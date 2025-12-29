@@ -70,6 +70,12 @@
 		9B731C872E5364A300CE26F0 /* Ingredient+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C772E5364A300CE26F0 /* Ingredient+CoreDataClass.swift */; };
 		9B731C882E5364A300CE26F0 /* Tag+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7B2E5364A300CE26F0 /* Tag+CoreDataClass.swift */; };
 		9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */; };
+		9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */; };
+		9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */; };
+		9B9C38E52EFC410A006E7DBD /* InviteMemberSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38E32EFC410A006E7DBD /* InviteMemberSheet.swift */; };
+		9B9C38E62EFC410A006E7DBD /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38E42EFC410A006E7DBD /* ShareSheet.swift */; };
+		9B9C38E92EFC4F11006E7DBD /* AcceptInvitationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38E72EFC4F11006E7DBD /* AcceptInvitationSheet.swift */; };
+		9B9C38EA2EFC4F11006E7DBD /* HouseholdMembersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38E82EFC4F11006E7DBD /* HouseholdMembersView.swift */; };
 		9BC115A42EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC115A32EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift */; };
 		9BC115A52EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC115A12EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift */; };
 		9BC663462EE25D95006836A5 /* CloudKitSyncTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */; };
@@ -165,6 +171,12 @@
 		9B731C7C2E5364A300CE26F0 /* Tag+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+Extensions.swift"; sourceTree = "<group>"; };
+		9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+Extensions.swift"; sourceTree = "<group>"; };
+		9B9C38E32EFC410A006E7DBD /* InviteMemberSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteMemberSheet.swift; sourceTree = "<group>"; };
+		9B9C38E42EFC410A006E7DBD /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
+		9B9C38E72EFC4F11006E7DBD /* AcceptInvitationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcceptInvitationSheet.swift; sourceTree = "<group>"; };
+		9B9C38E82EFC4F11006E7DBD /* HouseholdMembersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdMembersView.swift; sourceTree = "<group>"; };
 		9BC115A12EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryItem+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC115A32EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncTestView.swift; sourceTree = "<group>"; };
@@ -209,6 +221,10 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXGroup;
 			children = (
+				9B9C38E72EFC4F11006E7DBD /* AcceptInvitationSheet.swift */,
+				9B9C38E82EFC4F11006E7DBD /* HouseholdMembersView.swift */,
+				9B9C38E32EFC410A006E7DBD /* InviteMemberSheet.swift */,
+				9B9C38E42EFC410A006E7DBD /* ShareSheet.swift */,
 				9B1B39892EF5DB19001E1876 /* Repositories */,
 				9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */,
 				9B05551B2EDB665C00A57B34 /* AddCategoryView.swift */,
@@ -283,6 +299,8 @@
 		9B731C202E535C3100CE26F0 = {
 			isa = PBXGroup;
 			children = (
+				9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */,
+				9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */,
 				9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */,
 				9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */,
 				9B1B39642EF4BA71001E1876 /* Category+Extensions.swift */,
@@ -478,6 +496,8 @@
 				9B0555462EDB665C00A57B34 /* ManageCategoriesView.swift in Sources */,
 				9B0555472EDB665C00A57B34 /* AddStapleView.swift in Sources */,
 				9B0555482EDB665C00A57B34 /* RecipeListView.swift in Sources */,
+				9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */,
+				9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */,
 				9B1B39692EF4E005001E1876 /* PlannedMeal+Extensions.swift in Sources */,
 				9B0555492EDB665C00A57B34 /* CategoryAssignmentModal.swift in Sources */,
 				9B05554A2EDB665C00A57B34 /* ConsolidationPreviewView.swift in Sources */,
@@ -486,6 +506,8 @@
 				9B1B398A2EF5DB19001E1876 /* IngredientTemplateRepository.swift in Sources */,
 				9B1B398B2EF5DB19001E1876 /* PlannedMealRepository.swift in Sources */,
 				9B1B398C2EF5DB19001E1876 /* CategoryRepository.swift in Sources */,
+				9B9C38E52EFC410A006E7DBD /* InviteMemberSheet.swift in Sources */,
+				9B9C38E62EFC410A006E7DBD /* ShareSheet.swift in Sources */,
 				9B1B39672EF4DED6001E1876 /* IngredientTemplate+Extensions.swift in Sources */,
 				9B05554D2EDB665C00A57B34 /* CategoryChangeModal.swift in Sources */,
 				9B05554E2EDB665C00A57B34 /* DataDebugView.swift in Sources */,
@@ -527,6 +549,8 @@
 				9BC663462EE25D95006836A5 /* CloudKitSyncTestView.swift in Sources */,
 				9B731C862E5364A300CE26F0 /* Tag+CoreDataProperties.swift in Sources */,
 				9B731C872E5364A300CE26F0 /* Ingredient+CoreDataClass.swift in Sources */,
+				9B9C38E92EFC4F11006E7DBD /* AcceptInvitationSheet.swift in Sources */,
+				9B9C38EA2EFC4F11006E7DBD /* HouseholdMembersView.swift in Sources */,
 				9B3DB86E2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift in Sources */,
 				9B731C882E5364A300CE26F0 /* Tag+CoreDataClass.swift in Sources */,
 				9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */,

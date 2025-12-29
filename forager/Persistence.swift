@@ -273,6 +273,9 @@ extension Category {
 
 struct PersistenceController {
     static let shared = PersistenceController()
+    
+    // M7.2.2: Serial queue for synchronizing one-time setup
+    private static let setupQueue = DispatchQueue(label: "com.forager.setup", qos: .userInitiated)
 
     static var preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
@@ -301,20 +304,21 @@ struct PersistenceController {
         let categories = (try? context.fetch(categoryRequest)) ?? []
         let categoryDict = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0) })
         
-        // Sample Grocery Items (Staples) with category relationships
+        // M7.2.2: Sample Grocery Items - NO STAPLES (isStaple = false for all)
+        // Staples are user-created only, not part of sample data
         let groceryItems = [
-            ("Bananas", "Produce", true),
-            ("Apples", "Produce", true),
-            ("Strawberries", "Produce", true),
-            ("Grapes", "Produce", true),
-            ("Cucumbers", "Produce", true),
-            ("Peppers", "Produce", true),
-            ("Ham", "Deli & Meat", true),
-            ("Bologna", "Deli & Meat", true),
-            ("Bread", "Bread & Frozen", true),
-            ("Kids Yogurt", "Dairy & Fridge", true),
-            ("Milk 2%", "Dairy & Fridge", true),
-            ("Milk 1%", "Dairy & Fridge", true)
+            ("Bananas", "Produce", false),
+            ("Apples", "Produce", false),
+            ("Strawberries", "Produce", false),
+            ("Grapes", "Produce", false),
+            ("Cucumbers", "Produce", false),
+            ("Peppers", "Produce", false),
+            ("Ham", "Deli & Meat", false),
+            ("Bologna", "Deli & Meat", false),
+            ("Bread", "Bread & Frozen", false),
+            ("Kids Yogurt", "Dairy & Fridge", false),
+            ("Milk 2%", "Dairy & Fridge", false),
+            ("Milk 1%", "Dairy & Fridge", false)
         ]
         
         var groceryItemsDict: [String: GroceryItem] = [:]
@@ -423,15 +427,23 @@ struct PersistenceController {
         
         // M7.1.1: Configure CloudKit container options
         if let description = container.persistentStoreDescriptions.first {
-            // Enable CloudKit sync only in Release builds
-            // Debug builds use local-only Core Data for fast iteration
-            #if !DEBUG
-            description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
+            // CRITICAL FIX: Force Development environment
+            // The container options need to be set with proper environment
+            let containerOptions = NSPersistentCloudKitContainerOptions(
                 containerIdentifier: "iCloud.com.richhayn.forager"
             )
-            print("☁️ CloudKit sync enabled (Release build)")
+            
+            // Set database scope to private (required for NSPersistentCloudKitContainer)
+            description.cloudKitContainerOptions = containerOptions
+            
+            #if DEBUG
+            // FORCE Development environment in Debug builds
+            // This is the correct way to override the default Production environment
+            description.setOption("Development" as NSObject,
+                                forKey: "NSPersistentStoreCloudKitEnvironment")
+            print("☁️ CloudKit sync enabled (DEVELOPMENT environment FORCED)")
             #else
-            print("💻 Local-only Core Data (Debug build - fast iteration)")
+            print("☁️ CloudKit sync enabled (Production environment)")
             #endif
             
             // M7.1.3: Enable automatic lightweight migration for schema changes
@@ -467,16 +479,84 @@ struct PersistenceController {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
         
-        // FIXED: Only perform setup once, in the right order
+        // M7.2.2: Set up observer to wait for initial CloudKit import before creating defaults
         if !inMemory {
-            performOneTimeSetup()
+            setupCloudKitImportObserver()
         }
     }
     
     // MARK: - One-Time Setup (ENHANCED with Step 4 Migration - UPDATED)
+    /// M7.2.2: Observes CloudKit import events to ensure sync completes before creating defaults
+    /// This prevents duplicate categories when Device B syncs from Device A
+    private func setupCloudKitImportObserver() {
+        // M7.2.2: Use UserDefaults to track if initial setup has been performed
+        let setupKey = "M7.2.2_InitialSetupCompleted"
+        
+        // If already completed, skip
+        guard !UserDefaults.standard.bool(forKey: setupKey) else {
+            print("ℹ️ M7.2.2: Initial setup already completed, skipping observer")
+            return
+        }
+        
+        // Store observer reference and timeout work item
+        var observer: NSObjectProtocol?
+        var timeoutWorkItem: DispatchWorkItem?
+        
+        // M7.2.2: Helper to execute setup exactly once using serial queue
+        let executeSetupOnce = {
+            PersistenceController.setupQueue.async {
+                // Check flag again inside serial queue (ensures only one execution)
+                guard !UserDefaults.standard.bool(forKey: setupKey) else {
+                    print("ℹ️ M7.2.2: Setup already completed, skipping duplicate call")
+                    return
+                }
+                
+                // Mark as completed FIRST (inside serial queue)
+                UserDefaults.standard.set(true, forKey: setupKey)
+                
+                // Cancel timeout and remove observer
+                timeoutWorkItem?.cancel()
+                if let obs = observer {
+                    NotificationCenter.default.removeObserver(obs)
+                }
+                
+                // Now perform setup (guaranteed to run only once)
+                self.performOneTimeSetup()
+            }
+        }
+        
+        // Create timeout work item
+        timeoutWorkItem = DispatchWorkItem {
+            print("ℹ️ M7.2.2: No CloudKit import detected after 3s, proceeding with setup...")
+            executeSetupOnce()
+        }
+        
+        // Set up observer
+        observer = NotificationCenter.default.addObserver(
+            forName: NSPersistentCloudKitContainer.eventChangedNotification,
+            object: container,
+            queue: .main
+        ) { notification in
+            // Check if this is an import event
+            if let event = notification.userInfo?[NSPersistentCloudKitContainer.eventNotificationUserInfoKey] as? NSPersistentCloudKitContainer.Event,
+               event.type == .import {
+                
+                // Wait for first successful import before creating defaults
+                if event.endDate != nil {
+                    print("ℹ️ M7.2.2: Initial CloudKit import completed, proceeding with setup...")
+                    executeSetupOnce()
+                }
+            }
+        }
+        
+        // Schedule timeout on background queue (3 seconds)
+        if let workItem = timeoutWorkItem {
+            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 3.0, execute: workItem)
+        }
+    }
+    
     /// Performs all setup operations in the correct order to prevent duplicates
     private func performOneTimeSetup() {
-        // Use a single background context for all setup operations
         container.performBackgroundTask { backgroundContext in
             // Step 1: Ensure categories exist first (only once)
             self.ensureCategoriesExist(in: backgroundContext)
@@ -487,11 +567,12 @@ struct PersistenceController {
             // Step 3: Migrate nil assignments to Uncategorized
             self.migrateToUncategorizedCategory(in: backgroundContext)
             
-            // Step 4: NEW - Execute Step 4 staples migration
+            // Step 4: Execute staples migration if needed
             self.executeStaplesMigrationIfNeeded(in: backgroundContext)
             
-            // Step 5: Add sample data only if database is empty
-            self.addSampleDataIfNeeded(in: backgroundContext)
+            // Step 5: M7.2.2 - REMOVED sample data creation
+            // Users now start with clean slate (no pre-populated grocery items)
+            // Sample data only exists in SwiftUI previews for development
             
             // Step 6: M7.1.3 - Execute Stage A migration (populate semantic keys)
             self.performStageAMigration(in: backgroundContext)
@@ -568,61 +649,6 @@ struct PersistenceController {
         if !validation.success {
             print("⚠️ Step 4 migration validation failed - manual review recommended")
         }
-    }
-    
-    /// Add sample data only if database is completely empty
-    private func addSampleDataIfNeeded(in context: NSManagedObjectContext) {
-        #if DEBUG
-        let request: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
-        
-        do {
-            let count = try context.count(for: request)
-            if count == 0 {
-                // DON'T call ensureDefaultCategories here - categories already exist
-                print("📦 Adding sample data to empty database")
-                PersistenceController.addSampleDataWithoutCategories(to: context)
-            } else {
-                print("ℹ️ Database has data (\(count) items), skipping sample data")
-            }
-        } catch {
-            print("❌ Error checking for existing data: \(error)")
-        }
-        #endif
-    }
-    
-    /// Sample data creation that doesn't create categories (they already exist)
-    private static func addSampleDataWithoutCategories(to context: NSManagedObjectContext) {
-        // Fetch existing categories
-        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
-        let categories = (try? context.fetch(categoryRequest)) ?? []
-        let categoryDict = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0) })
-        
-        // Only create grocery items and other data - categories already exist
-        let groceryItems = [
-            ("Bananas", "Produce", true),
-            ("Apples", "Produce", true),
-            ("Strawberries", "Produce", true),
-            ("Ham", "Deli & Meat", true),
-            ("Bologna", "Deli & Meat", true),
-            ("Milk 2%", "Dairy & Fridge", true),
-            ("Kids Yogurt", "Dairy & Fridge", true),
-            ("Bread", "Bread & Frozen", true)
-        ]
-        
-        for (name, categoryName, isStaple) in groceryItems {
-            let item = GroceryItem(context: context)
-            item.id = UUID()
-            item.name = name
-            item.category = categoryName
-            item.categoryEntity = categoryDict[categoryName]
-            item.isStaple = isStaple
-            item.dateCreated = Date().addingTimeInterval(-Double.random(in: 0...30) * 24 * 60 * 60)
-            if isStaple {
-                item.lastPurchased = Date().addingTimeInterval(-Double.random(in: 1...14) * 24 * 60 * 60)
-            }
-        }
-        
-        print("✅ Sample data added with existing categories")
     }
     
     // MARK: - Background Operations

@@ -2,8 +2,13 @@
 // Updated with Settings Tab - M3 Phase 3
 // Updated with Meal Planning Tab - M4.2
 // CORRECTED: Tap-to-Pop-to-Root with NavigationStack and path arrays
+// M7.2.2 Task 3: CloudKit share invitation handling
 
 import SwiftUI
+import CloudKit
+
+// CloudKit share metadata key for user activity
+private let CKShareMetadataKey = "CKShareMetadataKey"
 
 @main
 struct foragerApp: App {
@@ -12,6 +17,11 @@ struct foragerApp: App {
     // M7.1.2: CloudKit sync monitoring - observing shared instance from PersistenceController
     // Using @ObservedObject since PersistenceController owns the instance
     @StateObject private var syncMonitor = CloudKitSyncMonitor()
+    
+    // M7.2.2 Task 3: CloudKit share invitation handling
+    @State private var pendingShareMetadata: CKShare.Metadata?
+    @State private var showAcceptInvitationSheet = false
+    @StateObject private var householdService: HouseholdService
     
     // Tab selection tracking
     @State private var selectedTab: Tab = .lists
@@ -29,6 +39,12 @@ struct foragerApp: App {
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
     @State private var categoriesPopToRoot = false
+    
+    // M7.2.2 Task 3: Initialize HouseholdService
+    init() {
+        let service = HouseholdService(context: PersistenceController.shared.container.viewContext)
+        _householdService = StateObject(wrappedValue: service)
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -90,6 +106,15 @@ struct foragerApp: App {
             }
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
             .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
+            // M7.2.2 Task 3: Handle CloudKit share invitations
+            .onContinueUserActivity("com.apple.CloudKit.ShareInvitation") { userActivity in
+                handleCloudKitShare(userActivity)
+            }
+            .sheet(isPresented: $showAcceptInvitationSheet) {
+                if let metadata = pendingShareMetadata {
+                    AcceptInvitationSheet(service: householdService, share: metadata)
+                }
+            }
         }
     }
     
@@ -116,6 +141,34 @@ struct foragerApp: App {
         case .settings:
             break // Settings has no navigation stack
         }
+    }
+    
+    // MARK: - M7.2.2 Task 3: CloudKit Share Handling
+    
+    /// Handles incoming CloudKit share invitation
+    /// Called when user taps invitation link from Messages, Mail, etc.
+    private func handleCloudKitShare(_ userActivity: NSUserActivity) {
+        // Extract CKShareMetadata from userInfo
+        guard let metadataData = userActivity.userInfo?[CKShareMetadataKey] as? Data else {
+            print("❌ No share metadata found in user activity")
+            return
+        }
+        
+        // Unarchive the metadata
+        guard let shareMetadata = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClass: CKShare.Metadata.self,
+            from: metadataData
+        ) else {
+            print("❌ Failed to unarchive share metadata")
+            return
+        }
+        
+        print("✅ Received CloudKit share invitation")
+        print("   Root record: \(shareMetadata.rootRecordID.recordName)")
+        
+        // Store metadata and present acceptance sheet
+        pendingShareMetadata = shareMetadata
+        showAcceptInvitationSheet = true
     }
 }
 

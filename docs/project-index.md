@@ -1,9 +1,9 @@
 # Forager - Project Index
 
-**Last Updated**: December 23, 2025  
+**Last Updated**: December 24, 2025  
 **Purpose**: Central navigation hub for all project documentation  
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight (M7.0 ✅, M7.1 ✅, M7.2.1 ✅)  
-**Next Priority**: Strategic Decision - M7.2.2 vs M6 vs M8 (see next-prompt.md)
+**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight (M7.0 ✅, M7.1 ✅, M7 CloudKit Debugging ✅)  
+**Next Priority**: Strategic Decision - Continue M7.2.2 vs M6 vs M8 (see next-prompt.md)
 
 ---
 
@@ -98,6 +98,56 @@ _[All other sections remain the same until PRDs section]_
 _[Continue with rest of file content...]_
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **December 24, 2025** - M7 CloudKit Multi-Device Sync Debugging ✅ COMPLETE (~4 hours)
+- **Completed**: Multi-device CloudKit synchronization debugging and fixes
+- **Achievement**: Perfect bi-directional sync across 2 physical devices with zero duplicates
+- **Problems Discovered & Fixed**:
+  1. **Production Schema Lock** (45 min)
+     - Symptom: `<CKError: "Cannot create new type CD_GroceryItem in production schema">`
+     - Root Cause: Entitlements file hardcoded Production environment
+     - Fix: Updated `forager.entitlements` to force Development
+     - Learning: Entitlements file takes precedence over code settings!
+  2. **Duplicate Categories Race Condition** (45 min)
+     - Symptom: `Fatal error: Duplicate values for key: 'Produce'`
+     - Root Cause: Device B created categories before CloudKit import completed
+     - Fix: Implemented CloudKit import observer pattern
+     - Pattern: Wait for NSPersistentCloudKitContainer.eventChangedNotification
+  3. **Observer/Timeout Race Condition** (60 min)
+     - Symptom: Duplicates still occurring even with observer
+     - Root Cause: Both observer AND timeout calling setup (check-then-act not atomic)
+     - Fix: Serial queue synchronization (PersistenceController.setupQueue)
+     - Architecture: Serial queue guarantees atomic check-set-execute
+  4. **Sample Data Creating Fake Staples** (30 min)
+     - Symptom: Old ingredient data appearing as staples
+     - Root Cause: Sample data had isStaple = true, got migrated
+     - Fix: Removed sample data from production app launches
+     - Result: Users start with clean slate (7 categories only)
+- **Testing Results**:
+  - ✅ Device A → CloudKit → Device B sync: <5s latency
+  - ✅ Bi-directional sync working perfectly
+  - ✅ Zero duplicate categories
+  - ✅ Zero data loss
+  - ✅ Clean app start (7 categories, empty lists, no fake staples)
+- **Key Learnings**:
+  - CloudKit Environment Precedence: Entitlements File > Code Settings
+  - CloudKit import happens AFTER app initialization (must wait!)
+  - PersistenceController as struct can't use [weak self], needs UserDefaults
+  - Serial queues provide atomic execution for race condition prevention
+  - Multi-device testing requires 2 physical devices
+- **Documentation**:
+  - **[m7-docs/27-m7-cloudkit-sync-debugging.md](m7-docs/27-m7-cloudkit-sync-debugging.md)** - Complete debugging journey (NEW!)
+  - Updated [current-story.md](current-story.md) with CloudKit debugging completion
+- **Files Modified**:
+  - forager.entitlements - Changed to Development environment
+  - Persistence.swift - Serial queue, observer pattern, sample data removal
+- **Branch**: feature/M7.2.2-member-invitation (debugging occurred during testing)
+- **Value Delivered**:
+  - 🎯 Multi-device CloudKit sync working perfectly
+  - 🎯 Production-ready observer pattern preventing duplicates
+  - 🎯 Clean user onboarding (no sample data pollution)
+  - 🎯 Serial queue pattern reusable for other sync scenarios
+- **Total Progress**: ~107.25 hours (M1-M7.1: ~103.25h + CloudKit Debug: 4h)
 
 ### **December 23, 2025** - M7.2.1 Household Setup COMPLETE ✅ (1.25 hours - 100% accuracy!)
 - **Completed**: M7.2.1 - Household Setup & Shared Zone Foundation

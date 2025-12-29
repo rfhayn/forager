@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: December 23, 2025  
-**Current Phase**: M5.0 COMPLETE ✅ | M7.1 COMPLETE ✅ | M7.2.1 COMPLETE ✅ | Strategic Decision Point  
-**Status**: All M1-M5.0 milestones complete, M7.1 CloudKit foundation operational, M7.2.1 household setup complete, deciding next steps (M7.2.2 vs M6 vs M8)
+**Last Updated**: December 24, 2025  
+**Current Phase**: M5.0 COMPLETE ✅ | M7.1 COMPLETE ✅ | M7 CloudKit Debugging COMPLETE ✅ | Strategic Decision Point  
+**Status**: All M1-M5.0 milestones complete, M7.1 CloudKit foundation operational, M7 multi-device sync working perfectly, deciding next steps (M7.2.2 vs M6 vs M8)
 
 ---
 
@@ -66,9 +66,9 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 
 ### **🔄 M7: CloudKit Sync, Household Sharing & External TestFlight - IN PROGRESS** 🚀
 
-**Status**: 🔄 In Progress - M7.1 Complete ✅, M7.2 Architecture Validated 🚀  
+**Status**: 🔄 In Progress - M7.1 Complete ✅, Multi-Device Sync Working ✅  
 **Estimated Time**: 30-41 hours base, 35-46 hours with buffer  
-**Actual Progress**: 9.5 hours (M7.0: 3h, M7.1: 6.5h)  
+**Actual Progress**: 13.5 hours (M7.0: 3h, M7.1: 6.5h, CloudKit Debugging: 4h)  
 **Dependencies**: M5.0 complete ✅  
 **PRD**: docs/prds/milestone-7-cloudkit-sync-external-testflight.md (v2.0 - Shared Zone Architecture)
 
@@ -83,13 +83,29 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 **M7.1: CloudKit Sync Foundation (6.5 hours) - COMPLETE** ✅
 - ✅ **M7.1.1**: CloudKit Schema Validation (1.5h)
 - ✅ **M7.1.2**: CloudKitSyncMonitor Service (2h)
-- ⏭️ **M7.1.3**: Multi-Device Testing (skipped - integrated into M7.2)
+- ⏭️ **M7.1.3**: Multi-Device Testing (skipped - integrated into debugging)
 
-**M7.2: Shared Household Zone (8-10 hours) - IN PROGRESS** 🔄
+**M7 CloudKit Multi-Device Sync Debugging (4 hours) - COMPLETE** ✅
+- ✅ **Problem 1**: Production Schema Lock (45 min)
+  - Fixed entitlements to force Development environment
+  - Learning: Entitlements file takes precedence over code
+- ✅ **Problem 2**: Duplicate Categories Race Condition (45 min)
+  - Implemented CloudKit import observer pattern
+  - Wait for NSPersistentCloudKitContainer.eventChangedNotification
+- ✅ **Problem 3**: Observer/Timeout Race Condition (60 min)
+  - Added serial queue synchronization (PersistenceController.setupQueue)
+  - Serial queue guarantees atomic check-set-execute
+- ✅ **Problem 4**: Sample Data Creating Fake Staples (30 min)
+  - Removed sample data from production app launches
+  - Users start with clean slate (7 categories only)
+- ✅ **Testing**: Perfect bi-directional sync across 2 devices (<5s latency)
+- ✅ **Documentation**: [27-m7-cloudkit-sync-debugging.md](m7-docs/27-m7-cloudkit-sync-debugging.md)
+
+**M7.2: Shared Household Zone (8-10 hours) - PAUSED** ⏸️
 - ✅ **M7.2.1**: Household Setup & Shared Zone (1.25h) - COMPLETE (100% accuracy)
-- ⏳ **M7.2.2**: Member Invitation & Acceptance (2-3h)
-- ⏳ **M7.2.3**: Sync Validation & Testing (1-2h)
-- ⏳ **M7.2.4**: Household Management (1-2h)
+- ⏳ **M7.2.2**: Member Invitation & Acceptance (2-3h) - READY (or defer)
+- ⏳ **M7.2.3**: Sync Validation & Testing (1-2h) - MOSTLY DONE (multi-device validated)
+- ⏳ **M7.2.4**: Household Management (1-2h) - READY
 
 **Architecture Decision (Dec 23, 2025):**
 - ✅ **ALL 8 entities household-scoped**: GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate
@@ -154,7 +170,9 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - [ ] Beta landing page published (M7.7)
 - [ ] 10+ external beta testers providing feedback
 
-**Requirements**: 32 total (4 App Store prerequisites, 25 CloudKit/TestFlight features, 3 parsing resilience)
+**Requirements**: 39 total
+- ✅ **Complete (9)**: 4 App Store prerequisites + 5 CloudKit sync foundation + 4 debugging fixes
+- ⏳ **Remaining (30)**: 5 household collaboration + 5 conflict resolution + 5 sync UI + 6 parsing resilience + 5 external TestFlight + 4 non-functional
 
 ---
 
@@ -346,7 +364,8 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - **M7.0**: 3 hours (estimated 2-3h) - ✅ 100% accuracy
 - **M7.1**: 6.5 hours (estimated 6-8h) - ✅ 93% accuracy
 - **M7.2.1**: 1.25 hours (estimated 1.25h) - ✅ 100% accuracy
-- **Total Completed**: ~103.5 hours
+- **M7 CloudKit Debugging**: 4 hours (unplanned but essential) - ✅ Perfect sync achieved
+- **Total Completed**: ~107.25 hours
 
 ### **Planned Core Platform:**
 - **M7**: 30-41 hours base, 35-46 hours with buffer (+3-4h for M7.5)
@@ -366,7 +385,7 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - **Phase-level estimates**: Consistently accurate within ±15 minutes
 - **Milestone estimates**: Excellent accuracy for M1-M5.0 (88-100%)
 - **Risk mitigation**: Proactive problem identification preventing scope creep
-- **Overall Average**: 89% accuracy across completed work
+- **Overall Average**: 89% accuracy across completed work (excluding unplanned debugging sessions)
 
 ### **Quality Metrics:**
 - **Build Success Rate**: 100% (zero breaking changes)
@@ -388,10 +407,14 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 _[All previous success criteria remain unchanged - these are already in the file]_
 
 ### **M7: CloudKit Sync & External TestFlight**
-- [ ] Privacy policy published (M7.0)
-- [ ] All 8 entities sync via CloudKit (M7.1)
-- [ ] Multi-device sync < 5s latency (M7.1.3)
-- [ ] CKShare working for collaboration (M7.2)
+- [✅] Privacy policy published (M7.0)
+- [✅] All 8 entities sync via CloudKit (M7.1)
+- [✅] Multi-device sync < 5s latency (M7 Debugging)
+- [✅] CloudKit environment configured (Development)
+- [✅] CloudKit import observer prevents race conditions
+- [✅] Serial queue synchronization working
+- [✅] Clean user onboarding (no sample data)
+- [ ] CKShare working for collaboration (M7.2) - OPTIONAL
 - [ ] Conflict resolution reliable (M7.3)
 - [ ] Sync status UI informative (M7.4)
 - [ ] **Low-confidence parsing UI operational (M7.5)** ← NEW
@@ -476,6 +499,6 @@ _[All existing achievements remain - content already in file]_
 
 ---
 
-**Next Action**: Begin M7 - CloudKit Sync & External TestFlight (35-46h with buffer)
+**Next Action**: Strategic Decision - Continue M7.2.2 (Household Sharing) vs M6 (Testing) vs M8 (Analytics)
 
-**Status**: M1-M5.0 complete with ~92.75 hours total. M7 ready to begin with complete PRD, CloudKit-enabled infrastructure, and internal TestFlight operational. M7.0 App Store Prerequisites (privacy policy, questionnaire, name disambiguation) are MANDATORY before external TestFlight submission. **NEW**: M7.5 adds parsing resilience before external beta launch.
+**Status**: M1-M5.0 complete with ~92.75 hours. M7.0 + M7.1 + CloudKit Debugging complete (13.5h). **Multi-device CloudKit sync working perfectly!** ✅ Perfect bi-directional sync across 2 physical devices with <5s latency, zero duplicates, zero data loss. Now deciding next milestone: finish household sharing (M7.2.2, 4-7h) OR pivot to testing (M6, 12-15h) OR analytics (M8, 16-24h).

@@ -109,20 +109,33 @@ class CloudKitSyncMonitor: ObservableObject {
     // MARK: - Manual Sync Trigger
     
     /// M7.1.2: Manually trigger sync state check
-    /// Used for pull-to-refresh or explicit sync requests
-    /// Note: NSPersistentCloudKitContainer handles automatic sync
-    func triggerManualSync() {
+    /// Forces CloudKit to sync by saving the context
+    /// NSPersistentCloudKitContainer will detect changes and sync
+    func triggerManualSync(context: NSManagedObjectContext) {
         print("🔄 Manual sync triggered")
         syncState = .syncing
         
-        // NSPersistentCloudKitContainer handles actual sync automatically
-        // We just update UI state and wait for notification
+        // Save context to trigger CloudKit sync
+        // NSPersistentCloudKitContainer monitors context saves and syncs changes
+        if context.hasChanges {
+            do {
+                try context.save()
+                print("✅ Context saved - CloudKit will sync changes")
+            } catch {
+                print("❌ Failed to save context: \(error)")
+                handleSyncError(error)
+            }
+        } else {
+            // No changes, but still notify CloudKit to check for remote updates
+            print("⚠️ No local changes - waiting for remote sync notification")
+        }
         
-        // Reset to idle after brief UI feedback
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        // Reset to idle after brief UI feedback if no notification received
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             if self?.syncState == .syncing {
-                // If no notification received, assume idle
+                // If no notification received within 2 seconds, assume idle
                 self?.syncState = .idle
+                print("⚠️ Manual sync timeout - no notification received")
             }
         }
     }

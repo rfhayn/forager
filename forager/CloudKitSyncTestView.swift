@@ -142,7 +142,7 @@ struct CloudKitSyncTestView: View {
     /// Manual sync trigger button
     private var manualSyncButton: some View {
         Button {
-            syncMonitor.triggerManualSync()
+            syncMonitor.triggerManualSync(context: viewContext)
         } label: {
             Label("Trigger Manual Sync", systemImage: "arrow.triangle.2.circlepath")
         }

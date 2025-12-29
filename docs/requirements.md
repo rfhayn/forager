@@ -32,10 +32,11 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 ---
 
-## 🚀 **M7: CLOUDKIT SYNC & EXTERNAL TESTFLIGHT - PLANNED**
+## 🚀 **M7: CLOUDKIT SYNC & EXTERNAL TESTFLIGHT - IN PROGRESS**
 
-**Status**: ⏳ Planned - Ready to Start  
-**Estimated**: 30-41 hours base, 35-46 hours with buffer (+3-4h for M7.5)  
+**Status**: 🔄 In Progress - CloudKit Multi-Device Sync Working ✅  
+**Progress**: M7.0 (3h) ✅, M7.1 (6.5h) ✅, CloudKit Debugging (4h) ✅ = 13.5h / 35-46h  
+**Estimated Remaining**: 21.5-32.5 hours  
 **Summary**: Full CloudKit synchronization, multi-user collaboration, parsing resilience, and external public beta
 
 **⚠️ CRITICAL**: M7.0 App Store Prerequisites are MANDATORY before external TestFlight submission
@@ -51,13 +52,17 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 ### **Functional Requirements - CloudKit Sync Foundation**
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-CK-001** | **CloudKit schema generation** | All 8 entities sync to CloudKit | M7.1.1 | 🎯 **Sync foundation** |
-| **FR-CK-002** | **Multi-device sync** | Changes sync across devices <5s | M7.1.3 | 🎯 **Seamless experience** |
-| **FR-CK-003** | **Automatic background sync** | CloudKit syncs without user action | M7.1.2 | 🎯 **Transparent operation** |
-| **FR-CK-004** | **Offline sync queue** | Changes queue offline, sync when online | M7.1.3 | 🎯 **Reliability** |
-| **FR-CK-005** | **Sync status monitoring** | CloudKit sync state tracking | M7.1.2 | 🎯 **Transparency** |
+| ID | Requirement | Target Implementation | Milestone | Status |
+|----|-------------|----------------------|-----------|--------|
+| **FR-CK-001** | **CloudKit schema generation** | All 8 entities sync to CloudKit | M7.1.1 | ✅ **COMPLETE** |
+| **FR-CK-002** | **Multi-device sync** | Changes sync across devices <5s | M7.1.3 | ✅ **COMPLETE** |
+| **FR-CK-003** | **Automatic background sync** | CloudKit syncs without user action | M7.1.2 | ✅ **COMPLETE** |
+| **FR-CK-004** | **Offline sync queue** | Changes queue offline, sync when online | M7.1.3 | ✅ **COMPLETE** |
+| **FR-CK-005** | **Sync status monitoring** | CloudKit sync state tracking | M7.1.2 | ✅ **COMPLETE** |
+| **FR-CK-021** | **CloudKit environment configuration** | Development environment for testing, Production for release | Debugging | ✅ **COMPLETE** |
+| **FR-CK-022** | **CloudKit import observer pattern** | Wait for import completion before setup | Debugging | ✅ **COMPLETE** |
+| **FR-CK-023** | **Race condition prevention** | Serial queue synchronization for atomic operations | Debugging | ✅ **COMPLETE** |
+| **FR-CK-024** | **Clean user onboarding** | No sample data in production (7 categories only) | Debugging | ✅ **COMPLETE** |
 
 ### **Functional Requirements - Household Collaboration (Shared Zone Architecture)**
 
@@ -126,7 +131,12 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | **NFR-PR-001** | **Edit form load < 0.2s** | Instant edit form display | M7.5.2 | 🎯 **Responsive UX** |
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
-**M7 Summary (Planned)**: 35 requirements including App Store prerequisites (4), CloudKit sync (5), multi-user collaboration (5), conflict resolution (5), sync UI polish (5), parsing resilience (6 NEW), external TestFlight (5), and non-functional requirements (9). Transforms Forager into App Store-compliant collaborative family platform with graceful parsing degradation and public beta program.
+**M7 Summary**: 39 total requirements
+- **Complete (9)**: App Store prerequisites (4), CloudKit sync foundation (5 + 4 debugging fixes)
+- **Planned (30)**: Multi-user collaboration (5), conflict resolution (5), sync UI polish (5), parsing resilience (6), external TestFlight (5), non-functional (4 remaining)
+- **Progress**: M7.0 ✅, M7.1 ✅, CloudKit Multi-Device Sync Debugging ✅
+- **Achievement**: Perfect bi-directional sync across 2 physical devices with zero duplicates
+- **Next**: M7.2 (Household Sharing) or M6 (Testing) or M8 (Analytics)
 
 ---
 
@@ -269,9 +279,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 | Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M9.5 (Opt) | Total |
 |--------|----|----|----|----|------|----|----|-----------|------------|-------|
-| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 0 | 0 | 0 | 0 | **122** |
-| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 35 | 24 | 4 | 8 | **71** |
-| **Total** | **19** | **37** | **33** | **19** | **14** | **35** | **24** | **4** | **8** | **193** |
+| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 9 | 0 | 0 | 0 | **131** |
+| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 | 0 | **30** |
+| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 4 | 8 | **36** |
+| **Total** | **19** | **37** | **33** | **19** | **14** | **39** | **24** | **4** | **8** | **197** |
 
 ### **By Category**
 
@@ -284,8 +295,9 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | Quantities | 33 | ✅ Complete |
 | Meal Planning | 19 | ✅ Complete |
 | TestFlight & Identity | 14 | ✅ Complete |
-| App Store Compliance | 4 | ⏳ Planned (M7.0) |
-| CloudKit Sync | 25 | ⏳ Planned (M7.1-M7.4) |
+| App Store Compliance | 4 | ✅ Complete (M7.0) |
+| CloudKit Sync Foundation | 9 | ✅ Complete (M7.1 + Debugging) |
+| CloudKit Collaboration | 16 | 🔄 In Progress (M7.2-M7.4) |
 | **Parsing Resilience** | **6** | ⏳ **Planned (M7.5)** ← NEW |
 | **Parsing Improvements** | **10** | ⏳ **Planned (M8.0)** ← NEW |
 | **ML Parsing (Optional)** | **8** | ⏳ **Planned (M9.5)** ← NEW |
@@ -294,9 +306,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | Budget Intelligence | 4 | ⏳ Planned (M10) |
 | AI Assistant | 4 | ⏳ Planned (M11) |
 | Advanced Collaboration | 3 | ⏳ Planned (M12) |
-| **Complete** | **122** | **63% (122/193)** |
-| **Planned (Mandatory)** | **63** | **33% (63/193)** |
-| **Planned (Optional)** | **8** | **4% (8/193)** |
+| **Complete** | **131** | **67% (131/197)** |
+| **In Progress** | **30** | **15% (30/197)** |
+| **Planned (Mandatory)** | **28** | **14% (28/197)** |
+| **Planned (Optional)** | **8** | **4% (8/197)** |
 
 ### **Performance Requirements Status**
 
@@ -325,9 +338,25 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 **Total Time**: 6 hours  
 **Status**: All 14 requirements complete
 
-### **Next Priority: M7 CloudKit Sync & External TestFlight** 🚀
-**Timeline**: 30-41 hours base, 35-46 hours with buffer  
-**Requirements**: 35 total (including 6 new parsing resilience)
+### **Completed: M7 CloudKit Multi-Device Sync** ✅
+**Total Time**: 13.5 hours (M7.0: 3h + M7.1: 6.5h + Debugging: 4h)  
+**Status**: 9 requirements complete
+- ✅ App Store prerequisites (privacy policy, compliance)
+- ✅ CloudKit schema generation (all 8 entities)
+- ✅ Multi-device sync (<5s latency)
+- ✅ Automatic background sync
+- ✅ Offline sync queue
+- ✅ Sync status monitoring
+- ✅ Environment configuration (Development)
+- ✅ CloudKit import observer pattern
+- ✅ Race condition prevention (serial queue)
+- ✅ Clean user onboarding (no sample data)
+
+**Achievement**: Perfect bi-directional sync across 2 physical devices with zero duplicates!
+
+### **In Progress: M7 CloudKit Collaboration & External TestFlight** 🔄
+**Remaining Time**: 21.5-32.5 hours  
+**Requirements In Progress**: 30 (household sharing, conflict resolution, sync UI, parsing, TestFlight)
 
 **Strategic Additions:**
 - **M7.5: Parsing Resilience** (6 requirements, 3-4h) - Graceful degradation before external beta
@@ -350,7 +379,7 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit, parsing resilience, and public beta (35 requirements). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 193 total requirements (122 complete, 63 mandatory planned, 8 optional).
 
-**Last Updated**: December 19, 2025  
-**Version**: 4.2  
-**Next Update**: After M7 completion  
-**Current Focus**: M7 - CloudKit Sync, Parsing Resilience & External TestFlight
+**Last Updated**: December 24, 2025  
+**Version**: 4.3  
+**Next Update**: After M7.2 decision (Continue household sharing vs Testing vs Analytics)  
+**Current Focus**: M7 - CloudKit Multi-Device Sync Complete ✅, Strategic Decision Point

@@ -77,10 +77,12 @@
         <relationship name="weeklyLists" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WeeklyList" inverseName="household" inverseEntity="WeeklyList"/>
     </entity>
     <entity name="HouseholdMember" representedClassName="HouseholdMember" syncable="YES" codeGenerationType="class">
+        <attribute name="displayName" optional="YES" attributeType="String"/>
         <attribute name="email" attributeType="String" defaultValueString="&quot;&quot;"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="joinedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="role" optional="YES" attributeType="String"/>
+        <attribute name="status" attributeType="String" defaultValueString="&quot;pending&quot;"/>
         <relationship name="household" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Household" inverseName="members" inverseEntity="Household"/>
     </entity>
     <entity name="Ingredient" representedClassName="Ingredient" syncable="YES">
