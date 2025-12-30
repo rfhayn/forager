@@ -128,47 +128,51 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - **M7.4.1**: Sync Status Indicators (2-3h)
 - **M7.4.2**: CloudKit Settings & Diagnostics (1h)
 
-**M7.5: Parsing Resilience & Polish (3-4 hours) - 💡 NEW**
-- **M7.5.1**: Low-Confidence UI Detection (1.5h)
-  - Yellow indicator badge for confidence < 0.5
-  - "Edit Ingredient" button integration
-- **M7.5.2**: Structured Edit Form (1.5h)
-  - Professional edit sheet UI
-  - Pre-filled with parsed values
-  - Manual correction workflow
-- **M7.5.3**: Telemetry Logging (1h)
-  - ParsingTelemetryService implementation
-  - Log failures for M8.0 analysis
-  - Privacy-safe local storage
+**M7.5: Architecture Hardening - UX/Service Cleanup (8-12 hours) - 🏗️ NEW**
+- **Phase 1**: Service Ownership of Saves (3-4h)
+  - Eliminate scattered save() calls
+  - Centralize write paths in services
+  - Intent-style service methods
+  - Consistent error handling
+- **Phase 2**: SwiftUI Navigation Cleanup (3-4h)
+  - Enum-based routing (replace boolean soup)
+  - Predictable UI state
+  - Apply to 2-3 major screens
+- **Phase 3**: UX Polish & Invariant Tests (2-4h)
+  - EmptyStateView standardization
+  - 5-10 Core Data invariant tests (optional)
+  - Professional polish before external beta
 
-**Why M7.5?** Adds graceful degradation for ingredient parsing edge cases before external beta launch. Prevents embarrassing failures like "2-3 cloves garlic, minced" and starts collecting real-world failure data for M8.0 improvements.
+**Why M7.5?** Completes architecture hardening started in M7.2.3. Clean service layer, predictable navigation, and test coverage before public beta launch. Builds on customGPT recommendations.
 
-**PRD**: [docs/prds/parsing/M7.5-parsing-resilience-polish-prd.md](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
+**PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
-**M7.6: External TestFlight Deployment (2-3 hours)** ← Renumbered from M7.5
+**M7.6: External TestFlight Deployment (2-3 hours)**
 - **M7.6.1**: External Testing Group Setup (30min)
 - **M7.6.2**: App Review Submission (1-2h)
 - **M7.6.3**: App Review Preparation (1h)
 - **M7.6.4**: Public Link Generation (30min)
 
-**M7.7: Public Beta Program (2-3 hours)** ← Renumbered from M7.6
+**M7.7: Public Beta Program (2-3 hours)**
 - **M7.7.1**: Beta Landing Page (1-2h)
 - **M7.7.2**: LinkedIn Showcase (1h)
 
 **Success Criteria:**
-- [ ] Privacy policy published and accessible (M7.0)
-- [ ] All 8 entities sync via CloudKit (M7.1)
-- [ ] Multi-device sync < 5s latency (M7.1.3)
-- [ ] CKShare working for lists/recipes/meal plans (M7.2)
-- [ ] Conflict resolution 100% reliable (M7.3)
-- [ ] Sync status UI clear and informative (M7.4)
-- [ ] **Low-confidence ingredients show review indicator (M7.5)** ← NEW
-- [ ] **Edit ingredient flow operational (M7.5)** ← NEW
-- [ ] **Parsing failures logged to telemetry (M7.5)** ← NEW
-- [ ] External TestFlight approved by Apple (M7.6)
-- [ ] Public beta link generated and working (M7.6)
-- [ ] Beta landing page published (M7.7)
-- [ ] 10+ external beta testers providing feedback
+- [✅] Privacy policy published and accessible (M7.0)
+- [✅] All 10 entities sync via CloudKit (M7.1)
+- [✅] Multi-device sync < 5s latency (M7.1)
+- [✅] CloudKit debugging complete (M7 Debug)
+- [✅] Household setup working (M7.2.1)
+- [ ] CloudKit hardening complete (M7.2.3)
+- [ ] Household collaboration working (M7.2.2)
+- [ ] Conflict resolution reliable (M7.3)
+- [ ] Sync status UI informative (M7.4)
+- [ ] Service layer cleanup complete (M7.5)
+- [ ] Navigation patterns standardized (M7.5)
+- [ ] Empty states consistent (M7.5)
+- [ ] External TestFlight approved (M7.6)
+- [ ] Public beta launched (M7.7)
+- [ ] 10+ external beta testers active
 
 **Requirements**: 39 total
 - ✅ **Complete (9)**: 4 App Store prerequisites + 5 CloudKit sync foundation + 4 debugging fixes
@@ -329,6 +333,25 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 
 **PRD**: [docs/prds/parsing/M9.5-ml-powered-parsing-prd.md](prds/parsing/M9.5-ml-powered-parsing-prd.md)
 
+**M8.6: Parsing Resilience & Telemetry** (3-4 hours) - DEFERRED from M7
+- Low-confidence detection UI (yellow badge)
+- Structured edit form for corrections
+- Telemetry logging for M9.0 analysis
+- **Why deferred**: Architecture cleanup (M7.5) more critical than parsing polish
+- **PRD**: [docs/prds/parsing/M7.5-parsing-resilience-polish-prd.md](prds/parsing/M7.5-parsing-resilience-polish-prd.md) (will be renamed)
+
+**M9.0: Parsing Improvements Foundation** (8-12 hours) - Data-Driven
+- Analyze M8.6 telemetry for failure patterns
+- Hybrid NLP system (regex + Apple Natural Language)
+- Target: 95% → 98%+ accuracy
+- **PRD**: [docs/prds/parsing/M8.0-parsing-improvements-foundation-prd.md](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (will be renamed)
+
+**M9.5: ML-Powered Parsing** (15-20 hours) - OPTIONAL
+- Custom CoreML model from user corrections
+- Target: 98% → 99.5%+ accuracy
+- **Decision Point**: Evaluate after M9.0
+- **PRD**: [docs/prds/parsing/M9.5-ml-powered-parsing-prd.md](prds/parsing/M9.5-ml-powered-parsing-prd.md)
+
 **M10: Budget Intelligence** (10-15 hours)
 - Price tracking and history
 - Budget planning tools
@@ -368,15 +391,24 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - **Total Completed**: ~107.25 hours
 
 ### **Planned Core Platform:**
-- **M7**: 30-41 hours base, 35-46 hours with buffer (+3-4h for M7.5)
-  - M7.0: 2-3 hours (App Store prerequisites - MANDATORY)
-  - M7.1-7.4: 21-28 hours (CloudKit sync & polish)
-  - M7.5: 3-4 hours (Parsing resilience - NEW)
+- **M7**: 38-53 hours base, 43-58 hours with buffer
+  - M7.0: 2-3 hours (✅ COMPLETE - App Store prerequisites)
+  - M7.1: 6-8 hours (✅ COMPLETE - CloudKit foundation)
+  - M7 Debug: 4 hours (✅ COMPLETE - Multi-device sync)
+  - M7.2: 8-10 hours (Household sharing - IN PROGRESS)
+  - M7.2.3: 12-15 hours (CloudKit hardening - READY)
+  - M7.3-7.4: 7-10 hours (Conflict + Sync UI)
+  - M7.5: 8-12 hours (Architecture hardening - NEW)
   - M7.6-7.7: 4-6 hours (External beta)
 - **M6**: 12-18 hours (comprehensive testing & AI augmentation)
-- **M8**: 16-24 hours (+8-12h for M8.0 parsing improvements)
+- **M8**: 12-16 hours (Analytics dashboard only)
+- **M8.6**: 3-4 hours (Parsing resilience - DEFERRED)
+- **M9.0**: 8-12 hours (Parsing improvements - data-driven)
+- **M9.5**: 15-20 hours (ML parsing - OPTIONAL)
 
-**Total Core Platform (M1-M8)**: ~156-181 hours estimated (+11-16h from original 145-165h)
+**Total Core Platform (M1-M8)**: ~178-205 hours estimated
+- Includes M7.2.3 (12-15h) and M7.5 (8-12h) architecture hardening
+- Parsing work deferred to M8.6+M9.0 (+11-16h after analytics)
 
 **If Including M9.5 ML (Optional)**:
 - **M9**: 25-35 hours (10-15h core + 15-20h ML optional)
@@ -422,15 +454,16 @@ _[All previous success criteria remain unchanged - these are already in the file
 - [ ] External TestFlight approved (M7.6)
 - [ ] Public beta launched (M7.7)
 
-### **M8: Analytics, Insights & Parsing**
-- [ ] **Parsing accuracy ≥ 98%** ← NEW
-- [ ] **Low-confidence rate ≤ 2%** ← NEW
-- [ ] **Hybrid NLP parser operational** ← NEW
+### **M8: Analytics & Insights Dashboard**
 - [ ] Dashboard loads < 1s
 - [ ] Meaningful insights generated
 - [ ] Trend analysis functional
 - [ ] Recommendations actionable
 - [ ] Export capabilities working
+- [ ] **M8.6: Parsing Resilience** ← DEFERRED from M7
+  - [ ] Low-confidence ingredients flagged
+  - [ ] Edit ingredient form operational
+  - [ ] Telemetry collection working
 
 ---
 
