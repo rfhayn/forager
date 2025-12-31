@@ -3,6 +3,7 @@
 //  forager
 //
 //  M7.2.3 Phase 1.2: Extracted from Persistence.swift
+//  M7.2.3 Phase 3.1: Updated to use HouseholdCategoryRepository
 //  Single responsibility: Idempotent default data seeding
 //
 //  Created on December 30, 2025.
@@ -12,6 +13,7 @@ import CoreData
 import Foundation
 
 /// M7.2.3 Phase 1.2: Idempotent default data seeding
+/// M7.2.3 Phase 3.1: Uses HouseholdCategoryRepository for semantic uniqueness
 ///
 /// Responsibilities:
 /// - Seed default categories (7 categories)
@@ -21,7 +23,7 @@ import Foundation
 ///
 /// Does NOT handle:
 /// - Sample data (only in SwiftUI previews)
-/// - Migrations (see MigrationRunner)
+/// - Migrations (handled by old Persistence.swift)
 /// - Container setup (see PersistenceCore)
 final class DefaultSeeder {
     
@@ -60,7 +62,7 @@ final class DefaultSeeder {
     
     /// M7.2.3: Seeds default data if needed
     /// Idempotent: safe to run multiple times
-    /// CloudKit-safe: uses query-before-create pattern
+    /// CloudKit-safe: uses query-before-create pattern via repositories
     ///
     /// - Parameter context: Core Data managed object context
     /// - Throws: Core Data errors during save
@@ -74,7 +76,7 @@ final class DefaultSeeder {
         print("🌱 M7.2.3: Starting default data seeding...")
         let startTime = Date()
         
-        // Seed default categories (idempotent)
+        // Seed default categories using repository (Phase 3.1)
         try seedDefaultCategories(in: context)
         
         // Mark as complete
@@ -84,70 +86,47 @@ final class DefaultSeeder {
         print("✅ M7.2.3: Default seeding completed in \(String(format: "%.2f", duration))s")
     }
     
-    // MARK: - Category Seeding (Idempotent)
+    // MARK: - Category Seeding (Phase 3.1: Using Repository)
     
-    /// M7.2.3: Seeds default categories using query-before-create pattern
-    /// Idempotent: checks if category exists before creating
+    /// M7.2.3 Phase 3.1: Seeds default categories using HouseholdCategoryRepository
+    /// Idempotent: repository checks if category exists before creating
     /// CloudKit-safe: tolerates race conditions and concurrent creates
     ///
     /// - Parameter context: Core Data managed object context
     /// - Throws: Core Data errors during fetch or save
     private static func seedDefaultCategories(in context: NSManagedObjectContext) throws {
-        print("🏷️ M7.2.3: Seeding default categories...")
+        print("🏷️ M7.2.3 Phase 3.1: Seeding default categories via repository...")
+        
+        // Create repository instance
+        let repository = HouseholdCategoryRepository(context: context)
         
         var createdCount = 0
         var existingCount = 0
         
         for (name, color, sortOrder) in defaultCategories {
-            // Query before create (idempotent pattern)
-            let categoryExists = try checkCategoryExists(name: name, in: context)
+            // Use repository's findOrCreate (handles semantic uniqueness)
+            let category = try repository.findOrCreate(
+                name: name,
+                color: color,
+                sortOrder: sortOrder,
+                isDefault: true
+            )
             
-            if categoryExists {
-                existingCount += 1
-                print("ℹ️ M7.2.3: Category '\(name)' already exists, skipping")
-            } else {
-                // Create category with all required fields
-                let category = Category(context: context)
-                category.id = UUID()
-                category.name = name
-                category.normalizedName = Category.normalizedName(from: name)
-                category.color = color
-                category.sortOrder = sortOrder
-                category.isDefault = true
-                category.dateCreated = Date()
-                category.updatedAt = Date()
-                
+            // Check if it was newly created or already existed
+            if category.dateCreated?.timeIntervalSinceNow ?? -1000 > -1 {
                 createdCount += 1
-                print("✅ M7.2.3: Created category '\(name)' with color \(color)")
+            } else {
+                existingCount += 1
             }
         }
         
         // Save if any changes were made
         if context.hasChanges {
             try context.save()
-            print("✅ M7.2.3: Saved \(createdCount) new categories (\(existingCount) already existed)")
+            print("✅ M7.2.3 Phase 3.1: Repository seeding complete - \(createdCount) created, \(existingCount) existing")
         } else {
-            print("ℹ️ M7.2.3: All \(existingCount) categories already exist")
+            print("ℹ️ M7.2.3 Phase 3.1: All \(existingCount) categories already exist")
         }
-    }
-    
-    /// M7.2.3: Checks if a category exists using semantic uniqueness
-    /// Uses normalized name for case-insensitive matching
-    ///
-    /// - Parameters:
-    ///   - name: Display name of the category
-    ///   - context: Core Data managed object context
-    /// - Returns: True if category exists, false otherwise
-    /// - Throws: Core Data errors during fetch
-    private static func checkCategoryExists(name: String, in context: NSManagedObjectContext) throws -> Bool {
-        let normalizedName = Category.normalizedName(from: name)
-        
-        let request: NSFetchRequest<Category> = Category.fetchRequest()
-        request.predicate = NSPredicate(format: "normalizedName ==[c] %@", normalizedName)
-        request.fetchLimit = 1
-        
-        let count = try context.count(for: request)
-        return count > 0
     }
     
     // MARK: - Development/Testing Support
