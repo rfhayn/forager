@@ -309,36 +309,51 @@ class IngredientTemplateService: ObservableObject {
         }
     }
     
+    // M7.2.3 Phase 3.3: Updated to use HouseholdIngredientTemplateRepository
     func findOrCreateTemplate(name: String, category: String? = nil) -> IngredientTemplate {
         // M4.3.5: Normalize ingredient name before lookup/creation
         let normalizedName = normalize(name: name)
         
-        // M7.1.3 Phase 1.2: Use repository pattern to prevent duplicate creation
-        let template = IngredientTemplateRepository.getOrCreate(displayName: normalizedName, in: context)
+        // M7.2.3 Phase 3.3: Use HouseholdIngredientTemplateRepository for semantic uniqueness
+        let repository = HouseholdIngredientTemplateRepository(context: context)
         
-        // Set category if provided and not already set
-        if let category = category, template.category == nil || template.category?.isEmpty == true {
-            template.category = category
-        }
-        
-        // Increment usage count
-        template.usageCount += 1
-        
-        // Ensure UUID is set
-        if template.id == nil {
-            template.id = UUID()
-        }
-        
-        // Save changes
         do {
+            // Use repository's findOrCreate (handles semantic uniqueness + category/staple)
+            let template = try repository.findOrCreate(
+                name: normalizedName,
+                category: category,
+                isStaple: false  // Default to non-staple
+            )
+            
+            // Increment usage count
+            template.usageCount += 1
+            template.updatedAt = Date()
+            
+            // Ensure UUID is set
+            if template.id == nil {
+                template.id = UUID()
+            }
+            
+            // Save changes
             if context.hasChanges {
                 try context.save()
             }
+            
+            return template
+            
         } catch {
-            print("❌ IngredientTemplateService: Error saving template: \(error)")
+            print("❌ M7.2.3 Phase 3.3: Error creating template: \(error)")
+            // Fallback: create directly (shouldn't happen but safety net)
+            let template = IngredientTemplate(context: context)
+            template.id = UUID()
+            template.name = normalizedName
+            template.canonicalName = IngredientTemplate.canonicalName(from: normalizedName)
+            template.category = category
+            template.usageCount = 1
+            template.dateCreated = Date()
+            template.updatedAt = Date()
+            return template
         }
-        
-        return template
     }
     
     func incrementUsage(template: IngredientTemplate) {

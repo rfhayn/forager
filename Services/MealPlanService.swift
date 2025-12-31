@@ -452,27 +452,29 @@ class MealPlanService: ObservableObject {
             return nil
         }
         
-        // M7.1.3 Phase 1.2: Create planned meal using repository pattern
+        // M7.2.3 Phase 3.4: Create planned meal using HouseholdPlannedMealRepository
         // Default mealType to "dinner" - future enhancement: allow user to select
-        let plannedMeal = PlannedMealRepository.getOrCreate(
-            date: startOfDay,
-            mealType: "dinner",
-            recipe: recipe,
-            mealPlan: mealPlan,
-            in: context
-        )
-        plannedMeal.id = UUID()
-        plannedMeal.servings = servings ?? Int16(recipe.servings)
-        plannedMeal.scaleFactor = Double(plannedMeal.servings) / Double(recipe.servings)
-        plannedMeal.isCompleted = false
-        
-        // M4.2.4: NEW - Update recipe usage tracking
-        // Track when added to meal plan (better signal than grocery list)
-        // Use the planned meal date, not today
-        recipe.usageCount += 1
-        recipe.lastUsed = startOfDay
+        let repository = HouseholdPlannedMealRepository(context: context)
         
         do {
+            let plannedMeal = try repository.findOrCreate(
+                date: startOfDay,
+                mealType: "dinner",
+                recipe: recipe
+            )
+            plannedMeal.id = UUID()
+            plannedMeal.mealPlan = mealPlan
+            plannedMeal.servings = servings ?? Int16(recipe.servings)
+            plannedMeal.scaleFactor = Double(plannedMeal.servings) / Double(recipe.servings)
+            plannedMeal.isCompleted = false
+            
+            // M4.2.4: Update recipe usage tracking
+            // Track when added to meal plan (better signal than grocery list)
+            // Use the planned meal date, not today
+            recipe.usageCount += 1
+            recipe.lastUsed = startOfDay
+            
+            // Save all changes
             try context.save()
             
             // Update published plannedMeals if this is for the active plan
@@ -482,9 +484,10 @@ class MealPlanService: ObservableObject {
             
             lastOperationDuration = CFAbsoluteTimeGetCurrent() - startTime
             return plannedMeal
+            
         } catch {
             lastError = error
-            print("Error adding recipe to meal plan: \(error)")
+            print("❌ M7.2.3 Phase 3.4: Error adding recipe to meal plan: \(error)")
             context.rollback()
             return nil
         }
