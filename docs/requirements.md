@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: December 19, 2025  
-**Version**: 4.2  
-**Current Milestone**: M5.0 Complete ✅ | M7.0 Ready 🚀
+**Last Updated**: December 31, 2025  
+**Version**: 4.3  
+**Current Milestone**: M5.0 Complete ✅ | M7.1 Complete ✅ | M7.2.1 Complete ✅ | M7.2.3 Phase 3.8 Complete ✅ | M7.2.2 Ready 🚀
 
 ---
 
@@ -34,10 +34,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 ## 🚀 **M7: CLOUDKIT SYNC & EXTERNAL TESTFLIGHT - IN PROGRESS**
 
-**Status**: 🔄 In Progress - CloudKit Multi-Device Sync Working ✅  
-**Progress**: M7.0 (3h) ✅, M7.1 (6.5h) ✅, CloudKit Debugging (4h) ✅ = 13.5h / 35-46h  
-**Estimated Remaining**: 21.5-32.5 hours  
-**Summary**: Full CloudKit synchronization, multi-user collaboration, parsing resilience, and external public beta
+**Status**: 🔄 In Progress - CloudKit Multi-Device Sync with Dedupe Working ✅  
+**Progress**: M7.0 (3h) ✅, M7.1 (6.5h) ✅, M7.2.1 (1.25h) ✅, CloudKit Debugging (4h) ✅, M7.2.3 Phase 3.8 (1h) ✅ = 14.75h / 35-46h  
+**Estimated Remaining**: 20.25-31.25 hours  
+**Summary**: Full CloudKit synchronization with automatic duplicate prevention, multi-user collaboration, parsing resilience, and external public beta
 
 **⚠️ CRITICAL**: M7.0 App Store Prerequisites are MANDATORY before external TestFlight submission
 
@@ -70,11 +70,14 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-CK-006** | **Household creation & shared zone** | Create household, migrate data to shared zone | M7.2.1 | 🎯 **Household collaboration** |
+| **FR-CK-006** | **Household creation & shared zone** | Create household, migrate data to shared zone | M7.2.1 | ✅ **COMPLETE** |
 | **FR-CK-007** | **Member invitation flow** | Invite household members via email, iCloud integration | M7.2.2 | 🎯 **Easy sharing** |
 | **FR-CK-008** | **Household management** | View members, remove/leave household, dissolve | M7.2.4 | 🎯 **Access control** |
-| **FR-CK-009** | **All entities household-scoped** | GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate | M7.2.1 | 🎯 **Data ownership** |
+| **FR-CK-009** | **All entities household-scoped** | GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate | M7.2.1 | ✅ **COMPLETE** |
 | **FR-CK-010** | **Automatic sync across household** | All household members see all data automatically | M7.2.3 | 🎯 **Seamless collaboration** |
+| **FR-CK-025** | **Automatic duplicate category prevention** | CategoryDeduplicator removes duplicates after CloudKit sync | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
+| **FR-CK-026** | **Self-healing multi-device sync** | System converges to correct state automatically (<60s) | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
+| **FR-CK-027** | **Dedupe-after-creation pattern** | Apple-recommended approach for duplicate prevention | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
 
 ### **Functional Requirements - Conflict Resolution**
 
@@ -131,12 +134,12 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | **NFR-PR-001** | **Edit form load < 0.2s** | Instant edit form display | M7.5.2 | 🎯 **Responsive UX** |
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
-**M7 Summary**: 39 total requirements
-- **Complete (9)**: App Store prerequisites (4), CloudKit sync foundation (5 + 4 debugging fixes)
-- **Planned (30)**: Multi-user collaboration (5), conflict resolution (5), sync UI polish (5), parsing resilience (6), external TestFlight (5), non-functional (4 remaining)
-- **Progress**: M7.0 ✅, M7.1 ✅, CloudKit Multi-Device Sync Debugging ✅
-- **Achievement**: Perfect bi-directional sync across 2 physical devices with zero duplicates
-- **Next**: M7.2 (Household Sharing) or M6 (Testing) or M8 (Analytics)
+**M7 Summary**: 42 total requirements
+- **Complete (15)**: App Store prerequisites (4), CloudKit sync foundation (5 + 4 debugging fixes), Household foundation (3 from M7.2.1 + M7.2.3 Phase 3.8)
+- **In Progress (27)**: Multi-user collaboration (2 remaining from M7.2), conflict resolution (5), sync UI polish (5), parsing resilience (6), external TestFlight (5), non-functional (4 remaining)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 Phase 3.8 ✅
+- **Achievement**: Self-healing multi-device sync with automatic duplicate prevention (<60s convergence)
+- **Next**: M7.2.2 - Member Invitation & Acceptance (2-3 hours)
 
 ---
 
@@ -279,10 +282,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 | Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M9.5 (Opt) | Total |
 |--------|----|----|----|----|------|----|----|-----------|------------|-------|
-| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 9 | 0 | 0 | 0 | **131** |
-| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 | 0 | **30** |
+| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 15 | 0 | 0 | 0 | **137** |
+| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 | 0 | **27** |
 | ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 4 | 8 | **36** |
-| **Total** | **19** | **37** | **33** | **19** | **14** | **39** | **24** | **4** | **8** | **197** |
+| **Total** | **19** | **37** | **33** | **19** | **14** | **42** | **24** | **4** | **8** | **200** |
 
 ### **By Category**
 
@@ -297,7 +300,8 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | TestFlight & Identity | 14 | ✅ Complete |
 | App Store Compliance | 4 | ✅ Complete (M7.0) |
 | CloudKit Sync Foundation | 9 | ✅ Complete (M7.1 + Debugging) |
-| CloudKit Collaboration | 16 | 🔄 In Progress (M7.2-M7.4) |
+| Household Foundation | 3 | ✅ Complete (M7.2.1 + M7.2.3 Phase 3.8) |
+| CloudKit Collaboration | 13 | 🔄 In Progress (M7.2.2, M7.2.4, M7.3-M7.4) |
 | **Parsing Resilience** | **6** | ⏳ **Planned (M7.5)** ← NEW |
 | **Parsing Improvements** | **10** | ⏳ **Planned (M8.0)** ← NEW |
 | **ML Parsing (Optional)** | **8** | ⏳ **Planned (M9.5)** ← NEW |
@@ -306,10 +310,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | Budget Intelligence | 4 | ⏳ Planned (M10) |
 | AI Assistant | 4 | ⏳ Planned (M11) |
 | Advanced Collaboration | 3 | ⏳ Planned (M12) |
-| **Complete** | **131** | **67% (131/197)** |
-| **In Progress** | **30** | **15% (30/197)** |
-| **Planned (Mandatory)** | **28** | **14% (28/197)** |
-| **Planned (Optional)** | **8** | **4% (8/197)** |
+| **Complete** | **137** | **69% (137/200)** |
+| **In Progress** | **27** | **14% (27/200)** |
+| **Planned (Mandatory)** | **28** | **14% (28/200)** |
+| **Planned (Optional)** | **8** | **4% (8/200)** |
 
 ### **Performance Requirements Status**
 
@@ -338,11 +342,11 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 **Total Time**: 6 hours  
 **Status**: All 14 requirements complete
 
-### **Completed: M7 CloudKit Multi-Device Sync** ✅
-**Total Time**: 13.5 hours (M7.0: 3h + M7.1: 6.5h + Debugging: 4h)  
-**Status**: 9 requirements complete
+### **Completed: M7 CloudKit Multi-Device Sync & Household Foundation** ✅
+**Total Time**: 14.75 hours (M7.0: 3h + M7.1: 6.5h + M7.2.1: 1.25h + Debugging: 4h + M7.2.3 Phase 3.8: 1h)  
+**Status**: 15 requirements complete
 - ✅ App Store prerequisites (privacy policy, compliance)
-- ✅ CloudKit schema generation (all 8 entities)
+- ✅ CloudKit schema generation (all 10 entities)
 - ✅ Multi-device sync (<5s latency)
 - ✅ Automatic background sync
 - ✅ Offline sync queue
@@ -351,12 +355,17 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 - ✅ CloudKit import observer pattern
 - ✅ Race condition prevention (serial queue)
 - ✅ Clean user onboarding (no sample data)
+- ✅ Household creation & shared zone (M7.2.1)
+- ✅ All 10 entities household-scoped (M7.2.1)
+- ✅ Automatic duplicate category prevention (M7.2.3 Phase 3.8)
+- ✅ Self-healing multi-device sync (<60s convergence)
+- ✅ Dedupe-after-creation pattern (Apple-recommended)
 
-**Achievement**: Perfect bi-directional sync across 2 physical devices with zero duplicates!
+**Achievement**: Production-ready self-healing CloudKit sync with automatic duplicate cleanup!
 
 ### **In Progress: M7 CloudKit Collaboration & External TestFlight** 🔄
-**Remaining Time**: 21.5-32.5 hours  
-**Requirements In Progress**: 30 (household sharing, conflict resolution, sync UI, parsing, TestFlight)
+**Remaining Time**: 20.25-31.25 hours  
+**Requirements In Progress**: 27 (household sharing remaining, conflict resolution, sync UI, parsing, TestFlight)
 
 **Strategic Additions:**
 - **M7.5: Parsing Resilience** (6 requirements, 3-4h) - Graceful degradation before external beta
@@ -377,9 +386,9 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit, parsing resilience, and public beta (35 requirements). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 193 total requirements (122 complete, 63 mandatory planned, 8 optional).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit, household foundation, parsing resilience, and public beta (42 requirements: 15 complete, 27 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 200 total requirements (137 complete, 55 mandatory in progress + planned, 8 optional).
 
-**Last Updated**: December 24, 2025  
-**Version**: 4.3  
-**Next Update**: After M7.2 decision (Continue household sharing vs Testing vs Analytics)  
-**Current Focus**: M7 - CloudKit Multi-Device Sync Complete ✅, Strategic Decision Point
+**Last Updated**: December 31, 2025  
+**Version**: 4.4  
+**Next Update**: After M7.2.2 completion (Member Invitation & Acceptance)  
+**Current Focus**: M7.2.2 Ready 🚀 - Member Invitation & Acceptance (2-3 hours) following successful M7.2.3 Phase 3.8 (CategoryDeduplicator)

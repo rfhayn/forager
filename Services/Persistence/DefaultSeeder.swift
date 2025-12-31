@@ -4,6 +4,7 @@
 //
 //  M7.2.3 Phase 1.2: Extracted from Persistence.swift
 //  M7.2.3 Phase 3.1: Updated to use HouseholdCategoryRepository
+//  M7.2.3 Phase 3.7: Using NSUbiquitousKeyValueStore for cross-device coordination
 //  Single responsibility: Idempotent default data seeding
 //
 //  Created on December 30, 2025.
@@ -14,25 +15,28 @@ import Foundation
 
 /// M7.2.3 Phase 1.2: Idempotent default data seeding
 /// M7.2.3 Phase 3.1: Uses HouseholdCategoryRepository for semantic uniqueness
+/// M7.2.3 Phase 3.8: Simplified - duplicates handled by CategoryDeduplicator
 ///
 /// Responsibilities:
-/// - Seed default categories (7 categories)
-/// - Be idempotent: safe to run multiple times
-/// - CloudKit-safe: query before create (semantic uniqueness)
-/// - Handle race conditions gracefully
+/// - Seed default categories (7 categories total, only "Uncategorized" is protected)
+/// - CloudKit-safe: repository pattern ensures semantic uniqueness on same device
+///
+/// Strategy:
+/// - Let each device seed independently (fast, simple)
+/// - CategoryDeduplicator removes duplicates after CloudKit sync
+/// - Repository prevents duplicates on same device via semanticKey
 ///
 /// Does NOT handle:
+/// - Cross-device coordination (handled by CategoryDeduplicator)
 /// - Sample data (only in SwiftUI previews)
 /// - Migrations (handled by old Persistence.swift)
-/// - Container setup (see PersistenceCore)
+/// - Container setup (see PersistenceController)
 final class DefaultSeeder {
     
-    // MARK: - Seeding Status Tracking
-    
-    /// UserDefaults key for tracking if default seeding has completed
+    /// Per-device flag (local only, for quick exit)
     private static let defaultsSeedingKey = "M7.2.3_DefaultsSeedingCompleted"
     
-    /// Check if default seeding has been completed
+    /// Check if default seeding has been completed (local device)
     static var hasSeededDefaults: Bool {
         return UserDefaults.standard.bool(forKey: defaultsSeedingKey)
     }
@@ -48,28 +52,42 @@ final class DefaultSeeder {
     
     /// M7.2.3: Default categories with their display properties
     /// These are the 7 core categories that every user should have
-    private static let defaultCategories: [(name: String, color: String, sortOrder: Int16)] = [
-        ("Produce", "#4CAF50", 0),
-        ("Deli & Meat", "#FF9800", 1),
-        ("Dairy & Fridge", "#2196F3", 2),
-        ("Bread & Frozen", "#9C27B0", 3),
-        ("Pantry & Canned", "#795548", 4),
-        ("Snacks & Beverages", "#F44336", 5),
-        ("Health & Personal", "#00BCD4", 6)
+    /// "Uncategorized" is the ONLY protected category (isDefault = true) - needed for unassigned ingredients
+    private static let defaultCategories: [(name: String, color: String, sortOrder: Int16, isProtected: Bool)] = [
+        ("Produce", "#4CAF50", 0, false),                    // Green - Store entrance
+        ("Deli & Meat", "#F44336", 1, false),                // Red - Back perimeter
+        ("Dairy & Fridge", "#2196F3", 2, false),            // Blue - Back wall
+        ("Bread & Frozen", "#FF9800", 3, false),            // Orange - Side aisles
+        ("Boxed & Canned", "#795548", 4, false),            // Brown - Center aisles
+        ("Snacks, Drinks, & Other", "#9C27B0", 5, false),   // Purple - Checkout area
+        ("Uncategorized", "#9E9E9E", 999, true)             // PROTECTED: Gray - Default for unassigned
     ]
     
     // MARK: - Public Seeding Methods
     
     /// M7.2.3: Seeds default data if needed
-    /// Idempotent: safe to run multiple times
-    /// CloudKit-safe: uses query-before-create pattern via repositories
+    /// M7.2.3 Phase 3.8: Simplified approach - let each device seed independently
+    /// 
+    /// Strategy:
+    /// 1. Check if THIS device has already seeded (UserDefaults)
+    /// 2. Check local database count (quick exit if categories exist)
+    /// 3. Seed categories using repository (idempotent on same device)
+    /// 4. CategoryDeduplicator handles cross-device duplicates after sync
     ///
     /// - Parameter context: Core Data managed object context
     /// - Throws: Core Data errors during save
     static func seedDefaultsIfNeeded(in context: NSManagedObjectContext) throws {
-        // Quick exit if already seeded (UserDefaults check)
+        // Quick exit if already seeded on THIS device
         if hasSeededDefaults {
-            print("ℹ️ M7.2.3: Defaults already seeded, skipping")
+            print("ℹ️ M7.2.3: Defaults already seeded on this device, skipping")
+            return
+        }
+        
+        // Check local database - maybe CloudKit already synced categories
+        let categoryCount = (try? context.count(for: Category.fetchRequest())) ?? 0
+        if categoryCount >= defaultCategories.count {
+            print("✅ M7.2.3: Categories already exist (count: \(categoryCount)), skipping seeding")
+            markSeedingComplete()
             return
         }
         
@@ -79,16 +97,18 @@ final class DefaultSeeder {
         // Seed default categories using repository (Phase 3.1)
         try seedDefaultCategories(in: context)
         
-        // Mark as complete
+        // Mark as complete locally
         markSeedingComplete()
         
         let duration = Date().timeIntervalSince(startTime)
         print("✅ M7.2.3: Default seeding completed in \(String(format: "%.2f", duration))s")
+        print("   Note: CategoryDeduplicator will handle any cross-device duplicates after CloudKit sync")
     }
     
     // MARK: - Category Seeding (Phase 3.1: Using Repository)
     
     /// M7.2.3 Phase 3.1: Seeds default categories using HouseholdCategoryRepository
+    /// M7.2.3 Phase 3.7.2: Only "Uncategorized" is protected (isDefault = true)
     /// Idempotent: repository checks if category exists before creating
     /// CloudKit-safe: tolerates race conditions and concurrent creates
     ///
@@ -103,13 +123,13 @@ final class DefaultSeeder {
         var createdCount = 0
         var existingCount = 0
         
-        for (name, color, sortOrder) in defaultCategories {
+        for (name, color, sortOrder, isProtected) in defaultCategories {
             // Use repository's findOrCreate (handles semantic uniqueness)
             let category = try repository.findOrCreate(
                 name: name,
                 color: color,
                 sortOrder: sortOrder,
-                isDefault: true
+                isDefault: isProtected  // Only "Uncategorized" is protected
             )
             
             // Check if it was newly created or already existed

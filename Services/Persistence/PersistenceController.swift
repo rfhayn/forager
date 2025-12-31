@@ -11,20 +11,19 @@
 import CoreData
 import Foundation
 
-/// M7.2.3: Core Data stack initialization and configuration
+/// M7.2.3 Phase 3.6: Core Data stack initialization and configuration
 /// Responsibilities: Container setup, CloudKit sync, store loading, merge policies
-/// Does NOT handle: Seeding (DefaultSeeder), Migrations (MigrationRunner), Diagnostics (CloudKitDiagnostics)
+/// Does NOT handle: Seeding (DefaultSeeder), Migrations (old Persistence.swift), Diagnostics (CloudKitDiagnostics)
 /// 
-/// NOTE: Temporarily named PersistenceCore to avoid conflict with existing PersistenceController struct
-/// Will be renamed back in Phase 1.2-1.4 when old struct is removed
-final class PersistenceCore {
+/// This is the NEW clean PersistenceController extracted from bloated Persistence.swift
+final class PersistenceController {
     
     // MARK: - Singleton
     
-    static let shared = PersistenceCore()
+    static let shared = PersistenceController()
     
-    static var preview: PersistenceCore = {
-        let controller = PersistenceCore(inMemory: true)
+    static var preview: PersistenceController = {
+        let controller = PersistenceController(inMemory: true)
         // Sample data creation handled by DefaultSeeder (Phase 1.2)
         return controller
     }()
@@ -47,6 +46,12 @@ final class PersistenceCore {
         }
         loadPersistentStores()
         configureViewContext()
+        
+        // M7.2.3 Phase 3.6: Perform setup immediately
+        // DefaultSeeder now queries CloudKit directly, no observer needed!
+        if !inMemory {
+            performOneTimeSetup()
+        }
     }
     
     // MARK: - Private Configuration
@@ -131,6 +136,28 @@ final class PersistenceCore {
                         onError?(error)
                     }
                 }
+            }
+        }
+    }
+    
+    // MARK: - M7.2.3 Phase 3.6: One-Time Setup
+    
+    /// Performs one-time setup operations (seeding, migrations)
+    /// M7.2.3 Phase 3.6: DefaultSeeder queries CloudKit directly for true idempotence
+    /// Called immediately during initialization (no observer/timeout needed!)
+    private func performOneTimeSetup() {
+        container.performBackgroundTask { context in
+            do {
+                // M7.2.3 Phase 3.6: Use DefaultSeeder for truly idempotent category creation
+                try DefaultSeeder.seedDefaultsIfNeeded(in: context)
+                
+                // Save if any changes were made
+                if context.hasChanges {
+                    try context.save()
+                    print("✅ M7.2.3 Phase 3.6: One-time setup completed")
+                }
+            } catch {
+                print("❌ M7.2.3 Phase 3.6: One-time setup failed: \(error)")
             }
         }
     }

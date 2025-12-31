@@ -183,9 +183,10 @@ struct ManageCategoriesView: View {
     private func prepareForCategoryDeletion(_ category: Category) {
         categoryToDelete = category
         
-        // BLOCK DELETION: Check if this is the Uncategorized category
-        if category.displayName.lowercased() == "uncategorized" {
-            errorMessage = "The 'Uncategorized' category cannot be deleted as it's needed for unassigned ingredients."
+        // M7.2.3 Phase 3.7.2: BLOCK DELETION of protected categories (isDefault = true)
+        // Only "Uncategorized" is protected - it's needed for unassigned ingredients
+        if category.isDefault {
+            errorMessage = "The '\(category.displayName)' category cannot be deleted as it's needed for unassigned ingredients."
             showingError = true
             categoryToDelete = nil
             return
@@ -617,8 +618,8 @@ struct CategoryRowView: View {
             
             Spacer()
             
-            // Delete button - HIDE for Uncategorized category
-            if category.displayName.lowercased() != "uncategorized" {
+            // M7.2.3 Phase 3.7.2: Delete button - HIDE for protected categories (isDefault = true)
+            if !category.isDefault {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .foregroundColor(.red)

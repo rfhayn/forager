@@ -3,7 +3,8 @@
 //  forager
 //
 //  Created for M7.1.2: CloudKitSyncMonitor Service
-//  Purpose: Monitor CloudKit sync status, handle notifications, log events
+//  M7.2.3 Phase 3.8: Added automatic category deduplication
+//  Purpose: Monitor CloudKit sync status, handle notifications, log events, remove duplicates
 //
 
 import Foundation
@@ -81,6 +82,7 @@ class CloudKitSyncMonitor: ObservableObject {
     // MARK: - Notification Handlers
     
     /// M7.1.2: Handle remote change notifications from CloudKit
+    /// M7.2.3 Phase 3.8: Added automatic deduplication after sync
     /// These fire when NSPersistentCloudKitContainer syncs data
     /// Updates sync state and tracks successful sync timestamp
     private func handleRemoteChange(_ notification: Notification) {
@@ -104,6 +106,42 @@ class CloudKitSyncMonitor: ObservableObject {
         syncError = nil
         
         print("   ✅ Sync state updated: synced at \(lastSyncDate!)")
+        
+        // M7.2.3 Phase 3.8: Run deduplication after import events
+        // This handles the case where multiple devices seeded simultaneously
+        runDeduplication()
+    }
+    
+    // MARK: - M7.2.3 Phase 3.8: Deduplication
+    
+    /// M7.2.3 Phase 3.8: Run category deduplication on background thread
+    /// Safe to call multiple times - CategoryDeduplicator is idempotent
+    /// Removes duplicate categories that arose from simultaneous seeding
+    private func runDeduplication() {
+        // Run on background thread to avoid blocking UI
+        DispatchQueue.global(qos: .utility).async {
+            let context = PersistenceController.shared.newBackgroundContext()
+            context.automaticallyMergesChangesFromParent = true
+            
+            context.performAndWait {
+                do {
+                    let deduplicator = CategoryDeduplicator(context: context)
+                    let deletedCount = try deduplicator.removeDuplicates()
+                    
+                    if deletedCount > 0 {
+                        // Deduplication happened - log it
+                        DispatchQueue.main.async {
+                            print("🧹 M7.2.3: Auto-deduplication removed \(deletedCount) duplicate categories")
+                        }
+                    }
+                } catch {
+                    // Log error but don't fail - deduplication is best-effort
+                    DispatchQueue.main.async {
+                        print("⚠️ M7.2.3: Deduplication failed: \(error)")
+                    }
+                }
+            }
+        }
     }
     
     // MARK: - Manual Sync Trigger
