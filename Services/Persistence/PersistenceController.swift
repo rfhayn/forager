@@ -1,0 +1,137 @@
+//
+//  PersistenceController.swift
+//  forager
+//
+//  M7.2.3 Phase 1.1: Extracted from Persistence.swift
+//  Single responsibility: Core Data container and store management
+//
+//  Created on December 30, 2025.
+//
+
+import CoreData
+import Foundation
+
+/// M7.2.3: Core Data stack initialization and configuration
+/// Responsibilities: Container setup, CloudKit sync, store loading, merge policies
+/// Does NOT handle: Seeding (DefaultSeeder), Migrations (MigrationRunner), Diagnostics (CloudKitDiagnostics)
+/// 
+/// NOTE: Temporarily named PersistenceCore to avoid conflict with existing PersistenceController struct
+/// Will be renamed back in Phase 1.2-1.4 when old struct is removed
+final class PersistenceCore {
+    
+    // MARK: - Singleton
+    
+    static let shared = PersistenceCore()
+    
+    static var preview: PersistenceCore = {
+        let controller = PersistenceCore(inMemory: true)
+        // Sample data creation handled by DefaultSeeder (Phase 1.2)
+        return controller
+    }()
+    
+    // MARK: - Properties
+    
+    /// M7.1.1: CloudKit-enabled container (was NSPersistentContainer)
+    let container: NSPersistentCloudKitContainer
+    
+    var viewContext: NSManagedObjectContext {
+        return container.viewContext
+    }
+    
+    // MARK: - Initialization
+    
+    init(inMemory: Bool = false) {
+        container = NSPersistentCloudKitContainer(name: "forager")
+        if let description = container.persistentStoreDescriptions.first {
+            configureStoreDescription(description, inMemory: inMemory)
+        }
+        loadPersistentStores()
+        configureViewContext()
+    }
+    
+    // MARK: - Private Configuration
+    
+    /// Configure CloudKit sync, migration, history tracking, and remote notifications
+    private func configureStoreDescription(_ description: NSPersistentStoreDescription, inMemory: Bool) {
+        // M7.1.1: CloudKit container configuration
+        let containerOptions = NSPersistentCloudKitContainerOptions(
+            containerIdentifier: "iCloud.com.richhayn.forager"
+        )
+        description.cloudKitContainerOptions = containerOptions
+        
+        #if DEBUG
+        // Force Development environment in Debug builds for testing
+        description.setOption("Development" as NSObject,
+                            forKey: "NSPersistentStoreCloudKitEnvironment")
+        print("☁️ M7.2.3: CloudKit sync enabled (DEVELOPMENT)")
+        #else
+        print("☁️ M7.2.3: CloudKit sync enabled (Production)")
+        #endif
+        
+        // M7.1.3: Enable automatic lightweight migration
+        description.setOption(true as NSNumber,
+                            forKey: NSMigratePersistentStoresAutomaticallyOption)
+        description.setOption(true as NSNumber,
+                            forKey: NSInferMappingModelAutomaticallyOption)
+        
+        // Enable history tracking and remote change notifications (required for CloudKit)
+        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        description.setOption(true as NSNumber, 
+                            forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        
+        if inMemory {
+            description.url = URL(fileURLWithPath: "/dev/null")
+            print("🧪 M7.2.3: In-memory store for testing")
+        }
+    }
+    
+    /// Load persistent stores with error handling
+    private func loadPersistentStores() {
+        container.loadPersistentStores { storeDescription, error in
+            if let error = error as NSError? {
+                fatalError("❌ M7.2.3: Core Data store loading failed: \(error), \(error.userInfo)")
+            }
+            print("✅ M7.2.3: Core Data stack loaded successfully")
+        }
+    }
+    
+    /// M7.2.3: Configure view context with object-trump merge policy
+    /// In-memory changes win over persistent store (appropriate for user edits)
+    private func configureViewContext() {
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        print("✅ M7.2.3: View context configured with object-trump merge policy")
+    }
+    
+    // MARK: - Background Context Management
+    
+    /// Create background context with consistent merge policy
+    func newBackgroundContext() -> NSManagedObjectContext {
+        let context = container.newBackgroundContext()
+        context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        return context
+    }
+    
+    /// Perform write operation on background context with error handling
+    func performWrite(
+        _ block: @escaping (NSManagedObjectContext) -> Void,
+        onError: ((Error) -> Void)? = nil
+    ) {
+        container.performBackgroundTask { context in
+            context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+            block(context)
+            
+            if context.hasChanges {
+                do {
+                    try context.save()
+                    print("✅ M7.2.3: Background context saved successfully")
+                } catch {
+                    print("❌ M7.2.3: Background save failed: \(error)")
+                    DispatchQueue.main.async {
+                        onError?(error)
+                    }
+                }
+            }
+        }
+    }
+}
