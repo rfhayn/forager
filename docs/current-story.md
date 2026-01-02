@@ -1,8 +1,8 @@
 # Current Development Story
 
-**Last Updated**: January 2, 2026 (M7.2.3 Prep Phase Complete)  
-**Status**: M7.2.3 🚀 **PHASE 0 READY - Prep Phase Complete**  
-**Total Progress**: ~109.25 hours | 89% planning accuracy  
+**Last Updated**: January 2, 2026 (M7.2.3 Phase 0 Complete)  
+**Status**: M7.2.3 🚀 **PHASE 2 READY - Phase 0 Complete**  
+**Total Progress**: ~111.25 hours | 89% planning accuracy  
 **Current Branch**: `feature/M7.2.3-prep-phase`  
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
 
@@ -10,10 +10,10 @@
 
 ## 🚀 **M7.2.3: READY FOR PREP PHASE - External Validation Complete**
 
-**Status**: 🚀 **PREP PHASE COMPLETE** - Phase 0 ready to start  
+**Status**: 🚀 **PHASE 0 COMPLETE** - Phase 2 ready to start  
 **Branch**: `feature/M7.2.3-prep-phase`  
-**Progress**: 33% complete (6.5h / 19.5h midpoint)  
-**Estimated Remaining**: 13-16 hours
+**Progress**: 43% complete (8.5h / 19.5h midpoint)  
+**Estimated Remaining**: 11-14 hours
 
 ### **What's Complete ✅**
 
@@ -50,6 +50,17 @@
   - Validates Core Data model v2 can migrate from v1
   - Tests: entity presence, optional relationships, no deleted attributes
   - Prevents data loss during Phase 0 model changes
+
+**Phase 0: Core Data Model Changes** (2 hours - Jan 2, 2026)
+- ✅ Created model version 2 (forager 2)
+- ✅ Added householdKey (String, Optional) to:
+  - Recipe
+  - IngredientTemplate
+  - Category
+  - PlannedMeal
+- ✅ All household relationships already present (from M7.2.2)
+- ✅ Fixed StoreIdentityLogger build error
+- ✅ Build successful, migration-safe
 
 ### **What's Next 🚀**
 
