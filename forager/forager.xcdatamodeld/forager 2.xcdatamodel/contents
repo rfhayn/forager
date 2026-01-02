@@ -59,7 +59,7 @@
             <fetchIndexElement property="isFromRecipe" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
-    <entity name="Household" representedClassName="Household" syncable="YES" codeGenerationType="class">
+    <entity name="Household" representedClassName="Household" syncable="YES">
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="name" attributeType="String" defaultValueString="&quot;&quot;"/>
@@ -77,7 +77,7 @@
         <relationship name="tags" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Tag" inverseName="household" inverseEntity="Tag"/>
         <relationship name="weeklyLists" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WeeklyList" inverseName="household" inverseEntity="WeeklyList"/>
     </entity>
-    <entity name="HouseholdMember" representedClassName="HouseholdMember" syncable="YES" codeGenerationType="class">
+    <entity name="HouseholdMember" representedClassName="HouseholdMember" syncable="YES">
         <attribute name="displayName" optional="YES" attributeType="String"/>
         <attribute name="email" attributeType="String" defaultValueString="&quot;&quot;"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
@@ -105,7 +105,7 @@
             <fetchIndexElement property="isParseable" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
-    <entity name="IngredientTemplate" representedClassName="IngredientTemplate" syncable="YES" codeGenerationType="class">
+    <entity name="IngredientTemplate" representedClassName="IngredientTemplate" syncable="YES">
         <attribute name="canonicalName" optional="YES" attributeType="String"/>
         <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="dateCreated" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -133,7 +133,7 @@
             <fetchIndexElement property="canonicalName" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
-    <entity name="MealPlan" representedClassName="MealPlan" syncable="YES" codeGenerationType="class">
+    <entity name="MealPlan" representedClassName="MealPlan" syncable="YES">
         <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="duration" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
@@ -149,7 +149,7 @@
             <fetchIndexElement property="startDate" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
-    <entity name="PlannedMeal" representedClassName="PlannedMeal" syncable="YES" codeGenerationType="class">
+    <entity name="PlannedMeal" representedClassName="PlannedMeal" syncable="YES">
         <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -206,7 +206,7 @@
         <attribute name="name" optional="YES" attributeType="String"/>
         <relationship name="household" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Household" inverseName="tags" inverseEntity="Household"/>
     </entity>
-    <entity name="UserPreferences" representedClassName="UserPreferences" syncable="YES" codeGenerationType="class">
+    <entity name="UserPreferences" representedClassName="UserPreferences" syncable="YES">
         <attribute name="autoNameMealPlans" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>

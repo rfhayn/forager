@@ -165,7 +165,7 @@ struct MealPlanRowView: View {
 // MARK: - Preview
 
 #Preview("Active Plan") {
-    let context = PersistenceController.preview.container.viewContext
+    @Previewable @State var context = PersistenceController.preview.container.viewContext
     
     let plan = MealPlan(context: context)
     plan.id = UUID()
@@ -182,7 +182,7 @@ struct MealPlanRowView: View {
 }
 
 #Preview("Upcoming Plan") {
-    let context = PersistenceController.preview.container.viewContext
+    @Previewable @State var context = PersistenceController.preview.container.viewContext
     
     let plan = MealPlan(context: context)
     plan.id = UUID()
@@ -199,7 +199,7 @@ struct MealPlanRowView: View {
 }
 
 #Preview("Completed Plan") {
-    let context = PersistenceController.preview.container.viewContext
+    @Previewable @State var context = PersistenceController.preview.container.viewContext
     
     let plan = MealPlan(context: context)
     plan.id = UUID()

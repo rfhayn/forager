@@ -23,6 +23,8 @@ extension Category {
     @NSManaged public var dateCreated: Date?
     @NSManaged public var normalizedName: String?  // M7.1.3: Semantic key for uniqueness
     @NSManaged public var updatedAt: Date?        // M7.1.3: Conflict resolution
+    @NSManaged public var household: Household?
+    @NSManaged public var householdKey: String?
     @NSManaged public var groceryItems: NSSet?
 }
 

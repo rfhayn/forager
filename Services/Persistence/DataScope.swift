@@ -94,23 +94,11 @@ protocol HouseholdScoped: NSManagedObject {
 
 // MARK: - HouseholdScoped Conformance
 
-// ⚠️ TODO M7.2.3 Phase 2: UNCOMMENT AFTER PHASE 2 COMPLETION
-// These conformance declarations are commented out until Core Data model
-// fully generates the required properties (household, householdKey).
-//
-// ✅ WHEN TO UNCOMMENT:
-// - After Phase 2.5 (all creation points updated)
-// - After verifying build succeeds with factory pattern
-// - Before Phase 2 completion commit
-//
-// Without these uncommented, ManagedObjectFactory won't be able to use
-// the HouseholdScoped protocol, which is critical for Phase 2.
-
-// extension WeeklyList: HouseholdScoped {}
-// extension Recipe: HouseholdScoped {}
-// extension PlannedMeal: HouseholdScoped {}
-// extension Category: HouseholdScoped {}
-// extension IngredientTemplate: HouseholdScoped {}
+extension WeeklyList: HouseholdScoped {}
+extension Recipe: HouseholdScoped {}
+extension PlannedMeal: HouseholdScoped {}
+extension Category: HouseholdScoped {}
+extension IngredientTemplate: HouseholdScoped {}
 
 // MARK: - Debug Utilities
 

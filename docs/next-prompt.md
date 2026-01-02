@@ -2,299 +2,377 @@
 
 **Last Updated**: January 2, 2026  
 **For Milestone**: M7.2.3 - CloudKit Hardening & Shared Data Architecture  
-**Status**: 🚀 **PHASE 0 READY - Prep Phase Complete**  
-**Estimated Duration**: 3-4 hours (Phase 0)
+**Status**: 🚀 **PHASE 2.6 READY - Infrastructure Complete**  
+**Estimated Duration**: 2-3 hours (Phase 2.6)
 
 ---
 
-## ✅ **PREP PHASE COMPLETE** (1 hour - Jan 2, 2026)
+## ✅ **PHASES 0-2.5 COMPLETE** (Jan 2, 2026)
 
-**Completed**:
-- ✅ StoreIdentityLogger.swift - DEBUG utility for store identification
-- ✅ MigrationValidationTests.swift - Core Data migration safety net
+**Completed Work**:
+- ✅ Phase 0: Core Data Model v2 with household relationships (2h)
+- ✅ Phase 2.1: DataScope enum & HouseholdScoped protocol (20min)
+- ✅ Phase 2.2: HouseholdScopeProvider @MainActor service (15min)
+- ✅ Phase 2.3: ManagedObjectFactory with generic create() (20min)
+- ✅ Phase 2.4: Environment injection in foragerApp.swift (10min)
+- ✅ Phase 2.5: Protocol activation & manual Core Data files (1.75h)
 
-**Result**: Infrastructure ready for Phase 0 model changes
+**Current State**:
+- ✅ Build successful (0 errors)
+- ✅ All infrastructure complete and activated
+- ✅ 12 manual Core Data files created (6 entities × 2 files)
+- ✅ Protocol conformances enforced
+- ⚠️ **Factory exists but nothing uses it yet**
+- ⚠️ **Design challenge: Background context pattern needed**
 
----
-
-## 🚀 **PHASE 0: CORE DATA MODEL CHANGES - START HERE NEXT SESSION**
-
-**Current State:**
-- ✅ PRD v2.2 FINAL ready (1597 lines, externally validated)
-- ✅ Prep Phase complete (migration validation + store logging)
-- ✅ Phase 1 complete (Persistence decomposition, 5h)
-- ✅ Phase 3.8 complete (CategoryDeduplicator, 1h)
-
-**What's Next**: Phase 0 - Core Data Model Changes (3-4 hours)  
-**Purpose**: Add household relationships to enable shared data architecture
-
----
-
-## 📋 **PHASE 0 IMPLEMENTATION GUIDE**
-
-### **Overview**
-
-Add `household` relationship to 4 entities + `householdKey` semantic string attributes. This creates Core Data model version 2 and enables the shared data architecture.
-
-**PRD Reference**: Lines 325-423 in `docs/prds/m7.2.3-cloudkit-hardening-household-repositories.md`
+**What's Next**: Phase 2.6 - Update Creation Points (2-3 hours)
 
 ---
 
-### **Phase 0.1: Create Model Version 2** (30 minutes)
+## 🚨 **CRITICAL DESIGN CHALLENGE - READ FIRST**
 
-**Goal**: Create new Core Data model version with household relationships
+### **The Problem**
 
-**Steps**:
-1. In Xcode, open `forager.xcdatamodeld`
-2. Editor → Add Model Version → Name it "forager 2"
-3. Select new version in File Inspector
-4. Set "forager 2" as current model version
-
-**Verification**:
-```bash
-# Should show forager 2.xcdatamodel as current
-ls -la forager.xcdatamodeld/
+Most entity creation happens in background contexts via:
+```swift
+PersistenceController.performWrite { context in
+    let recipe = Recipe(context: context)
+    // ... configure recipe
+}
 ```
 
----
+**But our factory requires**:
+1. `HouseholdScopeProvider` (from @Environment)
+2. `@MainActor` isolation
+3. Access to current scope state
 
-### **Phase 0.2: Add Household Relationship to Recipe** (30 minutes)
+**This doesn't work in background contexts** because:
+- ❌ No access to @Environment values
+- ❌ Background thread ≠ @MainActor
+- ❌ Can't pass ObservableObject across threads
 
-**Entity**: Recipe
+### **Potential Solutions to Explore**
 
-**Add Relationship**:
-- Name: `household`
-- Destination: `Household`
-- Type: To One
-- Optional: **YES** (critical for migration!)
-- Delete Rule: Nullify
-- Inverse: `recipes` (on Household)
+**Option A: Pass ObjectID explicitly**
+```swift
+// On main thread
+let scopeObjectID = scopeProvider.currentHouseholdObjectID
 
-**Add Attribute**:
-- Name: `householdKey`
-- Type: String
-- Optional: YES
-- Indexed: YES
-- Used By: CloudKit
-
-**Why householdKey**: 
-- Semantic duplicate detection requires comparing strings, not relationships
-- CloudKit predicate queries need string attributes
-- Enables efficient lookups without fetching full object graph
-
----
-
-### **Phase 0.3: Add Household Relationship to IngredientTemplate** (30 minutes)
-
-**Entity**: IngredientTemplate
-
-**Add Relationship**:
-- Name: `household`
-- Destination: `Household`
-- Type: To One
-- Optional: **YES**
-- Delete Rule: Nullify
-- Inverse: `ingredientTemplates` (on Household)
-
-**Add Attribute**:
-- Name: `householdKey`
-- Type: String
-- Optional: YES
-- Indexed: YES
-- Used By: CloudKit
-
-**Critical**: IngredientTemplate deduplication relies on householdKey matching
+// In background context
+PersistenceController.performWrite { context in
+    let factory = ManagedObjectFactory(householdObjectID: scopeObjectID)
+    let recipe = factory.create(Recipe.self, in: context)
+}
+```
+**Pros**: Simple, thread-safe  
+**Cons**: Couples creation to household knowledge
 
 ---
 
-### **Phase 0.4: Add Household Relationship to Category** (30 minutes)
-
-**Entity**: Category
-
-**Add Relationship**:
-- Name: `household`
-- Destination: `Household`
-- Type: To One
-- Optional: **YES**
-- Delete Rule: Nullify
-- Inverse: `categories` (on Household)
-
-**Add Attribute**:
-- Name: `householdKey`
-- Type: String
-- Optional: YES
-- Indexed: YES
-- Used By: CloudKit
-
-**Note**: CategoryDeduplicator (Phase 3.8) already uses householdKey-based logic
+**Option B: Extend PersistenceController.performWrite**
+```swift
+// New method
+func performWrite(
+    scope: DataScope,
+    _ block: @escaping (NSManagedObjectContext, ManagedObjectFactory) -> Void
+) {
+    performWrite { context in
+        let factory = ManagedObjectFactory(scope: scope)
+        block(context, factory)
+    }
+}
+```
+**Pros**: Clean API, encapsulates pattern  
+**Cons**: Duplicates performWrite logic
 
 ---
 
-### **Phase 0.5: Add Household Relationship to PlannedMeal** (30 minutes)
-
-**Entity**: PlannedMeal
-
-**Add Relationship**:
-- Name: `household`
-- Destination: `Household`
-- Type: To One
-- Optional: **YES**
-- Delete Rule: Nullify
-- Inverse: `plannedMeals` (on Household)
-
-**Add Attribute**:
-- Name: `householdKey`
-- Type: String
-- Optional: YES
-- Indexed: YES
-- Used By: CloudKit
+**Option C: Factory per context**
+```swift
+extension NSManagedObjectContext {
+    func createEntity<T: NSManagedObject>(
+        _ type: T.Type,
+        scope: DataScope
+    ) -> T {
+        let factory = ManagedObjectFactory(scope: scope)
+        return factory.create(type, in: self)
+    }
+}
+```
+**Pros**: Context-aware, discoverable  
+**Cons**: Scope still needs to be passed
 
 ---
 
-### **Phase 0.6: Add Inverse Relationships to Household** (30 minutes)
-
-**Entity**: Household (already exists from M7.2.2)
-
-**Add To-Many Relationships**:
-
-1. **recipes**
-   - Destination: Recipe
-   - Type: To Many
-   - Optional: YES
-   - Delete Rule: Cascade
-   - Inverse: `household`
-
-2. **ingredientTemplates**
-   - Destination: IngredientTemplate
-   - Type: To Many
-   - Optional: YES
-   - Delete Rule: Cascade
-   - Inverse: `household`
-
-3. **categories**
-   - Destination: Category
-   - Type: To Many
-   - Optional: YES
-   - Delete Rule: Cascade
-   - Inverse: `household`
-
-4. **plannedMeals**
-   - Destination: PlannedMeal
-   - Type: To Many
-   - Optional: YES
-   - Delete Rule: Cascade
-   - Inverse: `household`
-
-**Why Cascade**: When household is deleted, all shared data should be deleted too
+**Option D: Main thread creation only**
+```swift
+// Only create on main thread with view context
+// Use factory directly with @Environment
+let recipe = factory.create(Recipe.self, in: viewContext)
+```
+**Pros**: Simple, uses infrastructure as-is  
+**Cons**: Blocks UI, not scalable for bulk operations
 
 ---
 
-### **Phase 0.7: Run Migration Validation Tests** (30 minutes)
+### **Recommended Approach: Start with Option D, Evolve to A**
 
-**Goal**: Confirm lightweight migration will work
+1. **Phase 2.6a**: Update 1-2 simple view-based creation points
+   - Use factory directly in views with viewContext
+   - Validate household relationships work
+   - **Duration**: 30-45 minutes
 
-**Steps**:
-1. Build the project (⌘B)
-2. Run MigrationValidationTests (⌘U)
-3. Verify all tests pass:
-   - ✅ testModelVersion2CanMigrateFromVersion1
-   - ✅ testNewRelationshipsAreOptional
-   - ✅ testNoRequiredAttributesDeleted
-   - ✅ testLightweightMigrationPossible
+2. **Phase 2.6b**: Prototype background pattern
+   - Implement Option A for one background case
+   - Test with performWrite
+   - **Duration**: 45-60 minutes
 
-**If tests fail**:
-- Check that all household relationships are Optional: YES
-- Verify no required attributes were deleted
-- Confirm inverse relationships are properly configured
+3. **Phase 2.6c**: Decide on final pattern
+   - Based on 2.6b results
+   - Update remaining creation points
+   - **Duration**: 45-60 minutes
 
 ---
 
-### **Phase 0.8: Test Migration with Sample Data** (30 minutes)
+## 📋 **PHASE 2.6a: SIMPLE VIEW-BASED CREATION** (30-45 min)
 
-**Goal**: Verify existing data migrates cleanly
+### **Goal**: Validate factory works in simplest case first
 
-**Steps**:
-1. Delete app from simulator (to start fresh with model v1)
-2. Check out commit before model changes: `git stash`
-3. Run app, create 2-3 test recipes
-4. Stop app
-5. Return to model v2: `git stash pop`
-6. Run app again
-7. Verify recipes still load correctly (household will be nil, that's expected)
+**Target**: WeeklyListsView (creates lists on main thread)
+
+**Current Code** (WeeklyListsView.swift):
+```swift
+private func createList() {
+    let newList = WeeklyList(context: viewContext)
+    newList.id = UUID()
+    newList.name = "Week of \(formatDate(Date()))"
+    newList.dateCreated = Date()
+    // ... etc
+}
+```
+
+**Updated Code** (with factory):
+```swift
+@Environment(\.managedObjectContext) private var viewContext
+@Environment(ManagedObjectFactory.self) private var factory  // ADD THIS
+
+private func createList() {
+    let newList = factory.create(WeeklyList.self, in: viewContext)  // USE FACTORY
+    newList.id = UUID()
+    newList.name = "Week of \(formatDate(Date()))"
+    newList.dateCreated = Date()
+    // household relationship automatically set by factory!
+    
+    do {
+        try viewContext.save()
+    } catch {
+        print("Error creating list: \(error)")
+    }
+}
+```
+
+**Validation Steps**:
+1. Launch app
+2. Create a new weekly list
+3. In debugger, check: `po newList.household`
+4. Should be nil (personal scope) OR set (if household scope active)
+5. Verify app doesn't crash
 
 **Success Criteria**:
-- App launches without crashing
-- Existing recipes are visible
-- No data loss
-- Console shows no Core Data errors
+- ✅ List creates successfully
+- ✅ Factory called without errors
+- ✅ Household relationship matches current scope
+- ✅ No performance degradation
 
 ---
 
-## 🎯 **AFTER PHASE 0 COMPLETE**
+## 📋 **PHASE 2.6b: BACKGROUND CONTEXT PATTERN** (45-60 min)
+
+### **Goal**: Establish pattern for background creation
+
+**Target**: DefaultSeeder.swift (creates default categories in background)
+
+**Current Code** (DefaultSeeder.swift):
+```swift
+persistence.performWrite { context in
+    let category = Category(context: context)
+    category.id = UUID()
+    category.name = "Produce"
+    // ...
+}
+```
+
+**Option A Implementation** (pass ObjectID):
+```swift
+// 1. Add method to HouseholdScopeProvider
+extension HouseholdScopeProvider {
+    var currentHouseholdObjectID: NSManagedObjectID? {
+        guard case .household(let objectID) = currentScope else {
+            return nil
+        }
+        return objectID
+    }
+}
+
+// 2. Update DefaultSeeder
+func seedDefaultCategories(
+    householdObjectID: NSManagedObjectID? = nil
+) {
+    persistence.performWrite { context in
+        let scope: DataScope = if let hhID = householdObjectID {
+            .household(hhID)
+        } else {
+            .personal
+        }
+        
+        let factory = ManagedObjectFactory(scope: scope)
+        let category = factory.create(Category.self, in: context)
+        category.id = UUID()
+        category.name = "Produce"
+        // household set automatically!
+    }
+}
+```
+
+**Validation Steps**:
+1. Delete app, reinstall (triggers seeding)
+2. Check default categories have household = nil (personal scope)
+3. Create household, delete app, reinstall
+4. Check default categories have household set (household scope)
+
+**Success Criteria**:
+- ✅ Seeding works in both scopes
+- ✅ No threading issues
+- ✅ Clean, maintainable pattern
+
+---
+
+## 📋 **PHASE 2.6c: FINALIZE PATTERN** (45-60 min)
+
+### **Goal**: Update remaining creation points
+
+**Targets** (in order of complexity):
+1. RecipeListView - creating recipes (view context)
+2. IngredientsView - creating ingredients (view context)  
+3. MealPlanListView - creating meal plans (view context)
+4. IngredientTemplateService - background operations
+
+**Pattern to Apply**:
+- **View contexts**: Use factory directly with @Environment
+- **Background contexts**: Pass householdObjectID explicitly
+
+**Validation**: 
+After each update:
+1. Test the creation flow
+2. Verify household relationship
+3. Ensure no crashes or performance issues
+
+---
+
+## 🎯 **AFTER PHASE 2.6 COMPLETE**
 
 ### **Git Workflow**:
 ```bash
-# Commit Phase 0 work
-git add forager.xcdatamodeld/
-git commit -m "M7.2.3 Phase 0: Core Data model v2 with household relationships
+# Commit Phase 2.6 work
+git add forager/WeeklyListsView.swift
+git add Services/DefaultSeeder.swift
+git add Services/Persistence/HouseholdScopeProvider.swift
+git add forager/RecipeListView.swift
+# ... other updated files
 
-✅ Model Changes:
-- Created model version 2
-- Added household relationship to Recipe, IngredientTemplate, Category, PlannedMeal
-- Added householdKey string attributes (indexed, CloudKit-compatible)
-- Added inverse relationships to Household (cascade delete)
+git commit -m "M7.2.3 Phase 2.6: Update creation points to use ManagedObjectFactory
+
+✅ Completed:
+- Updated WeeklyListsView to use factory (view context)
+- Updated DefaultSeeder with background context pattern
+- Established householdObjectID passing pattern
+- Updated 4 additional creation points
+
+🏗️ Pattern Established:
+- View contexts: Use factory via @Environment
+- Background contexts: Pass householdObjectID explicitly
+- Thread-safe, maintainable approach
 
 ✅ Validation:
-- All relationships optional (migration-safe)
-- Migration tests passing
-- Sample data migrates cleanly
+- All creation flows tested
+- Household relationships set correctly
+- No performance degradation
+- Zero crashes or errors
 
 📊 Metrics:
-- Estimated: 3-4h
+- Estimated: 2-3h
 - Actual: [X]h
 
-🎯 Next: Phase 2 - Scope-based store assignment (4-5h)"
+🎯 Next: Phase 4 - Attach-then-share migration (3-4h)"
 
 git push origin feature/M7.2.3-prep-phase
 ```
 
 ### **Update Documentation**:
-1. Mark Phase 0 ✅ COMPLETE in `current-story.md`
-2. Update progress: 33% → 48% (6.5h → 10h)
-3. Update `next-prompt.md` for Phase 2
+1. Mark Phase 2.6 ✅ COMPLETE in `current-story.md`
+2. Update progress: 52% → 68% (10.25h → 13.25h)
+3. Create learning note about background context pattern
+4. Update `next-prompt.md` for Phase 4
 
-### **Begin Phase 2** (if time permits):
-- Read PRD v2.2 Phase 2 section (lines 425-582)
-- Implement DataScope, ScopeProvider, ManagedObjectFactory
-- Expected duration: 4-5 hours
+### **Begin Phase 4** (if time permits):
+- Read PRD v2.2 Phase 4 section
+- Implement attach-then-share migration UI
+- Expected duration: 3-4 hours
 
 ---
 
 ## 📚 **KEY REFERENCES**
 
 **PRD v2.2 FINAL**: `docs/prds/m7.2.3-cloudkit-hardening-household-repositories.md`
-- Lines 325-423: Phase 0 (Core Data model changes) ← **READ THIS**
-- Lines 425-582: Phase 2 (Scope-based store assignment)
+- Lines 425-582: Phase 2 (Scope-based store assignment) ← **READ THIS**
+- Lines 583-741: Phase 4 (Attach-then-share migration)
 - Lines 1511-1564: Version history & polish integrations
 
+**Existing Code to Study**:
+- `Services/Persistence/ManagedObjectFactory.swift` - How factory works
+- `Services/Persistence/HouseholdScopeProvider.swift` - Scope management
+- `Services/PersistenceController.swift` - Background context usage
+- `forager/WeeklyListsView.swift` - Simple creation example
+
 **Key Concepts**:
-- **Optional relationships**: Required for lightweight migration from v1 → v2
-- **householdKey attributes**: Enable semantic deduplication without relationship traversal
-- **Cascade delete**: Household deletion removes all associated shared data
-- **Nullify delete**: Entity deletion doesn't affect household
+- **Thread safety**: ObjectID is thread-safe, ObservableObject is not
+- **@MainActor isolation**: Environment values only on main thread
+- **Background contexts**: Need explicit scope passing
+- **Factory pattern**: Centralizes household assignment logic
 
 ---
 
 ## 🚨 **CRITICAL REMINDERS**
 
-1. **All household relationships MUST be Optional: YES** - Non-optional breaks migration
-2. **Test migration before proceeding** - MigrationValidationTests must pass
-3. **Use householdKey for deduplication** - Don't traverse relationships in predicates
-4. **Commit after each sub-phase** - Every 30min for safety
-5. **Follow PRD v2.2 exactly** - It's externally validated, don't improvise
+1. **Start simple** - Get view context working before background
+2. **Test incrementally** - Validate after each creation point update
+3. **Document the pattern** - Future developers need to understand approach
+4. **Don't over-engineer** - If Option A works, don't complicate further
+5. **Household can be nil** - Personal scope is valid and expected
 
 ---
 
-**Version**: January 2, 2026 - Phase 0 Ready  
-**Status**: 🚀 Prep Phase complete, Core Data model changes next  
-**Progress**: 33% complete (6.5h / 19.5h)
+## 💭 **DESIGN DECISIONS TO MAKE**
+
+Before starting Phase 2.6, decide:
+
+1. **Do we need background creation right away?**
+   - Could defer to Phase 5 if view context works
+   - Most user actions happen on main thread anyway
+
+2. **What's the acceptable API?**
+   - Passing ObjectID feels explicit and safe
+   - Worth the extra parameter?
+
+3. **Should we update ALL creation points now?**
+   - Or just enough to validate the pattern?
+   - Can always update more later
+
+**Recommendation**: Start with 2-3 creation points, establish pattern, evaluate before updating all.
+
+---
+
+**Version**: January 2, 2026 - Phase 2.6 Ready  
+**Status**: 🚀 Infrastructure complete, creation points next  
+**Progress**: 52% complete (10.25h / 19.5h)  
+**Design Challenge**: Background context pattern (Options A-D outlined above)

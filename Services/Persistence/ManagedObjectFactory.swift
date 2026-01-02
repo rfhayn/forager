@@ -108,15 +108,11 @@ final class ManagedObjectFactory {
             print("   Scope: Personal (Private Store)")
             #endif
             
-            // Note: Store assignment will be added in Phase 2.4
-            // For now, object is created in default store
-            
-            // TODO M7.2.3 Phase 2.5: Uncomment when protocol conformances are active
             // Explicitly ensure household relationship is nil
-            // if let scopedObject = object as? HouseholdScoped {
-            //     scopedObject.household = nil
-            //     scopedObject.householdKey = nil
-            // }
+            if let scopedObject = object as? HouseholdScoped {
+                scopedObject.household = nil
+                scopedObject.householdKey = nil
+            }
             
         case .household(let householdID, let targetStore):
             // Household scope: set household relationship and key
@@ -124,25 +120,21 @@ final class ManagedObjectFactory {
             print("   Scope: Household (Store: \(targetStore.url?.lastPathComponent ?? "unknown"))")
             #endif
             
-            // Note: Store assignment will be added in Phase 2.4
-            // For now, object is created in default store
-            
-            // TODO M7.2.3 Phase 2.5: Uncomment when protocol conformances are active
             // Set household relationship
-            // if let scopedObject = object as? HouseholdScoped {
-            //     // Fetch household in current context (prevents stale references)
-            //     if let household = try? context.existingObject(with: householdID) as? Household {
-            //         scopedObject.household = household
-            //         scopedObject.householdKey = household.id?.uuidString
-            //         
-            //         #if DEBUG
-            //         print("   ✅ Household relationship set: \(household.name ?? "Unnamed")")
-            //         print("   ✅ HouseholdKey set: \(household.id?.uuidString ?? "nil")")
-            //         #endif
-            //     } else {
-            //         print("   ⚠️ Could not resolve household from ObjectID")
-            //     }
-            // }
+            if let scopedObject = object as? HouseholdScoped {
+                // Fetch household in current context (prevents stale references)
+                if let household = try? context.existingObject(with: householdID) as? Household {
+                    scopedObject.household = household
+                    scopedObject.householdKey = household.id?.uuidString
+                    
+                    #if DEBUG
+                    print("   ✅ Household relationship set: \(household.name ?? "Unnamed")")
+                    print("   ✅ HouseholdKey set: \(household.id?.uuidString ?? "nil")")
+                    #endif
+                } else {
+                    print("   ⚠️ Could not resolve household from ObjectID")
+                }
+            }
         }
         
         // Configure object properties
