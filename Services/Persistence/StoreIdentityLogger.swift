@@ -38,7 +38,8 @@ extension NSManagedObject {
     /// Returns: "Private Store", "Shared Store", or "Unknown Store"
     private func identifyStore(_ store: NSPersistentStore) -> String {
         // Check store configuration name
-        if let configurationName = store.configurationName {
+        let configurationName = store.configurationName
+        if !configurationName.isEmpty {
             if configurationName.contains("Private") {
                 return "Private Store"
             } else if configurationName.contains("Shared") {

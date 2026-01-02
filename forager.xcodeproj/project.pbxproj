@@ -49,7 +49,6 @@
 		9B0555652EDB665C00A57B34 /* EditStapleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552A2EDB665C00A57B34 /* EditStapleView.swift */; };
 		9B0555662EDB665C00A57B34 /* AddIngredientsToListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05551C2EDB665C00A57B34 /* AddIngredientsToListView.swift */; };
 		9B0555672EDB665C00A57B34 /* AddListItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05551E2EDB665C00A57B34 /* AddListItemView.swift */; };
-		9B05556A2EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555682EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift */; };
 		9B0555732EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555712EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift */; };
 		9B0555742EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555702EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift */; };
 		9B1B39652EF4BA71001E1876 /* Category+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39642EF4BA71001E1876 /* Category+Extensions.swift */; };
@@ -148,7 +147,6 @@
 		9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardEmptyStateView.swift; sourceTree = "<group>"; };
 		9B0555402EDB665C00A57B34 /* WeeklyListsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyListsView.swift; sourceTree = "<group>"; };
 		9B0555422EDB665C00A57B34 /* forager.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = forager.xcdatamodel; sourceTree = "<group>"; };
-		9B0555682EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerTests.swift; sourceTree = "<group>"; };
 		9B0555702EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITests.swift; sourceTree = "<group>"; };
 		9B0555712EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		9B1B39632EF2FFD8001E1876 /* forager 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 2.xcdatamodel"; sourceTree = "<group>"; };
@@ -278,7 +276,6 @@
 			isa = PBXGroup;
 			children = (
 				9B56ECA82F08293B00877716 /* PersistenceTests */,
-				9B0555682EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift */,
 			);
 			path = foragerTests;
 			sourceTree = "<group>";
@@ -577,7 +574,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B05556A2EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift in Sources */,
 				9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
