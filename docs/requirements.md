@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: December 31, 2025  
-**Version**: 4.3  
-**Current Milestone**: M5.0 Complete ✅ | M7.1 Complete ✅ | M7.2.1 Complete ✅ | M7.2.3 Phase 3.8 Complete ✅ | M7.2.2 Ready 🚀
+**Last Updated**: January 1, 2026  
+**Version**: 4.5  
+**Current Milestone**: M5.0 Complete ✅ | M7.1 Complete ✅ | M7.2.1 Complete ✅ | M7.2.3 Phase 3.8 Complete ✅ | **M7.2.3 External Validation Complete ✅ | M7.2.2 Paused** ⏸️
 
 ---
 
@@ -79,6 +79,25 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | **FR-CK-026** | **Self-healing multi-device sync** | System converges to correct state automatically (<60s) | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
 | **FR-CK-027** | **Dedupe-after-creation pattern** | Apple-recommended approach for duplicate prevention | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
 
+### **Functional Requirements - Shared Data Architecture (M7.2.3 - NEW)** 🏗️
+
+**⚠️ ARCHITECTURAL EVOLUTION**: M7.2.3 establishes production-ready shared data patterns validated by external AI experts (ChatGPT + Gemini). See [PRD v2.2](prds/m7.2.3-cloudkit-hardening-household-repositories.md) for complete specifications.
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-CK-028** | **Household as aggregate root** | 5 new relationships: weeklyLists, recipes, mealPlans, categories, ingredientTemplates | M7.2.3 Phase 0 | 🎯 **Framework-native sharing** |
+| **FR-CK-029** | **Scope-based store assignment** | DataScope enum (.personal \| .household) with ManagedObjectFactory | M7.2.3 Phase 2 | 🎯 **Explicit ownership** |
+| **FR-CK-030** | **Attach-then-share migration** | Set relationships in private → share() moves graph to shared zone | M7.2.3 Phase 4 | 🎯 **Zero UUID remapping** |
+| **FR-CK-031** | **Store-scoped repositories** | Explicit fetch with affectedStores = [sharedStore] | M7.2.3 Phase 5 | 🎯 **Clear data boundaries** |
+| **FR-CK-032** | **Cross-store violation prevention** | DEBUG validator catches relationship violations early | M7.2.3 Phase 6 | 🎯 **Development safety** |
+| **FR-CK-033** | **HouseholdScoped protocol** | Compiler-enforced conformance for factory-based creation | M7.2.3 Phase 2 | 🎯 **Type safety** |
+| **FR-CK-034** | **One active scope constraint** | App operates in .personal OR .household, not both | M7.2.3 Phase 2 | 🎯 **Prevents feature creep** |
+| **FR-CK-035** | **Recipe ownership semantics** | Recipes Nullified (not Cascaded) to preserve user curation | M7.2.3 Phase 0 | 🎯 **Value preservation** |
+| **FR-CK-036** | **Workspace leave model** | Data stays with household, optional export later (M8+) | M7.2.3 Phase 5 | 🎯 **Standard pattern** |
+| **FR-CK-037** | **DEBUG validators for production** | Catch share failures, stale refs, cross-store bugs | M7.2.3 Phase 4-6 | 🎯 **Early error detection** |
+
+**External Validation**: All patterns validated by ChatGPT ("Gold Standard") and Gemini ("Production-ready"). Complete code implementations provided.
+
 ### **Functional Requirements - Conflict Resolution**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
@@ -134,12 +153,12 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | **NFR-PR-001** | **Edit form load < 0.2s** | Instant edit form display | M7.5.2 | 🎯 **Responsive UX** |
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
-**M7 Summary**: 42 total requirements
+**M7 Summary**: 52 total requirements
 - **Complete (15)**: App Store prerequisites (4), CloudKit sync foundation (5 + 4 debugging fixes), Household foundation (3 from M7.2.1 + M7.2.3 Phase 3.8)
-- **In Progress (27)**: Multi-user collaboration (2 remaining from M7.2), conflict resolution (5), sync UI polish (5), parsing resilience (6), external TestFlight (5), non-functional (4 remaining)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 Phase 3.8 ✅
-- **Achievement**: Self-healing multi-device sync with automatic duplicate prevention (<60s convergence)
-- **Next**: M7.2.2 - Member Invitation & Acceptance (2-3 hours)
+- **In Progress (37)**: Shared data architecture (10 from M7.2.3), multi-user collaboration (remaining from M7.2), conflict resolution (5), sync UI polish (5), parsing resilience (6), external TestFlight (5), non-functional (6 remaining)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 Phase 3.8 ✅, **M7.2.3 External Validation ✅**
+- **Achievement**: Production-ready shared data architecture validated by external AI experts (ChatGPT + Gemini)
+- **Next**: M7.2.3 Prep Phase - Store Logging + Migration Validation (1 hour)
 
 ---
 
@@ -283,9 +302,9 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M9.5 (Opt) | Total |
 |--------|----|----|----|----|------|----|----|-----------|------------|-------|
 | ✅ Complete | 19 | 37 | 33 | 19 | 14 | 15 | 0 | 0 | 0 | **137** |
-| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 27 | 0 | 0 | 0 | **27** |
+| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 37 | 0 | 0 | 0 | **37** |
 | ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 4 | 8 | **36** |
-| **Total** | **19** | **37** | **33** | **19** | **14** | **42** | **24** | **4** | **8** | **200** |
+| **Total** | **19** | **37** | **33** | **19** | **14** | **52** | **24** | **4** | **8** | **210** |
 
 ### **By Category**
 
@@ -301,7 +320,7 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | App Store Compliance | 4 | ✅ Complete (M7.0) |
 | CloudKit Sync Foundation | 9 | ✅ Complete (M7.1 + Debugging) |
 | Household Foundation | 3 | ✅ Complete (M7.2.1 + M7.2.3 Phase 3.8) |
-| CloudKit Collaboration | 13 | 🔄 In Progress (M7.2.2, M7.2.4, M7.3-M7.4) |
+| CloudKit Collaboration | 23 | 🔄 In Progress (M7.2.3, M7.2.4, M7.3-M7.4) |
 | **Parsing Resilience** | **6** | ⏳ **Planned (M7.5)** ← NEW |
 | **Parsing Improvements** | **10** | ⏳ **Planned (M8.0)** ← NEW |
 | **ML Parsing (Optional)** | **8** | ⏳ **Planned (M9.5)** ← NEW |
@@ -310,10 +329,10 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 | Budget Intelligence | 4 | ⏳ Planned (M10) |
 | AI Assistant | 4 | ⏳ Planned (M11) |
 | Advanced Collaboration | 3 | ⏳ Planned (M12) |
-| **Complete** | **137** | **69% (137/200)** |
-| **In Progress** | **27** | **14% (27/200)** |
-| **Planned (Mandatory)** | **28** | **14% (28/200)** |
-| **Planned (Optional)** | **8** | **4% (8/200)** |
+| **Complete** | **137** | **65% (137/210)** |
+| **In Progress** | **37** | **18% (37/210)** |
+| **Planned (Mandatory)** | **28** | **13% (28/210)** |
+| **Planned (Optional)** | **8** | **4% (8/210)** |
 
 ### **Performance Requirements Status**
 
@@ -364,13 +383,22 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 **Achievement**: Production-ready self-healing CloudKit sync with automatic duplicate cleanup!
 
 ### **In Progress: M7 CloudKit Collaboration & External TestFlight** 🔄
-**Remaining Time**: 20.25-31.25 hours  
-**Requirements In Progress**: 27 (household sharing remaining, conflict resolution, sync UI, parsing, TestFlight)
+**Remaining Time**: 30-41 hours  
+**Requirements In Progress**: 37 (shared data architecture, household sharing, conflict resolution, sync UI, parsing, TestFlight)
+
+**Recent Achievement**:
+- ✅ M7.2.3 External Validation Complete - PRD v2.2 FINAL ready
+- ✅ Shared data architecture validated by ChatGPT ("Gold Standard") and Gemini ("Production-ready")
+- ✅ Complete code implementations received (DataScope, ScopeProvider, ManagedObjectFactory, etc.)
+- ✅ 10 new requirements added with battle-tested patterns
 
 **Strategic Additions:**
+- **M7.2.3: Shared Data Architecture** (10 requirements, 14-17h) - Production-ready CloudKit patterns
 - **M7.5: Parsing Resilience** (6 requirements, 3-4h) - Graceful degradation before external beta
-- CloudKit sync and collaboration (25 requirements, 21-28h)
+- CloudKit sync and collaboration (31 requirements, 27-34h)
 - External TestFlight and public beta (9 requirements, 6-9h)
+
+**Current Focus**: M7.2.3 Prep Phase - Store Logging + Migration Validation (1 hour)
 
 ### **Future Parsing Evolution** 💡
 
@@ -386,9 +414,9 @@ _[All M1-M5.0 sections remain exactly as they are in the current file - not repe
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit, household foundation, parsing resilience, and public beta (42 requirements: 15 complete, 27 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 200 total requirements (137 complete, 55 mandatory in progress + planned, 8 optional).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit, household foundation, shared data architecture, parsing resilience, and public beta (52 requirements: 15 complete, 37 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (137 complete, 65 mandatory in progress + planned, 8 optional).
 
-**Last Updated**: December 31, 2025  
-**Version**: 4.4  
-**Next Update**: After M7.2.2 completion (Member Invitation & Acceptance)  
-**Current Focus**: M7.2.2 Ready 🚀 - Member Invitation & Acceptance (2-3 hours) following successful M7.2.3 Phase 3.8 (CategoryDeduplicator)
+**Last Updated**: January 1, 2026  
+**Version**: 4.5  
+**Next Update**: After M7.2.3 Prep Phase completion  
+**Current Focus**: M7.2.3 Prep Phase 🚀 - Store Logging + Migration Validation (1 hour) with PRD v2.2 FINAL ready
