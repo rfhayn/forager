@@ -369,9 +369,14 @@ struct IngredientsView: View {
     }
     
     // FIXED: Sort categories by custom sort order from Category entities
+    // M7.2.3 Phase 3.6: Handle duplicate categories gracefully (use first occurrence)
     private var sortedCategoryNames: [String] {
         let grouped = groupedIngredients
-        let categoryMap = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0.sortOrder) })
+        // Use uniquingKeysWith to handle duplicate category names (keep first occurrence)
+        let categoryMap = Dictionary(
+            categories.map { ($0.displayName, $0.sortOrder) },
+            uniquingKeysWith: { first, _ in first }
+        )
         
         return grouped.keys.sorted { category1, category2 in
             // Handle "Uncategorized" - put it at the end

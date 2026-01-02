@@ -3,7 +3,7 @@
 //  forager
 //
 //  Created by Rich Hayn on 8/20/25.
-//
+//  M7.2.3 Phase 3.2: Updated to use HouseholdCategoryRepository
 //
 
 import Foundation
@@ -22,31 +22,44 @@ public class Category: NSManagedObject {
         ("Snacks, Drinks, & Other", "#9C27B0", 5) // Purple - Checkout area
     ]
     
-    // MARK: - Category Management
+    // MARK: - M7.2.3 Phase 3.2: Category Management (Using Repository)
+    
+    /// M7.2.3 Phase 3.2: Create default categories using HouseholdCategoryRepository
+    /// Prevents duplicate categories in CloudKit shared zones
     static func createDefaultCategories(in context: NSManagedObjectContext) {
+        let repository = HouseholdCategoryRepository(context: context)
+        
         for (name, color, sortOrder) in defaultCategories {
-            let category = Category(context: context)
-            category.id = UUID()
-            category.name = name
-            category.normalizedName = Category.normalizedName(from: name) // M7.1.3: Populate semantic key
-            category.updatedAt = Date() // M7.1.3: Set timestamp
-            category.color = color
-            category.sortOrder = sortOrder
-            category.isDefault = true
-            category.dateCreated = Date()
+            do {
+                // Use repository's findOrCreate (handles semantic uniqueness)
+                _ = try repository.findOrCreate(
+                    name: name,
+                    color: color,
+                    sortOrder: sortOrder,
+                    isDefault: true
+                )
+            } catch {
+                print("❌ M7.2.3: Error creating category '\(name)': \(error)")
+            }
         }
     }
     
+    /// M7.2.3 Phase 3.2: Ensure default categories exist using HouseholdCategoryRepository
+    /// Idempotent: safe to call multiple times
     static func ensureDefaultCategories(in context: NSManagedObjectContext) {
-        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        let repository = HouseholdCategoryRepository(context: context)
         
         do {
-            let existingCategories = try context.fetch(request)
-            if existingCategories.isEmpty {
+            let allCategories = try repository.findAll()
+            if allCategories.isEmpty {
+                print("🏷️ M7.2.3: No categories found, creating defaults...")
                 createDefaultCategories(in: context)
+            } else {
+                print("ℹ️ M7.2.3: Categories already exist (\(allCategories.count) found)")
             }
         } catch {
-            print("Error checking for existing categories: \\(error)")
+            print("❌ M7.2.3: Error checking for existing categories: \(error)")
+            // Fallback: try creating defaults anyway (repository will handle duplicates)
             createDefaultCategories(in: context)
         }
     }

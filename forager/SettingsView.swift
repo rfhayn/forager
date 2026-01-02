@@ -218,7 +218,8 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - M7.1.2: Developer Tools Section
+    // M7.1.2: Developer Tools Section
+    // M7.2.3 Phase 3.5: Added CloudKit Test Harness
     
     // Developer tools for CloudKit sync testing and debugging
     // Provides access to sync status monitoring and validation
@@ -241,6 +242,26 @@ struct SettingsView: View {
                     }
                 }
             }
+            
+            #if DEBUG
+            // M7.2.3 Phase 3.5: CloudKit Test Harness
+            // Comprehensive testing UI for duplicate prevention validation
+            NavigationLink {
+                CloudKitTestHarnessView()
+            } label: {
+                HStack {
+                    Image(systemName: "wrench.and.screwdriver")
+                        .foregroundColor(.purple)
+                    VStack(alignment: .leading) {
+                        Text("CloudKit Test Harness")
+                            .font(.headline)
+                        Text("Test duplicate prevention and repository patterns")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            #endif
             
             // M7.2.2: Household Debug link - TEMPORARILY DISABLED
             // Shows all households in database for debugging sync issues
