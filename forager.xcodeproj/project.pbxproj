@@ -62,6 +62,7 @@
 		9B1B398C2EF5DB19001E1876 /* CategoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39862EF5DB19001E1876 /* CategoryRepository.swift */; };
 		9B31714D2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B31714B2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift */; };
 		9B3DB86E2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3DB86D2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift */; };
+		9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56ECA72F08293B00877716 /* MigrationValidationTests.swift */; };
 		9B731C7F2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */; };
 		9B731C832E5364A300CE26F0 /* Ingredient+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C782E5364A300CE26F0 /* Ingredient+CoreDataProperties.swift */; };
 		9B731C842E5364A300CE26F0 /* GroceryListItem+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C752E5364A300CE26F0 /* GroceryListItem+CoreDataClass.swift */; };
@@ -161,6 +162,7 @@
 		9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannedMealRepository.swift; sourceTree = "<group>"; };
 		9B31714B2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B3DB86D2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryListItem+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9B56ECA72F08293B00877716 /* MigrationValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationValidationTests.swift; sourceTree = "<group>"; };
 		9B731C292E535C3100CE26F0 /* forager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = forager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B731C3D2E535C3300CE26F0 /* foragerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = foragerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9B731C472E535C3300CE26F0 /* foragerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = foragerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -275,6 +277,7 @@
 		9B0555692EDB69CD00A57B34 /* foragerTests */ = {
 			isa = PBXGroup;
 			children = (
+				9B56ECA82F08293B00877716 /* PersistenceTests */,
 				9B0555682EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift */,
 			);
 			path = foragerTests;
@@ -297,6 +300,14 @@
 				9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */,
 			);
 			path = Repositories;
+			sourceTree = "<group>";
+		};
+		9B56ECA82F08293B00877716 /* PersistenceTests */ = {
+			isa = PBXGroup;
+			children = (
+				9B56ECA72F08293B00877716 /* MigrationValidationTests.swift */,
+			);
+			path = PersistenceTests;
 			sourceTree = "<group>";
 		};
 		9B731C202E535C3100CE26F0 = {
@@ -567,6 +578,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B05556A2EDB69CD00A57B34 /* GroceryRecipeManagerTests.swift in Sources */,
+				9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
