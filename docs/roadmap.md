@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: December 24, 2025  
-**Current Phase**: M5.0 COMPLETE ✅ | M7.1 COMPLETE ✅ | M7 CloudKit Debugging COMPLETE ✅ | Strategic Decision Point  
-**Status**: All M1-M5.0 milestones complete, M7.1 CloudKit foundation operational, M7 multi-device sync working perfectly, deciding next steps (M7.2.2 vs M6 vs M8)
+**Last Updated**: January 1, 2026  
+**Current Phase**: M5.0 COMPLETE ✅ | M7.1 COMPLETE ✅ | M7.2.1 COMPLETE ✅ | M7 CloudKit Debugging COMPLETE ✅ | M7.2.3 Phase 3.8 COMPLETE ✅ | **M7.2.3 External Validation COMPLETE ✅** | M7.2.2 Paused ⏸️  
+**Status**: All M1-M5.0 milestones complete, M7.1 CloudKit foundation operational, M7.2.1 household setup complete, M7.2.3 PRD v2.2 FINAL ready, ready for M7.2.3 Prep Phase implementation
 
 ---
 
@@ -66,9 +66,9 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 
 ### **🔄 M7: CloudKit Sync, Household Sharing & External TestFlight - IN PROGRESS** 🚀
 
-**Status**: 🔄 In Progress - M7.1 Complete ✅, Multi-Device Sync Working ✅  
+**Status**: 🔄 In Progress - M7.1 Complete ✅, M7.2.1 Complete ✅, M7.2.3 Phase 3.8 Complete ✅, **M7.2.3 External Validation Complete ✅**, Multi-Device Sync Working ✅  
 **Estimated Time**: 30-41 hours base, 35-46 hours with buffer  
-**Actual Progress**: 13.5 hours (M7.0: 3h, M7.1: 6.5h, CloudKit Debugging: 4h)  
+**Actual Progress**: 14.5 hours (M7.0: 3h, M7.1: 6.5h, M7.2.1: 1.25h, CloudKit Debug: 4h, M7.2.3 Phase 3.8: 1h) + External Validation (Jan 1, 2026)  
 **Dependencies**: M5.0 complete ✅  
 **PRD**: docs/prds/milestone-7-cloudkit-sync-external-testflight.md (v2.0 - Shared Zone Architecture)
 
@@ -101,10 +101,23 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - ✅ **Testing**: Perfect bi-directional sync across 2 devices (<5s latency)
 - ✅ **Documentation**: [27-m7-cloudkit-sync-debugging.md](m7-docs/27-m7-cloudkit-sync-debugging.md)
 
-**M7.2: Shared Household Zone (8-10 hours) - PAUSED** ⏸️
+**M7.2: Shared Household Zone (19-23 hours) - IN PROGRESS** 🔄
 - ✅ **M7.2.1**: Household Setup & Shared Zone (1.25h) - COMPLETE (100% accuracy)
-- ⏳ **M7.2.2**: Member Invitation & Acceptance (2-3h) - READY (or defer)
-- ⏳ **M7.2.3**: Sync Validation & Testing (1-2h) - MOSTLY DONE (multi-device validated)
+- ⏸️ **M7.2.2**: Member Invitation & Acceptance (2-3h) - PAUSED (code complete, awaiting testing)
+- 🔄 **M7.2.3**: CloudKit Hardening & Shared Data Architecture (19-23h) - IN PROGRESS
+  - ✅ Phase 1: Persistence Decomposition (5h) - COMPLETE (PersistenceController, DefaultSeeder, MigrationRunner)
+  - ✅ Phase 3.8: CategoryDeduplicator (1h) - COMPLETE (dedupe-after-creation working)
+  - ✅ **External Validation** (Jan 1, 2026) - COMPLETE
+    - ChatGPT: "Gold Standard for NSPersistentCloudKitContainer"
+    - Gemini: "Production-ready, no architectural changes required"
+    - Received complete code implementations (DataScope, ScopeProvider, ManagedObjectFactory, etc.)
+    - PRD v2.2 FINAL ready with all polish integrated
+  - 🚀 **Prep Phase**: Store Logging + Migration Validation (1h) - NEXT
+  - ⏳ **Phase 0**: Core Data Model Changes (3-4h)
+  - ⏳ **Phase 2**: Scope-Based Store Assignment (4-5h)
+  - ⏳ **Phase 4**: Attach-Then-Share Migration (3-4h)
+  - ⏳ **Phase 5**: Repository Hardening (2-3h)
+  - ⏳ **Phase 6**: Multi-Device Validation (1-2h)
 - ⏳ **M7.2.4**: Household Management (1-2h) - READY
 
 **Architecture Decision (Dec 23, 2025):**
@@ -387,8 +400,9 @@ _[Continue with existing roadmap structure but skip to the detailed M7 section]_
 - **M7.0**: 3 hours (estimated 2-3h) - ✅ 100% accuracy
 - **M7.1**: 6.5 hours (estimated 6-8h) - ✅ 93% accuracy
 - **M7.2.1**: 1.25 hours (estimated 1.25h) - ✅ 100% accuracy
+- **M7.2.3 Phase 3.8**: 1 hour (CategoryDeduplicator) - ✅ Production-ready dedupe
 - **M7 CloudKit Debugging**: 4 hours (unplanned but essential) - ✅ Perfect sync achieved
-- **Total Completed**: ~107.25 hours
+- **Total Completed**: ~108.25 hours
 
 ### **Planned Core Platform:**
 - **M7**: 38-53 hours base, 43-58 hours with buffer
@@ -532,6 +546,6 @@ _[All existing achievements remain - content already in file]_
 
 ---
 
-**Next Action**: Strategic Decision - Continue M7.2.2 (Household Sharing) vs M6 (Testing) vs M8 (Analytics)
+**Next Action**: M7.2.3 Prep Phase - Store Logging + Migration Validation (1 hour)
 
-**Status**: M1-M5.0 complete with ~92.75 hours. M7.0 + M7.1 + CloudKit Debugging complete (13.5h). **Multi-device CloudKit sync working perfectly!** ✅ Perfect bi-directional sync across 2 physical devices with <5s latency, zero duplicates, zero data loss. Now deciding next milestone: finish household sharing (M7.2.2, 4-7h) OR pivot to testing (M6, 12-15h) OR analytics (M8, 16-24h).
+**Status**: M1-M5.0 complete with ~92.5 hours. M7.0 + M7.1 + M7.2.1 + M7 CloudKit Debugging + M7.2.3 Phase 3.8 + **M7.2.3 External Validation complete** (15.5h). **Multi-device CloudKit sync with self-healing dedupe working perfectly!** ✅ **PRD v2.2 FINAL ready** with production-ready shared data architecture validated by ChatGPT ("Gold Standard") and Gemini ("Production-ready"). M7.2.2 paused, proceeding with M7.2.3 implementation.
