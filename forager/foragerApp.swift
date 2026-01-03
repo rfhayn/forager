@@ -62,14 +62,15 @@ struct foragerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // M7.2.3 Phase 2.4: Create ManagedObjectFactory for environment injection
+            // M7.2.3 Phase 2.4 & 2.6: Create ManagedObjectFactory for environment injection
             let scopeProvider = HouseholdScopeProvider(
                 householdService: householdService,
-                context: persistenceController.container.viewContext
+                persistence: persistenceController  // ✅ Phase 2.6: Changed from 'context:' to 'persistence:'
             )
             let objectFactory = ManagedObjectFactory(
                 context: persistenceController.container.viewContext,
-                scopeProvider: scopeProvider
+                scopeProvider: scopeProvider,
+                persistence: persistenceController  // ✅ Phase 2.6: Added persistence parameter
             )
             
             TabView(selection: $selectedTab) {

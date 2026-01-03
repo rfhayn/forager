@@ -3,6 +3,7 @@
 //  forager
 //
 //  M7.2.3 Phase 1.1: Extracted from Persistence.swift
+//  M7.2.3 Phase 2.6: Added store properties and StoreID resolution
 //  Single responsibility: Core Data container and store management
 //
 //  Created on December 30, 2025.
@@ -35,6 +36,49 @@ final class PersistenceController {
     
     var viewContext: NSManagedObjectContext {
         return container.viewContext
+    }
+    
+    // MARK: - M7.2.3 Phase 2.6: Store Properties
+    
+    /// Private CloudKit store (user's personal data)
+    /// Lazily computed from loaded persistent stores
+    var privateStore: NSPersistentStore {
+        // For NSPersistentCloudKitContainer with single configuration,
+        // the default store is the private store
+        guard let store = container.persistentStoreCoordinator.persistentStores.first else {
+            fatalError("❌ M7.2.3: No persistent stores loaded")
+        }
+        return store
+    }
+    
+    /// Shared CloudKit store (household collaborative data)
+    /// Note: Will be properly implemented in Phase 4 (Attach-Then-Share)
+    /// For now, returns the same store as private (single store configuration)
+    var sharedStore: NSPersistentStore {
+        // TODO M7.2.3 Phase 4: Implement proper shared store lookup
+        // For now, same as private store until we implement multi-store config
+        return privateStore
+    }
+    
+    /// M7.2.3 Phase 2.6: Resolve StoreID to NSPersistentStore
+    ///
+    /// ## Purpose
+    /// Encapsulates store resolution logic inside PersistenceController.
+    /// Callers use StoreID enum instead of passing NSPersistentStore instances.
+    ///
+    /// ## Benefits (Gemini feedback)
+    /// - Store plumbing localized to persistence layer
+    /// - No NSPersistentStore instances passed through call chains
+    /// - Easier to test and maintain
+    ///
+    /// Source: Gemini - "Better: make DataScope carry stable store identity"
+    func store(for storeID: StoreID) -> NSPersistentStore {
+        switch storeID {
+        case .private:
+            return privateStore
+        case .shared:
+            return sharedStore
+        }
     }
     
     // MARK: - Initialization

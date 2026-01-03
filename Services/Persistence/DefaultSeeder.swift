@@ -5,6 +5,7 @@
 //  M7.2.3 Phase 1.2: Extracted from Persistence.swift
 //  M7.2.3 Phase 3.1: Updated to use HouseholdCategoryRepository
 //  M7.2.3 Phase 3.7: Using NSUbiquitousKeyValueStore for cross-device coordination
+//  M7.2.3 Phase 2.6: Added factory-based seeding pattern
 //  Single responsibility: Idempotent default data seeding
 //
 //  Created on December 30, 2025.
@@ -16,10 +17,12 @@ import Foundation
 /// M7.2.3 Phase 1.2: Idempotent default data seeding
 /// M7.2.3 Phase 3.1: Uses HouseholdCategoryRepository for semantic uniqueness
 /// M7.2.3 Phase 3.8: Simplified - duplicates handled by CategoryDeduplicator
+/// M7.2.3 Phase 2.6: Example of factory-based household seeding
 ///
 /// Responsibilities:
 /// - Seed default categories (7 categories total, only "Uncategorized" is protected)
 /// - CloudKit-safe: repository pattern ensures semantic uniqueness on same device
+/// - (NEW) Demonstrate performScopedWrite + factory pattern for household data
 ///
 /// Strategy:
 /// - Let each device seed independently (fast, simple)
@@ -146,6 +149,77 @@ final class DefaultSeeder {
             print("✅ M7.2.3 Phase 3.1: Repository seeding complete - \(createdCount) created, \(existingCount) existing")
         } else {
             print("ℹ️ M7.2.3 Phase 3.1: All \(existingCount) categories already exist")
+        }
+    }
+    
+    // MARK: - M7.2.3 Phase 2.6: Factory-Based Household Seeding
+    
+    /// M7.2.3 Phase 2.6: Seed household categories using performScopedWrite + factory
+    ///
+    /// ## Purpose
+    /// Demonstrates the new Phase 2.6 pattern for background operations:
+    /// - Uses performScopedWrite helper (ChatGPT pattern)
+    /// - Factory with explicit scope (Gemini pattern)
+    /// - Automatic store assignment + household linking
+    ///
+    /// ## When to Use
+    /// This pattern is ideal for seeding household-scoped data when:
+    /// - Creating data for a newly created household
+    /// - Migrating personal data to household (Phase 4)
+    /// - Background batch operations on household data
+    ///
+    /// ## Parameters
+    /// - householdID: NSManagedObjectID of the household to seed for
+    /// - persistence: PersistenceController instance
+    ///
+    /// ## Example Usage
+    /// ```swift
+    /// // After creating household on main thread:
+    /// let householdID = household.objectID
+    ///
+    /// // Seed categories in background:
+    /// await DefaultSeeder.seedHouseholdCategories(
+    ///     householdID: householdID,
+    ///     persistence: PersistenceController.shared
+    /// )
+    /// ```
+    ///
+    /// Source: ChatGPT + Gemini - Phase 2.6 external validation
+    static func seedHouseholdCategories(
+        householdID: NSManagedObjectID,
+        persistence: PersistenceController
+    ) async {
+        print("🌱 M7.2.3 Phase 2.6: Seeding household categories with factory pattern...")
+        
+        // M7.2.3 Phase 2.6: Construct DataScope with StoreID (Gemini feedback)
+        let scope = DataScope.household(id: householdID, storeID: .shared)
+        
+        // M7.2.3 Phase 2.6: Use performScopedWrite helper (ChatGPT pattern)
+        persistence.performScopedWrite(scope: scope) { context, factory in
+            var createdCount = 0
+            
+            for (name, color, sortOrder, isProtected) in defaultCategories {
+                do {
+                    // M7.2.3 Phase 2.6: Factory with explicit scope
+                    // Store + household automatically assigned! ✨
+                    _ = try factory.make(Category.self, in: scope) { category in
+                        category.id = UUID()
+                        category.name = name
+                        category.color = color  // ✅ Fixed: 'color' not 'colorHex'
+                        category.sortOrder = sortOrder
+                        category.isDefault = isProtected
+                        category.dateCreated = Date()
+                        // household + householdKey set by factory!
+                    }
+                    
+                    createdCount += 1
+                    
+                } catch {
+                    print("❌ M7.2.3 Phase 2.6: Failed to create category '\(name)': \(error)")
+                }
+            }
+            
+            print("✅ M7.2.3 Phase 2.6: Factory seeding complete - \(createdCount) categories created")
         }
     }
     

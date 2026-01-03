@@ -2,8 +2,9 @@
 //  HouseholdScopeProvider.swift
 //  forager
 //
-//  M7.2.3 Phase 2.2: Scope-Based Store Assignment - ScopeProvider
+//  M7.2.3 Phase 2.2 & 2.6: Scope-Based Store Assignment - ScopeProvider
 //  Created on January 2, 2026
+//  Updated Phase 2.6: ScopeProvider protocol conformance + scopeSnapshot
 //
 //  Provides the current data scope based on household state.
 //  Automatically determines whether objects should be created in
@@ -22,39 +23,54 @@ import CoreData
 /// - **Output**: DataScope enum (.personal or .household)
 /// - **Key Feature**: Auto-resolves which store household lives in
 ///
+/// ## M7.2.3 Phase 2.6 Changes
+/// - Now conforms to `ScopeProvider` protocol
+/// - Implements `scopeSnapshot()` for background work (Gemini feedback)
+/// - Uses `StoreID` instead of `NSPersistentStore` (Gemini feedback)
+///
 /// ## Usage
 /// ```swift
 /// let scopeProvider = HouseholdScopeProvider(
 ///     householdService: householdService,
-///     context: viewContext
+///     persistence: persistence
 /// )
 ///
-/// let scope = await scopeProvider.activeScope
+/// // Main thread: use activeScope directly
+/// let scope = scopeProvider.activeScope
+///
+/// // Background: capture snapshot first
+/// let snapshot = scopeProvider.scopeSnapshot()
+/// persistence.performScopedWrite(scope: snapshot) { ... }
 /// ```
 ///
-/// Source: Gemini - Adapted for MainActor isolation
+/// Source: Gemini + ChatGPT - Adapted for @MainActor isolation
 @MainActor
-final class HouseholdScopeProvider {
+final class HouseholdScopeProvider: ScopeProvider {
     
     // MARK: - Dependencies
     
     private let householdService: HouseholdService
-    private let context: NSManagedObjectContext
+    private let persistence: PersistenceController
     
     // MARK: - Initialization
     
     /// Creates a scope provider with required dependencies
-    /// - Parameters:
-    ///   - householdService: Service that tracks current household
-    ///   - context: Managed object context for store access
-    init(householdService: HouseholdService, context: NSManagedObjectContext) {
+    ///
+    /// ## M7.2.3 Phase 2.6 Changes
+    /// - Now takes `persistence` instead of `context`
+    /// - Needed for StoreID → NSPersistentStore resolution
+    ///
+    /// Parameters:
+    /// - householdService: Service that tracks current household
+    /// - persistence: Persistence controller for store access
+    init(householdService: HouseholdService, persistence: PersistenceController) {
         self.householdService = householdService
-        self.context = context
+        self.persistence = persistence
     }
     
-    // MARK: - Scope Resolution
+    // MARK: - ScopeProvider Protocol
     
-    /// Returns the active data scope
+    /// M7.2.3 Phase 2.6: Returns the active data scope
     ///
     /// ## Decision Logic
     /// 1. **No household** → Personal scope
@@ -64,6 +80,10 @@ final class HouseholdScopeProvider {
     /// - **Before share creation**: Returns .personal (household in Private)
     /// - **After share creation**: Returns .household (household in Shared)
     /// - **Dynamic resolution**: Checks store on every access
+    ///
+    /// ## M7.2.3 Phase 2.6 Changes
+    /// - Returns `.household(id, storeID: .shared)` instead of passing NSPersistentStore
+    /// - Store resolution now handled by PersistenceController.store(for:)
     var activeScope: DataScope {
         // 1. Check if a household is currently active
         guard let household = householdService.currentHousehold else {
@@ -74,7 +94,6 @@ final class HouseholdScopeProvider {
         }
         
         // 2. Get the store directly from the ObjectID
-        // NSManagedObjectID has a persistentStore property!
         guard let householdStore = household.objectID.persistentStore else {
             #if DEBUG
             print("⚠️ HouseholdScopeProvider: Could not resolve store → Personal scope (fallback)")
@@ -82,9 +101,8 @@ final class HouseholdScopeProvider {
             return .personal
         }
         
-        // 3. Check if household is in a shared CloudKit store
-        // For now, we'll determine this by checking if the store URL contains "shared"
-        // This is a simplified heuristic that works for NSPersistentCloudKitContainer
+        // 3. Determine which StoreID based on URL heuristic
+        // TODO M7.2.3 Phase 4: Improve store detection when multi-store config is implemented
         let storeURL = householdStore.url?.absoluteString.lowercased() ?? ""
         let isSharedStore = storeURL.contains("shared")
         
@@ -93,18 +111,48 @@ final class HouseholdScopeProvider {
             #if DEBUG
             print("👥 HouseholdScopeProvider: Household in shared store → Household scope")
             print("   Household: \(household.name ?? "Unnamed")")
-            print("   Store: \(householdStore.url?.lastPathComponent ?? "unknown")")
+            print("   StoreID: .shared")
             #endif
             
-            return .household(id: household.objectID, store: householdStore)
+            return .household(id: household.objectID, storeID: .shared)
         } else {
             // Household is in local/private store or not yet shared
+            // Still return personal scope until share is created
             #if DEBUG
             print("🏠 HouseholdScopeProvider: Household in private store → Personal scope")
-            print("   Store: \(householdStore.url?.lastPathComponent ?? "unknown")")
+            print("   Household: \(household.name ?? "Unnamed")")
+            print("   StoreID: .private")
             #endif
             return .personal
         }
+    }
+    
+    /// M7.2.3 Phase 2.6: Capture immutable scope snapshot for background work
+    ///
+    /// ## Purpose (Gemini Best Practice)
+    /// When enqueuing background work, capture scope on main thread:
+    /// ```swift
+    /// // ✅ Main thread
+    /// let snapshot = scopeProvider.scopeSnapshot()
+    ///
+    /// // ✅ Background thread - uses scope from enqueue time
+    /// persistence.performScopedWrite(scope: snapshot) { context, factory in
+    ///     // ...
+    /// }
+    /// ```
+    ///
+    /// ## Benefits
+    /// - No cross-actor calls from background → main
+    /// - Deterministic behavior (scope at enqueue time, not execution time)
+    /// - Fewer parameters through call chains
+    /// - Immutable snapshot safe to pass anywhere
+    ///
+    /// ## Returns
+    /// Immutable DataScope value captured at call time
+    ///
+    /// Source: Gemini - "snapshot scope on main before hopping"
+    func scopeSnapshot() -> DataScope {
+        return activeScope  // DataScope is a value type, safe to return
     }
 }
 
@@ -117,6 +165,14 @@ extension HouseholdScopeProvider {
         let scope = activeScope
         print("\n📍 [\(label)] Current Scope:")
         print("   \(scope)")
+        
+        if case .household(let id, let storeID) = scope {
+            if let household = try? persistence.container.viewContext.existingObject(with: id) as? Household {
+                print("   Household Name: \(household.name ?? "Unnamed")")
+                print("   Household ID: \(household.id?.uuidString ?? "nil")")
+            }
+        }
+        
         print("")
     }
 }

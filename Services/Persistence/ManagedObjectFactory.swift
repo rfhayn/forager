@@ -2,18 +2,43 @@
 //  ManagedObjectFactory.swift
 //  forager
 //
-//  M7.2.3 Phase 2.3: Scope-Based Store Assignment - Object Factory
+//  M7.2.3 Phase 2.3 & 2.6: Scope-Based Store Assignment - Object Factory
 //  Created on January 2, 2026
+//  Updated Phase 2.6: StoreID resolution, loud failures, 'in' parameter
 //
 //  Factory for creating managed objects with automatic store assignment
 //  and household relationship management. This is the ONLY way to create
 //  household-scoped entities in the app.
 //
-//  Implementation adapted from Gemini external validation.
+//  Implementation adapted from Gemini + ChatGPT external validation.
 //
 
 import Foundation
 import CoreData
+
+// MARK: - Factory Errors
+
+/// M7.2.3 Phase 2.6: Explicit errors for loud failures
+///
+/// Source: Gemini - "Prefer throw if scope says household but fetch fails"
+enum FactoryError: Error {
+    /// Household ObjectID could not be resolved to an object
+    case householdNotFound(NSManagedObjectID)
+    
+    /// ObjectID resolved but was not a Household type
+    case invalidHouseholdObjectID
+    
+    var localizedDescription: String {
+        switch self {
+        case .householdNotFound(let id):
+            return "Household not found for ObjectID: \(id)"
+        case .invalidHouseholdObjectID:
+            return "ObjectID did not resolve to a Household type"
+        }
+    }
+}
+
+// MARK: - Managed Object Factory
 
 /// Factory for creating managed objects with automatic store assignment
 ///
@@ -23,90 +48,166 @@ import CoreData
 /// - **HouseholdKey**: Auto-populates householdKey for efficient queries
 /// - **Enforcement**: Only creation path for household-scoped entities
 ///
-/// ## Usage
-/// ```swift
-/// let factory = ManagedObjectFactory(
-///     context: viewContext,
-///     scopeProvider: scopeProvider
-/// )
+/// ## M7.2.3 Phase 2.6 Refinements (External Validation)
+/// 1. **StoreID Resolution**: Uses enum instead of NSPersistentStore (Gemini)
+/// 2. **Loud Failures**: Throws on household lookup failure instead of silent nil (Gemini)
+/// 3. **`in` Parameter**: Named parameter for explicit scope (ChatGPT + Gemini)
+/// 4. **Optional ScopeProvider**: Works for both main + background contexts (ChatGPT)
 ///
-/// // Create a recipe in the correct scope
-/// let recipe = await factory.make(Recipe.self) { newRecipe in
-///     newRecipe.id = UUID()
-///     newRecipe.title = "Chocolate Cake"
-///     newRecipe.servings = 8
+/// ## Usage Patterns
+///
+/// ### Main Thread (SwiftUI Views)
+/// ```swift
+/// @Environment(\.managedObjectFactory) private var factory
+///
+/// func createList() {
+///     guard let factory = factory else { return }
+///
+///     _ = try factory.make(WeeklyList.self) { list in
+///         list.id = UUID()
+///         // Scope from provider, store + household auto-set!
+///     }
 /// }
-/// // Recipe is automatically in correct store with household set!
+/// ```
+///
+/// ### Background Context
+/// ```swift
+/// let scope = DataScope.household(id: householdID, storeID: .shared)
+///
+/// persistence.performScopedWrite(scope: scope) { context, factory in
+///     _ = try factory.make(Category.self, in: scope) { category in
+///         category.id = UUID()
+///         // Explicit scope, store + household auto-set!
+///     }
+/// }
 /// ```
 ///
 /// ## Critical: HouseholdScoped Invariant
 /// Any entity conforming to HouseholdScoped MUST be created via this factory.
 /// Direct creation (`Recipe(context:)`) is explicitly forbidden.
 ///
-/// Source: Gemini - Adapted for @MainActor and simplified store assignment
-@MainActor
+/// Source: Gemini + ChatGPT - Refined from Phase 2.3 implementation
+///
+/// ## M7.2.6 Threading Note
+/// NOT marked @MainActor because it works in both contexts:
+/// - Main thread: With ScopeProvider (which IS @MainActor)
+/// - Background thread: With explicit scope (no provider needed)
 final class ManagedObjectFactory {
     
     // MARK: - Dependencies
     
     private let context: NSManagedObjectContext
-    private let scopeProvider: HouseholdScopeProvider
+    private let scopeProvider: ScopeProvider?  // ✅ Optional for background usage
+    private let persistence: PersistenceController
     
     // MARK: - Initialization
     
-    /// Creates a factory for object creation with automatic store assignment
-    /// - Parameters:
-    ///   - context: Managed object context for creating objects
-    ///   - scopeProvider: Provides current scope (personal vs household)
-    init(context: NSManagedObjectContext, scopeProvider: HouseholdScopeProvider) {
+    /// M7.2.3 Phase 2.6: Creates factory with optional scope provider
+    ///
+    /// ## Parameters
+    /// - context: Managed object context for creating objects
+    /// - scopeProvider: Optional provider for automatic scope (nil for background)
+    /// - persistence: Persistence controller for store resolution
+    ///
+    /// ## Design Decision (External Validation)
+    /// **Optional scopeProvider** (ChatGPT's approach):
+    /// - One initializer, simpler API
+    /// - Works for both main + background contexts
+    /// - Priority chain: explicit > provider > personal
+    ///
+    /// Alternative considered (Gemini's suggestion):
+    /// - Two separate initializers (more rigid)
+    ///
+    /// **Verdict**: Optional is cleaner and more flexible
+    ///
+    /// Source: ChatGPT - "Making it optional is clean"
+    init(
+        context: NSManagedObjectContext,
+        scopeProvider: ScopeProvider? = nil,
+        persistence: PersistenceController
+    ) {
         self.context = context
         self.scopeProvider = scopeProvider
+        self.persistence = persistence
     }
     
     // MARK: - Object Creation
     
-    /// Creates a new object in the appropriate store based on current scope
+    /// M7.2.3 Phase 2.6: Creates object with automatic store + household assignment
     ///
     /// ## Automatic Behavior
-    /// - **Personal scope**: Object created in Private Store, household = nil
-    /// - **Household scope**: Object created in Shared Store, household auto-set
+    /// - **Personal scope**: Object in Private Store, household = nil
+    /// - **Household scope**: Object in Shared Store, household auto-set
     ///
-    /// ## Store Assignment (Phase 2.3)
-    /// Currently creates objects in default store. Store assignment will be
-    /// implemented in Phase 2.4 when NSManagedObjectContext.assign(_:to:) is available.
+    /// ## Scope Priority (Refined in Phase 2.6)
+    /// 1. **Explicit scope** (in parameter) - for background contexts
+    /// 2. **ScopeProvider** (if available) - for main thread/views
+    /// 3. **Fallback to .personal** - if neither provided
     ///
     /// ## Parameters
-    ///   - type: The NSManagedObject type to create
-    ///   - configure: Configuration closure for setting properties
+    /// - type: The NSManagedObject type to create
+    /// - explicitScope: Optional explicit scope (for background contexts)
+    /// - configure: Configuration closure for setting properties
     ///
     /// ## Returns
     /// The created object with:
-    /// - Correct store assignment (Private or Shared)
+    /// - Correct store assignment (via StoreID resolution)
     /// - Household relationship set (if in household scope)
     /// - HouseholdKey populated (if in household scope)
     ///
-    /// ## Example
+    /// ## Throws
+    /// - `FactoryError.householdNotFound`: If household ObjectID can't be resolved
+    /// - `FactoryError.invalidHouseholdObjectID`: If ObjectID isn't a Household
+    ///
+    /// ## Example (Main Thread)
     /// ```swift
-    /// let list = await factory.make(WeeklyList.self) { newList in
+    /// let list = try factory.make(WeeklyList.self) { newList in
     ///     newList.id = UUID()
     ///     newList.startDate = Date()
-    ///     newList.status = "active"
     /// }
     /// ```
-    func make<T: NSManagedObject>(_ type: T.Type, configure: (T) -> Void) -> T {
+    ///
+    /// ## Example (Background Context)
+    /// ```swift
+    /// let scope = DataScope.household(id: householdID, storeID: .shared)
+    /// let category = try factory.make(Category.self, in: scope) { newCat in
+    ///     newCat.id = UUID()
+    ///     newCat.name = "Produce"
+    /// }
+    /// ```
+    ///
+    /// Source: ChatGPT + Gemini - "in:" parameter for readability
+    func make<T: NSManagedObject>(
+        _ type: T.Type,
+        in explicitScope: DataScope? = nil,  // ✅ Named 'in' for readability
+        configure: (T) -> Void
+    ) throws -> T {
         let object = T(context: context)
-        let scope = scopeProvider.activeScope
+        
+        // M7.2.3 Phase 2.6: Priority chain for scope resolution
+        // scopeProvider is only non-nil when on MainActor (from Environment),
+        // so we can safely access it using assumeIsolated
+        let activeScope: DataScope
+        if let explicitScope = explicitScope {
+            activeScope = explicitScope
+        } else if let provider = scopeProvider {
+            activeScope = MainActor.assumeIsolated {
+                provider.activeScope
+            }
+        } else {
+            activeScope = .personal
+        }
         
         #if DEBUG
         print("🏭 ManagedObjectFactory: Creating \(type)")
+        print("   Scope: \(activeScope)")
         #endif
         
-        switch scope {
+        switch activeScope {
         case .personal:
-            // Personal scope: household should be nil
-            #if DEBUG
-            print("   Scope: Personal (Private Store)")
-            #endif
+            // M7.2.3 Phase 2.6: Resolve StoreID → NSPersistentStore
+            let targetStore = persistence.store(for: .private)
+            context.assign(object, to: targetStore)
             
             // Explicitly ensure household relationship is nil
             if let scopedObject = object as? HouseholdScoped {
@@ -114,25 +215,42 @@ final class ManagedObjectFactory {
                 scopedObject.householdKey = nil
             }
             
-        case .household(let householdID, let targetStore):
-            // Household scope: set household relationship and key
             #if DEBUG
-            print("   Scope: Household (Store: \(targetStore.url?.lastPathComponent ?? "unknown"))")
+            print("   Store: Private (household = nil)")
             #endif
             
-            // Set household relationship
+        case .household(let householdID, let storeID):
+            // M7.2.3 Phase 2.6: Resolve StoreID → NSPersistentStore (Gemini)
+            let targetStore = persistence.store(for: storeID)
+            context.assign(object, to: targetStore)
+            
+            // M7.2.3 Phase 2.6: Loud failure on household resolution (Gemini)
+            // "Prefer throw if scope says household but fetch fails"
             if let scopedObject = object as? HouseholdScoped {
-                // Fetch household in current context (prevents stale references)
-                if let household = try? context.existingObject(with: householdID) as? Household {
+                do {
+                    guard let household = try context.existingObject(with: householdID) as? Household else {
+                        #if DEBUG
+                        fatalError("❌ Factory: Household ObjectID resolved to wrong type")
+                        #else
+                        throw FactoryError.invalidHouseholdObjectID
+                        #endif
+                    }
+                    
                     scopedObject.household = household
                     scopedObject.householdKey = household.id?.uuidString
                     
                     #if DEBUG
-                    print("   ✅ Household relationship set: \(household.name ?? "Unnamed")")
-                    print("   ✅ HouseholdKey set: \(household.id?.uuidString ?? "nil")")
+                    print("   ✅ Household: \(household.name ?? "Unnamed")")
+                    print("   ✅ HouseholdKey: \(household.id?.uuidString ?? "nil")")
+                    print("   ✅ Store: \(storeID)")
                     #endif
-                } else {
-                    print("   ⚠️ Could not resolve household from ObjectID")
+                    
+                } catch {
+                    #if DEBUG
+                    fatalError("❌ Factory: Failed to resolve household from ObjectID: \(error)")
+                    #else
+                    throw FactoryError.householdNotFound(householdID)
+                    #endif
                 }
             }
         }
@@ -141,11 +259,9 @@ final class ManagedObjectFactory {
         configure(object)
         
         #if DEBUG
-        // Log final store assignment (using StoreIdentityLogger from Prep Phase)
-        if let managedObject = object as? NSManagedObject {
-            print("  Factory Result:")
-            managedObject.logStoreIdentity()
-        }
+        // Log final store assignment (using StoreIdentityLogger)
+        print("  Factory Result:")
+        object.logStoreIdentity()
         #endif
         
         return object
@@ -159,16 +275,31 @@ extension ManagedObjectFactory {
     /// Creates an object and logs verbose details (for debugging)
     func makeWithLogging<T: NSManagedObject>(
         _ type: T.Type,
+        in explicitScope: DataScope? = nil,
         label: String = "Object Creation",
         configure: (T) -> Void
-    ) -> T {
+    ) throws -> T {
         print("\n🏭 [\(label)] Creating \(type)")
-        print("   Current Scope: \(scopeProvider.activeScope)")
         
-        let object = make(type, configure: configure)
+        // M7.2.3 Phase 2.6: Same scope resolution as make()
+        let activeScope: DataScope
+        if let explicitScope = explicitScope {
+            activeScope = explicitScope
+        } else if let provider = scopeProvider {
+            activeScope = MainActor.assumeIsolated {
+                provider.activeScope
+            }
+        } else {
+            activeScope = .personal
+        }
         
-        print("   ✅ Object created successfully")
-        print("")
+        print("   Explicit Scope: \(explicitScope?.description ?? "nil")")
+        print("   Provider Scope: \(scopeProvider != nil ? "<available>" : "nil")")
+        print("   Active Scope: \(activeScope)")
+        
+        let object = try make(type, in: explicitScope, configure: configure)
+        
+        print("   ✅ Object created successfully\n")
         
         return object
     }
