@@ -86,6 +86,8 @@
 		9BC663462EE25D95006836A5 /* CloudKitSyncTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */; };
 		9BCE1C452EC612E4009B0109 /* GroceryListItem+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BCE1C442EC612DE009B0109 /* GroceryListItem+ComputedProperties.swift */; };
 		9BD3C3AC2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD3C3AB2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift */; };
+		9BD3C3AF2F0ABE2500F50495 /* WeeklyList+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD3C3AE2F0ABE2500F50495 /* WeeklyList+Extensions.swift */; };
+		9BD3C3B02F0ABE2500F50495 /* MealPlan+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BD3C3AD2F0ABE2500F50495 /* MealPlan+Extensions.swift */; };
 		9BE1A4AE2F05807500C59861 /* CloudKitTestHarnessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE1A4AD2F05807500C59861 /* CloudKitTestHarnessView.swift */; };
 		9BE384A72F088918001929B8 /* Household+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE384A02F088918001929B8 /* Household+CoreDataClass.swift */; };
 		9BE384A82F088918001929B8 /* HouseholdMember+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE384A12F088918001929B8 /* HouseholdMember+CoreDataClass.swift */; };
@@ -201,6 +203,8 @@
 		9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncTestView.swift; sourceTree = "<group>"; };
 		9BCE1C442EC612DE009B0109 /* GroceryListItem+ComputedProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryListItem+ComputedProperties.swift"; sourceTree = "<group>"; };
 		9BD3C3AB2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreHouseholdDataMigrationSheet.swift; sourceTree = "<group>"; };
+		9BD3C3AD2F0ABE2500F50495 /* MealPlan+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MealPlan+Extensions.swift"; sourceTree = "<group>"; };
+		9BD3C3AE2F0ABE2500F50495 /* WeeklyList+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+Extensions.swift"; sourceTree = "<group>"; };
 		9BE1A4AD2F05807500C59861 /* CloudKitTestHarnessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitTestHarnessView.swift; sourceTree = "<group>"; };
 		9BE384A02F088918001929B8 /* Household+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9BE384A12F088918001929B8 /* HouseholdMember+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+CoreDataClass.swift"; sourceTree = "<group>"; };
@@ -366,6 +370,7 @@
 				85ADBDC72EA97DE600E3B1B5 /* M3ValidationTests.swift */,
 				9BE384A32F088918001929B8 /* MealPlan+CoreDataClass.swift */,
 				9B56ECB72F0859E800877716 /* MealPlan+CoreDataProperties.swift */,
+				9BD3C3AD2F0ABE2500F50495 /* MealPlan+Extensions.swift */,
 				9B1B396C2EF4E48C001E1876 /* MigrationTestHelper.swift */,
 				9BE384A42F088918001929B8 /* PlannedMeal+CoreDataClass.swift */,
 				9B56ECB22F0857FB00877716 /* PlannedMeal+CoreDataProperties.swift */,
@@ -382,6 +387,7 @@
 				9BE384A62F088918001929B8 /* UserPreferences+CoreDataProperties.swift */,
 				9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */,
 				9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */,
+				9BD3C3AE2F0ABE2500F50495 /* WeeklyList+Extensions.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -580,6 +586,8 @@
 				9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */,
 				9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */,
 				9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */,
+				9BD3C3AF2F0ABE2500F50495 /* WeeklyList+Extensions.swift in Sources */,
+				9BD3C3B02F0ABE2500F50495 /* MealPlan+Extensions.swift in Sources */,
 				9B0555562EDB665C00A57B34 /* CreateRecipeView.swift in Sources */,
 				9B1B39652EF4BA71001E1876 /* Category+Extensions.swift in Sources */,
 				9B0555572EDB665C00A57B34 /* WeeklyListsView.swift in Sources */,

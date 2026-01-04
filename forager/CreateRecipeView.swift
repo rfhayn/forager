@@ -652,6 +652,11 @@ struct CreateRecipeView: View {
             // Single save for entire transaction
             try viewContext.save()
             
+            // M7.2.3 Phase 4.3: Verify household auto-assignment
+            print("✅ M7.2.3 Phase 4.3: Recipe saved - '\(recipe.title ?? "")'")
+            print("   Household: \(recipe.household?.name ?? "nil")")
+            print("   Household Key: \(recipe.householdKey ?? "nil")")
+            
             hasUnsavedChanges = false
             isSaving = false
             dismiss()
