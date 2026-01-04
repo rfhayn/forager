@@ -161,6 +161,221 @@ class HouseholdService: ObservableObject {
         }
     }
     
+    // MARK: - M7.2.3 Phase 4: Data Migration
+    
+    /// Counts existing personal data for migration prompt
+    /// Returns tuple of (recipeCount, listCount, mealPlanCount, categoryCount, templateCount)
+    func countPersonalData() -> (recipes: Int, lists: Int, mealPlans: Int, categories: Int, templates: Int) {
+        var recipeCount = 0
+        var listCount = 0
+        var mealPlanCount = 0
+        var categoryCount = 0
+        var templateCount = 0
+        
+        // Count recipes without household
+        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeRequest.predicate = NSPredicate(format: "household == nil")
+        recipeCount = (try? viewContext.count(for: recipeRequest)) ?? 0
+        
+        // Count weekly lists without household
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listRequest.predicate = NSPredicate(format: "household == nil")
+        listCount = (try? viewContext.count(for: listRequest)) ?? 0
+        
+        // Count meal plans without household (MealPlan, not PlannedMeal!)
+        let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        mealPlanRequest.predicate = NSPredicate(format: "household == nil")
+        mealPlanCount = (try? viewContext.count(for: mealPlanRequest)) ?? 0
+        
+        // Count categories without household
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.predicate = NSPredicate(format: "household == nil")
+        categoryCount = (try? viewContext.count(for: categoryRequest)) ?? 0
+        
+        // Count ingredient templates without household
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateRequest.predicate = NSPredicate(format: "household == nil")
+        templateCount = (try? viewContext.count(for: templateRequest)) ?? 0
+        
+        #if DEBUG
+        print("📊 Personal data counts:")
+        print("   Recipes: \(recipeCount)")
+        print("   Weekly Lists: \(listCount)")
+        print("   Meal Plans: \(mealPlanCount)")
+        print("   Categories: \(categoryCount)")
+        print("   Ingredient Templates: \(templateCount)")
+        #endif
+        
+        return (recipeCount, listCount, mealPlanCount, categoryCount, templateCount)
+    }
+    
+    /// Creates household and migrates existing personal data if requested
+    /// - Parameters:
+    ///   - name: Name of the household
+    ///   - ownerName: Display name for the owner
+    ///   - moveExistingData: Whether to migrate existing personal data to household
+    /// - Returns: The newly created Household
+    func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            #if DEBUG
+            print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
+            print("   Household: \(name)")
+            print("   Owner: \(ownerName)")
+            print("   Move existing data: \(moveExistingData)")
+            #endif
+            
+            // 1. Get current user's email from CloudKit
+            let ownerEmail = try await getCurrentUserEmail()
+            
+            // 2. Create Household entity in Private Store (will be shared after)
+            let household = Household(context: viewContext)
+            household.id = UUID()
+            household.name = name
+            household.ownerEmail = ownerEmail
+            household.createdDate = Date()
+            
+            // 3. Create owner as first member
+            let ownerMember = HouseholdMember(context: viewContext)
+            ownerMember.id = UUID()
+            ownerMember.email = ownerEmail
+            ownerMember.displayName = ownerName
+            ownerMember.role = "owner"
+            ownerMember.status = "active"
+            ownerMember.joinedDate = Date()
+            ownerMember.household = household
+            
+            // 4. Migrate existing data if requested
+            if moveExistingData {
+                try migratePersonalDataToHousehold(household)
+            }
+            
+            // 5. Save to Core Data (household in Private Store initially)
+            try viewContext.save()
+            
+            #if DEBUG
+            household.logStoreIdentity()  // Should show "Private Store"
+            #endif
+            
+            // 6. CRITICAL: Share the household using container.share()
+            // This creates CKShare and moves household to Shared Zone
+            // Note: We use 'to: nil' to let Core Data manage CKShare creation
+            let persistenceController = PersistenceController.shared
+            let (_, share, _) = try await persistenceController.container.share([household], to: nil)
+            
+            #if DEBUG
+            print("✅ CKShare created: \(share.recordID.recordName)")
+            household.logStoreIdentity()  // Should show "Shared Store" after share
+            #endif
+            
+            // 7. Store share record reference
+            household.shareRecord = try NSKeyedArchiver.archivedData(
+                withRootObject: share,
+                requiringSecureCoding: true
+            )
+            
+            // 8. CRITICAL: Refresh all household-related objects to get updated store assignments
+            viewContext.refreshAllObjects()
+            
+            // 9. Save share record
+            try viewContext.save()
+            
+            // 10. Update current household
+            currentHousehold = household
+            
+            print("✅ Household created: \(name)")
+            print("✅ Owner: \(ownerEmail)")
+            print("✅ CloudKit shared zone activated")
+            if moveExistingData {
+                print("✅ Personal data migrated to household")
+            }
+            
+            return household
+            
+        } catch {
+            print("❌ Household creation failed: \(error)")
+            throw HouseholdError.creationFailed(error.localizedDescription)
+        }
+    }
+    
+    /// Migrates ALL existing personal data to household
+    /// Attaches recipes, lists, meal plans, categories, and ingredient templates
+    /// Sets both household relationship AND householdKey for CloudKit sync
+    private func migratePersonalDataToHousehold(_ household: Household) throws {
+        #if DEBUG
+        print("\n🔄 Migrating ALL personal data to household...")
+        #endif
+        
+        guard let householdId = household.id else {
+            throw HouseholdError.creationFailed("Household missing ID")
+        }
+        
+        let householdKey = householdId.uuidString
+        var migratedCount = 0
+        
+        // Migrate recipes
+        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeRequest.predicate = NSPredicate(format: "household == nil")
+        let recipes = try viewContext.fetch(recipeRequest)
+        for recipe in recipes {
+            recipe.household = household
+            recipe.householdKey = householdKey
+            migratedCount += 1
+        }
+        
+        // Migrate weekly lists
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listRequest.predicate = NSPredicate(format: "household == nil")
+        let lists = try viewContext.fetch(listRequest)
+        for list in lists {
+            list.household = household
+            list.householdKey = householdKey
+            migratedCount += 1
+        }
+        
+        // Migrate meal plans (MealPlan, not PlannedMeal!)
+        let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        mealPlanRequest.predicate = NSPredicate(format: "household == nil")
+        let mealPlans = try viewContext.fetch(mealPlanRequest)
+        for mealPlan in mealPlans {
+            mealPlan.household = household
+            mealPlan.householdKey = householdKey
+            migratedCount += 1
+        }
+        
+        // Migrate categories
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.predicate = NSPredicate(format: "household == nil")
+        let categories = try viewContext.fetch(categoryRequest)
+        for category in categories {
+            category.household = household
+            category.householdKey = householdKey
+            migratedCount += 1
+        }
+        
+        // Migrate ingredient templates
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateRequest.predicate = NSPredicate(format: "household == nil")
+        let templates = try viewContext.fetch(templateRequest)
+        for template in templates {
+            template.household = household
+            template.householdKey = householdKey
+            migratedCount += 1
+        }
+        
+        #if DEBUG
+        print("✅ Migrated \(migratedCount) items:")
+        print("   \(recipes.count) recipes")
+        print("   \(lists.count) weekly lists")
+        print("   \(mealPlans.count) meal plans")
+        print("   \(categories.count) categories")
+        print("   \(templates.count) ingredient templates")
+        print("   Household key: \(householdKey)")
+        #endif
+    }
+    
     // MARK: - CloudKit Integration
     
     /// Creates a CloudKit share for the household

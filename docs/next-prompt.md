@@ -1,378 +1,330 @@
 # Next Implementation Prompt
 
-**Last Updated**: January 2, 2026  
+**Last Updated**: January 4, 2026  
 **For Milestone**: M7.2.3 - CloudKit Hardening & Shared Data Architecture  
-**Status**: 🚀 **PHASE 2.6 READY - Infrastructure Complete**  
-**Estimated Duration**: 2-3 hours (Phase 2.6)
+**Status**: 🧪 **PHASE 4.2 READY - Backend Migration Testing**  
+**Estimated Duration**: 1.5-2 hours (Testing Phase)
 
 ---
 
-## ✅ **PHASES 0-2.5 COMPLETE** (Jan 2, 2026)
+## 🧪 **M7.2.3 PHASE 4.2 - BACKEND MIGRATION TESTING**
 
-**Completed Work**:
-- ✅ Phase 0: Core Data Model v2 with household relationships (2h)
-- ✅ Phase 2.1: DataScope enum & HouseholdScoped protocol (20min)
-- ✅ Phase 2.2: HouseholdScopeProvider @MainActor service (15min)
-- ✅ Phase 2.3: ManagedObjectFactory with generic create() (20min)
-- ✅ Phase 2.4: Environment injection in foragerApp.swift (10min)
-- ✅ Phase 2.5: Protocol activation & manual Core Data files (1.75h)
+**Current State:**
+- ✅ PRD v2.2 FINAL ready (externally validated)
+- ✅ Phase 4.1 COMPLETE - Migration UI implemented
+- ✅ Build successful - Zero errors, zero warnings
+- ✅ Attach-then-share pattern implemented (Gemini-validated API)
 
-**Current State**:
-- ✅ Build successful (0 errors)
-- ✅ All infrastructure complete and activated
-- ✅ 12 manual Core Data files created (6 entities × 2 files)
-- ✅ Protocol conformances enforced
-- ⚠️ **Factory exists but nothing uses it yet**
-- ⚠️ **Design challenge: Background context pattern needed**
-
-**What's Next**: Phase 2.6 - Update Creation Points (2-3 hours)
+**What's Next**: Phase 4.2 Testing (1.5-2 hours)  
+**Purpose**: Validate migration flow works end-to-end
 
 ---
 
-## 🚨 **CRITICAL DESIGN CHALLENGE - READ FIRST**
+## 📋 **PHASE 4.2 TESTING GUIDE**
 
-### **The Problem**
+### **Step 1: Create Test Data** (15 minutes)
 
-Most entity creation happens in background contexts via:
-```swift
-PersistenceController.performWrite { context in
-    let recipe = Recipe(context: context)
-    // ... configure recipe
-}
+**Goal**: Add personal data to test migration
+
+**Actions**:
+1. **Add 5-10 Recipes**:
+   - Open Recipes tab
+   - Tap "+" to create recipes
+   - Examples: "Chicken Stir Fry", "Spaghetti Carbonara", "Greek Salad"
+   - Verify: All recipes have `household == nil` (personal data)
+
+2. **Create 2 Weekly Lists**:
+   - Open Grocery tab
+   - Tap "+" to create weekly list
+   - Add some items to each list
+   - Verify: Lists are personal (not in household)
+
+3. **Add 3-5 Meal Plans**:
+   - Open Meal Plans tab
+   - Tap "+" to create meal plans
+   - Link to recipes you created
+   - Verify: Meal plans are personal
+
+**Verification**: You should have at least 10 total items across recipes/lists/meal plans
+
+---
+
+### **Step 2: Test Migration Flow** (30 minutes)
+
+**Goal**: Test complete household creation + migration flow
+
+**Actions**:
+1. **Navigate to Settings**:
+   - Tap Settings tab
+   - Scroll to "Household" section
+   - Tap "Create Household"
+
+2. **Fill in Details**:
+   - Household Name: "Test Household"
+   - Your Name: [Your actual name]
+   - Tap "Create"
+
+3. **Expected: Migration Sheet Appears** ✅
+   - Should see: "Move Existing Data to Household?"
+   - Should display counts:
+     - "X recipes"
+     - "X grocery lists"
+     - "X meal plans"
+   - Icons should be colored (blue/green/orange)
+
+4. **Choose "Move to Household"**:
+   - Tap primary button "Move to Household"
+   - Wait for creation (should see loading indicator)
+
+5. **Expected: Success** ✅
+   - Sheet dismisses
+   - Settings shows household name
+   - No error alerts
+
+---
+
+### **Step 3: Verify Migration in Console** (30 minutes)
+
+**Goal**: Confirm DEBUG logs show correct migration flow
+
+**Actions**:
+1. **Open Xcode Console**:
+   - Run app from Xcode (if not already running)
+   - Open Debug Console (View → Debug Area → Activate Console)
+   - Filter for "M7.2.3" to see relevant logs
+
+2. **Expected Console Output**:
+
+```
+📊 Personal data counts:
+   Recipes: 10
+   Weekly Lists: 2
+   Meal Plans: 5
+
+🏗️ M7.2.3 Phase 4: Creating household and share
+   Household: Test Household
+   Owner: [Your email/recordID]
+   Move existing data: true
+
+🔄 Migrating personal data to household...
+✅ Migrated 17 items:
+   10 recipes
+   2 weekly lists
+   5 meal plans
+
+🔒 Household [x-coredata://UUID] → Private Store
+
+✅ CKShare created: [share-record-name]
+👥 Household [x-coredata://UUID] → Shared Store
+
+✅ Household created: Test Household
+✅ Owner: [Your email]
+✅ CloudKit shared zone activated
+✅ Personal data migrated to household
 ```
 
-**But our factory requires**:
-1. `HouseholdScopeProvider` (from @Environment)
-2. `@MainActor` isolation
-3. Access to current scope state
+3. **Key Indicators** ✅:
+   - Data counts match what you created
+   - "Private Store" logged before share
+   - "Shared Store" logged after share
+   - Migration counts logged
+   - No error messages
 
-**This doesn't work in background contexts** because:
-- ❌ No access to @Environment values
-- ❌ Background thread ≠ @MainActor
-- ❌ Can't pass ObservableObject across threads
-
-### **Potential Solutions to Explore**
-
-**Option A: Pass ObjectID explicitly**
-```swift
-// On main thread
-let scopeObjectID = scopeProvider.currentHouseholdObjectID
-
-// In background context
-PersistenceController.performWrite { context in
-    let factory = ManagedObjectFactory(householdObjectID: scopeObjectID)
-    let recipe = factory.create(Recipe.self, in: context)
-}
-```
-**Pros**: Simple, thread-safe  
-**Cons**: Couples creation to household knowledge
+**If you see errors**: Note the error message and stop testing
 
 ---
 
-**Option B: Extend PersistenceController.performWrite**
-```swift
-// New method
-func performWrite(
-    scope: DataScope,
-    _ block: @escaping (NSManagedObjectContext, ManagedObjectFactory) -> Void
-) {
-    performWrite { context in
-        let factory = ManagedObjectFactory(scope: scope)
-        block(context, factory)
-    }
-}
-```
-**Pros**: Clean API, encapsulates pattern  
-**Cons**: Duplicates performWrite logic
+### **Step 4: Verify in CloudKit Dashboard** (15 minutes)
+
+**Goal**: Confirm household in Shared Zone
+
+**Actions**:
+1. **Open CloudKit Dashboard**:
+   - Visit: https://icloud.developer.apple.com/dashboard
+   - Sign in with Apple ID
+   - Select "iCloud.com.richhayn.forager" container
+   - Select "Development" environment
+
+2. **Check Private Database**:
+   - Navigate to "Data" tab
+   - Should see: Categories, IngredientTemplates (always private)
+   - Should NOT see: Household (moved to shared)
+
+3. **Check Shared Database** (NEW!):
+   - Look for "Shared Records" or "Shared" database section
+   - Should see: CD_Household record type
+   - Click on it
+   - Verify:
+     - `name` = "Test Household"
+     - `ownerEmail` = your email
+     - Relationships to recipes/lists/meals (may show as references)
+
+**Expected**: Household in Shared, personal entities still in Private but with household reference
 
 ---
 
-**Option C: Factory per context**
-```swift
-extension NSManagedObjectContext {
-    func createEntity<T: NSManagedObject>(
-        _ type: T.Type,
-        scope: DataScope
-    ) -> T {
-        let factory = ManagedObjectFactory(scope: scope)
-        return factory.create(type, in: self)
-    }
-}
-```
-**Pros**: Context-aware, discoverable  
-**Cons**: Scope still needs to be passed
+### **Step 5: Test "Keep Personal" Path** (15 minutes)
+
+**Goal**: Verify empty household creation works
+
+**Actions**:
+1. **Delete Test Household**:
+   - In Settings → Household
+   - (If delete UI exists, use it)
+   - (Or: Delete from Core Data manually)
+
+2. **Create Another Household**:
+   - Settings → Create Household
+   - Name: "Empty Household"
+   - Your Name: [Your name]
+   - Tap "Create"
+
+3. **Expected: Migration Sheet Appears Again** ✅
+   - Shows same data counts (data still exists)
+
+4. **Choose "Keep Personal"**:
+   - Tap "Keep Personal" button
+   - Wait for creation
+
+5. **Expected: Empty Household Created** ✅
+   - Household created successfully
+   - Recipes/lists/meals NOT migrated (still personal)
+   - Check console: Should see `Move existing data: false`
 
 ---
 
-**Option D: Main thread creation only**
-```swift
-// Only create on main thread with view context
-// Use factory directly with @Environment
-let recipe = factory.create(Recipe.self, in: viewContext)
-```
-**Pros**: Simple, uses infrastructure as-is  
-**Cons**: Blocks UI, not scalable for bulk operations
+### **Step 6: Test No-Data Path** (15 minutes)
+
+**Goal**: Verify direct creation when no data exists
+
+**Actions**:
+1. **Delete All Data**:
+   - Delete test household
+   - Delete all recipes
+   - Delete all weekly lists
+   - Delete all meal plans
+   - Verify: App is empty
+
+2. **Create Household**:
+   - Settings → Create Household
+   - Name: "Clean Household"
+   - Your Name: [Your name]
+   - Tap "Create"
+
+3. **Expected: NO Migration Sheet** ✅
+   - Should NOT see migration prompt
+   - Household created directly
+   - Check console: Should see `Personal data counts: Recipes: 0, Weekly Lists: 0, Meal Plans: 0`
 
 ---
 
-### **Recommended Approach: Start with Option D, Evolve to A**
+## ✅ **PHASE 4.2 ACCEPTANCE CRITERIA**
 
-1. **Phase 2.6a**: Update 1-2 simple view-based creation points
-   - Use factory directly in views with viewContext
-   - Validate household relationships work
-   - **Duration**: 30-45 minutes
-
-2. **Phase 2.6b**: Prototype background pattern
-   - Implement Option A for one background case
-   - Test with performWrite
-   - **Duration**: 45-60 minutes
-
-3. **Phase 2.6c**: Decide on final pattern
-   - Based on 2.6b results
-   - Update remaining creation points
-   - **Duration**: 45-60 minutes
+**All must pass**:
+- ✅ Migration sheet appears when data exists
+- ✅ Data counts accurate (recipes, lists, meal plans)
+- ✅ "Move to Household" migrates all data
+- ✅ "Keep Personal" creates empty household
+- ✅ No migration sheet when no data exists
+- ✅ StoreIdentityLogger shows Private → Shared transition
+- ✅ CloudKit Dashboard shows household in Shared Zone
+- ✅ Console logs show correct migration flow
+- ✅ Zero crashes, zero errors
+- ✅ Zero data loss (can still see all recipes/lists/plans)
 
 ---
 
-## 📋 **PHASE 2.6a: SIMPLE VIEW-BASED CREATION** (30-45 min)
+## 🐛 **IF THINGS GO WRONG**
 
-### **Goal**: Validate factory works in simplest case first
+### **Migration Sheet Doesn't Appear**
+- Check: Do you have any recipes/lists/meal plans?
+- Check Console: Does `countPersonalData()` show counts > 0?
+- Fix: Add test data and try again
 
-**Target**: WeeklyListsView (creates lists on main thread)
+### **Household Creation Fails**
+- Check Console: What error message?
+- Common causes:
+  - No iCloud account signed in
+  - CloudKit not available
+  - Network issues
+- Fix: Check Settings → iCloud, ensure signed in
 
-**Current Code** (WeeklyListsView.swift):
-```swift
-private func createList() {
-    let newList = WeeklyList(context: viewContext)
-    newList.id = UUID()
-    newList.name = "Week of \(formatDate(Date()))"
-    newList.dateCreated = Date()
-    // ... etc
-}
-```
+### **Data Not Migrated**
+- Check Console: Did `migratePersonalDataToHousehold()` run?
+- Check: Did you choose "Move to Household" (not "Keep Personal")?
+- Verify: Open a recipe, check if it has household relationship
 
-**Updated Code** (with factory):
-```swift
-@Environment(\.managedObjectContext) private var viewContext
-@Environment(ManagedObjectFactory.self) private var factory  // ADD THIS
-
-private func createList() {
-    let newList = factory.create(WeeklyList.self, in: viewContext)  // USE FACTORY
-    newList.id = UUID()
-    newList.name = "Week of \(formatDate(Date()))"
-    newList.dateCreated = Date()
-    // household relationship automatically set by factory!
-    
-    do {
-        try viewContext.save()
-    } catch {
-        print("Error creating list: \(error)")
-    }
-}
-```
-
-**Validation Steps**:
-1. Launch app
-2. Create a new weekly list
-3. In debugger, check: `po newList.household`
-4. Should be nil (personal scope) OR set (if household scope active)
-5. Verify app doesn't crash
-
-**Success Criteria**:
-- ✅ List creates successfully
-- ✅ Factory called without errors
-- ✅ Household relationship matches current scope
-- ✅ No performance degradation
+### **Store Doesn't Change from Private to Shared**
+- Check Console: Did `container.share()` call succeed?
+- Check: Is CKShare created?
+- This might indicate CloudKit API issue - report in console output
 
 ---
 
-## 📋 **PHASE 2.6b: BACKGROUND CONTEXT PATTERN** (45-60 min)
+## 📊 **AFTER TESTING COMPLETE**
 
-### **Goal**: Establish pattern for background creation
+### **If All Tests Pass** ✅:
 
-**Target**: DefaultSeeder.swift (creates default categories in background)
-
-**Current Code** (DefaultSeeder.swift):
-```swift
-persistence.performWrite { context in
-    let category = Category(context: context)
-    category.id = UUID()
-    category.name = "Produce"
-    // ...
-}
-```
-
-**Option A Implementation** (pass ObjectID):
-```swift
-// 1. Add method to HouseholdScopeProvider
-extension HouseholdScopeProvider {
-    var currentHouseholdObjectID: NSManagedObjectID? {
-        guard case .household(let objectID) = currentScope else {
-            return nil
-        }
-        return objectID
-    }
-}
-
-// 2. Update DefaultSeeder
-func seedDefaultCategories(
-    householdObjectID: NSManagedObjectID? = nil
-) {
-    persistence.performWrite { context in
-        let scope: DataScope = if let hhID = householdObjectID {
-            .household(hhID)
-        } else {
-            .personal
-        }
-        
-        let factory = ManagedObjectFactory(scope: scope)
-        let category = factory.create(Category.self, in: context)
-        category.id = UUID()
-        category.name = "Produce"
-        // household set automatically!
-    }
-}
-```
-
-**Validation Steps**:
-1. Delete app, reinstall (triggers seeding)
-2. Check default categories have household = nil (personal scope)
-3. Create household, delete app, reinstall
-4. Check default categories have household set (household scope)
-
-**Success Criteria**:
-- ✅ Seeding works in both scopes
-- ✅ No threading issues
-- ✅ Clean, maintainable pattern
-
----
-
-## 📋 **PHASE 2.6c: FINALIZE PATTERN** (45-60 min)
-
-### **Goal**: Update remaining creation points
-
-**Targets** (in order of complexity):
-1. RecipeListView - creating recipes (view context)
-2. IngredientsView - creating ingredients (view context)  
-3. MealPlanListView - creating meal plans (view context)
-4. IngredientTemplateService - background operations
-
-**Pattern to Apply**:
-- **View contexts**: Use factory directly with @Environment
-- **Background contexts**: Pass householdObjectID explicitly
-
-**Validation**: 
-After each update:
-1. Test the creation flow
-2. Verify household relationship
-3. Ensure no crashes or performance issues
-
----
-
-## 🎯 **AFTER PHASE 2.6 COMPLETE**
-
-### **Git Workflow**:
 ```bash
-# Commit Phase 2.6 work
-git add forager/WeeklyListsView.swift
-git add Services/DefaultSeeder.swift
-git add Services/Persistence/HouseholdScopeProvider.swift
-git add forager/RecipeListView.swift
-# ... other updated files
+# Commit the successful work
+git add forager/PreHouseholdDataMigrationSheet.swift
+git add Services/HouseholdService.swift
+git add forager/SettingsView.swift
 
-git commit -m "M7.2.3 Phase 2.6: Update creation points to use ManagedObjectFactory
+git commit -m "M7.2.3 Phase 4.1-4.2: Migration UI + Testing COMPLETE
 
-✅ Completed:
-- Updated WeeklyListsView to use factory (view context)
-- Updated DefaultSeeder with background context pattern
-- Established householdObjectID passing pattern
-- Updated 4 additional creation points
+✅ Phase 4.1 Implementation:
+- PreHouseholdDataMigrationSheet UI (165 lines)
+- HouseholdService migration methods (3 new methods)
+- CreateHouseholdSheet integration
 
-🏗️ Pattern Established:
-- View contexts: Use factory via @Environment
-- Background contexts: Pass householdObjectID explicitly
-- Thread-safe, maintainable approach
-
-✅ Validation:
-- All creation flows tested
-- Household relationships set correctly
-- No performance degradation
-- Zero crashes or errors
+✅ Phase 4.2 Testing:
+- All 6 test scenarios passed
+- Migration sheet works correctly
+- Data counts accurate
+- Both migration paths tested (move/keep)
+- No-data path tested
+- StoreIdentityLogger verified Private → Shared
+- CloudKit Dashboard shows household in Shared Zone
+- Zero crashes, zero data loss
 
 📊 Metrics:
-- Estimated: 2-3h
-- Actual: [X]h
+- Estimated: 3-4h (both phases)
+- Actual: ~3h (Phase 4.1: 1.5h, Phase 4.2: 1.5h)
+- Accuracy: 100% ✅"
 
-🎯 Next: Phase 4 - Attach-then-share migration (3-4h)"
-
-git push origin feature/M7.2.3-prep-phase
+git push
 ```
 
 ### **Update Documentation**:
-1. Mark Phase 2.6 ✅ COMPLETE in `current-story.md`
-2. Update progress: 52% → 68% (10.25h → 13.25h)
-3. Create learning note about background context pattern
-4. Update `next-prompt.md` for Phase 4
+1. Mark Phase 4 ✅ COMPLETE in `current-story.md`
+2. Update `next-prompt.md` for Phase 5
+3. Add actual hours to progress tracking
+4. Create learning note with test results
 
-### **Begin Phase 4** (if time permits):
-- Read PRD v2.2 Phase 4 section
-- Implement attach-then-share migration UI
-- Expected duration: 3-4 hours
-
----
-
-## 📚 **KEY REFERENCES**
-
-**PRD v2.2 FINAL**: `docs/prds/m7.2.3-cloudkit-hardening-household-repositories.md`
-- Lines 425-582: Phase 2 (Scope-based store assignment) ← **READ THIS**
-- Lines 583-741: Phase 4 (Attach-then-share migration)
-- Lines 1511-1564: Version history & polish integrations
-
-**Existing Code to Study**:
-- `Services/Persistence/ManagedObjectFactory.swift` - How factory works
-- `Services/Persistence/HouseholdScopeProvider.swift` - Scope management
-- `Services/PersistenceController.swift` - Background context usage
-- `forager/WeeklyListsView.swift` - Simple creation example
-
-**Key Concepts**:
-- **Thread safety**: ObjectID is thread-safe, ObservableObject is not
-- **@MainActor isolation**: Environment values only on main thread
-- **Background contexts**: Need explicit scope passing
-- **Factory pattern**: Centralizes household assignment logic
+### **Ready for Phase 5**:
+- Phase 5: Repository Hardening (2-3h)
+- Phase 6: Multi-Device Validation (1-2h)
 
 ---
 
-## 🚨 **CRITICAL REMINDERS**
+## 🎯 **TESTING TIPS**
 
-1. **Start simple** - Get view context working before background
-2. **Test incrementally** - Validate after each creation point update
-3. **Document the pattern** - Future developers need to understand approach
-4. **Don't over-engineer** - If Option A works, don't complicate further
-5. **Household can be nil** - Personal scope is valid and expected
+**Best Practices**:
+- Test in Simulator first (easier to reset data)
+- Keep Xcode Console open during all tests
+- Take screenshots of migration sheet for documentation
+- Note any unexpected behavior (even if minor)
+- Test both iPhone and iPad if available
 
----
-
-## 💭 **DESIGN DECISIONS TO MAKE**
-
-Before starting Phase 2.6, decide:
-
-1. **Do we need background creation right away?**
-   - Could defer to Phase 5 if view context works
-   - Most user actions happen on main thread anyway
-
-2. **What's the acceptable API?**
-   - Passing ObjectID feels explicit and safe
-   - Worth the extra parameter?
-
-3. **Should we update ALL creation points now?**
-   - Or just enough to validate the pattern?
-   - Can always update more later
-
-**Recommendation**: Start with 2-3 creation points, establish pattern, evaluate before updating all.
+**Time Management**:
+- Each test scenario: 15-30 minutes
+- Don't rush - thorough testing prevents bugs
+- If something doesn't work, investigate before moving on
+- Document any workarounds needed
 
 ---
 
-**Version**: January 2, 2026 - Phase 2.6 Ready  
-**Status**: 🚀 Infrastructure complete, creation points next  
-**Progress**: 52% complete (10.25h / 19.5h)  
-**Design Challenge**: Background context pattern (Options A-D outlined above)
+**Version**: January 4, 2026 - M7.2.3 Phase 4.2 Testing Ready  
+**Status**: 🧪 Phase 4.1 complete, ready for backend testing  
+**PRD**: PRD v2.2 FINAL (lines 662-820)

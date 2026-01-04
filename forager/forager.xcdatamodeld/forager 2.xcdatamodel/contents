@@ -70,7 +70,7 @@
         <relationship name="groceryListItems" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroceryListItem" inverseName="household" inverseEntity="GroceryListItem"/>
         <relationship name="ingredients" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Ingredient" inverseName="household" inverseEntity="Ingredient"/>
         <relationship name="ingredientTemplates" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="IngredientTemplate" inverseName="household" inverseEntity="IngredientTemplate"/>
-        <relationship name="mealPlans" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MealPlan" inverseName="household" inverseEntity="MealPlan"/>
+        <relationship name="mealPlans" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="MealPlan" inverseName="household" inverseEntity="MealPlan"/>
         <relationship name="members" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="HouseholdMember" inverseName="household" inverseEntity="HouseholdMember"/>
         <relationship name="preferences" optional="YES" maxCount="1" deletionRule="Cascade" destinationEntity="UserPreferences" inverseName="household" inverseEntity="UserPreferences"/>
         <relationship name="recipes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Recipe" inverseName="household" inverseEntity="Recipe"/>
@@ -137,6 +137,7 @@
         <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="duration" attributeType="Integer 16" defaultValueString="7" usesScalarValueType="YES"/>
+        <attribute name="householdKey" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isActive" attributeType="Boolean" defaultValueString="YES" usesScalarValueType="YES"/>
         <attribute name="isCompleted" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
@@ -153,7 +154,6 @@
         <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="createdDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
-        <attribute name="householdKey" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isCompleted" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="mealType" optional="YES" attributeType="String"/>
@@ -161,7 +161,6 @@
         <attribute name="scaleFactor" attributeType="Double" defaultValueString="1" usesScalarValueType="YES"/>
         <attribute name="servings" attributeType="Integer 16" defaultValueString="4" usesScalarValueType="YES"/>
         <attribute name="slotKey" optional="YES" attributeType="String"/>
-        <relationship name="household" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="PlannedMeal" inverseName="household" inverseEntity="PlannedMeal"/>
         <relationship name="mealPlan" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="MealPlan" inverseName="plannedMeals" inverseEntity="MealPlan"/>
         <relationship name="recipe" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Recipe" inverseName="plannedMeals" inverseEntity="Recipe"/>
         <fetchIndex name="bydateandisCompleted">
@@ -221,6 +220,7 @@
     </entity>
     <entity name="WeeklyList" representedClassName="WeeklyList" syncable="YES">
         <attribute name="dateCreated" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="householdKey" optional="YES" attributeType="String"/>
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isCompleted" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>

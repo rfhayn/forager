@@ -1,35 +1,23 @@
 # Current Development Story
 
-**Last Updated**: January 2, 2026 (M7.2.3 Phase 2.5 Complete)  
-**Status**: M7.2.3 🔄 **PHASE 2 ACTIVE - Phase 2.5 Complete, 2.6 Ready**  
-**Total Progress**: ~113 hours | 89% planning accuracy  
+**Last Updated**: January 4, 2026 (M7.2.3 Phase 4.1 Complete)  
+**Status**: M7.2.3 🔄 **PHASE 4.1 COMPLETE - Phase 4.2 Next**  
+**Total Progress**: ~117 hours | 89% planning accuracy  
 **Current Branch**: `feature/M7.2.3-prep-phase`  
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
 
 ---
 
-## 🚀 **M7.2.3: PHASE 2 ACTIVE - Infrastructure Complete, Creation Points Next**
+## 🔄 **M7.2.3: PHASE 4.1 COMPLETE - Phase 4.2 Ready**
 
-**Status**: 🔄 **PHASE 2.5 COMPLETE** - Infrastructure ready, Phase 2.6 next  
-**Branch**: `feature/M7.2.3-prep-phase` (uncommitted changes)  
-**Progress**: 52% complete (10.25h / 19.5h midpoint)  
-**Estimated Remaining**: 9-12 hours
+**Status**: ✅ **Phase 4.1 COMPLETE** - Phase 4.2 ready (backend testing)  
+**Branch**: `feature/M7.2.3-prep-phase`  
+**Progress**: 51% complete (10h / 19.5h midpoint)  
+**Estimated Remaining**: 4.5-7.5 hours (Phases 4.2, 5, 6)
 
 ### **What's Complete ✅**
 
-**Phase 1: Persistence Decomposition** (5 hours - Dec 30, 2025)
-- ✅ PersistenceController.swift (134 lines)
-- ✅ DefaultSeeder.swift (182 lines)
-- ✅ MigrationRunner.swift (274 lines)
-- ✅ Total: 590 lines of clean, focused code
-
-**Phase 3.8: CategoryDeduplicator** (1 hour - Dec 31, 2025)
-- ✅ CategoryDeduplicator.swift (182 lines)
-- ✅ Self-healing multi-device sync (<60s convergence)
-- ✅ Dedupe-after-creation pattern (Apple-recommended)
-- ✅ Production-ready duplicate prevention
-
-**External Validation** (Jan 1, 2026)
+**External Validation** (Jan 1, 2026 - 1 day planning)
 - ✅ PRD v2.0 submitted to ChatGPT & Gemini
 - ✅ **ChatGPT**: "Gold Standard for NSPersistentCloudKitContainer"
 - ✅ **Gemini**: "Production-ready, no architectural changes required"
@@ -41,104 +29,150 @@
 - ✅ Received complete production-ready code implementations
 - ✅ PRD v2.2 FINAL created with all polish integrated
 
-**Prep Phase: Development Infrastructure** (1 hour - Jan 2, 2026)
+**Phase 0: Core Data Model Changes** ✅ COMPLETE (completed in M7.1.3)
+- ✅ Created model version 2 (forager 2)
+- ✅ Added 5 relationships to Household:
+  - weeklyLists, recipes, mealPlans, categories, ingredientTemplates
+- ✅ Added inverse relationships to all child entities (Optional, Nullify)
+- ✅ Added householdKey (String?) to all household-scoped entities
+- ✅ Lightweight migration working
+- ✅ Build successful, no data loss
+
+**Prep Phase A: Store Identity Logger** ✅ COMPLETE (30 min - Jan 2, 2026)
 - ✅ StoreIdentityLogger.swift (74 lines)
   - DEBUG-only utility for identifying CloudKit store (Private/Shared)
   - Extension on NSManagedObject with logStoreIdentity() method
   - Essential for debugging Phase 4 migration
-- ✅ MigrationValidationTests.swift (149 lines)
-  - Validates Core Data model v2 can migrate from v1
-  - Tests: entity presence, optional relationships, no deleted attributes
-  - Prevents data loss during Phase 0 model changes
 
-**Phase 0: Core Data Model Changes** (2 hours - Jan 2, 2026)
-- ✅ Created model version 2 (forager 2)
-- ✅ Added householdKey (String, Optional) to:
-  - Recipe
-  - IngredientTemplate
-  - Category
-  - PlannedMeal
-- ✅ All household relationships already present (from M7.2.2)
-- ✅ Fixed StoreIdentityLogger build error
-- ✅ Build successful, migration-safe
+**Prep Phase B: Migration Validation** ✅ N/A
+- Not needed - Phase 0 already complete and validated in M7.1.3
 
-**Phase 2: Scope-Based Store Assignment** (1.75 hours - Jan 2, 2026)
+**Phase 1: Persistence Decomposition** ✅ COMPLETE (5 hours - Dec 30, 2025)
+- ✅ PersistenceController.swift (134 lines)
+- ✅ DefaultSeeder.swift (182 lines)
+- ✅ MigrationRunner.swift (274 lines)
+- ✅ Total: 590 lines of clean, focused code
 
-**Phase 2.1: DataScope & Protocol** ✅ COMPLETE (20 min)
-- ✅ DataScope enum (personal vs household)
-- ✅ HouseholdScoped protocol
-- ✅ Protocol conformances (5 entities)
-- ✅ File: Services/Persistence/DataScope.swift (55 lines)
+**Phase 2: Scope-Based Store Assignment** ✅ COMPLETE (2 hours - Jan 3, 2026)
 
-**Phase 2.2: HouseholdScopeProvider** ✅ COMPLETE (15 min)
-- ✅ @MainActor isolation
-- ✅ ObservableObject with @Published scope
-- ✅ Default .personal initialization
-- ✅ File: Services/Persistence/HouseholdScopeProvider.swift (30 lines)
+All sub-phases (2.1-2.6) complete with external validation refinements:
 
-**Phase 2.3: ManagedObjectFactory** ✅ COMPLETE (20 min)
-- ✅ Generic create<T>() method
-- ✅ Household logic (commented with TODOs for Phase 2.5)
-- ✅ DEBUG logging for validation
-- ✅ File: Services/Persistence/ManagedObjectFactory.swift (150 lines)
+**Phase 2.1-2.5** (completed Jan 2, 2026)
+- ✅ DataScope enum & HouseholdScoped protocol
+- ✅ HouseholdScopeProvider implementation
+- ✅ ManagedObjectFactory core implementation
+- ✅ Environment injection in foragerApp.swift
+- ✅ Manual Core Data property files (6 entities)
 
-**Phase 2.4: Environment Injection** ✅ COMPLETE (10 min)
-- ✅ Added to foragerApp.swift
-- ✅ Provider initialized and injected
-- ✅ Factory created with provider dependency
-- ✅ Both available via @Environment throughout app
+**Phase 2.6: Background Factory Pattern** ✅ COMPLETE (2 hours - Jan 3, 2026)
+- ✅ StoreID abstraction (Gemini feedback)
+- ✅ Loud failures (fatalError DEBUG, throw Release)
+- ✅ performScopedWrite helper (ChatGPT pattern)
+- ✅ Scope snapshot pattern (Gemini best practice)
+- ✅ Optional scopeProvider (ChatGPT approach)
+- ✅ 'in' parameter naming (natural Swift)
+- ✅ MainActor isolation fixes (assumeIsolated pattern)
+- ✅ Build fixes (logStoreIdentity, category.color, foragerApp params)
+- ✅ Files modified: 7 files, ~650 lines
+- ✅ Build successful, app running, CloudKit sync working (27 events)
 
-**Phase 2.5: Protocol Activation & Manual Core Data Files** ✅ COMPLETE (1.75 hours)
-- ✅ Uncommented protocol conformances in DataScope.swift
-- ✅ Activated household logic in ManagedObjectFactory.swift
-- ✅ Created manual +CoreDataClass.swift files (6 entities)
-- ✅ Created manual +CoreDataProperties.swift files (6 entities)
-- ✅ Added household/householdKey properties to all entities
-- ✅ Fixed missing properties (completedDate, createdDate, servings, etc.)
-- ✅ Fixed Preview syntax in MealPlanRowView.swift
-- ✅ Changed 6 entities from Class Definition → Manual/None codegen
-- ✅ **Build Status: SUCCESS** (0 errors, down from 162)
+**Phase 3.8: CategoryDeduplicator** ✅ COMPLETE (1 hour - Dec 31, 2025)
+- ✅ CategoryDeduplicator.swift (182 lines)
+- ✅ Self-healing multi-device sync (<60s convergence)
+- ✅ Dedupe-after-creation pattern (Apple-recommended)
+- ✅ Production-ready duplicate prevention
 
-**Files Created in Phase 2.5** (12 total):
-- Household+CoreDataClass.swift & +CoreDataProperties.swift
-- HouseholdMember+CoreDataClass.swift & +CoreDataProperties.swift
-- MealPlan+CoreDataClass.swift & +CoreDataProperties.swift
-- IngredientTemplate+CoreDataClass.swift & +CoreDataProperties.swift
-- PlannedMeal+CoreDataClass.swift & +CoreDataProperties.swift
-- UserPreferences+CoreDataClass.swift & +CoreDataProperties.swift
+**Phase 4.1: Pre-Household Migration Prompt UI** ✅ COMPLETE (1.5 hours - Jan 4, 2026)
+- ✅ PreHouseholdDataMigrationSheet.swift (165 lines)
+  - Clean migration prompt with data counts
+  - Primary/secondary action buttons
+  - Medium presentation detent for optimal UX
+- ✅ HouseholdService.countPersonalData() - Counts existing recipes, lists, meal plans
+- ✅ HouseholdService.createHouseholdAndShare() - Attach-then-share migration flow
+- ✅ HouseholdService.migratePersonalDataToHousehold() - Data attachment helper
+- ✅ CreateHouseholdSheet updated - Migration flow integration
+- ✅ Build successful - Zero errors, zero warnings
+- ✅ Uses container.share([household], to: nil) - Gemini-validated API
+- ✅ Calls viewContext.refreshAllObjects() - Prevents stale references
+- ✅ DEBUG logging with StoreIdentityLogger
 
-**Key Decisions in Phase 2.5**:
-- **Manual/None codegen** for all household-related entities prevents conflicts
-- **Complete property definitions** match Core Data model exactly
-- **Protocol activation** enables compiler-enforced household scoping
-- **Infrastructure complete but unused** - no creation points updated yet
+### **Progress Summary**
+
+**Completed Phases**:
+- ✅ Phase 0: Core Data Model (M7.1.3)
+- ✅ Prep A: StoreIdentityLogger
+- ✅ Prep B: N/A (Phase 0 already done)
+- ✅ Phase 1: Persistence Decomposition (5h)
+- ✅ Phase 2: Scope-Based Factory (2h)
+- ✅ Phase 3.8: CategoryDeduplicator (1h)
+- ✅ Phase 4.1: Pre-Household Migration UI (1.5h)
+- **Total: 10 hours** (5h + 0.5h + 2h + 1h + 1.5h)
+
+**Remaining Phases**:
+- 🚀 Phase 4.2: Backend Migration Testing (1.5-2h) - **NEXT UP**
+- ⏳ Phase 5: Repository Hardening (2-3h)
+- ⏳ Phase 6: Multi-Device Validation (1-2h)
+- **Total Remaining: 4.5-7.5 hours**
+
+**Overall Progress**: 10h of 14.5-17.5h = **51-69% complete**
 
 ### **What's Next 🚀**
 
-**Phase 2.6: Update Creation Points** (2-3h) 🚀 **READY**
-- **Design Challenge**: How to use factory in background contexts?
-  - Most creation happens via `PersistenceController.performWrite`
-  - Background thread = no @Environment access
-  - ScopeProvider is @MainActor
-  - **Need pattern for factory + background contexts**
-- Update creation points to use ManagedObjectFactory
-- Start with 1-2 simple cases (e.g., WeeklyListsView)
-- Validate household relationships set correctly
-- **Current Reality**: Infrastructure exists but nothing uses it yet
+**Phase 4.2: Backend Migration Testing** (1.5-2h) - **READY TO START**
 
-**Phase 4: Attach-Then-Share Migration** (3-4h)
-- Pre-household data migration UI
-- Attach-then-share implementation
-- Post-share validation
+Now that the UI is complete, time to test the backend migration flow!
 
-**Phase 5: Repository Hardening** (2-3h)
-- Store-scoped repositories
-- IngredientTemplateDeduplicator integration
+**Testing Checklist**:
+1. **Create test data** (15 min)
+   - Add 5-10 recipes to app
+   - Create 2 weekly lists
+   - Add 3-5 meal plans
+   - All should have `household == nil`
 
-**Phase 6: Multi-Device Validation** (1-2h)
-- Cross-store validator
-- 4 test scenarios
-- Performance validation
+2. **Test migration flow** (30 min)
+   - Launch Settings → Household
+   - Tap "Create Household"
+   - Enter "Test Household" and your name
+   - Tap "Create"
+   - **Expected**: Migration sheet appears with counts
+   - Choose "Move to Household"
+   - **Expected**: Household created successfully
+
+3. **Verify migration** (30 min)
+   - Check DEBUG console logs:
+     - 📊 Personal data counts printed
+     - 🏗️ Household creation logged
+     - 🔒 "Private Store" before share
+     - ✅ CKShare created
+     - 👥 "Shared Store" after share
+     - 🔄 Migration counts logged
+   - Open CloudKit Dashboard
+   - Verify household in Shared Zone
+   - Verify recipes/lists/plans have household relationship
+
+4. **Test "Keep Personal" path** (15 min)
+   - Delete test household
+   - Create new household
+   - Choose "Keep Personal"
+   - **Expected**: Household created with no data migration
+
+5. **Test no-data path** (15 min)
+   - Delete all data
+   - Create household
+   - **Expected**: No migration sheet, household created directly
+
+**Acceptance Criteria**:
+- ✅ Migration sheet appears when data exists
+- ✅ Data counts accurate (recipes, lists, meal plans)
+- ✅ "Move to Household" migrates all data
+- ✅ "Keep Personal" creates empty household
+- ✅ No migration sheet when no data exists
+- ✅ StoreIdentityLogger shows Private → Shared transition
+- ✅ CloudKit Dashboard shows household in Shared Zone
+- ✅ All relationships intact after migration
+- ✅ Zero crashes, zero data loss
+
+**After Phase 4.2**: Phase 5 (Repository Hardening, 2-3h) then Phase 6 (Multi-Device Validation, 1-2h)
 
 ### **Strategic Decision: M7.2.2 Paused**
 
@@ -156,150 +190,23 @@
 
 ---
 
-## 📚 **COMPLETED WORK THIS SESSION**
+## 📚 **LEARNING NOTES CREATED**
 
-### **M7.2.3 Phase 2.5: Protocol Activation** ✅ COMPLETE (Jan 2, 2026, ~1.75 hours)
+### **M7.2.3 Documentation**
+- **[30-m7.2.3-phase-2.6-background-factory.md](m7-docs/30-m7.2.3-phase-2.6-background-factory.md)** - Phase 2.6 complete journey
+  - External validation refinements (6 major improvements)
+  - Build fixes (4 issues resolved)
+  - Two factory patterns coexisting (environment + explicit scope)
+  - Production-ready code examples
+  - Complete implementation summary (~650 lines)
 
-**The Challenge:**
-After creating the infrastructure (DataScope, ScopeProvider, Factory), we needed to activate it by:
-1. Uncommentng protocol conformances
-2. Activating household logic in factory
-3. Adding household/householdKey properties to entity files
-4. Preventing codegen conflicts
-
-**Initial Approach Failed:**
-- Tried to just uncomment TODOs → 162 build errors
-- Root cause: Core Data model v2 had householdKey attributes, but entity property files weren't updated
-- Auto-generated files (Class Definition codegen) conflicting with manual edits
-
-**Solution: Manual Core Data Files**
-Created 12 files (6 entities × 2 files each):
-- +CoreDataClass.swift (base class definition)
-- +CoreDataProperties.swift (properties & relationships)
-
-Changed these entities to Manual/None codegen:
-- Household, HouseholdMember (referenced by many files)
-- MealPlan, PlannedMeal (cross-referenced)
-- IngredientTemplate (widely used)
-- UserPreferences (household relationship)
-
-**Debugging Journey:**
-1. Started: 162 errors ("Cannot find type 'IngredientTemplate' in scope")
-2. Created property files → 4 errors (missing class files)
-3. Created class files → 3 errors (Preview syntax + missing properties)
-4. Fixed Preview syntax → 1 error (MealPlan.completedDate missing)
-5. Added missing properties → **BUILD SUCCESS**
-
-**Files Modified:**
-- DataScope.swift (uncommented protocol conformances)
-- ManagedObjectFactory.swift (activated household logic)
-- WeeklyList+CoreDataProperties.swift (added household props)
-- Recipe+CoreDataProperties.swift (added household props)
-- Category+CoreDataProperties.swift (added household props)
-- MealPlanRowView.swift (fixed Preview syntax)
-
-**Key Learnings:**
-- Manual/None codegen requires BOTH class AND properties files
-- Core Data model attributes ≠ Swift properties until files regenerated
-- @Previewable @State + return keyword fixes Preview conformance
-- Complete property definitions essential (missing createdDate, completedDate, etc.)
-- Systematic approach: fix one error category at a time
-
-**Current State:**
-- ✅ Build succeeds (0 errors)
-- ✅ All infrastructure complete and activated
-- ❌ No creation points updated yet (Phase 2.6)
-- ❌ Nothing functionally testable (factory never called)
-- ⚠️ Design question: How to use factory in background contexts?
-
-**Time:**
-- Estimated: 1 hour
-- Actual: 1.75 hours (debugging Core Data files)
-- Accuracy: 58% (underestimated codegen complexity)
-
----
-
-## 📊 **COMPLETED MILESTONES**
-
-### **M7.2.1: Household Setup Foundation** ✅ COMPLETE (1.25h - Dec 23, 2025)
-- Household & HouseholdMember entities created
-- HouseholdService with CloudKit integration
-- Settings UI with household creation flow
-- Complete architectural foundation (10 entities scoped)
-
-### **M7.1: CloudKit Sync Foundation** ✅ COMPLETE (6.5h - Dec 4-21, 2025)
-- NSPersistentCloudKitContainer configured
-- CloudKit schema validated (10+ entities)
-- CloudKitSyncMonitor service operational
-- Real-time sync tracking with <1s latency
-
-### **M7.0: App Store Prerequisites** ✅ COMPLETE (3h - Dec 3, 2025)
-- Privacy policy published and integrated
-- App Privacy questionnaire complete
-- Display name disambiguated
-
-### **M1-M5.0: Foundation** ✅ COMPLETE (92.5h - Oct-Nov 2025)
-- Professional grocery management
-- Recipe catalog with normalization
-- Meal planning with calendar view
-- Settings infrastructure
-- CloudKit entitlements configured
-
-**Total Completed**: ~113 hours  
-**Planning Accuracy**: 89% overall  
-**Build Success**: 100% (zero breaking changes)  
-**Technical Debt**: NONE ✅
-
----
-
-## 📊 **QUALITY METRICS**
-
-**Build Success**: 100% (all builds succeeded)  
-**Performance**: 100% (< 3s launch, < 0.5s operations)  
-**Data Integrity**: 100% (zero data loss)  
-**Documentation**: 100% (comprehensive with validation checkpoint)  
-**Planning Accuracy**: 89% overall  
-**Phase 2.5 Accuracy**: 58% (underestimated codegen complexity)
-
----
-
-## 💾 **GIT WORKFLOW STATUS**
-
-**Current Branch**: `feature/M7.2.3-prep-phase` (uncommitted changes)  
-**Working Tree**: **DIRTY** - Phase 2.5 changes ready to commit
-
-**Files Ready to Commit** (Phase 2.5):
-
-**Core Infrastructure** (4 files):
-- Services/Persistence/DataScope.swift (protocol conformances activated)
-- Services/Persistence/ManagedObjectFactory.swift (household logic activated)
-- Services/Persistence/HouseholdScopeProvider.swift (Phase 2.2)
-- forager/foragerApp.swift (environment injection, Phase 2.4)
-
-**Manual Core Data Files** (12 new files):
-- Household+CoreDataClass.swift & +CoreDataProperties.swift
-- HouseholdMember+CoreDataClass.swift & +CoreDataProperties.swift
-- MealPlan+CoreDataClass.swift & +CoreDataProperties.swift
-- IngredientTemplate+CoreDataClass.swift & +CoreDataProperties.swift
-- PlannedMeal+CoreDataClass.swift & +CoreDataProperties.swift
-- UserPreferences+CoreDataClass.swift & +CoreDataProperties.swift
-
-**Updated Entity Files** (3 files):
-- WeeklyList+CoreDataProperties.swift (household props)
-- Recipe+CoreDataProperties.swift (household props)
-- Category+CoreDataProperties.swift (household props)
-
-**Bug Fixes** (1 file):
-- forager/MealPlanRowView.swift (Preview syntax fix)
-
-**Total**: 20 files ready to commit
-
-**Commit Strategy:**
-All Phase 2.1-2.5 work should be committed together as "Infrastructure Complete" checkpoint:
-- Clean logical unit (all infrastructure, not yet used)
-- Working build (0 errors)
-- Safe revert point
-- Clear milestone before Phase 2.6 (creation points)
+### **Previous M7 Learning Notes**
+- **[24-m7.1.1-cloudkit-schema-validation.md](learning-notes/24-m7.1.1-cloudkit-schema-validation.md)** - CloudKit container setup
+- **[25-m7.1.2-cloudkit-sync-monitoring.md](learning-notes/25-m7.1.2-cloudkit-sync-monitoring.md)** - Sync monitoring implementation
+- **[26-m7.2-architecture-pivot.md](learning-notes/26-m7.2-architecture-pivot.md)** - CKShare → Shared Zones pivot
+- **[27-m7.2.3-phase1-persistence-decomposition.md](m7-docs/27-m7.2.3-phase1-persistence-decomposition.md)** - Phase 1 complete
+- **[28-m7.2.3-phase3.8-category-deduplicator.md](m7-docs/28-m7.2.3-phase3.8-category-deduplicator.md)** - Duplicate prevention
+- **[29-m7.2.3-external-validation.md](m7-docs/29-m7.2.3-external-validation.md)** - ChatGPT + Gemini validation
 
 ---
 
@@ -316,9 +223,8 @@ All Phase 2.1-2.5 work should be committed together as "Infrastructure Complete"
 
 ---
 
-**Last Session**: January 2, 2026 - M7.2.3 Phase 2.5 complete (infrastructure activated)  
-**Next Action**: Commit Phase 2.1-2.5 work → Plan Phase 2.6 approach  
-**Ready To Go**: ✅ Infrastructure complete, build clean  
-**Design Challenge**: 🟡 How to use factory in background contexts?  
-**Confidence**: 🟢 HIGH (infrastructure solid, creation patterns TBD)  
-**Version**: January 2, 2026 - M7.2.3 Phase 2.5 Complete
+**Last Session**: January 4, 2026 - M7.2.3 Phase 4.1 complete (migration prompt UI)  
+**Next Action**: Phase 4.2 - Backend Migration Testing (1.5-2 hours)  
+**Ready To Go**: ✅ UI complete, migration flow integrated, build successful  
+**Confidence**: 🟢 HIGH (Gemini-validated attach-then-share pattern implemented)  
+**Version**: January 4, 2026 - M7.2.3 Phase 4.1 Complete

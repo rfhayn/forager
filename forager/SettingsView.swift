@@ -380,19 +380,24 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - M7.2.1: Create Household Sheet
+// MARK: - M7.2.1: Create Household Sheet (Updated M7.2.3 Phase 4.1)
 
 // Sheet view for creating a new household
-// Allows user to enter household name and creates CloudKit shared zone
+// M7.2.3: Now includes migration flow to move existing personal data to household
 struct CreateHouseholdSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var householdService: HouseholdService
     
     @State private var householdName: String = ""
-    @State private var ownerDisplayName: String = "" // NEW: User's display name
+    @State private var ownerDisplayName: String = ""
     @State private var isCreating: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
+    
+    // M7.2.3 Phase 4.1: Migration flow state
+    @State private var showMigrationSheet: Bool = false
+    @State private var personalDataCounts: (recipes: Int, lists: Int, mealPlans: Int, categories: Int, templates: Int) = (0, 0, 0, 0, 0)
+    @State private var shouldMigrateData: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -423,7 +428,7 @@ struct CreateHouseholdSheet: View {
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
-                        createHousehold()
+                        checkPersonalDataAndCreate()
                     }
                     .disabled(householdName.isEmpty || ownerDisplayName.isEmpty || isCreating)
                 }
@@ -442,19 +447,56 @@ struct CreateHouseholdSheet: View {
             } message: {
                 Text(errorMessage)
             }
+            .sheet(isPresented: $showMigrationSheet) {
+                // M7.2.3 Phase 4.1: Show migration prompt if user has personal data
+                PreHouseholdDataMigrationSheet(
+                    recipeCount: personalDataCounts.recipes,
+                    listCount: personalDataCounts.lists,
+                    mealPlanCount: personalDataCounts.mealPlans,
+                    categoryCount: personalDataCounts.categories,
+                    templateCount: personalDataCounts.templates,
+                    onMoveAll: {
+                        shouldMigrateData = true
+                        createHouseholdWithMigration()
+                    },
+                    onKeepPersonal: {
+                        shouldMigrateData = false
+                        createHouseholdWithMigration()
+                    }
+                )
+            }
         }
     }
     
-    // Creates household using HouseholdService
-    // Displays loading indicator and handles errors
-    private func createHousehold() {
+    // M7.2.3 Phase 4.1: Checks for existing personal data before creating household
+    // Shows migration sheet if data exists, otherwise creates household directly
+    private func checkPersonalDataAndCreate() {
+        // Count existing personal data
+        personalDataCounts = householdService.countPersonalData()
+        
+        let totalCount = personalDataCounts.recipes + personalDataCounts.lists + personalDataCounts.mealPlans + personalDataCounts.categories + personalDataCounts.templates
+        
+        if totalCount > 0 {
+            // User has personal data - show migration prompt
+            showMigrationSheet = true
+        } else {
+            // No personal data - create household directly
+            shouldMigrateData = false
+            createHouseholdWithMigration()
+        }
+    }
+    
+    // M7.2.3 Phase 4.1: Creates household with optional data migration
+    // Uses createHouseholdAndShare which implements attach-then-share pattern
+    private func createHouseholdWithMigration() {
         isCreating = true
         
         Task {
             do {
-                _ = try await householdService.createHousehold(
+                _ = try await householdService.createHouseholdAndShare(
                     name: householdName,
-                    ownerName: ownerDisplayName
+                    ownerName: ownerDisplayName,
+                    moveExistingData: shouldMigrateData
                 )
                 dismiss()
             } catch {

@@ -24,6 +24,7 @@ extension MealPlan {
     @NSManaged public var isActive: Bool
     @NSManaged public var isCompleted: Bool
     @NSManaged public var household: Household?
+    @NSManaged public var householdKey: String?
     @NSManaged public var plannedMeals: NSSet?
 }
 

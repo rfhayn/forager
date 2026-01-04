@@ -65,3 +65,5 @@ fastlane/test_output
 .DS_Store
 .AppleDouble
 .LSOverride 
+# Claude AI assistant context
+.claude/
