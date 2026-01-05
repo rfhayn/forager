@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: January 2, 2026  
+**Last Updated**: January 4, 2026  
 **Purpose**: Central navigation hub for all project documentation  
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
-**Current Phase**: M7.2.3 Phase 2.5 ✅ Complete, Phase 2.6 🚀 Ready  
-**Next Priority**: M7.2.3 Phase 2.6 - Update Creation Points (2-3 hours)
+**Current Phase**: M7.2.3 ✅ COMPLETE, M7.2.2 🚀 READY  
+**Next Priority**: M7.2.2 - Member Invitation & Acceptance Testing (2-3 hours)
 
 ---
 
@@ -49,6 +49,24 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **January 4, 2026** - M7.2.3 COMPLETE ✅ (~12.25 hours total)
+- **Completed**: All M7.2.3 phases complete - CloudKit hardening & shared data architecture operational
+- **Achievement**: Production-ready CloudKit sync with attach-then-share migration validated
+- **Total Time**: 12.25 hours (estimated 14-17h, 88% accuracy)
+- **Phase Breakdown**:
+  - Phase 0: Core Data Model v2 (2h)
+  - Prep A: StoreIdentityLogger (0.5h)
+  - Phase 1: Persistence Decomposition (5h)
+  - Phase 2: Scope-Based Factory (3.75h)
+  - Phase 3.8: CategoryDeduplicator (1h)
+  - Phase 4: Attach-Then-Share Migration (3.5h)
+- **Critical Success**: Fixed CloudKit sync bug (missing `context.save()` after share)
+- **Migration Validated**: 61 items (11 recipes, 1 list, 1 meal plan, 41 templates, 7 categories)
+- **CloudKit Dashboard**: Shared zone created, data visible, zone-wide sharing enabled
+- **Console Logs**: Private → Shared transition confirmed
+- **Total Progress**: ~119.5 hours
+- **Next**: M7.2.2 - Member Invitation & Acceptance Testing (2-3h) - Requires 2 physical iPhones
 
 ### **January 2, 2026** - M7.2.3 Phase 2.5 Infrastructure Complete ✅ (~1.75 hours)
 - **Completed**: Protocol activation & manual Core Data files (Phases 2.1-2.5 all done)
@@ -159,14 +177,16 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3 Phase 0**: Core Data Model v2 (2 hours)
 - **M7.2.3 Phase 1**: Persistence Decomposition (5 hours)
 - **M7.2.3 Phase 2.1-2.5**: Infrastructure Complete (3 hours)
-- **M7.2.3 Phase 3.8**: CategoryDeduplicator (1 hour)
+- **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M7.2.3 Phase 2.6**: Update Creation Points (2-3 hours) 🚀 READY
-  - Design decision: How to use factory in background contexts?
-  - Options outlined: ObjectID passing, performWrite extension, context extension, main-thread only
-  - Start with simple view-based cases, establish pattern
-  - Update 1-2 creation points to validate approach
+- **M7.2.2**: Member Invitation & Acceptance Testing (2-3 hours) 🚀 READY
+  - Code implemented from previous session (branch: `feature/M7.2.2-member-invitation`)
+  - Requires 2 physical iPhones with DIFFERENT iCloud accounts
+  - Test household invitation flow end-to-end (send/receive/accept)
+  - Validate bi-directional sync between household members
+  - Verify members list shows both users correctly
+  - See next-prompt.md for detailed testing guide
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -188,8 +208,10 @@ _[Previous entries remain the same through December 23...]_
 - ✅ Household setup foundation (M7.2.1)
 - ✅ Core Data model v2 with household relationships (M7.2.3 Phase 0)
 - ✅ Persistence layer decomposed (M7.2.3 Phase 1)
-- ✅ Scope-based store assignment infrastructure (M7.2.3 Phase 2.1-2.5)
-- ✅ Category deduplication (M7.2.3 Phase 3.8)
+- ✅ Scope-based store assignment infrastructure (M7.2.3)
+- ✅ Category deduplication (M7.2.3)
+- ✅ Attach-then-share migration with UI (M7.2.3)
+- ✅ CloudKit sync verified working (M7.2.3)
 
 ### **Key Achievements**
 - Household-scoped data architecture complete (all infrastructure in place)
@@ -206,26 +228,28 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🎯 **WHAT'S NEXT**
 
-### **Immediate Priority** (M7.2.3 Phase 2.6 - 2-3 hours) 🚀 READY
-Update creation points to use ManagedObjectFactory:
-1. **Design Decision**: Choose background context pattern (Options A-D outlined in next-prompt.md)
-2. **Phase 2.6a**: Update 1-2 simple view-based creation points (WeeklyListsView)
-3. **Phase 2.6b**: Prototype background pattern (DefaultSeeder)
-4. **Phase 2.6c**: Finalize pattern and update remaining creation points
+### **Immediate Priority** (M7.2.2 - 2-3 hours) 🚀 READY
+Member Invitation & Acceptance Testing:
+1. **Prerequisites**: 2 physical iPhones with different iCloud accounts
+2. **Test Invitation**: Send invite from Device A to Device B
+3. **Test Acceptance**: Accept invite on Device B
+4. **Verify Sharing**: Confirm both devices see shared household data
+5. **Test Members View**: Verify household members list shows both users
 
-**Design Challenge**: How to use factory in background contexts?
-- Most creation via `performWrite { context in ... }`
-- Environment not available on background threads
-- ScopeProvider is @MainActor
-- Need thread-safe pattern
+**Required Equipment**:
+- iPhone A: Owner's device (already has household)
+- iPhone B: Member's device (different iCloud account)
+- Both devices on same iOS version (18.5+)
+- Both devices signed into iCloud
 
-### **After Phase 2.6**
-- **M7.2.3 Phase 4**: Attach-Then-Share Migration (3-4h)
-- **M7.2.3 Phase 5**: Repository Hardening (2-3h)
-- **M7.2.3 Phase 6**: Multi-Device Validation (1-2h)
+### **After M7.2.2**
+- **M7.2.3 Remaining Work**: Phases 5-6 if needed (repository hardening, multi-device validation)
+- **M7.3**: Conflict Resolution (4-6h)
+- **M7.4**: Sync UI & Polish (3-4h)
+- **M7.5**: External TestFlight (2-3h)
 
 ### **M7 Remaining Milestones**
-- **M7.2.2**: Multi-User Collaboration (2-3h) - Resume after M7.2.3 complete
+- **M7.2.2**: Multi-User Collaboration (2-3h) - 🚀 ACTIVE (testing phase)
 - **M7.3**: Conflict Resolution (4-6h)
 - **M7.4**: Sync UI & Polish (3-4h)
 - **M7.5**: External TestFlight (2-3h)

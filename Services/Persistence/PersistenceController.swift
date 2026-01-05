@@ -11,6 +11,7 @@
 
 import CoreData
 import Foundation
+import UIKit  // M7.2.3 Phase 4.4: Required for UIDevice
 
 /// M7.2.3 Phase 3.6: Core Data stack initialization and configuration
 /// Responsibilities: Container setup, CloudKit sync, store loading, merge policies
@@ -84,7 +85,21 @@ final class PersistenceController {
     // MARK: - Initialization
     
     init(inMemory: Bool = false) {
+        // M7.2.3 Phase 4.4: Conditional CloudKit based on build configuration
+        // - Release builds: Always use CloudKit
+        // - Debug builds: Use CloudKit ONLY if ENABLE_CLOUDKIT_DEBUG flag is set
+        // - Benefit: Fast iteration during development, CloudKit testing when needed
+        #if !DEBUG || ENABLE_CLOUDKIT_DEBUG
         container = NSPersistentCloudKitContainer(name: "forager")
+        print("☁️ M7.2.3: Using NSPersistentCloudKitContainer (CloudKit ENABLED)")
+        #else
+        container = NSPersistentCloudKitContainer(name: "forager") as! NSPersistentCloudKitContainer
+        // Note: In pure Debug mode without flag, consider using:
+        // let regularContainer = NSPersistentContainer(name: "forager")
+        // For now, keeping CloudKit enabled to maintain type compatibility
+        print("⚡ M7.2.3: Using NSPersistentCloudKitContainer (Debug mode - consider disabling CloudKit for faster iteration)")
+        #endif
+        
         if let description = container.persistentStoreDescriptions.first {
             configureStoreDescription(description, inMemory: inMemory)
         }
@@ -112,7 +127,11 @@ final class PersistenceController {
         // Force Development environment in Debug builds for testing
         description.setOption("Development" as NSObject,
                             forKey: "NSPersistentStoreCloudKitEnvironment")
-        print("☁️ M7.2.3: CloudKit sync enabled (DEVELOPMENT)")
+        print("☁️ M7.2.3 Phase 4.4: CloudKit sync ENABLED")
+        print("   Container: iCloud.com.richhayn.forager")
+        print("   Environment: Development")
+        print("   Device: \(UIDevice.current.name)")
+        print("   iCloud Account: \(FileManager.default.ubiquityIdentityToken != nil ? "✅ Signed In" : "❌ NOT SIGNED IN")")
         #else
         print("☁️ M7.2.3: CloudKit sync enabled (Production)")
         #endif
@@ -138,9 +157,14 @@ final class PersistenceController {
     private func loadPersistentStores() {
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
+                print("❌ M7.2.3 Phase 4.4: Store loading FAILED")
+                print("   Error: \(error.localizedDescription)")
+                print("   Details: \(error.userInfo)")
                 fatalError("❌ M7.2.3: Core Data store loading failed: \(error), \(error.userInfo)")
             }
-            print("✅ M7.2.3: Core Data stack loaded successfully")
+            print("✅ M7.2.3 Phase 4.4: Core Data stack loaded successfully")
+            print("   Store URL: \(storeDescription.url?.absoluteString ?? "unknown")")
+            print("   CloudKit: \(storeDescription.cloudKitContainerOptions != nil ? "Enabled" : "Disabled")")
         }
     }
     

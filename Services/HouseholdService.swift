@@ -267,22 +267,30 @@ class HouseholdService: ObservableObject {
             
             #if DEBUG
             print("✅ CKShare created: \(share.recordID.recordName)")
+            #endif
+            
+            // 7. CRITICAL: Save context immediately to persist the share
+            // M7.2.3 Phase 4.4 FIX: Without this save, CKShare exists in-memory but never syncs to CloudKit!
+            try viewContext.save()
+            
+            #if DEBUG
+            print("✅ Context saved - CKShare should sync to CloudKit now")
             household.logStoreIdentity()  // Should show "Shared Store" after share
             #endif
             
-            // 7. Store share record reference
+            // 8. Store share record reference for future access
             household.shareRecord = try NSKeyedArchiver.archivedData(
                 withRootObject: share,
                 requiringSecureCoding: true
             )
             
-            // 8. CRITICAL: Refresh all household-related objects to get updated store assignments
+            // 9. CRITICAL: Refresh all household-related objects to get updated store assignments
             viewContext.refreshAllObjects()
             
-            // 9. Save share record
+            // 10. Save share record again to persist the archived share reference
             try viewContext.save()
             
-            // 10. Update current household
+            // 11. Update current household
             currentHousehold = household
             
             print("✅ Household created: \(name)")
