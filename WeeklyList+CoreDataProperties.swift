@@ -21,6 +21,8 @@ extension WeeklyList {
     @NSManaged public var isCompleted: Bool
     @NSManaged public var name: String?
     @NSManaged public var notes: String?
+    @NSManaged public var household: Household?
+    @NSManaged public var householdKey: String?
     @NSManaged public var items: NSSet?
 
 }

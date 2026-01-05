@@ -3,12 +3,26 @@
 // Updated with Meal Planning Tab - M4.2
 // CORRECTED: Tap-to-Pop-to-Root with NavigationStack and path arrays
 // M7.2.2 Task 3: CloudKit share invitation handling
+// M7.2.3 Phase 2.4: ManagedObjectFactory environment injection
 
 import SwiftUI
 import CloudKit
 
 // CloudKit share metadata key for user activity
 private let CKShareMetadataKey = "CKShareMetadataKey"
+
+// MARK: - M7.2.3 Phase 2.4: Environment Key for ManagedObjectFactory
+
+private struct ManagedObjectFactoryKey: EnvironmentKey {
+    static let defaultValue: ManagedObjectFactory? = nil
+}
+
+extension EnvironmentValues {
+    var managedObjectFactory: ManagedObjectFactory? {
+        get { self[ManagedObjectFactoryKey.self] }
+        set { self[ManagedObjectFactoryKey.self] = newValue }
+    }
+}
 
 @main
 struct foragerApp: App {
@@ -48,6 +62,17 @@ struct foragerApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // M7.2.3 Phase 2.4 & 2.6: Create ManagedObjectFactory for environment injection
+            let scopeProvider = HouseholdScopeProvider(
+                householdService: householdService,
+                persistence: persistenceController  // ✅ Phase 2.6: Changed from 'context:' to 'persistence:'
+            )
+            let objectFactory = ManagedObjectFactory(
+                context: persistenceController.container.viewContext,
+                scopeProvider: scopeProvider,
+                persistence: persistenceController  // ✅ Phase 2.6: Added persistence parameter
+            )
+            
             TabView(selection: $selectedTab) {
                 NavigationStack(path: $listsPath) {
                     WeeklyListsView(popToRoot: $listsPopToRoot)
@@ -105,6 +130,8 @@ struct foragerApp: App {
                 }
             }
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
+            .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
             .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
             // M7.2.2 Task 3: Handle CloudKit share invitations
             .onContinueUserActivity("com.apple.CloudKit.ShareInvitation") { userActivity in

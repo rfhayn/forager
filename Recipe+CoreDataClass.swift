@@ -26,6 +26,18 @@ public class Recipe: NSManagedObject {
         setPrimitiveValue(Int16(4), forKey: "servings")  // Default 4 servings
         setPrimitiveValue(Int32(0), forKey: "usageCount")
         setPrimitiveValue(false, forKey: "isFavorite")
+        
+        // M7.2.3 Phase 4.3: Auto-assign to household if one exists
+        if household == nil, let context = managedObjectContext {
+            let fetchRequest: NSFetchRequest<Household> = Household.fetchRequest()
+            fetchRequest.fetchLimit = 1
+            
+            if let existingHousehold = try? context.fetch(fetchRequest).first {
+                household = existingHousehold
+                householdKey = existingHousehold.id?.uuidString
+                print("🏠 M7.2.3 Phase 4.3: Auto-assigned Recipe to household '\(existingHousehold.name ?? "unknown")'")
+            }
+        }
     }
     
     // MARK: - Validation
