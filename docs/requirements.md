@@ -416,136 +416,202 @@ This document defines all functional and non-functional requirements for the For
 
 ---
 
-## 🔮 **M8: ANALYTICS, INSIGHTS & PARSING IMPROVEMENTS - PLANNED** 💡
+## 🔮 **M8: INGREDIENT PARSING INTELLIGENCE - PLANNED** 🧠
 
-**Status**: ⏳ Planned  
-**Estimated**: 16-24 hours (+8-12h for M8.0 parsing improvements)  
-**Dependencies**: M7 complete (telemetry data from external beta)  
-**Summary**: Data-driven parsing improvements + usage analytics and insights
+**Status**: ⏳ Planned
+**Estimated**: 13-16 hours core (+15-20h optional ML)
+**Dependencies**: M7 complete with external beta telemetry
+**Summary**: Data-driven parsing evolution from 95% → 98% → 99.5% accuracy through hybrid NLP and optional ML
+**PRD**: [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
 
-### **Functional Requirements - Parsing Improvements Foundation (M8.0 - NEW)** 💡
+### **Functional Requirements - Resilience & Telemetry (M8.1)**
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-PI-001** | **Telemetry analysis** | Parse M7 telemetry, identify top 10 failure patterns | M8.0.1 | 🎯 **Data-driven approach** |
-| **FR-PI-002** | **Pattern prioritization** | ROI analysis, decide which patterns to target | M8.0.2 | 🎯 **Efficient investment** |
-| **FR-PI-003** | **Hybrid parser architecture** | Fast path (regex) + Smart path (NLP) | M8.0.3 | 🎯 **Performance + accuracy** |
-| **FR-PI-004** | **Apple NLP integration** | Natural Language framework for complex patterns | M8.0.4 | 🎯 **Advanced parsing** |
-| **FR-PI-005** | **Range pattern handling** | "2-3 cloves" → 2.5 cloves average | M8.0.5 | 🎯 **Complex quantities** |
-| **FR-PI-006** | **Parenthetical unit extraction** | "1 can (14.5 oz)" → quantity + unit | M8.0.5 | 🎯 **Nested formats** |
-| **FR-PI-007** | **Qualifier extraction** | "garlic, minced" → name + note | M8.0.5 | 🎯 **Preparation notes** |
-| **FR-PI-008** | **Smart pre-fill enhancement** | Use NLP results in edit form defaults | M8.0.6 | 🎯 **Better UX** |
-| **FR-PI-009** | **Enhanced telemetry** | Track which parser used, performance metrics | M8.0.7 | 🎯 **Continuous improvement** |
-| **FR-PI-010** | **Regression testing** | Ensure no accuracy loss on existing inputs | M8.0.8-10 | 🎯 **Quality assurance** |
-
-### **Functional Requirements - Analytics Infrastructure**
+_Note: These 6 requirements were originally specified in M7.5 and are included here for completeness_
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-AN-001** | **Analytics service architecture** | Data aggregation and caching | M8.1 | 🎯 **Performance** |
-| **FR-AN-002** | **Query optimization** | Efficient trend queries | M8.1 | 🎯 **Responsiveness** |
+| **FR-PR-001** | **Low-confidence detection** | Yellow badge for parseConfidence < 0.5 | M8.1 | 🎯 **Graceful degradation** |
+| **FR-PR-002** | **Edit ingredient button** | "Review" button on low-confidence items | M8.1 | 🎯 **User correction flow** |
+| **FR-PR-003** | **Structured edit form** | EditIngredientSheet with quantity/unit/name fields | M8.1 | 🎯 **Professional UX** |
+| **FR-PR-004** | **Pre-filled edit values** | Parse results pre-populate edit form | M8.1 | 🎯 **Efficient editing** |
+| **FR-PR-005** | **Telemetry logging** | ParsingTelemetryService logs failures to local JSON | M8.1 | 🎯 **Data for M8.2+** |
+| **FR-PR-006** | **Privacy-safe telemetry** | No user identification, local storage only | M8.1 | 🎯 **Privacy compliance** |
 
-### **Functional Requirements - Insights Dashboard**
-
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-IN-001** | **Usage statistics** | Recipe popularity, ingredient frequency | M8.2 | 🎯 **User insights** |
-| **FR-IN-002** | **Cost tracking** | Budget trends and analysis | M8.2 | 🎯 **Financial awareness** |
-| **FR-IN-003** | **Visualizations** | Charts and graphs for trends | M8.2 | 🎯 **Data clarity** |
-
-### **Functional Requirements - Recommendations**
+### **Functional Requirements - Hybrid NLP Parser (M8.3)**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-RE-001** | **Recipe suggestions** | Smart recommendations | M8.3 | 🎯 **Discovery** |
-| **FR-RE-002** | **Seasonal highlights** | Ingredient seasonality | M8.3 | 🎯 **Freshness** |
-| **FR-RE-003** | **Budget optimization** | Cost-saving tips | M8.3 | 🎯 **Value** |
+| **FR-PI-001** | **Hybrid parser architecture** | Protocol-based abstraction (regex + NLP + future ML) | M8.3 | 🎯 **Extensibility** |
+| **FR-PI-002** | **Fast path optimization** | RegexIngredientParser for 80% of inputs (< 0.05s) | M8.3 | 🎯 **Performance** |
+| **FR-PI-003** | **Smart path NLP** | NLPIngredientParser using Apple NaturalLanguage | M8.3 | 🎯 **Accuracy** |
+| **FR-PI-004** | **Range pattern support** | "2-3 cloves" → 2.5 cloves average | M8.3 | 🎯 **Common pattern** |
+| **FR-PI-005** | **Parenthetical extraction** | "1 can (14.5 oz)" → 14.5 oz, can | M8.3 | 🎯 **Complex parsing** |
+| **FR-PI-006** | **Qualifier separation** | "garlic, minced" → garlic (notes: minced) | M8.3 | 🎯 **Detail preservation** |
+| **FR-PI-007** | **Confidence calibration** | Accurate confidence scores (0.0-1.0) for routing | M8.3 | 🎯 **Smart routing** |
+| **FR-PI-008** | **Performance budgets** | p50 < 0.05s, p95 < 0.3s, p99 < 0.5s | M8.3 | 🎯 **Responsiveness** |
+| **FR-PI-009** | **Telemetry enhancement** | Track parser used, durations, confidence scores | M8.3 | 🎯 **Monitoring** |
+| **FR-PI-010** | **Regression prevention** | Comprehensive test suite (existing + new patterns) | M8.3 | 🎯 **Quality assurance** |
 
-### **Functional Requirements - Export & Sharing**
+### **Functional Requirements - ML Enhancement (M8.4 - OPTIONAL)** 💡
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-EX-001** | **Data export** | Export capabilities | M8.4 | 🎯 **Data portability** |
-| **FR-EX-002** | **Report generation** | Formatted reports | M8.4 | 🎯 **Sharing** |
+| **FR-ML-001** | **Training dataset creation** | Extract 100+ labeled examples from M7-M8 telemetry | M8.4 | 🎯 **Quality data** |
+| **FR-ML-002** | **Data validation** | Validate and clean training data (spot-check 20%) | M8.4 | 🎯 **Model accuracy** |
+| **FR-ML-003** | **Create ML training** | Train custom text classifier (99%+ test accuracy) | M8.4 | 🎯 **Custom intelligence** |
+| **FR-ML-004** | **Hyperparameter tuning** | Optimize model iterations, algorithm selection | M8.4 | 🎯 **Best accuracy** |
+| **FR-ML-005** | **On-device inference** | CoreML integration for local prediction (< 0.2s) | M8.4 | 🎯 **Privacy + speed** |
+| **FR-ML-006** | **Hybrid system integration** | MLIngredientParser as third tier after regex/NLP | M8.4 | 🎯 **Progressive enhancement** |
+| **FR-ML-007** | **Continuous learning pipeline** | Retraining workflow from ongoing telemetry | M8.4 | 🎯 **Self-improving** |
+| **FR-ML-008** | **Retraining triggers** | Retrain at 50+ corrections or 30 days | M8.4 | 🎯 **Fresh model** |
 
 ### **Non-Functional Requirements - M8**
 
 | ID | Requirement | Target | Milestone | Value |
 |----|-------------|--------|-----------|-------|
-| **NFR-PI-001** | **Parsing accuracy ≥ 98%** | Up from 95% baseline | M8.0 | 🎯 **Quality improvement** |
-| **NFR-PI-002** | **Low-confidence rate ≤ 2%** | Down from 5% baseline | M8.0 | 🎯 **Fewer manual edits** |
-| **NFR-PI-003** | **Fast path performance < 0.05s** | Regex parser unchanged | M8.0 | 🎯 **Speed preserved** |
-| **NFR-PI-004** | **Smart path performance < 0.2s** | NLP parsing acceptable latency | M8.0 | 🎯 **Responsive** |
-| **NFR-PI-005** | **Hybrid routing overhead < 0.01s** | Decision cost minimal | M8.0 | 🎯 **Efficient** |
-| **NFR-AN-001** | **Dashboard load < 1s** | Fast analytics display | M8.2 | 🎯 **User experience** |
-| **NFR-AN-002** | **Query performance < 0.5s** | Responsive data retrieval | M8.1 | 🎯 **Snappy** |
+| **NFR-PI-001** | **Parsing accuracy (M8.3)** | ≥98% (up from 95% baseline) | M8.3 | 🎯 **Quality improvement** |
+| **NFR-PI-002** | **Low-confidence rate (M8.3)** | ≤2% (down from 5% baseline) | M8.3 | 🎯 **Fewer manual edits** |
+| **NFR-PI-003** | **Fast path performance** | 80% of inputs < 0.05s (regex unchanged) | M8.3 | 🎯 **Speed preserved** |
+| **NFR-PI-004** | **Smart path performance** | 15% of inputs < 0.2s (NLP acceptable latency) | M8.3 | 🎯 **Responsive** |
+| **NFR-PI-005** | **Hybrid routing overhead** | Decision cost < 0.01s (minimal) | M8.3 | 🎯 **Efficient** |
+| **NFR-ML-001** | **ML parsing accuracy (M8.4)** | ≥99.5% (up from 98% baseline) | M8.4 | 🎯 **Industry-leading** |
+| **NFR-ML-002** | **ML inference latency** | < 0.2s on-device CoreML | M8.4 | 🎯 **Real-time** |
+| **NFR-ML-003** | **Model size** | ≤5MB CoreML model file | M8.4 | 🎯 **Download efficiency** |
+| **NFR-ML-004** | **Privacy compliance** | 100% on-device, no cloud calls | M8.4 | 🎯 **User trust** |
+| **NFR-ML-005** | **Zero regressions** | Existing patterns maintain/improve accuracy | M8 All | 🎯 **Quality** |
 
-**M8 Summary (Planned)**: 24 requirements including parsing improvements (10 NEW), analytics infrastructure (2), insights dashboard (3), recommendations (3), export/sharing (2), and non-functional requirements (7). Achieves 98%+ parsing accuracy through data-driven NLP enhancements while building analytics foundation.
+**M8 Summary (Planned)**: 32 requirements across 4 phases: resilience & telemetry (6), hybrid NLP parser (10), ML enhancement (8 optional), and non-functional requirements (10). Achieves professional-grade 98%+ accuracy (M8.3) with optional industry-leading 99.5%+ ML enhancement (M8.4). Exit points after each phase allow flexible ROI optimization.
 
 ---
 
-## 🔮 **M9-M11: ADVANCED INTELLIGENCE PLATFORM - PLANNED**
+## 🔮 **M9: TECHNICAL DEBT & CODEBASE OPTIMIZATION - PLANNED** 🛠️
 
-### **M9: Health & Nutrition Integration + Optional ML Parsing** (10-15h core + 15-20h optional)
+**Status**: ⏳ Planned
+**Estimated**: 135-173 hours (17-22 weeks part-time)
+**Dependencies**: M7 complete, M8 complete
+**Summary**: Systematic refactoring, architectural improvements, and performance optimizations to reduce code size ~25%, eliminate performance bottlenecks, and establish sustainable patterns
+**PRD**: [M9 Technical Debt PRD](prds/m9-technical-debt-codebase-optimization.md)
+
+### **Summary of M9 Phases**
+
+**Phase 1: Quick Wins & Critical Fixes** (20-25h)
+- Utility consolidation (eliminate ~300 lines of duplication)
+- Core Data performance (indexes, N+1 query fixes, caching)
+- Thread safety fixes (ManageCategoriesView background operations)
+- Error handling standardization (ServiceError framework)
+
+**Phase 2: Architectural Improvements** (40-50h)
+- Dependency injection (reduce PersistenceController.shared coupling)
+- Service layer consistency (async/await migration)
+- View decomposition (RecipeListView 1,204→400 lines, AddIngredientsToListView 901→500 lines)
+
+**Phase 3: Performance & Data Model** (60-70h)
+- Ingredient normalization optimization (caching)
+- Core Data cascade delete rules
+- Category string→relationship migration
+- Batch fetching implementation
+
+**Phase 4: Quality & Sustainability** (15-20h)
+- Coding standards documentation
+- PR review checklist
+- Unit test framework (≥60% coverage target)
+- Logging framework
+
+_Note: Full requirements for M9 are detailed in the dedicated PRD. This milestone is structured to allow stopping after any phase if ROI diminishes._
+
+---
+
+## 🔮 **M10: ANALYTICS & INSIGHTS - PLANNED** 📊
+
+**Status**: ⏳ Planned
+**Estimated**: 16-24 hours
+**Dependencies**: M7 complete (structured data from meal planning), M9 complete (clean architecture)
+**Summary**: Usage analytics, insights dashboard, and data-driven recommendations
+
+### **Functional Requirements - Analytics Infrastructure (M10.1)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-AN-001** | **Analytics service architecture** | Data aggregation and caching | M10.1 | 🎯 **Performance** |
+| **FR-AN-002** | **Query optimization** | Efficient trend queries | M10.1 | 🎯 **Responsiveness** |
+
+### **Functional Requirements - Insights Dashboard (M10.2)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-IN-001** | **Usage statistics** | Recipe popularity, ingredient frequency | M10.2 | 🎯 **User insights** |
+| **FR-IN-002** | **Cost tracking** | Budget trends and analysis | M10.2 | 🎯 **Financial awareness** |
+| **FR-IN-003** | **Visualizations** | Charts and graphs for trends | M10.2 | 🎯 **Data clarity** |
+
+### **Functional Requirements - Recommendations (M10.3)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-RE-001** | **Recipe suggestions** | Smart recommendations based on history | M10.3 | 🎯 **Discovery** |
+| **FR-RE-002** | **Seasonal highlights** | Ingredient seasonality awareness | M10.3 | 🎯 **Freshness** |
+| **FR-RE-003** | **Budget optimization** | Cost-saving tips and recommendations | M10.3 | 🎯 **Value** |
+
+### **Functional Requirements - Export & Sharing (M10.4)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-EX-001** | **Data export** | Export capabilities for analytics data | M10.4 | 🎯 **Data portability** |
+| **FR-EX-002** | **Report generation** | Formatted reports for sharing | M10.4 | 🎯 **Sharing** |
+
+### **Non-Functional Requirements - M10**
+
+| ID | Requirement | Target | Milestone | Value |
+|----|-------------|--------|-----------|-------|
+| **NFR-AN-001** | **Dashboard load time** | < 1s for analytics display | M10.2 | 🎯 **User experience** |
+| **NFR-AN-002** | **Query performance** | < 0.5s for data retrieval | M10.1 | 🎯 **Snappy** |
+| **NFR-AN-003** | **Data accuracy** | 100% accurate based on Core Data | M10 All | 🎯 **Trust** |
+
+**M10 Summary (Planned)**: 12 requirements including analytics infrastructure (2), insights dashboard (3), recommendations (3), export/sharing (2), and non-functional requirements (3). Leverages clean ingredient data from M8 and optimized architecture from M9 to provide data-driven insights.
+
+---
+
+## 🔮 **M11-M13: ADVANCED INTELLIGENCE PLATFORM - PLANNED**
+
+### **M11: Health & Nutrition Integration** (10-15h core)
 
 #### **Functional Requirements - Core Health Features**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-HN-001** | **Apple Health integration** | HealthKit connection | M9.1-9.4 | 🎯 **Health awareness** |
-| **FR-HN-002** | **Nutritional database** | USDA nutrient data | M9.1-9.4 | 🎯 **Nutrition facts** |
-| **FR-HN-003** | **Dietary goal tracking** | Custom nutrition targets | M9.1-9.4 | 🎯 **Goal management** |
-| **FR-HN-004** | **Allergen support** | Dietary restriction filtering | M9.1-9.4 | 🎯 **Safety** |
+| **FR-HN-001** | **Apple Health integration** | HealthKit connection | M11.1-11.4 | 🎯 **Health awareness** |
+| **FR-HN-002** | **Nutritional database** | USDA nutrient data | M11.1-11.4 | 🎯 **Nutrition facts** |
+| **FR-HN-003** | **Dietary goal tracking** | Custom nutrition targets | M11.1-11.4 | 🎯 **Goal management** |
+| **FR-HN-004** | **Allergen support** | Dietary restriction filtering | M11.1-11.4 | 🎯 **Safety** |
 
-#### **Functional Requirements - ML-Powered Parsing (M9.5 - OPTIONAL)** 💡
+_Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Optional ML Enhancement)_
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-ML-001** | **Training dataset creation** | Extract 100+ user corrections from M7-M8 | M9.5.1-4 | 🎯 **Quality data** |
-| **FR-ML-002** | **Data labeling** | Label and validate training data | M9.5.1-4 | 🎯 **Model accuracy** |
-| **FR-ML-003** | **Create ML model training** | Train custom text classifier | M9.5.5-8 | 🎯 **Custom intelligence** |
-| **FR-ML-004** | **Hyperparameter tuning** | Optimize model performance | M9.5.5-8 | 🎯 **Best accuracy** |
-| **FR-ML-005** | **On-device inference** | CoreML integration for local prediction | M9.5.9-10 | 🎯 **Privacy + speed** |
-| **FR-ML-006** | **Hybrid system integration** | ML as third tier after regex + NLP | M9.5.9-10 | 🎯 **Progressive enhancement** |
-| **FR-ML-007** | **Continuous learning pipeline** | Ongoing telemetry → retraining workflow | M9.5.11-12 | 🎯 **Self-improving** |
-| **FR-ML-008** | **Model retraining triggers** | Retrain at 50+ corrections or 30 days | M9.5.11-12 | 🎯 **Fresh model** |
+**M11 Summary (Planned)**: 4 requirements for core health features. Leverages clean ingredient data from M8 parsing improvements for accurate nutritional analysis.
 
-#### **Non-Functional Requirements - M9**
-
-| ID | Requirement | Target | Milestone | Value |
-|----|-------------|--------|-----------|-------|
-| **NFR-ML-001** | **ML parsing accuracy ≥ 99.5%** | Up from 98% (M8.0) | M9.5 | 🎯 **Industry-leading** |
-| **NFR-ML-002** | **Inference latency < 0.2s** | On-device CoreML speed | M9.5 | 🎯 **Real-time** |
-| **NFR-ML-003** | **Model size < 5MB** | Compact on-device model | M9.5 | 🎯 **Efficient** |
-| **NFR-ML-004** | **Training data minimum 100 samples** | Sufficient data for accuracy | M9.5 | 🎯 **Quality threshold** |
-
-**M9 Summary (Planned)**: 12 requirements for core health features (4) + 8 optional ML parsing requirements. M9.5 is OPTIONAL - only pursue if M8.0 shows room for improvement and you want best-in-class parsing (99.5%+ accuracy). Evaluate after M8.0 complete.
-
-### **M10: Budget Intelligence** (10-15 hours)
+### **M12: Budget Intelligence** (10-15 hours)
 
 | ID | Requirement | Milestone | Value |
 |----|-------------|-----------|-------|
-| **FR-BD-001** | **Price tracking** | M10 | 🎯 **Cost awareness** |
-| **FR-BD-002** | **Budget planning** | M10 | 🎯 **Financial control** |
-| **FR-BD-003** | **Cost optimization** | M10 | 🎯 **Savings** |
-| **FR-BD-004** | **Store comparison** | M10 | 🎯 **Best value** |
+| **FR-BD-001** | **Price tracking** | M12 | 🎯 **Cost awareness** |
+| **FR-BD-002** | **Budget planning** | M12 | 🎯 **Financial control** |
+| **FR-BD-003** | **Cost optimization** | M12 | 🎯 **Savings** |
+| **FR-BD-004** | **Store comparison** | M12 | 🎯 **Best value** |
 
-### **M11: AI-Powered Shopping Assistant** (10-15 hours)
-
-| ID | Requirement | Milestone | Value |
-|----|-------------|-----------|-------|
-| **FR-AI-001** | **Natural language meal planning** | M11 | 🎯 **Conversational UX** |
-| **FR-AI-002** | **Smart recipe discovery** | M11 | 🎯 **Personalization** |
-| **FR-AI-003** | **Automated list generation** | M11 | 🎯 **Convenience** |
-| **FR-AI-004** | **Learning preferences** | M11 | 🎯 **Adaptive** |
-
-### **M12: Advanced Collaboration** (10-15 hours)
+### **M13: AI-Powered Shopping Assistant** (10-15 hours)
 
 | ID | Requirement | Milestone | Value |
 |----|-------------|-----------|-------|
-| **FR-AC-001** | **Real-time shopping mode** | M12 | 🎯 **Live coordination** |
-| **FR-AC-002** | **Task delegation** | M12 | 🎯 **Family workflow** |
-| **FR-AC-003** | **Shopping analytics** | M12 | 🎯 **Household insights** |
+| **FR-AI-001** | **Natural language meal planning** | M13 | 🎯 **Conversational UX** |
+| **FR-AI-002** | **Smart recipe discovery** | M13 | 🎯 **Personalization** |
+| **FR-AI-003** | **Automated list generation** | M13 | 🎯 **Convenience** |
+| **FR-AI-004** | **Learning preferences** | M13 | 🎯 **Adaptive** |
+
+### **M14: Advanced Collaboration** (10-15 hours)
+
+| ID | Requirement | Milestone | Value |
+|----|-------------|-----------|-------|
+| **FR-AC-001** | **Real-time shopping mode** | M14 | 🎯 **Live coordination** |
+| **FR-AC-002** | **Task delegation** | M14 | 🎯 **Family workflow** |
+| **FR-AC-003** | **Shopping analytics** | M14 | 🎯 **Household insights** |
 
 ---
 

@@ -18,7 +18,7 @@
 - Calendar-based meal planning
 - CloudKit family collaboration
 - Analytics-driven insights
-- **Data-driven ingredient parsing improvements** (M7.5, M8.0, M9.5)
+- **Data-driven ingredient parsing improvements** (M8: 4 phases, 95% → 98%+ accuracy)
 
 ---
 ## 📊 **CURRENT STATE - November 2025**
@@ -220,11 +220,13 @@ With M5.0 completion, Forager is now:
 - **M4.3.1 → M4.3.2+**: Core Data relationships enable recipe source display ✅
 - **M4 → M7**: Meal planning data architecture ready for CloudKit family collaboration
 - **M5.0 → M7**: TestFlight infrastructure ready for external beta and CloudKit sync
-- **M3 + M4 → M8**: Rich analytics data from structured quantities and meal patterns
-- **M3 + M4 → M9-M12**: Advanced intelligence platform built on structured data foundation
+- **M3 + M4 → M8**: Ingredient parsing improvements leverage structured quantities
+- **M7 → M9**: External beta data informs technical debt priorities
+- **M3 + M4 → M10**: Rich analytics data from structured quantities and meal patterns
+- **M9 → M11-M14**: Clean architecture foundation enables advanced intelligence platform
 
 ### **Timeline Summary:**
-- **Core Platform (M1-M8)**: ~140-165 hours estimated
+- **Core Platform (M1-M10)**: ~220-270 hours estimated
 - **M1 Complete**: 32 hours ✅
 - **M2 Complete**: 16.5 hours ✅
 - **M3 Complete**: 10.5 hours ✅
@@ -233,9 +235,11 @@ With M5.0 completion, Forager is now:
 - **M5.0 Complete**: 6 hours ✅
 - **Total Completed (M1-M5.0)**: ~92.5 hours ✅
 - **M7 Planned**: 32-42 hours (with buffer)
-- **M6 Planned**: 12-18 hours
-- **M8 Planned**: 8-12 hours
-- **Remaining (M6-M8)**: ~52-72 hours
+- **M6 Planned**: 12-18 hours (testing & AI augmentation)
+- **M8 Planned**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
+- **M9 Planned**: 135-165 hours (technical debt & optimization)
+- **M10 Planned**: 8-12 hours (analytics & insights)
+- **Remaining (M6-M10)**: ~200-253 hours (core) or ~215-273 hours (with M8.4 ML)
 
 ---
 
@@ -904,10 +908,132 @@ With M5.0 completion, Forager is now:
 
 ---
 
-### **⏳ M8: Analytics & Insights - PLANNED**
+### **⏳ M8: Ingredient Parsing Intelligence - PLANNED** 🧠
 
-**Status**: ⏳ Planned  
-**Estimated Time**: 8-12 hours  
+**Status**: ⏳ Planned
+**Estimated Time**: 13-16 hours core (+15-20h optional ML)
+**Dependencies**: M7 complete with external beta telemetry
+**PRD**: [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
+
+**Overview**: Data-driven evolution of ingredient parsing from 95% baseline accuracy to industry-leading 99.5%+ through mandatory resilience, analysis, and NLP phases, plus optional ML enhancement.
+
+**Strategic Approach:**
+1. **Foundation First** (M8.1): Graceful degradation prevents user frustration
+2. **Strategy Before Implementation** (M8.2): Real data drives decisions
+3. **Targeted Improvement** (M8.3): Hybrid NLP solves actual user pain points
+4. **Optional Excellence** (M8.4): ML achieves industry-leading accuracy
+
+**Phase Breakdown:**
+
+**M8.1: Parsing Resilience & Telemetry (3-4 hours) - FOUNDATION** ✨
+- Yellow badge for parseConfidence < 0.5
+- EditIngredientSheet with pre-filled values
+- ParsingTelemetryService logging to local JSON
+- Professional UX even for unparseable inputs
+- **Exit Point**: Can stop here if parsing failures are rare (<2%)
+- **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
+
+**M8.2: Telemetry Analysis & Strategy (2 hours) - INSIGHTS** 📊
+- Analyze real telemetry to identify improvement priorities
+- Pattern prioritization matrix (frequency × user impact)
+- ROI analysis (effort vs impact)
+- Implementation strategy for M8.3
+- **Exit Point**: Can stop here if top patterns are rare
+- **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
+
+**M8.3: Hybrid NLP Parser (8-10 hours) - IMPLEMENTATION** 🚀
+- HybridIngredientParser with protocol abstraction
+- RegexIngredientParser (existing logic extracted)
+- NLPIngredientParser using Apple NaturalLanguage
+- Pattern-specific handlers (ranges, parentheticals, qualifiers)
+- Fast path (80% inputs < 0.05s) + Smart path (15% inputs < 0.2s)
+- **Target**: 95% → 98%+ accuracy, low-confidence rate: 5% → 2%
+- **Exit Point**: Recommended stopping point—professional-grade accuracy
+- **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phases 2-4)
+
+**M8.4: ML-Powered Parsing (15-20 hours) - OPTIONAL EXCELLENCE** 🎓
+- Custom CoreML model trained on user corrections
+- Training dataset (100+ labeled examples from telemetry)
+- MLIngredientParser with on-device inference (< 0.2s)
+- Continuous learning pipeline (retraining every 30 days or 50+ corrections)
+- **Target**: 98% → 99.5%+ accuracy, user edit rate: 2% → 0.5%
+- **Pursue ONLY If**: 100+ corrections, M8.3 at 97-98%, want ML portfolio piece
+- **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)
+
+**Recommended Path**: M8.1 → M8.2 → M8.3 → STOP (13-16 hours, 98%+ accuracy)
+
+**Success Criteria:**
+- [ ] Professional UX for parsing failures (M8.1)
+- [ ] Telemetry collecting real data (M8.1)
+- [ ] Top 10 failure patterns identified (M8.2)
+- [ ] Clear ROI for M8.3 investment (M8.2)
+- [ ] Parsing accuracy: 95% → 98%+ (M8.3)
+- [ ] Low-confidence rate: 5% → 2% (M8.3)
+- [ ] Zero regressions on existing patterns (M8.3)
+- [ ] (Optional) ML accuracy: 98% → 99.5%+ (M8.4)
+
+---
+
+### **⏳ M9: Technical Debt & Codebase Optimization - PLANNED** 🏗️
+
+**Status**: ⏳ Planned
+**Estimated Time**: 135-165 hours total
+**Dependencies**: M7 complete (external beta launched)
+**PRD**: [M9 Technical Debt PRD](prds/m9-technical-debt-codebase-optimization.md)
+
+**Overview**: Comprehensive technical debt remediation and codebase optimization before scaling to advanced features. Reduces codebase by ~2,000 lines, improves performance 50-80%, and establishes architectural patterns for long-term maintainability.
+
+**Strategic Impact:**
+- **Code Reduction**: ~2,000 lines eliminated (RecipeListView 1,204→400 lines)
+- **Performance**: 50-80% improvement in critical paths
+- **Maintainability**: Consistent patterns across 400+ service methods
+- **Quality**: Professional test coverage and error handling
+- **Future-Proofing**: Clean foundation for M10-M14 features
+
+**Phase Breakdown:**
+
+**Phase 1: Quick Wins (20-25 hours)**
+- M9.1: String Utilities & Code Deduplication (6-8h)
+- M9.2: Performance Optimizations (7-9h)
+- M9.3: Thread Safety & Context Management (7-8h)
+- **Impact**: 30% performance improvement, safer Core Data operations
+
+**Phase 2: Architecture & Structure (40-50 hours)**
+- M9.4: Service Consistency & Error Handling (15-18h)
+- M9.5: Dependency Injection Foundation (10-12h)
+- M9.6: View Decomposition (15-20h)
+- **Impact**: 50% reduction in RecipeListView, consistent service layer
+
+**Phase 3: Performance & Data Model (60-70 hours)**
+- M9.7: Query Optimization (20-25h)
+- M9.8: Batch Operations (15-18h)
+- M9.9: Data Model Cleanup (15-17h)
+- M9.10: Migration Strategy (10-12h)
+- **Impact**: 80% query performance improvement, clean schema
+
+**Phase 4: Quality & Standards (15-20 hours)**
+- M9.11: Code Standards & Linting (8-10h)
+- M9.12: Test Coverage (4-6h)
+- M9.13: Logging & Observability (3-4h)
+- **Impact**: Professional quality gates, comprehensive monitoring
+
+**Recommended Path**: Phase 1 → Evaluate → Phase 2 → Phase 4 (skip Phase 3 if performance acceptable)
+
+**Success Criteria:**
+- [ ] ~2,000 lines removed from codebase
+- [ ] 50-80% performance improvement in critical paths
+- [ ] RecipeListView: 1,204 → 400 lines
+- [ ] Zero N+1 queries remaining
+- [ ] Consistent error handling across all services
+- [ ] Thread safety patterns established
+- [ ] Professional test coverage (50%+ critical paths)
+
+---
+
+### **⏳ M10: Analytics & Insights - PLANNED**
+
+**Status**: ⏳ Planned
+**Estimated Time**: 8-12 hours
 **Dependencies**: M4 complete (structured data from meal planning)
 
 **Phase 1: Analytics Infrastructure** (2-3 hours)
@@ -942,34 +1068,34 @@ With M5.0 completion, Forager is now:
 
 ---
 
-### **⏳ M9-M12: Advanced Intelligence Platform - PLANNED**
+### **⏳ M11-M14: Advanced Intelligence Platform - PLANNED**
 
-**Status**: ⏳ Future Development  
-**Estimated Time**: 40-60 hours total  
-**Dependencies**: M1-M8 complete
+**Status**: ⏳ Future Development
+**Estimated Time**: 40-60 hours total
+**Dependencies**: M1-M10 complete
 
-**M9: Health & Nutrition Integration** (10-15 hours)
+**M11: Health & Nutrition Integration** (10-15 hours)
 - Apple Health integration
 - Nutritional database
 - Dietary goal tracking
 - Health-aware recommendations
 - Allergen and dietary restriction support
 
-**M10: Budget Intelligence** (10-15 hours)
+**M12: Budget Intelligence** (10-15 hours)
 - Price tracking and history
 - Budget planning tools
 - Cost optimization suggestions
 - Store price comparison
 - Deal and coupon integration
 
-**M11: AI-Powered Shopping Assistant** (10-15 hours)
+**M13: AI-Powered Shopping Assistant** (10-15 hours)
 - Natural language meal planning
 - Smart recipe discovery
 - Automated list generation
 - Contextual recommendations
 - Learning user preferences
 
-**M12: Advanced Collaboration** (10-15 hours)
+**M14: Advanced Collaboration** (10-15 hours)
 - Real-time shopping mode
 - Assignment and delegation
 - Shopping history and analytics
@@ -1004,9 +1130,11 @@ With M5.0 completion, Forager is now:
   - M7.2.2: 2-3 hours (Member invitation) 🚀 NEXT
   - M7.3-7.7: 8-15 hours (Conflict, UI, TestFlight) ⏳
 - **M6**: 12-18 hours (comprehensive testing & AI augmentation)
-- **M8**: 8-12 hours (analytics and insights)
+- **M8**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
+- **M9**: 135-165 hours (technical debt & codebase optimization)
+- **M10**: 8-12 hours (analytics and insights)
 
-**Total Core Platform (M1-M8)**: ~140-165 hours estimated
+**Total Core Platform (M1-M10)**: ~220-270 hours estimated (core) or ~235-290 hours (with M8.4 ML)
 
 ### **Planning Accuracy:**
 - **Phase-level estimates**: Consistently accurate within ±15 minutes
@@ -1079,7 +1207,7 @@ With M5.0 completion, Forager is now:
 - [ ] CI/CD running tests on every commit
 - [ ] Zero flaky tests, < 30s test suite
 
-### **M7: Analytics & Insights**
+### **M10: Analytics & Insights**
 - [ ] Usage analytics tracking
 - [ ] Insights dashboard with visualizations
 - [ ] Trend analysis over time
@@ -1134,8 +1262,10 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ### **Current Milestone:**
 - [M7 PRD](prds/milestone-7-cloudkit-sync-external-testflight.md) - CloudKit sync & external TestFlight
-- [Current Story](current-story.md) - M5.0 complete, M7 ready to start
-- [Requirements Document](requirements.md) - 151 total requirements (122 complete, 29 planned)
+- [Current Story](current-story.md) - M5.0 complete, M7 in progress
+- [Requirements Document](requirements.md) - All M1-M14 requirements documented
+- [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md) - Ingredient parsing intelligence (4 phases)
+- [M9 PRD](prds/m9-technical-debt-codebase-optimization.md) - Technical debt & codebase optimization
 
 ### **Completed Milestones:**
 - [M1 Learning Notes](learning-notes/01-10-milestone-1-phases.md)

@@ -269,6 +269,186 @@ Member Invitation & Acceptance Testing:
 
 ---
 
+## 🗺️ **COMPLETE MILESTONE ROADMAP**
+
+### **✅ Completed Milestones** (M1-M5.0, M7.0-M7.2.3: ~119.5 hours)
+
+**M1: Professional Grocery Management** (32 hours) - August 2025
+- Store-layout optimized grocery lists
+- Custom category management with drag-and-drop
+- Staple item system
+- Core Data architecture
+
+**M2: Recipe Integration** (16.5 hours) - September-October 2025
+- Complete recipe catalog with CRUD operations
+- Unified IngredientTemplate system
+- Recipe-to-grocery list integration
+- Recipe ingredient autocomplete
+- Multi-field search and analytics
+
+**M3: Structured Quantity Management** (10.5 hours) - October 2025
+- Structured quantity data model (numericValue, standardUnit, parseConfidence)
+- Enhanced parsing with 95%+ accuracy
+- Recipe scaling (0.25x-4x) with kitchen-friendly fractions
+- Quantity consolidation with unit conversion
+- Professional UX and help documentation
+
+**M3.5: Foundation Validation & Testing** (8.5 hours) - October 2025
+- Template system validation (16 templates)
+- Core Data audit and documentation
+- Automated validation test suite (6 suites, 100% pass rate)
+- 75+ computed properties added
+
+**M4: Meal Planning & Enhanced Grocery Integration** (19.25 hours) - November 2025
+- M4.1: Settings Infrastructure (1.5h)
+- M4.2: Calendar-Based Meal Planning (4h)
+- M4.3.1: Recipe Source Tracking (3.5h)
+- M4.3.2: Scaled Recipe to List (1.25h)
+- M4.3.3: Bulk Add from Meal Plan (2.5h)
+- M4.3.4: Meal Completion Tracking (1h)
+- M4.3.5: Ingredient Normalization (5.5h)
+
+**M5.0: App Renaming & TestFlight Deployment** (6 hours) - December 2025
+- Complete app rename to "Forager"
+- Professional app icon design
+- Apple Developer Program enrollment
+- App Store Connect configuration
+- Internal TestFlight deployment
+- Multi-tester beta program
+
+**M7.0: App Store Prerequisites** (3 hours) - December 2025
+- Privacy policy creation and hosting
+- In-app privacy link implementation
+- App Privacy questionnaire completion
+- Display name disambiguation
+
+**M7.1: CloudKit Sync Foundation** (6.5 hours) - December 2025
+- CloudKit schema validation
+- CloudKitSyncMonitor service
+- Multi-device sync debugging (4h additional)
+- Bi-directional sync < 5s latency
+
+**M7.2.1: Household Setup Foundation** (1.25 hours) - December 2025
+- Household Core Data entity
+- CreateHouseholdSheet UI
+- Active household management
+- Professional onboarding flow
+
+**M7.2.3: CloudKit Hardening & Shared Data Architecture** (12.25 hours) - December 2025-January 2026
+- Phase 0: Core Data Model v2 (2h)
+- Phase 1: Persistence Decomposition (5h)
+- Phase 2: Scope-Based Infrastructure (3.75h)
+- Phase 3.8: CategoryDeduplicator (1h)
+- Phase 4: Attach-Then-Share Migration (3.5h)
+- 8 entities household-scoped
+- 61 items migrated to CloudKit shared zone
+
+---
+
+### **🚀 In Progress** (M7.2.2: 2-3 hours)
+
+**M7.2.2: Member Invitation & Acceptance** (2-3 hours) - 🚀 READY
+- Code complete, awaiting 2 physical iPhones for testing
+- Household invitation flow
+- CKShare acceptance
+- Bi-directional sync validation
+- Members list verification
+
+---
+
+### **⏳ Planned Milestones** (M6-M14: ~335-465 hours)
+
+**M7 Remaining: CloudKit Sync & External TestFlight** (8-15 hours remaining)
+- M7.2.4: Household Management (1-2h)
+- M7.3: Conflict Resolution & Error Handling (4-6h)
+- M7.4: Sync UI & Polish (3-4h)
+- M7.5: Architecture Hardening - UX/Service Cleanup (8-12h)
+- M7.6: External TestFlight Deployment (2-3h)
+- M7.7: Public Beta Program (2-3h)
+- **PRD**: [milestone-7-cloudkit-sync-external-testflight.md](prds/milestone-7-cloudkit-sync-external-testflight.md)
+
+**M6: Testing Foundation & AI Augmentation** (12-18 hours)
+- Phase 1: Human Test Baseline (5-7h)
+- Phase 2: AI Test Review Setup (3-4h)
+- Phase 3: Testing Standards & Infrastructure (2-3h)
+- Phase 4: Phase 3 Prep - Optional (2-4h)
+- **Target**: 50%+ coverage, AI reviewer operational
+
+**M8: Ingredient Parsing Intelligence** (13-16 hours core, +15-20h optional ML) 🧠
+- **M8.1**: Parsing Resilience & Telemetry (3-4h) - Foundation
+  - Yellow badge for low confidence, EditIngredientSheet, telemetry logging
+  - **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
+- **M8.2**: Telemetry Analysis & Strategy (2h) - Insights
+  - Analyze real telemetry, prioritize improvements, ROI analysis
+  - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
+- **M8.3**: Hybrid NLP Parser (8-10h) - Implementation
+  - Protocol abstraction, Regex + NLP paths, pattern handlers
+  - **Target**: 95% → 98%+ accuracy, 5% → 2% low-confidence rate
+  - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phases 2-4)
+- **M8.4**: ML-Powered Parsing (15-20h) - OPTIONAL Excellence
+  - CoreML model, on-device inference, continuous learning
+  - **Target**: 98% → 99.5%+ accuracy (only if 100+ corrections available)
+  - **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)
+- **PRD**: [m8-ingredient-parsing-intelligence-meta-prd.md](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
+
+**M9: Technical Debt & Codebase Optimization** (135-165 hours) 🏗️
+- Phase 1: Quick Wins (20-25h) - String utilities, performance, thread safety
+- Phase 2: Architecture & Structure (40-50h) - Service consistency, DI, view decomposition
+- Phase 3: Performance & Data Model (60-70h) - Query optimization, batch operations, migrations
+- Phase 4: Quality & Standards (15-20h) - Code standards, test coverage, logging
+- **Impact**: ~2,000 lines removed, 50-80% performance improvement, RecipeListView 1,204→400 lines
+- **PRD**: [m9-technical-debt-codebase-optimization.md](prds/m9-technical-debt-codebase-optimization.md)
+
+**M10: Analytics & Insights** (8-12 hours)
+- Phase 1: Analytics Infrastructure (2-3h)
+- Phase 2: Insights Dashboard (3-4h)
+- Phase 3: Recommendations (2-3h)
+- Phase 4: Export & Sharing (1-2h)
+- **Leverages**: M3 structured quantities, M4 meal planning data
+
+**M11: Health & Nutrition Integration** (10-15 hours)
+- Apple Health integration
+- Nutritional database
+- Dietary goal tracking
+- Health-aware recommendations
+- Allergen and dietary restriction support
+
+**M12: Budget Intelligence** (10-15 hours)
+- Price tracking and history
+- Budget planning tools
+- Cost optimization suggestions
+- Store price comparison
+- Deal and coupon integration
+
+**M13: AI-Powered Shopping Assistant** (10-15 hours)
+- Natural language meal planning
+- Smart recipe discovery
+- Automated list generation
+- Contextual recommendations
+- Learning user preferences
+
+**M14: Advanced Collaboration** (10-15 hours)
+- Real-time shopping mode
+- Assignment and delegation
+- Shopping history and analytics
+- Family preference learning
+- Advanced sharing controls
+
+---
+
+### **Milestone Timeline Summary**
+
+**Core Platform (M1-M10)**: ~220-270 hours estimated (core) or ~235-290 hours (with M8.4 ML)
+- **Completed (M1-M7 partial)**: ~119.5 hours ✅
+- **Remaining (M6-M10)**: ~200-253 hours (core) or ~215-273 hours (with M8.4 ML)
+
+**Advanced Intelligence Platform (M11-M14)**: 40-60 hours total
+- Dependencies: M1-M10 complete
+
+**Total Project Estimate**: ~260-330 hours (core) or ~275-350 hours (with M8.4 ML)
+
+---
+
 ## 📚 **LEARNING RESOURCES**
 
 ### **Internal Knowledge**
@@ -285,8 +465,17 @@ Member Invitation & Acceptance Testing:
 
 ---
 
-**Version**: 8.0  
-**Last Updated**: January 2, 2026  
-**Maintained By**: Rich Hayn  
-**Project**: forager - Smart Meal Planning  
+**Version**: 8.1
+**Last Updated**: January 4, 2026
+**Maintained By**: Rich Hayn
+**Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git
+
+---
+
+**Documentation Update**: January 4, 2026 - Milestone restructuring complete
+- ✅ M8: Ingredient Parsing Intelligence (4 phases, was M7.5/M8.0/M9.5)
+- ✅ M9: Technical Debt & Codebase Optimization (new comprehensive PRD)
+- ✅ M10: Analytics & Insights (was M8)
+- ✅ M11-M14: Advanced Intelligence Platform (was M9-M12)
+- ✅ All PRDs, requirements.md, roadmap.md, and project-index.md updated
