@@ -12,105 +12,125 @@ struct InviteMemberSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var service: HouseholdService
     let household: Household
-    
-    @State private var email: String = ""
-    @State private var isInviting: Bool = false
+
     @State private var showingShareSheet: Bool = false
-    @State private var shareToPresent: CKShare?
+    @State private var invitationURL: URL?
+    @State private var isLoading: Bool = false
     @State private var errorMessage: String?
     @State private var showingError: Bool = false
-    
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("Email address", text: $email)
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled()
-                } header: {
+            VStack(spacing: 24) {
+                // Icon
+                Image(systemName: "person.badge.plus")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.blue)
+                    .padding(.top, 40)
+
+                // Title
+                VStack(spacing: 8) {
                     Text("Invite Member")
-                } footer: {
-                    Text("Enter the iCloud email address of the person you want to invite. They'll receive a notification and can join your household.")
+                        .font(.title)
+                        .fontWeight(.bold)
+
+                    Text("Add people to your household")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
                 }
-                
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Full Access", systemImage: "checkmark.circle.fill")
+
+                // Description
+                VStack(spacing: 12) {
+                    Label {
+                        Text("Share with family & friends")
+                    } icon: {
+                        Image(systemName: "house.fill")
                             .foregroundStyle(.green)
-                        Text("New members will have full read and write access to all recipes, grocery lists, and meal plans.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
                     }
+
+                    Text("New members will have full access to all grocery lists, recipes, and meal plans. They'll receive a notification to join.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
                 }
-            }
-            .navigationTitle("Invite Member")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .disabled(isInviting)
-                }
-                
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Send Invitation") {
+                .padding(.vertical)
+
+                Spacer()
+
+                // Button
+                VStack(spacing: 12) {
+                    Button {
                         Task {
-                            await sendInvitation()
+                            await presentShareSheet()
                         }
+                    } label: {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Invite People")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
-                    .disabled(email.isEmpty || isInviting || !isValidEmail(email))
+                    .disabled(isLoading)
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Cancel")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(.blue)
+                    }
+                    .disabled(isLoading)
                 }
+                .padding(.horizontal)
+                .padding(.bottom, 40)
             }
             .overlay {
-                if isInviting {
-                    ProgressView("Preparing invitation...")
+                if isLoading {
+                    ProgressView("Creating invitation...")
                         .padding()
                         .background(.regularMaterial)
                         .cornerRadius(10)
                 }
             }
             .sheet(isPresented: $showingShareSheet) {
-                if let share = shareToPresent {
-                    ShareSheet(
-                        share: share,
-                        container: CKContainer(identifier: "iCloud.com.richhayn.forager")
-                    ) {
+                if let url = invitationURL {
+                    ShareSheet(invitationURL: url) {
                         dismiss()
                     }
                 }
             }
-            .alert("Invitation Error", isPresented: $showingError) {
+            .alert("Error", isPresented: $showingError) {
                 Button("OK") { }
             } message: {
-                Text(errorMessage ?? "Failed to send invitation")
+                Text(errorMessage ?? "Failed to create invitation")
             }
         }
     }
-    
-    private func sendInvitation() async {
-        isInviting = true
-        defer { isInviting = false }
-        
+
+    private func presentShareSheet() async {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
-            // Create pending member and get share
-            let share = try await service.inviteMember(email: email, to: household)
-            
-            // Present UICloudSharingController
-            shareToPresent = share
+            // Create one-time invitation URL (works around UICloudSharingController issues)
+            let url = try await service.createOneTimeInvitationURL(household: household)
+
+            print("📝 Presenting share sheet with one-time URL...")
+
+            // Store URL and present share sheet
+            invitationURL = url
             showingShareSheet = true
-            
+
         } catch {
             errorMessage = error.localizedDescription
             showingError = true
+            print("❌ Failed to create invitation: \(error)")
         }
-    }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        return emailPredicate.evaluate(with: email)
     }
 }

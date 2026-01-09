@@ -22,6 +22,7 @@ enum HouseholdError: LocalizedError {
     case alreadyMember
     case invitationPending
     case noInvitation
+    case noInvitationURL
     
     var errorDescription: String? {
         switch self {
@@ -43,6 +44,8 @@ enum HouseholdError: LocalizedError {
             return "An invitation is already pending for this email"
         case .noInvitation:
             return "No pending invitation found"
+        case .noInvitationURL:
+            return "Failed to generate invitation URL"
         }
     }
 }
@@ -150,13 +153,30 @@ class HouseholdService: ObservableObject {
     }
     
     /// Checks if current user is the owner of the household
+    /// Uses userRecordID for reliable comparison without requiring discoverability
     func isOwner(household: Household) async -> Bool {
         guard let ownerEmail = household.ownerEmail else { return false }
-        
+
         do {
-            let currentEmail = try await getCurrentUserEmail()
-            return currentEmail == ownerEmail
+            // Get current user's recordID (always available, no discoverability required)
+            let currentRecordID = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord.ID, Error>) in
+                container.fetchUserRecordID { recordID, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    guard let recordID = recordID else {
+                        continuation.resume(throwing: HouseholdError.emailNotFound)
+                        return
+                    }
+                    continuation.resume(returning: recordID)
+                }
+            }
+
+            // Compare recordNames (stable identifiers)
+            return currentRecordID.recordName == ownerEmail
         } catch {
+            print("⚠️ Failed to verify ownership: \(error)")
             return false
         }
     }
@@ -218,7 +238,7 @@ class HouseholdService: ObservableObject {
     func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
@@ -226,82 +246,100 @@ class HouseholdService: ObservableObject {
             print("   Owner: \(ownerName)")
             print("   Move existing data: \(moveExistingData)")
             #endif
-            
-            // 1. Get current user's email from CloudKit
-            let ownerEmail = try await getCurrentUserEmail()
-            
+
+            // 1. Get userRecordID as stable owner identifier
+            // Note: recordID.recordName is always available without discoverability permissions
+            let userRecordID = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord.ID, Error>) in
+                container.fetchUserRecordID { recordID, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    guard let recordID = recordID else {
+                        continuation.resume(throwing: HouseholdError.emailNotFound)
+                        return
+                    }
+                    continuation.resume(returning: recordID)
+                }
+            }
+
+            // Use recordName as stable owner identifier (not email, but reliable)
+            let ownerIdentifier = userRecordID.recordName
+
+            print("📝 Owner identifier (userRecordID): \(ownerIdentifier)")
+
             // 2. Create Household entity in Private Store (will be shared after)
             let household = Household(context: viewContext)
             household.id = UUID()
             household.name = name
-            household.ownerEmail = ownerEmail
+            household.ownerEmail = ownerIdentifier  // Stable userRecordID
             household.createdDate = Date()
-            
+
             // 3. Create owner as first member
             let ownerMember = HouseholdMember(context: viewContext)
             ownerMember.id = UUID()
-            ownerMember.email = ownerEmail
-            ownerMember.displayName = ownerName
+            ownerMember.email = ownerIdentifier  // Stable userRecordID
+            ownerMember.displayName = ownerName  // User-provided display name
             ownerMember.role = "owner"
             ownerMember.status = "active"
             ownerMember.joinedDate = Date()
             ownerMember.household = household
-            
+
             // 4. Migrate existing data if requested
             if moveExistingData {
                 try migratePersonalDataToHousehold(household)
             }
-            
+
             // 5. Save to Core Data (household in Private Store initially)
             try viewContext.save()
-            
+
             #if DEBUG
             household.logStoreIdentity()  // Should show "Private Store"
             #endif
-            
+
             // 6. CRITICAL: Share the household using container.share()
             // This creates CKShare and moves household to Shared Zone
             // Note: We use 'to: nil' to let Core Data manage CKShare creation
             let persistenceController = PersistenceController.shared
             let (_, share, _) = try await persistenceController.container.share([household], to: nil)
-            
+
             #if DEBUG
             print("✅ CKShare created: \(share.recordID.recordName)")
             #endif
-            
+
             // 7. CRITICAL: Save context immediately to persist the share
             // M7.2.3 Phase 4.4 FIX: Without this save, CKShare exists in-memory but never syncs to CloudKit!
             try viewContext.save()
-            
+
             #if DEBUG
             print("✅ Context saved - CKShare should sync to CloudKit now")
             household.logStoreIdentity()  // Should show "Shared Store" after share
             #endif
-            
+
             // 8. Store share record reference for future access
             household.shareRecord = try NSKeyedArchiver.archivedData(
                 withRootObject: share,
                 requiringSecureCoding: true
             )
-            
+
             // 9. CRITICAL: Refresh all household-related objects to get updated store assignments
             viewContext.refreshAllObjects()
-            
-            // 10. Save share record again to persist the archived share reference
+
+            // 10. Save share record
             try viewContext.save()
-            
+
             // 11. Update current household
             currentHousehold = household
-            
+
             print("✅ Household created: \(name)")
-            print("✅ Owner: \(ownerEmail)")
+            print("✅ Owner: \(ownerIdentifier)")
             print("✅ CloudKit shared zone activated")
             if moveExistingData {
                 print("✅ Personal data migrated to household")
             }
-            
+
             return household
-            
+
         } catch {
             print("❌ Household creation failed: \(error)")
             throw HouseholdError.creationFailed(error.localizedDescription)
@@ -401,6 +439,13 @@ class HouseholdService: ObservableObject {
     /// Gets the current user's email from CloudKit
     /// Falls back to userRecordID if email is not available
     private func getCurrentUserEmail() async throws -> String {
+        let userInfo = try await getCurrentUserInfo()
+        return userInfo.email
+    }
+
+    /// Gets the current user's information from CloudKit
+    /// Returns email and display name (or fallback values)
+    private func getCurrentUserInfo() async throws -> (email: String, displayName: String) {
         return try await withCheckedThrowingContinuation { continuation in
             // TODO: M7.2.2 - Update to modern CloudKit API (iOS 17+)
             container.fetchUserRecordID { recordID, error in
@@ -408,28 +453,42 @@ class HouseholdService: ObservableObject {
                     continuation.resume(throwing: error)
                     return
                 }
-                
+
                 guard let recordID = recordID else {
                     continuation.resume(throwing: HouseholdError.emailNotFound)
                     return
                 }
-                
+
                 self.container.discoverUserIdentity(withUserRecordID: recordID) { identity, error in
                     if let error = error {
                         print("⚠️ Failed to discover identity: \(error)")
                         // Fallback to userRecordID as identifier
-                        continuation.resume(returning: recordID.recordName)
+                        continuation.resume(returning: (recordID.recordName, "Me"))
                         return
                     }
-                    
-                    // Try to get email, fallback to recordName if not available
-                    if let email = identity?.lookupInfo?.emailAddress {
-                        print("✅ Retrieved email: \(email)")
-                        continuation.resume(returning: email)
-                    } else {
-                        print("⚠️ Email not available, using userRecordID as fallback")
-                        continuation.resume(returning: recordID.recordName)
+
+                    guard let identity = identity else {
+                        print("⚠️ No identity found, using fallback")
+                        continuation.resume(returning: (recordID.recordName, "Me"))
+                        return
                     }
+
+                    // Get email (or fallback to recordName)
+                    let email = identity.lookupInfo?.emailAddress ?? recordID.recordName
+
+                    // Get display name from nameComponents
+                    var displayName = "Me"
+                    if let nameComponents = identity.nameComponents {
+                        let formatter = PersonNameComponentsFormatter()
+                        formatter.style = .medium
+                        displayName = formatter.string(from: nameComponents)
+                        print("✅ Retrieved display name: \(displayName)")
+                    } else {
+                        print("⚠️ Name components not available, using 'Me' as fallback")
+                    }
+
+                    print("✅ Retrieved email: \(email)")
+                    continuation.resume(returning: (email, displayName))
                 }
             }
         }
@@ -437,61 +496,161 @@ class HouseholdService: ObservableObject {
     
     // MARK: - Member Management
     
-    /// Invites a member to the household by creating a pending member record
-    /// Owner must then present UICloudSharingController with the returned share
-    /// - Parameters:
-    ///   - email: iCloud email address of person to invite
-    ///   - household: Household to invite them to
-    /// - Returns: CKShare to present in UICloudSharingController
-    func inviteMember(email: String, to household: Household) async throws -> CKShare {
+    /// Gets the live CKShare for inviting members
+    /// Returns share ready to present in UICloudSharingController
+    /// - Parameter household: Household to get share for
+    /// - Returns: Live CKShare from CloudKit
+    func getShareForInvitation(household: Household) async throws -> CKShare {
+        // Verify caller is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Get and return live share from CloudKit
+        return try await getShare(for: household)
+    }
+
+    /// Creates a shareable invitation URL for inviting members
+    /// This approach works around UICloudSharingController issues by enabling
+    /// public link sharing (like Google Docs) with UIActivityViewController
+    /// - Parameter household: Household to create invitation for
+    /// - Returns: Shareable URL that can be sent via Messages, Mail, etc.
+    /// - Note: Enables publicPermission = .readWrite so anyone with URL can join
+    func createOneTimeInvitationURL(household: Household) async throws -> URL {
+        // Verify caller is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Get live share from CloudKit
+        let share = try await getShare(for: household)
+
+        print("📝 Creating shareable invitation URL...")
+        print("   Current participants: \(share.participants.count)")
+        print("   Current publicPermission: \(share.publicPermission.rawValue)")
+
+        // Enable public link sharing
+        // This allows anyone with the URL to join (like a shared Google Doc link)
+        // NOTE: CKShare.participants is read-only, so we can't add one-time participants
+        // The trade-off: public link (anyone with URL) vs private (UICloudSharingController required)
+        if share.publicPermission == .none {
+            share.publicPermission = .readWrite
+            print("✅ Enabled public link sharing (readWrite)")
+
+            // Persist updated share back to CloudKit via Core Data
+            let persistenceController = PersistenceController.shared
+
+            // Get the persistent store (should be the first/only store in CloudKit setup)
+            guard let persistentStore = persistenceController.container.persistentStoreCoordinator.persistentStores.first else {
+                throw HouseholdError.cloudKitUnavailable
+            }
+
+            try await persistenceController.container.persistUpdatedShare(share, in: persistentStore)
+            print("✅ Share updated with public permissions")
+        } else {
+            print("ℹ️ Share already has public permissions")
+        }
+
+        // Get the invitation URL from the share itself
+        // The share URL is what recipients will use to join
+        guard let invitationURL = share.url else {
+            print("❌ Share missing URL")
+            throw HouseholdError.noInvitationURL
+        }
+
+        print("✅ One-time invitation URL created: \(invitationURL)")
+
+        return invitationURL
+    }
+
+    /// Syncs participants from CloudKit share to local database
+    /// Creates or updates HouseholdMember records for each participant
+    /// Called after UICloudSharingController saves the share
+    /// - Parameter household: Household to sync participants for
+    func syncParticipantsFromShare(household: Household) async throws {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
-            // 1. Verify caller is owner
-            guard await isOwner(household: household) else {
-                throw HouseholdError.notOwner
-            }
-            
-            // 2. Check if already a member
-            let existingMember = household.memberArray.first { $0.email == email }
-            if let existing = existingMember {
-                if existing.isActive {
-                    throw HouseholdError.alreadyMember
+            // Get live share with current participants
+            let share = try await getShare(for: household)
+
+            print("🔄 Syncing participants from CloudKit share...")
+            print("   Total participants: \(share.participants.count)")
+
+            // Get current members from local database
+            let existingMembers = household.memberArray
+
+            // Process each participant from share
+            for participant in share.participants {
+                // Force explicit CloudKit types to avoid name collision
+                let ckParticipant: CKShare.Participant = participant
+
+                // userIdentity is NON-optional
+                let identity: CKUserIdentity = ckParticipant.userIdentity
+
+                // userRecordID is OPTIONAL (per Apple's CloudKit API)
+                guard let userRecordID: CKRecord.ID = identity.userRecordID else {
+                    print("⚠️ Skipping participant - userRecordID is nil")
+                    continue
+                }
+
+                let recordName: String = userRecordID.recordName
+
+                // lookupInfo and emailAddress are both optional
+                let email: String = identity.lookupInfo?.emailAddress ?? recordName
+
+                // Check if member already exists
+                let existingMember = existingMembers.first { $0.email == email }
+
+                if let member = existingMember {
+                    // Update existing member status if needed
+                    if member.isPending && participant.acceptanceStatus == .accepted {
+                        member.status = "active"
+                        member.joinedDate = Date()
+                        print("✅ Activated member: \(email)")
+                    }
                 } else {
-                    throw HouseholdError.invitationPending
+                    // Create new member record
+                    let newMember = HouseholdMember(context: viewContext)
+                    newMember.id = UUID()
+                    newMember.email = email
+
+                    // Get display name from CloudKit using stable identity variable
+                    if let nameComponents = identity.nameComponents {
+                        let formatter = PersonNameComponentsFormatter()
+                        formatter.style = .medium
+                        newMember.displayName = formatter.string(from: nameComponents)
+                    } else {
+                        newMember.displayName = extractDisplayName(from: email)
+                    }
+
+                    // Determine if owner
+                    if participant.role == .owner {
+                        newMember.role = "owner"
+                        newMember.status = "active"
+                        newMember.joinedDate = Date()
+                    } else {
+                        newMember.role = "member"
+                        newMember.status = participant.acceptanceStatus == .accepted ? "active" : "pending"
+                        newMember.joinedDate = participant.acceptanceStatus == .accepted ? Date() : nil
+                    }
+
+                    newMember.household = household
+                    print("✅ Created new member: \(email) (\(newMember.status ?? "unknown"))")
                 }
             }
-            
-            // 3. Create pending member
-            let pendingMember = HouseholdMember(context: viewContext)
-            pendingMember.id = UUID()
-            pendingMember.email = email
-            pendingMember.displayName = extractDisplayName(from: email)
-            pendingMember.role = "member"
-            pendingMember.status = "pending"
-            pendingMember.household = household
-            // joinedDate remains nil until acceptance
-            
-            // 4. Save pending member
+
+            // Save changes
             try viewContext.save()
-            
-            // 5. Get share for UICloudSharingController
-            let share = try await getShare(for: household)
-            
-            print("✅ Pending invitation created for: \(email)")
-            return share
-            
+            print("✅ Participants synced successfully")
+
         } catch {
-            print("❌ Invitation failed: \(error)")
-            if let hhError = error as? HouseholdError {
-                throw hhError
-            } else {
-                throw HouseholdError.invitationFailed(error.localizedDescription)
-            }
+            print("❌ Failed to sync participants: \(error)")
+            throw error
         }
     }
-    
+
     /// Accepts a household invitation
     /// Called when user taps "Join Household" after receiving invitation
     /// - Parameter household: Household being joined
@@ -532,22 +691,52 @@ class HouseholdService: ObservableObject {
     
     // MARK: - Helper Methods
     
-    /// Gets the CKShare record for the household
+    /// Gets the LIVE CKShare record for the household from CloudKit
     /// Used for invitation and share management
+    /// CRITICAL: Must fetch live record, not archived snapshot, for UICloudSharingController
     private func getShare(for household: Household) async throws -> CKShare {
-        guard let shareData = household.shareRecord else {
-            throw HouseholdError.noShareRecord
+        // APPROACH 1: Use NSPersistentCloudKitContainer to get live share
+        // This is the recommended approach when using Core Data + CloudKit
+        let persistenceController = PersistenceController.shared
+
+        // Fetch shares for this household
+        do {
+            let shares = try await persistenceController.container.fetchShares(matching: [household.objectID])
+
+            guard let share = shares.first?.1 else {
+                throw HouseholdError.noShareRecord
+            }
+
+            print("✅ Fetched live CKShare from CloudKit: \(share.recordID.recordName)")
+            print("   Current participants: \(share.participants.count)")
+
+            return share
+
+        } catch {
+            print("❌ Failed to fetch live share: \(error)")
+
+            // FALLBACK: Try to get share record ID from archived data and fetch manually
+            guard let shareData = household.shareRecord,
+                  let archivedShare = try? NSKeyedUnarchiver.unarchivedObject(
+                    ofClass: CKShare.self,
+                    from: shareData
+                  ) else {
+                throw HouseholdError.noShareRecord
+            }
+
+            // Fetch the live record from CloudKit using the recordID
+            let database = container.sharedCloudDatabase
+            let shareRecordID = archivedShare.recordID
+
+            let fetchedRecord = try await database.record(for: shareRecordID)
+
+            guard let liveShare = fetchedRecord as? CKShare else {
+                throw HouseholdError.noShareRecord
+            }
+
+            print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
+            return liveShare
         }
-        
-        // Unarchive the CKShare from stored data
-        guard let share = try NSKeyedUnarchiver.unarchivedObject(
-            ofClass: CKShare.self,
-            from: shareData
-        ) else {
-            throw HouseholdError.noShareRecord
-        }
-        
-        return share
     }
     
     /// Extracts display name from email address
