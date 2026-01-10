@@ -75,6 +75,7 @@
 		9B731C872E5364A300CE26F0 /* Ingredient+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C772E5364A300CE26F0 /* Ingredient+CoreDataClass.swift */; };
 		9B731C882E5364A300CE26F0 /* Tag+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7B2E5364A300CE26F0 /* Tag+CoreDataClass.swift */; };
 		9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */; };
+		9B8CC1CE2F12818600E7D0A3 /* PasteInvitationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */; };
 		9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */; };
 		9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */; };
 		9B9C38E52EFC410A006E7DBD /* InviteMemberSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38E32EFC410A006E7DBD /* InviteMemberSheet.swift */; };
@@ -192,6 +193,7 @@
 		9B731C7C2E5364A300CE26F0 /* Tag+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteInvitationSheet.swift; sourceTree = "<group>"; };
 		9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+Extensions.swift"; sourceTree = "<group>"; };
 		9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+Extensions.swift"; sourceTree = "<group>"; };
 		9B9C38E32EFC410A006E7DBD /* InviteMemberSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteMemberSheet.swift; sourceTree = "<group>"; };
@@ -253,6 +255,7 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXGroup;
 			children = (
+				9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */,
 				9BD3C3AB2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift */,
 				9BE1A4AD2F05807500C59861 /* CloudKitTestHarnessView.swift */,
 				9B9C38E72EFC4F11006E7DBD /* AcceptInvitationSheet.swift */,
@@ -612,6 +615,7 @@
 				9B731C842E5364A300CE26F0 /* GroceryListItem+CoreDataClass.swift in Sources */,
 				9BC115A42EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift in Sources */,
 				9BC115A52EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift in Sources */,
+				9B8CC1CE2F12818600E7D0A3 /* PasteInvitationSheet.swift in Sources */,
 				9B731C852E5364A300CE26F0 /* GroceryItem+CoreDataClass.swift in Sources */,
 				9BF1F8CA2E566BCC00E79B3F /* Category+CoreDataClass.swift in Sources */,
 				85ADBDBF2EA91EB800E3B1B5 /* Ingredient+ComputedProperties.swift in Sources */,

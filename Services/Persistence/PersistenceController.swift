@@ -10,6 +10,7 @@
 //
 
 import CoreData
+import CloudKit  // M7.2.2: Required for CKDatabase.Scope
 import Foundation
 import UIKit  // M7.2.3 Phase 4.4: Required for UIDevice
 
@@ -39,26 +40,29 @@ final class PersistenceController {
         return container.viewContext
     }
     
-    // MARK: - M7.2.3 Phase 2.6: Store Properties
-    
+    // MARK: - M7.2.2: Store Properties (Dual-Store Architecture)
+
     /// Private CloudKit store (user's personal data)
-    /// Lazily computed from loaded persistent stores
+    /// M7.2.2: Identifies store by filename (forager.sqlite)
     var privateStore: NSPersistentStore {
-        // For NSPersistentCloudKitContainer with single configuration,
-        // the default store is the private store
-        guard let store = container.persistentStoreCoordinator.persistentStores.first else {
-            fatalError("❌ M7.2.3: No persistent stores loaded")
+        guard let store = container.persistentStoreCoordinator.persistentStores.first(where: {
+            $0.url?.lastPathComponent == "forager.sqlite"
+        }) else {
+            fatalError("❌ M7.2.2: Private store not found. Expected forager.sqlite")
         }
         return store
     }
-    
-    /// Shared CloudKit store (household collaborative data)
-    /// Note: Will be properly implemented in Phase 4 (Attach-Then-Share)
-    /// For now, returns the same store as private (single store configuration)
+
+    /// Shared CloudKit store (accepted shares from other users)
+    /// M7.2.2: Identifies store by filename (forager_shared.sqlite)
+    /// CRITICAL: This store is what enables Device B to receive shared household data
     var sharedStore: NSPersistentStore {
-        // TODO M7.2.3 Phase 4: Implement proper shared store lookup
-        // For now, same as private store until we implement multi-store config
-        return privateStore
+        guard let store = container.persistentStoreCoordinator.persistentStores.first(where: {
+            $0.url?.lastPathComponent == "forager_shared.sqlite"
+        }) else {
+            fatalError("❌ M7.2.2: Shared store not found. Expected forager_shared.sqlite")
+        }
+        return store
     }
     
     /// M7.2.3 Phase 2.6: Resolve StoreID to NSPersistentStore
@@ -99,13 +103,14 @@ final class PersistenceController {
         // For now, keeping CloudKit enabled to maintain type compatibility
         print("⚡ M7.2.3: Using NSPersistentCloudKitContainer (Debug mode - consider disabling CloudKit for faster iteration)")
         #endif
-        
-        if let description = container.persistentStoreDescriptions.first {
-            configureStoreDescription(description, inMemory: inMemory)
-        }
+
+        // M7.2.2: Configure dual-store architecture for CloudKit sharing
+        // Research from ChatGPT & Gemini confirms this is REQUIRED for shared database sync
+        configureDualStoreArchitecture(inMemory: inMemory)
+
         loadPersistentStores()
         configureViewContext()
-        
+
         // M7.2.3 Phase 3.6: Perform setup immediately
         // DefaultSeeder now queries CloudKit directly, no observer needed!
         if !inMemory {
@@ -114,57 +119,103 @@ final class PersistenceController {
     }
     
     // MARK: - Private Configuration
-    
-    /// Configure CloudKit sync, migration, history tracking, and remote notifications
-    private func configureStoreDescription(_ description: NSPersistentStoreDescription, inMemory: Bool) {
-        // M7.1.1: CloudKit container configuration
+
+    /// M7.2.2: Configure dual-store architecture for CloudKit sharing
+    /// CRITICAL FIX: NSPersistentCloudKitContainer requires separate stores for Private and Shared databases
+    /// Research sources: ChatGPT & Gemini deep research (temp-chatgpt-research.md, temp-gemini-research.md)
+    ///
+    /// Key insight: Each store maps 1:1 to a CloudKit database scope
+    /// - Private Store (.private) → owner's personal data
+    /// - Shared Store (.shared) → accepted shares from others
+    ///
+    /// Without this, shared zones exist in CloudKit but never sync to local Core Data
+    private func configureDualStoreArchitecture(inMemory: Bool) {
+        guard let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            fatalError("❌ M7.2.2: Unable to locate Application Support directory")
+        }
+
+        // Ensure directory exists
+        try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
+
+        if inMemory {
+            // In-memory testing: use /dev/null for both stores
+            let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .private, inMemory: true)
+            let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .shared, inMemory: true)
+            container.persistentStoreDescriptions = [privateDesc, sharedDesc]
+            print("🧪 M7.2.2: Dual in-memory stores configured")
+        } else {
+            // Production: separate SQLite files for private and shared data
+            let privateStoreURL = appSupportURL.appendingPathComponent("forager.sqlite")
+            let sharedStoreURL = appSupportURL.appendingPathComponent("forager_shared.sqlite")
+
+            let privateDesc = createStoreDescription(url: privateStoreURL, scope: .private, inMemory: false)
+            let sharedDesc = createStoreDescription(url: sharedStoreURL, scope: .shared, inMemory: false)
+
+            container.persistentStoreDescriptions = [privateDesc, sharedDesc]
+
+            print("✅ M7.2.2: Dual-store architecture configured")
+            print("   Private Store: \(privateStoreURL.lastPathComponent)")
+            print("   Shared Store:  \(sharedStoreURL.lastPathComponent)")
+        }
+    }
+
+    /// Create a persistent store description with CloudKit configuration
+    private func createStoreDescription(url: URL, scope: CKDatabase.Scope, inMemory: Bool) -> NSPersistentStoreDescription {
+        let description = NSPersistentStoreDescription(url: url)
+        // Both stores use the same data model automatically
+
+        // CloudKit container options with explicit database scope
         let containerOptions = NSPersistentCloudKitContainerOptions(
             containerIdentifier: "iCloud.com.richhayn.forager"
         )
+        containerOptions.databaseScope = scope // CRITICAL: Explicit scope assignment
         description.cloudKitContainerOptions = containerOptions
-        
+
         #if DEBUG
-        // Force Development environment in Debug builds for testing
+        // Force Development environment in Debug builds
         description.setOption("Development" as NSObject,
                             forKey: "NSPersistentStoreCloudKitEnvironment")
-        print("☁️ M7.2.3 Phase 4.4: CloudKit sync ENABLED")
-        print("   Container: iCloud.com.richhayn.forager")
-        print("   Environment: Development")
-        print("   Device: \(UIDevice.current.name)")
-        print("   iCloud Account: \(FileManager.default.ubiquityIdentityToken != nil ? "✅ Signed In" : "❌ NOT SIGNED IN")")
-        #else
-        print("☁️ M7.2.3: CloudKit sync enabled (Production)")
-        #endif
-        
-        // M7.1.3: Enable automatic lightweight migration
-        description.setOption(true as NSNumber,
-                            forKey: NSMigratePersistentStoresAutomaticallyOption)
-        description.setOption(true as NSNumber,
-                            forKey: NSInferMappingModelAutomaticallyOption)
-        
-        // Enable history tracking and remote change notifications (required for CloudKit)
-        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
-        description.setOption(true as NSNumber, 
-                            forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
-        
-        if inMemory {
-            description.url = URL(fileURLWithPath: "/dev/null")
-            print("🧪 M7.2.3: In-memory store for testing")
+        if scope == .private {
+            print("☁️ M7.2.2: CloudKit sync ENABLED")
+            print("   Container: iCloud.com.richhayn.forager")
+            print("   Environment: Development")
+            print("   Device: \(UIDevice.current.name)")
+            print("   iCloud Account: \(FileManager.default.ubiquityIdentityToken != nil ? "✅ Signed In" : "❌ NOT SIGNED IN")")
         }
+        #else
+        if scope == .private {
+            print("☁️ M7.2.2: CloudKit sync enabled (Production)")
+        }
+        #endif
+
+        // M7.1.3: Enable automatic lightweight migration
+        description.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
+        description.setOption(true as NSNumber, forKey: NSInferMappingModelAutomaticallyOption)
+
+        // Required for CloudKit sync
+        description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+        description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+
+        return description
     }
     
-    /// Load persistent stores with error handling
+    /// M7.2.2: Load persistent stores with error handling
+    /// Now loads BOTH private and shared stores
     private func loadPersistentStores() {
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                print("❌ M7.2.3 Phase 4.4: Store loading FAILED")
+                print("❌ M7.2.2: Store loading FAILED")
                 print("   Error: \(error.localizedDescription)")
                 print("   Details: \(error.userInfo)")
-                fatalError("❌ M7.2.3: Core Data store loading failed: \(error), \(error.userInfo)")
+                fatalError("❌ M7.2.2: Core Data store loading failed: \(error), \(error.userInfo)")
             }
-            print("✅ M7.2.3 Phase 4.4: Core Data stack loaded successfully")
-            print("   Store URL: \(storeDescription.url?.absoluteString ?? "unknown")")
-            print("   CloudKit: \(storeDescription.cloudKitContainerOptions != nil ? "Enabled" : "Disabled")")
+
+            // Log each store as it loads
+            let scope = storeDescription.cloudKitContainerOptions?.databaseScope
+            let scopeName = scope == .private ? "Private" : (scope == .shared ? "Shared" : "Unknown")
+            print("✅ M7.2.2: \(scopeName) store loaded")
+            print("   URL: \(storeDescription.url?.lastPathComponent ?? "unknown")")
+            print("   CloudKit Scope: .\(scopeName.lowercased())")
         }
     }
     

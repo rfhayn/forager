@@ -137,6 +137,19 @@ struct foragerApp: App {
             .onContinueUserActivity("com.apple.CloudKit.ShareInvitation") { userActivity in
                 handleCloudKitShare(userActivity)
             }
+            // M7.2.2: Debug - catch ALL user activities to see what we're receiving
+            .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { userActivity in
+                print("🔍 DEBUG: Received web browsing activity")
+                print("   URL: \(userActivity.webpageURL?.absoluteString ?? "none")")
+                handleCloudKitShareURL(userActivity.webpageURL)
+            }
+            // M7.2.2: Catch direct URL launches
+            .onOpenURL { url in
+                print("🔍 DEBUG: App opened with URL: \(url.absoluteString)")
+                print("   Scheme: \(url.scheme ?? "none")")
+                print("   Host: \(url.host ?? "none")")
+                handleCloudKitShareURL(url)
+            }
             .sheet(isPresented: $showAcceptInvitationSheet) {
                 if let metadata = pendingShareMetadata {
                     AcceptInvitationSheet(service: householdService, share: metadata)
@@ -171,16 +184,20 @@ struct foragerApp: App {
     }
     
     // MARK: - M7.2.2 Task 3: CloudKit Share Handling
-    
+
     /// Handles incoming CloudKit share invitation
     /// Called when user taps invitation link from Messages, Mail, etc.
     private func handleCloudKitShare(_ userActivity: NSUserActivity) {
+        print("🔍 DEBUG: handleCloudKitShare called")
+        print("   Activity type: \(userActivity.activityType)")
+        print("   UserInfo keys: \(userActivity.userInfo?.keys.map { String(describing: $0) } ?? [])")
+
         // Extract CKShareMetadata from userInfo
         guard let metadataData = userActivity.userInfo?[CKShareMetadataKey] as? Data else {
             print("❌ No share metadata found in user activity")
             return
         }
-        
+
         // Unarchive the metadata
         guard let shareMetadata = try? NSKeyedUnarchiver.unarchivedObject(
             ofClass: CKShare.Metadata.self,
@@ -189,13 +206,51 @@ struct foragerApp: App {
             print("❌ Failed to unarchive share metadata")
             return
         }
-        
+
         print("✅ Received CloudKit share invitation")
         print("   Root record: \(shareMetadata.rootRecordID.recordName)")
-        
+
         // Store metadata and present acceptance sheet
         pendingShareMetadata = shareMetadata
         showAcceptInvitationSheet = true
+    }
+
+    /// Handles CloudKit share URL (icloud.com/share/...)
+    /// M7.2.2: Public link sharing approach
+    private func handleCloudKitShareURL(_ url: URL?) {
+        guard let url = url else { return }
+
+        print("🔍 DEBUG: handleCloudKitShareURL called")
+        print("   URL: \(url.absoluteString)")
+
+        // Check if this is an iCloud share URL
+        guard url.host?.contains("icloud.com") == true,
+              url.path.contains("share") else {
+            print("   Not an iCloud share URL")
+            return
+        }
+
+        print("✅ Detected iCloud share URL - fetching metadata...")
+
+        // Fetch share metadata from the URL
+        Task {
+            do {
+                let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
+                let metadata = try await container.shareMetadata(for: url)
+
+                print("✅ Fetched share metadata")
+                print("   Root record: \(metadata.rootRecordID.recordName)")
+
+                // Store metadata and present acceptance sheet
+                await MainActor.run {
+                    pendingShareMetadata = metadata
+                    showAcceptInvitationSheet = true
+                }
+
+            } catch {
+                print("❌ Failed to fetch share metadata: \(error)")
+            }
+        }
     }
 }
 

@@ -30,6 +30,7 @@ struct SettingsView: View {
     
     // M7.2.2: Invitation sheet state
     @State private var showInviteMemberSheet = false
+    @State private var showPasteInvitationSheet = false
     
     // M7.2.1: Initializer to inject HouseholdService
     init(context: NSManagedObjectContext) {
@@ -69,6 +70,9 @@ struct SettingsView: View {
                 if let household = householdService.currentHousehold {
                     InviteMemberSheet(service: householdService, household: household)
                 }
+            }
+            .sheet(isPresented: $showPasteInvitationSheet) {
+                PasteInvitationSheet(service: householdService)
             }
         }
     }
@@ -139,7 +143,7 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    
+
                     Button(action: {
                         showCreateHouseholdSheet = true
                     }) {
@@ -150,6 +154,38 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+
+                    // M7.2.2: Paste invitation link button
+                    Button(action: {
+                        showPasteInvitationSheet = true
+                    }) {
+                        HStack {
+                            Image(systemName: "link.circle")
+                            Text("Paste Invitation Link")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+
+                    // M7.2.2: Manual refresh button to check for accepted invitations
+                    Button(action: {
+                        Task {
+                            await householdService.checkForAcceptedInvitations()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                            Text("Check for Invitations")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.gray.opacity(0.5))
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
