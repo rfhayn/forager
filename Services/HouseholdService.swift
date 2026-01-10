@@ -9,6 +9,7 @@
 import Foundation
 import CoreData
 import CloudKit
+import UIKit  // For UIDevice.current.name
 
 // MARK: - Household Errors
 
@@ -298,8 +299,8 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 6. CRITICAL: Share the household using container.share()
-            // This creates CKShare and moves household to Shared Zone
-            // Note: We use 'to: nil' to let Core Data manage CKShare creation
+            // M7.2.2: With dual-store setup, let Core Data determine the correct store
+            // Household is in viewContext, which will resolve to the appropriate store
             let persistenceController = PersistenceController.shared
             let (_, share, _) = try await persistenceController.container.share([household], to: nil)
 
@@ -438,7 +439,7 @@ class HouseholdService: ObservableObject {
     
     /// Gets the current user's email from CloudKit
     /// Falls back to userRecordID if email is not available
-    private func getCurrentUserEmail() async throws -> String {
+    func getCurrentUserEmail() async throws -> String {
         let userInfo = try await getCurrentUserInfo()
         return userInfo.email
     }
@@ -538,14 +539,11 @@ class HouseholdService: ObservableObject {
             print("✅ Enabled public link sharing (readWrite)")
 
             // Persist updated share back to CloudKit via Core Data
+            // M7.2.2: Share updates always go to private store (owner's data)
             let persistenceController = PersistenceController.shared
+            let privateStore = persistenceController.privateStore
 
-            // Get the persistent store (should be the first/only store in CloudKit setup)
-            guard let persistentStore = persistenceController.container.persistentStoreCoordinator.persistentStores.first else {
-                throw HouseholdError.cloudKitUnavailable
-            }
-
-            try await persistenceController.container.persistUpdatedShare(share, in: persistentStore)
+            try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
             print("✅ Share updated with public permissions")
         } else {
             print("ℹ️ Share already has public permissions")
@@ -657,35 +655,203 @@ class HouseholdService: ObservableObject {
     func acceptInvitation(for household: Household) async throws {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
             // 1. Get current user's email
             let currentEmail = try await getCurrentUserEmail()
-            
+
             // 2. Find pending member record
-            guard let pendingMember = household.memberArray.first(where: { 
-                $0.email == currentEmail && $0.isPending 
+            guard let pendingMember = household.memberArray.first(where: {
+                $0.email == currentEmail && $0.isPending
             }) else {
                 throw HouseholdError.noInvitation
             }
-            
+
             // 3. Activate member
             pendingMember.status = "active"
             pendingMember.joinedDate = Date()
-            
+
             // 4. Save changes
             try viewContext.save()
-            
+
             // 5. Update current household
             currentHousehold = household
-            
+
             print("✅ Invitation accepted")
             print("✅ Member activated: \(currentEmail)")
             print("✅ Joined household: \(household.name ?? "Unknown")")
-            
+
         } catch {
             print("❌ Failed to accept invitation: \(error)")
             throw HouseholdError.invitationFailed(error.localizedDescription)
+        }
+    }
+
+    /// M7.2.2: Manually checks CloudKit for accepted invitations
+    /// This is a workaround for when URL handling doesn't trigger (app already running)
+    /// Call this when user taps "Check for Invitations" button
+    func checkForAcceptedInvitations() async {
+        print("🔍 Manually checking for accepted invitations...")
+
+        do {
+            // FIRST: Check CloudKit shared database directly
+            print("   Checking CloudKit shared database for shared zones...")
+            let sharedDatabase = container.sharedCloudDatabase
+
+            // Fetch all shared record zones
+            let allZones = try await sharedDatabase.allRecordZones()
+            print("   Found \(allZones.count) shared zone(s) in CloudKit")
+
+            for zone in allZones {
+                print("      Zone: \(zone.zoneID.zoneName) (owner: \(zone.zoneID.ownerName))")
+            }
+
+            // SECOND: Force a CloudKit sync to pull any new data
+            print("   Forcing Core Data refresh...")
+            viewContext.refreshAllObjects()
+
+            // Wait a moment for sync to propagate
+            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+
+            // THIRD: Fetch all households from local database
+            let fetchRequest: NSFetchRequest<Household> = Household.fetchRequest()
+            let households = try viewContext.fetch(fetchRequest)
+
+            print("   Found \(households.count) household(s) in local database")
+
+            if households.isEmpty && allZones.count > 0 {
+                print("   No households found in local database")
+                print("   BUT found \(allZones.count) shared zones in CloudKit")
+                print("   ⚠️ NSPersistentCloudKitContainer hasn't synced the shared zone yet")
+                print("   ⚠️ This is a known limitation - shared zones require app restart to sync")
+                print("   💡 Solution: Close the app completely and reopen it")
+                return
+            } else if households.isEmpty {
+                print("   No households found - invitation may not have synced yet")
+                print("   Try again in a few seconds or check CloudKit Dashboard")
+                return
+            }
+
+            // Get current user's email to check membership
+            let currentEmail = try await getCurrentUserEmail()
+            print("   Current user: \(currentEmail)")
+
+            // Find a household where this user is a member
+            for household in households {
+                print("   Checking household: \(household.name ?? "Unnamed")")
+                print("      Members: \(household.members?.count ?? 0)")
+
+                // Check if user is already a member of this household
+                if let member = household.memberArray.first(where: { $0.email == currentEmail }) {
+                    print("✅ Found household where you're a member!")
+                    print("   Household: \(household.name ?? "Unnamed")")
+                    print("   Status: \(member.status ?? "unknown")")
+                    print("   Is pending: \(member.isPending)")
+
+                    // Set as current household
+                    currentHousehold = household
+
+                    // If still pending, accept it
+                    if member.isPending {
+                        try await acceptInvitation(for: household)
+                    }
+
+                    return
+                }
+
+                // M7.2.2: Auto-create member for public link shares
+                // If household exists in shared store but user is not a member,
+                // they must have accepted via public link - create member record
+                let sharedStore = PersistenceController.shared.sharedStore
+                if household.objectID.persistentStore == sharedStore {
+                    print("🔗 Household from shared store - auto-creating member for public link share")
+
+                    // Create new active member
+                    let newMember = HouseholdMember(context: viewContext)
+                    newMember.id = UUID()
+                    newMember.email = currentEmail
+                    newMember.role = "member"
+                    newMember.status = "active"
+                    newMember.joinedDate = Date()
+
+                    // Get display name - try multiple approaches
+                    var displayName: String?
+
+                    // Try 1: Get from CloudKit user identity (if available)
+                    do {
+                        let userRecordID = try await container.userRecordID()
+                        if let identity = try await container.userIdentity(forUserRecordID: userRecordID),
+                           let nameComponents = identity.nameComponents {
+                            let formatter = PersonNameComponentsFormatter()
+                            formatter.style = .medium
+                            displayName = formatter.string(from: nameComponents)
+                            print("   ✅ Got display name from CloudKit: \(displayName!)")
+                        }
+                    } catch {
+                        print("   ⚠️ CloudKit identity unavailable: \(error)")
+                    }
+
+                    // Try 2: Use device name as fallback
+                    if displayName == nil {
+                        let deviceName = UIDevice.current.name
+                        print("   ℹ️ Device name: '\(deviceName)'")
+
+                        // Pattern 1: "John's iPhone" -> "John"
+                        if let range = deviceName.range(of: "'s ") {
+                            displayName = String(deviceName[..<range.lowerBound])
+                            print("   ✅ Extracted from possessive pattern: \(displayName!)")
+                        }
+                        // Pattern 2: "Rich iPhone" -> "Rich" (first word before "iPhone"/"iPad")
+                        else if deviceName.contains("iPhone") || deviceName.contains("iPad") {
+                            let components = deviceName.components(separatedBy: " ")
+                            if components.count >= 2 && (components[1] == "iPhone" || components[1] == "iPad") {
+                                displayName = components[0]
+                                print("   ✅ Extracted first word from device name: \(displayName!)")
+                            }
+                        }
+                        // Pattern 3: Just use the whole device name if it's short and not generic
+                        else if deviceName.count <= 20 && !["iPhone", "iPad", "iPod"].contains(deviceName) {
+                            displayName = deviceName
+                            print("   ✅ Using device name as-is: \(displayName!)")
+                        }
+                    }
+
+                    // Try 3: Extract from email if it looks like a real email
+                    if displayName == nil {
+                        // Check if this is a CloudKit user record ID (starts with "_" followed by hex)
+                        if currentEmail.hasPrefix("_") && currentEmail.count > 20 {
+                            // This is a CloudKit user record ID, not an email - use generic fallback
+                            displayName = "User"
+                            print("   ℹ️ Detected CloudKit user record ID, using generic fallback: \(displayName!)")
+                        } else {
+                            // Looks like an actual email, try to extract a name
+                            displayName = extractDisplayName(from: currentEmail)
+                            print("   ℹ️ Using extracted name from email: \(displayName!)")
+                        }
+                    }
+
+                    newMember.displayName = displayName
+
+                    newMember.household = household
+
+                    try viewContext.save()
+
+                    print("✅ Auto-created member for public link share")
+                    print("   Member: \(newMember.displayName ?? currentEmail)")
+                    print("   Role: \(newMember.role ?? "member")")
+
+                    // Set as current household
+                    currentHousehold = household
+
+                    return
+                }
+            }
+
+            print("   No households found where you're a member")
+            print("   The share may not have been accepted yet")
+
+        } catch {
+            print("❌ Error checking for invitations: \(error)")
         }
     }
     

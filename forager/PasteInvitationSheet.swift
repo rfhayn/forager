@@ -1,64 +1,64 @@
 //
-// AcceptInvitationSheet.swift
+// PasteInvitationSheet.swift
 // forager
 //
-// M7.2.2 Task 3: Invitation acceptance UI
-// Presents "Join Household?" dialog when user receives invitation
+// M7.2.2: Manual invitation URL input for troubleshooting
+// Workaround for when system share acceptance doesn't trigger URL handlers
 //
 
 import SwiftUI
 import CloudKit
 
-struct AcceptInvitationSheet: View {
+struct PasteInvitationSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var service: HouseholdService
-    let share: CKShare.Metadata
-    
+
+    @State private var invitationURL: String = ""
     @State private var isAccepting: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
-    @State private var showRestartAlert: Bool = false
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
                 // Icon
-                Image(systemName: "house.fill")
+                Image(systemName: "link.circle.fill")
                     .font(.system(size: 60))
                     .foregroundStyle(.blue)
                     .padding(.top, 40)
-                
+
                 // Title
                 VStack(spacing: 8) {
-                    Text("Join Household?")
+                    Text("Join with Link")
                         .font(.title)
                         .fontWeight(.bold)
-                    
-                    // Display household invitation
-                    Text("Household Invitation")
-                        .font(.title2)
+
+                    Text("Paste your invitation link")
+                        .font(.title3)
                         .foregroundStyle(.secondary)
                 }
-                
-                // Description
-                VStack(spacing: 12) {
-                    Label {
-                        Text("You've been invited to join this household")
-                    } icon: {
-                        Image(systemName: "person.2.fill")
-                            .foregroundStyle(.green)
-                    }
-                    
-                    Text("You'll have full access to all grocery lists, recipes, and meal plans. Any changes you make will be visible to all household members.")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+
+                // Instructions
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("1. Long-press the invitation link in Messages")
+                    Text("2. Tap 'Copy'")
+                    Text("3. Paste it below")
                 }
-                .padding(.vertical)
-                
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal)
+
+                // URL Input
+                TextField("https://www.icloud.com/share/...", text: $invitationURL)
+                    .textFieldStyle(.roundedBorder)
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
+                    .keyboardType(.URL)
+                    .padding(.horizontal)
+
                 Spacer()
-                
+
                 // Buttons
                 VStack(spacing: 12) {
                     Button {
@@ -72,16 +72,16 @@ struct AcceptInvitationSheet: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
+                        .background(invitationURL.isEmpty ? Color.gray : Color.blue)
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
-                    .disabled(isAccepting)
-                    
+                    .disabled(invitationURL.isEmpty || isAccepting)
+
                     Button {
                         dismiss()
                     } label: {
-                        Text("Not Now")
+                        Text("Cancel")
                             .frame(maxWidth: .infinity)
                             .padding()
                             .foregroundColor(.blue)
@@ -96,7 +96,7 @@ struct AcceptInvitationSheet: View {
                     ZStack {
                         Color.black.opacity(0.3)
                             .ignoresSafeArea()
-                        
+
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.5)
@@ -109,39 +109,50 @@ struct AcceptInvitationSheet: View {
                     }
                 }
             }
-            .alert("Error Joining Household", isPresented: $showError) {
+            .alert("Error", isPresented: $showError) {
                 Button("OK") { }
             } message: {
                 Text(errorMessage)
             }
-            .alert("Restart Required", isPresented: $showRestartAlert) {
-                Button("Restart App", role: .destructive) {
-                    exit(0)  // Force app termination - user will reopen manually
-                }
-                Button("Cancel", role: .cancel) {
-                    dismiss()
-                }
-            } message: {
-                Text("The household data is being synced from iCloud but hasn't arrived yet. Please force close and reopen the app to complete the setup.\n\nTap 'Restart App' to close now, then reopen from your home screen.")
-            }
         }
     }
-    
+
     private func acceptInvitation() async {
         isAccepting = true
         defer { isAccepting = false }
 
         do {
-            print("📝 Accepting CloudKit share...")
+            print("🔗 Attempting to accept invitation from URL: \(invitationURL)")
 
-            // Accept the share in CloudKit using metadata
+            // Parse URL
+            guard let url = URL(string: invitationURL.trimmingCharacters(in: .whitespaces)) else {
+                throw HouseholdError.invitationFailed("Invalid URL format")
+            }
+
+            // Verify it's an iCloud share URL
+            guard url.host?.contains("icloud.com") == true else {
+                throw HouseholdError.invitationFailed("Not an iCloud share URL")
+            }
+
+            print("📝 Fetching share metadata from CloudKit...")
+
+            // Fetch share metadata
             let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-            let acceptedShare = try await container.accept(share)
+            let metadata = try await container.shareMetadata(for: url)
+
+            print("✅ Fetched share metadata")
+            print("   Root record: \(metadata.rootRecordID.recordName)")
+            print("   Container: \(metadata.containerIdentifier)")
+
+            // Accept the share
+            print("📝 Accepting share in CloudKit...")
+            let acceptedShare = try await container.accept(metadata)
 
             print("✅ Share accepted in CloudKit: \(acceptedShare.recordID)")
+
+            // Wait for CloudKit sync to propagate with retries
             print("⏳ Waiting for CloudKit sync (this may take 10-30 seconds)...")
 
-            // Retry loop: wait for household to sync
             var household: Household?
             let maxRetries = 6
 
@@ -149,7 +160,7 @@ struct AcceptInvitationSheet: View {
                 print("   Attempt \(attempt)/\(maxRetries) - waiting 5 seconds...")
                 try await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
 
-                // Check for household using auto-member creation logic
+                // Check for household
                 await service.checkForAcceptedInvitations()
 
                 if let found = service.currentHousehold {
@@ -157,12 +168,13 @@ struct AcceptInvitationSheet: View {
                     print("✅ Household synced! Found: \(found.name ?? "Unnamed")")
                     break
                 } else {
-                    print("   Not yet synced... (\(attempt * 5) seconds elapsed)")
+                    print("   Not yet... (\(attempt * 5) seconds elapsed)")
                 }
             }
 
-            // If found, check member status (auto-creation may have already activated us)
+            // If found, check member status
             if let household = household {
+                // Check if we're already an active member (from auto-creation)
                 let currentEmail = try await service.getCurrentUserEmail()
                 if let member = household.memberArray.first(where: { $0.email == currentEmail }) {
                     if member.isPending {
@@ -170,14 +182,12 @@ struct AcceptInvitationSheet: View {
                         try await service.acceptInvitation(for: household)
                     } else {
                         // Member already active (auto-created) - just dismiss
-                        print("✅ Member already active - household ready to use")
+                        print("✅ Member already active - no need to accept invitation")
                     }
                 }
                 dismiss()
             } else {
-                // Household didn't sync in time - show restart alert
-                print("⚠️ Household not synced after 30 seconds - showing restart alert")
-                showRestartAlert = true
+                throw HouseholdError.invitationFailed("Share accepted! Please close and restart the app, then the household data will appear. (This is a NSPersistentCloudKitContainer limitation)")
             }
 
         } catch {

@@ -33,7 +33,12 @@ struct HouseholdMembersView: View {
 
 struct HouseholdMemberRow: View {
     let member: HouseholdMember
-    
+
+    /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)
+    private func isCloudKitUserRecordID(_ string: String) -> Bool {
+        return string.hasPrefix("_") && string.count > 20 && string.allSatisfy { $0.isHexDigit || $0 == "_" }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             // Avatar
@@ -63,11 +68,13 @@ struct HouseholdMemberRow: View {
                         .cornerRadius(4)
                 }
                 
-                // Email
-                Text(member.email ?? "No email")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                // Email (hide CloudKit user record IDs)
+                if let email = member.email, !isCloudKitUserRecordID(email) {
+                    Text(email)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
             }
             
             Spacer()
