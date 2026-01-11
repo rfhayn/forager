@@ -108,9 +108,41 @@
 
 ### **What's Next 🚀**
 
-**M7.2.2: Member Invitation & Acceptance** (2-3h) - **READY TO START**
+**M7.2.2: Member Invitation & Acceptance** - 🔧 **IN PROGRESS - BUG FIXES COMPLETE**
 
-Now that CloudKit sync is working and data migration is verified, it's time to test multi-user household collaboration!
+**Estimated**: 2-3h testing | **Actual**: 11-12h (implementation + bug fixes discovered during testing)
+**Status**: Device A ✅ | Device B ⏳ (bug fixes committed, ready to retest)
+**Branch**: `main`
+
+**Journey So Far**:
+- **Jan 9**: Implemented public link sharing (~8h)
+  - Bypassed UICloudSharingController iOS 18.x bugs
+  - Successfully sent invitation from Device A via Messages
+  - See: [32-m7.2.2-public-link-sharing.md](m7-docs/32-m7.2.2-public-link-sharing.md)
+- **Jan 10**: Physical device testing revealed critical bugs
+  - Display names showing CloudKit user record IDs instead of real names
+  - Only 3-second sync retry (insufficient for CloudKit propagation)
+  - Standard share flow not reliably triggering acceptance UI
+  - App requiring force-close to complete sync
+- **Jan 10**: Fixed all discovered bugs (~3-4h)
+  - Extended sync retry from 3s → 30s (6 attempts × 5s)
+  - Improved display name fallback (device name patterns, CloudKit ID detection)
+  - Hide CloudKit user record IDs from UI completely
+  - Integrated auto-member creation into AcceptInvitationSheet
+  - Added restart alert for sync edge cases
+  - See: [33-m7.2.2-device-b-bug-fixes.md](m7-docs/33-m7.2.2-device-b-bug-fixes.md)
+
+**Bug Fixes Completed** ✅:
+- ✅ Display name extraction now handles CloudKit IDs gracefully ("User" fallback)
+- ✅ Device name parsing improved ("Rich iPhone" → "Rich")
+- ✅ Sync retry logic increased to 30 seconds for CloudKit propagation
+- ✅ CloudKit user record IDs hidden from member list UI
+- ✅ Auto-member creation integrated into standard acceptance flow
+- ✅ Restart alert added for edge cases when sync doesn't complete
+- ✅ getCurrentUserEmail() made public for AcceptInvitationSheet access
+- ✅ URL handling enhanced in foragerApp.swift
+
+**Next Action**: Retest Device B invitation acceptance with fixes
 
 **Prerequisites**:
 - 2 physical iPhones with different iCloud accounts
@@ -155,36 +187,41 @@ Now that CloudKit sync is working and data migration is verified, it's time to t
    - Test accepting invitation twice
    - Test removing member (if implemented)
 
-**Acceptance Criteria**:
+**Acceptance Criteria** (Partial Progress):
 - ✅ Invitation sent successfully from Device A
-- ✅ Invitation received on Device B
-- ✅ Acceptance flow completes without errors
-- ✅ Both devices show same household data
-- ✅ Bi-directional sync working (<5s latency)
-- ✅ Members list shows both users
-- ✅ No data loss or duplication
-- ✅ Zero crashes during flow
+- ⏳ Invitation received on Device B (needs retest with fixes)
+- ⏳ Acceptance flow completes without errors (needs retest)
+- ⏳ Both devices show same household data (needs retest)
+- ⏳ Bi-directional sync working (<5s latency) (needs retest)
+- ⏳ Members list shows both users with real names (bug fixed, needs verification)
+- ⏳ No data loss or duplication (needs retest)
+- ⏳ Zero crashes during flow (needs retest)
 
-**After M7.2.2**: 
-- M7.2.3 Phases 5-6 if needed (repository hardening, validation)
-- M7.3: Conflict Resolution (4-6h)
+**After M7.2.2**:
+- M7.3: Conflict Resolution (4-6h) - May be optional if CloudKit handles it well
 - M7.4: Sync UI & Polish (3-4h)
 - M7.5: External TestFlight (2-3h)
 
-### **Strategic Decision: M7.2.2 Status**
+### **M7.2.2 Reality Check: Testing Revealed Bugs**
 
-**Current Reality**:
-- Branch: `feature/M7.2.2-member-invitation` exists
-- Code: All 4 tasks implemented (HouseholdService, ShareSheet, AcceptInvitationSheet, HouseholdMembersView)
-- Build: Successful, zero compilation errors
-- Status: Code complete, awaiting physical device testing
+**What We Thought**:
+- "M7.2.2 = 2-3h of simple testing"
+- "Code is ready, just verify on devices"
+- "Should be straightforward"
 
-**Why Testing Now Makes Sense**:
-- M7.2.3 completed the shared data architecture
-- CloudKit sync verified working
-- Migration to shared zone validated
-- Household infrastructure ready
-- Perfect time to test multi-user collaboration
+**What Actually Happened**:
+- Jan 9: Discovered UICloudSharingController broken on iOS 18.x
+- Jan 9: Pivoted to public link sharing (~8h implementation)
+- Jan 10: Physical device testing revealed 4 critical bugs
+- Jan 10: Fixed display names, sync retry, UI issues (~3-4h)
+- **Total: 11-12 hours** vs. estimated 2-3h
+
+**Key Lesson**: Testing on real devices with real iCloud accounts is when you find the real bugs. The bugs we fixed are critical for production:
+- Users must see real names, not CloudKit IDs
+- Sync must wait long enough for CloudKit propagation (30s not 3s)
+- UI must gracefully handle edge cases (restart alerts)
+
+**Current State**: Bug fixes committed, ready for Device B retest tomorrow
 
 ---
 
@@ -217,9 +254,9 @@ Now that CloudKit sync is working and data migration is verified, it's time to t
 
 ---
 
-**Last Session**: January 4, 2026 - M7.2.3 Complete (all phases done)  
-**Next Action**: M7.2.2 - Member Invitation & Acceptance Testing (2-3 hours)  
-**Ready To Go**: ✅ M7.2.2 code exists, CloudKit working, shared zone verified  
-**Requirements**: 2 physical iPhones with different iCloud accounts  
-**Confidence**: 🟢 HIGH (Code complete, infrastructure proven, just needs testing)  
-**Version**: January 4, 2026 - M7.2.3 Complete, M7.2.2 Ready
+**Last Session**: January 10, 2026 - M7.2.2 Bug Fixes Complete
+**Next Action**: M7.2.2 - Device B Retesting (1-2 hours)
+**Ready To Go**: ✅ Bug fixes committed, CloudKit working, ready to verify on Device B
+**Requirements**: 2 physical iPhones with different iCloud accounts
+**Confidence**: 🟡 MEDIUM (Fixes look good, but need real device verification)
+**Version**: January 10, 2026 - M7.2.2 In Progress (Bug Fixes Complete)

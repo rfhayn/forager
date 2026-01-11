@@ -1,23 +1,76 @@
 # Next Implementation Prompt
 
-**Last Updated**: January 4, 2026  
-**For Milestone**: M7.2.2 - Member Invitation & Acceptance Testing  
-**Status**: 🧪 **M7.2.2 READY - Multi-User Household Testing**  
-**Estimated Duration**: 2-3 hours (Physical Device Testing)
+**Last Updated**: January 10, 2026
+**For Milestone**: M7.2.2 - Member Invitation & Acceptance Testing
+**Status**: 🔧 **M7.2.2 BUG FIXES COMPLETE - READY TO RETEST**
+**Estimated Duration**: 1-2 hours (Device B retesting with fixes)
 
 ---
 
-## 🧪 **M7.2.2 - MEMBER INVITATION & ACCEPTANCE TESTING**
+## 🔧 **M7.2.2 - BUG FIXES COMPLETE, READY FOR DEVICE B RETEST**
 
 **Current State:**
 - ✅ M7.2.3 COMPLETE - CloudKit sync verified working
-- ✅ Shared zone validated with 61 migrated items
-- ✅ M7.2.2 code already implemented (from previous session)
-- ✅ Branch exists: `feature/M7.2.2-member-invitation`
-- ⏸️ Testing paused - waiting for physical device availability
+- ✅ M7.2.2 public link sharing implemented (Jan 9, ~8h)
+- ✅ Device A testing COMPLETE - invitation sent successfully
+- ✅ Device B initial testing revealed 4 critical bugs (Jan 10)
+- ✅ All 4 bugs FIXED and committed (Jan 10, ~3-4h)
+- ⏳ Device B retesting pending with fixes
+- 📍 Branch: `main`
 
-**What's Next**: Physical device testing with 2 iPhones (2-3 hours)  
-**Purpose**: Validate household invitation and multi-user collaboration end-to-end
+**Bug Fixes Completed:**
+1. ✅ Display name extraction - now handles CloudKit IDs ("User" fallback)
+2. ✅ Device name parsing - improved patterns ("Rich iPhone" → "Rich")
+3. ✅ Sync retry logic - increased from 3s to 30s
+4. ✅ CloudKit user record IDs - hidden from UI completely
+5. ✅ Auto-member creation - integrated into standard flow
+6. ✅ Restart alert - added for sync timeout edge cases
+
+**What's Next**: Device B retesting with bug fixes (1-2 hours)
+**Purpose**: Verify bug fixes work on Device B and complete M7.2.2 acceptance criteria
+
+**See Full Bug Fix Details**: [33-m7.2.2-device-b-bug-fixes.md](m7-docs/33-m7.2.2-device-b-bug-fixes.md)
+
+---
+
+## 🎯 **WHAT TO TEST (After Bug Fixes)**
+
+### **Quick Testing Plan** (1-2 hours)
+
+**Focus Areas** (what was broken, now fixed):
+
+1. **Display Names** ✅ Fixed
+   - Watch for: Member name shows "Rich" or "User" (NOT `_271Eff95354Ff7Ec05494B315B74A5Dc`)
+   - Where: Settings → Household → Members list
+   - Logs: Look for "Extracted first word from device name: Rich"
+
+2. **Sync Timing** ✅ Fixed
+   - Watch for: 30-second retry with progress (NOT 3-second failure)
+   - Where: AcceptInvitationSheet during acceptance
+   - Logs: Look for "Attempt 1/6 - waiting 5 seconds..."
+
+3. **CloudKit ID Hiding** ✅ Fixed
+   - Watch for: No `_f780f6bc...` or `_271eff95...` visible in UI
+   - Where: Members list email field
+   - Should: Be completely hidden (not showing internal CloudKit IDs)
+
+4. **Acceptance Flow** ✅ Fixed
+   - Watch for: AcceptInvitationSheet appears and completes successfully
+   - Where: Tapping invitation link from Messages
+   - Should: Wait up to 30s, auto-create member, dismiss on success
+
+**Expected Timeline**:
+- Device B invitation acceptance: 15 min
+- Display name verification: 5 min
+- Sync testing (bi-directional): 30 min
+- Edge case validation: 15 min
+- **Total**: ~1-1.5 hours if all fixes work
+
+**If Something Fails**:
+- Check Device B logs for which fallback path was taken
+- Look for new error patterns (should have better logging now)
+- Take screenshots of any issues
+- Document in learning note if more fixes needed
 
 ---
 
@@ -166,9 +219,9 @@ git log --oneline -10
 
 ---
 
-### **Phase 3: Accept Invitation** (30 minutes)
+### **Phase 3: Accept Invitation** (15-20 minutes with bug fixes)
 
-**Goal**: Accept household invitation on Device B
+**Goal**: Accept household invitation on Device B and verify bug fixes
 
 **On Device B (Member):**
 
@@ -177,29 +230,45 @@ git log --oneline -10
    - **Expected**: Forager app launches automatically
    - **Expected**: AcceptInvitationSheet appears
 
-2. **Review Invitation Details**:
-   - Household name should be displayed
-   - Owner name should be shown
-   - (May show household data preview)
-
-3. **Accept Invitation**:
+2. **Monitor Acceptance Process** 🆕 WATCH FOR BUG FIXES:
+   - **NEW**: Should see retry attempts in logs (up to 6 attempts × 5s = 30s)
+   - **NEW**: Look for device name extraction logs
+   - **NEW**: Auto-member creation should happen automatically
    - Tap "Accept" or "Join Household" button
-   - Wait for processing (may show loading indicator)
+   - Wait for processing (up to 30 seconds now)
 
-4. **Expected Results** ✅:
-   - Success message: "Joined [Household Name]"
-   - AcceptInvitationSheet dismisses
+3. **Expected Results** ✅:
+   - AcceptInvitationSheet waits up to 30 seconds for sync (not 3s)
+   - Success: AcceptInvitationSheet dismisses after household syncs
+   - OR: Restart alert appears if >30s (rare edge case)
    - Settings → Household now shows household details
    - Household name displayed
-   - Members list shows both users (Owner + Member)
 
-**Verification on Device B**:
-- Navigate through app tabs (Recipes, Grocery, Meal Plans)
-- **Expected**: All household data from Device A is visible
-- Recipes created on Device A should appear
-- Weekly lists from Device A should appear
-- Meal plans from Device A should appear
-- Categories should be synced
+4. **Verification on Device B** 🆕 CHECK BUG FIXES:
+   - **Navigate to Members List**:
+     - ✅ Owner shows: "Rich" (NOT `_f780f6bc804eddafdcc3bcb060d468b7`)
+     - ✅ Member shows: "Rich" or "User" (NOT `_271Eff95354Ff7Ec05494B315B74A5Dc`)
+     - ✅ Email field: Hidden or real email (NOT CloudKit user record ID)
+   - **Navigate through app tabs (Recipes, Grocery, Meal Plans)**:
+     - **Expected**: All household data from Device A is visible
+     - Recipes created on Device A should appear
+     - Weekly lists from Device A should appear
+     - Meal plans from Device A should appear
+     - Categories should be synced
+
+**Console Log Verification** 🆕:
+```
+Expected Device B logs:
+⏳ Waiting for CloudKit sync (this may take 10-30 seconds)...
+   Attempt 1/6 - waiting 5 seconds...
+🔍 Manually checking for accepted invitations...
+   Found 1 shared zone(s) in CloudKit
+   ℹ️ Device name: 'Rich iPhone'  ← Should show your device name
+   ✅ Extracted first word from device name: Rich  ← Pattern match success
+✅ Auto-created member for public link share
+   Member: Rich  ← Real name, not CloudKit ID
+✅ Member already active - household ready to use
+```
 
 **On Device A (Owner):**
 
@@ -526,7 +595,8 @@ git push
 
 ---
 
-**Version**: January 4, 2026 - M7.2.2 Testing Ready  
-**Status**: 🧪 M7.2.3 complete, M7.2.2 code ready, awaiting physical device testing  
-**Branch**: `feature/M7.2.2-member-invitation` (verify exists before starting)  
+**Version**: January 10, 2026 - M7.2.2 Bug Fixes Complete
+**Status**: 🔧 Bug fixes committed, Device B retesting pending
+**Branch**: `main`
 **Requirements**: 2 physical iPhones with different iCloud accounts
+**Time Estimate**: 1-2 hours (was 2-3h, now faster with focused verification)
