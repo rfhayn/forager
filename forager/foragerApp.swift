@@ -8,9 +8,6 @@
 import SwiftUI
 import CloudKit
 
-// CloudKit share metadata key for user activity
-private let CKShareMetadataKey = "CKShareMetadataKey"
-
 // MARK: - M7.2.3 Phase 2.4: Environment Key for ManagedObjectFactory
 
 private struct ManagedObjectFactoryKey: EnvironmentKey {
@@ -26,15 +23,16 @@ extension EnvironmentValues {
 
 @main
 struct foragerApp: App {
+    // M7.2.2: Register AppDelegate to configure SceneDelegate for CloudKit share handling
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     let persistenceController = PersistenceController.shared
     
     // M7.1.2: CloudKit sync monitoring - observing shared instance from PersistenceController
     // Using @ObservedObject since PersistenceController owns the instance
     @StateObject private var syncMonitor = CloudKitSyncMonitor()
     
-    // M7.2.2 Task 3: CloudKit share invitation handling
-    @State private var pendingShareMetadata: CKShare.Metadata?
-    @State private var showAcceptInvitationSheet = false
+    // M7.2.2 Task 3: CloudKit share invitation handling via SceneDelegate
     @StateObject private var householdService: HouseholdService
     
     // Tab selection tracking
@@ -53,7 +51,10 @@ struct foragerApp: App {
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
     @State private var categoriesPopToRoot = false
-    
+
+    // M7.2.2: CloudKit permission pre-prompt
+    @State private var showPermissionPrePrompt = false
+
     // M7.2.2 Task 3: Initialize HouseholdService
     init() {
         let service = HouseholdService(context: PersistenceController.shared.container.viewContext)
@@ -133,33 +134,97 @@ struct foragerApp: App {
             .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
             .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
             .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
-            // M7.2.2 Task 3: Handle CloudKit share invitations
-            .onContinueUserActivity("com.apple.CloudKit.ShareInvitation") { userActivity in
-                handleCloudKitShare(userActivity)
-            }
-            // M7.2.2: Debug - catch ALL user activities to see what we're receiving
-            .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { userActivity in
-                print("🔍 DEBUG: Received web browsing activity")
-                print("   URL: \(userActivity.webpageURL?.absoluteString ?? "none")")
-                handleCloudKitShareURL(userActivity.webpageURL)
-            }
-            // M7.2.2: Catch direct URL launches
-            .onOpenURL { url in
-                print("🔍 DEBUG: App opened with URL: \(url.absoluteString)")
-                print("   Scheme: \(url.scheme ?? "none")")
-                print("   Host: \(url.host ?? "none")")
-                handleCloudKitShareURL(url)
-            }
-            .sheet(isPresented: $showAcceptInvitationSheet) {
-                if let metadata = pendingShareMetadata {
-                    AcceptInvitationSheet(service: householdService, share: metadata)
+            // M7.2.2: Pre-permission prompt for iCloud name access
+            .alert("See Who's in Your Household", isPresented: $showPermissionPrePrompt) {
+                Button("Continue") {
+                    Task {
+                        await requestSystemPermission()
+                    }
                 }
+                Button("Not Now", role: .cancel) {
+                    print("ℹ️ User declined permission pre-prompt")
+                }
+            } message: {
+                Text("To display member names like \"Mary\" instead of \"User\", Forager needs permission to access iCloud display names.\n\nThis helps you know who you're sharing lists with!")
+            }
+            // M7.2.2: CloudKit share invitations now handled by SceneDelegate
+            // M7.2.2: Check for existing households on app launch (new device scenario)
+            .task {
+                // Give CloudKit a moment to sync on first launch
+                try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+
+                // Request user discoverability permission if needed
+                // This allows fetching iCloud display names for household members
+                await requestUserDiscoverabilityPermission()
+
+                // Check if user already has a household (e.g., new device, reinstall)
+                if householdService.currentHousehold == nil {
+                    print("🔍 App launch: Checking for existing households...")
+                    await householdService.checkForAcceptedInvitations()
+                }
+
+                // Refresh display name on every launch
+                // Handles: permission grants, iCloud name changes, device name changes
+                await householdService.refreshCurrentMemberDisplayName()
             }
         }
     }
-    
+
+    // MARK: - M7.2.2: CloudKit Permission Management
+
+    /// Checks permission status and shows pre-prompt if needed
+    /// Called on app launch to ensure names can be fetched for household members
+    private func requestUserDiscoverabilityPermission() async {
+        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
+
+        do {
+            let status = try await container.accountStatus()
+            guard status == .available else {
+                print("ℹ️ iCloud account not available, skipping permission request")
+                return
+            }
+
+            let permission = try await container.applicationPermissionStatus(for: .userDiscoverability)
+
+            if permission == .granted {
+                print("✅ User discoverability permission already granted")
+            } else if permission == .initialState {
+                // Show pre-permission prompt first
+                print("📋 Showing permission pre-prompt...")
+                await MainActor.run {
+                    showPermissionPrePrompt = true
+                }
+            } else {
+                print("⚠️ User discoverability permission status: \(permission.rawValue)")
+            }
+        } catch {
+            print("⚠️ Could not check user discoverability permission: \(error)")
+        }
+    }
+
+    /// Requests the actual system permission (called after pre-prompt acceptance)
+    private func requestSystemPermission() async {
+        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
+
+        do {
+            print("📋 Requesting system permission...")
+            let permission = try await container.requestApplicationPermission(.userDiscoverability)
+
+            if permission == .granted {
+                print("✅ User discoverability permission granted")
+
+                // Refresh display name after permission grant
+                await householdService.refreshCurrentMemberDisplayName()
+            } else {
+                print("⚠️ User discoverability permission denied - will use fallback names")
+            }
+        } catch {
+            print("⚠️ Could not request user discoverability permission: \(error)")
+        }
+    }
+
     // MARK: - Tab Pop-to-Root Handler
-    
+
     // Clears navigation path and triggers sheet dismissal for the specified tab
     private func handlePopToRoot(for tab: Tab) {
         switch tab {
@@ -180,76 +245,6 @@ struct foragerApp: App {
             categoriesPopToRoot.toggle()
         case .settings:
             break // Settings has no navigation stack
-        }
-    }
-    
-    // MARK: - M7.2.2 Task 3: CloudKit Share Handling
-
-    /// Handles incoming CloudKit share invitation
-    /// Called when user taps invitation link from Messages, Mail, etc.
-    private func handleCloudKitShare(_ userActivity: NSUserActivity) {
-        print("🔍 DEBUG: handleCloudKitShare called")
-        print("   Activity type: \(userActivity.activityType)")
-        print("   UserInfo keys: \(userActivity.userInfo?.keys.map { String(describing: $0) } ?? [])")
-
-        // Extract CKShareMetadata from userInfo
-        guard let metadataData = userActivity.userInfo?[CKShareMetadataKey] as? Data else {
-            print("❌ No share metadata found in user activity")
-            return
-        }
-
-        // Unarchive the metadata
-        guard let shareMetadata = try? NSKeyedUnarchiver.unarchivedObject(
-            ofClass: CKShare.Metadata.self,
-            from: metadataData
-        ) else {
-            print("❌ Failed to unarchive share metadata")
-            return
-        }
-
-        print("✅ Received CloudKit share invitation")
-        print("   Root record: \(shareMetadata.rootRecordID.recordName)")
-
-        // Store metadata and present acceptance sheet
-        pendingShareMetadata = shareMetadata
-        showAcceptInvitationSheet = true
-    }
-
-    /// Handles CloudKit share URL (icloud.com/share/...)
-    /// M7.2.2: Public link sharing approach
-    private func handleCloudKitShareURL(_ url: URL?) {
-        guard let url = url else { return }
-
-        print("🔍 DEBUG: handleCloudKitShareURL called")
-        print("   URL: \(url.absoluteString)")
-
-        // Check if this is an iCloud share URL
-        guard url.host?.contains("icloud.com") == true,
-              url.path.contains("share") else {
-            print("   Not an iCloud share URL")
-            return
-        }
-
-        print("✅ Detected iCloud share URL - fetching metadata...")
-
-        // Fetch share metadata from the URL
-        Task {
-            do {
-                let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-                let metadata = try await container.shareMetadata(for: url)
-
-                print("✅ Fetched share metadata")
-                print("   Root record: \(metadata.rootRecordID.recordName)")
-
-                // Store metadata and present acceptance sheet
-                await MainActor.run {
-                    pendingShareMetadata = metadata
-                    showAcceptInvitationSheet = true
-                }
-
-            } catch {
-                print("❌ Failed to fetch share metadata: \(error)")
-            }
         }
     }
 }
@@ -309,5 +304,24 @@ struct DangerButtonStyle: ButtonStyle {
             .font(.headline)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+// MARK: - M7.2.2: AppDelegate for SceneDelegate Configuration
+
+/// AppDelegate that configures SceneDelegate for CloudKit share invitation handling
+/// Required because SwiftUI apps need UIKit lifecycle integration for CloudKit shares
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        let sceneConfig = UISceneConfiguration(
+            name: nil,
+            sessionRole: connectingSceneSession.role
+        )
+        sceneConfig.delegateClass = SceneDelegate.self
+        return sceneConfig
     }
 }

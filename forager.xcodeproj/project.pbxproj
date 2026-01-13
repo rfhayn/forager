@@ -59,6 +59,7 @@
 		9B1B398A2EF5DB19001E1876 /* IngredientTemplateRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39872EF5DB19001E1876 /* IngredientTemplateRepository.swift */; };
 		9B1B398B2EF5DB19001E1876 /* PlannedMealRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */; };
 		9B1B398C2EF5DB19001E1876 /* CategoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39862EF5DB19001E1876 /* CategoryRepository.swift */; };
+		9B2735D52F1526A60068C5FE /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B2735D42F1526A60068C5FE /* SceneDelegate.swift */; };
 		9B31714D2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B31714B2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift */; };
 		9B3DB86E2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B3DB86D2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift */; };
 		9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56ECA72F08293B00877716 /* MigrationValidationTests.swift */; };
@@ -174,6 +175,7 @@
 		9B1B39862EF5DB19001E1876 /* CategoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryRepository.swift; sourceTree = "<group>"; };
 		9B1B39872EF5DB19001E1876 /* IngredientTemplateRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateRepository.swift; sourceTree = "<group>"; };
 		9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannedMealRepository.swift; sourceTree = "<group>"; };
+		9B2735D42F1526A60068C5FE /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		9B31714B2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B3DB86D2ECD52DE00395BD7 /* GroceryListItem+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryListItem+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B56ECA72F08293B00877716 /* MigrationValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationValidationTests.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXGroup;
 			children = (
+				9B2735D42F1526A60068C5FE /* SceneDelegate.swift */,
 				9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */,
 				9BD3C3AB2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift */,
 				9BE1A4AD2F05807500C59861 /* CloudKitTestHarnessView.swift */,
@@ -578,6 +581,7 @@
 				9B9C38E62EFC410A006E7DBD /* ShareSheet.swift in Sources */,
 				9B56ECB82F0859E800877716 /* MealPlan+CoreDataProperties.swift in Sources */,
 				9B56ECB92F0859E800877716 /* Household+CoreDataProperties.swift in Sources */,
+				9B2735D52F1526A60068C5FE /* SceneDelegate.swift in Sources */,
 				9B56ECBA2F0859E800877716 /* HouseholdMember+CoreDataProperties.swift in Sources */,
 				9B1B39672EF4DED6001E1876 /* IngredientTemplate+Extensions.swift in Sources */,
 				9B05554D2EDB665C00A57B34 /* CategoryChangeModal.swift in Sources */,

@@ -4,6 +4,21 @@
 <dict>
 	<key>CKSharingSupported</key>
 	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.apple.CloudKit.ShareInvitation</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.richhayn.forager</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>forager</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

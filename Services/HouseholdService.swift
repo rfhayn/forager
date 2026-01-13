@@ -532,8 +532,7 @@ class HouseholdService: ObservableObject {
 
         // Enable public link sharing
         // This allows anyone with the URL to join (like a shared Google Doc link)
-        // NOTE: CKShare.participants is read-only, so we can't add one-time participants
-        // The trade-off: public link (anyone with URL) vs private (UICloudSharingController required)
+        // NOTE: SceneDelegate will handle the acceptance via acceptShareInvitations
         if share.publicPermission == .none {
             share.publicPermission = .readWrite
             print("✅ Enabled public link sharing (readWrite)")
@@ -778,17 +777,33 @@ class HouseholdService: ObservableObject {
                     var displayName: String?
 
                     // Try 1: Get from CloudKit user identity (if available)
+                    // Note: Requires .userDiscoverability permission (requested in SceneDelegate)
                     do {
                         let userRecordID = try await container.userRecordID()
-                        if let identity = try await container.userIdentity(forUserRecordID: userRecordID),
-                           let nameComponents = identity.nameComponents {
-                            let formatter = PersonNameComponentsFormatter()
-                            formatter.style = .medium
-                            displayName = formatter.string(from: nameComponents)
-                            print("   ✅ Got display name from CloudKit: \(displayName!)")
+                        print("   📝 CloudKit user record ID: \(userRecordID.recordName)")
+
+                        if let identity = try await container.userIdentity(forUserRecordID: userRecordID) {
+                            print("   ✅ Got CloudKit identity")
+
+                            if let nameComponents = identity.nameComponents {
+                                let formatter = PersonNameComponentsFormatter()
+                                formatter.style = .medium
+                                displayName = formatter.string(from: nameComponents)
+                                print("   ✅ Display name from name components: \(displayName!)")
+                            } else {
+                                print("   ⚠️ Identity found but no name components available")
+                            }
+
+                            // Also log email if available (for debugging)
+                            if let lookupInfo = identity.lookupInfo, let emailAddress = lookupInfo.emailAddress {
+                                print("   📧 Email from identity: \(emailAddress)")
+                            }
+                        } else {
+                            print("   ⚠️ userIdentity returned nil - may need .userDiscoverability permission")
                         }
                     } catch {
-                        print("   ⚠️ CloudKit identity unavailable: \(error)")
+                        print("   ⚠️ CloudKit identity unavailable: \(error.localizedDescription)")
+                        print("   ℹ️ This is normal if user hasn't granted user discoverability permission")
                     }
 
                     // Try 2: Use device name as fallback
@@ -840,7 +855,10 @@ class HouseholdService: ObservableObject {
                     print("   Member: \(newMember.displayName ?? currentEmail)")
                     print("   Role: \(newMember.role ?? "member")")
 
-                    // Set as current household
+                    // Refresh household to pick up new member relationship
+                    viewContext.refresh(household, mergeChanges: true)
+
+                    // Set as current household (this will trigger UI update)
                     currentHousehold = household
 
                     return
@@ -854,7 +872,97 @@ class HouseholdService: ObservableObject {
             print("❌ Error checking for invitations: \(error)")
         }
     }
-    
+
+    // MARK: - M7.2.2: Display Name Management
+
+    /// Refreshes the current user's display name from CloudKit
+    /// Called on app launch to ensure name is up-to-date
+    /// Handles: permission grants, iCloud name changes, device name changes
+    func refreshCurrentMemberDisplayName() async {
+        guard let household = currentHousehold else {
+            print("🔄 Display name refresh: No household, skipping")
+            return
+        }
+
+        do {
+            // Get current user's email/identifier
+            let currentEmail = try await getCurrentUserEmail()
+
+            // Find current user's member record
+            guard let currentMember = household.memberArray.first(where: { $0.email == currentEmail }) else {
+                print("🔄 Display name refresh: Current user not found in household members")
+                return
+            }
+
+            let oldName = currentMember.displayName ?? "Unknown"
+            print("🔄 Refreshing display name for: \(oldName)")
+
+            // Attempt to get latest display name from CloudKit
+            var newDisplayName: String?
+
+            // Try 1: Get from CloudKit user identity
+            do {
+                let userRecordID = try await container.userRecordID()
+                if let identity = try await container.userIdentity(forUserRecordID: userRecordID),
+                   let nameComponents = identity.nameComponents {
+                    let formatter = PersonNameComponentsFormatter()
+                    formatter.style = .medium
+                    newDisplayName = formatter.string(from: nameComponents)
+                    print("   ✅ Got display name from CloudKit identity: \(newDisplayName!)")
+                }
+            } catch {
+                print("   ℹ️ CloudKit identity lookup failed: \(error.localizedDescription)")
+            }
+
+            // Try 2: Device name extraction
+            if newDisplayName == nil {
+                let deviceName = UIDevice.current.name
+
+                // Pattern 1: "John's iPhone" -> "John"
+                if let range = deviceName.range(of: "'s ") {
+                    newDisplayName = String(deviceName[..<range.lowerBound])
+                    print("   ✅ Extracted from device name: \(newDisplayName!)")
+                }
+                // Pattern 2: "Rich iPhone" -> "Rich"
+                else if deviceName.contains("iPhone") || deviceName.contains("iPad") {
+                    let components = deviceName.components(separatedBy: " ")
+                    if components.count >= 2 && (components[1] == "iPhone" || components[1] == "iPad") {
+                        newDisplayName = components[0]
+                        print("   ✅ Extracted from device name: \(newDisplayName!)")
+                    }
+                }
+            }
+
+            // Try 3: Extract from email (if not a CloudKit user record ID)
+            if newDisplayName == nil {
+                if !currentEmail.hasPrefix("_") || currentEmail.count <= 20 {
+                    newDisplayName = extractDisplayName(from: currentEmail)
+                    print("   ✅ Extracted from email: \(newDisplayName!)")
+                }
+            }
+
+            // Only update if we found a better name and it's different
+            if let newDisplayName = newDisplayName, newDisplayName != oldName {
+                currentMember.displayName = newDisplayName
+                try viewContext.save()
+                print("✅ Updated display name: '\(oldName)' → '\(newDisplayName)'")
+
+                // Refresh household to trigger UI update
+                viewContext.refresh(household, mergeChanges: true)
+
+                // Trigger objectWillChange to update UI
+                objectWillChange.send()
+            } else if newDisplayName == nil {
+                print("   ℹ️ No better name found, keeping: \(oldName)")
+            } else {
+                print("   ℹ️ Display name unchanged: \(oldName)")
+            }
+
+        } catch {
+            print("❌ Error refreshing display name: \(error)")
+        }
+    }
+
     // MARK: - Helper Methods
     
     /// Gets the LIVE CKShare record for the household from CloudKit

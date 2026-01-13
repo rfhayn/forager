@@ -16,5 +16,9 @@
 	</array>
 	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
 	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:www.icloud.com</string>
+	</array>
 </dict>
 </plist>
