@@ -103,6 +103,7 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 - ADR 001: Selective Technical Improvements
 - ADR 006: Consolidate Staples and Ingredients
 - ADR 007: Core Data Change Process
+- **[Service Layer Pattern](architecture/service-layer-pattern.md)** ⭐ **M7.5+ STANDARD**
 
 **Key Takeaway**: Don't reinvent patterns - follow established decisions
 
