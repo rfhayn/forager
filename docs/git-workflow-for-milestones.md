@@ -424,6 +424,312 @@ git checkout feature/M7.1.1-cloudkit-schema
 
 ---
 
+## 🐙 **GitHub Integration Workflow**
+
+### **At Milestone Start**
+
+When beginning a new milestone (M#.#.#), establish GitHub tracking:
+
+**1. Create GitHub Issue**
+```bash
+# Create issue with template
+gh issue create \
+  --title "M7.2.2: Member Invitation & Acceptance" \
+  --label "milestone,feature" \
+  --milestone "M7: CloudKit Sync & External TestFlight" \
+  --body "$(cat <<'EOF'
+**Status**: 🔄 IN PROGRESS
+**Estimated**: 2-3 hours
+**Actual**: TBD
+
+## Task List
+
+### Phase 1: Implementation
+- [ ] Task 1
+- [ ] Task 2
+- [ ] Task 3
+
+### Phase 2: Testing
+- [ ] Test scenario 1
+- [ ] Test scenario 2
+
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+## Documentation
+- [ ] Learning notes created
+- [ ] Wiki updated
+- [ ] Current-story updated
+EOF
+)"
+
+# The issue number will be returned (e.g., #22)
+```
+
+**2. Add to Project Board**
+```bash
+# Add issue to project (auto-adds to "Todo" status)
+gh project item-add 1 --owner rfhayn --url https://github.com/rfhayn/forager/issues/22
+```
+
+**3. Document in Wiki (if major milestone)**
+
+For significant milestones (M#.#, M#.#.#), update wiki pages:
+- CloudKit-Implementation.md (for M7.x milestones)
+- Milestones-Overview.md (for all milestones)
+- Home.md (for major status changes)
+
+This step is **optional** at milestone start - wiki updates can wait until completion.
+
+---
+
+### **During Milestone**
+
+**Update Issue Progress (Optional)**
+
+```bash
+# Edit issue to update progress
+gh issue edit 22 --body "$(cat <<'EOF'
+**Status**: 🔄 IN PROGRESS (Phase 2 Testing)
+**Estimated**: 2-3 hours
+**Actual**: 8 hours so far
+
+## Task List
+
+### Phase 1: Implementation ✅
+- [x] Task 1
+- [x] Task 2
+- [x] Task 3
+
+### Phase 2: Testing (In Progress)
+- [x] Test scenario 1
+- [ ] Test scenario 2  ← Currently here
+
+## Bugs Discovered
+- Bug #1: Description and fix
+- Bug #2: Description (investigating)
+
+## Documentation
+- [x] Implementation notes created
+- [ ] Testing notes (in progress)
+EOF
+)"
+```
+
+**Move Project Board Card (Optional)**
+
+```bash
+# Move to "In Progress" status
+gh project item-edit --project-id <project-id> --id <item-id> --field-id <status-field-id> --value "In Progress"
+
+# Note: Often easier to do this manually via web UI
+```
+
+**Key Principle**: During development, focus on **work**, not **tracking**. Update GitHub when natural milestones occur (phase complete, bug discovered, etc.), not for every small change.
+
+---
+
+### **At Milestone Completion**
+
+When the milestone is complete, close out GitHub tracking:
+
+**1. Close GitHub Issue with Completion Summary**
+
+```bash
+gh issue close 22 --comment "$(cat <<'EOF'
+## ✅ M7.2.2 COMPLETE
+
+**Final Status**: Member invitation and acceptance system working
+**Total Time**: 11-12 hours
+**Original Estimate**: 2-3 hours
+**Variance**: Extended due to iOS 18.x issues and bug fixes
+
+---
+
+## 🎯 Completion Summary
+
+**Implementation Complete**:
+✅ Feature 1 working
+✅ Feature 2 implemented
+✅ Bug fixes applied
+✅ Documentation complete
+
+**Testing Complete**:
+✅ Test scenario 1 passed
+✅ Test scenario 2 passed
+✅ All acceptance criteria met
+
+---
+
+## 🐛 Issues Discovered & Resolved
+
+**Bug #1**: Description
+- Fix: What was done
+
+**Bug #2**: Description
+- Fix: What was done
+
+---
+
+## 📚 Documentation
+
+**Implementation Guides**:
+- [32: Guide Name](link) (XX KB)
+- [33: Guide Name](link) (XX KB)
+
+**Wiki Updates**:
+- CloudKit-Implementation.md updated
+- Milestones-Overview.md updated
+- Home.md status updated
+
+---
+
+## 💡 Key Lessons
+
+Brief summary of what was learned
+
+---
+
+**Next**: M7.2.3 or next planned milestone
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+**Why this format?**:
+- ✅ Provides complete closure documentation
+- ✅ Captures lessons learned
+- ✅ Links to detailed documentation
+- ✅ Shows time variance for future planning
+- ✅ Searchable summary for future reference
+
+**2. Verify Project Board Auto-Updated**
+
+```bash
+# Check that issue closing moved card to "Done"
+gh project item-list 1 --owner rfhayn --format json | jq '.items[] | select(.content.number == 22) | {title: .title, status: .status}'
+
+# Should show: "status": "Done"
+# GitHub automatically moves closed issues to Done status
+```
+
+**3. Update Wiki Pages**
+
+Update relevant wiki pages to reflect completion:
+
+**CloudKit-Implementation.md** (for M7.x milestones):
+```markdown
+### M7.2.2: Member Invitation ✅ COMPLETE (11-12 hours)
+- Feature 1 working
+- Feature 2 implemented
+- Bug fixes applied
+- Documentation complete
+```
+
+**Milestones-Overview.md** (for all milestones):
+- Move milestone from "In Progress" to "Completed Milestones"
+- Update status dashboard table
+- Update time tracking summary
+- Add to planning accuracy analysis
+
+**Home.md** (for major milestones):
+- Update "Current Phase" status
+- Update development time total
+- Update project stats
+
+**4. Commit Wiki and Documentation Updates**
+
+```bash
+cd /tmp/forager-wiki  # Wiki repository
+git add -A
+git commit -m "Documentation: M7.2.2 complete - Member invitation working (11-12h)
+
+Updated wiki pages to reflect M7.2.2 completion:
+- CloudKit-Implementation.md: Added completion summary
+- Milestones-Overview.md: Moved to completed section
+- Home.md: Updated project status and stats
+
+GitHub:
+- Issue #22 closed with completion summary
+- Project board automatically updated to Done
+
+Next: M7.3 (Conflict Resolution) or M7.5 (Architecture Hardening)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+git push origin main
+
+cd /Users/rich/Development/forager  # Main repository
+```
+
+**5. Create Milestone Completion Git Commit (Main Repo)**
+
+```bash
+# In main repository
+git add -A
+git commit -m "M7.2.2: Mark complete - Member invitation and acceptance working (11-12h)
+
+Member invitation and acceptance system fully operational after comprehensive
+bug fixes from physical device testing.
+
+Completion Status:
+- Public link sharing system working
+- Accept invitation flow with auto-member creation
+- All bugs fixed and documented
+
+Bug Fixes:
+- Fixed display names showing CloudKit IDs
+- Extended sync retry from 3s → 30s
+- Integrated auto-member creation
+- Added restart alert for edge cases
+
+Documentation:
+- docs/m7-docs/32: Public Link Sharing (20.4 KB)
+- docs/m7-docs/33: Device B Bug Fixes (19.1 KB)
+- docs/m7-docs/34: M7.2.2 Completion
+- Wiki updates (CloudKit-Implementation, Milestones-Overview, Home)
+
+GitHub:
+- Issue #22 closed with completion summary
+- Project board updated to Done
+
+Time Investment:
+- Original Estimate: 2-3 hours
+- Actual: 11-12 hours (implementation + bug fixes)
+- Justification: Real device testing revealed critical production bugs
+
+Next: M7.3 (Conflict Resolution) or M7.5 (Architecture Hardening)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+```
+
+---
+
+### **GitHub Workflow Summary**
+
+**Milestone Start**:
+1. Create GitHub Issue with task list
+2. Add to Project Board
+3. (Optional) Document in wiki
+
+**During Milestone**:
+1. Update issue when phases complete
+2. Check off tasks as done
+3. Document bugs discovered
+
+**Milestone Complete**:
+1. Close issue with comprehensive summary
+2. Verify project board auto-updated to Done
+3. Update wiki pages (CloudKit-Implementation, Milestones-Overview, Home)
+4. Commit wiki changes
+5. Commit main repo changes
+
+**Key Principle**: GitHub is for **tracking**, git is for **history**. Use both to maintain complete project visibility.
+
+---
+
 ## 📋 **Checklist Integration**
 
 ### **Add to session-startup-checklist.md**

@@ -409,6 +409,317 @@ docs/prds/milestone-4-meal-planning-and-settings-integration.md
 
 ---
 
+## 🐙 GITHUB NAMING CONVENTIONS
+
+### **GitHub Issues**
+
+**Format**: `M#.#.#: [Descriptive Title]`
+
+**Examples:**
+```
+M7.2.2: Member Invitation & Acceptance
+M7.2.3: CloudKit Hardening & Shared Data Architecture
+M7.5: Architecture Hardening - UX/Service Cleanup
+```
+
+**Creation:**
+```bash
+gh issue create \
+  --title "M7.2.2: Member Invitation & Acceptance" \
+  --label "milestone,feature" \
+  --milestone "M7: CloudKit Sync & External TestFlight"
+```
+
+**Required Elements:**
+- Milestone number prefix (M#.#.# or M#.#)
+- Descriptive title (4-8 words)
+- Appropriate labels
+- Associated milestone group
+- Task list in body
+
+---
+
+### **GitHub Milestones**
+
+**Format**: `M#: [Major Feature Name]`
+
+**Examples:**
+```
+M7: CloudKit Sync & External TestFlight
+M8: Ingredient Parsing Intelligence
+M9: Technical Debt & Codebase Optimization
+```
+
+**Purpose:**
+- Group related issues under major features
+- Track completion percentage
+- Provide high-level progress visibility
+
+**Note:** GitHub Milestones represent Level 1 (Major Features), while Issues can be Level 2 (Components) or Level 3 (Tasks)
+
+---
+
+### **GitHub Labels**
+
+**Standard Labels:**
+
+**Type Labels:**
+- `milestone` - Work tied to documented milestone
+- `feature` - New functionality
+- `infrastructure` - Architecture, tooling, setup
+- `bug` - Defect or incorrect behavior
+- `documentation` - Docs, learning notes, ADRs
+
+**Status Labels:**
+- `in-progress` - Currently being worked on
+- `blocked` - Waiting on dependency
+- `completed` - Finished and merged
+
+**Priority Labels:**
+- `critical` - Blocking other work
+- `high` - Important, schedule soon
+- `medium` - Normal priority
+- `low` - Nice to have
+
+**Usage:**
+```bash
+gh issue create \
+  --label "milestone,feature,high"
+```
+
+---
+
+### **GitHub Project Board**
+
+**Column Naming:**
+- `Todo` - Planned work, not started
+- `In Progress` - Active development
+- `Done` - Completed and merged
+
+**Card Movement:**
+- Issues auto-add to "Todo" when created
+- Manually move to "In Progress" when starting
+- Auto-move to "Done" when issue closed
+
+**Automation:**
+- Closing issue → moves card to "Done"
+- Reopening issue → moves card to "In Progress"
+
+---
+
+### **Wiki Page Naming**
+
+**Format:** Descriptive kebab-case names (not M# prefixed)
+
+**Examples:**
+```
+CloudKit-Implementation.md
+Milestones-Overview.md
+Learning-Notes-Index.md
+Architecture-Decisions.md
+Quick-Reference.md
+```
+
+**Content Structure:**
+- Reference M#.#.# within content
+- Link to source documentation
+- Keep up-to-date with main repo
+
+**Update Pattern:**
+```markdown
+### M7.2.2: Member Invitation ✅ COMPLETE (11-12 hours)
+- Feature description
+- Key achievements
+- Documentation links
+```
+
+---
+
+### **Branch Naming**
+
+**Format**: `feature/M#.#.#-brief-description`
+
+**Examples:**
+```
+feature/M7.1.1-cloudkit-schema-validation
+feature/M7.2.2-member-invitation
+feature/M7.5-architecture-hardening
+```
+
+**Rules:**
+- Prefix: `feature/` (always)
+- Milestone: Exact M#.#.# identifier
+- Description: 2-5 words, kebab-case
+- Delete after PR merge
+
+**See:** [git-workflow-for-milestones.md](git-workflow-for-milestones.md) for complete workflow
+
+---
+
+### **Commit Message Naming**
+
+**Format:**
+```
+M#.#.#: Brief description (imperative mood)
+
+- Bullet point of changes
+- Another change
+- Test results
+```
+
+**Examples:**
+```bash
+git commit -m "M7.2.2: Implement public link sharing for household invitations
+
+- Bypass UICloudSharingController (broken on iOS 18.x)
+- Add ShareSheet integration for URL sharing
+- Update InviteMemberSheet with public link flow
+- Successfully tested on Device A
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+```
+
+**Milestone Completion Commits:**
+```bash
+git commit -m "M7.2.2: Mark complete - Member invitation working (11-12h)
+
+Member invitation and acceptance system fully operational.
+
+Completion Status:
+- Public link sharing working
+- Bug fixes applied
+- Documentation complete
+
+Bug Fixes:
+- Fixed display name extraction
+- Extended sync retry to 30s
+
+Documentation:
+- docs/m7-docs/32: Public Link Sharing
+- docs/m7-docs/33: Device B Bug Fixes
+- Wiki updates complete
+
+GitHub:
+- Issue #22 closed
+- Project board updated to Done
+
+Time: 11-12h actual vs 2-3h estimated (iOS 18.x bugs)
+
+Next: M7.3 (Conflict Resolution) or M7.5 (Architecture Hardening)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+```
+
+---
+
+### **Pull Request Naming**
+
+**Title Format**: `M#.#.#: [Descriptive Title]`
+
+**Examples:**
+```
+M7.1.1: CloudKit Schema Validation
+M7.2.2: Member Invitation & Acceptance
+M7.5: Architecture Hardening - UX/Service Cleanup
+```
+
+**Body Template:**
+```markdown
+## Summary
+Brief description of changes
+
+## Changes
+- Change 1
+- Change 2
+- Change 3
+
+## Testing
+- ✅ Test 1
+- ✅ Test 2
+
+## Time
+- Estimated: X hours
+- Actual: Y hours
+
+## Next
+M#.#.#: Next milestone
+```
+
+---
+
+### **Forward-Only Naming Policy**
+
+**Principle**: Don't rename historical work - maintain naming as it was created
+
+**Rationale:**
+- Preserves historical accuracy
+- Avoids breaking documentation links
+- Maintains git history integrity
+- Focuses energy on future work
+
+**Apply To:**
+- ✅ **New work**: Use current standards
+- ✅ **Documentation updates**: Reference old names correctly
+- ❌ **Don't rename**: Past issues, branches, commits, docs
+
+**Example:**
+```markdown
+# OLD (created before GitHub integration):
+M7.2.2 documented in learning notes only
+
+# NEW (created after GitHub integration):
+M7.5: Issue #25, Project Board, Wiki, Learning Notes
+
+# CORRECT APPROACH:
+- Keep M7.2.2 docs as-is
+- Start GitHub integration with M7.5
+- Note transition point in documentation
+```
+
+**Transition Point Documentation:**
+```markdown
+## GitHub Integration Timeline
+
+**Before Jan 2026**: Milestones documented in learning notes and wiki only
+**After Jan 2026**: Milestones fully tracked in GitHub Issues and Project Board
+
+**Legacy Milestones** (pre-GitHub tracking):
+- M7.1: CloudKit Sync Foundation
+- M7.2.1: Household Setup Foundation
+- M7.2.2: Member Invitation & Acceptance
+- M7.2.3: CloudKit Hardening
+
+**GitHub-Tracked Milestones**:
+- M7.5: Architecture Hardening (Issue #XX)
+- M7.6: External TestFlight (Issue #XX)
+- Future milestones...
+```
+
+---
+
+### **GitHub Naming Checklist**
+
+**When Starting New Milestone:**
+- [ ] Create GitHub Issue with M#.#.# prefix
+- [ ] Add to appropriate Milestone group (M#)
+- [ ] Apply correct labels (milestone, feature/infrastructure)
+- [ ] Add to Project Board
+- [ ] Document in wiki (if major milestone)
+
+**During Development:**
+- [ ] Use M#.#.# in all commit messages
+- [ ] Update issue task list as work progresses
+- [ ] Move project board card when status changes
+
+**When Completing Milestone:**
+- [ ] Close issue with comprehensive summary
+- [ ] Verify project board auto-updated to "Done"
+- [ ] Update wiki pages with completion status
+- [ ] Create completion commit with M#.#.# prefix
+- [ ] Include time variance and lessons learned
+
+---
+
 ## 🔗 RELATED DOCUMENTS
 
 **Essential Reading:**
