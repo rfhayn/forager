@@ -1,8 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: January 4, 2026  
-**Current Phase**: M5.0 COMPLETE ✅ | M7.1 COMPLETE ✅ | M7.2.1 COMPLETE ✅ | **M7.2.3 COMPLETE ✅** | M7.2.2 🚀 Ready  
-**Status**: All M1-M5.0 milestones complete, M7.1 CloudKit foundation operational, M7.2.1 household setup complete, M7.2.3 CloudKit hardening complete (all 6 phases), ready for M7.2.2 member invitation testing
+**Last Updated**: January 13, 2026
+**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | **M7.3 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M7.3 (Household Management & Settings) ready to start
+**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
 
@@ -656,12 +657,43 @@ With M5.0 completion, Forager is now:
 
 ---
 
+### **⏸️ M6: Testing Foundation & AI Augmentation - DEFERRED** 🔜
+
+**Status**: 🔜 Deferred (executing after M7)
+**Estimated Time**: 20-30 hours
+**Execution Plan**: M7 (CloudKit + External Beta) → M6 (Testing Foundation) → M8 (Parsing)
+**PRD**: docs/prds/milestone-6-testing-foundation-ai-augmentation.md
+
+**Why Deferred?**
+Originally planned after M5, M6 was strategically deferred to execute after M7 completes:
+- ✅ External beta proves app stable before investing in testing infrastructure
+- ✅ Test coverage in place BEFORE M8 parsing improvements (13-16h) and M9 refactoring (135-173h)
+- ✅ AI test reviewer learns patterns from M8 implementation
+- ✅ CI/CD established before external users depend on stability
+
+**Planned Phases:**
+- **M6.1**: Human Test Baseline (50%+ coverage on services)
+- **M6.2**: AI Test Review Setup (operational on every PR)
+- **M6.3**: Testing Standards (documentation and CI/CD)
+
+**Key Deliverables:**
+- 50%+ test coverage on critical services
+- AI test reviewer operational on every PR
+- Testing standards documented
+- CI/CD pipeline with automated test execution
+- Foundation for autonomous testing evolution
+
+**Impact**: Establishes testing foundation before major refactoring, protecting quality during M8-M9 development.
+
+---
+
 ### **🔄 M7: CloudKit Sync, Household Sharing & External TestFlight - IN PROGRESS** 🚀
 
-**Status**: 🔄 In Progress - M7.1 Complete ✅, M7.2.1 Complete ✅, **M7.2.3 Complete ✅**, Multi-Device Sync Working ✅  
-**Estimated Time**: 30-41 hours base, 35-46 hours with buffer  
-**Actual Progress**: 27 hours (M7.0: 3h, M7.1: 6.5h, M7.2.1: 1.25h, CloudKit Debug: 4h, M7.2.3: 12.25h)  
-**Dependencies**: M5.0 complete ✅  
+**Status**: 🔄 In Progress - M7.0-M7.2 Complete ✅, M7.2.3 Complete ✅, **M7.3 🚀 Next**
+**Estimated Time**: 52-60 hours total
+**Actual Progress**: ~37 hours (M7.0: 3h, M7.1: 6.5h, M7.2: 15h, M7.2.3: 12.25h)
+**Remaining**: 15-23 hours (M7.3, M7.5, M7.6, M7.7)
+**Dependencies**: M5.0 complete ✅
 **PRD**: docs/prds/milestone-7-cloudkit-sync-external-testflight.md (v2.2 - Shared Zone Architecture)
 
 **⚠️ ARCHITECTURE PIVOT (Dec 21, 2025)**: Pivoted from CKShare (per-item sharing) to Shared Household Zone (all data shared automatically). See learning note 25 for rationale.
@@ -691,11 +723,11 @@ With M5.0 completion, Forager is now:
   - Removed sample data from production app launches
   - Users start with clean slate (7 categories only)
 - ✅ **Testing**: Perfect bi-directional sync across 2 devices (<5s latency)
-- ✅ **Documentation**: [27-m7-cloudkit-sync-debugging.md](m7-docs/27-m7-cloudkit-sync-debugging.md)
+- ✅ **Documentation**: [27-m7-cloudkit-sync-debugging.md](archive/27-m7-cloudkit-sync-debugging.md)
 
-**M7.2: Shared Household Zone (19-23 hours) - IN PROGRESS** 🔄
-- ✅ **M7.2.1**: Household Setup & Shared Zone (1.25h) - COMPLETE (100% accuracy)
-- 🚀 **M7.2.2**: Member Invitation & Acceptance (2-3h) - READY (code complete, awaiting 2 physical iPhones)
+**M7.2: Shared Household Zone (15 hours) - COMPLETE** ✅
+- ✅ **M7.2.1**: Household Setup & Shared Zone (1.25h) - COMPLETE
+- ✅ **M7.2.2**: Member Invitation & Acceptance (11-12h) - COMPLETE (Jan 12, 2026)
 - ✅ **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25h) - COMPLETE (88% accuracy)
   - ✅ Phase 0: Core Data Model v2 (2h) - household relationships
   - ✅ Prep A: StoreIdentityLogger (0.5h) - DEBUG utility

@@ -1,10 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: January 4, 2026  
-**Purpose**: Central navigation hub for all project documentation  
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
-**Current Phase**: M7.2.3 ✅ COMPLETE, M7.2.2 🚀 READY  
-**Next Priority**: M7.2.2 - Member Invitation & Acceptance Testing (2-3 hours)
+**Last Updated**: January 13, 2026
+**Purpose**: Central navigation hub for all project documentation
+**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, **M7.3 🚀 Next**
+**Next Priority**: M7.3 - Household Management & Settings (6-8 hours)
+**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
 
@@ -49,6 +50,31 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **January 13, 2026** - Documentation Cleanup & M6 Planning 📚
+- **Completed**: Comprehensive documentation sync and milestone planning review
+- **Achievement**: All planning documents updated to reflect M7.2.2 and M7.2.3 completion
+- **Documentation Updates**:
+  - requirements.md: Updated to v4.7, added M6 deferred section, M7 status refresh
+  - roadmap.md: Added M6 deferred section with strategic rationale, M7 progress update
+  - project-index.md: Current phase updated (M7.3 next), execution order clarified
+  - session-startup-checklist.md: Updated to v2.2 with ADR 008/009 and service-layer-pattern
+  - claude-instructions.md: Created v5.0 with timeless content (removed M7.1 status)
+  - CLAUDE.md: Created streamlined startup guide for /init command
+  - M7.2.3 PRD: Updated to v2.4 FINAL (COMPLETE status, deferred phases documented)
+  - M7.2 PRD: Updated to v2.0 COMPLETE (Jan 12, 2026 completion)
+- **M6 Strategic Decision**: Deferred to execute after M7 (before M8)
+  - Rationale: External beta proves stability → Testing foundation → Parsing improvements → Safe refactoring
+  - Impact: Test coverage protects against regressions during M9's 135-173h refactoring
+  - Execution order: M7 → M6 → M8 → M9 (not M1-M5 → M6 → M7 as originally planned)
+- **Current Status**:
+  - M7.0-M7.2: ✅ COMPLETE (~27h)
+  - M7.2.3: ✅ COMPLETE (12.25h)
+  - M7 Total: ~37h of ~52-60h estimated
+  - Next: M7.3 - Household Management & Settings (6-8h)
+- **Total Progress**: ~131 hours (includes M7.2.2 bug fixes ~11-12h from Jan 9-10)
+- **Planning Accuracy**: 89% maintained
+- **Key Decision**: Keep milestone numbers sequential (M1→M5→M7→M6→M8), document execution order instead of renumbering
 
 ### **January 4, 2026** - M7.2.3 COMPLETE ✅ (~12.25 hours total)
 - **Completed**: All M7.2.3 phases complete - CloudKit hardening & shared data architecture operational

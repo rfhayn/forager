@@ -1,7 +1,7 @@
 # Session Startup Checklist
 
-**Purpose**: Mandatory startup procedure for every Claude development session  
-**Last Updated**: December 21, 2025  
+**Purpose**: Mandatory startup procedure for every Claude development session
+**Last Updated**: January 13, 2026
 **Required Reading**: **EVERY SESSION** - No exceptions
 
 ---
@@ -16,7 +16,7 @@ This checklist ensures:
 - ✅ Efficient development workflow
 - ✅ Clean git history with feature branches
 
-**Estimated Time**: 10-15 minutes  
+**Estimated Time**: 10-15 minutes
 **Impact**: Prevents hours of rework and confusion
 
 ---
@@ -26,27 +26,27 @@ This checklist ensures:
 ### **PHASE 1: CONTEXT LOADING** (Required for ALL sessions)
 
 #### **1. Read Session Startup Checklist** ✅
-**Location**: `docs/session-startup-checklist.md` (this file)  
-**Purpose**: Ensure you follow the complete startup procedure  
+**Location**: `docs/session-startup-checklist.md` (this file)
+**Purpose**: Ensure you follow the complete startup procedure
 **Action**: You're doing it right now!
 
 #### **2. Read Project Naming Standards** ✅
-**Location**: `docs/project-naming-standards.md`  
-**Purpose**: Understand M#.#.# naming hierarchy and status indicators  
+**Location**: `docs/project-naming-standards.md`
+**Purpose**: Understand M#.#.# naming hierarchy and status indicators
 **What to verify:**
 - [ ] Current active milestone (e.g., M7)
 - [ ] Current active component (e.g., M7.1)
 - [ ] Status indicator meanings (✅ 🔄 🚀 ⏳)
 - [ ] Quick reference card at top of document
 
-**Key Takeaway**: 
+**Key Takeaway**:
 ```
 Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 ```
 
 #### **3. Read Current Story** ✅
-**Location**: `docs/current-story.md`  
-**Purpose**: Understand current milestone progress and what's active  
+**Location**: `docs/current-story.md`
+**Purpose**: Understand current milestone progress and what's active
 **What to capture:**
 - [ ] Current milestone number and name
 - [ ] Active phases/components with 🔄 ACTIVE status
@@ -61,8 +61,8 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 ### **PHASE 2: IMPLEMENTATION PREPARATION** (Required if doing development work)
 
 #### **4. Read Next Prompt** ✅
-**Location**: `docs/next-prompt.md`  
-**Purpose**: Get specific implementation guidance for current active work  
+**Location**: `docs/next-prompt.md`
+**Purpose**: Get specific implementation guidance for current active work
 **What to review:**
 - [ ] Phase breakdown and time estimates
 - [ ] Technical requirements
@@ -73,7 +73,7 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 **Key Takeaway**: Copy-paste ready implementation plan for current session
 
 #### **5. Search Project Knowledge for Core Data Schema** ✅
-**When**: If working with data model (entities, relationships, migrations)  
+**When**: If working with data model (entities, relationships, migrations)
 **Search queries to use:**
 ```
 "Core Data entity [EntityName] properties relationships"
@@ -91,8 +91,8 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 **Key Takeaway**: Never assume schema - always verify current state
 
 #### **6. Review Relevant ADRs** ✅
-**Location**: `docs/architecture/`  
-**When**: Working on features with architectural implications  
+**Location**: `docs/architecture/`
+**When**: Working on features with architectural implications
 **What to search:**
 ```
 "architecture decision [feature area]"
@@ -103,12 +103,14 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 - ADR 001: Selective Technical Improvements
 - ADR 006: Consolidate Staples and Ingredients
 - ADR 007: Core Data Change Process
+- ADR 008: Shared Zone Architecture (M7 CloudKit foundation)
+- ADR 009: Public Link Sharing (M7.2.2 household invitations)
 - **[Service Layer Pattern](architecture/service-layer-pattern.md)** ⭐ **M7.5+ STANDARD**
 
 **Key Takeaway**: Don't reinvent patterns - follow established decisions
 
 #### **7. Search for Existing Services** ✅
-**When**: Before creating ANY new service or infrastructure  
+**When**: Before creating ANY new service or infrastructure
 **Search queries to use:**
 ```
 "Service [functionality] implementation"
@@ -134,8 +136,8 @@ Always use full identifiers: "M7.1.3" not "Phase 3" or "Step 3"
 **Key Takeaway**: Search before creating - avoid duplicate infrastructure
 
 #### **8. VALIDATE Architecture Approach (For Complex Features)** ✅
-**When**: Before implementing features with multiple possible approaches  
-**Purpose**: Ensure you're building the right thing before writing code  
+**When**: Before implementing features with multiple possible approaches
+**Purpose**: Ensure you're building the right thing before writing code
 **Required for**: Multi-user features, sharing, sync, complex workflows
 
 **Validation Process:**
@@ -155,10 +157,10 @@ I see multiple architectural approaches for this feature:
 
 ### Option 1: [Approach Name]
 **How it works**: [Brief description]
-**Pros**: 
+**Pros**:
 - [Benefit 1]
 - [Benefit 2]
-**Cons**: 
+**Cons**:
 - [Limitation 1]
 - [Limitation 2]
 **Best for**: [Use case]
@@ -167,10 +169,10 @@ I see multiple architectural approaches for this feature:
 
 ### Option 2: [Approach Name]
 **How it works**: [Brief description]
-**Pros**: 
+**Pros**:
 - [Benefit 1]
 - [Benefit 2]
-**Cons**: 
+**Cons**:
 - [Limitation 1]
 - [Limitation 2]
 **Best for**: [Use case]
@@ -195,8 +197,8 @@ M7.2 "Multi-user collaboration" - Should have validated CKShare vs Shared Zone B
 **Key Takeaway**: 15 minutes of validation saves hours of rework. Present options, get confirmation, THEN code.
 
 #### **9. Create Feature Branch for Phase** ✅
-**Location**: Git command line  
-**When**: Before writing ANY code for a phase  
+**Location**: Git command line
+**When**: Before writing ANY code for a phase
 **Purpose**: Isolate phase work for clean history, safe experimentation, and easy rollback
 
 **Git Workflow:**
@@ -237,7 +239,7 @@ git push -u origin feature/M7.1.3-multi-device-testing
 - Push after each commit (backs up work to GitHub)
 - Use M#.#.# format in all commit messages
 
-**Key Takeaway**: 
+**Key Takeaway**:
 - One phase = one branch = one PR = one squash commit to main
 - Clean main branch history for easy understanding
 - Safe to experiment (can abandon branch if needed)
@@ -326,8 +328,8 @@ git push -u origin feature/M7.1.3-multi-device-testing
 
 ### **Historical Results**
 
-**Sessions Using Checklist (M1-M7.0):**
-- 95.5 hours total development
+**Sessions Using Checklist (M1-M7):**
+- ~120 hours total development
 - ~89% planning accuracy
 - Zero major rework required
 - 100% documentation consistency
@@ -342,6 +344,10 @@ git push -u origin feature/M7.1.3-multi-device-testing
 
 **After completing this checklist, refer to:**
 
+**For Conventions:**
+- [project-naming-standards.md](project-naming-standards.md) - M#.#.# format
+- [milestone5.0.1-name-decision-record.md](milestone5.0.1-name-decision-record.md) - Naming decision context
+
 **For Development:**
 - [development-guidelines.md](development-guidelines.md) - Code standards and patterns
 - [next-prompt.md](next-prompt.md) - Current implementation guidance
@@ -354,6 +360,7 @@ git push -u origin feature/M7.1.3-multi-device-testing
 
 **For Architecture:**
 - [architecture/](architecture/) - Architecture Decision Records
+- [architecture/service-layer-pattern.md](architecture/service-layer-pattern.md) - M7.5+ Service Standard ⭐
 - [learning-notes/](learning-notes/) - Implementation patterns
 
 ---
@@ -361,7 +368,7 @@ git push -u origin feature/M7.1.3-multi-device-testing
 ## 💡 PRO TIPS
 
 ### **First Session of the Day**
-Complete ALL 8 checklist items - full context load is critical
+Complete ALL 9 checklist items - full context load is critical
 
 ### **Continuing Previous Session's Work**
 Can skip items 5-7 if:
@@ -370,10 +377,10 @@ Can skip items 5-7 if:
 - No new services being created
 - Already on correct feature branch
 
-BUT always complete items 1-4 + 8 - these ensure naming consistency and current context
+BUT always complete items 1-4 + 9 - these ensure naming consistency and current context
 
 ### **Starting New Milestone/Component**
-Complete ALL 8 items + additionally review:
+Complete ALL 9 items + additionally review:
 - Relevant PRDs in `docs/prds/`
 - Similar milestone learning notes
 - Related ADRs for the feature area
@@ -440,7 +447,7 @@ If interrupted or switching contexts mid-session:
 
 ---
 
-**Version**: 2.1 - Product Validation Checkpoint  
-**Created**: October 23, 2025  
-**Last Updated**: December 21, 2025  
+**Version**: 2.2 - Architecture Pattern Updates
+**Created**: October 23, 2025
+**Last Updated**: January 13, 2026
 **Next Review**: After M7 completion

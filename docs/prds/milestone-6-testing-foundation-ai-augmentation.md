@@ -1,12 +1,30 @@
 # M6: Testing Foundation & AI Augmentation - PRD
 
-**Project**: Grocery & Recipe Manager iOS App  
-**Milestone**: M6  
-**Status**: ⏳ PLANNED  
-**Version**: 2.0  
-**Created**: November 26, 2025  
-**Updated**: November 26, 2025 (Enhanced with AI Agent PRD)  
-**Dependencies**: M5 complete (TestFlight validated, CloudKit tested)
+**Project**: Grocery & Recipe Manager iOS App
+**Milestone**: M6
+**Status**: 🚀 READY (Deferred after M7)
+**Version**: 2.1
+**Created**: November 26, 2025
+**Updated**: January 13, 2026 (Execution order clarified)
+**Dependencies**: M7 complete (CloudKit sync, household sharing, external beta)
+**Execution Plan**: M7 → M6 → M8 → M9
+
+---
+
+## ⏸️ Execution Order Change
+
+> **Note**: Originally planned after M5, M6 was strategically deferred to execute after M7 completes.
+>
+> **Why?** This sequencing provides:
+> - ✅ External beta proves app stable before investing in testing infrastructure
+> - ✅ Test coverage in place BEFORE M8 parsing improvements (13-16h) and M9 refactoring (135-173h)
+> - ✅ AI test reviewer learns patterns from M8 implementation
+> - ✅ CI/CD established before external users depend on stability
+>
+> **Original Plan**: M1 → M2 → M3 → M4 → M5 → M6 → M7 → M8 → M9
+> **Revised Plan**: M1 → M2 → M3 → M4 → M5 → M7 → **M6** → M8 → M9
+>
+> The content below remains unchanged - this is the complete PRD ready to execute after M7.
 
 ---
 

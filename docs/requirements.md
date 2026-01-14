@@ -1,8 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: January 4, 2026  
-**Version**: 4.6  
-**Current Milestone**: M5.0 Complete ✅ | M7.1 Complete ✅ | M7.2.1 Complete ✅ | **M7.2.3 COMPLETE ✅** | M7.2.2 🚀 Ready
+**Last Updated**: January 13, 2026
+**Version**: 4.7
+**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | **M7.3 🚀 Next**
+**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
 
@@ -285,13 +286,38 @@ This document defines all functional and non-functional requirements for the For
 
 ---
 
+## ⏸️ **M6: TESTING FOUNDATION & AI AUGMENTATION - DEFERRED**
+
+**Status**: 🔜 Deferred (executing after M7)
+**Estimated**: 20-30 hours
+**Reason**: Prioritized CloudKit sync and external beta over testing infrastructure
+**Execution Plan**: M7 (CloudKit + External Beta) → M6 (Testing Foundation) → M8 (Parsing)
+**PRD**: [M6 Testing Foundation PRD](prds/milestone-6-testing-foundation-ai-augmentation.md)
+
+### **Strategic Context**
+
+M6 was originally planned after M5, but deferred to execute after M7 completes. This sequencing provides:
+- ✅ External beta proves app stable before investing in testing infrastructure
+- ✅ Test coverage in place BEFORE M8 parsing improvements and M9 refactoring (135-173h)
+- ✅ AI test reviewer learns patterns from M8 implementation
+- ✅ CI/CD established before external users depend on stability
+
+### **Planned Requirements** (See PRD for Full Details)
+
+**M6.1: Human Test Baseline (50%+ coverage on services)**
+**M6.2: AI Test Review Setup (operational on every PR)**
+**M6.3: Testing Standards (documentation and CI/CD)**
+
+**M6 Summary (Planned)**: Testing foundation with AI-augmented review, establishing baseline coverage before major refactoring efforts in M8-M9.
+
+---
 
 ## 🚀 **M7: CLOUDKIT SYNC & EXTERNAL TESTFLIGHT - IN PROGRESS**
 
-**Status**: 🔄 In Progress - M7.2.3 Complete ✅, M7.2.2 Testing Ready 🚀  
-**Progress**: M7.0 (3h) ✅, M7.1 (6.5h) ✅, M7.2.1 (1.25h) ✅, CloudKit Debug (4h) ✅, M7.2.3 (12.25h) ✅ = 27h / 35-46h  
-**Estimated Remaining**: 8-19 hours  
-**Summary**: Full CloudKit synchronization with automatic duplicate prevention, multi-user collaboration, parsing resilience, and external public beta
+**Status**: 🔄 In Progress - M7.0-M7.2 Complete ✅, M7.3 🚀 Next
+**Progress**: M7.0 (3h) ✅, M7.1 (6.5h) ✅, M7.2 (15h) ✅, M7.2.3 (12.25h) ✅ = ~37h / 52-60h
+**Estimated Remaining**: 15-23 hours (M7.3, M7.5, M7.6, M7.7)
+**Summary**: Full CloudKit synchronization with household sharing, automatic duplicate prevention, external public beta
 
 **⚠️ CRITICAL**: M7.0 App Store Prerequisites are MANDATORY before external TestFlight submission
 

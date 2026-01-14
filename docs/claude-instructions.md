@@ -1,20 +1,10 @@
 # CLAUDE PROJECT INSTRUCTIONS - FORAGER
 
-> **🚀 ACTIVE WORK: M7.1 - CloudKit Sync Foundation**
-> 
-> **Current Phase**: M7.1.3 Multi-Device Sync Testing - 🚀 READY
-> **Status**: M7.1.1 Complete ✅, M7.1.2 Complete ✅, M7.1.3 Ready to Start
-> 
-> **Key M7.1 Documentation**:
-> - [M7 PRD](docs/prds/milestone-7-cloudkit-sync-external-testflight.md) - Complete plan
-> - [M7.1 Next-Prompt](docs/next-prompt.md) - Complete implementation guide
-> - [Current Story](docs/current-story.md) - Current progress
-> 
-> **📊 Progress**: M7.0 Complete (3h), M7.1.1 Complete (1.5h), M7.1.2 Complete (2h)
+**Project**: forager (Smart Meal Planner)
+**Version**: 5.0 - Architecture Pattern Updates
+**Last Updated**: January 13, 2026
 
-**Project**: forager (Smart Meal Planner)  
-**Version**: 4.0 - Git Workflow Integration  
-**Last Updated**: December 5, 2025
+**For Current Project Status**: Always read `docs/current-story.md` at session start
 
 ---
 
@@ -25,10 +15,10 @@
 **Claude MUST complete these actions at the start of EVERY session:**
 
 1. **Search project knowledge**: `session-startup-checklist.md`
-   - Read complete 8-point checklist (updated with git workflow!)
+   - Read complete 9-point checklist (updated with architecture patterns!)
    - Follow Phase 1 (context loading) for ALL sessions
    - Follow Phase 2 (implementation prep) for development sessions
-   - **NEW: Item #8** - Create feature branch before any code
+   - **Item #9** - Create feature branch before any code
 
 2. **Search project knowledge**: `project-naming-standards.md`
    - Verify current M#.#.# format (e.g., M7.1.3)
@@ -58,22 +48,16 @@ iOS mobile app for grocery and recipe management with:
 - Structured quantity management with intelligent consolidation
 - Recipe-to-grocery integration with smart automation
 - Store-layout optimized grocery lists
-- **CloudKit multi-device sync** (M7 in progress)
-
-### **Current Status**
-- **Completed**: M1-M5.0, M7.0 (~95.5 hours total)
-- **Active**: M7.1 CloudKit Sync Foundation
-- **Planning Accuracy**: 89% (consistently within estimates)
-- **Build Success**: 100% (zero breaking changes)
+- **CloudKit multi-device sync and household sharing**
 
 ### **Technology Stack**
 - Swift + SwiftUI for UI
 - Core Data for persistence with NSPersistentCloudKitContainer
-- CloudKit for multi-device sync
+- CloudKit for multi-device sync and household sharing
 - iOS 18.5+ target
 - Xcode project structure
 - Proven service architecture patterns
-- **Feature branch git workflow** (M7+)
+- **Feature branch git workflow**
 
 ---
 
@@ -137,6 +121,13 @@ Search: "Service [functionality] implementation"
 Check: Can existing service be extended instead of creating new?
 ```
 
+**D. Architecture Patterns (before implementing):**
+```
+Search: "architecture decision [feature area]"
+Search: "service-layer-pattern ADR"
+Check: Follow established patterns and decisions
+```
+
 **Why this matters**: M1-M7 have established proven patterns - always leverage them instead of reinventing.
 
 ---
@@ -151,10 +142,19 @@ IngredientTemplateService      - Normalization & deduplication
 QuantityMergeService          - Intelligent consolidation
 UnitConversionService         - Measurement handling
 RecipeScalingService          - Recipe quantity scaling
-CloudKitSyncMonitor           - Sync monitoring (M7.1.2)
+CloudKitSyncMonitor           - Sync monitoring
+HouseholdService              - Household management & sharing
 ```
 
 **Before creating a new service**: Search for existing services that can be extended.
+
+**Service Layer Standard (M7.5+):**
+See [Service Layer Pattern](../architecture/service-layer-pattern.md) for complete standard:
+- All Core Data writes go through services
+- @Published errorMessage: String? pattern
+- Intent-style method names (createX, updateX, deleteX)
+- Services own saves (not views)
+- Background contexts for write operations
 
 ### **UI Patterns (Reuse These)**
 ```
@@ -172,7 +172,8 @@ READ-ONLY relationships       - No cascade deletes on templates
 Single-save transactions      - With rollback capability
 Computed properties           - 75+ added in M3.5 for data integrity
 Performance targets           - <0.1s queries, <0.5s complex operations
-CloudKit sync                 - NSPersistentCloudKitContainer (M7.1.1)
+CloudKit sync                 - NSPersistentCloudKitContainer
+Dual-store architecture       - Private + Shared zones (M7.2.3)
 ```
 
 ---
@@ -232,9 +233,9 @@ private func updateConsolidationAnalysis() {
 ### **Section Organization (Use MARK)**
 ```swift
 // MARK: - Service Initialization
-// MARK: - View Components  
+// MARK: - View Components
 // MARK: - User Actions
-// MARK: - M7.1: CloudKit Sync Functions
+// MARK: - M7: CloudKit Sync Functions
 ```
 
 ### **State Management Comments (Required)**
@@ -278,11 +279,12 @@ listItem.name = parsed.name
 - ✅ **Batch operations** for multiple changes
 - ✅ **Background contexts** for heavy operations
 
-**CloudKit Sync (M7.1+):**
+**CloudKit Sync (M7+):**
 - ✅ Use NSPersistentCloudKitContainer for sync
 - ✅ Wrap in #if !DEBUG for development speed
 - ✅ Enable history tracking and remote notifications
 - ✅ Monitor sync with CloudKitSyncMonitor service
+- ✅ Dual-store architecture (private + shared zones)
 
 **Migration:**
 - ✅ Follow M3 Phase 3 pattern (successful isStaple migration)
@@ -332,12 +334,12 @@ listItem.name = parsed.name
 ### **Critical Startup Documents (Read Every Session)**
 ```
 docs/
-├── session-startup-checklist.md   ← START HERE EVERY SESSION (now with git!)
-├── project-naming-standards.md    ← M#.#.# naming conventions  
+├── session-startup-checklist.md   ← START HERE EVERY SESSION
+├── project-naming-standards.md    ← M#.#.# naming conventions
 ├── current-story.md               ← Current milestone status
 ├── next-prompt.md                 ← Implementation guidance
 ├── development-guidelines.md      ← Code standards & patterns
-└── git-workflow-for-milestones.md ← Complete git workflow (NEW!)
+└── git-workflow-for-milestones.md ← Complete git workflow
 ```
 
 ### **Strategic Planning Documents**
@@ -345,7 +347,8 @@ docs/
 docs/
 ├── requirements.md                ← Functional requirements
 ├── roadmap.md                     ← Milestone tracking
-└── project-index.md               ← Central navigation hub
+├── project-index.md               ← Central navigation hub
+└── milestone5.0.1-name-decision-record.md ← Naming convention decision
 ```
 
 ### **Implementation Documentation**
@@ -356,19 +359,30 @@ docs/
 │   └── complete/                  ← Completed feature PRDs
 │
 ├── learning-notes/                ← Implementation journey
-│   ├── 01-10-milestone-1-phases.md
-│   ├── 11-m2.1-recipe-architecture.md
-│   ├── 12-14-m3-phases-1-4.md
-│   ├── 15-m3-phase5-quantity-consolidation.md
-│   ├── 16-m3-phase6-ui-polish.md
-│   ├── 17-m3.5-foundation-validation.md
-│   ├── 24-m7.1.1-cloudkit-schema-validation.md
-│   └── [future M7+ notes]
+│   ├── 01-09: Milestone 1 phases
+│   ├── 10-13: Milestone 2 (recipes)
+│   ├── 14-15: Milestone 3 (quantities)
+│   ├── 16-19: Milestone 4 (meal planning)
+│   ├── 20-21: Milestone 5 (app renaming)
+│   ├── 22-m7.1.1-cloudkit-schema-validation.md
+│   ├── 23-m7.1.3-read-the-prd-first.md
+│   ├── 24-m7-cloudkit-foundation-and-debugging.md
+│   ├── 25-m7-architecture-pivot-ckshare-vs-shared-zone.md
+│   ├── 26-m7.2.2-public-link-sharing.md
+│   ├── 27-m7.2.2-member-invitation-completion.md
+│   └── [future learning notes]
 │
-└── architecture/                  ← Architecture decisions
+└── architecture/                  ← Architecture decisions & patterns
     ├── 001-selective-technical-improvements.md
+    ├── 002-custom-category-sort-order.md
+    ├── 003-category-duplication-prevention.md
+    ├── 004-revolutionary-store-layout-optimization.md
+    ├── 005-phase-1-performance-services-architecture.md
     ├── 006-consolidate-staples-and-ingredients.md
-    └── 007-core-data-change-process.md
+    ├── 007-core-data-change-process.md
+    ├── 008-shared-zone-architecture.md (M7 foundation)
+    ├── 009-public-link-sharing-household-invitations.md (M7.2.2)
+    └── service-layer-pattern.md (M7.5+ standard)
 ```
 
 ---
@@ -392,12 +406,10 @@ docs/
 
 ### **Planning Accuracy**
 - M1: 32h (est 30-35h) - ✅ 91% accuracy
-- M2: 16.5h (est 15-18h) - ✅ 92% accuracy  
+- M2: 16.5h (est 15-18h) - ✅ 92% accuracy
 - M3: 10.5h (est 8-12h) - ✅ 88% accuracy
 - M3.5: 8.5h (est 7h) - ✅ 82% accuracy
-- M7.0: 3h (est 2-3h) - ✅ 100% accuracy
-- M7.1.1: 1.5h (est 1.5h) - ✅ 100% accuracy
-- M7.1.2: 2h (est 2h) - ✅ 100% accuracy
+- M7.0-7.2: ~50h (est ~55h) - ✅ 91% accuracy
 - **Overall: 89% accuracy (<11% variance)**
 
 ### **Quality Metrics**
@@ -424,7 +436,7 @@ docs/
 - ✅ Pre-production app - breaking changes acceptable
 - ✅ Single developer - optimize for long-term maintainability
 - ✅ Learning-focused - balance learning with pragmatism
-- ✅ Quality over speed - but excellent velocity (95.5h for M1-M7.1.2)
+- ✅ Quality over speed - but excellent velocity (~120h total)
 
 ### **Red Flags to Challenge**
 - ❌ Proposals contradicting proven M1-M7 patterns
@@ -453,7 +465,8 @@ docs/
 5. "Core Data entity [EntityName] properties" (if touching data)
 6. "Service [functionality]" (before creating new service)
 7. "architecture decision [feature]" (for architectural work)
-8. "git-workflow-for-milestones" (for git workflow reference)
+8. "service-layer-pattern" (for M7.5+ service standard)
+9. "git-workflow-for-milestones" (for git workflow reference)
 ```
 
 ### **Finding Patterns**
@@ -511,24 +524,21 @@ docs/
 ### **1. Final Documentation Commit**
 ```bash
 # Ensure all documentation is committed
-git add docs/current-story.md docs/learning-notes/24-*.md docs/next-prompt.md
-git commit -m "M7.1.3 COMPLETE: Update documentation
+git add docs/current-story.md docs/learning-notes/*.md docs/next-prompt.md
+git commit -m "M#.#.# COMPLETE: Update documentation
 
 ✅ Acceptance Criteria:
-- All 6 test scenarios passed
-- Average sync latency: 3.2 seconds (< 5s target)
-- Zero data loss across all scenarios
-- Multi-device sync validated on 2 iPhones
+- [Criterion 1]
+- [Criterion 2]
 
 📊 Metrics:
-- Estimated: 3-4 hours
-- Actual: 3.5 hours (88% accuracy)
-- Performance: 3.2s avg sync (target: < 5s)
+- Estimated: X hours
+- Actual: Y hours (Z% accuracy)
 
 📝 Documentation:
-- current-story.md marked M7.1.3 complete
-- Learning notes updated with CloudKit insights
-- next-prompt.md ready for M7.2 (or strategic decision)"
+- current-story.md marked complete
+- Learning notes updated
+- next-prompt.md ready for next phase"
 
 git push
 ```
@@ -540,29 +550,24 @@ gh pr create --fill
 
 # OR specify manually for better PR description
 gh pr create \
-  --title "M7.1.3: Multi-Device Sync Testing" \
+  --title "M#.#.#: [Brief Description]" \
   --body "## Summary
-Validated CloudKit sync across two physical devices with comprehensive testing scenarios.
+[What was accomplished]
 
 ## Changes
-- Tested 6 scenarios: Create/Edit/Delete/Offline/Concurrent/Complex
-- Measured sync performance: 3.2s average (< 5s target met)
-- Validated zero data loss across all operations
-- Updated documentation with test results
+- [Change 1]
+- [Change 2]
 
 ## Testing
-- ✅ All 6 test scenarios passed
-- ✅ Average sync latency: 3.2 seconds
-- ✅ Zero data loss or duplication
-- ✅ Offline queue works correctly
-- ✅ Complex relationships preserved
+- ✅ [Test result 1]
+- ✅ [Test result 2]
 
 ## Time
-- Estimated: 3-4 hours
-- Actual: 3.5 hours (88% accuracy)
+- Estimated: X hours
+- Actual: Y hours (Z% accuracy)
 
 ## Next
-Strategic decision: M7.2 (Multi-User Collaboration) vs M6 (Testing) vs M8 (Analytics)" \
+[Next phase or milestone]" \
   --base main
 ```
 
@@ -586,7 +591,7 @@ git checkout main
 git pull origin main
 
 # Clean up local feature branch
-git branch -d feature/M7.1.3-multi-device-testing
+git branch -d feature/M#.#.#-description
 
 # Verify clean state
 git status  # Should show: "nothing to commit, working tree clean"
@@ -596,7 +601,7 @@ git branch   # Should show only: * main
 ### **5. Ready for Next Phase**
 ```bash
 # Immediately create branch for next phase (if continuing)
-git checkout -b feature/M7.2.1-ckshare-implementation
+git checkout -b feature/M#.#.#-next-description
 
 # Or return to main if taking a break
 git checkout main
@@ -632,25 +637,19 @@ M#.#.#: Brief description (50 chars or less)
 
 ### **Good Commit Examples**
 ```bash
-✅ git commit -m "M7.1.3: Test Create → Sync → Read scenario
+✅ git commit -m "M7.2.2: Test household invitation flow
 
-- Created test list on Device A
-- Verified sync to Device B in 2.8 seconds
-- All 3 items present with correct details
-- CloudKitSyncMonitor event count incremented on both devices"
+- Created share on Device A
+- Sent invitation via Messages
+- Verified acceptance on Device B
+- Both devices show shared household data"
 
-✅ git commit -m "M7.1.2: Implement CloudKitSyncMonitor service
+✅ git commit -m "M7.2.3: Implement ManagedObjectFactory
 
-- ObservableObject with @Published properties
-- Observe NSPersistentStoreRemoteChange notifications
-- Map CKError types to user-friendly messages
-- Real-time sync status updates"
-
-✅ git commit -m "M7.1.1: Configure CloudKit container with #if !DEBUG
-
-- Enables fast local development (Debug builds)
-- CloudKit active in Release builds only
-- Confirmed schema generation in CloudKit Dashboard"
+- Protocol-based factory pattern
+- Scope-based store assignment (private vs shared)
+- Background context support
+- Unit tests passing"
 ```
 
 ### **Bad Commit Examples**
@@ -669,13 +668,13 @@ M#.#.#: Brief description (50 chars or less)
 ```bash
 # On Computer A - save work
 git add .
-git commit -m "M7.1.3 WIP: Completed scenarios 1-3, pausing at scenario 4"
+git commit -m "M#.#.# WIP: Completed X, pausing at Y"
 git push
 
 # On Computer B - resume work
 git fetch origin
-git checkout feature/M7.1.3-multi-device-testing
-git pull origin feature/M7.1.3-multi-device-testing
+git checkout feature/M#.#.#-description
+git pull origin feature/M#.#.#-description
 # Continue working...
 ```
 
@@ -691,28 +690,28 @@ git commit --amend
 ```bash
 # Just make another commit fixing it
 git add <fixed-files>
-git commit -m "M7.1.3: Fix typo in CloudKit container configuration"
+git commit -m "M#.#.#: Fix [description of fix]"
 git push
 ```
 
 ### **Need to Abandon Branch and Start Over**
 ```bash
 git checkout main
-git branch -D feature/M7.1.3-multi-device-testing  # Force delete
-git checkout -b feature/M7.1.3-multi-device-testing-v2
+git branch -D feature/M#.#.#-description  # Force delete
+git checkout -b feature/M#.#.#-description-v2
 ```
 
 ### **Accidentally Committed to Main**
 ```bash
 # Create branch from current main
-git branch feature/M7.1.3-multi-device-testing
+git branch feature/M#.#.#-description
 
 # Reset main to origin
 git checkout main
 git reset --hard origin/main
 
 # Continue work on feature branch
-git checkout feature/M7.1.3-multi-device-testing
+git checkout feature/M#.#.#-description
 ```
 
 ---
@@ -761,8 +760,8 @@ git checkout feature/M7.1.3-multi-device-testing
 ## 🏁 FINAL REMINDER
 
 **Every session starts with the same 4 searches:**
-1. `session-startup-checklist.md` - Complete procedure (now 8 items with git!)
-2. `project-naming-standards.md` - M#.#.# naming  
+1. `session-startup-checklist.md` - Complete procedure (now 9 items!)
+2. `project-naming-standards.md` - M#.#.# naming
 3. `current-story.md` - Current status
 4. `next-prompt.md` - Implementation guide (if developing)
 
@@ -792,6 +791,6 @@ git checkout feature/M7.1.3-multi-device-testing
 
 ---
 
-**Version**: 4.0 - Git Workflow Integration  
-**Last Updated**: December 5, 2025  
+**Version**: 5.0 - Architecture Pattern Updates
+**Last Updated**: January 13, 2026
 **GitHub**: https://github.com/rfhayn/forager.git

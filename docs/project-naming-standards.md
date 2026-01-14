@@ -595,8 +595,8 @@ Bug Fixes:
 - Extended sync retry to 30s
 
 Documentation:
-- docs/m7-docs/32: Public Link Sharing
-- docs/m7-docs/33: Device B Bug Fixes
+- docs/learning-notes/26: Public Link Sharing
+- docs/archive/33: Device B Bug Fixes (archived)
 - Wiki updates complete
 
 GitHub:

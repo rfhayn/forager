@@ -686,9 +686,9 @@ Bug Fixes:
 - Added restart alert for edge cases
 
 Documentation:
-- docs/m7-docs/32: Public Link Sharing (20.4 KB)
-- docs/m7-docs/33: Device B Bug Fixes (19.1 KB)
-- docs/m7-docs/34: M7.2.2 Completion
+- docs/learning-notes/26: Public Link Sharing (20.4 KB)
+- docs/archive/33: Device B Bug Fixes (19.1 KB)
+- docs/learning-notes/27: M7.2.2 Completion
 - Wiki updates (CloudKit-Implementation, Milestones-Overview, Home)
 
 GitHub:

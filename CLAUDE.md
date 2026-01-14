@@ -2,395 +2,316 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 🚨 MANDATORY: Session Startup Procedure (READ FIRST)
+---
 
-**CRITICAL**: Before doing ANY work in this repository, you MUST read the following documentation files in order. This is non-negotiable and prevents hours of wasted effort.
+## Session Startup (MANDATORY - Read These Every Session)
 
-### Required Reading (Every Session - No Exceptions)
+**Before ANY work, read these 4 documents in order:**
 
-**Phase 1: Core Context (Required for ALL sessions)**
+1. `docs/session-startup-checklist.md` - Complete 9-point checklist
+2. `docs/project-naming-standards.md` - M#.#.# naming conventions
+3. `docs/current-story.md` - Current project status
+4. `docs/next-prompt.md` - Implementation guidance (if developing)
 
-1. **`docs/session-startup-checklist.md`** ← **START HERE**
-   - Complete 8-point startup procedure
-   - Ensures naming consistency, documentation continuity, clean git workflow
-   - **Estimated time**: 10-15 minutes
-   - **Prevents**: 7-16 hours of rework
+**Time Investment**: 10-15 minutes prevents 7-16 hours of rework.
 
-2. **`docs/project-naming-standards.md`**
-   - M#.#.# naming hierarchy (ALWAYS use "M7.2.3" NOT "Phase 3")
-   - Status indicators (✅ 🔄 🚀 ⏳)
-   - Quick reference card at top
-
-3. **`docs/current-story.md`**
-   - Current milestone status
-   - Active work (🔄 ACTIVE)
-   - Recently completed (✅ COMPLETE)
-   - Next planned (🚀 READY)
-
-4. **`docs/next-prompt.md`** (if doing development work)
-   - Implementation guide for current session
-   - Phase breakdown with time estimates
-   - Technical requirements and acceptance criteria
-
-**Phase 2: Strategic Context (Review as needed)**
-
-5. **`docs/claude-instructions.md`**
-   - Active work summary
-   - Key documentation links
-   - Quick reference for current milestone
-
-6. **`docs/development-guidelines.md`**
-   - Code documentation standards
-   - Quality gates and success indicators
-   - Proven patterns from M1-M7
-   - Core Data rules and migration patterns
-
-7. **`docs/git-workflow-for-milestones.md`**
-   - Feature branch workflow (one phase = one branch = one PR)
-   - Commit message format with M#.#.# naming
-   - PR creation and squash merge process
-
-8. **`docs/requirements.md`**
-   - Functional requirements
-   - Feature specifications
-   - User needs and goals
-
-9. **`docs/roadmap.md`**
-   - Milestone completion tracking
-   - Time estimates vs actuals
-   - Success metrics (89% planning accuracy)
-
-10. **`docs/project-index.md`**
-    - Central navigation hub for all documentation
-    - Recent activity and new documentation links
-    - Learning notes index
-
-11. **`docs/milestone5.0.1-name-decision-record.md`**
-    - App naming history (GroceryRecipeManager → Forager)
-    - Brand identity decisions
-
-**Why This Matters:**
-- ✅ Prevents duplicate services (check existing before creating new)
-- ✅ Maintains naming consistency (M#.#.# format everywhere)
-- ✅ Ensures documentation continuity between sessions
-- ✅ Follows proven patterns from 119.5+ hours of development
-- ✅ Clean git history with feature branch workflow
-- ✅ No architectural conflicts or rework
-
-**Time Investment vs Benefit:**
-- Reading these docs: ~10-15 minutes
-- Rework from skipping: 7-16 hours
-- **ROI**: 28-64x return on time invested
+**Full Instructions**: See `docs/claude-instructions.md` for complete development guidelines, architecture patterns, git workflow, and code standards.
 
 ---
 
-## Build, Test, and Development Commands
+## Build & Run
 
-### Building the App
 ```bash
-# Open in Xcode
+# Open project
 open forager.xcodeproj
 
-# Build from command line (requires full Xcode installation)
-xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 15' build
+# Build and run
+# Press ⌘+R in Xcode
+# Or: Product → Run
+
+# Run on specific simulator
+# Select simulator from Xcode toolbar, then ⌘+R
+
+# Debug builds: CloudKit DISABLED (faster local development)
+# Release builds: CloudKit ENABLED
 ```
 
-### Running Tests
-```bash
-# Run all tests
-xcodebuild test -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 15'
+**No Tests**: Test infrastructure planned for M6 (not yet implemented).
 
-# Run specific test
-xcodebuild test -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 15' -only-testing:foragerTests/TestClassName/testMethodName
-```
+---
 
-### Development Workflow
-- **Requirements**: iOS 18.5+, Xcode 15.0+, macOS Sonoma 14.0+
-- **Target Platform**: iOS physical devices and simulators
-- **Build Configuration**:
-  - Debug builds use local Core Data only (fast iteration)
-  - Release builds enable CloudKit sync (`#if !DEBUG` wrapper)
+## Architecture Overview
 
-## High-Level Architecture
+### **Core Data Model (10 Entities)**
 
-### Core Data + CloudKit Dual-Store Architecture
+**Grocery Management:**
+- `WeeklyList` - Weekly shopping lists
+- `GroceryListItem` - Individual items on lists
+- `Category` - Custom store-layout categories
 
-Forager uses a sophisticated **shared zone architecture** for household collaboration:
+**Recipe System:**
+- `Recipe` - Recipe catalog
+- `Ingredient` - Recipe ingredients
+- `IngredientTemplate` - Normalized ingredient templates (prevents duplication)
 
-**Key Architectural Decisions:**
-- **NSPersistentCloudKitContainer** with CloudKit shared zones for multi-user collaboration
-- **Dual-store design**: Private store (user-scoped) + Shared store (household-scoped)
-- **Scope-based factory pattern** automatically assigns entities to correct store
-- **DataScope enum**: `.user` (private data) vs `.household` (shared data)
-- **HouseholdScopeProvider**: Runtime determination of which store to use
+**Meal Planning:**
+- `MealPlan` - Meal planning periods
+- `PlannedMeal` - Recipe assignments to specific dates
 
-**Why Shared Zones vs CKShare:**
-- Users want ONE shared household database (not selective item sharing)
-- All recipes, lists, meal plans, categories automatically sync between household members
-- Simpler UX: one-time household setup, no per-item share buttons
-- Better for target use case: couples/roommates managing shared household
+**Household & User:**
+- `Household` - Household for sharing
+- `HouseholdMember` - Members of households
+- `UserPreferences` - User settings
 
-**Critical Implementation Details:**
+### **CloudKit Dual-Store Architecture (M7.2.3)**
+
+**Critical Pattern**: Dual-store NSPersistentCloudKitContainer
+
 ```swift
-// All household-scoped entities implement HouseholdScoped protocol
-protocol HouseholdScoped: NSManagedObject {
-    var householdKey: String? { get set }
-}
+// Private Store (user's personal data)
+NSPersistentStore - CKRecordZone: com.apple.coredata.cloudkit.zone
 
-// Factory pattern assigns entities to correct store at creation time
-let recipe = factory.create(Recipe.self, scope: .household)  // → Shared store
-let userPref = factory.create(UserPreferences.self, scope: .user)  // → Private store
+// Shared Store (household shared data)
+NSPersistentStore - CKRecordZone: [household-specific shared zone]
 ```
 
-See `docs/architecture/008-shared-zone-architecture.md` for complete architectural rationale.
+**Key Components:**
+- `DataScope` enum - Defines `.personal` vs `.household(id, store)` scopes
+- `HouseholdScopeProvider` - Resolves active household scope
+- `ManagedObjectFactory` - Automatic store assignment based on scope
+- `CategoryDeduplicator` - Self-healing duplicate prevention (<60s convergence)
 
-### Core Data Model (9 Entities)
+**Store Assignment Pattern:**
+```swift
+// Creating household-scoped objects
+let factory = ManagedObjectFactory(
+    context: context,
+    persistence: persistence,
+    scopeProvider: scopeProvider
+)
 
-**Current Schema Version**: `forager 2` (located in `forager/forager.xcdatamodeld/`)
+let recipe = factory.createRecipe() // Automatically assigned to correct store
+```
 
-**Household-Scoped Entities** (shared between household members):
-- `Recipe` - Recipe catalog with ingredients, instructions, usage tracking
-- `Ingredient` - Recipe ingredients with structured quantities
-- `IngredientTemplate` - Normalized ingredient names (deduplication singleton pattern)
-- `Category` - Custom categories for store-layout optimization
-- `WeeklyList` - Grocery lists with source recipe tracking
-- `GroceryListItem` - Individual list items with quantities and categories
-- `MealPlan` - Calendar-based meal planning
-- `PlannedMeal` - Individual meals assigned to dates
+**Migration Pattern (Attach-Then-Share):**
+1. Create household record in private store
+2. Migrate personal data to household
+3. Call `container.share([household], to: nil)` to create CKShare
+4. **CRITICAL**: `try viewContext.save()` immediately after sharing
+5. Data moves from private → shared zone
 
-**User-Scoped Entities** (private to each user):
-- `UserPreferences` - User settings (meal plan duration, start day, etc.)
+### **Service Layer Pattern (M7.5+ Standard)**
 
-**Key Relationships:**
-- `Household` → all household-scoped entities (one-to-many)
-- `Recipe` ↔ `Ingredient` (one-to-many with cascade delete)
-- `Ingredient` → `IngredientTemplate` (many-to-one, READ-ONLY, no cascade)
-- `GroceryListItem` ↔ `Recipe` (many-to-many for source tracking)
-- `Category` custom sort order managed via `sortOrder` integer property
+**All Core Data writes MUST go through services.**
 
-**Template System**: IngredientTemplate acts as a single source of truth for ingredient names. Multiple recipes reference the same template, preventing duplication ("Butter", "butter", "BUTTER" all normalize to "butter" template).
+See `docs/architecture/service-layer-pattern.md` for complete standard.
 
-### Service Layer Architecture
+**Key Services:**
+- `HouseholdService` - Household management & sharing
+- `MealPlanService` - Meal planning operations
+- `OptimizedRecipeDataService` - Recipe CRUD
+- `IngredientParsingService` - Text parsing (<0.05s)
+- `IngredientTemplateService` - Normalization & deduplication
+- `QuantityMergeService` - Intelligent consolidation
+- `UnitConversionService` - Unit conversions
+- `RecipeScalingService` - Recipe scaling
+- `CloudKitSyncMonitor` - Real-time sync tracking
 
-Located in `/Services/` directory. All services follow singleton pattern with `@Published` properties for SwiftUI observation.
+**Pattern:**
+```swift
+@MainActor
+class ExampleService: ObservableObject {
+    @Published var errorMessage: String?
+    @Published var isLoading: Bool = false
 
-**Core Services:**
-- `OptimizedRecipeDataService` - Recipe CRUD operations with performance optimization
-- `IngredientParsingService` - Text parsing for ingredient entry (regex-based, <0.05s)
-- `IngredientTemplateService` - Template normalization and deduplication
-- `IngredientAutocompleteService` - Fuzzy matching for ingredient entry (parse-then-autocomplete)
-- `QuantityMergeService` - Intelligent consolidation of duplicate list items
-- `UnitConversionService` - Measurement conversion (cups ↔ tbsp ↔ tsp, lbs ↔ oz)
-- `RecipeScalingService` - Recipe quantity scaling with kitchen-friendly fractions
-- `MealPlanService` - Meal planning with calendar integration
-- `UserPreferencesService` - User settings management
-- `HouseholdService` - Household creation, sharing, member management
-- `CloudKitSyncMonitor` - Real-time CloudKit sync status monitoring
+    private let viewContext: NSManagedObjectContext
 
-**Persistence Services** (`/Services/Persistence/`):
-- `PersistenceController` - Core Data stack initialization and configuration
-- `DefaultSeeder` - Initial data seeding for new installations
-- `ManagedObjectFactory` - Scope-based entity creation (private vs shared store)
-- `HouseholdScopeProvider` - Runtime store selection based on household membership
-- `CategoryDeduplicator` - Self-healing category deduplication (<60s convergence)
-- `CloudKitDiagnostics` - DEBUG-only CloudKit logging and diagnostics
-- `StoreIdentityLogger` - DEBUG-only store identity verification
+    // Intent-style methods
+    func createExample(name: String) -> Example? {
+        // Service owns the save
+        do {
+            let obj = Example(context: viewContext)
+            obj.name = name
+            try viewContext.save()
+            return obj
+        } catch {
+            handleError("Failed to create example", error: error)
+            return nil
+        }
+    }
+}
+```
 
-**Repository Pattern** (`/forager/Repositories/`):
-- `CategoryRepository` - Household-aware category CRUD
-- `IngredientTemplateRepository` - Household-aware template management
-- `PlannedMealRepository` - Household-aware meal plan queries
+### **Repository Pattern**
 
-### UI Architecture
+**For data access (NOT writes):**
+- `CategoryRepository` - Category queries
+- `IngredientTemplateRepository` - Template queries
+- `PlannedMealRepository` - Meal plan queries
 
-**SwiftUI Patterns:**
-- `@FetchRequest` with predicates for live Core Data updates
-- `@StateObject` for service initialization
-- `@EnvironmentObject` for dependency injection (ManagedObjectFactory, HouseholdScopeProvider)
-- Navigation with sheets and `NavigationStack`
-- Form validation with unsaved changes detection
+**Repositories provide read-only access. Services handle writes.**
 
-**Key Views:**
-- `WeeklyListsView` - Grocery list management with consolidation preview
-- `RecipeListView` - Recipe catalog with search and usage tracking
-- `MealPlanListView` - Calendar-based meal planning
-- `SettingsView` - User preferences and household management
+### **Data Patterns**
 
-**Design Patterns:**
-- Category-aware organization throughout app (custom sort order respected)
-- Real-time search with native iOS patterns
-- Progress overlays for long-running operations
-- Visual feedback (checkmarks, strikethrough, scale indicators)
+**Template Normalization:**
+- `IngredientTemplate` is single source of truth
+- Prevents duplication: "Butter", "butter", "BUTTER" → "butter"
+- READ-ONLY relationships (no cascade deletes)
 
-### Performance Standards
+**Structured Quantities:**
+- Enables scaling (0.25x - 4x with kitchen-friendly fractions)
+- Intelligent consolidation: "1 cup milk" + "2 cups milk" = "3 cups milk"
+- Unit conversion: cups ↔ tablespoons ↔ teaspoons
 
-All operations must meet these validated targets:
-- Query performance: **< 0.1s**
-- Search performance: **< 0.2s**
-- Autocomplete: **< 0.1s**
-- Parsing: **< 0.05s**
-- Recipe scaling: **< 0.5s**
-- Consolidation analysis: **< 0.5s**
-- CloudKit sync: **< 5s** for typical operations
-- UI responsiveness: **60fps** maintained
+**Performance Targets:**
+- Queries: <0.1s
+- Complex operations: <0.5s
+- CloudKit sync: <5s
+- All targets maintained across 119+ hours of development
 
-Performance monitoring built into services via `@Published` properties.
+---
 
-## Project-Specific Guidelines
+## Critical Architecture Decisions
 
-### Milestone Naming Convention (CRITICAL)
+**ADR 008: Shared Zone Architecture**
+- M7 uses CloudKit shared zones (not CKShare participant lists)
+- Dual-store architecture (private + shared)
+- Household-scoped data automatically assigned to shared store
 
-**Always use M#.#.# format** for all milestone references:
+**ADR 009: Public Link Sharing**
+- M7.2.2 uses public link sharing (`publicPermission = .readWrite`)
+- Bypasses UICloudSharingController (broken on iOS 18.x)
+- ShareSheet for invitation distribution
 
+See `docs/architecture/` for all 9 ADRs + service-layer-pattern.md.
+
+---
+
+## Development Workflow
+
+### **Mandatory Naming Convention**
+
+**Always use M#.#.# format:**
 ```
 ✅ CORRECT: "M7.2.3" or "M7.2.3: CloudKit Hardening"
 ❌ WRONG: "Phase 3", "Step 3", "Story 7.2.3"
 ```
 
-**Status Indicators:**
-- ✅ **COMPLETE** - Fully implemented and validated
-- 🔄 **ACTIVE** - Currently being worked on
-- 🚀 **READY** - Next in queue, ready to start
-- ⏳ **PLANNED** - Future work, not ready yet
+**Status indicators:**
+- ✅ COMPLETE
+- 🔄 ACTIVE
+- 🚀 READY
+- ⏳ PLANNED
 
-See `docs/project-naming-standards.md` for complete naming hierarchy and enforcement rules.
-
-### Git Workflow (Feature Branch Model)
-
-**One phase = one branch = one PR = one squash commit to main**
+### **Git Workflow (Feature Branches)**
 
 ```bash
-# Phase start
-git checkout main
-git pull origin main
-git checkout -b feature/M7.2.3-cloudkit-hardening
+# 1. Create feature branch
+git checkout -b feature/M#.#.#-brief-description
 
-# Development (commit frequently every 15-30 min)
-git add <files>
-git commit -m "M7.2.3: Brief description
-- Detail 1
-- Detail 2"
+# 2. Commit frequently (every 15-30 min)
+git add .
+git commit -m "M#.#.#: Brief description
+
+- Detailed bullet 1
+- Detailed bullet 2"
 git push
 
-# Phase complete
+# 3. When phase complete, create PR
 gh pr create --fill
+
+# 4. Squash merge to main
 gh pr merge --squash --delete-branch
-git checkout main && git pull origin main
+
+# 5. Update local
+git checkout main
+git pull origin main
+git branch -d feature/M#.#.#-description
 ```
 
-**Benefits**: Clean main history (one commit per phase), easy rollback, safe experimentation.
+**One phase = one branch = one PR = one commit to main**
 
-See `docs/git-workflow-for-milestones.md` for complete workflow.
+### **Documentation Updates (After EVERY Session)**
 
-### Core Data Changes (MANDATORY PROCESS)
+1. Update `docs/current-story.md` with progress
+2. Create/update learning notes in `docs/learning-notes/`
+3. Mark phases ✅ COMPLETE with actual hours
+4. Update `docs/next-prompt.md` for next phase
 
-**Before modifying Core Data schema:**
+**Failure to update documentation breaks project continuity.**
 
-1. Search project knowledge for `ADR 007 core-data-change-process`
-2. Document impact in `M#.#.#-CORE-DATA-IMPACT-ANALYSIS.md`
-3. Verify codegen settings: IngredientTemplate uses "Class Definition", most others use "Manual/None"
-4. Add fetch indexes for frequently queried fields
-5. Test migration with sample data
-6. Verify build success and no data loss
+---
 
-**Proven migration pattern**: See M3 Phase 3 for successful `isStaple` migration example.
+## Code Standards
 
-### Service Creation Guidelines
-
-**Before creating a new service:**
-
-1. Search for existing services that can be extended
-2. Review proven patterns from M1-M7 (see `docs/learning-notes/`)
-3. Follow singleton pattern with `@Published` properties
-4. Include performance monitoring
-5. Document with function header comments explaining "why" not "what"
-
-**Reuse over reinvention**: M1-M7 established excellent patterns - always leverage them.
-
-### Code Documentation Standards
-
-**Required for all new code:**
+### **Comments**
 
 ```swift
-// MARK: - Section Organization
-// Use MARK comments to organize code into logical sections
+// MARK: - Section Name
 
-// Function Header Comments (required)
-// Explains what the function does, side effects, special conditions
-private func updateConsolidationAnalysis() {
-    // Implementation
+// Function header: Explain WHY and context
+// Called when user taps "Add to List"
+// Updates consolidationOpportunities count for badge display
+private func updateAnalysis() {
+    // Inline: Explain non-obvious logic
+    // Use parsed name for template matching consistency
+    item.name = parsed.name
 }
-
-// State Management Comments (required)
-// M7.2.3: CloudKit sync monitor
-// Observes NSPersistentStoreRemoteChange notifications
-@StateObject private var syncMonitor: CloudKitSyncMonitor
 ```
 
-**Comment principle**: Explain "why" not "what". Code should be self-documenting through clear naming.
+### **Core Data Rules**
 
-### Documentation Requirements
-
-**After every development session:**
-- Update `docs/current-story.md` with progress (use correct M#.#.# naming)
-- Create/update learning notes in `docs/learning-notes/`
-
-**After every phase completion:**
-- Mark phase ✅ COMPLETE in `docs/current-story.md` with actual hours
-- Update `docs/next-prompt.md` for next phase
-- Update `docs/project-index.md` Recent Activity
-
-**After every milestone completion:**
-- Update `docs/roadmap.md` with completion summary
-- Update `docs/project-index.md` with milestone links
-
-### Quality Gates
-
-**Stop immediately if:**
-- More than 5 build errors consecutively
-- Spending > 20 minutes on single compilation issue
-- Breaking existing working features
-- Performance degrades below targets (>0.5s for operations, >5s for CloudKit)
-- Using incorrect M#.#.# naming
-- Making Core Data changes without impact analysis
-- Creating new services without checking for existing ones
-- Working on main branch instead of feature branch
-
-### Key Architectural Patterns to Maintain
-
-**Template Normalization:**
-- IngredientTemplate is single source of truth for ingredient names
-- Templates are READ-ONLY from ingredient perspective (no cascade deletes)
-- Use `IngredientTemplateService` for all template operations
-
-**Scope-Based Store Assignment:**
-- Use `ManagedObjectFactory.create(_:scope:)` for entity creation
-- Never directly instantiate entities with `NSEntityDescription`
-- Factory pattern ensures entities land in correct store (private vs shared)
-
-**Background Operations:**
-- Heavy operations must use background contexts
-- UI-blocking operations are unacceptable
-- Use progress overlays for operations >0.5s
+**Before changing schema:**
+1. Read `docs/architecture/007-core-data-change-process.md`
+2. Document impact (which entities/relationships affected)
+3. Plan migration (lightweight vs custom)
+4. Test with sample data
+5. Verify build success
 
 **CloudKit Sync:**
-- Wrapped in `#if !DEBUG` for development speed
-- Monitor sync with `CloudKitSyncMonitor`
-- Handle offline gracefully (queued operations)
-- Use `CategoryDeduplicator` pattern for self-healing multi-device sync
+- Wrap in `#if !DEBUG` for development speed
+- Enable history tracking and remote notifications
+- Monitor with `CloudKitSyncMonitor`
 
-## Development Context
+### **Performance**
 
-**Project Status**: 119.5+ hours of development across M1-M7.2.3 with 89% planning accuracy
+- Add fetch indexes for frequently queried fields
+- Use predicates for database-level filtering
+- Background contexts for heavy operations
+- Batch operations for multiple changes
 
-**Current Focus**: M7.2.2 member invitation testing (after completing M7.2.3 CloudKit hardening)
+---
 
-**Success Metrics**:
-- 89% planning accuracy (<11% variance)
-- 100% build success rate (zero breaking changes)
-- 100% performance targets met or exceeded
-- Clean main branch history via feature branch workflow
+## Project Context
 
-**Target Users**: Couples and roommates managing shared household grocery shopping and meal planning
+**Planning Accuracy**: 89% average across 119+ hours
+**Current Milestone**: M7 - CloudKit Sync & Household Sharing
+**Build Success**: 100% (zero breaking changes maintained)
+**Technical Debt**: Zero
 
-**Quality Philosophy**: Build incrementally, validate continuously, leverage proven patterns, document everything
+**Complete journey documented in:**
+- `docs/requirements.md` - All functional requirements
+- `docs/roadmap.md` - Milestone timeline & tracking
+- `docs/learning-notes/` - 27+ implementation notes
+- `docs/architecture/` - 9 ADRs + service-layer-pattern
+- `docs/prds/` - Product Requirements Documents
+
+---
+
+## Key Principles
+
+1. **Session startup discipline** - Read checklist EVERY session
+2. **Naming consistency** - M#.#.# format (zero tolerance)
+3. **Search before creating** - Check for existing services/patterns
+4. **Document as you go** - Don't defer documentation
+5. **Leverage proven patterns** - M1-M7 established patterns
+6. **Performance matters** - Maintain <0.5s targets
+7. **Zero regressions** - Never break existing features
+8. **Feature branch workflow** - One phase = one branch = one PR
+9. **Service Layer Standard** - All writes through services (M7.5+)
+
+---
+
+**Last Updated**: January 13, 2026
+**For current status**: Read `docs/current-story.md`
+**For full instructions**: Read `docs/claude-instructions.md`

@@ -1,20 +1,37 @@
 # Current Development Story
 
-**Last Updated**: January 4, 2026 (M7.2.3 Phase 4 Complete)  
-**Status**: M7.2.3 ✅ **COMPLETE** - M7.2.2 🚀 **READY**  
-**Total Progress**: ~119.5 hours | 89% planning accuracy  
-**Current Branch**: `main` (Phase 4 complete, ready for M7.2.2 testing branch)  
+**Last Updated**: January 13, 2026 (M7.2.2 Complete, M7.3.1 Ready)
+**Status**: M7.0-M7.2 ✅ **COMPLETE** - M7.3.1 🚀 **READY**
+**Total Progress**: ~131 hours | 89% planning accuracy
+**Current Branch**: `main` (M7.2.2 complete, ready for M7.3.1 feature branch)
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
 
 ---
 
-## 🎉 **M7.2.3: COMPLETE - M7.2.2 NEXT**
+## 🎉 **M7.2 & M7.2.3: COMPLETE - M7.3 NEXT**
 
-**Status**: ✅ **M7.2.3 COMPLETE** - M7.2.2 ready (member invitation testing)  
-**Total Time**: 12.25 hours (estimated 14-17h, 72-88% accuracy)  
-**Achievement**: CloudKit sync working, data migrated to shared zone, migration UI operational
+**Status**: ✅ **M7.2 & M7.2.3 COMPLETE** - M7.3 ready (household management)
+**M7.2 Total Time**: 15 hours (M7.2.2 took 11-12h including bug fixes, not 2-3h estimated)
+**M7.2.3 Total Time**: 12.25 hours (estimated 14-17h, 88% accuracy)
+**Achievement**: Full household sharing operational, CloudKit sync working, dual-store architecture complete
 
 ### **What's Complete ✅**
+
+**M7.2.2: Member Invitation & Acceptance** ✅ COMPLETE (Jan 12, 2026)
+- ✅ Public link sharing implemented (bypassed UICloudSharingController iOS 18.x bugs)
+- ✅ Invitation sent successfully via Messages/Mail
+- ✅ Acceptance flow working on physical devices
+- ✅ Display name extraction fixed (handles CloudKit IDs gracefully)
+- ✅ Sync retry extended to 30 seconds (6 attempts × 5s)
+- ✅ CloudKit user record IDs hidden from UI
+- ✅ Auto-member creation integrated
+- ✅ URL handling enhanced
+- ✅ Bi-directional sync verified (<5s latency)
+- **Learning Notes**:
+  - [32-m7.2.2-public-link-sharing.md](archive/32-m7.2.2-public-link-sharing.md)
+  - [33-m7.2.2-device-b-bug-fixes.md](archive/33-m7.2.2-device-b-bug-fixes.md)
+
+**M7.2.3: CloudKit Hardening & Dual-Store Architecture** ✅ COMPLETE (Jan 4, 2026)
 
 **External Validation** (Jan 1, 2026 - 1 day planning)
 - ✅ PRD v2.0 submitted to ChatGPT & Gemini
@@ -99,145 +116,237 @@
   - Phase 4.2-4.4: Backend Testing & CloudKit Fix (2h)
 - **Total M7.2.3: 12.25 hours** (estimated 14-17h, 88% accuracy)
 
-**Overall M7 Progress**: 119.5 hours total
+**Overall M7 Progress**: ~131 hours total
 - M7.0: 3h ✅
 - M7.1: 6.5h ✅
-- M7.2.1: 1.25h ✅
-- CloudKit Debugging: 4h ✅
+- M7.2: 15h ✅ (M7.2.1 + M7.2.2 including bug fixes)
 - M7.2.3: 12.25h ✅
+- **Remaining**: M7.3 (6-8h), M7.5 (8-10h), M7.6 (2-3h), M7.7 (2-3h) = 18-24h
 
 ### **What's Next 🚀**
 
-**M7.2.2: Member Invitation & Acceptance** - 🔧 **IN PROGRESS - BUG FIXES COMPLETE**
+**M7.3: Household Management & Settings** - 🚀 **READY TO START**
 
-**Estimated**: 2-3h testing | **Actual**: 11-12h (implementation + bug fixes discovered during testing)
-**Status**: Device A ✅ | Device B ⏳ (bug fixes committed, ready to retest)
-**Branch**: `main`
+**Estimated Total**: 6-8 hours (4 phases)
+**Current Phase**: M7.3.1 - Rename Household (30 min)
+**Status**: Ready to implement
+**Branch**: Create `feature/M7.3.1-rename-household`
+**PRD**: [m7.3-household-management-settings.md](prds/m7.3-household-management-settings.md)
 
-**Journey So Far**:
-- **Jan 9**: Implemented public link sharing (~8h)
-  - Bypassed UICloudSharingController iOS 18.x bugs
-  - Successfully sent invitation from Device A via Messages
-  - See: [32-m7.2.2-public-link-sharing.md](m7-docs/32-m7.2.2-public-link-sharing.md)
-- **Jan 10**: Physical device testing revealed critical bugs
-  - Display names showing CloudKit user record IDs instead of real names
-  - Only 3-second sync retry (insufficient for CloudKit propagation)
-  - Standard share flow not reliably triggering acceptance UI
-  - App requiring force-close to complete sync
-- **Jan 10**: Fixed all discovered bugs (~3-4h)
-  - Extended sync retry from 3s → 30s (6 attempts × 5s)
-  - Improved display name fallback (device name patterns, CloudKit ID detection)
-  - Hide CloudKit user record IDs from UI completely
-  - Integrated auto-member creation into AcceptInvitationSheet
-  - Added restart alert for sync edge cases
-  - See: [33-m7.2.2-device-b-bug-fixes.md](m7-docs/33-m7.2.2-device-b-bug-fixes.md)
+### **M7.3 Overview - Four Phases**
 
-**Bug Fixes Completed** ✅:
-- ✅ Display name extraction now handles CloudKit IDs gracefully ("User" fallback)
-- ✅ Device name parsing improved ("Rich iPhone" → "Rich")
-- ✅ Sync retry logic increased to 30 seconds for CloudKit propagation
-- ✅ CloudKit user record IDs hidden from member list UI
-- ✅ Auto-member creation integrated into standard acceptance flow
-- ✅ Restart alert added for edge cases when sync doesn't complete
-- ✅ getCurrentUserEmail() made public for AcceptInvitationSheet access
-- ✅ URL handling enhanced in foragerApp.swift
+**M7.3.1: Rename Household** (30 min) 🚀 **NEXT**
+- Allow owners to rename their household
+- Inline text field edit in Settings
+- CloudKit syncs automatically to all members
 
-**Next Action**: Retest Device B invitation acceptance with fixes
+**M7.3.2: Leave Household** (1-2h) ⏳
+- Members can leave households
+- Optional data export to JSON
+- Graceful exit with local data preservation
 
-**Prerequisites**:
-- 2 physical iPhones with different iCloud accounts
-- Both devices on iOS 18.5+
-- Both devices signed into iCloud
+**M7.3.3: Remove Member & Delete Household** (2-3h) ⏳
+- Owners can remove members from household
+- Owners can delete households entirely
+- Data migration from shared → private zone
 
-**Testing Phases**:
+**M7.3.4: Storage & Sync Controls** (1-2h) ⏳
+- Display CloudKit storage usage
+- Toggle for enabling/disabling iCloud sync
+- Local-only mode option
 
-1. **Device Setup** (15 min)
-   - Device A: Owner's device (already has household from Phase 4 testing)
-   - Device B: Member's device (fresh install or different iCloud account)
-   - Ensure both devices can access CloudKit
+---
 
-2. **Invitation Flow** (30 min)
-   - Device A: Navigate to Settings → Household
-   - Tap "Invite Member" button
-   - Enter Device B's email/iCloud account
-   - Send invitation via ShareSheet
-   - Verify invitation sent successfully
+## **M7.3.1: Rename Household - Implementation Plan** 🎯
 
-3. **Acceptance Flow** (30 min)
-   - Device B: Receive invitation (Messages, Mail, or system notification)
-   - Open invitation link
-   - Tap "Accept Invitation"
-   - App should launch AcceptInvitationSheet
-   - Confirm acceptance
-   - Verify household created on Device B
+### **Goal**
+Allow household owners to rename their household with automatic CloudKit sync to all members.
 
-4. **Verification** (45 min)
-   - Both devices: Navigate to Settings → Household
-   - Verify both users appear in Members list
-   - Device B: Verify all household data visible (recipes, lists, meal plans)
-   - Device A: Add new recipe
-   - Device B: Verify new recipe syncs (<5s)
-   - Device B: Edit recipe
-   - Device A: Verify edit syncs (<5s)
-   - Test bi-directional sync across multiple entities
+### **User Story**
+> "As a household owner, I want to rename my household from 'My Household' to 'Smith Family' so it's more descriptive when I share it with family members."
 
-5. **Edge Cases** (30 min)
-   - Test invitation to already-invited user
-   - Test multiple pending invitations
-   - Test accepting invitation twice
-   - Test removing member (if implemented)
+### **Technical Implementation**
 
-**Acceptance Criteria** (Partial Progress):
-- ✅ Invitation sent successfully from Device A
-- ⏳ Invitation received on Device B (needs retest with fixes)
-- ⏳ Acceptance flow completes without errors (needs retest)
-- ⏳ Both devices show same household data (needs retest)
-- ⏳ Bi-directional sync working (<5s latency) (needs retest)
-- ⏳ Members list shows both users with real names (bug fixed, needs verification)
-- ⏳ No data loss or duplication (needs retest)
-- ⏳ Zero crashes during flow (needs retest)
+**1. Service Method** (HouseholdService.swift)
+```swift
+func renameHousehold(_ household: Household, to newName: String) throws {
+    guard household.isOwner else {
+        throw HouseholdError.notOwner
+    }
 
-**After M7.2.2**:
-- M7.3: Conflict Resolution (4-6h) - May be optional if CloudKit handles it well
-- M7.4: Sync UI & Polish (3-4h)
-- M7.5: External TestFlight (2-3h)
+    guard !newName.trimmingCharacters(in: .whitespaces).isEmpty else {
+        throw HouseholdError.emptyName
+    }
 
-### **M7.2.2 Reality Check: Testing Revealed Bugs**
+    household.name = newName
+    try viewContext.save()
+    // CloudKit syncs automatically
+    print("✅ Household renamed to: \(newName)")
+}
+```
 
-**What We Thought**:
-- "M7.2.2 = 2-3h of simple testing"
-- "Code is ready, just verify on devices"
-- "Should be straightforward"
+**2. UI Component** (Settings → Household section)
+- Tap household name to enter edit mode
+- Inline text field with current name pre-filled
+- Save on keyboard done/return or tap outside
+- Validation: 1-50 characters, non-empty
 
-**What Actually Happened**:
-- Jan 9: Discovered UICloudSharingController broken on iOS 18.x
-- Jan 9: Pivoted to public link sharing (~8h implementation)
-- Jan 10: Physical device testing revealed 4 critical bugs
-- Jan 10: Fixed display names, sync retry, UI issues (~3-4h)
-- **Total: 11-12 hours** vs. estimated 2-3h
+**3. Validation Rules**
+- Non-empty after trimming whitespace
+- 1-50 characters maximum
+- Owner-only operation (isOwner check)
 
-**Key Lesson**: Testing on real devices with real iCloud accounts is when you find the real bugs. The bugs we fixed are critical for production:
-- Users must see real names, not CloudKit IDs
-- Sync must wait long enough for CloudKit propagation (30s not 3s)
-- UI must gracefully handle edge cases (restart alerts)
+### **Files to Modify**
 
-**Current State**: Bug fixes committed, ready for Device B retest tomorrow
+**Services/HouseholdService.swift**
+- Add `renameHousehold(_:to:)` method
+- Add validation logic
+- Add error cases to HouseholdError enum
+
+**Views/Settings/HouseholdSettingsView.swift**
+- Make household name tappable (owner only)
+- Add inline text field for editing
+- Add save/cancel logic
+- Display validation errors
+
+### **Acceptance Criteria**
+
+**Functionality:**
+- ✅ Owner can tap household name to edit
+- ✅ Text field shows current name pre-filled
+- ✅ Save on keyboard done/return
+- ✅ Validation prevents empty names
+- ✅ Validation limits to 50 characters
+- ✅ Non-owners cannot edit (UI hidden)
+
+**CloudKit Sync:**
+- ✅ Renamed household syncs to all members
+- ✅ Members see new name within 5 seconds
+- ✅ Sync works bidirectionally
+
+**Error Handling:**
+- ✅ Empty name shows validation error
+- ✅ Non-owner attempt shows permission error
+- ✅ Save failure shows clear error message
+
+### **Testing Plan**
+
+**Unit Tests:**
+```swift
+func testRenameHousehold() {
+    // Given: household with owner
+    let household = createHouseholdWithOwner()
+
+    // When: rename to valid name
+    try service.renameHousehold(household, to: "New Name")
+
+    // Then: name updated
+    XCTAssertEqual(household.name, "New Name")
+}
+
+func testRenameHouseholdEmptyName() {
+    // Given: household
+    let household = createHouseholdWithOwner()
+
+    // When/Then: empty name throws error
+    XCTAssertThrowsError(
+        try service.renameHousehold(household, to: "   ")
+    )
+}
+
+func testRenameHouseholdNotOwner() {
+    // Given: household as member (not owner)
+    let household = createHouseholdAsMember()
+
+    // When/Then: non-owner throws error
+    XCTAssertThrowsError(
+        try service.renameHousehold(household, to: "New Name")
+    )
+}
+```
+
+**Integration Test (2 devices):**
+1. Device A (Owner): Rename household to "Test Family"
+2. Device B (Member): Wait 5 seconds
+3. Device B: Verify Settings → Household shows "Test Family"
+
+### **Time Estimate: 30 minutes**
+- Service method: 10 min
+- UI implementation: 15 min
+- Testing: 5 min
+
+### **Git Workflow**
+```bash
+# 1. Create feature branch
+git checkout main
+git pull origin main
+git checkout -b feature/M7.3.1-rename-household
+
+# 2. Implement and commit
+git add Services/HouseholdService.swift Views/Settings/HouseholdSettingsView.swift
+git commit -m "M7.3.1: Add rename household functionality
+
+- HouseholdService.renameHousehold(_:to:) method
+- Inline text field edit in Settings
+- Validation: 1-50 characters, non-empty
+- Owner-only operation with permission check"
+
+git push -u origin feature/M7.3.1-rename-household
+
+# 3. Test on devices, then merge
+git checkout main
+git merge feature/M7.3.1-rename-household
+git push origin main
+```
+
+---
+
+### **After M7.3.1 Complete**
+
+**Next**: M7.3.2 - Leave Household (1-2h)
+- Member exit flow
+- Data export to JSON
+- Graceful household departure
+
+### **M7 Progress Summary**
+
+**Completed Components** (Jan 13, 2026):
+- M7.0: App Store Prerequisites (3h) ✅
+- M7.1: CloudKit Sync Foundation (6.5h) ✅
+- M7.2: Shared Household Zone (15h) ✅
+  - M7.2.1: Household Setup (1.25h)
+  - M7.2.2: Member Invitation (11-12h) - *4x over estimate due to iOS 18.x bugs and testing*
+- M7.2.3: CloudKit Hardening (12.25h) ✅
+- **Total: ~37 hours of ~52-60h estimated**
+
+**Remaining Components**:
+- M7.3: Household Management & Settings (6-8h) 🚀 **NEXT**
+- M7.5: Architecture Hardening (8-10h) ⏳
+- M7.6: External TestFlight (2-3h) ⏳
+- M7.7: Beta Landing Page (2-3h) ⏳
+
+**Key Lessons from M7**:
+- Physical device testing reveals critical bugs simulators miss
+- iOS version bugs (18.x UICloudSharingController) require creative solutions
+- CloudKit propagation needs generous retry windows (30s not 3s)
+- Display name handling needs robust fallbacks for CloudKit IDs
+- Always test with real iCloud accounts on real devices before shipping
 
 ---
 
 ## 📚 **LEARNING NOTES CREATED**
 
 ### **M7.2.3 Documentation**
-- **[30-m7.2.3-phase-2.6-background-factory.md](m7-docs/30-m7.2.3-phase-2.6-background-factory.md)** - Phase 2.6 complete journey
-- **[31-m7.2.3-phase-4-cloudkit-sync-fix.md](m7-docs/31-m7.2.3-phase-4-cloudkit-sync-fix.md)** - Phase 4 complete (TO BE CREATED)
+- **[30-m7.2.3-phase-2.6-background-factory.md](archive/30-m7.2.3-phase-2.6-background-factory.md)** - Phase 2.6 complete journey
+- **[31-m7.2.3-phase-4-cloudkit-sync-fix.md](archive/31-m7.2.3-phase-4-cloudkit-sync-fix.md)** - Phase 4 complete (TO BE CREATED)
 
 ### **Previous M7 Learning Notes**
 - **[24-m7.1.1-cloudkit-schema-validation.md](learning-notes/24-m7.1.1-cloudkit-schema-validation.md)** - CloudKit container setup
 - **[25-m7.1.2-cloudkit-sync-monitoring.md](learning-notes/25-m7.1.2-cloudkit-sync-monitoring.md)** - Sync monitoring implementation
 - **[26-m7.2-architecture-pivot.md](learning-notes/26-m7.2-architecture-pivot.md)** - CKShare → Shared Zones pivot
-- **[27-m7.2.3-phase1-persistence-decomposition.md](m7-docs/27-m7.2.3-phase1-persistence-decomposition.md)** - Phase 1 complete
-- **[28-m7.2.3-phase3.8-category-deduplicator.md](m7-docs/28-m7.2.3-phase3.8-category-deduplicator.md)** - Duplicate prevention
-- **[29-m7.2.3-external-validation.md](m7-docs/29-m7.2.3-external-validation.md)** - ChatGPT + Gemini validation
+- **[27-m7.2.3-phase1-persistence-decomposition.md](archive/27-m7.2.3-phase1-persistence-decomposition.md)** - Phase 1 complete
+- **[28-m7.2.3-phase3.8-category-deduplicator.md](archive/28-m7.2.3-phase3.8-category-deduplicator.md)** - Duplicate prevention
+- **[29-m7.2.3-external-validation.md](archive/29-m7.2.3-external-validation.md)** - ChatGPT + Gemini validation
 
 ---
 
@@ -254,9 +363,9 @@
 
 ---
 
-**Last Session**: January 10, 2026 - M7.2.2 Bug Fixes Complete
-**Next Action**: M7.2.2 - Device B Retesting (1-2 hours)
-**Ready To Go**: ✅ Bug fixes committed, CloudKit working, ready to verify on Device B
-**Requirements**: 2 physical iPhones with different iCloud accounts
-**Confidence**: 🟡 MEDIUM (Fixes look good, but need real device verification)
-**Version**: January 10, 2026 - M7.2.2 In Progress (Bug Fixes Complete)
+**Last Session**: January 13, 2026 - Documentation Cleanup & M7.3.1 Planning
+**Next Action**: M7.3.1 - Rename Household (30 minutes)
+**Ready To Go**: ✅ M7.2.2 complete, M7.2.3 complete, ready for M7.3.1 implementation
+**Branch Strategy**: Create `feature/M7.3.1-rename-household` before starting
+**Confidence**: 🟢 HIGH (Simple 30-min feature, well-defined scope)
+**Version**: January 13, 2026 - M7.3.1 Ready to Start

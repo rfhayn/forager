@@ -4,10 +4,11 @@ An iOS app that transforms grocery shopping from a time-consuming chore into an 
 
 ## 🎯 Project Status
 
-**Current Phase**: M7.2.2 - Member Invitation & Acceptance Testing  
-**Development Time**: ~119.5 hours across 11 major milestones  
-**Planning Accuracy**: 89% average  
-**Technical Debt**: Zero ✅  
+**Current Phase**: M7.3.1 - Rename Household (Ready to Start)
+**Development Time**: ~131 hours across 12 major milestones
+**Planning Accuracy**: 89% average
+**Technical Debt**: Zero ✅
+**Execution Order**: M1→M2→M3→M4→M5→M7 (in progress)→M6 (deferred)→M8→M9→M10+  
 
 **GitHub Project**: [View Project Board](https://github.com/users/rfhayn/projects/1)
 
@@ -109,7 +110,7 @@ The app consists of six main tabs:
 
 ## Development Status
 
-### Completed Milestones (~119.5 hours)
+### Completed Milestones (~131 hours)
 
 **M1: Professional Grocery Management** ✅ (32 hours - August 2025)
 - Custom store-layout optimization with drag-and-drop categories
@@ -188,9 +189,7 @@ The app consists of six main tabs:
   - **Critical fix**: Added missing context.save() after container.share()
   - Validated 61 items migrated to CloudKit shared zone
 
-### In Progress
-
-**M7.2.2: Member Invitation & Acceptance** 🔄 (11-12 hours so far)
+**M7.2.2: Member Invitation & Acceptance** ✅ (11-12 hours - Jan 12, 2026)
 - Jan 9: Public link sharing implementation (~8h)
   - Bypassed UICloudSharingController (broken on iOS 18.x)
   - Successfully sent invitations via ShareSheet
@@ -199,18 +198,28 @@ The app consists of six main tabs:
   - Extended sync retry from 3s → 30s (CloudKit propagation)
   - Integrated auto-member creation
   - Added restart alert for edge cases
-- Status: Bug fixes committed, ready for Device B retest
+- Jan 12: Testing complete on physical devices
+  - Bi-directional sync < 5s latency
+  - Member invitation and acceptance working
+
+### In Progress
+
+**M7.3: Household Management & Settings** 🔄 (Ready to start - 6-8 hours)
+- M7.3.1: Rename Household (30 min) 🚀 **NEXT**
+- M7.3.2: Leave Household with export (1-2h)
+- M7.3.3: Remove Member & Delete Household (2-3h)
+- M7.3.4: Storage & Sync Controls (1-2h)
 
 ### Planned Features
 
-**M7: CloudKit Sync & External TestFlight** (Remaining: ~8-15 hours)
-- M7.3: Conflict Resolution & Error Handling (4-6h)
-- M7.4: Sync UI & Polish (3-4h)
-- M7.5: Architecture Hardening - UX/Service Cleanup (8-12h)
+**M7: CloudKit Sync & External TestFlight** (Remaining: ~18-24 hours)
+- M7.5: Architecture Hardening - UX/Service Cleanup (8-10h)
 - M7.6: External TestFlight Deployment (2-3h)
-- M7.7: Public Beta Program (2-3h)
+- M7.7: Public Beta Landing Page (2-3h)
 
-**M6: Testing Foundation & AI Augmentation** (12-18 hours)
+**M6: Testing Foundation & AI Augmentation** (20-30 hours) - **Deferred after M7**
+- Originally planned after M5, strategically deferred to execute after M7
+- Rationale: External beta proves stability → Test foundation → Safe refactoring (M8-M9)
 - Human-written test baseline (50%+ service coverage)
 - AI test reviewer operational on every PR via GitHub Actions
 - Testing standards documentation and CI/CD pipeline
@@ -372,14 +381,14 @@ For questions about the project or iOS development approaches used, please open 
 ---
 
 **Project Stats:**
-- 🕐 119.5+ hours of development across 11 major milestones
+- 🕐 131+ hours of development across 12 major milestones
 - 📊 89% planning accuracy with phase-based approach
 - ✅ 100% build success rate (zero breaking changes)
 - 🚀 100% performance targets met or exceeded
 - 📚 Comprehensive documentation tracking every decision
 - 🔧 380+ granular tasks tracked across GitHub Issues
 - 📋 22+ learning notes documenting implementation journey
-- 🏗️ 8 Architecture Decision Records (ADRs)
+- 🏗️ 9 Architecture Decision Records (ADRs)
 - 🎯 Zero technical debt maintained
 
 *Transform your grocery shopping experience with intelligent automation and personalized organization.*
