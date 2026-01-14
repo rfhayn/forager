@@ -1,9 +1,9 @@
 # Current Development Story
 
-**Last Updated**: January 13, 2026 (M7.2.2 Complete, M7.3.1 Ready)
-**Status**: M7.0-M7.2 ✅ **COMPLETE** - M7.3.1 🚀 **READY**
-**Total Progress**: ~131 hours | 89% planning accuracy
-**Current Branch**: `main` (M7.2.2 complete, ready for M7.3.1 feature branch)
+**Last Updated**: January 13, 2026 (M7.3.1 Complete, M7.3.2 Next)
+**Status**: M7.0-M7.3.1 ✅ **COMPLETE** - M7.3.2 🚀 **NEXT**
+**Total Progress**: ~131.5 hours | 89% planning accuracy
+**Current Branch**: `main` (M7.3.1 complete, ready for M7.3.2)
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
 
 ---
@@ -103,6 +103,15 @@
   - Data records present (Categories, IngredientTemplates visible)
   - Private → Shared transition confirmed via logs
 
+**M7.3.1: Rename Household** ✅ COMPLETE (Jan 13, 2026 - 30 min)
+- ✅ Owner-only household renaming functionality
+- ✅ Inline text field edit UI in Settings with Save/Cancel
+- ✅ Validation: 1-50 characters, non-empty, trimmed whitespace
+- ✅ Async ownership check via HouseholdService.isOwner(household:)
+- ✅ Automatic CloudKit sync to all household members
+- ✅ Build successful, all acceptance criteria met
+- ✅ 100% accurate time estimate (30 min estimated, 30 min actual)
+
 ### **Progress Summary**
 
 **All Phases Complete** ✅:
@@ -116,31 +125,33 @@
   - Phase 4.2-4.4: Backend Testing & CloudKit Fix (2h)
 - **Total M7.2.3: 12.25 hours** (estimated 14-17h, 88% accuracy)
 
-**Overall M7 Progress**: ~131 hours total
+**Overall M7 Progress**: ~131.5 hours total
 - M7.0: 3h ✅
 - M7.1: 6.5h ✅
 - M7.2: 15h ✅ (M7.2.1 + M7.2.2 including bug fixes)
 - M7.2.3: 12.25h ✅
-- **Remaining**: M7.3 (6-8h), M7.5 (8-10h), M7.6 (2-3h), M7.7 (2-3h) = 18-24h
+- M7.3.1: 0.5h ✅
+- **Remaining**: M7.3 (5.5-7.5h), M7.5 (8-10h), M7.6 (2-3h), M7.7 (2-3h) = 16-21h
 
 ### **What's Next 🚀**
 
-**M7.3: Household Management & Settings** - 🚀 **READY TO START**
+**M7.3: Household Management & Settings** - 🔄 **IN PROGRESS**
 
 **Estimated Total**: 6-8 hours (4 phases)
-**Current Phase**: M7.3.1 - Rename Household (30 min)
+**Current Phase**: M7.3.2 - Leave Household (1-2h)
 **Status**: Ready to implement
-**Branch**: Create `feature/M7.3.1-rename-household`
+**Branch**: Create `feature/M7.3.2-leave-household`
 **PRD**: [m7.3-household-management-settings.md](prds/m7.3-household-management-settings.md)
 
 ### **M7.3 Overview - Four Phases**
 
-**M7.3.1: Rename Household** (30 min) 🚀 **NEXT**
-- Allow owners to rename their household
-- Inline text field edit in Settings
-- CloudKit syncs automatically to all members
+**M7.3.1: Rename Household** ✅ **COMPLETE** (30 min actual)
+- ✅ Owner-only household renaming
+- ✅ Inline text field edit in Settings
+- ✅ CloudKit syncs automatically to all members
+- ✅ 100% accurate time estimate
 
-**M7.3.2: Leave Household** (1-2h) ⏳
+**M7.3.2: Leave Household** (1-2h) 🚀 **NEXT**
 - Members can leave households
 - Optional data export to JSON
 - Graceful exit with local data preservation
@@ -157,21 +168,58 @@
 
 ---
 
-## **M7.3.1: Rename Household - Implementation Plan** 🎯
+## **M7.3.1: Rename Household** ✅ **COMPLETE**
 
-### **Goal**
-Allow household owners to rename their household with automatic CloudKit sync to all members.
+### **Completion Summary**
 
-### **User Story**
-> "As a household owner, I want to rename my household from 'My Household' to 'Smith Family' so it's more descriptive when I share it with family members."
+**Status**: ✅ Complete (January 13, 2026)
+**Time**: 30 minutes (100% accurate estimate)
+**Files Modified**:
+- `Services/HouseholdService.swift`
+- `forager/SettingsView.swift`
 
-### **Technical Implementation**
+### **What Was Implemented**
 
 **1. Service Method** (HouseholdService.swift)
-```swift
-func renameHousehold(_ household: Household, to newName: String) throws {
-    guard household.isOwner else {
-        throw HouseholdError.notOwner
+- Added `renameHousehold(_:to:)` async method
+- Owner validation via `isOwner(household:)` async check
+- Input validation: 1-50 characters, non-empty, trimmed whitespace
+- Added `emptyName` and `nameTooLong` error cases to HouseholdError
+- Automatic CloudKit sync via NSPersistentCloudKitContainer
+
+**2. UI Implementation** (SettingsView.swift)
+- Inline text field edit in Settings → Household section
+- Save/Cancel buttons with error display
+- Owner-only UI (pencil icon only for owners)
+- Async ownership check on view appearance via `.task` modifier
+- State management: `isEditingName`, `editedName`, `renameError`, `isCurrentUserOwner`
+
+### **Testing Results**
+
+✅ All acceptance criteria met:
+- Owner can tap household name to edit
+- Text field with Save/Cancel buttons
+- Validation prevents empty names
+- Validation prevents names > 50 characters
+- Non-owners cannot edit (no pencil icon, tap disabled)
+- Build successful
+- Manual testing confirmed working
+
+### **Technical Notes**
+
+**Key Fix**: Initially used `household.isOwner` (doesn't exist). Fixed by:
+1. Adding `@State private var isCurrentUserOwner = false`
+2. Using `.task { isCurrentUserOwner = await householdService.isOwner(household: household) }`
+3. Replacing all `household.isOwner` references with `isCurrentUserOwner`
+
+**CloudKit Sync**: Automatic via Core Data + NSPersistentCloudKitContainer. No manual sync code needed.
+
+---
+
+## **M7.3.2: Leave Household** 🚀 **NEXT**
+
+### **Goal**
+Allow household members to leave a household with optional data export
     }
 
     guard !newName.trimmingCharacters(in: .whitespaces).isEmpty else {
