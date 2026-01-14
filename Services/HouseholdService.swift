@@ -92,16 +92,33 @@ class HouseholdService: ObservableObject {
     // MARK: - Household Management
     
     /// Loads the current user's household (if any)
+    /// M7.3.2: Verifies user is actually a member before setting current household
     func loadCurrentHousehold() async {
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         request.fetchLimit = 1
 
         do {
             let households = try viewContext.fetch(request)
-            currentHousehold = households.first
+
+            // M7.3.2: Verify user is actually a member of the household
+            if let household = households.first {
+                let currentEmail = try await getCurrentUserEmail()
+                let isMember = household.memberArray.contains { $0.email == currentEmail }
+
+                if isMember {
+                    currentHousehold = household
+                    print("✅ Loaded household: \(household.name ?? "Unknown")")
+                } else {
+                    currentHousehold = nil
+                    print("ℹ️ Household exists but user is not a member (left or removed)")
+                }
+            } else {
+                currentHousehold = nil
+            }
         } catch {
             print("❌ Error loading household: \(error)")
             errorMessage = "Failed to load household"
+            currentHousehold = nil
         }
     }
 
