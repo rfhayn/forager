@@ -26,6 +26,8 @@ enum HouseholdError: LocalizedError {
     case noInvitationURL
     case emptyName
     case nameTooLong
+    case notMember
+    case ownerCannotLeave
 
     var errorDescription: String? {
         switch self {
@@ -53,6 +55,10 @@ enum HouseholdError: LocalizedError {
             return "Household name cannot be empty"
         case .nameTooLong:
             return "Household name must be 50 characters or less"
+        case .notMember:
+            return "You are not a member of this household"
+        case .ownerCannotLeave:
+            return "Owners cannot leave. Delete the household instead."
         }
     }
 }
@@ -126,6 +132,107 @@ class HouseholdService: ObservableObject {
 
         // CloudKit syncs automatically via NSPersistentCloudKitContainer
         print("✅ M7.3.1: Household renamed to: \(trimmedName)")
+    }
+
+    /// M7.3.2: Allows a member to leave a household
+    /// - Parameters:
+    ///   - household: The household to leave
+    ///   - exportData: Whether to export household data before leaving
+    /// - Returns: Optional JSON data if exportData is true
+    /// - Throws: HouseholdError if user is owner or not a member
+    func leaveHousehold(_ household: Household, exportData: Bool) async throws -> Data? {
+        // Get current user's email/identifier
+        let currentEmail = try await getCurrentUserEmail()
+
+        // Find current user's member record
+        guard let currentMember = household.memberArray.first(where: { $0.email == currentEmail }) else {
+            throw HouseholdError.notMember
+        }
+
+        // Prevent owner from leaving (must delete household instead)
+        guard !currentMember.isOwner else {
+            throw HouseholdError.ownerCannotLeave
+        }
+
+        // Optional: Export data before leaving
+        var exportedData: Data?
+        if exportData {
+            exportedData = try exportHouseholdData(household)
+        }
+
+        // Remove member from household
+        viewContext.delete(currentMember)
+
+        // Note: Household data remains in shared store as read-only
+        // CloudKit will automatically stop syncing updates after member is removed
+
+        // Save changes
+        try viewContext.save()
+
+        // Clear current household
+        currentHousehold = nil
+
+        print("✅ M7.3.2: Left household: \(household.name ?? "Unknown")")
+        print("   Data exported: \(exportData)")
+
+        return exportedData
+    }
+
+    /// M7.3.2: Exports household data to JSON
+    /// - Parameter household: The household to export
+    /// - Returns: JSON data containing all household recipes, lists, and meal plans
+    private func exportHouseholdData(_ household: Household) throws -> Data {
+        // Create export dictionary
+        var exportDict: [String: Any] = [:]
+
+        // Add household metadata
+        exportDict["householdName"] = household.name ?? "Unnamed Household"
+        exportDict["exportDate"] = ISO8601DateFormatter().string(from: Date())
+
+        // Export recipes
+        let recipeSet = household.recipes as? Set<Recipe> ?? []
+        let recipes = recipeSet.map { recipe -> [String: Any] in
+            let ingredientSet = recipe.ingredients as? Set<Ingredient> ?? []
+            return [
+                "name": recipe.title ?? "",
+                "servings": recipe.servings,
+                "instructions": recipe.instructions ?? "",
+                "ingredients": ingredientSet.map { ingredient in
+                    [
+                        "name": ingredient.name ?? "",
+                        "quantity": ingredient.displayText ?? ""
+                    ]
+                }
+            ]
+        }
+        exportDict["recipes"] = recipes
+
+        // Export weekly lists
+        let listSet = household.weeklyLists as? Set<WeeklyList> ?? []
+        let lists = listSet.map { list in
+            [
+                "name": list.name ?? "",
+                "createdDate": ISO8601DateFormatter().string(from: list.dateCreated ?? Date())
+            ]
+        }
+        exportDict["weeklyLists"] = lists
+
+        // Export meal plans
+        let mealPlanSet = household.mealPlans as? Set<MealPlan> ?? []
+        let mealPlans = mealPlanSet.map { plan in
+            [
+                "name": plan.name ?? "",
+                "startDate": ISO8601DateFormatter().string(from: plan.startDate ?? Date())
+            ]
+        }
+        exportDict["mealPlans"] = mealPlans
+
+        // Convert to JSON
+        let jsonData = try JSONSerialization.data(withJSONObject: exportDict, options: .prettyPrinted)
+
+        print("✅ Exported \(recipes.count) recipes, \(lists.count) lists, \(mealPlans.count) meal plans")
+
+        return jsonData
     }
 
     /// Creates a new household with CloudKit shared zone

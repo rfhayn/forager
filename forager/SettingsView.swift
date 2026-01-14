@@ -37,6 +37,12 @@ struct SettingsView: View {
     @State private var renameError: String?
     @State private var isCurrentUserOwner = false
 
+    // M7.3.2: Leave household state
+    @State private var showLeaveConfirmation = false
+    @State private var shouldExportData = false
+    @State private var exportedDataURL: URL?
+    @State private var showShareSheet = false
+
     // M7.2.1: Initializer to inject HouseholdService
     init(context: NSManagedObjectContext) {
         _householdService = StateObject(wrappedValue: HouseholdService(context: context))
@@ -74,6 +80,28 @@ struct SettingsView: View {
             .sheet(isPresented: $showInviteMemberSheet) {
                 if let household = householdService.currentHousehold {
                     InviteMemberSheet(service: householdService, household: household)
+                }
+            }
+            .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
+                Button("Export & Leave", role: .destructive) {
+                    shouldExportData = true
+                    if let household = householdService.currentHousehold {
+                        leaveHousehold(household)
+                    }
+                }
+                Button("Leave Without Export", role: .destructive) {
+                    shouldExportData = false
+                    if let household = householdService.currentHousehold {
+                        leaveHousehold(household)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("You will lose access to shared data. Local copies will remain read-only. Optionally export data first.")
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = exportedDataURL {
+                    ActivityViewController(activityItems: [url])
                 }
             }
         }
@@ -196,7 +224,25 @@ struct SettingsView: View {
                     .cornerRadius(10)
                 }
                 .padding(.top, 8)
-                
+
+                // M7.3.2: Leave Household button (non-owners only)
+                if !isCurrentUserOwner {
+                    Button(action: {
+                        showLeaveConfirmation = true
+                    }) {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                            Text("Leave Household")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .foregroundColor(.red)
+                        .cornerRadius(10)
+                    }
+                    .padding(.top, 8)
+                }
+
             } else {
                 // No household - show create button
                 VStack(alignment: .leading, spacing: 8) {
@@ -453,6 +499,34 @@ struct SettingsView: View {
         }
     }
 
+    // M7.3.2: Leaves household with optional data export
+    private func leaveHousehold(_ household: Household) {
+        Task {
+            do {
+                let exportedData = try await householdService.leaveHousehold(
+                    household,
+                    exportData: shouldExportData
+                )
+
+                // If data was exported, save to temporary file and show share sheet
+                if let data = exportedData {
+                    let tempURL = FileManager.default.temporaryDirectory
+                        .appendingPathComponent("household-export-\(Date().timeIntervalSince1970).json")
+                    try data.write(to: tempURL)
+                    exportedDataURL = tempURL
+                    showShareSheet = true
+                }
+
+                // Refresh household to trigger UI update
+                await householdService.loadCurrentHousehold()
+
+            } catch {
+                // Show error in console (could add alert UI here)
+                print("❌ Error leaving household: \(error)")
+            }
+        }
+    }
+
     // M4.1: Converts day number (0-6) to weekday name
     // Used by Picker to display "Sunday", "Monday", etc.
     private func dayName(for day: Int) -> String {
@@ -596,12 +670,28 @@ struct CreateHouseholdSheet: View {
 // Enables in-app Safari browser for displaying web content
 struct SafariView: UIViewControllerRepresentable {
     let url: URL
-    
+
     func makeUIViewController(context: Context) -> SFSafariViewController {
         return SFSafariViewController(url: url)
     }
-    
+
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {
+        // No updates needed
+    }
+}
+
+// MARK: - M7.3.2: ActivityViewController Wrapper
+
+// UIActivityViewController wrapper for sharing exported data
+// Enables system share sheet for files, allowing save to Files, Mail, etc.
+struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
         // No updates needed
     }
 }
