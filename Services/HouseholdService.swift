@@ -24,7 +24,9 @@ enum HouseholdError: LocalizedError {
     case invitationPending
     case noInvitation
     case noInvitationURL
-    
+    case emptyName
+    case nameTooLong
+
     var errorDescription: String? {
         switch self {
         case .noShareRecord:
@@ -47,6 +49,10 @@ enum HouseholdError: LocalizedError {
             return "No pending invitation found"
         case .noInvitationURL:
             return "Failed to generate invitation URL"
+        case .emptyName:
+            return "Household name cannot be empty"
+        case .nameTooLong:
+            return "Household name must be 50 characters or less"
         }
     }
 }
@@ -83,7 +89,7 @@ class HouseholdService: ObservableObject {
     func loadCurrentHousehold() async {
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         request.fetchLimit = 1
-        
+
         do {
             let households = try viewContext.fetch(request)
             currentHousehold = households.first
@@ -92,7 +98,36 @@ class HouseholdService: ObservableObject {
             errorMessage = "Failed to load household"
         }
     }
-    
+
+    /// M7.3.1: Renames a household (owner-only operation)
+    /// - Parameters:
+    ///   - household: The household to rename
+    ///   - newName: The new household name (1-50 characters)
+    /// - Throws: HouseholdError if not owner or invalid name
+    func renameHousehold(_ household: Household, to newName: String) async throws {
+        // Verify owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Validate name
+        let trimmedName = newName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else {
+            throw HouseholdError.emptyName
+        }
+
+        guard trimmedName.count <= 50 else {
+            throw HouseholdError.nameTooLong
+        }
+
+        // Update name
+        household.name = trimmedName
+        try viewContext.save()
+
+        // CloudKit syncs automatically via NSPersistentCloudKitContainer
+        print("✅ M7.3.1: Household renamed to: \(trimmedName)")
+    }
+
     /// Creates a new household with CloudKit shared zone
     /// - Parameters:
     ///   - name: Name of the household (e.g., "Smith Family")

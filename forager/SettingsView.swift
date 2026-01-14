@@ -30,7 +30,13 @@ struct SettingsView: View {
     
     // M7.2.2: Invitation sheet state
     @State private var showInviteMemberSheet = false
-    
+
+    // M7.3.1: Rename household state
+    @State private var isEditingName = false
+    @State private var editedName = ""
+    @State private var renameError: String?
+    @State private var isCurrentUserOwner = false
+
     // M7.2.1: Initializer to inject HouseholdService
     init(context: NSManagedObjectContext) {
         _householdService = StateObject(wrappedValue: HouseholdService(context: context))
@@ -82,12 +88,70 @@ struct SettingsView: View {
             if let household = householdService.currentHousehold {
                 // User is in a household - show details
                 VStack(alignment: .leading, spacing: 8) {
+                    // M7.3.1: Editable household name (owner only)
                     HStack {
-                        Text("Household Name")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(household.name ?? "Unnamed Household")
-                            .fontWeight(.medium)
+                        if isEditingName {
+                            // Edit mode - text field
+                            VStack(alignment: .leading, spacing: 4) {
+                                TextField("Household Name", text: $editedName)
+                                    .textFieldStyle(.roundedBorder)
+                                    .onSubmit {
+                                        saveHouseholdName(household)
+                                    }
+
+                                HStack {
+                                    Button("Cancel") {
+                                        isEditingName = false
+                                        renameError = nil
+                                    }
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+
+                                    Spacer()
+
+                                    Button("Save") {
+                                        saveHouseholdName(household)
+                                    }
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                }
+
+                                if let error = renameError {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        } else {
+                            // Display mode - tappable text
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text("Household Name")
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    if isCurrentUserOwner {
+                                        Image(systemName: "pencil")
+                                            .foregroundColor(.blue)
+                                            .font(.caption)
+                                    }
+                                }
+                                Text(household.name ?? "Unnamed Household")
+                                    .fontWeight(.medium)
+
+                                if isCurrentUserOwner {
+                                    Text("Tap to rename")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if isCurrentUserOwner {
+                                    editedName = household.name ?? ""
+                                    isEditingName = true
+                                }
+                            }
+                        }
                     }
                     
                     // M7.2.2 Task 4: Link to members list
@@ -112,7 +176,11 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.vertical, 4)
-                
+                .task {
+                    // M7.3.1: Check if current user is owner
+                    isCurrentUserOwner = await householdService.isOwner(household: household)
+                }
+
                 // M7.2.2: Invite Member button
                 Button(action: {
                     showInviteMemberSheet = true
@@ -367,7 +435,24 @@ struct SettingsView: View {
     */
     
     // MARK: - Helper Methods
-    
+
+    // M7.3.1: Saves household name after validation
+    // Owner-only operation with automatic CloudKit sync
+    private func saveHouseholdName(_ household: Household) {
+        Task {
+            do {
+                try await householdService.renameHousehold(household, to: editedName)
+                isEditingName = false
+                renameError = nil
+
+                // Trigger view refresh
+                await householdService.loadCurrentHousehold()
+            } catch {
+                renameError = error.localizedDescription
+            }
+        }
+    }
+
     // M4.1: Converts day number (0-6) to weekday name
     // Used by Picker to display "Sunday", "Monday", etc.
     private func dayName(for day: Int) -> String {
