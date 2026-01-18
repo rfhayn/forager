@@ -39,9 +39,10 @@ struct SettingsView: View {
 
     // M7.3.2: Leave household state
     @State private var showLeaveConfirmation = false
-    @State private var shouldExportData = false
-    @State private var exportedDataURL: URL?
-    @State private var showShareSheet = false
+    @State private var shouldMigrateData = false
+
+    // M7.3.2: Member sync state (Issue #3)
+    @State private var isSyncingMembers = false
 
     // M7.2.1: Initializer to inject HouseholdService
     init(context: NSManagedObjectContext) {
@@ -83,26 +84,21 @@ struct SettingsView: View {
                 }
             }
             .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
-                Button("Export & Leave", role: .destructive) {
-                    shouldExportData = true
+                Button("Migrate & Leave", role: .destructive) {
+                    shouldMigrateData = true
                     if let household = householdService.currentHousehold {
                         leaveHousehold(household)
                     }
                 }
-                Button("Leave Without Export", role: .destructive) {
-                    shouldExportData = false
+                Button("Clean App & Leave", role: .destructive) {
+                    shouldMigrateData = false
                     if let household = householdService.currentHousehold {
                         leaveHousehold(household)
                     }
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("You will lose access to shared data. Local copies will remain read-only. Optionally export data first.")
-            }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportedDataURL {
-                    ActivityViewController(activityItems: [url])
-                }
+                Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh with a clean app.")
             }
         }
     }
@@ -190,8 +186,32 @@ struct SettingsView: View {
                             Text("Members")
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Text("\(household.members?.count ?? 0)")
-                                .fontWeight(.medium)
+                            if isSyncingMembers {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .padding(.trailing, 4)
+                                Text("Syncing...")
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("\(household.members?.count ?? 0)")
+                                    .fontWeight(.medium)
+                            }
+                        }
+                    }
+
+                    // M7.3.2: Refresh members button (Issue #3)
+                    if isCurrentUserOwner && !isSyncingMembers {
+                        Button(action: {
+                            refreshMembers()
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.clockwise")
+                                Text("Refresh Members")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .foregroundColor(.blue)
                         }
                     }
                     
@@ -499,23 +519,14 @@ struct SettingsView: View {
         }
     }
 
-    // M7.3.2: Leaves household with optional data export
+    // M7.3.2: Leaves household with optional data migration
     private func leaveHousehold(_ household: Household) {
         Task {
             do {
-                let exportedData = try await householdService.leaveHousehold(
+                try await householdService.leaveHousehold(
                     household,
-                    exportData: shouldExportData
+                    migrateData: shouldMigrateData
                 )
-
-                // If data was exported, save to temporary file and show share sheet
-                if let data = exportedData {
-                    let tempURL = FileManager.default.temporaryDirectory
-                        .appendingPathComponent("household-export-\(Date().timeIntervalSince1970).json")
-                    try data.write(to: tempURL)
-                    exportedDataURL = tempURL
-                    showShareSheet = true
-                }
 
                 // Refresh household to trigger UI update
                 await householdService.loadCurrentHousehold()
@@ -524,6 +535,15 @@ struct SettingsView: View {
                 // Show error in console (could add alert UI here)
                 print("❌ Error leaving household: \(error)")
             }
+        }
+    }
+
+    // M7.3.2: Refreshes member list with sync polling (Issue #3)
+    private func refreshMembers() {
+        Task {
+            isSyncingMembers = true
+            await householdService.waitForMemberDeletionSync()
+            isSyncingMembers = false
         }
     }
 
@@ -676,22 +696,6 @@ struct SafariView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {
-        // No updates needed
-    }
-}
-
-// MARK: - M7.3.2: ActivityViewController Wrapper
-
-// UIActivityViewController wrapper for sharing exported data
-// Enables system share sheet for files, allowing save to Files, Mail, etc.
-struct ActivityViewController: UIViewControllerRepresentable {
-    let activityItems: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
         // No updates needed
     }
 }

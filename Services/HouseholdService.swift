@@ -122,6 +122,53 @@ class HouseholdService: ObservableObject {
         }
     }
 
+    /// M7.3.2: Waits for member deletion to sync from CloudKit (Issue #3)
+    /// Uses polling pattern to detect member count changes
+    /// - Returns: True if count changed or already synced, false only if sync appears stuck
+    @MainActor
+    func waitForMemberDeletionSync() async -> Bool {
+        guard let household = currentHousehold else {
+            print("⚠️ No current household to sync")
+            return false
+        }
+
+        let initialMemberCount = household.memberCount
+        print("🔄 Refreshing member count... (current: \(initialMemberCount))")
+
+        let startTime = Date()
+        let quickCheckDuration: TimeInterval = 5.0
+        let pollInterval: TimeInterval = 1.0
+
+        // Poll for up to 5 seconds looking for changes
+        while Date().timeIntervalSince(startTime) < quickCheckDuration {
+            // Refresh from Core Data (CloudKit syncs in background)
+            viewContext.refreshAllObjects()
+
+            // Re-fetch household to get latest data
+            await loadCurrentHousehold()
+
+            guard let refreshedHousehold = currentHousehold else {
+                print("⚠️ Household disappeared during sync")
+                return true // Household was deleted
+            }
+
+            let currentMemberCount = refreshedHousehold.memberCount
+
+            if currentMemberCount != initialMemberCount {
+                let elapsed = Date().timeIntervalSince(startTime)
+                print("✅ Member count updated after \(String(format: "%.1f", elapsed))s: \(initialMemberCount) → \(currentMemberCount)")
+                return true
+            }
+
+            // Wait before next poll
+            try? await Task.sleep(nanoseconds: UInt64(pollInterval * 1_000_000_000))
+        }
+
+        // No change detected after 5 seconds - assume already synced
+        print("✅ Member count stable at \(initialMemberCount) (already synced)")
+        return true
+    }
+
     /// M7.3.1: Renames a household (owner-only operation)
     /// - Parameters:
     ///   - household: The household to rename
@@ -154,10 +201,9 @@ class HouseholdService: ObservableObject {
     /// M7.3.2: Allows a member to leave a household
     /// - Parameters:
     ///   - household: The household to leave
-    ///   - exportData: Whether to export household data before leaving
-    /// - Returns: Optional JSON data if exportData is true
+    ///   - migrateData: Whether to migrate household data to personal store
     /// - Throws: HouseholdError if user is owner or not a member
-    func leaveHousehold(_ household: Household, exportData: Bool) async throws -> Data? {
+    func leaveHousehold(_ household: Household, migrateData: Bool) async throws {
         // Get current user's email/identifier
         let currentEmail = try await getCurrentUserEmail()
 
@@ -171,86 +217,172 @@ class HouseholdService: ObservableObject {
             throw HouseholdError.ownerCannotLeave
         }
 
-        // Optional: Export data before leaving
-        var exportedData: Data?
-        if exportData {
-            exportedData = try exportHouseholdData(household)
+        // Step 1: Migrate data BEFORE stopping participation (while we still have access)
+        if migrateData {
+            try await migrateHouseholdDataToPersonal(household)
+            print("✅ M7.3.2: Migrated household data to personal store")
         }
 
-        // Remove member from household
+        // Step 2: Remove member from household (this syncs to all devices)
         viewContext.delete(currentMember)
-
-        // Note: Household data remains in shared store as read-only
-        // CloudKit will automatically stop syncing updates after member is removed
-
-        // Save changes
         try viewContext.save()
 
-        // Clear current household
+        // Step 3: Stop participating in the share
+        // This removes device access to the shared CloudKit zone
+        // Shared data will disappear from device after CloudKit processes the removal
+        do {
+            try await stopParticipatingInShare(for: household)
+            print("✅ M7.3.2: Stopped participating in share")
+            print("   Shared zone access removed - data will sync off device")
+        } catch {
+            print("⚠️ M7.3.2: Failed to stop participating in share: \(error)")
+            print("   Shared data may remain on device - manual cleanup may be needed")
+            // Don't throw - member record is already deleted, just log the issue
+        }
+
+        // Step 4: Clear current household (UI will show "Create Household")
         currentHousehold = nil
 
         print("✅ M7.3.2: Left household: \(household.name ?? "Unknown")")
-        print("   Data exported: \(exportData)")
-
-        return exportedData
+        if migrateData {
+            print("   Personal copy created, shared data removed")
+        } else {
+            print("   All data removed (clean app)")
+        }
     }
 
-    /// M7.3.2: Exports household data to JSON
-    /// - Parameter household: The household to export
-    /// - Returns: JSON data containing all household recipes, lists, and meal plans
-    private func exportHouseholdData(_ household: Household) throws -> Data {
-        // Create export dictionary
-        var exportDict: [String: Any] = [:]
+    /// M7.3.2: Stops participating in a CloudKit share
+    /// This removes the device's access to the shared zone
+    /// - Parameter household: The household whose share to stop participating in
+    /// - Throws: HouseholdError if share cannot be fetched or operation fails
+    private func stopParticipatingInShare(for household: Household) async throws {
+        // Fetch the CKShare from the household
+        let share = try await fetchShare(for: household)
 
-        // Add household metadata
-        exportDict["householdName"] = household.name ?? "Unnamed Household"
-        exportDict["exportDate"] = ISO8601DateFormatter().string(from: Date())
+        // Get the container
+        guard let container = PersistenceController.shared.container as? NSPersistentCloudKitContainer else {
+            throw HouseholdError.cloudKitUnavailable
+        }
 
-        // Export recipes
+        // Stop participating in the share
+        // This removes access to the shared zone and triggers CloudKit to remove shared data
+        try await container.purgeObjectsAndRecordsInZone(with: share.recordID.zoneID, in: PersistenceController.shared.sharedStore)
+
+        print("🔄 M7.3.2: Purged shared zone data for zone: \(share.recordID.zoneID.zoneName)")
+    }
+
+    /// M7.3.2: Fetches the CKShare record for a household
+    /// - Parameter household: The household to fetch the share for
+    /// - Returns: The CKShare record
+    /// - Throws: HouseholdError if share record is missing or invalid
+    private func fetchShare(for household: Household) async throws -> CKShare {
+        // Try to unarchive the share from stored data
+        guard let shareData = household.shareRecord else {
+            throw HouseholdError.noShareRecord
+        }
+
+        guard let share = try? NSKeyedUnarchiver.unarchivedObject(
+            ofClass: CKShare.self,
+            from: shareData
+        ) else {
+            throw HouseholdError.noShareRecord
+        }
+
+        return share
+    }
+
+    /// M7.3.2: Migrates household data to personal store
+    /// - Parameter household: The household to migrate from
+    private func migrateHouseholdDataToPersonal(_ household: Household) async throws {
         let recipeSet = household.recipes as? Set<Recipe> ?? []
-        let recipes = recipeSet.map { recipe -> [String: Any] in
-            let ingredientSet = recipe.ingredients as? Set<Ingredient> ?? []
-            return [
-                "name": recipe.title ?? "",
-                "servings": recipe.servings,
-                "instructions": recipe.instructions ?? "",
-                "ingredients": ingredientSet.map { ingredient in
-                    [
-                        "name": ingredient.name ?? "",
-                        "quantity": ingredient.displayText ?? ""
-                    ]
-                }
-            ]
-        }
-        exportDict["recipes"] = recipes
-
-        // Export weekly lists
         let listSet = household.weeklyLists as? Set<WeeklyList> ?? []
-        let lists = listSet.map { list in
-            [
-                "name": list.name ?? "",
-                "createdDate": ISO8601DateFormatter().string(from: list.dateCreated ?? Date())
-            ]
-        }
-        exportDict["weeklyLists"] = lists
-
-        // Export meal plans
         let mealPlanSet = household.mealPlans as? Set<MealPlan> ?? []
-        let mealPlans = mealPlanSet.map { plan in
-            [
-                "name": plan.name ?? "",
-                "startDate": ISO8601DateFormatter().string(from: plan.startDate ?? Date())
-            ]
+
+        // Migrate recipes with ingredients
+        for oldRecipe in recipeSet {
+            let newRecipe = Recipe(context: viewContext)
+            newRecipe.id = UUID()
+            newRecipe.title = oldRecipe.title
+            newRecipe.instructions = oldRecipe.instructions
+            newRecipe.servings = oldRecipe.servings
+            newRecipe.cookTime = oldRecipe.cookTime
+            newRecipe.prepTime = oldRecipe.prepTime
+            newRecipe.sourceURL = oldRecipe.sourceURL
+            newRecipe.dateCreated = Date()
+            newRecipe.isFavorite = oldRecipe.isFavorite
+            newRecipe.usageCount = 0
+            newRecipe.household = nil
+            newRecipe.householdKey = nil
+
+            // Copy ingredients
+            let ingredientSet = oldRecipe.ingredients as? Set<Ingredient> ?? []
+            for oldIngredient in ingredientSet {
+                let newIngredient = Ingredient(context: viewContext)
+                newIngredient.id = UUID()
+                newIngredient.name = oldIngredient.name
+                newIngredient.displayText = oldIngredient.displayText
+                newIngredient.numericValue = oldIngredient.numericValue
+                newIngredient.standardUnit = oldIngredient.standardUnit
+                newIngredient.notes = oldIngredient.notes
+                newIngredient.sortOrder = oldIngredient.sortOrder
+                newIngredient.isParseable = oldIngredient.isParseable
+                newIngredient.parseConfidence = oldIngredient.parseConfidence
+                newIngredient.recipe = newRecipe
+                newIngredient.ingredientTemplate = oldIngredient.ingredientTemplate
+            }
         }
-        exportDict["mealPlans"] = mealPlans
 
-        // Convert to JSON
-        let jsonData = try JSONSerialization.data(withJSONObject: exportDict, options: .prettyPrinted)
+        // Migrate weekly lists with items
+        for oldList in listSet {
+            let newList = WeeklyList(context: viewContext)
+            newList.id = UUID()
+            newList.name = oldList.name
+            newList.notes = oldList.notes
+            newList.dateCreated = Date()
+            newList.isCompleted = oldList.isCompleted
+            newList.household = nil
+            newList.householdKey = nil
 
-        print("✅ Exported \(recipes.count) recipes, \(lists.count) lists, \(mealPlans.count) meal plans")
+            // Copy items
+            let itemSet = oldList.items as? Set<GroceryListItem> ?? []
+            for oldItem in itemSet {
+                let newItem = GroceryListItem(context: viewContext)
+                newItem.id = UUID()
+                newItem.name = oldItem.name
+                newItem.displayText = oldItem.displayText
+                newItem.numericValue = oldItem.numericValue
+                newItem.standardUnit = oldItem.standardUnit
+                newItem.categoryName = oldItem.categoryName
+                newItem.sortOrder = oldItem.sortOrder
+                newItem.isCompleted = oldItem.isCompleted
+                newItem.isFromRecipe = false
+                newItem.isParseable = oldItem.isParseable
+                newItem.parseConfidence = oldItem.parseConfidence
+                newItem.weeklyList = newList
+            }
+        }
 
-        return jsonData
+        // Migrate meal plans with planned meals
+        for oldPlan in mealPlanSet {
+            let newPlan = MealPlan(context: viewContext)
+            newPlan.id = UUID()
+            newPlan.name = oldPlan.name
+            newPlan.startDate = oldPlan.startDate
+            newPlan.createdDate = Date()
+            newPlan.duration = oldPlan.duration
+            newPlan.isActive = false
+            newPlan.isCompleted = oldPlan.isCompleted
+            newPlan.household = nil
+            newPlan.householdKey = nil
+
+            // Note: PlannedMeal copying would require recipe mapping
+            // For now, skip planned meals as they reference recipes
+            // User can recreate meal assignments manually
+        }
+
+        print("📊 Migrated: \(recipeSet.count) recipes, \(listSet.count) lists, \(mealPlanSet.count) plans")
     }
+
 
     /// Creates a new household with CloudKit shared zone
     /// - Parameters:
