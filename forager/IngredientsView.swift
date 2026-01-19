@@ -16,9 +16,10 @@ struct CategoryChangePayload: Identifiable {
 
 struct IngredientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @Binding var popToRoot: Bool
-    
+
     // MARK: - Core Data Fetch
     @FetchRequest(
         sortDescriptors: [
@@ -27,13 +28,66 @@ struct IngredientsView: View {
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ],
         animation: .default
-    ) private var ingredients: FetchedResults<IngredientTemplate>
-    
+    ) private var allIngredients: FetchedResults<IngredientTemplate>
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)],
         animation: .default
-    ) private var categories: FetchedResults<Category>
-    
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.3.2: Filter based on current household context
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    private var ingredients: [IngredientTemplate] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
+        #if DEBUG
+        print("🔍 M7.3.2 Ingredients Filter Debug:")
+        print("   Total ingredients in fetch: \(allIngredients.count)")
+        print("   Current household key: \(currentHouseholdKey ?? "nil")")
+        if !allIngredients.isEmpty {
+            let first5 = allIngredients.prefix(5)
+            for template in first5 {
+                print("   Template '\(template.name ?? "untitled")': householdKey=\(template.householdKey ?? "nil")")
+            }
+            if allIngredients.count > 5 {
+                print("   ... and \(allIngredients.count - 5) more")
+            }
+        }
+        #endif
+
+        return allIngredients.filter { template in
+            if let householdKey = currentHouseholdKey {
+                return template.householdKey == householdKey
+            } else {
+                return template.householdKey == nil
+            }
+        }
+    }
+
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    private var categories: [Category] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
+        #if DEBUG
+        print("🔍 M7.3.2 Categories Filter Debug:")
+        print("   Total categories in fetch: \(allCategories.count)")
+        print("   Current household key: \(currentHouseholdKey ?? "nil")")
+        if !allCategories.isEmpty {
+            for category in allCategories {
+                print("   Category '\(category.name ?? "untitled")': householdKey=\(category.householdKey ?? "nil")")
+            }
+        }
+        #endif
+
+        return allCategories.filter { category in
+            if let householdKey = currentHouseholdKey {
+                return category.householdKey == householdKey
+            } else {
+                return category.householdKey == nil
+            }
+        }
+    }
+
     // MARK: - State Variables
     @State private var searchText = ""
     @State private var selectedCategory = "All Categories"

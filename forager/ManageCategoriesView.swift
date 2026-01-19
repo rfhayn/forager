@@ -4,9 +4,10 @@ import CoreData
 struct ManageCategoriesView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @Binding var popToRoot: Bool
-    
+
     // Fetch categories sorted by current order
     @FetchRequest(
         sortDescriptors: [
@@ -14,8 +15,24 @@ struct ManageCategoriesView: View {
             NSSortDescriptor(keyPath: \Category.name, ascending: true)
         ],
         animation: .default
-    ) private var categories: FetchedResults<Category>
-    
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.3.2: Filter categories based on current household context
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    // This prevents showing duplicates from both private and shared stores
+    private var categories: [Category] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+        return allCategories.filter { category in
+            if let householdKey = currentHouseholdKey {
+                // User is in a household: show only household categories
+                return category.householdKey == householdKey
+            } else {
+                // User is not in a household: show only personal categories (no householdKey)
+                return category.householdKey == nil
+            }
+        }
+    }
+
     // State management
     @State private var isReordering = false
     @State private var showingAddCategory = false

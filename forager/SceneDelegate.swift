@@ -93,18 +93,24 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
                 print("   Core Data will now sync household data from CloudKit")
                 print("   This may take 10-30 seconds depending on data size")
 
-                // Trigger a manual check for the household
-                // The HouseholdService will detect the new household after sync completes
+                // M7.2.2 FIX: Post notification instead of creating a new HouseholdService instance
+                // The main app's HouseholdService will listen for this and check for invitations
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    // Give CloudKit a moment to start syncing, then check
-                    Task {
-                        let householdService = HouseholdService(
-                            context: persistenceController.container.viewContext
-                        )
-                        await householdService.checkForAcceptedInvitations()
-                    }
+                    print("📢 Posting notification to check for accepted invitations")
+                    NotificationCenter.default.post(
+                        name: .cloudKitShareAccepted,
+                        object: nil
+                    )
                 }
             }
         }
     }
+}
+
+// MARK: - M7.2.2: Notification for CloudKit Share Acceptance
+
+extension Notification.Name {
+    /// Posted when a CloudKit share invitation is accepted
+    /// Listeners should check for and load the newly shared household
+    static let cloudKitShareAccepted = Notification.Name("cloudKitShareAccepted")
 }

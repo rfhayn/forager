@@ -3,19 +3,20 @@ import CoreData
 
 struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @Binding var popToRoot: Bool
-    
+
     @StateObject private var recipeService = OptimizedRecipeDataService(context: PersistenceController.shared.container.viewContext)
-    
+
     @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var searchHistory: [String] = []
-    
+
     // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
     @State private var selectedRecipeForMealPlan: Recipe?
-    
+
     @FetchRequest(
         entity: Recipe.entity(),
         sortDescriptors: [
@@ -23,16 +24,53 @@ struct RecipeListView: View {
             NSSortDescriptor(keyPath: \Recipe.title, ascending: true)
         ],
         animation: .default
-    ) private var recipes: FetchedResults<Recipe>
-    
+    ) private var allRecipes: FetchedResults<Recipe>
+
+    // M7.3.2: Filter recipes based on current household context
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    private var recipes: [Recipe] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
+        #if DEBUG
+        print("🔍 M7.3.2 Recipe Filter Debug:")
+        print("   Total recipes in fetch: \(allRecipes.count)")
+        // M7.2.2 DEBUG: Check what's nil - the household or the id?
+        if let household = householdService.currentHousehold {
+            print("   Household exists: '\(household.name ?? "unnamed")'")
+            print("   Household.id: \(household.id?.uuidString ?? "NIL")")
+            print("   Derived key: \(householdService.currentHouseholdKey ?? "nil")")
+        } else {
+            print("   Household is nil")
+        }
+        print("   Current household key: \(currentHouseholdKey ?? "nil")")
+        if !allRecipes.isEmpty {
+            let first5 = allRecipes.prefix(5)
+            for recipe in first5 {
+                print("   Recipe '\(recipe.title ?? "untitled")': householdKey=\(recipe.householdKey ?? "nil")")
+            }
+            if allRecipes.count > 5 {
+                print("   ... and \(allRecipes.count - 5) more")
+            }
+        }
+        #endif
+
+        return allRecipes.filter { recipe in
+            if let householdKey = currentHouseholdKey {
+                return recipe.householdKey == householdKey
+            } else {
+                return recipe.householdKey == nil
+            }
+        }
+    }
+
     // M3.5: Simplified search using computed property
     private var filteredRecipes: [Recipe] {
         if searchText.isEmpty {
-            return Array(recipes)
+            return recipes
         }
-        
+
         // M3.5: Use computed property for search
-        return Array(recipes).filter { recipe in
+        return recipes.filter { recipe in
             recipe.matchesRecipeSearchQuery(searchText)
         }.sorted { first, second in
             // Sort by usage count (higher first)

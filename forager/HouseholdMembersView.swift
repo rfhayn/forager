@@ -2,8 +2,8 @@
 // HouseholdMembersView.swift
 // forager
 //
-// M7.2.2 Task 4: Household members list display
-// Shows all members with roles (Owner/Member) and statuses (Active/Pending)
+// M7.2.2 Refactor: Display members from CKShare.participants (source of truth)
+// No longer uses HouseholdMember Core Data records
 //
 
 import SwiftUI
@@ -12,11 +12,45 @@ struct HouseholdMembersView: View {
     let household: Household
     @ObservedObject var service: HouseholdService
     @Environment(\.dismiss) private var dismiss
-    
+
+    @State private var participants: [ShareParticipant] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+
     var body: some View {
-        List {
-            ForEach(household.memberArray) { member in
-                HouseholdMemberRow(member: member)
+        Group {
+            if isLoading {
+                ProgressView("Loading members...")
+            } else if let error = errorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.orange)
+                    Text("Could not load members")
+                        .font(.headline)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        loadParticipants()
+                    }
+                }
+                .padding()
+            } else if participants.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "person.slash")
+                        .font(.largeTitle)
+                        .foregroundColor(.secondary)
+                    Text("No members found")
+                        .font(.headline)
+                }
+            } else {
+                List {
+                    ForEach(participants) { participant in
+                        ShareParticipantRow(participant: participant)
+                    }
+                }
             }
         }
         .navigationTitle("Household Members")
@@ -28,59 +62,85 @@ struct HouseholdMembersView: View {
                 }
             }
         }
+        .onAppear {
+            loadParticipants()
+        }
+    }
+
+    private func loadParticipants() {
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            do {
+                let loaded = try await service.getParticipants(for: household)
+                await MainActor.run {
+                    self.participants = loaded
+                    self.isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                }
+            }
+        }
     }
 }
 
-struct HouseholdMemberRow: View {
-    let member: HouseholdMember
+// MARK: - ShareParticipantRow
 
-    /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)
-    private func isCloudKitUserRecordID(_ string: String) -> Bool {
-        return string.hasPrefix("_") && string.count > 20 && string.allSatisfy { $0.isHexDigit || $0 == "_" }
-    }
+struct ShareParticipantRow: View {
+    let participant: ShareParticipant
 
     var body: some View {
         HStack(spacing: 12) {
             // Avatar
             ZStack {
                 Circle()
-                    .fill(member.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                    .fill(participant.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
                     .frame(width: 44, height: 44)
-                
-                Image(systemName: member.isOwner ? "crown.fill" : "person.fill")
-                    .foregroundStyle(member.isOwner ? .blue : .gray)
+
+                Image(systemName: participant.isOwner ? "crown.fill" : "person.fill")
+                    .foregroundStyle(participant.isOwner ? .blue : .gray)
                     .font(.title3)
             }
-            
+
             // Name and email
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(member.displayName ?? "Unknown")
+                    Text(participant.displayName)
                         .font(.headline)
-                    
+
+                    if participant.isCurrentUser {
+                        Text("(You)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
                     // Role badge
-                    Text(member.isOwner ? "Owner" : "Member")
+                    Text(participant.isOwner ? "Owner" : "Member")
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(member.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                        .foregroundStyle(member.isOwner ? .blue : .gray)
+                        .background(participant.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                        .foregroundStyle(participant.isOwner ? .blue : .gray)
                         .cornerRadius(4)
                 }
-                
-                // Email (hide CloudKit user record IDs)
-                if let email = member.email, !isCloudKitUserRecordID(email) {
+
+                // Email (if available and not a CloudKit ID)
+                if let email = participant.email, !isCloudKitUserRecordID(email) {
                     Text(email)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
-            
+
             Spacer()
-            
+
             // Status indicator
-            if member.isPending {
+            if participant.acceptanceStatus.isPending {
                 HStack(spacing: 4) {
                     Image(systemName: "clock.fill")
                         .font(.caption)
@@ -88,12 +148,17 @@ struct HouseholdMemberRow: View {
                         .font(.caption)
                 }
                 .foregroundStyle(.orange)
-            } else if member.isActive {
+            } else if participant.acceptanceStatus.isActive {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
             }
         }
         .padding(.vertical, 4)
+    }
+
+    /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)
+    private func isCloudKitUserRecordID(_ string: String) -> Bool {
+        return string.hasPrefix("_") && string.count > 20 && string.allSatisfy { $0.isHexDigit || $0 == "_" }
     }
 }
 
@@ -102,49 +167,31 @@ struct HouseholdMemberRow: View {
 struct HouseholdMembersView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            HouseholdMembersView(
-                household: previewHousehold(),
-                service: HouseholdService(context: PersistenceController.preview.container.viewContext)
-            )
+            // Use a mock view for preview since we can't easily mock CKShare
+            List {
+                ShareParticipantRow(participant: ShareParticipant(
+                    displayName: "Sarah",
+                    email: "sarah@example.com",
+                    isOwner: true,
+                    isCurrentUser: true,
+                    acceptanceStatus: .accepted
+                ))
+                ShareParticipantRow(participant: ShareParticipant(
+                    displayName: "Mike",
+                    email: "mike@example.com",
+                    isOwner: false,
+                    isCurrentUser: false,
+                    acceptanceStatus: .accepted
+                ))
+                ShareParticipantRow(participant: ShareParticipant(
+                    displayName: "Alex",
+                    email: "alex@example.com",
+                    isOwner: false,
+                    isCurrentUser: false,
+                    acceptanceStatus: .pending
+                ))
+            }
+            .navigationTitle("Household Members")
         }
-    }
-    
-    static func previewHousehold() -> Household {
-        let context = PersistenceController.preview.container.viewContext
-        let household = Household(context: context)
-        household.id = UUID()
-        household.name = "Preview Household"
-        household.ownerEmail = "owner@example.com"
-        
-        // Owner member
-        let owner = HouseholdMember(context: context)
-        owner.id = UUID()
-        owner.email = "owner@example.com"
-        owner.displayName = "Sarah"
-        owner.role = "owner"
-        owner.status = "active"
-        owner.joinedDate = Date()
-        owner.household = household
-        
-        // Active member
-        let member1 = HouseholdMember(context: context)
-        member1.id = UUID()
-        member1.email = "mike@example.com"
-        member1.displayName = "Mike"
-        member1.role = "member"
-        member1.status = "active"
-        member1.joinedDate = Date().addingTimeInterval(-86400)
-        member1.household = household
-        
-        // Pending member
-        let member2 = HouseholdMember(context: context)
-        member2.id = UUID()
-        member2.email = "alex@example.com"
-        member2.displayName = "Alex"
-        member2.role = "member"
-        member2.status = "pending"
-        member2.household = household
-        
-        return household
     }
 }

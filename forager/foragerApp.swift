@@ -116,8 +116,8 @@ struct foragerApp: App {
                 .tag(Tab.categories)
                 
                 // M3 Phase 3: Settings Tab (replaces DEBUG-only Migration tab)
-                // M7.2.1: Pass context for HouseholdService
-                SettingsView(context: persistenceController.container.viewContext)
+                // M7.2.2 FIX: No longer needs context - uses environmentObject
+                SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gear")
                     }
@@ -166,6 +166,14 @@ struct foragerApp: App {
                 // Refresh display name on every launch
                 // Handles: permission grants, iCloud name changes, device name changes
                 await householdService.refreshCurrentMemberDisplayName()
+            }
+            // M7.2.2 FIX: Listen for CloudKit share acceptance from SceneDelegate
+            // This ensures the SAME HouseholdService instance is used (not a new one)
+            .onReceive(NotificationCenter.default.publisher(for: .cloudKitShareAccepted)) { _ in
+                print("📬 Received cloudKitShareAccepted notification")
+                Task {
+                    await householdService.checkForAcceptedInvitations()
+                }
             }
         }
     }

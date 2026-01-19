@@ -11,14 +11,28 @@ import CoreData
 
 struct WeeklyListsView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @Binding var popToRoot: Bool
-    
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \WeeklyList.dateCreated, ascending: false)],
         animation: .default
-    ) private var weeklyLists: FetchedResults<WeeklyList>
-    
+    ) private var allWeeklyLists: FetchedResults<WeeklyList>
+
+    // M7.3.2: Filter lists based on current household context
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    private var weeklyLists: [WeeklyList] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+        return allWeeklyLists.filter { list in
+            if let householdKey = currentHouseholdKey {
+                return list.householdKey == householdKey
+            } else {
+                return list.householdKey == nil
+            }
+        }
+    }
+
     // State management
     @State private var isGeneratingList = false
     @State private var showingError = false

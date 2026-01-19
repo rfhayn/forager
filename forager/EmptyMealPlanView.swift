@@ -89,7 +89,7 @@ struct EmptyMealPlanView: View {
             .padding(.horizontal, 32)
             
             // Settings link
-            NavigationLink(destination: SettingsView(context: viewContext)) {
+            NavigationLink(destination: SettingsView()) {
                 Text("Change meal plan settings")
                     .font(.caption)
                     .foregroundColor(.blue)

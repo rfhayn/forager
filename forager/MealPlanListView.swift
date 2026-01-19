@@ -15,16 +15,30 @@ import CoreData
 // Pattern: Follows proven WeeklyListsView architecture
 struct MealPlansListView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @Binding var popToRoot: Bool
-    
+
     // M4.2.4: Fetch all meal plans, sorted by start date (newest first)
     // Uses @FetchRequest for automatic UI updates when plans change
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \MealPlan.startDate, ascending: false)],
         animation: .default
-    ) private var allMealPlans: FetchedResults<MealPlan>
-    
+    ) private var allMealPlansFetch: FetchedResults<MealPlan>
+
+    // M7.3.2: Filter meal plans based on current household context
+    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
+    private var allMealPlans: [MealPlan] {
+        let currentHouseholdKey = householdService.currentHouseholdKey
+        return allMealPlansFetch.filter { plan in
+            if let householdKey = currentHouseholdKey {
+                return plan.householdKey == householdKey
+            } else {
+                return plan.householdKey == nil
+            }
+        }
+    }
+
     // M4.2.4: UI state management
     @State private var showingCreateSheet = false
     @State private var showCompleted = false  // Completed section collapsed by default

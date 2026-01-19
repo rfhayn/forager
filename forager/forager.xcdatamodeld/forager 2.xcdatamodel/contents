@@ -76,6 +76,7 @@
         <relationship name="recipes" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Recipe" inverseName="household" inverseEntity="Recipe"/>
         <relationship name="tags" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Tag" inverseName="household" inverseEntity="Tag"/>
         <relationship name="weeklyLists" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="WeeklyList" inverseName="household" inverseEntity="WeeklyList"/>
+        <relationship name="leaveRequests" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="LeaveRequest" inverseName="household" inverseEntity="LeaveRequest"/>
     </entity>
     <entity name="HouseholdMember" representedClassName="HouseholdMember" syncable="YES">
         <attribute name="displayName" optional="YES" attributeType="String"/>
@@ -227,5 +228,14 @@
         <attribute name="notes" optional="YES" attributeType="String"/>
         <relationship name="household" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Household" inverseName="weeklyLists" inverseEntity="Household"/>
         <relationship name="items" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="GroceryListItem" inverseName="weeklyList" inverseEntity="GroceryListItem"/>
+    </entity>
+    <entity name="LeaveRequest" representedClassName="LeaveRequest" syncable="YES">
+        <attribute name="displayName" optional="YES" attributeType="String"/>
+        <attribute name="householdID" optional="YES" attributeType="String"/>
+        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="requestedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="status" attributeType="String" defaultValueString="pending"/>
+        <attribute name="userRecordID" optional="YES" attributeType="String"/>
+        <relationship name="household" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Household" inverseName="leaveRequests" inverseEntity="Household"/>
     </entity>
 </model>

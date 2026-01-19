@@ -17,8 +17,10 @@ struct SettingsView: View {
     @StateObject private var preferencesService = UserPreferencesService.shared
     
     // M7.2.1: Household service for household management
-    @StateObject private var householdService: HouseholdService
-    
+    // M7.2.2 FIX: Use @EnvironmentObject instead of creating a separate instance
+    // This ensures all views share the same HouseholdService state
+    @EnvironmentObject private var householdService: HouseholdService
+
     // Access to Core Data context for migration service
     @Environment(\.managedObjectContext) private var viewContext
     
@@ -44,11 +46,10 @@ struct SettingsView: View {
     // M7.3.2: Member sync state (Issue #3)
     @State private var isSyncingMembers = false
 
-    // M7.2.1: Initializer to inject HouseholdService
-    init(context: NSManagedObjectContext) {
-        _householdService = StateObject(wrappedValue: HouseholdService(context: context))
-    }
-    
+    // M7.2.2 Refactor: CKShare-based participant info
+    @State private var participantCount: Int = 0
+    @State private var ownerDisplayName: String = "Unknown"
+
     var body: some View {
         NavigationView {
             Form {
@@ -194,7 +195,8 @@ struct SettingsView: View {
                                     .fontWeight(.medium)
                                     .foregroundColor(.secondary)
                             } else {
-                                Text("\(household.members?.count ?? 0)")
+                                // M7.2.2 Refactor: Use CKShare participant count
+                                Text("\(participantCount)")
                                     .fontWeight(.medium)
                             }
                         }
@@ -219,7 +221,8 @@ struct SettingsView: View {
                         Text("Owner")
                             .foregroundColor(.secondary)
                         Spacer()
-                        Text(household.memberArray.first(where: { $0.isOwner })?.displayName ?? "Unknown")
+                        // M7.2.2 Refactor: Use CKShare owner
+                        Text(ownerDisplayName)
                             .fontWeight(.medium)
                     }
                 }
@@ -227,6 +230,12 @@ struct SettingsView: View {
                 .task {
                     // M7.3.1: Check if current user is owner
                     isCurrentUserOwner = await householdService.isOwner(household: household)
+
+                    // M7.2.2 Refactor: Load participant info from CKShare
+                    participantCount = await householdService.getParticipantCount(for: household)
+                    if let owner = await householdService.getOwnerParticipant(for: household) {
+                        ownerDisplayName = owner.displayName
+                    }
                 }
 
                 // M7.2.2: Invite Member button
@@ -540,9 +549,14 @@ struct SettingsView: View {
 
     // M7.3.2: Refreshes member list with sync polling (Issue #3)
     private func refreshMembers() {
+        guard let household = householdService.currentHousehold else { return }
         Task {
             isSyncingMembers = true
-            await householdService.waitForMemberDeletionSync()
+            // M7.2.2 Refactor: Refresh participant count from CKShare
+            participantCount = await householdService.getParticipantCount(for: household)
+            if let owner = await householdService.getOwnerParticipant(for: household) {
+                ownerDisplayName = owner.displayName
+            }
             isSyncingMembers = false
         }
     }
@@ -704,7 +718,8 @@ struct SafariView: UIViewControllerRepresentable {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView(context: PersistenceController.preview.container.viewContext)
+        SettingsView()
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+            .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
     }
 }
