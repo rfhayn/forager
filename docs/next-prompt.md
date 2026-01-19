@@ -1,437 +1,169 @@
 # Next Implementation Prompt
 
-**Last Updated**: January 13, 2026
-**For Milestone**: M7.3.2 - Leave Household
-**Status**: 🚀 **READY TO IMPLEMENT**
-**Estimated Duration**: 1-2 hours
-**Prerequisites**: M7.3.1 Complete ✅
+**Last Updated**: January 18, 2026
+**For Milestone**: M7.2.2 - Leave Household Testing & Completion
+**Status**: 🧪 **NEEDS TESTING**
+**Estimated Duration**: 30-60 minutes testing
+**Prerequisites**: Code complete, build from Xcode
 
 ---
 
-## 🎯 **M7.3.2 - LEAVE HOUSEHOLD**
+## 🎯 **M7.2.2 - TEST LEAVE HOUSEHOLD FLOW**
 
-**Goal**: Allow household members to leave a household with optional data export and graceful local data preservation.
+**Goal**: Verify the member leave flow works end-to-end with automatic owner notification.
 
 **Current State**:
-- ✅ M7.3.1 COMPLETE - Rename household working
-- 🚀 M7.3.2 READY - Leave household with data export
-- 📍 Branch: Create `feature/M7.3.2-leave-household`
+- ✅ Code complete - LeaveRequest entity, leave flow, owner processing
+- ✅ Migration fixed - categories & ingredient templates now included
+- 🧪 Needs physical device testing
+- 📍 Branch: `main` (all work committed)
 
-**What to Build**:
-- Service method: `leaveHousehold(_:exportData:)`
-- UI: Leave button in Settings with confirmation alert
-- Optional: Export household data to JSON before leaving
-- Local data: Preserve read-only copies after leaving
-
-**Why This Next**: Second simplest M7.3 phase (1-2h), establishes member exit pattern before more complex features (remove member, delete household).
-
----
-
-## 📋 **IMPLEMENTATION CHECKLIST**
-
-### **Step 1: Git Branch** (2 min)
-
-```bash
-# Create feature branch
-git checkout main
-git pull origin main
-git checkout -b feature/M7.3.2-leave-household
-
-# Verify clean state
-git status
-```
+**What Was Built**:
+1. LeaveRequest Core Data entity (syncs via CloudKit)
+2. Member creates LeaveRequest when leaving
+3. Owner's app processes LeaveRequest on launch
+4. Owner removes member from CKShare automatically
+5. Owner receives local notification
+6. Migration includes categories & ingredient templates
 
 ---
 
-### **Step 2: Service Method** (30-45 min)
+## 📋 **TESTING CHECKLIST**
 
-**File**: `Services/HouseholdService.swift`
+### **Step 1: Build from Xcode** (5 min)
 
-**Add Method**:
-```swift
-/// M7.3.2: Allows a member to leave a household
-/// - Parameters:
-///   - household: The household to leave
-///   - exportData: Whether to export household data before leaving
-/// - Returns: Optional JSON data if exportData is true
-/// - Throws: HouseholdError if user is owner or not a member
-func leaveHousehold(_ household: Household, exportData: Bool) async throws -> Data? {
-    // Get current user's email/identifier
-    let currentEmail = try await getCurrentUserEmail()
+Open Xcode and build the app:
+1. Open `forager.xcodeproj`
+2. Select your physical device (iPhone)
+3. Cmd+B to build
+4. Fix any build errors if they occur
 
-    // Find current user's member record
-    guard let currentMember = household.memberArray.first(where: { $0.email == currentEmail }) else {
-        throw HouseholdError.notMember
-    }
+**Note**: Command-line build failed due to simulator naming. Build directly from Xcode.
 
-    // Prevent owner from leaving (must delete household instead)
-    guard !currentMember.isOwner else {
-        throw HouseholdError.ownerCannotLeave
-    }
+---
 
-    // Optional: Export data before leaving
-    var exportedData: Data?
-    if exportData {
-        exportedData = try await exportHouseholdData(household)
-    }
+### **Step 2: Setup Test Environment** (5 min)
 
-    // Remove member from household
-    viewContext.delete(currentMember)
+**Device A (Owner - your phone)**:
+1. Ensure household exists with data (recipes, categories)
+2. Note the household name and member count
 
-    // Note: Household data remains in shared store as read-only
-    // CloudKit will automatically stop syncing updates after member is removed
+**Device B (Member - Tessa's iPad)**:
+1. Should be a member of the household
+2. Should see shared data (recipes, categories)
 
-    // Save changes
-    try viewContext.save()
+---
 
-    // Clear current household
-    currentHousehold = nil
+### **Step 3: Test Migrate and Leave** (15 min)
 
-    print("✅ M7.3.2: Left household: \(household.name ?? "Unknown")")
-    print("   Data exported: \(exportData)")
+**On Device B (Member)**:
+1. Go to Settings → Household
+2. Tap "Leave Household"
+3. Choose "Migrate and Leave"
+4. Wait for leave to complete
 
-    return exportedData
-}
+**Verify on Device B**:
+- [ ] App no longer shows household
+- [ ] Recipes still visible (migrated to personal)
+- [ ] **Categories still visible** (this was the bug we fixed)
+- [ ] Ingredient templates preserved
+- [ ] Can create new household or wait for invite
 
-/// M7.3.2: Exports household data to JSON
-/// - Parameter household: The household to export
-/// - Returns: JSON data containing all household recipes, lists, and meal plans
-private func exportHouseholdData(_ household: Household) async throws -> Data {
-    // Create export dictionary
-    var exportDict: [String: Any] = [:]
+---
 
-    // Add household metadata
-    exportDict["householdName"] = household.name ?? "Unnamed Household"
-    exportDict["exportDate"] = ISO8601DateFormatter().string(from: Date())
+### **Step 4: Verify Owner Notification** (10 min)
 
-    // Export recipes
-    let recipes = household.recipeArray.map { recipe in
-        [
-            "name": recipe.name ?? "",
-            "servings": recipe.servings,
-            "instructions": recipe.instructions ?? "",
-            "ingredients": recipe.ingredientArray.map { ingredient in
-                [
-                    "name": ingredient.name ?? "",
-                    "quantity": ingredient.quantity ?? ""
-                ]
-            }
-        ]
-    }
-    exportDict["recipes"] = recipes
+**On Device A (Owner)**:
+1. Close app completely (swipe up)
+2. Reopen app
+3. Check for local notification: "Member Left - [Name] has left [Household]"
 
-    // Export weekly lists
-    let lists = household.weeklyListArray.map { list in
-        [
-            "name": list.name ?? "",
-            "createdDate": ISO8601DateFormatter().string(from: list.createdDate ?? Date())
-        ]
-    }
-    exportDict["weeklyLists"] = lists
+**Verify on Device A**:
+- [ ] Notification received (may appear in Notification Center)
+- [ ] Member no longer appears in household members list
+- [ ] Household still functional for owner
 
-    // Export meal plans
-    let mealPlans = household.mealPlanArray.map { plan in
-        [
-            "name": plan.name ?? "",
-            "startDate": ISO8601DateFormatter().string(from: plan.startDate ?? Date())
-        ]
-    }
-    exportDict["mealPlans"] = mealPlans
-
-    // Convert to JSON
-    let jsonData = try JSONSerialization.data(withJSONObject: exportDict, options: .prettyPrinted)
-
-    print("✅ Exported \(recipes.count) recipes, \(lists.count) lists, \(mealPlans.count) meal plans")
-
-    return jsonData
-}
+**Check Logs** (if available):
 ```
-
-**Add Error Cases** (to existing `HouseholdError` enum):
-```swift
-enum HouseholdError: LocalizedError {
-    // ... existing cases ...
-    case notMember
-    case ownerCannotLeave
-
-    var errorDescription: String? {
-        switch self {
-        case .notMember:
-            return "You are not a member of this household"
-        case .ownerCannotLeave:
-            return "Owners cannot leave. Delete the household instead."
-        // ... other cases ...
-        }
-    }
-}
+📋 M7.2.2: Processing leave request from [Name]
+✅ M7.2.2: Removed [Name] from household
+📬 M7.2.2: Sent member left notification
 ```
 
 ---
 
-### **Step 3: UI Implementation** (30-45 min)
+### **Step 5: Verify CloudKit State** (Optional)
 
-**File**: `Views/Settings/SettingsView.swift`
-
-**Add State Variables**:
-```swift
-// M7.3.2: Leave household state
-@State private var showLeaveConfirmation = false
-@State private var showExportOption = false
-@State private var shouldExportData = false
-@State private var exportedDataURL: URL?
-@State private var showShareSheet = false
-```
-
-**Add Leave Button** (in household section, after Invite Member button):
-```swift
-// M7.3.2: Leave Household button (non-owners only)
-if !isCurrentUserOwner {
-    Button(action: {
-        showLeaveConfirmation = true
-    }) {
-        HStack {
-            Image(systemName: "rectangle.portrait.and.arrow.right")
-            Text("Leave Household")
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color.red.opacity(0.1))
-        .foregroundColor(.red)
-        .cornerRadius(10)
-    }
-    .padding(.top, 8)
-}
-```
-
-**Add Confirmation Alert**:
-```swift
-.alert("Leave Household?", isPresented: $showLeaveConfirmation) {
-    Button("Export & Leave", role: .destructive) {
-        shouldExportData = true
-        leaveHousehold(household)
-    }
-    Button("Leave Without Export", role: .destructive) {
-        shouldExportData = false
-        leaveHousehold(household)
-    }
-    Button("Cancel", role: .cancel) { }
-} message: {
-    Text("You will lose access to shared data. Local copies will remain read-only. Optionally export data first.")
-}
-```
-
-**Add Leave Method** (in Helper Methods):
-```swift
-// M7.3.2: Leaves household with optional data export
-private func leaveHousehold(_ household: Household) {
-    Task {
-        do {
-            let exportedData = try await householdService.leaveHousehold(
-                household,
-                exportData: shouldExportData
-            )
-
-            // If data was exported, save to temporary file and show share sheet
-            if let data = exportedData {
-                let tempURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("household-export-\(Date().timeIntervalSince1970).json")
-                try data.write(to: tempURL)
-                exportedDataURL = tempURL
-                showShareSheet = true
-            }
-
-            // Refresh household to trigger UI update
-            await householdService.loadCurrentHousehold()
-
-        } catch {
-            // Show error alert
-            print("❌ Error leaving household: \(error)")
-        }
-    }
-}
-```
-
-**Add Share Sheet** (in body):
-```swift
-.sheet(isPresented: $showShareSheet) {
-    if let url = exportedDataURL {
-        ActivityViewController(activityItems: [url])
-    }
-}
-```
-
-**Add ActivityViewController** (at bottom of file):
-```swift
-// M7.3.2: UIActivityViewController wrapper for sharing exported data
-struct ActivityViewController: UIViewControllerRepresentable {
-    let activityItems: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {
-        // No updates needed
-    }
-}
-```
+If issues occur, check CloudKit Dashboard:
+1. Go to CloudKit Dashboard
+2. Check shared zone for LeaveRequest records
+3. Verify CKShare.participants updated
 
 ---
 
-### **Step 4: Testing** (15-30 min)
+## ✅ **SUCCESS CRITERIA**
 
-**Build and Run**:
-```bash
-# Build app
-Cmd+B
+**Member Side**:
+- [ ] "Migrate and Leave" completes without crash
+- [ ] Recipes persist after leaving (personal copies)
+- [ ] **Categories persist after leaving** (this was the fix)
+- [ ] Ingredient templates persist
+- [ ] No re-joining on app restart
 
-# Run on simulator or device
-Cmd+R
-```
-
-**Manual Test**:
-1. Navigate to Settings → Household
-2. As non-owner member: Verify "Leave Household" button appears (red)
-3. Tap "Leave Household"
-4. Test "Export & Leave":
-   - Should show share sheet with JSON file
-   - Share to Files app or Mail
-   - Verify JSON contains recipes, lists, meal plans
-5. Test "Leave Without Export":
-   - Should leave immediately without export
-6. Verify:
-   - Current household cleared
-   - Settings shows "Create Household" button again
-   - Shared data still visible but read-only (can't edit)
-
-**Multi-Device Test** (if 2 devices available):
-1. Device B (Member): Leave household
-2. Wait 5 seconds
-3. Device A (Owner): Navigate to Settings → Household → Members
-4. Verify member no longer listed
-
----
-
-## ✅ **ACCEPTANCE CRITERIA**
-
-**Functionality**:
-- ✅ Non-owner members can leave household
-- ✅ Leave confirmation alert with two options
-- ✅ "Export & Leave" exports JSON and shows share sheet
-- ✅ "Leave Without Export" leaves immediately
-- ✅ Owner cannot leave (button hidden or disabled)
-- ✅ Current household cleared after leaving
-
-**Data Export**:
-- ✅ JSON includes recipes, lists, meal plans
-- ✅ Share sheet allows saving to Files, Mail, etc.
-- ✅ Exported filename includes timestamp
-
-**Data Preservation**:
-- ✅ Local copies of shared data remain read-only
-- ✅ No data loss from leaving
-- ✅ Can rejoin later if invited again
-
-**Error Handling**:
-- ✅ Owner attempting to leave shows clear error
-- ✅ Network errors handled gracefully
-- ✅ Export failures don't prevent leaving
-
-**UX**:
-- ✅ Red "Leave Household" button clearly destructive
-- ✅ Confirmation alert prevents accidental leaving
-- ✅ Clear messaging about data preservation
-- ✅ No crashes or UI glitches
+**Owner Side**:
+- [ ] LeaveRequest processed automatically on app launch
+- [ ] Member removed from CKShare.participants
+- [ ] Local notification sent
+- [ ] Household continues to function
 
 ---
 
 ## 🐛 **TROUBLESHOOTING**
 
-**Error: "Owners cannot leave"**
-- Check: User is actually a member, not owner
-- Fix: Owners must delete household instead (M7.3.3)
+**Build Errors**:
+- Build from Xcode, not command line
+- Check that LeaveRequest files are added to project
 
-**Export Not Working**
-- Check: Data actually exists in household
-- Verify: JSON serialization succeeds
-- Check logs: "Exported X recipes, Y lists, Z meal plans"
+**Categories Not Persisting**:
+- Check logs for: "M7.2.2: Migrated household data to personal"
+- Should show category count > 0
+- Verify `migrateHouseholdDataToPersonal` includes categorySet
 
-**Share Sheet Not Showing**
-- Verify: exportedDataURL is set
-- Check: File written to temp directory successfully
-- Try: Re-run with fresh data export
+**Member Still Shows After Leaving**:
+- Owner needs to reopen app to process LeaveRequest
+- Check CloudKit sync delay (may take 30-60 seconds)
+- LeaveRequest should sync to owner's device first
 
-**UI Not Updating After Leaving**
-- Call `await householdService.loadCurrentHousehold()`
-- Verify: currentHousehold set to nil
-- Check: View observing householdService changes
+**Notification Not Appearing**:
+- Check notification permissions for app
+- Check Notification Center (not just banner)
+- Verify `sendMemberLeftNotification` was called in logs
+
+**Re-Joining Automatically**:
+- Check UserDefaults for left household tracking
+- Log should show: "Marked household [ID] as left"
+- On next launch: "Skipping re-join (household ID in left list)"
 
 ---
 
-## 📊 **AFTER COMPLETION**
+## 📊 **AFTER TESTING PASSES**
 
-### **Git Commit**:
+### **If All Tests Pass**:
 
-```bash
-# Stage changes
-git add Services/HouseholdService.swift
-git add forager/SettingsView.swift
+1. Update documentation to mark M7.2.2 complete
+2. Move to M7.3.3: Remove Member & Delete Household
 
-# Commit with message
-git commit -m "M7.3.2: Add leave household functionality
+### **If Issues Found**:
 
-- HouseholdService.leaveHousehold(_:exportData:) method
-- exportHouseholdData() for JSON export
-- Leave button in Settings (non-owners only)
-- Export & Leave vs Leave Without Export options
-- ActivityViewController for share sheet integration
-- Local data preserved as read-only after leaving
-
-Acceptance criteria met:
-✅ Non-owner members can leave household
-✅ Optional JSON data export with share sheet
-✅ Owner cannot leave (must delete instead)
-✅ Current household cleared after leaving
-✅ Local data preserved read-only
-
-Tested on:
-- Simulator (validation, export)
-- Device A (Owner): Member removed from list
-- Device B (Member): Leave successful, data exported
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-
-# Push to GitHub
-git push -u origin feature/M7.3.2-leave-household
-
-# Merge to main (after testing)
-git checkout main
-git merge --squash feature/M7.3.2-leave-household
-git commit -m "M7.3.2: Leave household with data export complete"
-git push origin main
-git branch -d feature/M7.3.2-leave-household
-git push origin --delete feature/M7.3.2-leave-household
-```
-
-### **Update Documentation**:
-
-1. **current-story.md**:
-   - Mark M7.3.2 ✅ COMPLETE
-   - Update to M7.3.3 (Remove Member & Delete Household) as next
-   - Add actual time (1-2h estimated)
-
-2. **next-prompt.md**:
-   - Replace with M7.3.3 content
-   - Remove member and delete household features (2-3h)
-
-3. **project-index.md** (optional):
-   - Add M7.3.2 to recent activity if significant
+1. Document specific failure in logs
+2. Save device logs to `/Users/rich/Desktop/forager/cc-ss/`
+3. Next session will debug based on logs
 
 ---
 
 ## 🚀 **NEXT: M7.3.3 - REMOVE MEMBER & DELETE HOUSEHOLD**
 
-**After M7.3.2 complete, next is**:
+**After M7.2.2 testing passes**:
 
 **M7.3.3: Remove Member & Delete Household** (2-3 hours)
 - Owners can remove members from household
@@ -439,12 +171,28 @@ git push origin --delete feature/M7.3.2-leave-household
 - Data migration from shared → private zone on delete
 - Confirmation alerts for destructive actions
 
-**Time Estimate**: 2-3 hours (most complex M7.3 phase)
+---
+
+## 📝 **GIT STATUS**
+
+Current state:
+- Branch: `main`
+- Latest commit: `f263730 Mid 7.2.3 Troubleshooting...`
+- Working tree: clean
+- All changes committed
+
+If testing reveals issues requiring code changes:
+```bash
+# Make fixes, then:
+git add -A
+git commit -m "M7.2.2: Fix [issue description]"
+git push origin main
+```
 
 ---
 
-**Version**: January 13, 2026 - M7.3.2 Ready to Implement
-**Status**: 🚀 Ready to start
-**Branch**: Create `feature/M7.3.2-leave-household` before starting
-**Estimated Time**: 1-2 hours
-**Confidence**: 🟢 HIGH (Well-defined scope, similar to M7.3.1 patterns)
+**Version**: January 18, 2026 - Testing Phase
+**Status**: 🧪 Code complete, needs device testing
+**Branch**: `main`
+**Estimated Time**: 30-60 minutes testing
+**Confidence**: 🟡 MEDIUM (Code looks good, needs verification)

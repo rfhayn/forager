@@ -1,400 +1,153 @@
 # Current Development Story
 
-**Last Updated**: January 13, 2026 (M7.3.1 Complete, M7.3.2 Next)
-**Status**: M7.0-M7.3.1 ✅ **COMPLETE** - M7.3.2 🚀 **NEXT**
-**Total Progress**: ~131.5 hours | 89% planning accuracy
-**Current Branch**: `main` (M7.3.1 complete, ready for M7.3.2)
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight  
+**Last Updated**: January 18, 2026 (M7.2.2 Leave Household Debugging)
+**Status**: M7.2.2 🔄 **IN PROGRESS** - Leave flow functional, testing needed
+**Total Progress**: ~135 hours | 89% planning accuracy
+**Current Branch**: `main` (M7.2.2 leave household work committed)
+**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
 
 ---
 
-## 🎉 **M7.2 & M7.2.3: COMPLETE - M7.3 NEXT**
+## 🔄 **M7.2.2: LEAVE HOUSEHOLD - IN PROGRESS**
 
-**Status**: ✅ **M7.2 & M7.2.3 COMPLETE** - M7.3 ready (household management)
-**M7.2 Total Time**: 15 hours (M7.2.2 took 11-12h including bug fixes, not 2-3h estimated)
-**M7.2.3 Total Time**: 12.25 hours (estimated 14-17h, 88% accuracy)
-**Achievement**: Full household sharing operational, CloudKit sync working, dual-store architecture complete
+**Status**: 🔄 **FUNCTIONAL BUT NEEDS TESTING**
+**Session Date**: January 18, 2026
+**Key Achievement**: Member leave flow with automatic owner notification system
 
-### **What's Complete ✅**
+### **What Was Implemented This Session** ✅
 
-**M7.2.2: Member Invitation & Acceptance** ✅ COMPLETE (Jan 12, 2026)
-- ✅ Public link sharing implemented (bypassed UICloudSharingController iOS 18.x bugs)
-- ✅ Invitation sent successfully via Messages/Mail
-- ✅ Acceptance flow working on physical devices
-- ✅ Display name extraction fixed (handles CloudKit IDs gracefully)
-- ✅ Sync retry extended to 30 seconds (6 attempts × 5s)
-- ✅ CloudKit user record IDs hidden from UI
-- ✅ Auto-member creation integrated
-- ✅ URL handling enhanced
-- ✅ Bi-directional sync verified (<5s latency)
-- **Learning Notes**:
-  - [32-m7.2.2-public-link-sharing.md](archive/32-m7.2.2-public-link-sharing.md)
-  - [33-m7.2.2-device-b-bug-fixes.md](archive/33-m7.2.2-device-b-bug-fixes.md)
+**1. LeaveRequest Entity for Cross-Device Leave Notification**
+- New Core Data entity: `LeaveRequest` with properties:
+  - `id`, `householdID`, `userRecordID`, `displayName`, `requestedDate`, `status`
+  - Relationship to `Household` (inverse: `leaveRequests`)
+- Files created:
+  - `LeaveRequest+CoreDataClass.swift`
+  - `LeaveRequest+CoreDataProperties.swift`
+  - Updated `Household+CoreDataProperties.swift` with `leaveRequests` relationship
+  - Updated Core Data model `forager 2.xcdatamodel`
 
-**M7.2.3: CloudKit Hardening & Dual-Store Architecture** ✅ COMPLETE (Jan 4, 2026)
+**2. Leave Request Flow (HouseholdService.swift)**
+- `createLeaveRequest(for:)` - Creates leave request when member leaves
+- `processLeaveRequests()` - Owner-side processing on app launch
+- `processLeaveRequest(_:household:)` - Processes individual leave request
+- `removeParticipantFromShare(userRecordID:household:)` - Removes member from CKShare
+- `sendMemberLeftNotification(memberName:householdName:)` - Local notification to owner
 
-**External Validation** (Jan 1, 2026 - 1 day planning)
-- ✅ PRD v2.0 submitted to ChatGPT & Gemini
-- ✅ **ChatGPT**: "Gold Standard for NSPersistentCloudKitContainer"
-- ✅ **Gemini**: "Production-ready, no architectural changes required"
-- ✅ Fixed 4 critical bugs BEFORE implementation
-- ✅ Received complete production-ready code implementations
-- ✅ PRD v2.2 FINAL created with all polish integrated
+**3. Local "Left Household" Tracking**
+- CloudKit limitation: Members cannot remove themselves from CKShare.participants
+- Solution: Track left households in UserDefaults
+- Methods: `markHouseholdAsLeft()`, `hasLeftHousehold()`, `clearLeftHouseholdFlag()`
+- Prevents re-joining on app launch when CloudKit still shows membership
 
-**Phase 0: Core Data Model Changes** ✅ COMPLETE (completed in M7.1.3)
-- ✅ Created model version 2 (forager 2)
-- ✅ Added 5 relationships to Household
-- ✅ Added inverse relationships to all child entities
-- ✅ Added householdKey (String?) to all household-scoped entities
-- ✅ Lightweight migration working
-- ✅ Build successful, no data loss
+**4. Migration Fix: Categories & Ingredient Templates**
+- **Bug**: `migrateHouseholdDataToPersonal()` only migrated recipes, lists, meal plans
+- **Fix**: Now includes categories and ingredient templates with relationship mapping
+- Categories migrated first (templates depend on them)
+- Templates mapped to migrated categories
+- Ingredients mapped to migrated templates
 
-**Prep Phase A: Store Identity Logger** ✅ COMPLETE (30 min - Jan 2, 2026)
-- ✅ StoreIdentityLogger.swift (74 lines)
-- ✅ DEBUG-only utility for identifying CloudKit store
-- ✅ Essential for debugging Phase 4 migration
+### **Key Technical Changes**
 
-**Phase 1: Persistence Decomposition** ✅ COMPLETE (5 hours - Dec 30, 2025)
-- ✅ PersistenceController.swift (134 lines)
-- ✅ DefaultSeeder.swift (182 lines)
-- ✅ MigrationRunner.swift (274 lines)
-- ✅ Total: 590 lines of clean, focused code
-
-**Phase 2: Scope-Based Store Assignment** ✅ COMPLETE (2 hours - Jan 3, 2026)
-- ✅ All sub-phases (2.1-2.6) complete with external validation refinements
-- ✅ DataScope enum & HouseholdScoped protocol
-- ✅ HouseholdScopeProvider implementation
-- ✅ ManagedObjectFactory core implementation
-- ✅ Environment injection in foragerApp.swift
-- ✅ Manual Core Data property files (6 entities)
-- ✅ Background factory pattern implemented
-- ✅ Build successful, app running
-
-**Phase 3.8: CategoryDeduplicator** ✅ COMPLETE (1 hour - Dec 31, 2025)
-- ✅ CategoryDeduplicator.swift (182 lines)
-- ✅ Self-healing multi-device sync (<60s convergence)
-- ✅ Dedupe-after-creation pattern (Apple-recommended)
-- ✅ Production-ready duplicate prevention
-
-**Phase 4: Attach-Then-Share Migration** ✅ COMPLETE (3.5 hours - Jan 4, 2026)
-
-**Phase 4.1: Pre-Household Migration Prompt UI** ✅ COMPLETE (1.5 hours)
-- ✅ PreHouseholdDataMigrationSheet.swift (165 lines)
-- ✅ Clean migration prompt with data counts
-- ✅ Primary/secondary action buttons
-- ✅ Medium presentation detent for optimal UX
-- ✅ HouseholdService.countPersonalData()
-- ✅ HouseholdService.createHouseholdAndShare()
-- ✅ HouseholdService.migratePersonalDataToHousehold()
-- ✅ Build successful - Zero errors, zero warnings
-
-**Phase 4.2-4.4: Backend Testing & CloudKit Fix** ✅ COMPLETE (2 hours)
-- ✅ Test data created (11 recipes, 1 list, 1 meal plan, 41 templates, 7 categories)
-- ✅ Migration executed successfully (61 items total)
-- ✅ **CRITICAL BUG FIXED**: Missing `context.save()` after `container.share()`
-  - Root cause: CKShare created in-memory but never persisted
-  - Solution: Added `try viewContext.save()` immediately after share creation
-  - Result: CloudKit Dashboard now shows data in shared zone
-- ✅ Enhanced logging implemented (iCloud status, device name, CloudKit events)
-- ✅ Build error fixed (UIKit import for logging)
-- ✅ CloudKit Dashboard verification:
-  - Shared zone created: com.apple.coredata.cloudkit.share.01A0D124...
-  - Zone-wide sharing enabled
-  - Data records present (Categories, IngredientTemplates visible)
-  - Private → Shared transition confirmed via logs
-
-**M7.3.1: Rename Household** ✅ COMPLETE (Jan 13, 2026 - 30 min)
-- ✅ Owner-only household renaming functionality
-- ✅ Inline text field edit UI in Settings with Save/Cancel
-- ✅ Validation: 1-50 characters, non-empty, trimmed whitespace
-- ✅ Async ownership check via HouseholdService.isOwner(household:)
-- ✅ Automatic CloudKit sync to all household members
-- ✅ Build successful, all acceptance criteria met
-- ✅ 100% accurate time estimate (30 min estimated, 30 min actual)
-
-### **Progress Summary**
-
-**All Phases Complete** ✅:
-- ✅ Phase 0: Core Data Model (M7.1.3) - 2h
-- ✅ Prep A: StoreIdentityLogger - 0.5h
-- ✅ Phase 1: Persistence Decomposition - 5h
-- ✅ Phase 2: Scope-Based Factory (2.1-2.6) - 3.75h
-- ✅ Phase 3.8: CategoryDeduplicator - 1h
-- ✅ Phase 4: Attach-Then-Share Migration - 3.5h
-  - Phase 4.1: Migration Prompt UI (1.5h)
-  - Phase 4.2-4.4: Backend Testing & CloudKit Fix (2h)
-- **Total M7.2.3: 12.25 hours** (estimated 14-17h, 88% accuracy)
-
-**Overall M7 Progress**: ~131.5 hours total
-- M7.0: 3h ✅
-- M7.1: 6.5h ✅
-- M7.2: 15h ✅ (M7.2.1 + M7.2.2 including bug fixes)
-- M7.2.3: 12.25h ✅
-- M7.3.1: 0.5h ✅
-- **Remaining**: M7.3 (5.5-7.5h), M7.5 (8-10h), M7.6 (2-3h), M7.7 (2-3h) = 16-21h
-
-### **What's Next 🚀**
-
-**M7.3: Household Management & Settings** - 🔄 **IN PROGRESS**
-
-**Estimated Total**: 6-8 hours (4 phases)
-**Current Phase**: M7.3.2 - Leave Household (1-2h)
-**Status**: Ready to implement
-**Branch**: Create `feature/M7.3.2-leave-household`
-**PRD**: [m7.3-household-management-settings.md](prds/m7.3-household-management-settings.md)
-
-### **M7.3 Overview - Four Phases**
-
-**M7.3.1: Rename Household** ✅ **COMPLETE** (30 min actual)
-- ✅ Owner-only household renaming
-- ✅ Inline text field edit in Settings
-- ✅ CloudKit syncs automatically to all members
-- ✅ 100% accurate time estimate
-
-**M7.3.2: Leave Household** (1-2h) 🚀 **NEXT**
-- Members can leave households
-- Optional data export to JSON
-- Graceful exit with local data preservation
-
-**M7.3.3: Remove Member & Delete Household** (2-3h) ⏳
-- Owners can remove members from household
-- Owners can delete households entirely
-- Data migration from shared → private zone
-
-**M7.3.4: Storage & Sync Controls** (1-2h) ⏳
-- Display CloudKit storage usage
-- Toggle for enabling/disabling iCloud sync
-- Local-only mode option
-
----
-
-## **M7.3.1: Rename Household** ✅ **COMPLETE**
-
-### **Completion Summary**
-
-**Status**: ✅ Complete (January 13, 2026)
-**Time**: 30 minutes (100% accurate estimate)
-**Files Modified**:
-- `Services/HouseholdService.swift`
-- `forager/SettingsView.swift`
-
-### **What Was Implemented**
-
-**1. Service Method** (HouseholdService.swift)
-- Added `renameHousehold(_:to:)` async method
-- Owner validation via `isOwner(household:)` async check
-- Input validation: 1-50 characters, non-empty, trimmed whitespace
-- Added `emptyName` and `nameTooLong` error cases to HouseholdError
-- Automatic CloudKit sync via NSPersistentCloudKitContainer
-
-**2. UI Implementation** (SettingsView.swift)
-- Inline text field edit in Settings → Household section
-- Save/Cancel buttons with error display
-- Owner-only UI (pencil icon only for owners)
-- Async ownership check on view appearance via `.task` modifier
-- State management: `isEditingName`, `editedName`, `renameError`, `isCurrentUserOwner`
-
-### **Testing Results**
-
-✅ All acceptance criteria met:
-- Owner can tap household name to edit
-- Text field with Save/Cancel buttons
-- Validation prevents empty names
-- Validation prevents names > 50 characters
-- Non-owners cannot edit (no pencil icon, tap disabled)
-- Build successful
-- Manual testing confirmed working
-
-### **Technical Notes**
-
-**Key Fix**: Initially used `household.isOwner` (doesn't exist). Fixed by:
-1. Adding `@State private var isCurrentUserOwner = false`
-2. Using `.task { isCurrentUserOwner = await householdService.isOwner(household: household) }`
-3. Replacing all `household.isOwner` references with `isCurrentUserOwner`
-
-**CloudKit Sync**: Automatic via Core Data + NSPersistentCloudKitContainer. No manual sync code needed.
-
----
-
-## **M7.3.2: Leave Household** 🚀 **NEXT**
-
-### **Goal**
-Allow household members to leave a household with optional data export
-    }
-
-    guard !newName.trimmingCharacters(in: .whitespaces).isEmpty else {
-        throw HouseholdError.emptyName
-    }
-
-    household.name = newName
-    try viewContext.save()
-    // CloudKit syncs automatically
-    print("✅ Household renamed to: \(newName)")
-}
-```
-
-**2. UI Component** (Settings → Household section)
-- Tap household name to enter edit mode
-- Inline text field with current name pre-filled
-- Save on keyboard done/return or tap outside
-- Validation: 1-50 characters, non-empty
-
-**3. Validation Rules**
-- Non-empty after trimming whitespace
-- 1-50 characters maximum
-- Owner-only operation (isOwner check)
-
-### **Files to Modify**
-
-**Services/HouseholdService.swift**
-- Add `renameHousehold(_:to:)` method
-- Add validation logic
-- Add error cases to HouseholdError enum
-
-**Views/Settings/HouseholdSettingsView.swift**
-- Make household name tappable (owner only)
-- Add inline text field for editing
-- Add save/cancel logic
-- Display validation errors
-
-### **Acceptance Criteria**
-
-**Functionality:**
-- ✅ Owner can tap household name to edit
-- ✅ Text field shows current name pre-filled
-- ✅ Save on keyboard done/return
-- ✅ Validation prevents empty names
-- ✅ Validation limits to 50 characters
-- ✅ Non-owners cannot edit (UI hidden)
-
-**CloudKit Sync:**
-- ✅ Renamed household syncs to all members
-- ✅ Members see new name within 5 seconds
-- ✅ Sync works bidirectionally
-
-**Error Handling:**
-- ✅ Empty name shows validation error
-- ✅ Non-owner attempt shows permission error
-- ✅ Save failure shows clear error message
-
-### **Testing Plan**
-
-**Unit Tests:**
+**stopParticipatingInShare() Refactor**:
 ```swift
-func testRenameHousehold() {
-    // Given: household with owner
-    let household = createHouseholdWithOwner()
-
-    // When: rename to valid name
-    try service.renameHousehold(household, to: "New Name")
-
-    // Then: name updated
-    XCTAssertEqual(household.name, "New Name")
-}
-
-func testRenameHouseholdEmptyName() {
-    // Given: household
-    let household = createHouseholdWithOwner()
-
-    // When/Then: empty name throws error
-    XCTAssertThrowsError(
-        try service.renameHousehold(household, to: "   ")
-    )
-}
-
-func testRenameHouseholdNotOwner() {
-    // Given: household as member (not owner)
-    let household = createHouseholdAsMember()
-
-    // When/Then: non-owner throws error
-    XCTAssertThrowsError(
-        try service.renameHousehold(household, to: "New Name")
-    )
-}
+// Uses getShare() for LIVE CKShare from CloudKit (not stale archived data)
+// Owner purges from privateStore (not sharedStore)
+// Member: No purge needed - CloudKit handles cleanup automatically
 ```
 
-**Integration Test (2 devices):**
-1. Device A (Owner): Rename household to "Test Family"
-2. Device B (Member): Wait 5 seconds
-3. Device B: Verify Settings → Household shows "Test Family"
+**Leave Flow Sequence**:
+1. Migrate data (if requested) - now includes categories & templates
+2. Create LeaveRequest (syncs to owner via CloudKit)
+3. Stop participating in share (CloudKit handles cleanup)
+4. Mark household as "left" locally (UserDefaults)
+5. Clear currentHousehold (UI updates)
 
-### **Time Estimate: 30 minutes**
-- Service method: 10 min
-- UI implementation: 15 min
-- Testing: 5 min
+**Owner-Side Processing**:
+1. On app launch, `processLeaveRequests()` called
+2. Fetches pending LeaveRequests for this household
+3. Removes participant from CKShare via `CKModifyRecordsOperation`
+4. Sends local notification to owner
+5. Marks request as "processed"
 
-### **Git Workflow**
-```bash
-# 1. Create feature branch
-git checkout main
-git pull origin main
-git checkout -b feature/M7.3.1-rename-household
+### **What Still Needs Testing** 🧪
 
-# 2. Implement and commit
-git add Services/HouseholdService.swift Views/Settings/HouseholdSettingsView.swift
-git commit -m "M7.3.1: Add rename household functionality
+1. **Full Leave Flow End-to-End**:
+   - Member initiates "migrate and leave"
+   - Verify categories AND recipes migrate to personal
+   - Verify LeaveRequest syncs to owner
+   - Verify owner's app processes request on launch
+   - Verify member is removed from CKShare
+   - Verify owner receives notification
 
-- HouseholdService.renameHousehold(_:to:) method
-- Inline text field edit in Settings
+2. **Build Error Resolution**:
+   - Xcode build from command line failed (simulator name issue)
+   - Build from Xcode directly should work
+   - Test on physical devices
+
+---
+
+## **Previous Session Progress**
+
+### **M7.3.1: Rename Household** ✅ COMPLETE (Jan 13, 2026)
+- Owner-only household renaming functionality
+- Inline text field edit UI in Settings
 - Validation: 1-50 characters, non-empty
-- Owner-only operation with permission check"
+- Automatic CloudKit sync to all members
 
-git push -u origin feature/M7.3.1-rename-household
+### **M7.2.3: CloudKit Hardening** ✅ COMPLETE (Jan 4, 2026)
+- Dual-store architecture (private + shared)
+- Scope-based store assignment
+- CategoryDeduplicator for multi-device sync
+- Attach-then-share migration
 
-# 3. Test on devices, then merge
-git checkout main
-git merge feature/M7.3.1-rename-household
-git push origin main
-```
-
----
-
-### **After M7.3.1 Complete**
-
-**Next**: M7.3.2 - Leave Household (1-2h)
-- Member exit flow
-- Data export to JSON
-- Graceful household departure
-
-### **M7 Progress Summary**
-
-**Completed Components** (Jan 13, 2026):
-- M7.0: App Store Prerequisites (3h) ✅
-- M7.1: CloudKit Sync Foundation (6.5h) ✅
-- M7.2: Shared Household Zone (15h) ✅
-  - M7.2.1: Household Setup (1.25h)
-  - M7.2.2: Member Invitation (11-12h) - *4x over estimate due to iOS 18.x bugs and testing*
-- M7.2.3: CloudKit Hardening (12.25h) ✅
-- **Total: ~37 hours of ~52-60h estimated**
-
-**Remaining Components**:
-- M7.3: Household Management & Settings (6-8h) 🚀 **NEXT**
-- M7.5: Architecture Hardening (8-10h) ⏳
-- M7.6: External TestFlight (2-3h) ⏳
-- M7.7: Beta Landing Page (2-3h) ⏳
-
-**Key Lessons from M7**:
-- Physical device testing reveals critical bugs simulators miss
-- iOS version bugs (18.x UICloudSharingController) require creative solutions
-- CloudKit propagation needs generous retry windows (30s not 3s)
-- Display name handling needs robust fallbacks for CloudKit IDs
-- Always test with real iCloud accounts on real devices before shipping
+### **M7.2.2: Member Invitation** ✅ COMPLETE (Jan 12, 2026)
+- Public link sharing (bypassed UICloudSharingController bugs)
+- CKShare.participants as source of truth
+- ShareParticipant model for UI display
 
 ---
 
-## 📚 **LEARNING NOTES CREATED**
+## **Files Modified This Session**
 
-### **M7.2.3 Documentation**
-- **[30-m7.2.3-phase-2.6-background-factory.md](archive/30-m7.2.3-phase-2.6-background-factory.md)** - Phase 2.6 complete journey
-- **[31-m7.2.3-phase-4-cloudkit-sync-fix.md](archive/31-m7.2.3-phase-4-cloudkit-sync-fix.md)** - Phase 4 complete (TO BE CREATED)
+**Core Data**:
+- `forager.xcdatamodeld/forager 2.xcdatamodel/contents` - Added LeaveRequest entity
+- `LeaveRequest+CoreDataClass.swift` - NEW
+- `LeaveRequest+CoreDataProperties.swift` - NEW
+- `Household+CoreDataProperties.swift` - Added leaveRequests relationship
 
-### **Previous M7 Learning Notes**
-- **[24-m7.1.1-cloudkit-schema-validation.md](learning-notes/24-m7.1.1-cloudkit-schema-validation.md)** - CloudKit container setup
-- **[25-m7.1.2-cloudkit-sync-monitoring.md](learning-notes/25-m7.1.2-cloudkit-sync-monitoring.md)** - Sync monitoring implementation
-- **[26-m7.2-architecture-pivot.md](learning-notes/26-m7.2-architecture-pivot.md)** - CKShare → Shared Zones pivot
-- **[27-m7.2.3-phase1-persistence-decomposition.md](archive/27-m7.2.3-phase1-persistence-decomposition.md)** - Phase 1 complete
-- **[28-m7.2.3-phase3.8-category-deduplicator.md](archive/28-m7.2.3-phase3.8-category-deduplicator.md)** - Duplicate prevention
-- **[29-m7.2.3-external-validation.md](archive/29-m7.2.3-external-validation.md)** - ChatGPT + Gemini validation
+**Services**:
+- `Services/HouseholdService.swift` - Major changes:
+  - Leave request management methods
+  - Local left-household tracking
+  - Migration fix for categories/templates
+  - stopParticipatingInShare() refactor
+
+---
+
+## **Known Issues & Limitations**
+
+1. **CloudKit Limitation**: Members cannot remove themselves from CKShare.participants
+   - Workaround: Local tracking + LeaveRequest for owner to process
+
+2. **Migration**: PlannedMeals not migrated (require recipe mapping)
+   - User can recreate meal assignments manually
+
+3. **Shared Data After Leave**: CloudKit may take time to remove shared data
+   - Local tracking prevents re-joining prematurely
+
+---
+
+## 🚀 **What's Next**
+
+**Immediate**: Test the leave flow on physical devices
+1. Build app from Xcode
+2. Test member leave with "migrate and leave"
+3. Verify categories persist alongside recipes
+4. Verify owner notification works
+
+**After Testing Passes**:
+- M7.3.3: Remove Member & Delete Household (2-3h)
+- M7.3.4: Storage & Sync Controls (1-2h)
 
 ---
 
@@ -402,18 +155,15 @@ git push origin main
 
 **For EVERY development session**, follow the mandatory startup sequence:
 
-1. ✅ Read `docs/session-startup-checklist.md` - Complete 8-point checklist
-2. ✅ Read `docs/project-naming-standards.md` - Verify M#.#.# format
-3. ✅ Read `docs/current-story.md` (this file) - Confirm current status
-4. ✅ Read `docs/next-prompt.md` - Get implementation guidance
-
-**This 10-15 minute investment prevents 7-16 hours of rework.**
+1. ✅ Read `docs/session-startup-checklist.md`
+2. ✅ Read `docs/project-naming-standards.md`
+3. ✅ Read `docs/current-story.md` (this file)
+4. ✅ Read `docs/next-prompt.md`
 
 ---
 
-**Last Session**: January 13, 2026 - Documentation Cleanup & M7.3.1 Planning
-**Next Action**: M7.3.1 - Rename Household (30 minutes)
-**Ready To Go**: ✅ M7.2.2 complete, M7.2.3 complete, ready for M7.3.1 implementation
-**Branch Strategy**: Create `feature/M7.3.1-rename-household` before starting
-**Confidence**: 🟢 HIGH (Simple 30-min feature, well-defined scope)
-**Version**: January 13, 2026 - M7.3.1 Ready to Start
+**Last Session**: January 18, 2026 - M7.2.2 Leave Household Debugging
+**Next Action**: Test leave flow on physical devices
+**Branch**: `main` (all work committed)
+**Confidence**: 🟡 MEDIUM (Code complete, needs device testing)
+**Version**: January 18, 2026 - Leave Flow Functional
