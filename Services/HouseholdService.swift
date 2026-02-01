@@ -1633,15 +1633,20 @@ class HouseholdService: ObservableObject {
             for household in households {
                 print("   Checking household: \(household.name ?? "Unnamed")")
 
-                // M7.2.2 FIX: Skip households the user has locally "left"
-                // CloudKit limitation: Members can't remove themselves from CKShare.participants
-                if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
-                    print("   ⏭️ Skipping - user has left this household locally")
-                    continue
-                }
-
                 // Check if user is a participant via CKShare (the source of truth)
                 let isParticipant = await isCurrentUserParticipant(in: household)
+
+                // M7.2.2 FIX: Skip households the user has locally "left"
+                // But only if they haven't re-joined (re-joining clears the flag below)
+                if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
+                    if !isParticipant {
+                        print("   ⏭️ Skipping - user has left this household locally")
+                        continue
+                    }
+                    // User re-joined this household - clear the left flag
+                    print("   🔄 User previously left but has re-joined - clearing left flag")
+                    clearLeftHouseholdFlag(householdID)
+                }
 
                 if isParticipant {
                     print("✅ Found household where you're a participant!")
