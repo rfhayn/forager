@@ -11,6 +11,7 @@ import CoreData
 import CloudKit
 import UIKit  // For UIDevice.current.name
 import UserNotifications  // M7.2.2: For member left notifications
+import Combine  // M7.2.2: For real-time sync observation
 
 // MARK: - Household Errors
 
@@ -83,6 +84,11 @@ class HouseholdService: ObservableObject {
     // So we track left households locally to prevent re-joining on next app launch
     private static let leftHouseholdsKey = "com.forager.leftHouseholdIDs"
 
+    private var cancellables = Set<AnyCancellable>()
+
+    // M7.2.2: Debounce timer to avoid processing leave requests on every sync event
+    private var leaveRequestCheckTimer: Timer?
+
     private var leftHouseholdIDs: Set<String> {
         get {
             let array = UserDefaults.standard.stringArray(forKey: Self.leftHouseholdsKey) ?? []
@@ -153,10 +159,36 @@ class HouseholdService: ObservableObject {
     init(context: NSManagedObjectContext) {
         self.viewContext = context
         self.container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-        
+
         // Load current household on init
         Task {
             await loadCurrentHousehold()
+        }
+
+        // M7.2.2: Listen for CloudKit sync events to process leave requests in real-time
+        // Debounced to 5 seconds so we don't run on every sync event (100+ per session)
+        setupSyncObserver()
+    }
+
+    // M7.2.2: Observe CloudKit sync events and check for pending leave requests
+    // Uses debounce so rapid sync events (common during initial sync) don't trigger
+    // repeated processing — only fires once after sync activity settles
+    private func setupSyncObserver() {
+        NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.scheduleLeaveRequestCheck()
+            }
+            .store(in: &cancellables)
+    }
+
+    // M7.2.2: Debounced leave request check — waits 5 seconds after last sync event
+    private func scheduleLeaveRequestCheck() {
+        leaveRequestCheckTimer?.invalidate()
+        leaveRequestCheckTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.processLeaveRequests()
+            }
         }
     }
     
