@@ -320,13 +320,9 @@ class HouseholdService: ObservableObject {
 
         // Step 2: Create LeaveRequest BEFORE stopping participation
         // This syncs to the owner's device so they can remove us from CKShare.participants
-        do {
-            try await createLeaveRequest(for: household)
-            print("✅ M7.2.2: Created leave request for owner to process")
-        } catch {
-            print("⚠️ M7.2.2: Failed to create leave request: \(error)")
-            // Continue anyway - local leave still works
-        }
+        // If this fails, abort the leave — owner needs to be notified to clean up CKShare
+        try await createLeaveRequest(for: household)
+        print("✅ M7.2.2: Created leave request for owner to process")
 
         // Step 3: Stop participating in the share
         // M7.2.2 Refactor: No longer delete HouseholdMember records - CKShare.participants is source of truth
@@ -487,10 +483,15 @@ class HouseholdService: ObservableObject {
         print("🔍 M7.2.2: Checking for pending leave requests...")
 
         // Fetch pending leave requests for this household
+        guard let householdUUID = household.id?.uuidString else {
+            print("⚠️ M7.2.2: Cannot process leave requests - household has no ID")
+            return
+        }
+
         let request: NSFetchRequest<LeaveRequest> = LeaveRequest.fetchRequest()
         request.predicate = NSPredicate(
             format: "householdID == %@ AND status == %@",
-            household.id?.uuidString ?? "",
+            householdUUID,
             "pending"
         )
 
@@ -504,8 +505,22 @@ class HouseholdService: ObservableObject {
 
             print("   Found \(pendingRequests.count) pending leave request(s)")
 
+            // Deduplicate: only process the first request per userRecordID
+            // Multiple requests can exist if member retried or CloudKit resynced
+            var processedUserIDs = Set<String>()
             for leaveRequest in pendingRequests {
+                guard let userID = leaveRequest.userRecordID, !processedUserIDs.contains(userID) else {
+                    // Duplicate or missing userRecordID — mark as processed to prevent reprocessing
+                    leaveRequest.status = "processed"
+                    continue
+                }
+                processedUserIDs.insert(userID)
                 await processLeaveRequest(leaveRequest, household: household)
+            }
+
+            // Save any duplicate markings
+            if viewContext.hasChanges {
+                try viewContext.save()
             }
 
         } catch {
@@ -547,10 +562,12 @@ class HouseholdService: ObservableObject {
         let share = try await getShare(for: household)
 
         // Find the participant to remove
+        // If not found, they may have already left — log and continue without error
+        // so the leave request still gets marked as processed
         guard let participantToRemove = share.participants.first(where: { participant in
             participant.userIdentity.userRecordID?.recordName == userRecordID
         }) else {
-            print("⚠️ M7.2.2: Participant not found in share (may have already been removed)")
+            print("ℹ️ M7.2.2: Participant \(userRecordID) not found in share - already removed")
             return
         }
 
@@ -697,6 +714,11 @@ class HouseholdService: ObservableObject {
             newCategory.id = UUID()
             newCategory.name = oldCategory.name
             newCategory.sortOrder = oldCategory.sortOrder
+            newCategory.color = oldCategory.color
+            newCategory.isDefault = oldCategory.isDefault
+            newCategory.dateCreated = oldCategory.dateCreated
+            newCategory.normalizedName = oldCategory.normalizedName
+            newCategory.updatedAt = oldCategory.updatedAt
             newCategory.household = nil
             newCategory.householdKey = nil
 
@@ -713,15 +735,17 @@ class HouseholdService: ObservableObject {
             let newTemplate = IngredientTemplate(context: viewContext)
             newTemplate.id = UUID()
             newTemplate.name = oldTemplate.name
-            newTemplate.defaultUnit = oldTemplate.defaultUnit
+            newTemplate.canonicalName = oldTemplate.canonicalName
+            newTemplate.normalizedName = oldTemplate.normalizedName
+            newTemplate.usageCount = oldTemplate.usageCount
+            newTemplate.dateCreated = oldTemplate.dateCreated
+            newTemplate.updatedAt = oldTemplate.updatedAt
+            newTemplate.isStaple = oldTemplate.isStaple
             newTemplate.household = nil
             newTemplate.householdKey = nil
 
-            // Link to migrated category if it exists
-            if let oldCategoryId = oldTemplate.category?.id,
-               let newCategory = categoryMapping[oldCategoryId] {
-                newTemplate.category = newCategory
-            }
+            // Preserve category string (IngredientTemplate.category is a String, not a relationship)
+            newTemplate.category = oldTemplate.category
 
             // Store mapping for ingredient migration
             if let oldId = oldTemplate.id {
