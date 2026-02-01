@@ -736,7 +736,6 @@ class HouseholdService: ObservableObject {
             newTemplate.id = UUID()
             newTemplate.name = oldTemplate.name
             newTemplate.canonicalName = oldTemplate.canonicalName
-            newTemplate.normalizedName = oldTemplate.normalizedName
             newTemplate.usageCount = oldTemplate.usageCount
             newTemplate.dateCreated = oldTemplate.dateCreated
             newTemplate.updatedAt = oldTemplate.updatedAt
