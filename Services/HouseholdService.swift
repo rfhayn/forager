@@ -151,24 +151,24 @@ class HouseholdService: ObservableObject {
         setupSyncObserver()
     }
 
-    // M7.2.2: Observe CloudKit sync events and check for pending leave requests
+    // M7.2.2: Observe CloudKit sync events and check for member departures
     // Uses debounce so rapid sync events (common during initial sync) don't trigger
     // repeated processing — only fires once after sync activity settles
     private func setupSyncObserver() {
         NotificationCenter.default.publisher(for: .NSPersistentStoreRemoteChange)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
-                self?.scheduleLeaveRequestCheck()
+                self?.scheduleMemberDepartureCheck()
             }
             .store(in: &cancellables)
     }
 
-    // M7.2.2: Debounced leave request check — waits 5 seconds after last sync event
-    private func scheduleLeaveRequestCheck() {
+    // M7.2.2: Debounced departure check — waits 5 seconds after last sync event
+    private func scheduleMemberDepartureCheck() {
         leaveRequestCheckTimer?.invalidate()
         leaveRequestCheckTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.processLeaveRequests()
+                await self?.checkForMemberDepartures()
             }
         }
     }
@@ -191,10 +191,32 @@ class HouseholdService: ObservableObject {
                 // CloudKit limitation: Members can't remove themselves from CKShare.participants
                 // So we track left households locally to prevent re-joining
                 if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
-                    currentHousehold = nil
-                    print("ℹ️ Household '\(household.name ?? "Unknown")' found but user has left it locally")
-                    print("   Skipping re-join (household ID in left list)")
-                    return
+                    // Check if user has re-joined by verifying CKShare participation
+                    let isParticipant = await isCurrentUserParticipant(in: household)
+                    if isParticipant {
+                        // User re-joined — clear the left flag and proceed normally
+                        print("🔄 Household '\(household.name ?? "Unknown")' was left but user has re-joined — clearing flag")
+                        clearLeftHouseholdFlag(householdID)
+                    } else {
+                        // Genuinely left — nuke ghost data
+                        currentHousehold = nil
+                        print("ℹ️ Household '\(household.name ?? "Unknown")' found but user has left it locally")
+                        // Delete shared store objects from context (safe for @FetchRequest),
+                        // then nuke the store file to prevent ghost data re-sync
+                        let sharedStore = PersistenceController.shared.sharedStore
+                        let allEntities = PersistenceController.shared.container.managedObjectModel.entities
+                        for entity in allEntities {
+                            guard let entityName = entity.name else { continue }
+                            let fetchReq = NSFetchRequest<NSManagedObject>(entityName: entityName)
+                            fetchReq.affectedStores = [sharedStore]
+                            if let objects = try? viewContext.fetch(fetchReq) {
+                                for obj in objects { viewContext.delete(obj) }
+                            }
+                        }
+                        try? viewContext.save()
+                        try? PersistenceController.shared.destroyAndRecreateSharedStore()
+                        return
+                    }
                 }
 
                 // M7.2.2 Refactor: Check membership via CKShare, not HouseholdMember records
@@ -222,8 +244,8 @@ class HouseholdService: ObservableObject {
                         print("   Participants: \(participantCount) (could not init departure tracking)")
                     }
 
-                    // M7.2.2: Process any pending leave requests (owner-only)
-                    await processLeaveRequests()
+                    // M7.2.2: Check for member departures via CKShare polling (owner-only)
+                    await checkForMemberDepartures()
                 } else {
                     currentHousehold = nil
                     print("ℹ️ Household exists but user is not a participant (left or removed)")
@@ -343,39 +365,51 @@ class HouseholdService: ObservableObject {
             print("✅ M7.3.2: Migrated household data to personal store")
         }
 
-        // Step 2: Try to create LeaveRequest as a courtesy notification to the owner.
-        // This is BEST-EFFORT — the leave flow completes regardless of whether this succeeds.
-        // The owner's primary detection mechanism is CKShare participant polling.
+        // Step 2: Delete the CKShare record from the member's shared database.
+        // This is CloudKit's intended mechanism for a participant to leave a share.
+        // It bypasses NSPersistentCloudKitContainer's mirroring delegate entirely (direct CKDatabase op)
+        // and automatically updates the owner's CKShare.participants list.
         do {
-            try await createLeaveRequest(for: household)
-            print("✅ M7.2.2: Created leave request (best-effort notification to owner)")
-
-            // Give CloudKit a brief window to export before we leave the share.
-            // Don't block the flow — if it doesn't sync, participant polling handles it.
-            print("🔄 M7.2.2: Waiting briefly for leave request to sync...")
-            let exported = await waitForCloudKitExport(timeout: 5)
-            if exported {
-                print("✅ M7.2.2: Leave request synced to CloudKit")
-            } else {
-                print("ℹ️ M7.2.2: Leave request may not have synced — owner will detect via participant polling")
-            }
+            let share = try await getShare(for: household)
+            try await deleteCKShareFromSharedDatabase(share)
+            print("✅ M7.2.2: Deleted CKShare from shared database (left share)")
         } catch {
-            // Non-fatal — owner will detect departure via CKShare participant polling
-            print("ℹ️ M7.2.2: Could not create leave request: \(error.localizedDescription)")
-            print("   Owner will detect departure via CKShare participant polling")
+            // Non-fatal — local cleanup still proceeds so the UI is correct on this device.
+            // Owner will eventually detect departure or member can be manually removed.
+            print("⚠️ M7.2.2: Could not delete CKShare: \(error.localizedDescription)")
+            print("   Proceeding with local cleanup")
         }
 
-        // Step 3: Do NOT call stopParticipatingInShare() — it corrupts the owner's shared zone.
-        // Instead, the owner detects the LeaveRequest (or participant polling) and calls
-        // share.removeParticipant() on their side, which cleanly removes us without zone corruption.
-        // The member's local cleanup (purge + Keychain flag) is sufficient for immediate UI update.
+        // Step 3: Delete all objects in the shared store from the context FIRST.
+        // This notifies @FetchRequest observers so SwiftUI drops its references.
+        // Then destroy/recreate the store file to guarantee no ghost data remains.
+        // We can't just reset() or destroy the store — SwiftUI @FetchRequest holds
+        // managed object references and crashes if the store disappears underneath.
+        let sharedStore = PersistenceController.shared.sharedStore
+        let allEntities = PersistenceController.shared.container.managedObjectModel.entities
+        var deletedCount = 0
+        for entity in allEntities {
+            guard let entityName = entity.name else { continue }
+            let fetchReq = NSFetchRequest<NSManagedObject>(entityName: entityName)
+            fetchReq.affectedStores = [sharedStore]
+            if let objects = try? viewContext.fetch(fetchReq) {
+                for obj in objects {
+                    viewContext.delete(obj)
+                    deletedCount += 1
+                }
+            }
+        }
+        if viewContext.hasChanges {
+            try? viewContext.save()
+            print("✅ M7.2.2: Deleted \(deletedCount) shared store objects from context")
+        }
 
-        // Step 4: Purge shared store ghost objects from local Core Data
-        // CloudKit is supposed to remove these automatically after stopParticipatingInShare,
-        // but it's asynchronous and unreliable. Without this purge, the UI shows duplicates
-        // (personal copy + shared store ghost) until CloudKit eventually cleans up.
-        if let householdID = householdID {
-            purgeSharedStoreObjects(householdKey: householdID)
+        // Step 4: Destroy and recreate the empty store file to prevent ghost data from re-syncing
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            print("✅ M7.2.2: Shared store destroyed and recreated")
+        } catch {
+            print("⚠️ M7.2.2: Failed to destroy shared store: \(error.localizedDescription)")
         }
 
         // Step 5: Mark household as "left" in Keychain (survives app reinstall)
@@ -383,7 +417,7 @@ class HouseholdService: ObservableObject {
             markHouseholdAsLeft(householdID)
         }
 
-        // Step 5: Clear current household (UI will show "Create Household")
+        // Step 6: Clear current household (UI will show "Create Household")
         await MainActor.run {
             currentHousehold = nil
         }
@@ -436,124 +470,35 @@ class HouseholdService: ObservableObject {
         }
     }
 
-    // MARK: - Shared Store Cleanup (M7.2.2)
+    /// M7.2.2: Deletes the CKShare record from the member's shared database.
+    /// This is CloudKit's intended mechanism for a non-owner to leave a share.
+    /// Bypasses NSPersistentCloudKitContainer (direct CKDatabase operation) so it
+    /// cannot poison the mirroring delegate. CloudKit automatically updates the
+    /// owner's CKShare.participants list when the member deletes their copy.
+    private func deleteCKShareFromSharedDatabase(_ share: CKShare) async throws {
+        let sharedDB = container.sharedCloudDatabase
 
-    /// Purges shared store objects from local Core Data after a member leaves.
-    /// CloudKit is supposed to handle this automatically after stopParticipatingInShare(),
-    /// but it's unreliable — shared data can persist indefinitely, causing UI duplicates.
-    /// We delete all objects with the given householdKey plus the Household entity itself.
-    private func purgeSharedStoreObjects(householdKey: String) {
-        print("🧹 M7.2.2: Purging shared store objects for household \(householdKey)")
-        var totalDeleted = 0
-
-        // Delete all entities that have a householdKey matching the departed household
-        func purgeEntities<T: NSManagedObject>(_ type: T.Type, keyPath: String) {
-            let req = NSFetchRequest<T>(entityName: String(describing: T.self))
-            req.predicate = NSPredicate(format: "%K == %@", keyPath, householdKey)
-            if let results = try? viewContext.fetch(req) {
-                for obj in results {
-                    viewContext.delete(obj)
-                    totalDeleted += 1
-                }
-            }
-        }
-
-        // Only these entities have a householdKey attribute in the Core Data model.
-        // Child objects (Ingredient, GroceryListItem, PlannedMeal) are cascade-deleted
-        // when their parent (Recipe, WeeklyList, MealPlan) is deleted.
-        purgeEntities(Recipe.self, keyPath: "householdKey")
-        purgeEntities(WeeklyList.self, keyPath: "householdKey")
-        purgeEntities(MealPlan.self, keyPath: "householdKey")
-        purgeEntities(IngredientTemplate.self, keyPath: "householdKey")
-        purgeEntities(Category.self, keyPath: "householdKey")
-
-        // Delete the Household entity itself
-        let householdReq: NSFetchRequest<Household> = Household.fetchRequest()
-        guard let householdUUID = UUID(uuidString: householdKey) else {
-            print("⚠️ M7.2.2: Invalid household key for purge: \(householdKey)")
-            return
-        }
-        householdReq.predicate = NSPredicate(format: "id == %@", householdUUID as CVarArg)
-        if let households = try? viewContext.fetch(householdReq) {
-            for h in households {
-                viewContext.delete(h)
-                totalDeleted += 1
-            }
-        }
-
-        do {
-            if viewContext.hasChanges {
-                try viewContext.save()
-                print("✅ M7.2.2: Purged \(totalDeleted) shared store objects")
-            } else {
-                print("ℹ️ M7.2.2: No shared store objects to purge")
-            }
-        } catch {
-            print("⚠️ M7.2.2: Failed to purge shared store objects: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - Leave Request Management (M7.2.2)
-
-    /// Creates a leave request that syncs to the owner for automatic participant removal
-    /// - Parameter household: The household the member is leaving
-    private func createLeaveRequest(for household: Household) async throws {
-        // Clean up any stale leave requests from previous failed attempts
-        // These can poison CloudKit mirroring if stuck in the wrong store
-        let staleRequest: NSFetchRequest<LeaveRequest> = LeaveRequest.fetchRequest()
-        if let staleResults = try? viewContext.fetch(staleRequest), !staleResults.isEmpty {
-            print("🧹 M7.2.2: Cleaning up \(staleResults.count) stale leave request(s)")
-            for stale in staleResults {
-                viewContext.delete(stale)
-            }
-            try viewContext.save()
-        }
-
-        // Get current user's CloudKit record ID
-        let userRecordID = try await getCurrentUserRecordID()
-
-        // Get current user's display name — try CKShare participant first (more reliable),
-        // fall back to discoverUserIdentity (requires discoverability opt-in)
-        var displayName = await getDisplayNameFromShare(household: household)
-        if displayName == nil {
-            displayName = await getCurrentUserDisplayName()
-        }
-        let resolvedDisplayName = displayName ?? "Unknown Member"
-
-        // M7.2.2: Create leave request and share it into the household's CKShare
-        // so it syncs to the owner's device via the shared CloudKit zone.
-        // We must use shareManagedObjects(_:toShare:) — simply assigning to the
-        // shared store is not enough; CloudKit requires explicit sharing.
-        let leaveRequest = LeaveRequest(context: viewContext)
-        leaveRequest.id = UUID()
-        leaveRequest.householdID = household.id?.uuidString
-        leaveRequest.userRecordID = userRecordID
-        leaveRequest.displayName = resolvedDisplayName
-        leaveRequest.requestedDate = Date()
-        leaveRequest.status = "pending"
-
-        // Share the leave request into the household's existing CKShare
-        // IMPORTANT: Do NOT save before calling share() — the object must have a
-        // temporary objectID so share() can assign it to the shared store.
-        // If we save first, it gets a permanent ID in the private store and share() fails.
-        let share = try await getShare(for: household)
-        let persistenceContainer = PersistenceController.shared.container
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            persistenceContainer.share([leaveRequest], to: share) { _, _, _, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else {
+            let deleteOp = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: [share.recordID])
+            deleteOp.modifyRecordsResultBlock = { result in
+                switch result {
+                case .success:
                     continuation.resume()
+                case .failure(let error):
+                    // "Unknown item" or "zone not found" means already left — treat as success
+                    if let ckError = error as? CKError,
+                       ckError.code == .unknownItem || ckError.code == .zoneNotFound {
+                        continuation.resume()
+                    } else {
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
+            sharedDB.add(deleteOp)
         }
-        try viewContext.save()
-
-        print("📤 M7.2.2: Leave request created")
-        print("   Household: \(household.name ?? "Unknown")")
-        print("   Member: \(resolvedDisplayName)")
-        print("   UserRecordID: \(userRecordID)")
     }
+
+    // MARK: - Member Departure Detection (M7.2.2)
 
     /// Gets the current user's CloudKit record ID
     private func getCurrentUserRecordID() async throws -> String {
@@ -617,127 +562,35 @@ class HouseholdService: ObservableObject {
 
     /// Processes pending leave requests (owner-only)
     /// Call this on app launch and when CloudKit sync events occur
-    func processLeaveRequests() async {
+    /// M7.2.2: Checks for member departures via CKShare participant polling (owner-only).
+    /// Replaces the old processLeaveRequests() — we no longer create or process LeaveRequest entities.
+    /// Also cleans up any stale LeaveRequests from prior app versions.
+    func checkForMemberDepartures() async {
         guard let household = currentHousehold else {
             return
         }
 
-        // Only owner can process leave requests
+        // Only owner detects departures
         guard await isOwner(household: household) else {
             return
         }
 
-        // M7.2.2: Primary departure detection — check CKShare participants directly
+        // Primary departure detection — check CKShare participants directly
         await detectParticipantDepartures(household: household)
 
-        // Clean up any previously processed leave requests
+        // Clean up any leftover LeaveRequests from prior app versions
         cleanupStaleLeaveRequests()
-
-        print("🔍 M7.2.2: Checking for pending leave requests...")
-
-        // Fetch pending leave requests for this household
-        guard let householdUUID = household.id?.uuidString else {
-            print("⚠️ M7.2.2: Cannot process leave requests - household has no ID")
-            return
-        }
-
-        let request: NSFetchRequest<LeaveRequest> = LeaveRequest.fetchRequest()
-        request.predicate = NSPredicate(
-            format: "householdID == %@ AND status == %@",
-            householdUUID,
-            "pending"
-        )
-
-        do {
-            let pendingRequests = try viewContext.fetch(request)
-
-            if pendingRequests.isEmpty {
-                print("   No pending leave requests")
-                return
-            }
-
-            print("   Found \(pendingRequests.count) pending leave request(s)")
-
-            // Deduplicate: only process the first request per userRecordID
-            // Multiple requests can exist if member retried or CloudKit resynced
-            var processedUserIDs = Set<String>()
-            for leaveRequest in pendingRequests {
-                guard let userID = leaveRequest.userRecordID, !processedUserIDs.contains(userID) else {
-                    // Duplicate or missing userRecordID — delete to prevent accumulation
-                    viewContext.delete(leaveRequest)
-                    continue
-                }
-                processedUserIDs.insert(userID)
-                await processLeaveRequest(leaveRequest, household: household)
-            }
-
-            if viewContext.hasChanges {
-                try viewContext.save()
-            }
-
-        } catch {
-            print("❌ M7.2.2: Error fetching leave requests: \(error)")
-        }
     }
 
-    /// Processes a single leave request with security validation.
-    /// Validates that the userRecordID in the request matches an actual CKShare participant
-    /// before removing them — prevents spoofed leave requests from removing other members.
-    private func processLeaveRequest(_ request: LeaveRequest, household: Household) async {
-        guard let userRecordID = request.userRecordID else {
-            print("⚠️ M7.2.2: Leave request missing userRecordID — deleting")
-            viewContext.delete(request)
-            return
-        }
-
-        let displayName = request.displayName ?? "Unknown"
-        print("📋 M7.2.2: Processing leave request from \(displayName)")
-
-        do {
-            // Security: Validate that this userRecordID is an actual participant
-            let share = try await getShare(for: household)
-            let isActualParticipant = share.participants.contains {
-                $0.userIdentity.userRecordID?.recordName == userRecordID
-            }
-            guard isActualParticipant else {
-                print("⚠️ M7.2.2: userRecordID \(userRecordID) is not a participant — ignoring request")
-                viewContext.delete(request)
-                return
-            }
-
-            // Remove participant from CKShare
-            try await removeParticipantFromShare(userRecordID: userRecordID, household: household)
-
-            // Delete processed request (cleanup — don't accumulate in shared zone)
-            viewContext.delete(request)
-            try viewContext.save()
-
-            print("✅ M7.2.2: Removed \(displayName) from household")
-
-            // Update known participants after removal
-            let updatedIDs = Set(share.participants.compactMap {
-                $0.userIdentity.userRecordID?.recordName
-            }).subtracting([userRecordID])
-            knownParticipantRecordIDs = updatedIDs
-
-            // Send local notification to owner
-            await sendMemberLeftNotification(memberName: displayName, householdName: household.name ?? "household")
-
-        } catch {
-            print("❌ M7.2.2: Failed to process leave request: \(error)")
-        }
-    }
-
-    /// Cleans up old processed/stale leave requests from the shared zone.
-    /// Called periodically to prevent accumulation.
+    /// Cleans up ALL leave requests from the shared zone.
+    /// LeaveRequests are no longer created — this removes any leftover from prior app versions.
     private func cleanupStaleLeaveRequests() {
         let request: NSFetchRequest<LeaveRequest> = LeaveRequest.fetchRequest()
-        request.predicate = NSPredicate(format: "status == %@", "processed")
 
         do {
             let stale = try viewContext.fetch(request)
             if !stale.isEmpty {
-                print("🧹 M7.2.2: Cleaning up \(stale.count) processed leave request(s)")
+                print("🧹 M7.2.2: Cleaning up \(stale.count) stale leave request(s) from prior versions")
                 for lr in stale {
                     viewContext.delete(lr)
                 }
@@ -1070,8 +923,23 @@ class HouseholdService: ObservableObject {
             }
         }
 
-        // Migrate weekly lists with items
+        // Fetch existing personal weekly list names to avoid duplicates
+        let existingListNames: Set<String> = {
+            let req: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == nil")
+            let results = (try? viewContext.fetch(req)) ?? []
+            return Set(results.compactMap { $0.name?.lowercased() })
+        }()
+
+        // Migrate weekly lists with items, skipping duplicates by name
+        var skippedLists = 0
         for oldList in listSet {
+            let name = oldList.name?.lowercased() ?? ""
+            if existingListNames.contains(name) {
+                skippedLists += 1
+                continue
+            }
+
             let newList = WeeklyList(context: viewContext)
             newList.id = UUID()
             newList.name = oldList.name
@@ -1100,8 +968,23 @@ class HouseholdService: ObservableObject {
             }
         }
 
-        // Migrate meal plans with planned meals
+        // Fetch existing personal meal plan names to avoid duplicates
+        let existingPlanNames: Set<String> = {
+            let req: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == nil")
+            let results = (try? viewContext.fetch(req)) ?? []
+            return Set(results.compactMap { $0.name?.lowercased() })
+        }()
+
+        // Migrate meal plans, skipping duplicates by name
+        var skippedPlans = 0
         for oldPlan in mealPlanSet {
+            let name = oldPlan.name?.lowercased() ?? ""
+            if existingPlanNames.contains(name) {
+                skippedPlans += 1
+                continue
+            }
+
             let newPlan = MealPlan(context: viewContext)
             newPlan.id = UUID()
             newPlan.name = oldPlan.name
@@ -1122,8 +1005,8 @@ class HouseholdService: ObservableObject {
         print("   \(categorySet.count - skippedCategories) categories (\(skippedCategories) skipped — already exist)")
         print("   \(templateSet.count - skippedTemplates) ingredient templates (\(skippedTemplates) skipped — already exist)")
         print("   \(recipeSet.count - skippedRecipes) recipes (\(skippedRecipes) skipped — already exist)")
-        print("   \(listSet.count) weekly lists")
-        print("   \(mealPlanSet.count) meal plans")
+        print("   \(listSet.count - skippedLists) weekly lists (\(skippedLists) skipped — already exist)")
+        print("   \(mealPlanSet.count - skippedPlans) meal plans (\(skippedPlans) skipped — already exist)")
     }
 
 
@@ -1564,23 +1447,26 @@ class HouseholdService: ObservableObject {
         print("   Current participants: \(share.participants.count)")
         print("   Current publicPermission: \(share.publicPermission.rawValue)")
 
+        // Set share metadata for the recipient's acceptance dialog
+        let householdName = household.name ?? "a household"
+        share[CKShare.SystemFieldKey.title] = "Join \(householdName) on forager" as CKRecordValue
+
         // Enable public link sharing
         // This allows anyone with the URL to join (like a shared Google Doc link)
         // NOTE: SceneDelegate will handle the acceptance via acceptShareInvitations
-        if share.publicPermission == .none {
+        let needsPermissionUpdate = share.publicPermission == .none
+        if needsPermissionUpdate {
             share.publicPermission = .readWrite
             print("✅ Enabled public link sharing (readWrite)")
-
-            // Persist updated share back to CloudKit via Core Data
-            // M7.2.2: Share updates always go to private store (owner's data)
-            let persistenceController = PersistenceController.shared
-            let privateStore = persistenceController.privateStore
-
-            try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
-            print("✅ Share updated with public permissions")
         } else {
             print("ℹ️ Share already has public permissions")
         }
+
+        // Persist share metadata and permission changes
+        let persistenceController = PersistenceController.shared
+        let privateStore = persistenceController.privateStore
+        try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
+        print("✅ Share updated")
 
         // Get the invitation URL from the share itself
         // The share URL is what recipients will use to join
