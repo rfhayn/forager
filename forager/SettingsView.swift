@@ -43,6 +43,9 @@ struct SettingsView: View {
     @State private var showLeaveConfirmation = false
     @State private var shouldMigrateData = false
 
+    // M7.3.3: Delete household state (owner-only)
+    @State private var showDeleteConfirmation = false
+
     // M7.3.2: Member sync state (Issue #3)
     @State private var isSyncingMembers = false
 
@@ -100,6 +103,21 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh with a clean app.")
+            }
+            .alert("Delete Household?", isPresented: $showDeleteConfirmation) {
+                Button("Migrate & Delete", role: .destructive) {
+                    if let household = householdService.currentHousehold {
+                        deleteHousehold(household, migrateData: true)
+                    }
+                }
+                Button("Clean Delete", role: .destructive) {
+                    if let household = householdService.currentHousehold {
+                        deleteHousehold(household, migrateData: false)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This permanently deletes the household and removes all members' access. Choose 'Migrate & Delete' to keep a personal copy, or 'Clean Delete' to remove everything.")
             }
         }
     }
@@ -262,6 +280,24 @@ struct SettingsView: View {
                         HStack {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
                             Text("Leave Household")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .foregroundColor(.red)
+                        .cornerRadius(10)
+                    }
+                    .padding(.top, 8)
+                }
+
+                // M7.3.3: Delete Household button (owner-only)
+                if isCurrentUserOwner {
+                    Button(role: .destructive, action: {
+                        showDeleteConfirmation = true
+                    }) {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Household")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -543,6 +579,21 @@ struct SettingsView: View {
             } catch {
                 // Show error in console (could add alert UI here)
                 print("❌ Error leaving household: \(error)")
+            }
+        }
+    }
+
+    // M7.3.3: Deletes household with optional data migration (owner-only)
+    private func deleteHousehold(_ household: Household, migrateData: Bool) {
+        Task {
+            do {
+                try await householdService.deleteHousehold(
+                    household,
+                    migrateData: migrateData
+                )
+                await householdService.loadCurrentHousehold()
+            } catch {
+                print("❌ Error deleting household: \(error)")
             }
         }
     }

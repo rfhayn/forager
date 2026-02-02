@@ -30,6 +30,8 @@ enum HouseholdError: LocalizedError {
     case nameTooLong
     case notMember
     case ownerCannotLeave
+    case cannotRemoveSelf
+    case cannotRemoveOwner
 
     var errorDescription: String? {
         switch self {
@@ -61,6 +63,10 @@ enum HouseholdError: LocalizedError {
             return "You are not a member of this household"
         case .ownerCannotLeave:
             return "Owners cannot leave. Delete the household instead."
+        case .cannotRemoveSelf:
+            return "You cannot remove yourself. Use 'Leave Household' instead."
+        case .cannotRemoveOwner:
+            return "The household owner cannot be removed."
         }
     }
 }
@@ -355,6 +361,126 @@ class HouseholdService: ObservableObject {
         } else {
             print("   All data removed (clean app)")
         }
+    }
+
+    // MARK: - M7.3.3: Remove Member & Delete Household
+
+    /// M7.3.3: Removes a member from the household (owner-only)
+    /// Uses CKShare participant removal — CloudKit revokes the member's access
+    /// - Parameters:
+    ///   - participant: The ShareParticipant to remove
+    ///   - household: The household to remove them from
+    func removeMember(_ participant: ShareParticipant, from household: Household) async throws {
+        // Verify current user is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Cannot remove the owner
+        guard !participant.isOwner else {
+            throw HouseholdError.cannotRemoveOwner
+        }
+
+        // Cannot remove yourself (use leave instead)
+        guard !participant.isCurrentUser else {
+            throw HouseholdError.cannotRemoveSelf
+        }
+
+        let share = try await getShare(for: household)
+
+        // Find matching CKShare.Participant by userRecordID
+        guard let ckParticipant = share.participants.first(where: {
+            $0.userIdentity.userRecordID?.recordName == participant.id
+        }) else {
+            print("⚠️ M7.3.3: Could not find CKShare participant for \(participant.displayName)")
+            throw HouseholdError.notMember
+        }
+
+        // Remove participant from share
+        share.removeParticipant(ckParticipant)
+
+        // Persist updated share
+        let persistenceController = PersistenceController.shared
+        let privateStore = persistenceController.privateStore
+        try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
+
+        print("✅ M7.3.3: Removed \(participant.displayName) from household")
+
+        // Update known participants for departure detection
+        knownParticipantRecordIDs?.remove(participant.id)
+    }
+
+    /// M7.3.3: Deletes a household entirely (owner-only)
+    /// Removes CloudKit share (revokes all participants), deletes household entity,
+    /// and purges the shared store
+    /// - Parameters:
+    ///   - household: The household to delete
+    ///   - migrateData: Whether to migrate household data to personal store first
+    func deleteHousehold(_ household: Household, migrateData: Bool) async throws {
+        // Verify current user is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        let householdName = household.name ?? "Unknown"
+        print("🔄 M7.3.3: Deleting household: \(householdName)")
+
+        // Step 1: Migrate data if requested (while we still have access)
+        if migrateData {
+            try await migrateHouseholdDataToPersonal(household)
+            try viewContext.save()
+            print("✅ M7.3.3: Migrated household data to personal store")
+        }
+
+        // Step 2: Delete CKShare from private database (revokes all participants' access)
+        do {
+            let share = try await getShare(for: household)
+            let privateDB = container.privateCloudDatabase
+
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let deleteOp = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: [share.recordID])
+                deleteOp.modifyRecordsResultBlock = { result in
+                    switch result {
+                    case .success:
+                        continuation.resume()
+                    case .failure(let error):
+                        if let ckError = error as? CKError,
+                           ckError.code == .unknownItem || ckError.code == .zoneNotFound {
+                            continuation.resume()
+                        } else {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                }
+                privateDB.add(deleteOp)
+            }
+            print("✅ M7.3.3: Deleted CKShare from private database")
+        } catch {
+            print("⚠️ M7.3.3: Could not delete CKShare: \(error.localizedDescription)")
+            print("   Proceeding with local cleanup")
+        }
+
+        // Step 3: Purge all shared store objects from context
+        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.3: Deleted \(deletedCount) shared store objects from context")
+
+        // Step 4: Delete household entity
+        viewContext.delete(household)
+        try viewContext.save()
+
+        // Step 5: Destroy and recreate shared store
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            print("✅ M7.3.3: Shared store destroyed and recreated")
+        } catch {
+            print("⚠️ M7.3.3: Failed to destroy shared store: \(error.localizedDescription)")
+        }
+
+        // Step 6: Clear current household
+        currentHousehold = nil
+        knownParticipantRecordIDs = nil
+
+        print("✅ M7.3.3: Deleted household: \(householdName)")
     }
 
     /// M7.2.2: Deletes the CKShare record from the member's shared database.

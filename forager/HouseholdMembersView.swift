@@ -16,6 +16,11 @@ struct HouseholdMembersView: View {
     @State private var participants: [ShareParticipant] = []
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var isCurrentUserOwner = false
+
+    // M7.3.3: Remove member confirmation
+    @State private var memberToRemove: ShareParticipant?
+    @State private var showRemoveConfirmation = false
 
     var body: some View {
         Group {
@@ -49,6 +54,17 @@ struct HouseholdMembersView: View {
                 List {
                     ForEach(participants) { participant in
                         ShareParticipantRow(participant: participant)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                // M7.3.3: Owner can remove non-owner, non-self members
+                                if isCurrentUserOwner && !participant.isOwner && !participant.isCurrentUser {
+                                    Button(role: .destructive) {
+                                        memberToRemove = participant
+                                        showRemoveConfirmation = true
+                                    } label: {
+                                        Label("Remove", systemImage: "person.badge.minus")
+                                    }
+                                }
+                            }
                     }
                 }
             }
@@ -65,6 +81,20 @@ struct HouseholdMembersView: View {
         .onAppear {
             loadParticipants()
         }
+        .alert("Remove Member?", isPresented: $showRemoveConfirmation) {
+            Button("Remove", role: .destructive) {
+                if let member = memberToRemove {
+                    removeMember(member)
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                memberToRemove = nil
+            }
+        } message: {
+            if let member = memberToRemove {
+                Text("Remove \(member.displayName) from this household? They will lose access to all shared data.")
+            }
+        }
     }
 
     private func loadParticipants() {
@@ -74,8 +104,10 @@ struct HouseholdMembersView: View {
         Task {
             do {
                 let loaded = try await service.getParticipants(for: household)
+                let ownerCheck = await service.isOwner(household: household)
                 await MainActor.run {
                     self.participants = loaded
+                    self.isCurrentUserOwner = ownerCheck
                     self.isLoading = false
                 }
             } catch {
@@ -84,6 +116,19 @@ struct HouseholdMembersView: View {
                     self.isLoading = false
                 }
             }
+        }
+    }
+
+    // M7.3.3: Remove member and reload participant list
+    private func removeMember(_ participant: ShareParticipant) {
+        Task {
+            do {
+                try await service.removeMember(participant, from: household)
+                loadParticipants()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            memberToRemove = nil
         }
     }
 }
