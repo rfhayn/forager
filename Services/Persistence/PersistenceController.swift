@@ -229,6 +229,36 @@ final class PersistenceController {
     
     // MARK: - M7.2.2: Shared Store Lifecycle
 
+    /// M7.2.2: Deletes all objects in the shared store from the given context.
+    /// Notifies @FetchRequest observers so SwiftUI drops references before store destruction.
+    /// Returns the number of objects deleted.
+    @discardableResult
+    func purgeAllSharedStoreObjects(from context: NSManagedObjectContext) -> Int {
+        let coordinator = container.persistentStoreCoordinator
+        guard let sharedStore = coordinator.persistentStores.first(where: {
+            $0.url?.lastPathComponent == "forager_shared.sqlite"
+        }) else { return 0 }
+
+        var deletedCount = 0
+        for entity in container.managedObjectModel.entities {
+            guard let entityName = entity.name else { continue }
+            let fetchReq = NSFetchRequest<NSManagedObject>(entityName: entityName)
+            fetchReq.affectedStores = [sharedStore]
+            if let objects = try? context.fetch(fetchReq) {
+                for obj in objects {
+                    context.delete(obj)
+                    deletedCount += 1
+                }
+            }
+        }
+
+        if context.hasChanges {
+            try? context.save()
+        }
+
+        return deletedCount
+    }
+
     /// Destroys and recreates the shared SQLite store.
     /// Used during leave-household flow to deterministically remove all ghost data.
     /// More reliable than entity-by-entity purge which can miss objects.
