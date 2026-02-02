@@ -1,7 +1,7 @@
 # Forager - Development Roadmap
 
-**Last Updated**: January 13, 2026
-**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | **M7.3 🚀 Next**
+**Last Updated**: February 2, 2026
+**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | M7.2.2 Leave Flow COMPLETE ✅ | **M7.3.3 🚀 Next**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M7.3 (Household Management & Settings) ready to start
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
@@ -725,9 +725,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - ✅ **Testing**: Perfect bi-directional sync across 2 devices (<5s latency)
 - ✅ **Documentation**: [27-m7-cloudkit-sync-debugging.md](archive/27-m7-cloudkit-sync-debugging.md)
 
-**M7.2: Shared Household Zone (15 hours) - COMPLETE** ✅
+**M7.2: Shared Household Zone (~40 hours) - COMPLETE** ✅
 - ✅ **M7.2.1**: Household Setup & Shared Zone (1.25h) - COMPLETE
 - ✅ **M7.2.2**: Member Invitation & Acceptance (11-12h) - COMPLETE (Jan 12, 2026)
+- ✅ **M7.2.2 Leave Flow**: Leave Household, Rejoin Fix, Dead Code Cleanup (~12h) - COMPLETE (Feb 2, 2026)
 - ✅ **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25h) - COMPLETE (88% accuracy)
   - ✅ Phase 0: Core Data Model v2 (2h) - household relationships
   - ✅ Prep A: StoreIdentityLogger (0.5h) - DEBUG utility
@@ -739,7 +740,8 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
     - Phase 4.2-4.4: Backend Testing & Fix (2h)
   - ✅ **Critical Bug Fixed**: Missing context.save() after container.share()
   - ✅ **Migration Validated**: 61 items to CloudKit shared zone
-- ⏳ **M7.2.4**: Household Management (1-2h) - READY
+- ✅ **M7.3.1**: Rename Household - COMPLETE (Jan 13, 2026)
+- ⏳ **M7.3.3**: Remove Member & Delete Household - READY 🚀
 
 **Architecture Decision (Dec 23, 2025):**
 - ✅ **ALL 8 entities household-scoped**: GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate
@@ -754,9 +756,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - ✅ **Better UX**: Invite once, share everything automatically
 - ✅ **Documentation**: Complete technical framework and PRD
 
-**M7.3: Conflict Resolution & Error Handling (4-6 hours)**
-- **M7.3.1**: Conflict Resolution Policies (2-3h)
-- **M7.3.2**: Error Handling & Recovery (2-3h)
+**M7.3: Household Management & Error Handling (4-6 hours)**
+- ✅ **M7.3.1**: Rename Household - COMPLETE
+- **M7.3.3**: Remove Member & Delete Household (2-3h) 🚀 NEXT
+- **M7.3.4**: Error Handling & Recovery (2-3h)
 
 **M7.4: Sync UI & Polish (3-4 hours)**
 - **M7.4.1**: Sync Status Indicators (2-3h)
@@ -1150,7 +1153,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M7.2.1**: 1.25 hours (estimated 1-1.5h) - ✅ 100% accuracy
 - **CloudKit Debug**: 4 hours (unplanned) - ✅ N/A
 - **M7.2.3**: 12.25 hours (estimated 14-17h) - ✅ 88% accuracy
-- **Total Completed**: ~119.5 hours
+- **M7.2.2 Leave**: ~12 hours (leave flow, rejoin fix, dead code cleanup)
+- **M7.3.1**: Rename Household (~1h)
+- **Total Completed**: ~147 hours
 
 ### **Planned Core Platform:**
 - **M7**: 27-37 hours base, 32-42 hours with buffer (CloudKit sync + external TestFlight)
@@ -1159,8 +1164,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
   - M7.2.1: 1-1.5 hours (Household setup) ✅
   - CloudKit Debug: 4 hours (Multi-device sync) ✅
   - M7.2.3: 14-17 hours (CloudKit hardening) ✅ (12.25h actual, 88% accuracy)
-  - M7.2.2: 2-3 hours (Member invitation) 🚀 NEXT
-  - M7.3-7.7: 8-15 hours (Conflict, UI, TestFlight) ⏳
+  - M7.2.2 Leave Flow: ~12 hours (leave, rejoin, cleanup) ✅
+  - M7.3.1: Rename Household (~1h) ✅
+  - M7.3.3-7.7: 6-12 hours (Remove member, UI, TestFlight) ⏳
 - **M6**: 12-18 hours (comprehensive testing & AI augmentation)
 - **M8**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
 - **M9**: 135-165 hours (technical debt & codebase optimization)
