@@ -38,6 +38,9 @@ struct RecipePickerSheet: View {
     
     // M4.2.1-3: Core Data context
     @Environment(\.managedObjectContext) private var viewContext
+
+    // M7.2.2: Household scope filtering to prevent duplicate recipes in picker
+    @EnvironmentObject private var householdService: HouseholdService
     
     // M4.2.1-3: All recipes - loaded manually
     @State private var recipes: [Recipe] = []
@@ -201,7 +204,15 @@ struct RecipePickerSheet: View {
     private func loadRecipes() {
         let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
-        
+
+        // M7.2.2: Filter by household scope to prevent showing duplicates
+        // (personal + shared copies of same recipe)
+        if let householdKey = householdService.currentHouseholdKey {
+            fetchRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        } else {
+            fetchRequest.predicate = NSPredicate(format: "householdKey == nil")
+        }
+
         do {
             recipes = try viewContext.fetch(fetchRequest)
         } catch {

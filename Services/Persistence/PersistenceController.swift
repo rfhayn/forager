@@ -160,7 +160,7 @@ final class PersistenceController {
     }
 
     /// Create a persistent store description with CloudKit configuration
-    private func createStoreDescription(url: URL, scope: CKDatabase.Scope, inMemory: Bool) -> NSPersistentStoreDescription {
+    func createStoreDescription(url: URL, scope: CKDatabase.Scope, inMemory: Bool) -> NSPersistentStoreDescription {
         let description = NSPersistentStoreDescription(url: url)
         // Both stores use the same data model automatically
 
@@ -227,6 +227,86 @@ final class PersistenceController {
         print("✅ M7.2.3: View context configured with object-trump merge policy")
     }
     
+    // MARK: - M7.2.2: Shared Store Lifecycle
+
+    /// M7.2.2: Deletes all objects in the shared store from the given context.
+    /// Notifies @FetchRequest observers so SwiftUI drops references before store destruction.
+    /// Returns the number of objects deleted.
+    @discardableResult
+    func purgeAllSharedStoreObjects(from context: NSManagedObjectContext) -> Int {
+        let coordinator = container.persistentStoreCoordinator
+        guard let sharedStore = coordinator.persistentStores.first(where: {
+            $0.url?.lastPathComponent == "forager_shared.sqlite"
+        }) else { return 0 }
+
+        var deletedCount = 0
+        for entity in container.managedObjectModel.entities {
+            guard let entityName = entity.name else { continue }
+            let fetchReq = NSFetchRequest<NSManagedObject>(entityName: entityName)
+            fetchReq.affectedStores = [sharedStore]
+            if let objects = try? context.fetch(fetchReq) {
+                for obj in objects {
+                    context.delete(obj)
+                    deletedCount += 1
+                }
+            }
+        }
+
+        if context.hasChanges {
+            try? context.save()
+        }
+
+        return deletedCount
+    }
+
+    /// Destroys and recreates the shared SQLite store.
+    /// Used during leave-household flow to deterministically remove all ghost data.
+    /// More reliable than entity-by-entity purge which can miss objects.
+    func destroyAndRecreateSharedStore() throws {
+        let coordinator = container.persistentStoreCoordinator
+        guard let store = coordinator.persistentStores.first(where: {
+            $0.url?.lastPathComponent == "forager_shared.sqlite"
+        }) else {
+            print("ℹ️ M7.2.2: No shared store to destroy")
+            return
+        }
+
+        let storeURL = store.url!
+        print("🔄 M7.2.2: Destroying shared store at \(storeURL.lastPathComponent)")
+
+        // Remove from coordinator
+        try coordinator.remove(store)
+
+        // Delete SQLite files (main + WAL + SHM)
+        try coordinator.destroyPersistentStore(at: storeURL, type: .sqlite)
+
+        // Recreate with same CloudKit configuration
+        // Must use loadPersistentStores (not coordinator.addPersistentStore) so that
+        // NSPersistentCloudKitContainer registers the CloudKit mirroring for this store.
+        let desc = createStoreDescription(url: storeURL, scope: .shared, inMemory: false)
+
+        // Temporarily set descriptions to only the shared store to avoid re-loading private store
+        let savedDescriptions = container.persistentStoreDescriptions
+        container.persistentStoreDescriptions = [desc]
+
+        var loadError: Error?
+        container.loadPersistentStores { _, error in
+            if let error = error {
+                loadError = error
+            }
+        }
+
+        // Restore full description list
+        container.persistentStoreDescriptions = savedDescriptions
+            .filter { $0.url?.lastPathComponent != "forager_shared.sqlite" } + [desc]
+
+        if let error = loadError {
+            throw error
+        }
+
+        print("✅ M7.2.2: Shared store recreated")
+    }
+
     // MARK: - Background Context Management
     
     /// Create background context with consistent merge policy

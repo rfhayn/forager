@@ -15,8 +15,9 @@ struct ShareSheet: UIViewControllerRepresentable {
     var onDismiss: (() -> Void)?
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
+        let message = "Join my household on forager! Tap the link to share grocery lists, recipes, and meal plans."
         let controller = UIActivityViewController(
-            activityItems: [invitationURL],
+            activityItems: [message, invitationURL],
             applicationActivities: nil
         )
 

@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: January 13, 2026
-**Version**: 4.7
-**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | **M7.3 🚀 Next**
+**Last Updated**: February 2, 2026
+**Version**: 4.8
+**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | M7.2.2 Leave Flow Complete ✅ | **M7.3.3 🚀 Next**
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
@@ -351,8 +351,10 @@ M6 was originally planned after M5, but deferred to execute after M7 completes. 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
 | **FR-CK-006** | **Household creation & shared zone** | Create household, migrate data to shared zone | M7.2.1 | ✅ **COMPLETE** |
-| **FR-CK-007** | **Member invitation flow** | Invite household members via email, iCloud integration | M7.2.2 | 🎯 **Easy sharing** |
-| **FR-CK-008** | **Household management** | View members, remove/leave household, dissolve | M7.2.4 | 🎯 **Access control** |
+| **FR-CK-007** | **Member invitation flow** | ✅ Public link sharing, CKShare acceptance, paste invitation | M7.2.2 | ✅ **COMPLETE** |
+| **FR-CK-038** | **Member leave flow** | ✅ Leave with data migration, CKShare deletion, shared store cleanup, rejoin support | M7.2.2 | ✅ **COMPLETE** |
+| **FR-CK-039** | **Invitation message customization** | ✅ Friendly text message with CKShare title "Join [Name] on forager" | M7.2.2 | ✅ **COMPLETE** |
+| **FR-CK-008** | **Household management** | Owner remove member, delete household | M7.3.3 | 🎯 **Access control** |
 | **FR-CK-009** | **All entities household-scoped** | GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate | M7.2.1 | ✅ **COMPLETE** |
 | **FR-CK-010** | **Automatic sync across household** | All household members see all data automatically | M7.2.3 | 🎯 **Seamless collaboration** |
 | **FR-CK-025** | **Automatic duplicate category prevention** | CategoryDeduplicator removes duplicates after CloudKit sync | M7.2.3 Phase 3.8 | ✅ **COMPLETE** |
@@ -433,12 +435,12 @@ M6 was originally planned after M5, but deferred to execute after M7 completes. 
 | **NFR-PR-001** | **Edit form load < 0.2s** | Instant edit form display | M7.5.2 | 🎯 **Responsive UX** |
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
-**M7 Summary**: 52 total requirements
-- **Complete (22)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3)
-- **In Progress (30)**: Multi-user collaboration (1 from M7.2.2), Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), Parsing resilience (6), External TestFlight (5), Non-functional (4 remaining)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅ (all 6 phases complete)
-- **Achievement**: Production-ready CloudKit sync with attach-then-share migration validated. 61 items migrated successfully to shared zone.
-- **Next**: M7.2.2 - Member Invitation & Acceptance Testing (2-3 hours)
+**M7 Summary**: 54 total requirements
+- **Complete (27)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Dead code cleanup (1)
+- **In Progress (27)**: Repository hardening (4 from M7.2.3 remaining), Household management (1 from M7.3.3), Conflict resolution (5), Sync UI polish (5), Parsing resilience (6), External TestFlight (5), Non-functional (1 remaining)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅
+- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin all working.
+- **Next**: M7.3.3 - Remove Member & Delete Household
 
 ---
 
@@ -770,7 +772,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit sync and collaboration (52 requirements: 22 complete, 30 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (144 complete, 30 in progress, 36 planned).
 
-**Last Updated**: January 4, 2026  
-**Version**: 4.6  
-**Next Update**: After M7.2.2 Member Invitation Testing  
-**Current Focus**: M7.2.2 🚀 - Member Invitation & Acceptance Testing (2-3 hours)
+**Last Updated**: February 2, 2026
+**Version**: 4.8
+**Next Update**: After M7.3.3 Remove Member & Delete Household
+**Current Focus**: M7.3.3 🚀 - Remove Member & Delete Household

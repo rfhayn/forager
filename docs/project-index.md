@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: January 13, 2026
+**Last Updated**: February 2, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
-**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, **M7.3 🚀 Next**
-**Next Priority**: M7.3 - Household Management & Settings (6-8 hours)
+**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, M7.2.2 Leave Flow ✅ COMPLETE, M7.3.1 ✅ COMPLETE, **M7.3.3 🚀 Next**
+**Next Priority**: M7.3.3 - Remove Member & Delete Household
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
@@ -50,6 +50,15 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 2, 2026** - M7.2.2 Leave Flow COMPLETE ✅
+- **Completed**: Full member leave flow — leave with data migration, CKShare deletion, shared store cleanup, rejoin support
+- **Achievement**: ~450 lines of dead code removed, purge helper extracted, PasteInvitationSheet API fixed
+- **Commits**: 5 commits on `feature/M7.2.2-leave-flow-fixes`
+- **Files**: HouseholdService.swift (major refactor), PersistenceController.swift (purge helper), KeychainHelper.swift (NEW), PasteInvitationSheet.swift (API fix), ShareSheet.swift (invitation message)
+- **Documentation**: All 5 critical docs updated (current-story, next-prompt, roadmap, requirements, project-index)
+- **Total Progress**: ~147 hours
+- **Next**: Merge branch → M7.3.3 Remove Member & Delete Household
 
 ### **January 13, 2026** - Documentation Cleanup & M6 Planning 📚
 - **Completed**: Comprehensive documentation sync and milestone planning review
@@ -181,7 +190,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~113 hours (M1-M7.1: ~102h + M7.2.1: 1.25h + CloudKit: 4h + M7.2.3: 6.5h)
+- **Total Development Time**: ~147 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -206,13 +215,12 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M7.2.2**: Member Invitation & Acceptance Testing (2-3 hours) 🚀 READY
-  - Code implemented from previous session (branch: `feature/M7.2.2-member-invitation`)
-  - Requires 2 physical iPhones with DIFFERENT iCloud accounts
-  - Test household invitation flow end-to-end (send/receive/accept)
-  - Validate bi-directional sync between household members
-  - Verify members list shows both users correctly
-  - See next-prompt.md for detailed testing guide
+- **M7.2.2 Leave Flow**: ✅ COMPLETE (Feb 2, 2026)
+  - Full leave flow, rejoin fix, dead code cleanup, PasteInvitationSheet API fix
+  - Branch `feature/M7.2.2-leave-flow-fixes` ready to merge
+- **M7.3.3**: Remove Member & Delete Household 🚀 NEXT
+  - Owner can remove members and delete household
+  - Most infrastructure exists from M7.2.2
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -254,31 +262,19 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🎯 **WHAT'S NEXT**
 
-### **Immediate Priority** (M7.2.2 - 2-3 hours) 🚀 READY
-Member Invitation & Acceptance Testing:
-1. **Prerequisites**: 2 physical iPhones with different iCloud accounts
-2. **Test Invitation**: Send invite from Device A to Device B
-3. **Test Acceptance**: Accept invite on Device B
-4. **Verify Sharing**: Confirm both devices see shared household data
-5. **Test Members View**: Verify household members list shows both users
-
-**Required Equipment**:
-- iPhone A: Owner's device (already has household)
-- iPhone B: Member's device (different iCloud account)
-- Both devices on same iOS version (18.5+)
-- Both devices signed into iCloud
-
-### **After M7.2.2**
-- **M7.2.3 Remaining Work**: Phases 5-6 if needed (repository hardening, multi-device validation)
-- **M7.3**: Conflict Resolution (4-6h)
-- **M7.4**: Sync UI & Polish (3-4h)
-- **M7.5**: External TestFlight (2-3h)
+### **Immediate Priority** (M7.3.3) 🚀 READY
+Remove Member & Delete Household:
+1. Owner can remove a specific member from the household
+2. Owner can delete the entire household
+3. Data migration on delete (shared → personal for owner)
+4. Confirmation alerts for destructive actions
 
 ### **M7 Remaining Milestones**
-- **M7.2.2**: Multi-User Collaboration (2-3h) - 🚀 ACTIVE (testing phase)
-- **M7.3**: Conflict Resolution (4-6h)
+- **M7.3.3**: Remove Member & Delete Household (2-3h) 🚀 NEXT
 - **M7.4**: Sync UI & Polish (3-4h)
-- **M7.5**: External TestFlight (2-3h)
+- **M7.5**: Architecture Hardening (8-12h)
+- **M7.6**: External TestFlight (2-3h)
+- **M7.7**: Public Beta Program (2-3h)
 
 ---
 

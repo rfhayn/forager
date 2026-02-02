@@ -144,11 +144,25 @@ struct PasteInvitationSheet: View {
             print("   Root record: \(metadata.rootRecordID.recordName)")
             print("   Container: \(metadata.containerIdentifier)")
 
-            // Accept the share
-            print("📝 Accepting share in CloudKit...")
-            let acceptedShare = try await container.accept(metadata)
+            // Accept the share via NSPersistentCloudKitContainer so Core Data mirroring picks it up
+            print("📝 Accepting share via NSPersistentCloudKitContainer...")
+            let persistenceController = PersistenceController.shared
+            let sharedStore = persistenceController.sharedStore
 
-            print("✅ Share accepted in CloudKit: \(acceptedShare.recordID)")
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                persistenceController.container.acceptShareInvitations(
+                    from: [metadata],
+                    into: sharedStore
+                ) { _, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
+
+            print("✅ Share accepted via NSPersistentCloudKitContainer")
 
             // Wait for CloudKit sync to propagate with retries
             print("⏳ Waiting for CloudKit sync (this may take 10-30 seconds)...")
