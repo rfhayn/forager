@@ -478,6 +478,25 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            // M7.3.3: Category Sync Diagnostic
+            // Dumps all categories with their store location and householdKey
+            // Use to troubleshoot why categories aren't syncing to members
+            Button {
+                householdService.dumpCategorySyncDiagnostics()
+            } label: {
+                HStack {
+                    Image(systemName: "stethoscope")
+                        .foregroundColor(.teal)
+                    VStack(alignment: .leading) {
+                        Text("Category Sync Diagnostic")
+                            .font(.headline)
+                        Text("Dump category store & householdKey info")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
             #endif
             
         } header: {

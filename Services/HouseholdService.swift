@@ -32,6 +32,7 @@ enum HouseholdError: LocalizedError {
     case ownerCannotLeave
     case cannotRemoveSelf
     case cannotRemoveOwner
+    case alreadyInHousehold
 
     var errorDescription: String? {
         switch self {
@@ -67,6 +68,8 @@ enum HouseholdError: LocalizedError {
             return "You cannot remove yourself. Use 'Leave Household' instead."
         case .cannotRemoveOwner:
             return "The household owner cannot be removed."
+        case .alreadyInHousehold:
+            return "You are already in a household. Leave or delete it first before joining another."
         }
     }
 }
@@ -955,6 +958,27 @@ class HouseholdService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        // M7.3.3: Prevent creating a household when already in one
+        // User must leave/delete their current household first
+        if currentHousehold != nil {
+            print("❌ M7.3.3: Cannot create household - already in one")
+            throw HouseholdError.alreadyInHousehold
+        }
+
+        // Also check for any existing households in the database
+        let existingRequest: NSFetchRequest<Household> = Household.fetchRequest()
+        existingRequest.fetchLimit = 1
+        if let existingHouseholds = try? viewContext.fetch(existingRequest),
+           !existingHouseholds.isEmpty {
+            // Check if user is actually a participant in any of them
+            for existing in existingHouseholds {
+                if await isCurrentUserParticipant(in: existing) {
+                    print("❌ M7.3.3: Cannot create household - already a participant in '\(existing.name ?? "Unknown")'")
+                    throw HouseholdError.alreadyInHousehold
+                }
+            }
+        }
+
         do {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
@@ -1069,14 +1093,14 @@ class HouseholdService: ObservableObject {
         #if DEBUG
         print("\n🔄 Migrating ALL personal data to household...")
         #endif
-        
+
         guard let householdId = household.id else {
             throw HouseholdError.creationFailed("Household missing ID")
         }
-        
+
         let householdKey = householdId.uuidString
         var migratedCount = 0
-        
+
         // Migrate recipes
         let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         recipeRequest.predicate = NSPredicate(format: "household == nil")
@@ -1086,7 +1110,7 @@ class HouseholdService: ObservableObject {
             recipe.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate weekly lists
         let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
         listRequest.predicate = NSPredicate(format: "household == nil")
@@ -1096,7 +1120,7 @@ class HouseholdService: ObservableObject {
             list.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate meal plans (MealPlan, not PlannedMeal!)
         let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         mealPlanRequest.predicate = NSPredicate(format: "household == nil")
@@ -1106,7 +1130,7 @@ class HouseholdService: ObservableObject {
             mealPlan.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate categories
         let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
         categoryRequest.predicate = NSPredicate(format: "household == nil")
@@ -1116,7 +1140,7 @@ class HouseholdService: ObservableObject {
             category.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate ingredient templates
         let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         templateRequest.predicate = NSPredicate(format: "household == nil")
@@ -1126,7 +1150,7 @@ class HouseholdService: ObservableObject {
             template.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         #if DEBUG
         print("✅ Migrated \(migratedCount) items:")
         print("   \(recipes.count) recipes")
@@ -1419,6 +1443,16 @@ class HouseholdService: ObservableObject {
     func checkForAcceptedInvitations() async {
         print("🔍 Manually checking for accepted invitations...")
 
+        // M7.3.3: If user already has a household, don't auto-join another
+        // This prevents data integrity issues where householdKey doesn't match household.id
+        if let existingHousehold = currentHousehold {
+            print("⚠️ M7.3.3: User already in household '\(existingHousehold.name ?? "Unknown")'")
+            print("   Cannot auto-join a new household")
+            print("   User must leave/delete current household first")
+            errorMessage = "You are already in a household. Leave or delete it before joining another."
+            return
+        }
+
         do {
             // FIRST: Check CloudKit shared database directly
             print("   Checking CloudKit shared database for shared zones...")
@@ -1612,6 +1646,23 @@ class HouseholdService: ObservableObject {
                 throw HouseholdError.noShareRecord
             }
 
+            // M7.3.3: For owner, fetch directly from private database to get latest participants
+            // fetchShares(matching:) may return cached data that doesn't include new participants
+            let isOwner = await isOwner(household: household)
+            if isOwner {
+                let privateDB = container.privateCloudDatabase
+                do {
+                    let freshRecord = try await privateDB.record(for: share.recordID)
+                    if let freshShare = freshRecord as? CKShare {
+                        print("✅ Fetched fresh CKShare from private database: \(freshShare.recordID.recordName)")
+                        print("   Current participants: \(freshShare.participants.count)")
+                        return freshShare
+                    }
+                } catch {
+                    print("⚠️ Could not fetch fresh share from private DB, using cached: \(error.localizedDescription)")
+                }
+            }
+
             print("✅ Fetched live CKShare from CloudKit: \(share.recordID.recordName)")
             print("   Current participants: \(share.participants.count)")
 
@@ -1720,11 +1771,115 @@ class HouseholdService: ObservableObject {
     private func extractDisplayName(from email: String) -> String {
         // Get part before @
         let localPart = email.components(separatedBy: "@").first ?? email
-        
+
         // Split by dots and capitalize each part
         let parts = localPart.components(separatedBy: ".")
         let capitalized = parts.map { $0.capitalized }
-        
+
         return capitalized.joined(separator: " ")
+    }
+
+    // MARK: - M7.3.3: Diagnostic Methods
+
+    /// M7.3.3: Comprehensive diagnostic dump for troubleshooting sync issues
+    /// Call this from Settings or debug view to understand what data is where
+    func dumpCategorySyncDiagnostics() {
+        print("\n" + String(repeating: "=", count: 60))
+        print("🔍 M7.3.3 CATEGORY SYNC DIAGNOSTICS")
+        print(String(repeating: "=", count: 60))
+
+        // 1. Current household state
+        print("\n📦 HOUSEHOLD STATE:")
+        if let household = currentHousehold {
+            print("   Name: \(household.name ?? "Unknown")")
+            print("   ID (UUID): \(household.id?.uuidString ?? "NIL")")
+            print("   Owner: \(household.ownerEmail ?? "Unknown")")
+            if let store = household.objectID.persistentStore {
+                print("   Store: \(store.url?.lastPathComponent ?? "unknown")")
+            }
+        } else {
+            print("   No current household")
+        }
+
+        // 2. Derived household key
+        print("\n🔑 HOUSEHOLD KEY:")
+        print("   currentHouseholdKey: \(currentHouseholdKey ?? "NIL")")
+
+        // 3. Fetch ALL categories (both stores)
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Category.name, ascending: true)]
+
+        do {
+            let allCategories = try viewContext.fetch(categoryRequest)
+            print("\n📂 ALL CATEGORIES IN DATABASE (\(allCategories.count) total):")
+
+            let persistenceController = PersistenceController.shared
+            let privateStore = persistenceController.privateStore
+            let sharedStore = persistenceController.sharedStore
+
+            var privateCount = 0
+            var sharedCount = 0
+            var unknownStoreCount = 0
+
+            for category in allCategories {
+                let storeName: String
+                if category.objectID.persistentStore == privateStore {
+                    storeName = "PRIVATE"
+                    privateCount += 1
+                } else if category.objectID.persistentStore == sharedStore {
+                    storeName = "SHARED"
+                    sharedCount += 1
+                } else {
+                    storeName = "UNKNOWN"
+                    unknownStoreCount += 1
+                }
+
+                let hasHouseholdRelation = category.household != nil
+                print("   [\(storeName)] '\(category.name ?? "unnamed")' - householdKey: \(category.householdKey ?? "nil"), relationship: \(hasHouseholdRelation ? "YES" : "NO")")
+            }
+
+            print("\n📊 STORE SUMMARY:")
+            print("   Private store categories: \(privateCount)")
+            print("   Shared store categories: \(sharedCount)")
+            print("   Unknown store categories: \(unknownStoreCount)")
+
+            // 4. Check what the filter would show
+            let filteredCategories = allCategories.filter { category in
+                if let householdKey = currentHouseholdKey {
+                    return category.householdKey == householdKey
+                } else {
+                    return category.householdKey == nil
+                }
+            }
+            print("\n🎯 FILTER RESULT (\(filteredCategories.count) categories would show):")
+            for category in filteredCategories {
+                print("   '\(category.name ?? "unnamed")'")
+            }
+
+        } catch {
+            print("   ❌ Error fetching categories: \(error)")
+        }
+
+        // 5. Check WeeklyLists for comparison
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        if let allLists = try? viewContext.fetch(listRequest) {
+            print("\n📋 WEEKLY LISTS FOR COMPARISON (\(allLists.count) total):")
+            let persistenceController = PersistenceController.shared
+            for list in allLists.prefix(10) {
+                let storeName: String
+                if list.objectID.persistentStore == persistenceController.privateStore {
+                    storeName = "PRIVATE"
+                } else if list.objectID.persistentStore == persistenceController.sharedStore {
+                    storeName = "SHARED"
+                } else {
+                    storeName = "UNKNOWN"
+                }
+                print("   [\(storeName)] '\(list.name ?? "unnamed")' - householdKey: \(list.householdKey ?? "nil")")
+            }
+        }
+
+        print("\n" + String(repeating: "=", count: 60))
+        print("END DIAGNOSTICS")
+        print(String(repeating: "=", count: 60) + "\n")
     }
 }
