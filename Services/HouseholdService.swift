@@ -204,13 +204,12 @@ class HouseholdService: ObservableObject {
                         print("🔄 Household '\(household.name ?? "Unknown")' was left but user has re-joined — clearing flag")
                         clearLeftHouseholdFlag(householdID)
                     } else {
-                        // Genuinely left — nuke ghost data
+                        // Genuinely left — purge ghost data
                         currentHousehold = nil
                         print("ℹ️ Household '\(household.name ?? "Unknown")' found but user has left it locally")
-                        // Delete shared store objects from context (safe for @FetchRequest),
-                        // then nuke the store file to prevent ghost data re-sync
+                        // Purge shared store objects from context
+                        // Don't destroy store - causes crashes when re-joining
                         PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-                        try? PersistenceController.shared.destroyAndRecreateSharedStore()
                         return
                     }
                 }
@@ -448,25 +447,18 @@ class HouseholdService: ObservableObject {
             print("   Proceeding with local cleanup")
         }
 
-        // Step 3: Purge all shared store objects from context
-        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.3.3: Deleted \(deletedCount) shared store objects from context")
+        // Step 3: Clear current household FIRST so UI stops referencing shared objects
+        currentHousehold = nil
+        knownParticipantRecordIDs = nil
 
         // Step 4: Delete household entity
         viewContext.delete(household)
         try viewContext.save()
 
-        // Step 5: Destroy and recreate shared store
-        do {
-            try PersistenceController.shared.destroyAndRecreateSharedStore()
-            print("✅ M7.3.3: Shared store destroyed and recreated")
-        } catch {
-            print("⚠️ M7.3.3: Failed to destroy shared store: \(error.localizedDescription)")
-        }
-
-        // Step 6: Clear current household
-        currentHousehold = nil
-        knownParticipantRecordIDs = nil
+        // Step 5: Purge shared store objects from context
+        // Don't destroy store - causes crashes if user creates a new household later
+        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.3: Purged \(deletedCount) shared store objects")
 
         print("✅ M7.3.3: Deleted household: \(householdName)")
     }
