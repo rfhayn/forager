@@ -561,25 +561,20 @@ class HouseholdService: ObservableObject {
         if !isParticipant {
             print("👋 M7.3.3: Detected removal from household — cleaning up")
 
-            // Clear current household FIRST so UI stops referencing shared objects
+            // Clear current household so UI shows "Create Household"
             currentHousehold = nil
             print("✅ M7.3.3: Household cleared — UI will show 'Create Household'")
 
-            // Reset the context to release all managed object references
-            // This prevents crashes when we destroy the store below
-            viewContext.reset()
-            print("✅ M7.3.3: Context reset — all managed object references released")
-
-            // Small delay to let SwiftUI update before store destruction
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
-
-            // Destroy and recreate shared store to remove all ghost data
-            do {
-                try PersistenceController.shared.destroyAndRecreateSharedStore()
-                print("✅ M7.3.3: Shared store destroyed and recreated")
-            } catch {
-                print("⚠️ M7.3.3: Failed to destroy shared store: \(error.localizedDescription)")
+            // Mark this household as "left" so we don't re-join on next sync
+            if let householdID = household.id?.uuidString {
+                markHouseholdAsLeft(householdID)
             }
+
+            // Purge shared store objects from context
+            // Don't destroy/recreate the store - that causes crashes when re-joining
+            // CloudKit will stop syncing to the shared store automatically
+            let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+            print("✅ M7.3.3: Purged \(deletedCount) shared store objects")
         }
     }
 
