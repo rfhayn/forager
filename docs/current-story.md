@@ -1,10 +1,62 @@
 # Current Development Story
 
-**Last Updated**: February 2, 2026 (M7.2.2 COMPLETE)
-**Status**: M7.2.2 ✅ **COMPLETE** - Leave household flow fully implemented and tested
-**Total Progress**: ~147 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.2.2-leave-flow-fixes` (ready to merge to main)
+**Last Updated**: February 3, 2026
+**Status**: M7.3.3 ✅ **COMPLETE** | M7.3.4 🚀 **NEXT**
+**Total Progress**: ~155 hours | 89% planning accuracy
+**Current Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+
+---
+
+## ✅ **M7.3.3: REMOVE MEMBER & DELETE HOUSEHOLD - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 3, 2026
+**Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
+
+### **What Was Implemented** ✅
+
+**1. Remove Member (Owner-only)**
+- `removeMember(_:from:)` in HouseholdService - uses CKShare.removeParticipant()
+- Swipe-to-delete UI in HouseholdMembersView (only shows for owner, excludes self/owner rows)
+- Confirmation alert before removal
+- Error handling: `cannotRemoveSelf`, `cannotRemoveOwner`
+
+**2. Delete Household (Owner-only)**
+- `deleteHousehold(_:migrateData:)` in HouseholdService
+- Optional data migration (reuses `migrateHouseholdDataToPersonal()`)
+- Deletes CKShare from private database (revokes all participants' access)
+- Purges shared store objects
+- "Delete Household" button in SettingsView (red, destructive)
+- Two-option confirmation alert: "Migrate & Delete" / "Clean Delete"
+
+**3. Household Protection (Prevents Multi-Household State)**
+- `alreadyInHousehold` error case added to `HouseholdError`
+- Protection in `createHouseholdAndShare()` - cannot create when already in one
+- Protection in `checkForAcceptedInvitations()` - cannot join when already in one
+- SceneDelegate protection - rejects share invitation when already in household
+- `cloudKitShareRejectedAlreadyInHousehold` notification for UI feedback
+
+**4. Removed Member Detection**
+- `checkIfRemovedFromHousehold()` detects when member loses access
+- Automatically clears household state and purges shared data
+- Marks household as "left" to prevent re-join loops
+
+**5. Category Sync Diagnostics**
+- `dumpCategorySyncDiagnostics()` for troubleshooting sync issues
+- "Category Sync Diagnostic" button in Settings (DEBUG only)
+
+**6. Deprecated API Cleanup**
+- Removed `userDiscoverability` permission code from foragerApp.swift (~75 lines)
+- Fixed `rootRecordID` → `hierarchicalRootRecordID` in SceneDelegate and PasteInvitationSheet
+
+### **Files Modified**
+- `Services/HouseholdService.swift` - removeMember(), deleteHousehold(), protections, diagnostics
+- `forager/HouseholdMembersView.swift` - Swipe-to-delete UI with confirmation
+- `forager/SettingsView.swift` - Delete Household button, diagnostic button
+- `forager/SceneDelegate.swift` - Share rejection when already in household
+- `forager/foragerApp.swift` - Removed deprecated permission code (-75 lines)
+- `forager/PasteInvitationSheet.swift` - Fixed deprecated API
 
 ---
 
@@ -92,12 +144,19 @@
 
 ## **What's Next**
 
-**M7.3.3: Remove Member & Delete Household**
-- Owner can remove a specific member from the household
-- Owner can delete the entire household
-- Data migration on delete (shared -> personal for owner)
-- Confirmation alerts for destructive actions
-- Much infrastructure already exists from M7.2.2 work
+**M7.3.4: Error Handling & Recovery** 🚀 NEXT
+- Graceful error messages for CloudKit failures
+- Retry logic for transient network errors
+- Offline mode handling and user feedback
+- Connection status indicators
+
+**M7.4: Sync UI & Polish**
+- Sync status indicators in UI
+- CloudKit settings & diagnostics
+
+**M7.6: External TestFlight Deployment**
+- External testing group setup
+- App Review submission
 
 ---
 
@@ -112,8 +171,8 @@
 
 ---
 
-**Last Session**: February 2, 2026 - M7.2.2 Complete
-**Next Action**: Merge M7.2.2 branch, start M7.3.3
-**Branch**: `feature/M7.2.2-leave-flow-fixes` (ready to merge)
-**Confidence**: **GREEN** (All code working, clean builds, tested on devices)
-**Version**: February 2, 2026 - M7.2.2 Complete
+**Last Session**: February 3, 2026 - M7.3.3 Complete
+**Next Action**: Merge M7.3.3 branch, start M7.3.4 Error Handling
+**Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
+**Confidence**: **GREEN** (All features implemented, clean build, tested on devices)
+**Version**: February 3, 2026 - M7.3.3 Complete

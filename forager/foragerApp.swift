@@ -52,9 +52,6 @@ struct foragerApp: App {
     @State private var mealPlansPopToRoot = false
     @State private var categoriesPopToRoot = false
 
-    // M7.2.2: CloudKit permission pre-prompt
-    @State private var showPermissionPrePrompt = false
-
     // M7.2.2 Task 3: Initialize HouseholdService
     init() {
         let service = HouseholdService(context: PersistenceController.shared.container.viewContext)
@@ -134,28 +131,11 @@ struct foragerApp: App {
             .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
             .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
             .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
-            // M7.2.2: Pre-permission prompt for iCloud name access
-            .alert("See Who's in Your Household", isPresented: $showPermissionPrePrompt) {
-                Button("Continue") {
-                    Task {
-                        await requestSystemPermission()
-                    }
-                }
-                Button("Not Now", role: .cancel) {
-                    print("ℹ️ User declined permission pre-prompt")
-                }
-            } message: {
-                Text("To display member names like \"Mary\" instead of \"User\", Forager needs permission to access iCloud display names.\n\nThis helps you know who you're sharing lists with!")
-            }
             // M7.2.2: CloudKit share invitations now handled by SceneDelegate
             // M7.2.2: Check for existing households on app launch (new device scenario)
             .task {
                 // Give CloudKit a moment to sync on first launch
                 try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
-
-                // Request user discoverability permission if needed
-                // This allows fetching iCloud display names for household members
-                await requestUserDiscoverabilityPermission()
 
                 // Check if user already has a household (e.g., new device, reinstall)
                 if householdService.currentHousehold == nil {
@@ -164,7 +144,7 @@ struct foragerApp: App {
                 }
 
                 // Refresh display name on every launch
-                // Handles: permission grants, iCloud name changes, device name changes
+                // Handles: iCloud name changes, device name changes
                 await householdService.refreshCurrentMemberDisplayName()
             }
             // M7.2.2 FIX: Listen for CloudKit share acceptance from SceneDelegate
@@ -175,59 +155,6 @@ struct foragerApp: App {
                     await householdService.checkForAcceptedInvitations()
                 }
             }
-        }
-    }
-
-    // MARK: - M7.2.2: CloudKit Permission Management
-
-    /// Checks permission status and shows pre-prompt if needed
-    /// Called on app launch to ensure names can be fetched for household members
-    private func requestUserDiscoverabilityPermission() async {
-        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-
-        do {
-            let status = try await container.accountStatus()
-            guard status == .available else {
-                print("ℹ️ iCloud account not available, skipping permission request")
-                return
-            }
-
-            let permission = try await container.applicationPermissionStatus(for: .userDiscoverability)
-
-            if permission == .granted {
-                print("✅ User discoverability permission already granted")
-            } else if permission == .initialState {
-                // Show pre-permission prompt first
-                print("📋 Showing permission pre-prompt...")
-                await MainActor.run {
-                    showPermissionPrePrompt = true
-                }
-            } else {
-                print("⚠️ User discoverability permission status: \(permission.rawValue)")
-            }
-        } catch {
-            print("⚠️ Could not check user discoverability permission: \(error)")
-        }
-    }
-
-    /// Requests the actual system permission (called after pre-prompt acceptance)
-    private func requestSystemPermission() async {
-        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-
-        do {
-            print("📋 Requesting system permission...")
-            let permission = try await container.requestApplicationPermission(.userDiscoverability)
-
-            if permission == .granted {
-                print("✅ User discoverability permission granted")
-
-                // Refresh display name after permission grant
-                await householdService.refreshCurrentMemberDisplayName()
-            } else {
-                print("⚠️ User discoverability permission denied - will use fallback names")
-            }
-        } catch {
-            print("⚠️ Could not request user discoverability permission: \(error)")
         }
     }
 

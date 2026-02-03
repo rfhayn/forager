@@ -141,7 +141,7 @@ struct PasteInvitationSheet: View {
             let metadata = try await container.shareMetadata(for: url)
 
             print("✅ Fetched share metadata")
-            print("   Root record: \(metadata.rootRecordID.recordName)")
+            print("   Root record: \(metadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
             print("   Container: \(metadata.containerIdentifier)")
 
             // Accept the share via NSPersistentCloudKitContainer so Core Data mirroring picks it up

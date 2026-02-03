@@ -22,7 +22,7 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
     ) {
         print("📨 CloudKit share invitation received (app running)")
         print("   Share URL: \(cloudKitShareMetadata.share.url?.absoluteString ?? "none")")
-        print("   Root record: \(cloudKitShareMetadata.rootRecordID.recordName)")
+        print("   Root record: \(cloudKitShareMetadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
 
         acceptShareInvitation(metadata: cloudKitShareMetadata)
     }
@@ -38,7 +38,7 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
         if let cloudKitShareMetadata = connectionOptions.cloudKitShareMetadata {
             print("📨 CloudKit share invitation received (cold start)")
             print("   Share URL: \(cloudKitShareMetadata.share.url?.absoluteString ?? "none")")
-            print("   Root record: \(cloudKitShareMetadata.rootRecordID.recordName)")
+            print("   Root record: \(cloudKitShareMetadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
 
             acceptShareInvitation(metadata: cloudKitShareMetadata)
         }
@@ -53,30 +53,27 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
 
         let persistenceController = PersistenceController.shared
         let sharedStore = persistenceController.sharedStore
+        let viewContext = persistenceController.viewContext
 
-        // M7.2.2: Request user discoverability permission for display names
-        // This allows us to fetch the user's iCloud display name and email
-        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
-        Task {
-            do {
-                let status = try await container.accountStatus()
-                if status == .available {
-                    let permission = try await container.applicationPermissionStatus(for: .userDiscoverability)
-                    if permission != .granted {
-                        print("📋 Requesting user discoverability permission...")
-                        let newPermission = try await container.requestApplicationPermission(.userDiscoverability)
-                        if newPermission == .granted {
-                            print("✅ User discoverability permission granted")
-                        } else {
-                            print("⚠️ User discoverability permission denied - will use fallback name")
-                        }
-                    } else {
-                        print("✅ User discoverability permission already granted")
-                    }
-                }
-            } catch {
-                print("⚠️ Could not check user discoverability permission: \(error)")
+        // M7.3.3: Check if user is already in a household before accepting
+        // This prevents data integrity issues where householdKey doesn't match household.id
+        let existingRequest: NSFetchRequest<Household> = Household.fetchRequest()
+        existingRequest.fetchLimit = 1
+        if let existingHouseholds = try? viewContext.fetch(existingRequest),
+           let existing = existingHouseholds.first {
+            print("⚠️ M7.3.3: User already in household '\(existing.name ?? "Unknown")'")
+            print("   Cannot accept new share invitation")
+            print("   User must leave/delete current household first")
+
+            // Post notification to inform UI about the conflict
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: .cloudKitShareRejectedAlreadyInHousehold,
+                    object: nil,
+                    userInfo: ["existingHousehold": existing.name ?? "Unknown"]
+                )
             }
+            return
         }
 
         // Use NSPersistentCloudKitContainer's acceptShareInvitations method
@@ -113,4 +110,8 @@ extension Notification.Name {
     /// Posted when a CloudKit share invitation is accepted
     /// Listeners should check for and load the newly shared household
     static let cloudKitShareAccepted = Notification.Name("cloudKitShareAccepted")
+
+    /// M7.3.3: Posted when a share invitation is rejected because user is already in a household
+    /// The userInfo contains "existingHousehold" key with the name of the existing household
+    static let cloudKitShareRejectedAlreadyInHousehold = Notification.Name("cloudKitShareRejectedAlreadyInHousehold")
 }

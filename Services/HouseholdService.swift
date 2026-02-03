@@ -30,6 +30,9 @@ enum HouseholdError: LocalizedError {
     case nameTooLong
     case notMember
     case ownerCannotLeave
+    case cannotRemoveSelf
+    case cannotRemoveOwner
+    case alreadyInHousehold
 
     var errorDescription: String? {
         switch self {
@@ -61,6 +64,12 @@ enum HouseholdError: LocalizedError {
             return "You are not a member of this household"
         case .ownerCannotLeave:
             return "Owners cannot leave. Delete the household instead."
+        case .cannotRemoveSelf:
+            return "You cannot remove yourself. Use 'Leave Household' instead."
+        case .cannotRemoveOwner:
+            return "The household owner cannot be removed."
+        case .alreadyInHousehold:
+            return "You are already in a household. Leave or delete it first before joining another."
         }
     }
 }
@@ -198,13 +207,12 @@ class HouseholdService: ObservableObject {
                         print("🔄 Household '\(household.name ?? "Unknown")' was left but user has re-joined — clearing flag")
                         clearLeftHouseholdFlag(householdID)
                     } else {
-                        // Genuinely left — nuke ghost data
+                        // Genuinely left — purge ghost data
                         currentHousehold = nil
                         print("ℹ️ Household '\(household.name ?? "Unknown")' found but user has left it locally")
-                        // Delete shared store objects from context (safe for @FetchRequest),
-                        // then nuke the store file to prevent ghost data re-sync
+                        // Purge shared store objects from context
+                        // Don't destroy store - causes crashes when re-joining
                         PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-                        try? PersistenceController.shared.destroyAndRecreateSharedStore()
                         return
                     }
                 }
@@ -323,30 +331,38 @@ class HouseholdService: ObservableObject {
             print("   Proceeding with local cleanup")
         }
 
-        // Step 3: Delete all objects in the shared store from the context FIRST.
-        // This notifies @FetchRequest observers so SwiftUI drops its references.
-        // Then destroy/recreate the store file to guarantee no ghost data remains.
-        // We can't just reset() or destroy the store — SwiftUI @FetchRequest holds
-        // managed object references and crashes if the store disappears underneath.
-        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.2.2: Deleted \(deletedCount) shared store objects from context")
+        // Step 3: Clear current household FIRST so UI stops referencing shared objects
+        currentHousehold = nil
 
-        // Step 4: Destroy and recreate the empty store file to prevent ghost data from re-syncing
-        do {
-            try PersistenceController.shared.destroyAndRecreateSharedStore()
-            print("✅ M7.2.2: Shared store destroyed and recreated")
-        } catch {
-            print("⚠️ M7.2.2: Failed to destroy shared store: \(error.localizedDescription)")
-        }
-
-        // Step 5: Mark household as "left" in Keychain (survives app reinstall)
+        // Step 4: Mark household as "left" in Keychain (survives app reinstall)
         if let householdID = householdID {
             markHouseholdAsLeft(householdID)
         }
 
-        // Step 6: Clear current household (UI will show "Create Household")
-        await MainActor.run {
-            currentHousehold = nil
+        // Step 5: Delete data by householdKey (M7.3.3 FIX)
+        // This ensures orphaned data is cleaned up regardless of store location
+        // Prevents duplicates if user rejoins the same household later
+        if let key = householdID {
+            let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
+            print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
+        }
+
+        // Step 6: Also purge any remaining shared store objects
+        let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.2: Purged \(deletedFromStore) shared store objects")
+
+        // Step 7: Reset context BEFORE destroying shared store (M7.3.3)
+        // This clears all in-memory managed object references, preventing crashes
+        // when SwiftUI tries to access objects from the destroyed store
+        viewContext.reset()
+        print("✅ M7.3.3: Reset viewContext to clear in-memory references")
+
+        // Step 8: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            print("✅ M7.3.3: Destroyed and recreated shared store")
+        } catch {
+            print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
         }
 
         print("✅ M7.3.2: Left household: \(householdName)")
@@ -355,6 +371,132 @@ class HouseholdService: ObservableObject {
         } else {
             print("   All data removed (clean app)")
         }
+    }
+
+    // MARK: - M7.3.3: Remove Member & Delete Household
+
+    /// M7.3.3: Removes a member from the household (owner-only)
+    /// Uses CKShare participant removal — CloudKit revokes the member's access
+    /// - Parameters:
+    ///   - participant: The ShareParticipant to remove
+    ///   - household: The household to remove them from
+    func removeMember(_ participant: ShareParticipant, from household: Household) async throws {
+        // Verify current user is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Cannot remove the owner
+        guard !participant.isOwner else {
+            throw HouseholdError.cannotRemoveOwner
+        }
+
+        // Cannot remove yourself (use leave instead)
+        guard !participant.isCurrentUser else {
+            throw HouseholdError.cannotRemoveSelf
+        }
+
+        let share = try await getShare(for: household)
+
+        // Find matching CKShare.Participant by userRecordID
+        guard let ckParticipant = share.participants.first(where: {
+            $0.userIdentity.userRecordID?.recordName == participant.id
+        }) else {
+            print("⚠️ M7.3.3: Could not find CKShare participant for \(participant.displayName)")
+            throw HouseholdError.notMember
+        }
+
+        // Remove participant from share
+        share.removeParticipant(ckParticipant)
+
+        // Persist updated share
+        let persistenceController = PersistenceController.shared
+        let privateStore = persistenceController.privateStore
+        try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
+
+        print("✅ M7.3.3: Removed \(participant.displayName) from household")
+
+        // Update known participants for departure detection
+        knownParticipantRecordIDs?.remove(participant.id)
+    }
+
+    /// M7.3.3: Deletes a household entirely (owner-only)
+    /// Removes CloudKit share (revokes all participants), deletes household entity,
+    /// and purges the shared store
+    /// - Parameters:
+    ///   - household: The household to delete
+    ///   - migrateData: Whether to migrate household data to personal store first
+    func deleteHousehold(_ household: Household, migrateData: Bool) async throws {
+        // Verify current user is owner
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        let householdName = household.name ?? "Unknown"
+        let householdKey = household.id?.uuidString
+        print("🔄 M7.3.3: Deleting household: \(householdName)")
+
+        // Step 1: Migrate data if requested, otherwise delete household-linked data
+        if migrateData {
+            try await migrateHouseholdDataToPersonal(household)
+            try viewContext.save()
+            print("✅ M7.3.3: Migrated household data to personal store")
+
+            // M7.3.3 FIX: Delete old household-keyed data AFTER migration
+            // This prevents CategoryDeduplicator from finding duplicates between
+            // the new personal copies (householdKey=nil) and old household copies
+            if let key = householdKey {
+                let deletedOld = deleteHouseholdLinkedData(householdKey: key)
+                print("✅ M7.3.3: Cleaned up \(deletedOld) old household-keyed objects")
+            }
+        } else if let key = householdKey {
+            // Clean delete: remove all data with this householdKey from private store
+            let deletedCount = deleteHouseholdLinkedData(householdKey: key)
+            print("✅ M7.3.3: Deleted \(deletedCount) household-linked objects (clean delete)")
+        }
+
+        // Step 2: Delete CKShare from private database (revokes all participants' access)
+        do {
+            let share = try await getShare(for: household)
+            let privateDB = container.privateCloudDatabase
+
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let deleteOp = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: [share.recordID])
+                deleteOp.modifyRecordsResultBlock = { result in
+                    switch result {
+                    case .success:
+                        continuation.resume()
+                    case .failure(let error):
+                        if let ckError = error as? CKError,
+                           ckError.code == .unknownItem || ckError.code == .zoneNotFound {
+                            continuation.resume()
+                        } else {
+                            continuation.resume(throwing: error)
+                        }
+                    }
+                }
+                privateDB.add(deleteOp)
+            }
+            print("✅ M7.3.3: Deleted CKShare from private database")
+        } catch {
+            print("⚠️ M7.3.3: Could not delete CKShare: \(error.localizedDescription)")
+            print("   Proceeding with local cleanup")
+        }
+
+        // Step 3: Clear current household FIRST so UI stops referencing shared objects
+        currentHousehold = nil
+        knownParticipantRecordIDs = nil
+
+        // Step 4: Delete household entity
+        viewContext.delete(household)
+        try viewContext.save()
+
+        // Step 5: Purge shared store objects from context
+        // Don't destroy store - causes crashes if user creates a new household later
+        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.3: Purged \(deletedCount) shared store objects")
+
+        print("✅ M7.3.3: Deleted household: \(householdName)")
     }
 
     /// M7.2.2: Deletes the CKShare record from the member's shared database.
@@ -414,16 +556,67 @@ class HouseholdService: ObservableObject {
             return
         }
 
-        // Only owner detects departures
-        guard await isOwner(household: household) else {
+        // M7.3.3: Non-owners check if they've been removed
+        if await !isOwner(household: household) {
+            await checkIfRemovedFromHousehold(household: household)
             return
         }
 
-        // Primary departure detection — check CKShare participants directly
+        // Primary departure detection — check CKShare participants directly (owner-only)
         await detectParticipantDepartures(household: household)
 
         // Clean up any leftover LeaveRequests from prior app versions
         cleanupStaleLeaveRequests()
+    }
+
+    /// M7.3.3: Checks if the current user has been removed from the household
+    /// Called on non-owner devices when sync events arrive
+    private func checkIfRemovedFromHousehold(household: Household) async {
+        let isParticipant = await isCurrentUserParticipant(in: household)
+
+        if !isParticipant {
+            print("👋 M7.3.3: Detected removal from household — cleaning up")
+
+            // Capture householdKey before clearing currentHousehold
+            let householdKey = household.id?.uuidString
+
+            // Clear current household so UI shows "Create Household"
+            currentHousehold = nil
+            print("✅ M7.3.3: Household cleared — UI will show 'Create Household'")
+
+            // Mark this household as "left" so we don't re-join on next sync
+            if let householdID = householdKey {
+                markHouseholdAsLeft(householdID)
+            }
+
+            // M7.3.3 FIX: Delete data by householdKey (not just purge shared store)
+            // CloudKit may have already cleaned up the shared store, but orphaned
+            // data with householdKey can remain and cause duplicates on rejoin
+            if let key = householdKey {
+                let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
+                print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
+            }
+
+            // Also purge any remaining shared store objects
+            let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+            print("✅ M7.3.3: Purged \(deletedFromStore) shared store objects")
+
+            // M7.3.3 FIX: Reset context BEFORE destroying shared store
+            // This clears all in-memory managed object references, preventing crashes
+            // when SwiftUI tries to access objects from the destroyed store
+            viewContext.reset()
+            print("✅ M7.3.3: Reset viewContext to clear in-memory references")
+
+            // M7.3.3 FIX: Destroy and recreate shared store to clear local SQLite cache
+            // This is more aggressive but necessary to prevent duplicates on rejoin
+            // CloudKit will re-sync fresh data when user rejoins
+            do {
+                try PersistenceController.shared.destroyAndRecreateSharedStore()
+                print("✅ M7.3.3: Destroyed and recreated shared store")
+            } catch {
+                print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
+            }
+        }
     }
 
     /// Cleans up ALL leave requests from the shared zone.
@@ -818,6 +1011,27 @@ class HouseholdService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        // M7.3.3: Prevent creating a household when already in one
+        // User must leave/delete their current household first
+        if currentHousehold != nil {
+            print("❌ M7.3.3: Cannot create household - already in one")
+            throw HouseholdError.alreadyInHousehold
+        }
+
+        // Also check for any existing households in the database
+        let existingRequest: NSFetchRequest<Household> = Household.fetchRequest()
+        existingRequest.fetchLimit = 1
+        if let existingHouseholds = try? viewContext.fetch(existingRequest),
+           !existingHouseholds.isEmpty {
+            // Check if user is actually a participant in any of them
+            for existing in existingHouseholds {
+                if await isCurrentUserParticipant(in: existing) {
+                    print("❌ M7.3.3: Cannot create household - already a participant in '\(existing.name ?? "Unknown")'")
+                    throw HouseholdError.alreadyInHousehold
+                }
+            }
+        }
+
         do {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
@@ -932,14 +1146,14 @@ class HouseholdService: ObservableObject {
         #if DEBUG
         print("\n🔄 Migrating ALL personal data to household...")
         #endif
-        
+
         guard let householdId = household.id else {
             throw HouseholdError.creationFailed("Household missing ID")
         }
-        
+
         let householdKey = householdId.uuidString
         var migratedCount = 0
-        
+
         // Migrate recipes
         let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         recipeRequest.predicate = NSPredicate(format: "household == nil")
@@ -949,7 +1163,7 @@ class HouseholdService: ObservableObject {
             recipe.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate weekly lists
         let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
         listRequest.predicate = NSPredicate(format: "household == nil")
@@ -959,7 +1173,7 @@ class HouseholdService: ObservableObject {
             list.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate meal plans (MealPlan, not PlannedMeal!)
         let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         mealPlanRequest.predicate = NSPredicate(format: "household == nil")
@@ -969,7 +1183,7 @@ class HouseholdService: ObservableObject {
             mealPlan.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate categories
         let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
         categoryRequest.predicate = NSPredicate(format: "household == nil")
@@ -979,7 +1193,7 @@ class HouseholdService: ObservableObject {
             category.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         // Migrate ingredient templates
         let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         templateRequest.predicate = NSPredicate(format: "household == nil")
@@ -989,7 +1203,7 @@ class HouseholdService: ObservableObject {
             template.householdKey = householdKey
             migratedCount += 1
         }
-        
+
         #if DEBUG
         print("✅ Migrated \(migratedCount) items:")
         print("   \(recipes.count) recipes")
@@ -1188,10 +1402,16 @@ class HouseholdService: ObservableObject {
             let isParticipant = share.currentUserParticipant != nil
             print("🔍 isCurrentUserParticipant: \(isParticipant)")
             return isParticipant
+        } catch HouseholdError.noShareRecord {
+            // M7.3.3: noShareRecord means the share is gone — user was likely removed
+            // Don't assume participant just because data is in shared store
+            print("⚠️ Could not check participant status: noShareRecord")
+            print("   Share not found — user was likely removed")
+            return false
         } catch {
             print("⚠️ Could not check participant status: \(error)")
-            // If we can't fetch the share but household exists in shared store,
-            // the user is likely a participant (data synced via CloudKit)
+            // Network or transient error — if household is in shared store,
+            // assume participant (data synced via CloudKit)
             let sharedStore = PersistenceController.shared.sharedStore
             if household.objectID.persistentStore == sharedStore {
                 print("   Household is in shared store - assuming participant")
@@ -1275,6 +1495,16 @@ class HouseholdService: ObservableObject {
     /// Call this when user taps "Check for Invitations" button
     func checkForAcceptedInvitations() async {
         print("🔍 Manually checking for accepted invitations...")
+
+        // M7.3.3: If user already has a household, don't auto-join another
+        // This prevents data integrity issues where householdKey doesn't match household.id
+        if let existingHousehold = currentHousehold {
+            print("⚠️ M7.3.3: User already in household '\(existingHousehold.name ?? "Unknown")'")
+            print("   Cannot auto-join a new household")
+            print("   User must leave/delete current household first")
+            errorMessage = "You are already in a household. Leave or delete it before joining another."
+            return
+        }
 
         do {
             // FIRST: Check CloudKit shared database directly
@@ -1469,6 +1699,23 @@ class HouseholdService: ObservableObject {
                 throw HouseholdError.noShareRecord
             }
 
+            // M7.3.3: For owner, fetch directly from private database to get latest participants
+            // fetchShares(matching:) may return cached data that doesn't include new participants
+            let isOwner = await isOwner(household: household)
+            if isOwner {
+                let privateDB = container.privateCloudDatabase
+                do {
+                    let freshRecord = try await privateDB.record(for: share.recordID)
+                    if let freshShare = freshRecord as? CKShare {
+                        print("✅ Fetched fresh CKShare from private database: \(freshShare.recordID.recordName)")
+                        print("   Current participants: \(freshShare.participants.count)")
+                        return freshShare
+                    }
+                } catch {
+                    print("⚠️ Could not fetch fresh share from private DB, using cached: \(error.localizedDescription)")
+                }
+            }
+
             print("✅ Fetched live CKShare from CloudKit: \(share.recordID.recordName)")
             print("   Current participants: \(share.participants.count)")
 
@@ -1490,27 +1737,235 @@ class HouseholdService: ObservableObject {
             let database = container.sharedCloudDatabase
             let shareRecordID = archivedShare.recordID
 
-            let fetchedRecord = try await database.record(for: shareRecordID)
+            do {
+                let fetchedRecord = try await database.record(for: shareRecordID)
 
-            guard let liveShare = fetchedRecord as? CKShare else {
+                guard let liveShare = fetchedRecord as? CKShare else {
+                    throw HouseholdError.noShareRecord
+                }
+
+                print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
+                return liveShare
+            } catch {
+                // M7.3.3: CKError from shared database means user was removed
+                // "Invalid Arguments" / "Only shared zones can be accessed" = no access
+                print("❌ Fallback also failed: \(error)")
                 throw HouseholdError.noShareRecord
             }
-
-            print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
-            return liveShare
         }
     }
     
+    /// M7.3.3: Deletes all objects linked to a household by householdKey
+    /// Used during "Clean Delete" to remove data that may be in private store
+    /// (due to attach-then-share pattern not moving related objects to shared store)
+    @discardableResult
+    private func deleteHouseholdLinkedData(householdKey: String) -> Int {
+        var deletedCount = 0
+
+        print("🔍 M7.3.3: deleteHouseholdLinkedData starting for key: \(householdKey)")
+
+        // M7.3.3 FIX: Refresh context to ensure we see latest state from all stores
+        viewContext.refreshAllObjects()
+
+        // Delete recipes with this householdKey
+        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let recipes = try viewContext.fetch(recipeRequest)
+            print("   Found \(recipes.count) recipes to delete")
+            for recipe in recipes {
+                viewContext.delete(recipe)
+                deletedCount += 1
+            }
+        } catch {
+            print("   ❌ Recipe fetch error: \(error)")
+        }
+
+        // Delete weekly lists with this householdKey
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let lists = try viewContext.fetch(listRequest)
+            print("   Found \(lists.count) weekly lists to delete")
+            for list in lists {
+                viewContext.delete(list)
+                deletedCount += 1
+            }
+        } catch {
+            print("   ❌ WeeklyList fetch error: \(error)")
+        }
+
+        // Delete meal plans with this householdKey
+        let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        mealPlanRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let mealPlans = try viewContext.fetch(mealPlanRequest)
+            print("   Found \(mealPlans.count) meal plans to delete")
+            for mealPlan in mealPlans {
+                viewContext.delete(mealPlan)
+                deletedCount += 1
+            }
+        } catch {
+            print("   ❌ MealPlan fetch error: \(error)")
+        }
+
+        // Delete categories with this householdKey
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let categories = try viewContext.fetch(categoryRequest)
+            print("   Found \(categories.count) categories to delete")
+            for category in categories {
+                viewContext.delete(category)
+                deletedCount += 1
+            }
+        } catch {
+            print("   ❌ Category fetch error: \(error)")
+        }
+
+        // Delete ingredient templates with this householdKey
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let templates = try viewContext.fetch(templateRequest)
+            print("   Found \(templates.count) ingredient templates to delete")
+            for template in templates {
+                viewContext.delete(template)
+                deletedCount += 1
+            }
+        } catch {
+            print("   ❌ IngredientTemplate fetch error: \(error)")
+        }
+
+        if viewContext.hasChanges {
+            do {
+                try viewContext.save()
+                print("   ✅ Context saved successfully")
+            } catch {
+                print("   ❌ Context save error: \(error)")
+            }
+        } else {
+            print("   ⚠️ No changes to save")
+        }
+
+        print("🔍 M7.3.3: deleteHouseholdLinkedData complete, deleted \(deletedCount) objects")
+        return deletedCount
+    }
+
     /// Extracts display name from email address
     /// Example: "sarah.smith@icloud.com" → "Sarah Smith"
     private func extractDisplayName(from email: String) -> String {
         // Get part before @
         let localPart = email.components(separatedBy: "@").first ?? email
-        
+
         // Split by dots and capitalize each part
         let parts = localPart.components(separatedBy: ".")
         let capitalized = parts.map { $0.capitalized }
-        
+
         return capitalized.joined(separator: " ")
+    }
+
+    // MARK: - M7.3.3: Diagnostic Methods
+
+    /// M7.3.3: Comprehensive diagnostic dump for troubleshooting sync issues
+    /// Call this from Settings or debug view to understand what data is where
+    func dumpCategorySyncDiagnostics() {
+        print("\n" + String(repeating: "=", count: 60))
+        print("🔍 M7.3.3 CATEGORY SYNC DIAGNOSTICS")
+        print(String(repeating: "=", count: 60))
+
+        // 1. Current household state
+        print("\n📦 HOUSEHOLD STATE:")
+        if let household = currentHousehold {
+            print("   Name: \(household.name ?? "Unknown")")
+            print("   ID (UUID): \(household.id?.uuidString ?? "NIL")")
+            print("   Owner: \(household.ownerEmail ?? "Unknown")")
+            if let store = household.objectID.persistentStore {
+                print("   Store: \(store.url?.lastPathComponent ?? "unknown")")
+            }
+        } else {
+            print("   No current household")
+        }
+
+        // 2. Derived household key
+        print("\n🔑 HOUSEHOLD KEY:")
+        print("   currentHouseholdKey: \(currentHouseholdKey ?? "NIL")")
+
+        // 3. Fetch ALL categories (both stores)
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Category.name, ascending: true)]
+
+        do {
+            let allCategories = try viewContext.fetch(categoryRequest)
+            print("\n📂 ALL CATEGORIES IN DATABASE (\(allCategories.count) total):")
+
+            let persistenceController = PersistenceController.shared
+            let privateStore = persistenceController.privateStore
+            let sharedStore = persistenceController.sharedStore
+
+            var privateCount = 0
+            var sharedCount = 0
+            var unknownStoreCount = 0
+
+            for category in allCategories {
+                let storeName: String
+                if category.objectID.persistentStore == privateStore {
+                    storeName = "PRIVATE"
+                    privateCount += 1
+                } else if category.objectID.persistentStore == sharedStore {
+                    storeName = "SHARED"
+                    sharedCount += 1
+                } else {
+                    storeName = "UNKNOWN"
+                    unknownStoreCount += 1
+                }
+
+                let hasHouseholdRelation = category.household != nil
+                print("   [\(storeName)] '\(category.name ?? "unnamed")' - householdKey: \(category.householdKey ?? "nil"), relationship: \(hasHouseholdRelation ? "YES" : "NO")")
+            }
+
+            print("\n📊 STORE SUMMARY:")
+            print("   Private store categories: \(privateCount)")
+            print("   Shared store categories: \(sharedCount)")
+            print("   Unknown store categories: \(unknownStoreCount)")
+
+            // 4. Check what the filter would show
+            let filteredCategories = allCategories.filter { category in
+                if let householdKey = currentHouseholdKey {
+                    return category.householdKey == householdKey
+                } else {
+                    return category.householdKey == nil
+                }
+            }
+            print("\n🎯 FILTER RESULT (\(filteredCategories.count) categories would show):")
+            for category in filteredCategories {
+                print("   '\(category.name ?? "unnamed")'")
+            }
+
+        } catch {
+            print("   ❌ Error fetching categories: \(error)")
+        }
+
+        // 5. Check WeeklyLists for comparison
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        if let allLists = try? viewContext.fetch(listRequest) {
+            print("\n📋 WEEKLY LISTS FOR COMPARISON (\(allLists.count) total):")
+            let persistenceController = PersistenceController.shared
+            for list in allLists.prefix(10) {
+                let storeName: String
+                if list.objectID.persistentStore == persistenceController.privateStore {
+                    storeName = "PRIVATE"
+                } else if list.objectID.persistentStore == persistenceController.sharedStore {
+                    storeName = "SHARED"
+                } else {
+                    storeName = "UNKNOWN"
+                }
+                print("   [\(storeName)] '\(list.name ?? "unnamed")' - householdKey: \(list.householdKey ?? "nil")")
+            }
+        }
+
+        print("\n" + String(repeating: "=", count: 60))
+        print("END DIAGNOSTICS")
+        print(String(repeating: "=", count: 60) + "\n")
     }
 }
