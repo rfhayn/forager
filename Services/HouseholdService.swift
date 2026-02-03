@@ -410,13 +410,18 @@ class HouseholdService: ObservableObject {
         }
 
         let householdName = household.name ?? "Unknown"
+        let householdKey = household.id?.uuidString
         print("🔄 M7.3.3: Deleting household: \(householdName)")
 
-        // Step 1: Migrate data if requested (while we still have access)
+        // Step 1: Migrate data if requested, otherwise delete household-linked data
         if migrateData {
             try await migrateHouseholdDataToPersonal(household)
             try viewContext.save()
             print("✅ M7.3.3: Migrated household data to personal store")
+        } else if let key = householdKey {
+            // Clean delete: remove all data with this householdKey from private store
+            let deletedCount = deleteHouseholdLinkedData(householdKey: key)
+            print("✅ M7.3.3: Deleted \(deletedCount) household-linked objects (clean delete)")
         }
 
         // Step 2: Delete CKShare from private database (revokes all participants' access)
@@ -1646,6 +1651,70 @@ class HouseholdService: ObservableObject {
         }
     }
     
+    /// M7.3.3: Deletes all objects linked to a household by householdKey
+    /// Used during "Clean Delete" to remove data that may be in private store
+    /// (due to attach-then-share pattern not moving related objects to shared store)
+    @discardableResult
+    private func deleteHouseholdLinkedData(householdKey: String) -> Int {
+        var deletedCount = 0
+
+        // Delete recipes with this householdKey
+        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        if let recipes = try? viewContext.fetch(recipeRequest) {
+            for recipe in recipes {
+                viewContext.delete(recipe)
+                deletedCount += 1
+            }
+        }
+
+        // Delete weekly lists with this householdKey
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        if let lists = try? viewContext.fetch(listRequest) {
+            for list in lists {
+                viewContext.delete(list)
+                deletedCount += 1
+            }
+        }
+
+        // Delete meal plans with this householdKey
+        let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        mealPlanRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        if let mealPlans = try? viewContext.fetch(mealPlanRequest) {
+            for mealPlan in mealPlans {
+                viewContext.delete(mealPlan)
+                deletedCount += 1
+            }
+        }
+
+        // Delete categories with this householdKey
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        if let categories = try? viewContext.fetch(categoryRequest) {
+            for category in categories {
+                viewContext.delete(category)
+                deletedCount += 1
+            }
+        }
+
+        // Delete ingredient templates with this householdKey
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        if let templates = try? viewContext.fetch(templateRequest) {
+            for template in templates {
+                viewContext.delete(template)
+                deletedCount += 1
+            }
+        }
+
+        if viewContext.hasChanges {
+            try? viewContext.save()
+        }
+
+        return deletedCount
+    }
+
     /// Extracts display name from email address
     /// Example: "sarah.smith@icloud.com" → "Sarah Smith"
     private func extractDisplayName(from email: String) -> String {
