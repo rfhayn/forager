@@ -1732,60 +1732,93 @@ class HouseholdService: ObservableObject {
     private func deleteHouseholdLinkedData(householdKey: String) -> Int {
         var deletedCount = 0
 
+        print("🔍 M7.3.3: deleteHouseholdLinkedData starting for key: \(householdKey)")
+
+        // M7.3.3 FIX: Refresh context to ensure we see latest state from all stores
+        viewContext.refreshAllObjects()
+
         // Delete recipes with this householdKey
         let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         recipeRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        if let recipes = try? viewContext.fetch(recipeRequest) {
+        do {
+            let recipes = try viewContext.fetch(recipeRequest)
+            print("   Found \(recipes.count) recipes to delete")
             for recipe in recipes {
                 viewContext.delete(recipe)
                 deletedCount += 1
             }
+        } catch {
+            print("   ❌ Recipe fetch error: \(error)")
         }
 
         // Delete weekly lists with this householdKey
         let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
         listRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        if let lists = try? viewContext.fetch(listRequest) {
+        do {
+            let lists = try viewContext.fetch(listRequest)
+            print("   Found \(lists.count) weekly lists to delete")
             for list in lists {
                 viewContext.delete(list)
                 deletedCount += 1
             }
+        } catch {
+            print("   ❌ WeeklyList fetch error: \(error)")
         }
 
         // Delete meal plans with this householdKey
         let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         mealPlanRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        if let mealPlans = try? viewContext.fetch(mealPlanRequest) {
+        do {
+            let mealPlans = try viewContext.fetch(mealPlanRequest)
+            print("   Found \(mealPlans.count) meal plans to delete")
             for mealPlan in mealPlans {
                 viewContext.delete(mealPlan)
                 deletedCount += 1
             }
+        } catch {
+            print("   ❌ MealPlan fetch error: \(error)")
         }
 
         // Delete categories with this householdKey
         let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
         categoryRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        if let categories = try? viewContext.fetch(categoryRequest) {
+        do {
+            let categories = try viewContext.fetch(categoryRequest)
+            print("   Found \(categories.count) categories to delete")
             for category in categories {
                 viewContext.delete(category)
                 deletedCount += 1
             }
+        } catch {
+            print("   ❌ Category fetch error: \(error)")
         }
 
         // Delete ingredient templates with this householdKey
         let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         templateRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        if let templates = try? viewContext.fetch(templateRequest) {
+        do {
+            let templates = try viewContext.fetch(templateRequest)
+            print("   Found \(templates.count) ingredient templates to delete")
             for template in templates {
                 viewContext.delete(template)
                 deletedCount += 1
             }
+        } catch {
+            print("   ❌ IngredientTemplate fetch error: \(error)")
         }
 
         if viewContext.hasChanges {
-            try? viewContext.save()
+            do {
+                try viewContext.save()
+                print("   ✅ Context saved successfully")
+            } catch {
+                print("   ❌ Context save error: \(error)")
+            }
+        } else {
+            print("   ⚠️ No changes to save")
         }
 
+        print("🔍 M7.3.3: deleteHouseholdLinkedData complete, deleted \(deletedCount) objects")
         return deletedCount
     }
 
