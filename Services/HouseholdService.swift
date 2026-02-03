@@ -351,7 +351,13 @@ class HouseholdService: ObservableObject {
         let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
         print("✅ M7.3.2: Purged \(deletedFromStore) shared store objects")
 
-        // Step 7: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
+        // Step 7: Reset context BEFORE destroying shared store (M7.3.3)
+        // This clears all in-memory managed object references, preventing crashes
+        // when SwiftUI tries to access objects from the destroyed store
+        viewContext.reset()
+        print("✅ M7.3.3: Reset viewContext to clear in-memory references")
+
+        // Step 8: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
         do {
             try PersistenceController.shared.destroyAndRecreateSharedStore()
             print("✅ M7.3.3: Destroyed and recreated shared store")
@@ -594,6 +600,12 @@ class HouseholdService: ObservableObject {
             // Also purge any remaining shared store objects
             let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
             print("✅ M7.3.3: Purged \(deletedFromStore) shared store objects")
+
+            // M7.3.3 FIX: Reset context BEFORE destroying shared store
+            // This clears all in-memory managed object references, preventing crashes
+            // when SwiftUI tries to access objects from the destroyed store
+            viewContext.reset()
+            print("✅ M7.3.3: Reset viewContext to clear in-memory references")
 
             // M7.3.3 FIX: Destroy and recreate shared store to clear local SQLite cache
             // This is more aggressive but necessary to prevent duplicates on rejoin
