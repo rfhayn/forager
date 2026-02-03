@@ -540,16 +540,43 @@ class HouseholdService: ObservableObject {
             return
         }
 
-        // Only owner detects departures
-        guard await isOwner(household: household) else {
+        // M7.3.3: Non-owners check if they've been removed
+        if await !isOwner(household: household) {
+            await checkIfRemovedFromHousehold(household: household)
             return
         }
 
-        // Primary departure detection — check CKShare participants directly
+        // Primary departure detection — check CKShare participants directly (owner-only)
         await detectParticipantDepartures(household: household)
 
         // Clean up any leftover LeaveRequests from prior app versions
         cleanupStaleLeaveRequests()
+    }
+
+    /// M7.3.3: Checks if the current user has been removed from the household
+    /// Called on non-owner devices when sync events arrive
+    private func checkIfRemovedFromHousehold(household: Household) async {
+        let isParticipant = await isCurrentUserParticipant(in: household)
+
+        if !isParticipant {
+            print("👋 M7.3.3: Detected removal from household — cleaning up")
+
+            // Purge shared store objects
+            let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+            print("✅ M7.3.3: Deleted \(deletedCount) shared store objects")
+
+            // Destroy and recreate shared store
+            do {
+                try PersistenceController.shared.destroyAndRecreateSharedStore()
+                print("✅ M7.3.3: Shared store destroyed and recreated")
+            } catch {
+                print("⚠️ M7.3.3: Failed to destroy shared store: \(error.localizedDescription)")
+            }
+
+            // Clear current household
+            currentHousehold = nil
+            print("✅ M7.3.3: Household cleared — UI will show 'Create Household'")
+        }
     }
 
     /// Cleans up ALL leave requests from the shared zone.
@@ -1314,10 +1341,16 @@ class HouseholdService: ObservableObject {
             let isParticipant = share.currentUserParticipant != nil
             print("🔍 isCurrentUserParticipant: \(isParticipant)")
             return isParticipant
+        } catch HouseholdError.noShareRecord {
+            // M7.3.3: noShareRecord means the share is gone — user was likely removed
+            // Don't assume participant just because data is in shared store
+            print("⚠️ Could not check participant status: noShareRecord")
+            print("   Share not found — user was likely removed")
+            return false
         } catch {
             print("⚠️ Could not check participant status: \(error)")
-            // If we can't fetch the share but household exists in shared store,
-            // the user is likely a participant (data synced via CloudKit)
+            // Network or transient error — if household is in shared store,
+            // assume participant (data synced via CloudKit)
             let sharedStore = PersistenceController.shared.sharedStore
             if household.objectID.persistentStore == sharedStore {
                 print("   Household is in shared store - assuming participant")
