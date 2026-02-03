@@ -351,6 +351,14 @@ class HouseholdService: ObservableObject {
         let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
         print("✅ M7.3.2: Purged \(deletedFromStore) shared store objects")
 
+        // Step 7: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            print("✅ M7.3.3: Destroyed and recreated shared store")
+        } catch {
+            print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
+        }
+
         print("✅ M7.3.2: Left household: \(householdName)")
         if migrateData {
             print("   Personal copy created, shared data removed")
@@ -586,6 +594,16 @@ class HouseholdService: ObservableObject {
             // Also purge any remaining shared store objects
             let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
             print("✅ M7.3.3: Purged \(deletedFromStore) shared store objects")
+
+            // M7.3.3 FIX: Destroy and recreate shared store to clear local SQLite cache
+            // This is more aggressive but necessary to prevent duplicates on rejoin
+            // CloudKit will re-sync fresh data when user rejoins
+            do {
+                try PersistenceController.shared.destroyAndRecreateSharedStore()
+                print("✅ M7.3.3: Destroyed and recreated shared store")
+            } catch {
+                print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
+            }
         }
     }
 
