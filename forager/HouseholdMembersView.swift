@@ -110,6 +110,11 @@ struct HouseholdMembersView: View {
                     self.isCurrentUserOwner = ownerCheck
                     self.isLoading = false
                 }
+            } catch HouseholdError.noShareRecord {
+                // M7.3.3: Household was deleted - dismiss this view
+                await MainActor.run {
+                    dismiss()
+                }
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
