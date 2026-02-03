@@ -1,10 +1,10 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 2, 2026
+**Last Updated**: February 3, 2026
 **For Milestone**: M7.3.3 - Remove Member & Delete Household
-**Status**: **READY**
-**Prerequisites**: M7.2.2 merged to main
-**Branch**: `feature/M7.3.3-remove-member-delete-household`
+**Status**: **IN PROGRESS** - Protections complete, core features remaining
+**Prerequisites**: M7.2.2 merged to main ✅
+**Branch**: `feature/M7.3.3-remove-member-delete-household` (pushed)
 
 ---
 
@@ -22,7 +22,25 @@
 
 ---
 
-## **IMPLEMENTATION PLAN**
+## **COMPLETED** ✅
+
+**Household Protection** (prevents multi-household state):
+- `alreadyInHousehold` error case in HouseholdError
+- Protection in `createHouseholdAndShare()` and `checkForAcceptedInvitations()`
+- SceneDelegate rejects share invitation when already in household
+- `cloudKitShareRejectedAlreadyInHousehold` notification
+
+**Diagnostics**:
+- `dumpCategorySyncDiagnostics()` for troubleshooting sync issues
+- "Category Sync Diagnostic" button in Settings (DEBUG only)
+
+**Deprecated API Cleanup**:
+- Removed `userDiscoverability` permission code (~75 lines)
+- Fixed `rootRecordID` → `hierarchicalRootRecordID`
+
+---
+
+## **IMPLEMENTATION PLAN** (Remaining)
 
 ### **Feature 1: Owner Removes Member** (Low Complexity)
 
@@ -97,6 +115,6 @@ git push -u origin feature/M7.3.3-remove-member-delete-household
 
 ---
 
-**Version**: February 2, 2026 - M7.3.3 Ready
-**Status**: READY to implement
+**Version**: February 3, 2026 - M7.3.3 In Progress
+**Status**: Protections complete, core features remaining
 **Estimated Complexity**: Low-Medium (most infrastructure exists)

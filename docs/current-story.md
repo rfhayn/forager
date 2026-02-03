@@ -1,10 +1,60 @@
 # Current Development Story
 
-**Last Updated**: February 2, 2026 (M7.2.2 COMPLETE)
-**Status**: M7.2.2 ✅ **COMPLETE** - Leave household flow fully implemented and tested
-**Total Progress**: ~147 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.2.2-leave-flow-fixes` (ready to merge to main)
+**Last Updated**: February 3, 2026 (M7.3.3 IN PROGRESS)
+**Status**: M7.3.3 🔄 **IN PROGRESS** - Household protections complete, core features pending
+**Total Progress**: ~150 hours | 89% planning accuracy
+**Current Branch**: `feature/M7.3.3-remove-member-delete-household`
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+
+---
+
+## 🔄 **M7.3.3: REMOVE MEMBER & DELETE HOUSEHOLD - IN PROGRESS**
+
+**Status**: 🔄 **IN PROGRESS**
+**Session**: February 3, 2026
+**Branch**: `feature/M7.3.3-remove-member-delete-household`
+
+### **What Was Implemented** ✅
+
+**1. Household Protection (Prevents Multi-Household State)**
+- `alreadyInHousehold` error case added to `HouseholdError`
+- Protection in `createHouseholdAndShare()` - cannot create when already in one
+- Protection in `checkForAcceptedInvitations()` - cannot join when already in one
+- SceneDelegate protection - rejects share invitation when already in household
+- `cloudKitShareRejectedAlreadyInHousehold` notification for UI feedback
+
+**2. Category Sync Diagnostics**
+- `dumpCategorySyncDiagnostics()` - comprehensive debug output showing:
+  - Current household state and householdKey
+  - All categories with store location (private/shared) and householdKey
+  - Filter verification for household-scoped queries
+  - WeeklyLists for comparison
+- "Category Sync Diagnostic" button in Settings (DEBUG only)
+
+**3. Deprecated API Cleanup**
+- Removed `userDiscoverability` permission code from foragerApp.swift (~75 lines)
+- Fixed `rootRecordID` → `hierarchicalRootRecordID` in SceneDelegate and PasteInvitationSheet
+
+### **Verified Working** ✅
+- Category sync between owner (private store) and member (shared store)
+- Hierarchical sharing includes related objects (categories, recipes, etc.)
+- householdKey filtering works correctly on both owner and member devices
+
+### **What's Remaining** 📋
+- `removeMember(_:from:)` service method
+- `deleteHousehold(_:migrateData:)` service method
+- Swipe-to-delete UI in HouseholdMembersView (owner-only)
+- "Delete Household" button in SettingsView (owner-only)
+
+### **Commits**
+1. `e5ec430` - M7.3.3: Add household protection, diagnostics, remove deprecated APIs
+
+### **Files Modified**
+- `Services/HouseholdService.swift` - Protection and diagnostics (+175 lines)
+- `forager/SceneDelegate.swift` - Share rejection when already in household
+- `forager/SettingsView.swift` - Diagnostic button
+- `forager/foragerApp.swift` - Removed deprecated permission code (-75 lines)
+- `forager/PasteInvitationSheet.swift` - Fixed deprecated API
 
 ---
 
@@ -92,12 +142,12 @@
 
 ## **What's Next**
 
-**M7.3.3: Remove Member & Delete Household**
-- Owner can remove a specific member from the household
-- Owner can delete the entire household
-- Data migration on delete (shared -> personal for owner)
-- Confirmation alerts for destructive actions
-- Much infrastructure already exists from M7.2.2 work
+**M7.3.3: Complete Remove Member & Delete Household**
+- Implement `removeMember(_:from:)` in HouseholdService
+- Implement `deleteHousehold(_:migrateData:)` in HouseholdService
+- Add swipe-to-delete UI in HouseholdMembersView (owner-only)
+- Add "Delete Household" button in SettingsView (owner-only)
+- Much infrastructure already exists from M7.2.2 work (migration, purge, CKShare management)
 
 ---
 
@@ -112,8 +162,8 @@
 
 ---
 
-**Last Session**: February 2, 2026 - M7.2.2 Complete
-**Next Action**: Merge M7.2.2 branch, start M7.3.3
-**Branch**: `feature/M7.2.2-leave-flow-fixes` (ready to merge)
-**Confidence**: **GREEN** (All code working, clean builds, tested on devices)
-**Version**: February 2, 2026 - M7.2.2 Complete
+**Last Session**: February 3, 2026 - M7.3.3 In Progress
+**Next Action**: Continue M7.3.3 - implement remove member and delete household features
+**Branch**: `feature/M7.3.3-remove-member-delete-household`
+**Confidence**: **GREEN** (Protection features working, clean builds, tested on devices)
+**Version**: February 3, 2026 - M7.3.3 In Progress
