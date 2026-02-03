@@ -1649,14 +1649,21 @@ class HouseholdService: ObservableObject {
             let database = container.sharedCloudDatabase
             let shareRecordID = archivedShare.recordID
 
-            let fetchedRecord = try await database.record(for: shareRecordID)
+            do {
+                let fetchedRecord = try await database.record(for: shareRecordID)
 
-            guard let liveShare = fetchedRecord as? CKShare else {
+                guard let liveShare = fetchedRecord as? CKShare else {
+                    throw HouseholdError.noShareRecord
+                }
+
+                print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
+                return liveShare
+            } catch {
+                // M7.3.3: CKError from shared database means user was removed
+                // "Invalid Arguments" / "Only shared zones can be accessed" = no access
+                print("❌ Fallback also failed: \(error)")
                 throw HouseholdError.noShareRecord
             }
-
-            print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
-            return liveShare
         }
     }
     
