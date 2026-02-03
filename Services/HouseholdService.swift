@@ -329,31 +329,19 @@ class HouseholdService: ObservableObject {
             print("   Proceeding with local cleanup")
         }
 
-        // Step 3: Delete all objects in the shared store from the context FIRST.
-        // This notifies @FetchRequest observers so SwiftUI drops its references.
-        // Then destroy/recreate the store file to guarantee no ghost data remains.
-        // We can't just reset() or destroy the store — SwiftUI @FetchRequest holds
-        // managed object references and crashes if the store disappears underneath.
-        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.2.2: Deleted \(deletedCount) shared store objects from context")
+        // Step 3: Clear current household FIRST so UI stops referencing shared objects
+        currentHousehold = nil
 
-        // Step 4: Destroy and recreate the empty store file to prevent ghost data from re-syncing
-        do {
-            try PersistenceController.shared.destroyAndRecreateSharedStore()
-            print("✅ M7.2.2: Shared store destroyed and recreated")
-        } catch {
-            print("⚠️ M7.2.2: Failed to destroy shared store: \(error.localizedDescription)")
-        }
-
-        // Step 5: Mark household as "left" in Keychain (survives app reinstall)
+        // Step 4: Mark household as "left" in Keychain (survives app reinstall)
         if let householdID = householdID {
             markHouseholdAsLeft(householdID)
         }
 
-        // Step 6: Clear current household (UI will show "Create Household")
-        await MainActor.run {
-            currentHousehold = nil
-        }
+        // Step 5: Purge shared store objects from context
+        // Don't destroy/recreate the store - that causes crashes when re-joining later
+        // CloudKit will stop syncing to the shared store automatically
+        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.2: Purged \(deletedCount) shared store objects")
 
         print("✅ M7.3.2: Left household: \(householdName)")
         if migrateData {
