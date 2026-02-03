@@ -339,11 +339,17 @@ class HouseholdService: ObservableObject {
             markHouseholdAsLeft(householdID)
         }
 
-        // Step 5: Purge shared store objects from context
-        // Don't destroy/recreate the store - that causes crashes when re-joining later
-        // CloudKit will stop syncing to the shared store automatically
-        let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.3.2: Purged \(deletedCount) shared store objects")
+        // Step 5: Delete data by householdKey (M7.3.3 FIX)
+        // This ensures orphaned data is cleaned up regardless of store location
+        // Prevents duplicates if user rejoins the same household later
+        if let key = householdID {
+            let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
+            print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
+        }
+
+        // Step 6: Also purge any remaining shared store objects
+        let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        print("✅ M7.3.2: Purged \(deletedFromStore) shared store objects")
 
         print("✅ M7.3.2: Left household: \(householdName)")
         if migrateData {
@@ -557,20 +563,29 @@ class HouseholdService: ObservableObject {
         if !isParticipant {
             print("👋 M7.3.3: Detected removal from household — cleaning up")
 
+            // Capture householdKey before clearing currentHousehold
+            let householdKey = household.id?.uuidString
+
             // Clear current household so UI shows "Create Household"
             currentHousehold = nil
             print("✅ M7.3.3: Household cleared — UI will show 'Create Household'")
 
             // Mark this household as "left" so we don't re-join on next sync
-            if let householdID = household.id?.uuidString {
+            if let householdID = householdKey {
                 markHouseholdAsLeft(householdID)
             }
 
-            // Purge shared store objects from context
-            // Don't destroy/recreate the store - that causes crashes when re-joining
-            // CloudKit will stop syncing to the shared store automatically
-            let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-            print("✅ M7.3.3: Purged \(deletedCount) shared store objects")
+            // M7.3.3 FIX: Delete data by householdKey (not just purge shared store)
+            // CloudKit may have already cleaned up the shared store, but orphaned
+            // data with householdKey can remain and cause duplicates on rejoin
+            if let key = householdKey {
+                let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
+                print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
+            }
+
+            // Also purge any remaining shared store objects
+            let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+            print("✅ M7.3.3: Purged \(deletedFromStore) shared store objects")
         }
     }
 
