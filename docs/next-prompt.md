@@ -1,107 +1,105 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 3, 2026
-**For Milestone**: M7.3.3 - Remove Member & Delete Household
-**Status**: ✅ **COMPLETE** - All features implemented and tested
-**Prerequisites**: M7.2.2 merged to main ✅
-**Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
+**For Milestone**: M7.3.4 - Error Handling & Recovery
+**Status**: 🚀 **READY TO START**
+**Prerequisites**: M7.3.3 merged to main
+**Branch**: `feature/M7.3.4-error-handling-recovery`
 
 ---
 
-## **M7.3.3 - REMOVE MEMBER & DELETE HOUSEHOLD**
+## **M7.3.4 - ERROR HANDLING & RECOVERY**
 
-**Goal**: Owner can remove members and delete the entire household with proper data handling.
+**Goal**: Graceful error handling for CloudKit failures with retry logic and user feedback.
 
-**What Already Exists (from M7.2.2)**:
-- `deleteCKShareFromSharedDatabase()` - CKShare deletion pattern
-- `purgeAllSharedStoreObjects(from:)` - Shared store cleanup helper
-- `destroyAndRecreateSharedStore()` - Nuclear shared store cleanup
-- `migrateHouseholdDataToPersonal()` - Full data migration with dedup
-- `HouseholdMembersView` - Displays participants from CKShare
-- Leave confirmation alert pattern in SettingsView (reusable for delete)
-
----
-
-## **COMPLETED** ✅
-
-**Household Protection** (prevents multi-household state):
-- `alreadyInHousehold` error case in HouseholdError
-- Protection in `createHouseholdAndShare()` and `checkForAcceptedInvitations()`
-- SceneDelegate rejects share invitation when already in household
-- `cloudKitShareRejectedAlreadyInHousehold` notification
-
-**Diagnostics**:
-- `dumpCategorySyncDiagnostics()` for troubleshooting sync issues
-- "Category Sync Diagnostic" button in Settings (DEBUG only)
-
-**Deprecated API Cleanup**:
-- Removed `userDiscoverability` permission code (~75 lines)
-- Fixed `rootRecordID` → `hierarchicalRootRecordID`
+**What Already Exists**:
+- `HouseholdError` enum with various error cases
+- `errorMessage` published property on HouseholdService
+- `isLoading` state management
+- CloudKitSyncMonitor for sync state tracking
+- Basic error handling in existing service methods
 
 ---
 
-## **IMPLEMENTATION PLAN** (Remaining)
+## **IMPLEMENTATION PLAN**
 
-### **Feature 1: Owner Removes Member** (Low Complexity)
+### **Feature 1: CloudKit Error Classification** (Low Complexity)
 
-**Service**: `removeMember()` in HouseholdService
-- Fetch CKShare for household via `getShare(for:)`
-- Call `share.removeParticipant(participant)` (owner HAS permission)
-- Save the share via `CKModifyRecordsOperation`
-- Delete the corresponding HouseholdMember entity
-- Save context
+**Service**: Add error classification helper to HouseholdService
+- Classify CKError types: transient (retry) vs permanent (show error)
+- Transient: `.networkUnavailable`, `.networkFailure`, `.serviceUnavailable`, `.requestRateLimited`
+- Permanent: `.notAuthenticated`, `.quotaExceeded`, `.incompatibleVersion`
+- User-friendly error messages for each category
 
-**UI**: Button or swipe-to-delete in HouseholdMembersView
-- Only visible for owner
-- Confirmation alert before removal
-- Cannot remove self (owner)
+```swift
+private func classifyError(_ error: Error) -> (isRetryable: Bool, userMessage: String)
+```
 
-### **Feature 2: Owner Deletes Household** (Medium Complexity)
+### **Feature 2: Retry Logic** (Medium Complexity)
 
-**Service**: `deleteHousehold()` in HouseholdService
-1. Migrate owner's data to personal (reuse `migrateHouseholdDataToPersonal()`)
-2. Delete the CKShare (removes all participants' access)
-3. Purge shared store objects (reuse `purgeAllSharedStoreObjects(from:)`)
-4. Destroy and recreate shared store
-5. Clear `currentHousehold`
+**Service**: Add retry wrapper for CloudKit operations
+- Exponential backoff: 1s, 2s, 4s (max 3 retries)
+- Only retry transient errors
+- Log retry attempts for debugging
+- Cancel retries if user navigates away
 
-**UI**: "Delete Household" button in Settings (Household section)
-- Red destructive button
-- Two-step confirmation: "This will remove all members and delete shared data"
-- Option to migrate data first
-- Loading indicator during deletion
+```swift
+private func withRetry<T>(
+    maxAttempts: Int = 3,
+    operation: () async throws -> T
+) async throws -> T
+```
 
-### **Feature 3: Removed Member Detection** (Low Complexity)
+### **Feature 3: Offline Detection** (Low Complexity)
 
-**Behavior**: When a member is removed by the owner, their next sync should detect the change.
-- `loadCurrentHousehold()` already handles missing/invalid household state
-- On next app launch, if CKShare no longer includes user, household clears automatically
-- No additional code likely needed (verify during testing)
+**Service**: Network reachability monitoring
+- Use `NWPathMonitor` to track connectivity
+- Expose `isOffline` published property
+- Queue operations when offline (optional - can defer)
+- Show "Offline" indicator in UI
+
+### **Feature 4: User-Facing Error UI** (Low Complexity)
+
+**UI**: Error presentation in HouseholdService consumers
+- Alert for permanent errors with actionable message
+- Toast/banner for transient errors with "Retrying..." message
+- "No internet connection" banner when offline
+- Retry button for failed operations
 
 ---
 
 ## **ACCEPTANCE CRITERIA**
 
-**Owner Removes Member**:
-- [ ] Owner sees "Remove" option for each non-owner member
-- [ ] Confirmation alert before removal
-- [ ] Member removed from CKShare.participants
-- [ ] HouseholdMember entity deleted
-- [ ] Member's next sync shows them as household-less
+**Error Classification**:
+- [ ] CKError types correctly classified as transient or permanent
+- [ ] User-friendly messages for common error scenarios
+- [ ] Error messages logged for debugging
 
-**Owner Deletes Household**:
-- [ ] "Delete Household" button visible only for owner
-- [ ] Two-step confirmation dialog
-- [ ] Owner's data migrated to personal before deletion
-- [ ] CKShare deleted (all members lose access)
-- [ ] Shared store purged and recreated
-- [ ] Owner returns to "no household" state
-- [ ] Members detect household deletion on next sync
+**Retry Logic**:
+- [ ] Transient errors trigger automatic retry
+- [ ] Exponential backoff between retries
+- [ ] Max 3 retry attempts
+- [ ] Permanent errors fail immediately (no retry)
 
-**General**:
-- [ ] Clean build
-- [ ] No regressions to existing leave flow
-- [ ] Confirmation alerts for all destructive actions
+**Offline Handling**:
+- [ ] Network status monitored via NWPathMonitor
+- [ ] `isOffline` property exposed to UI
+- [ ] Offline indicator displayed when appropriate
+
+**User Experience**:
+- [ ] Clear error messages (no technical jargon)
+- [ ] "Retrying..." feedback during retry attempts
+- [ ] Actionable guidance ("Check internet connection")
+- [ ] No silent failures
+
+---
+
+## **FILES TO MODIFY**
+
+1. `Services/HouseholdService.swift` - Error classification, retry logic
+2. `Services/CloudKitSyncMonitor.swift` - Network monitoring (optional)
+3. `forager/SettingsView.swift` - Error/offline UI indicators
+4. `forager/HouseholdMembersView.swift` - Error handling for member operations
 
 ---
 
@@ -109,12 +107,30 @@
 
 ```bash
 git checkout main && git pull origin main
-git checkout -b feature/M7.3.3-remove-member-delete-household
-git push -u origin feature/M7.3.3-remove-member-delete-household
+git checkout -b feature/M7.3.4-error-handling-recovery
+git push -u origin feature/M7.3.4-error-handling-recovery
 ```
 
 ---
 
-**Version**: February 3, 2026 - M7.3.3 Complete
-**Status**: ✅ All features implemented
-**Estimated Complexity**: Low-Medium (completed as planned)
+## **REFERENCE: CKError Types**
+
+**Transient (Retry)**:
+- `.networkUnavailable` - No network
+- `.networkFailure` - Network request failed
+- `.serviceUnavailable` - CloudKit temporarily down
+- `.requestRateLimited` - Too many requests
+- `.zoneBusy` - Zone temporarily locked
+
+**Permanent (Show Error)**:
+- `.notAuthenticated` - Not signed into iCloud
+- `.quotaExceeded` - iCloud storage full
+- `.incompatibleVersion` - App version mismatch
+- `.permissionFailure` - No permission
+- `.unknownItem` - Record doesn't exist
+
+---
+
+**Version**: February 3, 2026 - M7.3.4 Ready
+**Estimated Complexity**: Low-Medium (2-3 hours)
+**Dependencies**: M7.3.3 complete ✅

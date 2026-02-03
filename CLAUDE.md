@@ -273,7 +273,17 @@ git checkout -b feature/M#.#.#-description-v2
 3. Mark completed phases with actual hours
 4. Update `docs/next-prompt.md` for next phase
 
-After milestone completion, also update `docs/roadmap.md` and `docs/project-index.md`.
+### Milestone Completion Documentation (MANDATORY)
+
+**After completing ANY milestone (M#.#.#), automatically update ALL 5 core documentation files:**
+
+1. `docs/current-story.md` - Mark milestone complete, update status
+2. `docs/next-prompt.md` - Replace with next milestone's implementation guidance
+3. `docs/roadmap.md` - Update milestone status, dates, hours
+4. `docs/requirements.md` - Mark requirements complete, update version
+5. `docs/project-index.md` - Update current phase, recent activity, metrics
+
+**Do this automatically without being asked.** The user should not need to request documentation updates after milestone completion.
 
 ### Documentation File Structure
 

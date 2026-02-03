@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 2, 2026
-**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | M7.2.2 Leave Flow COMPLETE ✅ | **M7.3.3 🚀 Next**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M7.3 (Household Management & Settings) ready to start
+**Last Updated**: February 3, 2026
+**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | M7.2.2 Leave Flow COMPLETE ✅ | M7.3.3 COMPLETE ✅ | **M7.3.4 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M7.3.4 (Error Handling & Recovery) ready to start
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
@@ -758,8 +758,8 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **M7.3: Household Management & Error Handling (4-6 hours)**
 - ✅ **M7.3.1**: Rename Household - COMPLETE
-- **M7.3.3**: Remove Member & Delete Household (2-3h) 🚀 NEXT
-- **M7.3.4**: Error Handling & Recovery (2-3h)
+- ✅ **M7.3.3**: Remove Member & Delete Household - COMPLETE (Feb 3, 2026)
+- **M7.3.4**: Error Handling & Recovery (2-3h) 🚀 NEXT
 
 **M7.4: Sync UI & Polish (3-4 hours)**
 - **M7.4.1**: Sync Status Indicators (2-3h)

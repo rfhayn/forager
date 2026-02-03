@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: February 2, 2026
+**Last Updated**: February 3, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
-**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, M7.2.2 Leave Flow ✅ COMPLETE, M7.3.1 ✅ COMPLETE, **M7.3.3 🚀 Next**
-**Next Priority**: M7.3.3 - Remove Member & Delete Household
+**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, M7.2.2 Leave Flow ✅ COMPLETE, M7.3.1 ✅ COMPLETE, M7.3.3 ✅ COMPLETE, **M7.3.4 🚀 Next**
+**Next Priority**: M7.3.4 - Error Handling & Recovery
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
@@ -50,6 +50,17 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 3, 2026** - M7.3.3 Remove Member & Delete Household COMPLETE ✅
+- **Completed**: Owner can remove members, delete household, with proper data migration and cleanup
+- **Key Fixes**:
+  - CategoryDeduplicator now respects householdKey scope (prevents cross-scope deletion)
+  - viewContext.reset() before destroyAndRecreateSharedStore() (prevents crash)
+  - Household protection prevents multi-household state
+  - Removed member detection with automatic cleanup
+- **Files**: HouseholdService.swift, CategoryDeduplicator.swift, HouseholdMembersView.swift, SettingsView.swift
+- **Total Progress**: ~155 hours
+- **Next**: Merge branch → M7.3.4 Error Handling & Recovery
 
 ### **February 2, 2026** - M7.2.2 Leave Flow COMPLETE ✅
 - **Completed**: Full member leave flow — leave with data migration, CKShare deletion, shared store cleanup, rejoin support
@@ -190,7 +201,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~147 hours
+- **Total Development Time**: ~155 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -215,12 +226,14 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M7.2.2 Leave Flow**: ✅ COMPLETE (Feb 2, 2026)
-  - Full leave flow, rejoin fix, dead code cleanup, PasteInvitationSheet API fix
-  - Branch `feature/M7.2.2-leave-flow-fixes` ready to merge
-- **M7.3.3**: Remove Member & Delete Household 🚀 NEXT
-  - Owner can remove members and delete household
-  - Most infrastructure exists from M7.2.2
+- **M7.3.3**: ✅ COMPLETE (Feb 3, 2026)
+  - Owner can remove members, delete household
+  - CategoryDeduplicator fix, crash fix, household protection
+  - Branch `feature/M7.3.3-remove-member-delete-household` ready to merge
+- **M7.3.4**: Error Handling & Recovery 🚀 NEXT
+  - Graceful CloudKit error messages
+  - Retry logic for transient errors
+  - Offline mode handling
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -262,15 +275,15 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🎯 **WHAT'S NEXT**
 
-### **Immediate Priority** (M7.3.3) 🚀 READY
-Remove Member & Delete Household:
-1. Owner can remove a specific member from the household
-2. Owner can delete the entire household
-3. Data migration on delete (shared → personal for owner)
-4. Confirmation alerts for destructive actions
+### **Immediate Priority** (M7.3.4) 🚀 READY
+Error Handling & Recovery:
+1. CloudKit error classification (transient vs permanent)
+2. Retry logic with exponential backoff
+3. Offline detection via NWPathMonitor
+4. User-friendly error messages and UI feedback
 
 ### **M7 Remaining Milestones**
-- **M7.3.3**: Remove Member & Delete Household (2-3h) 🚀 NEXT
+- **M7.3.4**: Error Handling & Recovery (2-3h) 🚀 NEXT
 - **M7.4**: Sync UI & Polish (3-4h)
 - **M7.5**: Architecture Hardening (8-12h)
 - **M7.6**: External TestFlight (2-3h)
@@ -487,8 +500,8 @@ Remove Member & Delete Household:
 
 ---
 
-**Version**: 8.1
-**Last Updated**: January 4, 2026
+**Version**: 8.2
+**Last Updated**: February 3, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

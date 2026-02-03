@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 2, 2026
-**Version**: 4.8
-**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | M7.2.2 Leave Flow Complete ✅ | **M7.3.3 🚀 Next**
+**Last Updated**: February 3, 2026
+**Version**: 4.9
+**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | M7.2.2 Leave Flow Complete ✅ | M7.3.3 Complete ✅ | **M7.3.4 🚀 Next**
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
