@@ -421,6 +421,14 @@ class HouseholdService: ObservableObject {
             try await migrateHouseholdDataToPersonal(household)
             try viewContext.save()
             print("✅ M7.3.3: Migrated household data to personal store")
+
+            // M7.3.3 FIX: Delete old household-keyed data AFTER migration
+            // This prevents CategoryDeduplicator from finding duplicates between
+            // the new personal copies (householdKey=nil) and old household copies
+            if let key = householdKey {
+                let deletedOld = deleteHouseholdLinkedData(householdKey: key)
+                print("✅ M7.3.3: Cleaned up \(deletedOld) old household-keyed objects")
+            }
         } else if let key = householdKey {
             // Clean delete: remove all data with this householdKey from private store
             let deletedCount = deleteHouseholdLinkedData(householdKey: key)
