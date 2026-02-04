@@ -12,6 +12,7 @@ import CloudKit
 import UIKit  // For UIDevice.current.name
 import UserNotifications  // M7.2.2: For member left notifications
 import Combine  // M7.2.2: For real-time sync observation
+import Network  // M7.3.4: For connectivity check before CloudKit operations
 
 // MARK: - Household Errors
 
@@ -498,7 +499,15 @@ class HouseholdService: ObservableObject {
     /// Bypasses NSPersistentCloudKitContainer (direct CKDatabase operation) so it
     /// cannot poison the mirroring delegate. CloudKit automatically updates the
     /// owner's CKShare.participants list when the member deletes their copy.
+    /// M7.3.4: Check connectivity first - skip if offline to avoid hanging
     private func deleteCKShareFromSharedDatabase(_ share: CKShare) async throws {
+        // M7.3.4: Check network connectivity before attempting CloudKit operation
+        // CKModifyRecordsOperation queues indefinitely when offline - skip and let caller proceed
+        guard await hasNetworkConnectivity() else {
+            CloudKitLogger.warning("No network connectivity - skipping CKShare delete (will sync when online)")
+            throw CKError(.networkUnavailable)
+        }
+
         let sharedDB = container.sharedCloudDatabase
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -518,6 +527,20 @@ class HouseholdService: ObservableObject {
                 }
             }
             sharedDB.add(deleteOp)
+        }
+    }
+
+    /// M7.3.4: Quick network connectivity check using NWPathMonitor
+    /// Returns true if device has network connectivity, false if offline
+    /// Used to skip CloudKit operations that would hang when offline
+    private func hasNetworkConnectivity() async -> Bool {
+        await withCheckedContinuation { continuation in
+            let monitor = NWPathMonitor()
+            monitor.pathUpdateHandler = { path in
+                monitor.cancel()
+                continuation.resume(returning: path.status == .satisfied)
+            }
+            monitor.start(queue: DispatchQueue.global(qos: .utility))
         }
     }
 
