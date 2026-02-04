@@ -95,6 +95,8 @@ class HouseholdService: ObservableObject {
     private var leaveRequestCheckTimer: Timer?
     // M7.2.2: Track known participant record IDs to detect departures
     private var knownParticipantRecordIDs: Set<String>?
+    // M7.3.4: Network monitor for processing pending leaves when connectivity returns
+    private var networkMonitor: NWPathMonitor?
 
     // M7.2.2: Keychain-backed left-household tracking (survives reinstalls)
     private func markHouseholdAsLeft(_ householdID: String) {
@@ -154,11 +156,29 @@ class HouseholdService: ObservableObject {
         // Load current household on init
         Task {
             await loadCurrentHousehold()
+            // M7.3.4: Process any pending leaves from offline sessions
+            await processPendingLeaves()
         }
 
         // M7.2.2: Listen for CloudKit sync events to process leave requests in real-time
         // Debounced to 5 seconds so we don't run on every sync event (100+ per session)
         setupSyncObserver()
+
+        // M7.3.4: Monitor connectivity to process pending leaves when online
+        setupConnectivityMonitor()
+    }
+
+    // M7.3.4: Monitor network connectivity to process pending leaves when coming online
+    private func setupConnectivityMonitor() {
+        networkMonitor = NWPathMonitor()
+        networkMonitor?.pathUpdateHandler = { [weak self] path in
+            if path.status == .satisfied {
+                Task { @MainActor [weak self] in
+                    await self?.processPendingLeaves()
+                }
+            }
+        }
+        networkMonitor?.start(queue: DispatchQueue.global(qos: .utility))
     }
 
     // M7.2.2: Observe CloudKit sync events and check for member departures
@@ -326,15 +346,17 @@ class HouseholdService: ObservableObject {
         // This is CloudKit's intended mechanism for a participant to leave a share.
         // It bypasses NSPersistentCloudKitContainer's mirroring delegate entirely (direct CKDatabase op)
         // and automatically updates the owner's CKShare.participants list.
+        // M7.3.4: If offline, this queues the operation for when connectivity returns.
         do {
             let share = try await getShare(for: household)
-            try await deleteCKShareFromSharedDatabase(share)
+            try await deleteCKShareFromSharedDatabase(share, householdID: householdID)
             CloudKitLogger.debug("Deleted CKShare from shared database (left share)")
         } catch {
             // Non-fatal — local cleanup still proceeds so the UI is correct on this device.
+            // M7.3.4: If offline, the leave was queued and will execute when online.
             // Owner will eventually detect departure or member can be manually removed.
             CloudKitLogger.shareFailed(operation: "leaveHousehold-deleteCKShare", error: error)
-            CloudKitLogger.warning("Proceeding with local cleanup")
+            CloudKitLogger.warning("Proceeding with local cleanup (pending leave queued if offline)")
         }
 
         // Step 3: Clear current household FIRST so UI stops referencing shared objects
@@ -499,12 +521,13 @@ class HouseholdService: ObservableObject {
     /// Bypasses NSPersistentCloudKitContainer (direct CKDatabase operation) so it
     /// cannot poison the mirroring delegate. CloudKit automatically updates the
     /// owner's CKShare.participants list when the member deletes their copy.
-    /// M7.3.4: Check connectivity first - skip if offline to avoid hanging
-    private func deleteCKShareFromSharedDatabase(_ share: CKShare) async throws {
+    /// M7.3.4: Check connectivity first - if offline, queue for later and skip
+    private func deleteCKShareFromSharedDatabase(_ share: CKShare, householdID: String) async throws {
         // M7.3.4: Check network connectivity before attempting CloudKit operation
-        // CKModifyRecordsOperation queues indefinitely when offline - skip and let caller proceed
+        // CKModifyRecordsOperation queues indefinitely when offline - queue for later
         guard await hasNetworkConnectivity() else {
-            CloudKitLogger.warning("No network connectivity - skipping CKShare delete (will sync when online)")
+            CloudKitLogger.warning("No network connectivity - queuing CKShare delete for later")
+            KeychainHelper.addPendingLeave(householdID: householdID, share: share)
             throw CKError(.networkUnavailable)
         }
 
@@ -541,6 +564,54 @@ class HouseholdService: ObservableObject {
                 continuation.resume(returning: path.status == .satisfied)
             }
             monitor.start(queue: DispatchQueue.global(qos: .utility))
+        }
+    }
+
+    /// M7.3.4: Process any pending leave operations that were queued while offline
+    /// Call this on app launch and when connectivity is restored
+    func processPendingLeaves() async {
+        let pending = KeychainHelper.pendingLeaves()
+        guard !pending.isEmpty else { return }
+
+        CloudKitLogger.info("Processing \(pending.count) pending leave(s)...")
+
+        // Check connectivity first
+        guard await hasNetworkConnectivity() else {
+            CloudKitLogger.debug("Still offline - pending leaves will be processed when online")
+            return
+        }
+
+        let sharedDB = container.sharedCloudDatabase
+
+        for leave in pending {
+            let zoneID = CKRecordZone.ID(zoneName: leave.shareZoneName, ownerName: leave.shareZoneOwner)
+            let recordID = CKRecord.ID(recordName: leave.shareRecordName, zoneID: zoneID)
+
+            do {
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    let deleteOp = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: [recordID])
+                    deleteOp.modifyRecordsResultBlock = { result in
+                        switch result {
+                        case .success:
+                            continuation.resume()
+                        case .failure(let error):
+                            // "Unknown item" or "zone not found" means already processed
+                            if let ckError = error as? CKError,
+                               ckError.code == .unknownItem || ckError.code == .zoneNotFound {
+                                continuation.resume()
+                            } else {
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                    }
+                    sharedDB.add(deleteOp)
+                }
+                CloudKitLogger.info("Processed pending leave for household \(leave.householdID)")
+                KeychainHelper.removePendingLeave(householdID: leave.householdID)
+            } catch {
+                CloudKitLogger.error("Failed to process pending leave for \(leave.householdID)", error: error)
+                // Keep in queue to retry later
+            }
         }
     }
 

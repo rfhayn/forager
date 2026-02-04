@@ -6,14 +6,71 @@
 //  Unlike UserDefaults, Keychain data survives app reinstalls and
 //  device restores (when backed up), preventing accidental re-joining.
 //
+//  M7.3.4: Added pending leave queue for offline leave operations.
+//
 
 import Foundation
 import Security
+import CloudKit
 
 enum KeychainHelper {
 
     private static let service = "com.richhayn.forager"
     private static let leftHouseholdsKey = "leftHouseholdIDs"
+    private static let pendingLeavesKey = "pendingLeaves"
+
+    // MARK: - Pending Leave (M7.3.4)
+
+    /// Represents a leave operation that needs to be completed when online
+    struct PendingLeave: Codable {
+        let householdID: String
+        let shareRecordName: String
+        let shareZoneName: String
+        let shareZoneOwner: String
+        let timestamp: Date
+    }
+
+    /// Adds a pending leave to be processed when connectivity returns
+    static func addPendingLeave(householdID: String, share: CKShare) {
+        var pending = pendingLeaves()
+        let leave = PendingLeave(
+            householdID: householdID,
+            shareRecordName: share.recordID.recordName,
+            shareZoneName: share.recordID.zoneID.zoneName,
+            shareZoneOwner: share.recordID.zoneID.ownerName,
+            timestamp: Date()
+        )
+        pending.append(leave)
+        savePendingLeaves(pending)
+        print("📝 M7.3.4: Queued pending leave for household \(householdID)")
+    }
+
+    /// Returns all pending leaves
+    static func pendingLeaves() -> [PendingLeave] {
+        guard let data = read(key: pendingLeavesKey),
+              let leaves = try? JSONDecoder().decode([PendingLeave].self, from: data) else {
+            return []
+        }
+        return leaves
+    }
+
+    /// Removes a pending leave after successful processing
+    static func removePendingLeave(householdID: String) {
+        var pending = pendingLeaves()
+        pending.removeAll { $0.householdID == householdID }
+        savePendingLeaves(pending)
+        print("✅ M7.3.4: Removed pending leave for household \(householdID)")
+    }
+
+    /// Clears all pending leaves
+    static func clearAllPendingLeaves() {
+        savePendingLeaves([])
+    }
+
+    private static func savePendingLeaves(_ leaves: [PendingLeave]) {
+        guard let data = try? JSONEncoder().encode(leaves) else { return }
+        write(key: pendingLeavesKey, data: data)
+    }
 
     // MARK: - Left Household Tracking
 
