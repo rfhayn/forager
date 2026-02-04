@@ -17,7 +17,8 @@ struct AcceptInvitationSheet: View {
     @State private var isAccepting: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
-    @State private var showRestartAlert: Bool = false
+    @State private var showRetryAlert: Bool = false
+    @State private var isRetrying: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -92,15 +93,15 @@ struct AcceptInvitationSheet: View {
                 .padding(.bottom, 40)
             }
             .overlay {
-                if isAccepting {
+                if isAccepting || isRetrying {
                     ZStack {
                         Color.black.opacity(0.3)
                             .ignoresSafeArea()
-                        
+
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.5)
-                            Text("Joining household...")
+                            Text(isRetrying ? "Checking for household..." : "Joining household...")
                                 .font(.headline)
                         }
                         .padding(40)
@@ -114,15 +115,18 @@ struct AcceptInvitationSheet: View {
             } message: {
                 Text(errorMessage)
             }
-            .alert("Restart Required", isPresented: $showRestartAlert) {
-                Button("Restart App", role: .destructive) {
-                    exit(0)  // Force app termination - user will reopen manually
+            // M7.3.4: Replaced exit(0) with "Check Again" button - Apple discourages exit()
+            .alert("Still Syncing", isPresented: $showRetryAlert) {
+                Button("Check Again") {
+                    Task {
+                        await retryCheck()
+                    }
                 }
                 Button("Cancel", role: .cancel) {
                     dismiss()
                 }
             } message: {
-                Text("The household data is being synced from iCloud but hasn't arrived yet. Please force close and reopen the app to complete the setup.\n\nTap 'Restart App' to close now, then reopen from your home screen.")
+                Text("The household data is still syncing from iCloud. This can take longer on slow networks.\n\nTap 'Check Again' to retry, or wait and try again later.")
             }
         }
     }
@@ -175,15 +179,34 @@ struct AcceptInvitationSheet: View {
                 }
                 dismiss()
             } else {
-                // Household didn't sync in time - show restart alert
-                print("⚠️ Household not synced after 30 seconds - showing restart alert")
-                showRestartAlert = true
+                // Household didn't sync in time - show retry alert
+                print("⚠️ Household not synced after 30 seconds - showing retry alert")
+                showRetryAlert = true
             }
 
         } catch {
             errorMessage = error.localizedDescription
             showError = true
             print("❌ Failed to accept invitation: \(error)")
+        }
+    }
+
+    // M7.3.4: Retry check for household sync (replaces exit(0) anti-pattern)
+    private func retryCheck() async {
+        isRetrying = true
+        defer { isRetrying = false }
+
+        print("🔄 M7.3.4: Retrying household check...")
+
+        // Check for household using auto-member creation logic
+        await service.checkForAcceptedInvitations()
+
+        if let found = service.currentHousehold {
+            print("✅ M7.3.4: Household found on retry: \(found.name ?? "Unnamed")")
+            dismiss()
+        } else {
+            print("⚠️ M7.3.4: Household still not synced - showing retry alert again")
+            showRetryAlert = true
         }
     }
 }

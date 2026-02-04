@@ -169,24 +169,10 @@ final class CloudKitDiagnostics: ObservableObject {
         return error.localizedDescription
     }
     
-    /// Get user-friendly message for CloudKit error codes
+    /// M7.3.4: Get user-friendly message for CloudKit error codes (updated to use CloudKitErrorMapper)
     private func cloudKitErrorMessage(for code: Int) -> String {
-        switch code {
-        case CKError.networkUnavailable.rawValue:
-            return "No internet connection"
-        case CKError.networkFailure.rawValue:
-            return "Network error - please try again"
-        case CKError.notAuthenticated.rawValue:
-            return "Not signed into iCloud"
-        case CKError.quotaExceeded.rawValue:
-            return "iCloud storage full"
-        case CKError.zoneBusy.rawValue:
-            return "CloudKit busy - will retry automatically"
-        case CKError.serviceUnavailable.rawValue:
-            return "CloudKit service temporarily unavailable"
-        default:
-            return "Sync error (code \(code))"
-        }
+        // M7.3.4: Delegate to centralized mapper for consistency
+        return CloudKitErrorMapper.message(forCode: code)
     }
     
     // MARK: - Logging

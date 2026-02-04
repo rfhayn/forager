@@ -200,19 +200,25 @@ class HouseholdService: ObservableObject {
                 // CloudKit limitation: Members can't remove themselves from CKShare.participants
                 // So we track left households locally to prevent re-joining
                 if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
-                    // Check if user has re-joined by verifying CKShare participation
+                    // M7.3.4 FIX: Check if user is still CKShare participant
+                    // If they are, it means server-side leave failed - DON'T auto-rejoin
                     let isParticipant = await isCurrentUserParticipant(in: household)
                     if isParticipant {
-                        // User re-joined — clear the left flag and proceed normally
-                        print("🔄 Household '\(household.name ?? "Unknown")' was left but user has re-joined — clearing flag")
-                        clearLeftHouseholdFlag(householdID)
+                        // M7.3.4: User marked as left but still participant on server
+                        // This means server-side leave failed. Don't auto-clear flag.
+                        // User must explicitly accept a new invitation to rejoin.
+                        CloudKitLogger.ghostDataDetected(householdID: householdID)
+                        CloudKitLogger.warning("Server-side leave may have failed. User must accept new invitation to rejoin")
+                        currentHousehold = nil
+                        return
                     } else {
                         // Genuinely left — purge ghost data
                         currentHousehold = nil
-                        print("ℹ️ Household '\(household.name ?? "Unknown")' found but user has left it locally")
+                        CloudKitLogger.info("Household '\(household.name ?? "Unknown")' found but user has left it locally")
                         // Purge shared store objects from context
                         // Don't destroy store - causes crashes when re-joining
                         PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+                        CloudKitLogger.sharedStorePurged()
                         return
                     }
                 }
@@ -222,11 +228,10 @@ class HouseholdService: ObservableObject {
 
                 if isMember {
                     currentHousehold = household
-                    print("✅ Loaded household: \(household.name ?? "Unknown")")
-                    print("   Household ID: \(household.id?.uuidString ?? "NIL")")
+                    CloudKitLogger.householdLoaded(household.name, householdID: household.id?.uuidString ?? "NIL")
 
                     if let storeURL = household.objectID.persistentStore?.url {
-                        print("   Store: \(storeURL.lastPathComponent)")
+                        CloudKitLogger.debug("Store: \(storeURL.lastPathComponent)")
                     }
 
                     // Initialize known participants for departure detection
@@ -236,23 +241,23 @@ class HouseholdService: ObservableObject {
                             $0.userIdentity.userRecordID?.recordName
                         })
                         knownParticipantRecordIDs = ids
-                        print("   Participants: \(share.participants.count)")
+                        CloudKitLogger.debug("Participants: \(share.participants.count)")
                     } catch {
                         let participantCount = await getParticipantCount(for: household)
-                        print("   Participants: \(participantCount) (could not init departure tracking)")
+                        CloudKitLogger.debug("Participants: \(participantCount) (could not init departure tracking)")
                     }
 
                     // M7.2.2: Check for member departures via CKShare polling (owner-only)
                     await checkForMemberDepartures()
                 } else {
                     currentHousehold = nil
-                    print("ℹ️ Household exists but user is not a participant (left or removed)")
+                    CloudKitLogger.info("Household exists but user is not a participant (left or removed)")
                 }
             } else {
                 currentHousehold = nil
             }
         } catch {
-            print("❌ Error loading household: \(error)")
+            CloudKitLogger.error("Error loading household", error: error)
             errorMessage = "Failed to load household"
             currentHousehold = nil
         }
@@ -306,14 +311,14 @@ class HouseholdService: ObservableObject {
         }
 
         let householdName = household.name ?? "Unknown"
-        let householdID = household.id?.uuidString
-        print("🔄 M7.3.2: Leaving household: \(householdName)")
+        let householdID = household.id?.uuidString ?? "unknown"
+        CloudKitLogger.leaveAttemptStarted(householdID: householdID)
 
         // Step 1: Migrate data BEFORE stopping participation (while we still have access)
         if migrateData {
             try await migrateHouseholdDataToPersonal(household)
             try viewContext.save()
-            print("✅ M7.3.2: Migrated household data to personal store")
+            CloudKitLogger.debug("Migrated household data to personal store")
         }
 
         // Step 2: Delete the CKShare record from the member's shared database.
@@ -323,54 +328,45 @@ class HouseholdService: ObservableObject {
         do {
             let share = try await getShare(for: household)
             try await deleteCKShareFromSharedDatabase(share)
-            print("✅ M7.2.2: Deleted CKShare from shared database (left share)")
+            CloudKitLogger.debug("Deleted CKShare from shared database (left share)")
         } catch {
             // Non-fatal — local cleanup still proceeds so the UI is correct on this device.
             // Owner will eventually detect departure or member can be manually removed.
-            print("⚠️ M7.2.2: Could not delete CKShare: \(error.localizedDescription)")
-            print("   Proceeding with local cleanup")
+            CloudKitLogger.shareFailed(operation: "leaveHousehold-deleteCKShare", error: error)
+            CloudKitLogger.warning("Proceeding with local cleanup")
         }
 
         // Step 3: Clear current household FIRST so UI stops referencing shared objects
         currentHousehold = nil
 
         // Step 4: Mark household as "left" in Keychain (survives app reinstall)
-        if let householdID = householdID {
-            markHouseholdAsLeft(householdID)
-        }
+        markHouseholdAsLeft(householdID)
 
         // Step 5: Delete data by householdKey (M7.3.3 FIX)
         // This ensures orphaned data is cleaned up regardless of store location
         // Prevents duplicates if user rejoins the same household later
-        if let key = householdID {
-            let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
-            print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
-        }
+        let deletedByKey = deleteHouseholdLinkedData(householdKey: householdID)
+        CloudKitLogger.debug("Deleted \(deletedByKey) objects with householdKey=\(householdID)")
 
         // Step 6: Also purge any remaining shared store objects
         let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.3.2: Purged \(deletedFromStore) shared store objects")
+        CloudKitLogger.debug("Purged \(deletedFromStore) shared store objects")
 
         // Step 7: Reset context BEFORE destroying shared store (M7.3.3)
         // This clears all in-memory managed object references, preventing crashes
         // when SwiftUI tries to access objects from the destroyed store
         viewContext.reset()
-        print("✅ M7.3.3: Reset viewContext to clear in-memory references")
+        CloudKitLogger.debug("Reset viewContext to clear in-memory references")
 
         // Step 8: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
         do {
             try PersistenceController.shared.destroyAndRecreateSharedStore()
-            print("✅ M7.3.3: Destroyed and recreated shared store")
+            CloudKitLogger.debug("Destroyed and recreated shared store")
         } catch {
-            print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
+            CloudKitLogger.error("Failed to recreate shared store", error: error)
         }
 
-        print("✅ M7.3.2: Left household: \(householdName)")
-        if migrateData {
-            print("   Personal copy created, shared data removed")
-        } else {
-            print("   All data removed (clean app)")
-        }
+        CloudKitLogger.leaveCompleted(householdID: householdID, migratedData: migrateData)
     }
 
     // MARK: - M7.3.3: Remove Member & Delete Household
@@ -402,7 +398,7 @@ class HouseholdService: ObservableObject {
         guard let ckParticipant = share.participants.first(where: {
             $0.userIdentity.userRecordID?.recordName == participant.id
         }) else {
-            print("⚠️ M7.3.3: Could not find CKShare participant for \(participant.displayName)")
+            CloudKitLogger.warning("Could not find CKShare participant for \(participant.displayName)")
             throw HouseholdError.notMember
         }
 
@@ -414,7 +410,7 @@ class HouseholdService: ObservableObject {
         let privateStore = persistenceController.privateStore
         try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
 
-        print("✅ M7.3.3: Removed \(participant.displayName) from household")
+        CloudKitLogger.memberRemoved(householdID: household.id?.uuidString ?? "unknown")
 
         // Update known participants for departure detection
         knownParticipantRecordIDs?.remove(participant.id)
@@ -433,26 +429,24 @@ class HouseholdService: ObservableObject {
         }
 
         let householdName = household.name ?? "Unknown"
-        let householdKey = household.id?.uuidString
-        print("🔄 M7.3.3: Deleting household: \(householdName)")
+        let householdKey = household.id?.uuidString ?? "unknown"
+        CloudKitLogger.deleteAttemptStarted(householdID: householdKey)
 
         // Step 1: Migrate data if requested, otherwise delete household-linked data
         if migrateData {
             try await migrateHouseholdDataToPersonal(household)
             try viewContext.save()
-            print("✅ M7.3.3: Migrated household data to personal store")
+            CloudKitLogger.debug("Migrated household data to personal store")
 
             // M7.3.3 FIX: Delete old household-keyed data AFTER migration
             // This prevents CategoryDeduplicator from finding duplicates between
             // the new personal copies (householdKey=nil) and old household copies
-            if let key = householdKey {
-                let deletedOld = deleteHouseholdLinkedData(householdKey: key)
-                print("✅ M7.3.3: Cleaned up \(deletedOld) old household-keyed objects")
-            }
-        } else if let key = householdKey {
+            let deletedOld = deleteHouseholdLinkedData(householdKey: householdKey)
+            CloudKitLogger.debug("Cleaned up \(deletedOld) old household-keyed objects")
+        } else {
             // Clean delete: remove all data with this householdKey from private store
-            let deletedCount = deleteHouseholdLinkedData(householdKey: key)
-            print("✅ M7.3.3: Deleted \(deletedCount) household-linked objects (clean delete)")
+            let deletedCount = deleteHouseholdLinkedData(householdKey: householdKey)
+            CloudKitLogger.debug("Deleted \(deletedCount) household-linked objects (clean delete)")
         }
 
         // Step 2: Delete CKShare from private database (revokes all participants' access)
@@ -477,10 +471,10 @@ class HouseholdService: ObservableObject {
                 }
                 privateDB.add(deleteOp)
             }
-            print("✅ M7.3.3: Deleted CKShare from private database")
+            CloudKitLogger.debug("Deleted CKShare from private database")
         } catch {
-            print("⚠️ M7.3.3: Could not delete CKShare: \(error.localizedDescription)")
-            print("   Proceeding with local cleanup")
+            CloudKitLogger.shareFailed(operation: "deleteHousehold-deleteCKShare", error: error)
+            CloudKitLogger.warning("Proceeding with local cleanup")
         }
 
         // Step 3: Clear current household FIRST so UI stops referencing shared objects
@@ -494,9 +488,9 @@ class HouseholdService: ObservableObject {
         // Step 5: Purge shared store objects from context
         // Don't destroy store - causes crashes if user creates a new household later
         let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        print("✅ M7.3.3: Purged \(deletedCount) shared store objects")
+        CloudKitLogger.debug("Purged \(deletedCount) shared store objects")
 
-        print("✅ M7.3.3: Deleted household: \(householdName)")
+        CloudKitLogger.deleteCompleted(householdID: householdKey, migratedData: migrateData)
     }
 
     /// M7.2.2: Deletes the CKShare record from the member's shared database.
@@ -1014,7 +1008,7 @@ class HouseholdService: ObservableObject {
         // M7.3.3: Prevent creating a household when already in one
         // User must leave/delete their current household first
         if currentHousehold != nil {
-            print("❌ M7.3.3: Cannot create household - already in one")
+            CloudKitLogger.warning("Cannot create household - already in one")
             throw HouseholdError.alreadyInHousehold
         }
 
@@ -1026,7 +1020,7 @@ class HouseholdService: ObservableObject {
             // Check if user is actually a participant in any of them
             for existing in existingHouseholds {
                 if await isCurrentUserParticipant(in: existing) {
-                    print("❌ M7.3.3: Cannot create household - already a participant in '\(existing.name ?? "Unknown")'")
+                    CloudKitLogger.warning("Cannot create household - already a participant in '\(existing.name ?? "Unknown")'")
                     throw HouseholdError.alreadyInHousehold
                 }
             }
@@ -1124,17 +1118,16 @@ class HouseholdService: ObservableObject {
             // 11. Update current household
             currentHousehold = household
 
-            print("✅ Household created: \(name)")
-            print("✅ Owner: \(ownerIdentifier)")
-            print("✅ CloudKit shared zone activated")
+            CloudKitLogger.householdCreated(name)
+            CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
             if moveExistingData {
-                print("✅ Personal data migrated to household")
+                CloudKitLogger.debug("Personal data migrated to household")
             }
 
             return household
 
         } catch {
-            print("❌ Household creation failed: \(error)")
+            CloudKitLogger.householdError("Household creation failed", householdID: nil, error: error)
             throw HouseholdError.creationFailed(error.localizedDescription)
         }
     }
@@ -1494,14 +1487,12 @@ class HouseholdService: ObservableObject {
     /// This is a workaround for when URL handling doesn't trigger (app already running)
     /// Call this when user taps "Check for Invitations" button
     func checkForAcceptedInvitations() async {
-        print("🔍 Manually checking for accepted invitations...")
+        CloudKitLogger.debug("Manually checking for accepted invitations...")
 
         // M7.3.3: If user already has a household, don't auto-join another
         // This prevents data integrity issues where householdKey doesn't match household.id
         if let existingHousehold = currentHousehold {
-            print("⚠️ M7.3.3: User already in household '\(existingHousehold.name ?? "Unknown")'")
-            print("   Cannot auto-join a new household")
-            print("   User must leave/delete current household first")
+            CloudKitLogger.warning("User already in household '\(existingHousehold.name ?? "Unknown")'. Cannot auto-join a new household.")
             errorMessage = "You are already in a household. Leave or delete it before joining another."
             return
         }
@@ -1568,26 +1559,21 @@ class HouseholdService: ObservableObject {
                 }
 
                 if isParticipant {
-                    print("✅ Found household where you're a participant!")
-                    print("   Household: \(household.name ?? "Unnamed")")
-
-                    // Get participant count for logging
-                    let participantCount = await getParticipantCount(for: household)
-                    print("   Participants: \(participantCount)")
+                    let householdID = household.id?.uuidString ?? "unknown"
+                    CloudKitLogger.memberJoined(householdID: householdID)
+                    CloudKitLogger.debug("Household: \(household.name ?? "Unnamed"), Participants: \(await getParticipantCount(for: household))")
 
                     // Set as current household (this triggers UI update via @Published)
                     currentHousehold = household
-                    print("   Household ID: \(household.id?.uuidString ?? "NIL")")
 
                     return
                 }
             }
 
-            print("   No households found where you're a participant")
-            print("   The share may not have been accepted yet")
+            CloudKitLogger.debug("No households found where you're a participant - share may not have synced yet")
 
         } catch {
-            print("❌ Error checking for invitations: \(error)")
+            CloudKitLogger.error("Error checking for invitations", error: error)
         }
     }
 
@@ -1701,28 +1687,28 @@ class HouseholdService: ObservableObject {
 
             // M7.3.3: For owner, fetch directly from private database to get latest participants
             // fetchShares(matching:) may return cached data that doesn't include new participants
-            let isOwner = await isOwner(household: household)
-            if isOwner {
+            let isOwnerUser = await isOwner(household: household)
+            if isOwnerUser {
                 let privateDB = container.privateCloudDatabase
                 do {
                     let freshRecord = try await privateDB.record(for: share.recordID)
                     if let freshShare = freshRecord as? CKShare {
-                        print("✅ Fetched fresh CKShare from private database: \(freshShare.recordID.recordName)")
-                        print("   Current participants: \(freshShare.participants.count)")
+                        CloudKitLogger.shareLookup(found: true, householdID: household.id?.uuidString ?? "unknown")
+                        CloudKitLogger.debug("Fresh CKShare participants: \(freshShare.participants.count)")
                         return freshShare
                     }
                 } catch {
-                    print("⚠️ Could not fetch fresh share from private DB, using cached: \(error.localizedDescription)")
+                    CloudKitLogger.debug("Could not fetch fresh share from private DB, using cached: \(error.localizedDescription)")
                 }
             }
 
-            print("✅ Fetched live CKShare from CloudKit: \(share.recordID.recordName)")
-            print("   Current participants: \(share.participants.count)")
+            CloudKitLogger.shareLookup(found: true, householdID: household.id?.uuidString ?? "unknown")
+            CloudKitLogger.debug("CKShare participants: \(share.participants.count)")
 
             return share
 
         } catch {
-            print("❌ Failed to fetch live share: \(error)")
+            CloudKitLogger.shareFailed(operation: "getShare-fetchShares", error: error)
 
             // FALLBACK: Try to get share record ID from archived data and fetch manually
             guard let shareData = household.shareRecord,
@@ -1744,12 +1730,12 @@ class HouseholdService: ObservableObject {
                     throw HouseholdError.noShareRecord
                 }
 
-                print("✅ Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
+                CloudKitLogger.debug("Fetched live CKShare via fallback: \(liveShare.recordID.recordName)")
                 return liveShare
             } catch {
                 // M7.3.3: CKError from shared database means user was removed
                 // "Invalid Arguments" / "Only shared zones can be accessed" = no access
-                print("❌ Fallback also failed: \(error)")
+                CloudKitLogger.shareFailed(operation: "getShare-fallback", error: error)
                 throw HouseholdError.noShareRecord
             }
         }
