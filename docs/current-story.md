@@ -3,7 +3,7 @@
 **Last Updated**: February 3, 2026
 **Status**: M7.3.3 ✅ **COMPLETE** | M7.3.4 🚀 **NEXT**
 **Total Progress**: ~155 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
+**Current Branch**: `main` (M7.3.3 merged)
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
 
 ---
@@ -144,11 +144,16 @@
 
 ## **What's Next**
 
-**M7.3.4: Error Handling & Recovery** 🚀 NEXT
-- Graceful error messages for CloudKit failures
-- Retry logic for transient network errors
-- Offline mode handling and user feedback
-- Connection status indicators
+**M7.3.4: Error Handling & Stability Improvements** 🚀 NEXT (RESCOPED)
+- **P0 (Must Fix)**:
+  - Fix Ghost Data bug in `loadCurrentHousehold()` - prevents auto-rejoin after failed leave
+  - Replace `exit(0)` with "Check Again" button in AcceptInvitationSheet
+- **P1 (Should Fix)**:
+  - Create single `CloudKitErrorMapper` utility (consolidate duplicate error mapping)
+  - Replace CKError magic numbers with `CKError.Code` enum
+  - Add `OSLog`/`Logger` for CloudKit debugging (critical for TestFlight)
+- **PRD**: `docs/prds/active/m7.3.4-error-handling-stability.md`
+- **Estimated**: 2.5-3 hours (P0 + P1)
 
 **M7.4: Sync UI & Polish**
 - Sync status indicators in UI
@@ -171,8 +176,8 @@
 
 ---
 
-**Last Session**: February 3, 2026 - M7.3.3 Complete
-**Next Action**: Merge M7.3.3 branch, start M7.3.4 Error Handling
-**Branch**: `feature/M7.3.3-remove-member-delete-household` (ready to merge)
-**Confidence**: **GREEN** (All features implemented, clean build, tested on devices)
-**Version**: February 3, 2026 - M7.3.3 Complete
+**Last Session**: February 3, 2026 - M7.3.4 Rescoped
+**Next Action**: Start M7.3.4 Error Handling & Stability Improvements (rescoped)
+**Branch**: `feature/M7.3.4-error-handling-stability` (to be created)
+**Confidence**: **GREEN** (PRD complete, clear implementation plan)
+**Version**: February 3, 2026 - M7.3.4 Ready
