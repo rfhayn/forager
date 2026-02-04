@@ -4,7 +4,7 @@
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
 **Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, M7.2.2 Leave Flow ✅ COMPLETE, M7.3.1 ✅ COMPLETE, M7.3.3 ✅ COMPLETE, **M7.3.4 🚀 Next**
-**Next Priority**: M7.3.4 - Error Handling & Recovery
+**Next Priority**: M7.3.4 - Error Handling & Stability Improvements (RESCOPED)
 **Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
 
 ---
@@ -275,15 +275,16 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🎯 **WHAT'S NEXT**
 
-### **Immediate Priority** (M7.3.4) 🚀 READY
-Error Handling & Recovery:
-1. CloudKit error classification (transient vs permanent)
-2. Retry logic with exponential backoff
-3. Offline detection via NWPathMonitor
-4. User-friendly error messages and UI feedback
+### **Immediate Priority** (M7.3.4) 🚀 READY (RESCOPED)
+Error Handling & Stability Improvements:
+1. **P0**: Fix Ghost Data bug in loadCurrentHousehold() - prevents auto-rejoin after failed leave
+2. **P0**: Replace exit(0) with "Check Again" button in AcceptInvitationSheet
+3. **P1**: Create single CloudKitErrorMapper utility (consolidate duplicate mapping)
+4. **P1**: Add OSLog/Logger for CloudKit debugging (critical for TestFlight)
+- **PRD**: `docs/prds/active/m7.3.4-error-handling-stability.md`
 
 ### **M7 Remaining Milestones**
-- **M7.3.4**: Error Handling & Recovery (2-3h) 🚀 NEXT
+- **M7.3.4**: Error Handling & Stability (2.5-3h) 🚀 NEXT (RESCOPED)
 - **M7.4**: Sync UI & Polish (3-4h)
 - **M7.5**: Architecture Hardening (8-12h)
 - **M7.6**: External TestFlight (2-3h)

@@ -436,11 +436,11 @@ M6 was originally planned after M5, but deferred to execute after M7 completes. 
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
 **M7 Summary**: 54 total requirements
-- **Complete (27)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Dead code cleanup (1)
-- **In Progress (27)**: Repository hardening (4 from M7.2.3 remaining), Household management (1 from M7.3.3), Conflict resolution (5), Sync UI polish (5), Parsing resilience (6), External TestFlight (5), Non-functional (1 remaining)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅
-- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin all working.
-- **Next**: M7.3.3 - Remove Member & Delete Household
+- **Complete (28)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Dead code cleanup (1)
+- **In Progress (26)**: Repository hardening (4 from M7.2.3 remaining), Error handling & stability (5 from M7.3.4 rescoped), Conflict resolution (5), Sync UI polish (5), Parsing resilience (6), External TestFlight (5)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅
+- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working.
+- **Next**: M7.3.4 - Error Handling & Stability Improvements (RESCOPED)
 
 ---
 
@@ -772,7 +772,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit sync and collaboration (52 requirements: 22 complete, 30 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (144 complete, 30 in progress, 36 planned).
 
-**Last Updated**: February 2, 2026
-**Version**: 4.8
-**Next Update**: After M7.3.3 Remove Member & Delete Household
-**Current Focus**: M7.3.3 🚀 - Remove Member & Delete Household
+**Last Updated**: February 3, 2026
+**Version**: 4.9
+**Next Update**: After M7.3.4 Error Handling & Stability Improvements
+**Current Focus**: M7.3.4 🚀 - Error Handling & Stability Improvements (RESCOPED)
