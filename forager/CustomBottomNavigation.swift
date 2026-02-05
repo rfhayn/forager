@@ -112,35 +112,19 @@ struct CustomBottomNavigationView: View {
                         selectedTab = tab
                     }
                 } label: {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 3) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 22, weight: .medium))
                         Text(tab.title)
-                            .font(.system(size: 10, weight: .medium))
+                            .font(.system(size: 10, weight: selectedTab == tab ? .semibold : .regular))
                     }
-                    .foregroundColor(selectedTab == tab ? .white : .primary.opacity(0.7))
+                    .foregroundColor(selectedTab == tab ? .primary : .primary.opacity(0.5))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 4)
-                    .background(
-                        Group {
-                            if selectedTab == tab {
-                                Capsule()
-                                    .fill(Color.accentColor)
-                                    .matchedGeometryEffect(id: "selectedTab", in: tabAnimation)
-                            }
-                        }
-                    )
+                    .frame(height: 44)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(3)
-        .background(
-            Capsule()
-                .fill(.ultraThinMaterial)
-                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-        )
     }
 
     @Namespace private var tabAnimation
@@ -155,14 +139,9 @@ struct CustomBottomNavigationView: View {
             }
         } label: {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.primary.opacity(0.7))
+                .font(.system(size: 22, weight: .medium))
+                .foregroundColor(.primary.opacity(0.5))
                 .frame(width: 44, height: 44)
-                .background(
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                )
         }
         .buttonStyle(.plain)
     }
@@ -170,7 +149,7 @@ struct CustomBottomNavigationView: View {
     // MARK: - Expanded Search Bar
 
     private var expandedSearchBar: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             // Home/back button
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -180,21 +159,16 @@ struct CustomBottomNavigationView: View {
                 }
             } label: {
                 Image(systemName: "house.fill")
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundColor(.primary)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                    )
             }
             .buttonStyle(.plain)
 
             // Search field
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.secondary)
 
                 TextField("Search everything...", text: $searchText)
@@ -207,20 +181,13 @@ struct CustomBottomNavigationView: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
             .frame(height: 44)
-            .background(
-                Capsule()
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-            )
         }
     }
 }
