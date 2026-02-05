@@ -181,17 +181,14 @@ struct MealPlansListView: View {
     }
     
     // MARK: - Toolbar
-    
+
     // M4.2.4: Toolbar with create button
-    // Pattern: Matches WeeklyListsView toolbar
+    // M7.4: Standardized to simple "+" icon (iOS convention)
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: { showingCreateSheet = true }) {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("New")
-                }
+                Image(systemName: "plus")
             }
         }
     }
