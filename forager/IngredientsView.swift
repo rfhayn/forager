@@ -104,9 +104,10 @@ struct IngredientsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search and Filter Section
-            searchAndFilterSection
-            
+            // M7.4: Removed search bar, now using .searchable() for Apple Music pattern
+            // Filter Section
+            filterSection
+
             // Main Content
             if filteredIngredients.isEmpty {
                 emptyStateView
@@ -116,6 +117,10 @@ struct IngredientsView: View {
         }
         .navigationTitle("Ingredients")
         .navigationBarTitleDisplayMode(.large)
+        .searchable(
+            text: $searchText,
+            prompt: "Search ingredients..."
+        )
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 // Enhanced toolbar with bulk category assignment
@@ -219,36 +224,9 @@ struct IngredientsView: View {
         }
     }
     
-    // MARK: - Search and Filter Section
-    private var searchAndFilterSection: some View {
+    // MARK: - M7.4: Filter Section (search moved to .searchable())
+    private var filterSection: some View {
         VStack(spacing: 16) {
-            // IMPROVED: More prominent search bar following iOS design guidelines
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.body)
-                
-                TextField("Search ingredients...", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .font(.body)
-                
-                if !searchText.isEmpty {
-                    Button("Clear") {
-                        searchText = ""
-                    }
-                    .font(.body)
-                    .foregroundColor(.blue)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.separator), lineWidth: 0.5)
-            )
-            
             // FIXED: Single-line filter layout that's clean and organized
             HStack(spacing: 8) {
                 // Category Filter
