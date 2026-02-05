@@ -97,13 +97,8 @@ struct CustomBottomNavigationView: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            Color(.systemBackground).opacity(0.95)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 0))
-        .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: -1)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSearchActive)
     }
 
@@ -218,8 +213,9 @@ struct CustomBottomNavigationView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(height: 44)
             .background(
                 Capsule()
                     .fill(.ultraThinMaterial)
