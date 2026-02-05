@@ -12,7 +12,10 @@ import CoreData
 struct CreateRecipeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
+    // M7.3.4: Household service for filtering autocomplete by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
+
     // Services
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
@@ -140,6 +143,10 @@ struct CreateRecipeView: View {
                 )
                 .presentationDetents([.height(300)])
                 .presentationDragIndicator(.visible)
+            }
+            // M7.3.4: Configure autocomplete service with current householdKey
+            .onAppear {
+                autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
             }
         }
     }

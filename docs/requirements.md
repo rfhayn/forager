@@ -1,9 +1,10 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 3, 2026
-**Version**: 4.9
-**Current Milestone**: M5.0 Complete ✅ | M7.0-M7.2 Complete ✅ | M7.2.3 Complete ✅ | M7.2.2 Leave Flow Complete ✅ | M7.3.3 Complete ✅ | **M7.3.4 🚀 Next**
-**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
+**Last Updated**: February 5, 2026
+**Version**: 5.0
+**Current Milestone**: M7.3.4 Complete ✅ | **M7.4 UI Polish 🚀 Next**
+**Execution Order (Pre-Launch)**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store)
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 

@@ -4,7 +4,10 @@ import CoreData
 struct AddCategoryView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
+    // M7.3.4: Household service for filtering by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
+
     @State private var name = ""
     @State private var selectedColor = "#4CAF50"
     @State private var showingError = false
@@ -83,11 +86,15 @@ struct AddCategoryView: View {
     
     private func saveCategory() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Check for duplicates
+
+        // M7.3.4: Check for duplicates within current household scope only
         let request: NSFetchRequest<Category> = Category.fetchRequest()
-        request.predicate = NSPredicate(format: "name ==[c] %@", trimmedName)
-        
+        if let householdKey = householdService.currentHouseholdKey {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", trimmedName, householdKey)
+        } else {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", trimmedName)
+        }
+
         do {
             let existingCategories = try viewContext.fetch(request)
             if !existingCategories.isEmpty {
@@ -100,7 +107,10 @@ struct AddCategoryView: View {
             showingError = true
             return
         }
-        
+
+        // Capture householdKey for use in performWrite closure
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
         // M7.1.3 Phase 1.2: Create category using repository pattern
         PersistenceController.shared.performWrite({ context in
             let newCategory = CategoryRepository.getOrCreate(displayName: trimmedName, in: context)
@@ -108,12 +118,19 @@ struct AddCategoryView: View {
             newCategory.color = selectedColor
             newCategory.isDefault = false
             newCategory.dateCreated = Date()
-            
-            // Get next sort order (add to end)
+            // M7.3.4: Set householdKey for proper scoping
+            newCategory.householdKey = currentHouseholdKey
+
+            // M7.3.4: Get next sort order within current household scope only
             let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+            if let key = currentHouseholdKey {
+                categoryRequest.predicate = NSPredicate(format: "householdKey == %@", key)
+            } else {
+                categoryRequest.predicate = NSPredicate(format: "householdKey == nil")
+            }
             let maxSortOrder = (try? context.fetch(categoryRequest).map(\.sortOrder).max()) ?? 5
             newCategory.sortOrder = maxSortOrder + 1
-            
+
             print("✅ Created new category: \(trimmedName)")
         }, onError: { error in
             DispatchQueue.main.async {
@@ -121,12 +138,16 @@ struct AddCategoryView: View {
                 showingError = true
             }
         })
-        
+
         dismiss()
     }
 }
 
 #Preview {
+    let context = PersistenceController.preview.container.viewContext
+    let householdService = HouseholdService(context: context)
+
     AddCategoryView()
-        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environment(\.managedObjectContext, context)
+        .environmentObject(householdService)
 }

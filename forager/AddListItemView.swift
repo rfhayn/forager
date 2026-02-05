@@ -11,7 +11,10 @@ import CoreData
 struct AddListItemView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+
+    // M7.3.4: Household service for filtering autocomplete by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
+
     let weeklyList: WeeklyList
     
     @FetchRequest(
@@ -191,6 +194,9 @@ struct AddListItemView: View {
                 addToTemplatesSheet
             }
             .onAppear {
+                // M7.3.4: Configure autocomplete service with current householdKey
+                autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
+
                 if selectedCategory.isEmpty, let firstCategory = categories.first {
                     selectedCategory = firstCategory.displayName
                 }

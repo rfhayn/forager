@@ -1,11 +1,12 @@
 # Forager - Project Index
 
-**Last Updated**: February 3, 2026
+**Last Updated**: February 5, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
-**Current Phase**: M7.0-M7.2 ✅ COMPLETE, M7.2.3 ✅ COMPLETE, M7.2.2 Leave Flow ✅ COMPLETE, M7.3.1 ✅ COMPLETE, M7.3.3 ✅ COMPLETE, **M7.3.4 🚀 Next**
-**Next Priority**: M7.3.4 - Error Handling & Stability Improvements (RESCOPED)
-**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
+**Current Phase**: M7.3.4 ✅ COMPLETE | **M7.4 UI Polish 🚀 Next**
+**Next Priority**: M7.4 - UI Polish & Pre-Launch Fixes
+**Execution Order (Pre-Launch)**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store)
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -50,6 +51,21 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 5, 2026** - M7.3.4 COMPLETE ✅ + Roadmap Updated
+- **Completed**: Error handling improvements, ghost data fixes, CloudKit logging
+- **Key Achievements**:
+  - Ghost Data bug fix (loadCurrentHousehold no longer auto-clears left flag)
+  - Check Again button replaces exit(0)
+  - CloudKitErrorMapper and CloudKitLogger utilities
+  - householdKey filtering across all autocomplete surfaces (16 files)
+- **Roadmap Decisions**:
+  - Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
+  - M7.4 repurposed for **UI Polish & Pre-Launch Fixes**
+  - **M8.1-M8.3 before launch** - Fix "3 avocados" parsing issue
+  - M7.5, M6, M8.4 deferred post-launch
+- **Total Progress**: ~158 hours
+- **Next**: Merge M7.3.4 → Start M7.4 UI Polish
 
 ### **February 3, 2026** - M7.3.3 Remove Member & Delete Household COMPLETE ✅
 - **Completed**: Owner can remove members, delete household, with proper data migration and cleanup
@@ -226,14 +242,14 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M7.3.3**: ✅ COMPLETE (Feb 3, 2026)
-  - Owner can remove members, delete household
-  - CategoryDeduplicator fix, crash fix, household protection
+- **M7.3.4**: ✅ COMPLETE (Feb 5, 2026)
+  - Ghost data bug fix, Check Again button, CloudKitErrorMapper/Logger
+  - householdKey filtering across all autocomplete surfaces
   - Branch `feature/M7.3.3-remove-member-delete-household` ready to merge
-- **M7.3.4**: Error Handling & Recovery 🚀 NEXT
-  - Graceful CloudKit error messages
-  - Retry logic for transient errors
-  - Offline mode handling
+- **M7.4**: UI Polish & Pre-Launch Fixes 🚀 NEXT
+  - Ad-hoc UI issues identified during app review
+  - Visual consistency fixes before App Store submission
+  - PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -275,20 +291,34 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🎯 **WHAT'S NEXT**
 
-### **Immediate Priority** (M7.3.4) 🚀 READY (RESCOPED)
-Error Handling & Stability Improvements:
-1. **P0**: Fix Ghost Data bug in loadCurrentHousehold() - prevents auto-rejoin after failed leave
-2. **P0**: Replace exit(0) with "Check Again" button in AcceptInvitationSheet
-3. **P1**: Create single CloudKitErrorMapper utility (consolidate duplicate mapping)
-4. **P1**: Add OSLog/Logger for CloudKit debugging (critical for TestFlight)
-- **PRD**: `docs/prds/active/m7.3.4-error-handling-stability.md`
+### **Pre-Launch Roadmap** 🚀
 
-### **M7 Remaining Milestones**
-- **M7.3.4**: Error Handling & Stability (2.5-3h) 🚀 NEXT (RESCOPED)
-- **M7.4**: Sync UI & Polish (3-4h)
-- **M7.5**: Architecture Hardening (8-12h)
-- **M7.6**: External TestFlight (2-3h)
-- **M7.7**: Public Beta Program (2-3h)
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| M7.3.4: Error Handling | ✅ COMPLETE | - |
+| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
+| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
+| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
+| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
+| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
+| **Pre-Launch Total** | | **~22-28h** |
+
+### **Post-Launch Roadmap**
+
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| M7.5: Architecture Hardening | DEFERRED | 18.5-24.5h |
+| M6: Testing Foundation | PLANNED | 12-18h |
+| M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
+| M9: Technical Debt | PLANNED | 135-165h |
+| M10+: Future Features | FUTURE | 48-72h |
+
+### **Key Decisions (February 5, 2026)**
+1. Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
+2. M7.4 repurposed for UI Polish & Pre-Launch Fixes
+3. M8.1-M8.3 before launch - Fix "3 avocados" parsing issue (95% → 98% accuracy)
+4. M7.5 deferred post-launch - developer-facing code quality
 
 ---
 
@@ -501,8 +531,8 @@ Error Handling & Stability Improvements:
 
 ---
 
-**Version**: 8.2
-**Last Updated**: February 3, 2026
+**Version**: 8.3
+**Last Updated**: February 5, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

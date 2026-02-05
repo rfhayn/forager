@@ -620,8 +620,10 @@ struct IngredientRowView: View {
     let onSelectionChanged: (Bool) -> Void
     let onStapleToggle: () -> Void
     let onCategoryAssign: () -> Void
-    
+
     @Environment(\.managedObjectContext) private var viewContext
+    // M7.3.4: Household service for filtering duplicate checks by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
     @State private var isEditingName = false
     @State private var editedName = ""
     @State private var showingError = false
@@ -736,9 +738,13 @@ struct IngredientRowView: View {
             return
         }
         
-        // Check for duplicates (excluding current ingredient)
+        // M7.3.4: Check for duplicates within current household scope only (excluding current ingredient)
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@", trimmedName, ingredient)
+        if let householdKey = householdService.currentHouseholdKey {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == %@", trimmedName, ingredient, householdKey)
+        } else {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == nil", trimmedName, ingredient)
+        }
         
         do {
             let existingIngredients = try viewContext.fetch(request)

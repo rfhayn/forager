@@ -1,173 +1,113 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 3, 2026
-**For Milestone**: M7.3.4 - Error Handling & Stability Improvements (RESCOPED)
+**Last Updated**: February 5, 2026
+**For Milestone**: M7.4 - UI Polish & Pre-Launch Fixes
 **Status**: READY TO START
-**Prerequisites**: M7.3.3 merged to main ✅
-**Branch**: `feature/M7.3.4-error-handling-stability`
-**PRD**: `docs/prds/active/m7.3.4-error-handling-stability.md`
+**Prerequisites**: M7.3.4 merged to main
+**Branch**: `feature/M7.4-ui-polish-pre-launch`
+**PRD**: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
 ---
 
-## **M7.3.4 - ERROR HANDLING & STABILITY IMPROVEMENTS (RESCOPED)**
+## **IMMEDIATE ACTION: MERGE M7.3.4 TO MAIN**
 
-**Goal**: Fix architecture risks and improve debuggability for TestFlight beta.
+Before starting M7.4, merge the current branch:
 
-**Why Rescoped**: External review (ChatGPT + Gemini) identified that original M7.3.4 scope (storage display, sync toggle, NWPathMonitor, exponential backoff) was unnecessary—CloudKit already handles most of it. They identified **actual architecture risks** that need fixing.
+```bash
+gh pr create --title "M7.3.3 + M7.3.4: Remove Member, Delete Household, Error Handling & Stability" --body "$(cat <<'EOF'
+## Summary
+- M7.3.3: Remove member (owner-only), delete household with data migration
+- M7.3.4: Error handling improvements, ghost data fixes, CloudKit logging
 
----
+## Changes
+- Remove member via swipe-to-delete (owner only)
+- Delete household with migrate/clean delete options
+- Ghost data bug fix (loadCurrentHousehold no longer auto-clears left flag)
+- Check Again button replaces exit(0) in AcceptInvitationSheet
+- CloudKitErrorMapper and CloudKitLogger utilities
+- Offline leave handling with pending leave queue
+- householdKey filtering across all autocomplete surfaces
 
-## **IMPLEMENTATION PLAN**
+## Testing
+- Offline leave: PASSED
+- Rejoin + ghost data: PASSED
+- Multi-device leave: SKIPPED (user decision)
+- OSLog validation: VALIDATED
+- Regression testing: SKIPPED (user decision - exhaustive testing done)
 
-### **Phase 1: P0 Fixes (50 minutes)**
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
 
-#### **ERR-001: Ghost Data Bug Fix (30 min)**
-
-**Location**: `Services/HouseholdService.swift`, `loadCurrentHousehold()` method (~line 202)
-
-**Problem**: If server-side leave fails but local cleanup succeeds, user can be auto-rejoined to household they tried to leave.
-
-**Current (Buggy)**:
-```swift
-if hasLeftHousehold(householdID) {
-    let isParticipant = await isCurrentUserParticipant(in: household)
-    if isParticipant {
-        // WRONG: Assumes re-join, clears flag
-        clearLeftHouseholdFlag(householdID)
-    }
-}
+gh pr merge --squash --delete-branch
+git checkout main && git pull origin main
 ```
 
-**Fixed**:
-```swift
-if hasLeftHousehold(householdID) {
-    let isParticipant = await isCurrentUserParticipant(in: household)
-    if isParticipant {
-        // M7.3.4: Don't auto-clear flag. User must explicitly re-join via new invitation.
-        print("⚠️ M7.3.4: User marked as left but still participant - ignoring household")
-        print("   (User must accept new invitation to rejoin)")
-        continue  // Skip this household
-    }
-}
-```
-
-#### **ERR-002: Replace exit(0) with Check Again (20 min)**
-
-**Location**: `forager/AcceptInvitationSheet.swift` (~line 117-126)
-
-**Problem**: `exit(0)` is discouraged by Apple and provides poor UX on slow networks.
-
-**Changes**:
-1. Rename `showRestartAlert` → `showRetryAlert`
-2. Replace "Restart Required" alert with "Still Syncing" alert
-3. Add `retryCheck()` async method
-4. Add `isChecking` state for loading indicator
-
 ---
 
-### **Phase 2: P1 Technical Debt (1 hour 35 minutes)**
+## **M7.4: UI POLISH & PRE-LAUNCH FIXES**
 
-#### **ERR-010: CloudKitErrorMapper (30 min)**
+**Goal**: Address UI issues and visual polish before App Store submission.
 
-**New File**: `Services/Persistence/CloudKitErrorMapper.swift`
+**Estimated Time**: 4-6 hours
 
-Create single source of truth for CKError → user message mapping with:
-- `ErrorType` enum: transient, userAction, permanent
-- `MappedError` struct: userMessage, type, suggestedAction
-- `map(_ error: CKError) -> MappedError`
+**Scope**: Intentionally open - issues identified in real-time through app review.
 
-Then update:
-- `CloudKitSyncMonitor.swift` - Use CloudKitErrorMapper
-- `CloudKitDiagnostics.swift` - Use CloudKitErrorMapper
+### **Process**
 
-#### **ERR-011: Replace Magic Numbers (20 min)**
+1. Run the app and systematically review each screen
+2. Take screenshots of issues
+3. Share with Claude for analysis and code location
+4. Fix issues in priority order
+5. Verify fixes compile and don't introduce regressions
 
-Search codebase for raw CKError codes (3, 4, 9, 25, etc.) and replace with `CKError.Code.xxx.rawValue` or refactor to pass CKError objects directly.
+### **In Scope**
+- Visual inconsistencies
+- UI alignment issues
+- Color/typography inconsistencies
+- Missing empty states
+- Rough edges in user flows
+- Minor UX improvements
 
-#### **ERR-012: OSLog Integration (45 min)**
+### **Out of Scope**
+- New features
+- Architecture changes (M7.5)
+- Performance optimization (M9)
+- Parsing improvements (M8)
 
-**New File**: `Services/Persistence/CloudKitLogger.swift`
-
-Create structured logging using `Logger` (OSLog) for:
-- Household operations (create, leave, delete, invite, remove, join)
-- Share operations (create, accept, fail)
-- Sync events (start, complete, fail)
-- Debug/warning helpers
-
-Then replace `print()` calls in HouseholdService with CloudKitLogger calls.
-
----
-
-## **ACCEPTANCE CRITERIA**
-
-**P0 - Must Fix**:
-- [ ] Ghost data bug fixed - users can't be auto-rejoined to households they left
-- [ ] No `exit(0)` anywhere in codebase
-- [ ] "Check Again" button works on AcceptInvitationSheet timeout
-
-**P1 - Should Fix**:
-- [ ] Single `CloudKitErrorMapper` utility exists
-- [ ] No magic numbers for CKError codes (use CKError.Code enum)
-- [ ] All CloudKit operations logged via OSLog
-- [ ] Logs retrievable from TestFlight devices via Console.app
-
----
-
-## **FILES TO MODIFY/CREATE**
-
-| File | Action |
-|------|--------|
-| `Services/HouseholdService.swift` | ERR-001 fix, logging integration |
-| `forager/AcceptInvitationSheet.swift` | ERR-002 Check Again button |
-| `Services/Persistence/CloudKitErrorMapper.swift` | **NEW** - ERR-010 |
-| `Services/Persistence/CloudKitLogger.swift` | **NEW** - ERR-012 |
-| `Services/CloudKitSyncMonitor.swift` | Use CloudKitErrorMapper |
-| `Services/Persistence/CloudKitDiagnostics.swift` | Use CloudKitErrorMapper |
-
----
-
-## **GIT WORKFLOW**
+### **Git Workflow**
 
 ```bash
 git checkout main && git pull origin main
-git checkout -b feature/M7.3.4-error-handling-stability
-git push -u origin feature/M7.3.4-error-handling-stability
+git checkout -b feature/M7.4-ui-polish-pre-launch
+git push -u origin feature/M7.4-ui-polish-pre-launch
 ```
 
 ---
 
-## **TESTING CHECKLIST**
+## **PRE-LAUNCH ROADMAP**
 
-**Ghost Data Prevention**:
-- [ ] Leave household, simulate server failure, verify user stays out on restart
-- [ ] Accept new invitation after leaving, verify flag is cleared properly
-
-**Check Again Flow**:
-- [ ] Accept invitation, wait for timeout, tap "Check Again"
-- [ ] Verify no exit(0) behavior anywhere
-
-**Error Messages**:
-- [ ] Verify consistent wording across all error surfaces
-- [ ] No magic numbers in logs
-
-**Logs**:
-- [ ] Verify CloudKitLogger output in Console.app
-- [ ] Test log retrieval from TestFlight device
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| M7.3.4: Error Handling | ✅ COMPLETE | - |
+| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
+| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
+| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
+| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
+| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
+| **Pre-Launch Total** | | **~22-28h** |
 
 ---
 
-## **EXPLICITLY DEFERRED**
+## **KEY DECISIONS MADE (February 5, 2026)**
 
-These were evaluated and intentionally skipped:
-- NWPathMonitor (CloudKit handles offline)
-- Exponential backoff retry (risk of double operations)
-- CloudKit storage display (complex, low value)
-- iCloud sync toggle (breaks households)
-- Event-driven share acceptance (too complex)
-- CKAccountChangedNotification (low priority edge case)
+1. **Original M7.4 (Sync Status UI) SKIPPED** - Dual-store architecture makes it unnecessary
+2. **M7.4 repurposed** for UI Polish & Pre-Launch Fixes
+3. **M8.1-M8.3 before launch** - Fix "3 avocados" parsing issue
+4. **M7.5, M6, M8.4, M9+ deferred** to post-launch
 
 ---
 
-**Version**: February 3, 2026 - M7.3.4 Rescoped
-**Estimated Complexity**: Low-Medium (2.5-3 hours for P0+P1)
-**Dependencies**: M7.3.3 complete ✅
+**Version**: February 5, 2026 - M7.4 Ready
+**Dependencies**: M7.3.4 merged to main

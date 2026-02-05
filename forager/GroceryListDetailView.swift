@@ -13,6 +13,10 @@ import CoreData
 
 struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
+
+    // M7.3.4: Household service for filtering autocomplete by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
+
     @ObservedObject var weeklyList: WeeklyList
     
     // INLINE ADD: Services
@@ -119,6 +123,9 @@ struct GroceryListDetailView: View {
             }
         }
         .onAppear {
+            // M7.3.4: Configure autocomplete service with current householdKey
+            autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
+
             if let firstCategory = categories.first {
                 defaultCategory = firstCategory.displayName
             }
