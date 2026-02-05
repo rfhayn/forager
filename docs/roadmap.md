@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 3, 2026
-**Current Phase**: M5.0 COMPLETE ✅ | M7.0-M7.2 COMPLETE ✅ | M7.2.3 COMPLETE ✅ | M7.2.2 Leave Flow COMPLETE ✅ | M7.3.3 COMPLETE ✅ | **M7.3.4 🚀 Next (RESCOPED)**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M7.3.4 (Error Handling & Stability - RESCOPED) ready to start
-**Execution Order**: M1 → M2 → M3 → M4 → M5 → M7 (in progress) → M6 (deferred) → M8 → M9 → M10+
+**Last Updated**: February 5, 2026
+**Current Phase**: M7.3.4 COMPLETE ✅ | **M7.4 UI Polish 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, preparing for App Store launch
+**Execution Order**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -759,31 +759,31 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 **M7.3: Household Management & Error Handling (4-6 hours)**
 - ✅ **M7.3.1**: Rename Household - COMPLETE
 - ✅ **M7.3.3**: Remove Member & Delete Household - COMPLETE (Feb 3, 2026)
-- **M7.3.4**: Error Handling & Stability Improvements (2.5-3h) 🚀 NEXT (RESCOPED)
+- ✅ **M7.3.4**: Error Handling & Stability Improvements - COMPLETE (Feb 5, 2026)
   - P0: Ghost Data bug fix, replace exit(0) with "Check Again"
   - P1: CloudKitErrorMapper, OSLog integration
-  - PRD: `docs/prds/active/m7.3.4-error-handling-stability.md`
+  - Bonus: householdKey filtering across all autocomplete surfaces
 
-**M7.4: Sync UI & Polish (3-4 hours)**
-- **M7.4.1**: Sync Status Indicators (2-3h)
-- **M7.4.2**: CloudKit Settings & Diagnostics (1h)
+**M7.4: UI Polish & Pre-Launch Fixes (4-6 hours) - 🚀 NEXT**
+- Ad-hoc UI issues identified during app review
+- Visual consistency fixes
+- Minor UX improvements before App Store
+- **Note**: Original M7.4 (Sync Status UI) was SKIPPED - dual-store architecture makes it unnecessary
+- PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
-**M7.5: Architecture Hardening - UX/Service Cleanup (8-12 hours) - 🏗️ NEW**
-- **Phase 1**: Service Ownership of Saves (3-4h)
-  - Eliminate scattered save() calls
-  - Centralize write paths in services
+**M7.5: Architecture Hardening - UX/Service Cleanup (18.5-24.5 hours) - ⏸️ DEFERRED POST-LAUNCH**
+- **Phase 1**: Service Ownership of Saves (4-6h)
+  - Eliminate 39 scattered save() calls across 18 views
+  - Create RecipeService, WeeklyListService
   - Intent-style service methods
-  - Consistent error handling
-- **Phase 2**: SwiftUI Navigation Cleanup (3-4h)
-  - Enum-based routing (replace boolean soup)
-  - Predictable UI state
-  - Apply to 2-3 major screens
-- **Phase 3**: UX Polish & Invariant Tests (2-4h)
+- **Phase 2**: SwiftUI Navigation Cleanup (11.5-14.5h)
+  - Replace 60+ boolean states with enum routing
+  - Fix member count CloudKit refresh bug
+- **Phase 3**: UX Polish & Invariant Tests (3-4h)
   - EmptyStateView standardization
-  - 5-10 Core Data invariant tests (optional)
-  - Professional polish before external beta
+  - 7 Core Data invariant tests
 
-**Why M7.5?** Completes architecture hardening started in M7.2.3. Clean service layer, predictable navigation, and test coverage before public beta launch. Builds on customGPT recommendations.
+**Why Deferred?** M7.5 is developer-facing code quality. Users won't notice the difference. Prioritizing user-visible polish (M7.4) and parsing fixes (M8) before launch.
 
 **PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
@@ -1401,6 +1401,40 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Begin M7 - CloudKit Sync & External TestFlight (32-42h with buffer)
+**Next Action**: Merge M7.3.4, then start M7.4 UI Polish
 
-**Status**: M1-M5.0 complete with ~92.5 hours total. M7 ready to begin with complete PRD, CloudKit-enabled infrastructure, and internal TestFlight operational. M7.0 App Store Prerequisites (privacy policy, questionnaire, name disambiguation) are MANDATORY before external TestFlight submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.3.4 complete (~65h). Preparing for App Store launch with M7.4 UI Polish → M8.1-M8.3 Parsing → M7.6-M7.7 submission.
+
+---
+
+## 🚀 **PRE-LAUNCH ROADMAP (February 2026)**
+
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| M7.3.4: Error Handling | ✅ COMPLETE | - |
+| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
+| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
+| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
+| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
+| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
+| **Pre-Launch Total** | | **~22-28h** |
+
+### **Post-Launch Roadmap**
+
+| Task | Status | Est. Hours |
+|------|--------|------------|
+| M7.5: Architecture Hardening | DEFERRED | 18.5-24.5h |
+| M6: Testing Foundation | PLANNED | 12-18h |
+| M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
+| M9: Technical Debt | PLANNED | 135-165h |
+| M10: Analytics & Insights | PLANNED | 8-12h |
+| M11-M14: Advanced Features | FUTURE | 40-60h |
+
+### **Key Decisions (February 5, 2026)**
+
+1. **Original M7.4 (Sync Status UI) SKIPPED** - Dual-store architecture makes it unnecessary
+2. **M7.4 repurposed** for UI Polish & Pre-Launch Fixes
+3. **M8.1-M8.3 before launch** - Fix "3 avocados" parsing issue (95% → 98% accuracy)
+4. **M7.5 deferred post-launch** - Developer-facing code quality, users won't notice
+5. **M8.4 optional post-launch** - ML requires 100+ user corrections from M8.1 telemetry

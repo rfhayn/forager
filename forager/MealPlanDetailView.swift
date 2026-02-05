@@ -14,14 +14,17 @@ import CoreData
 // Clean list format where each day has its own search field
 // Type to filter recipes, tap to assign - no modals needed
 struct MealPlanDetailView: View {
-    
+
     // MARK: - Properties
-    
+
     // M4.2.4: The meal plan to display
     @ObservedObject var mealPlan: MealPlan
-    
+
     // M4.2.4: Core Data context
     @Environment(\.managedObjectContext) private var viewContext
+
+    // M7.3.4: Household service for filtering by householdKey
+    @EnvironmentObject private var householdService: HouseholdService
     
     // M4.2.4: Fetch planned meals for this meal plan
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
@@ -224,12 +227,20 @@ struct MealPlanDetailView: View {
     }
     
     // MARK: - Helper Functions
-    
+
     // M4.2.1-3 Enhancement: Load all recipes for autocomplete
+    // M7.3.4: Filter by householdKey to prevent ghost data from other households
     private func loadAllRecipes() {
         let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
-        
+
+        // M7.3.4: Filter by current householdKey to prevent duplicates
+        if let householdKey = householdService.currentHouseholdKey {
+            fetchRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        } else {
+            fetchRequest.predicate = NSPredicate(format: "householdKey == nil")
+        }
+
         do {
             allRecipes = try viewContext.fetch(fetchRequest)
         } catch {
@@ -718,30 +729,34 @@ struct DayRowView: View {
 struct MealPlanDetailView_Previews: PreviewProvider {
     static var previews: some View {
         let context = PersistenceController.preview.container.viewContext
-        
+
         // Create sample meal plan
         let plan = MealPlan(context: context)
         plan.id = UUID()
         plan.name = "This Week"
         plan.startDate = Date()
         plan.duration = 7
-        
+
         // Create sample recipes
         let recipe1 = Recipe(context: context)
         recipe1.id = UUID()
         recipe1.title = "Hot Dog and Tortellini"
         recipe1.servings = 4
-        
+
         let recipe2 = Recipe(context: context)
         recipe2.id = UUID()
         recipe2.title = "Chocolate Chip Cookies"
         recipe2.servings = 24
-        
+
         try? context.save()
-        
+
+        // M7.3.4: Create HouseholdService for preview
+        let householdService = HouseholdService(context: context)
+
         return NavigationStack {
             MealPlanDetailView(mealPlan: plan)
                 .environment(\.managedObjectContext, context)
+                .environmentObject(householdService)
         }
     }
 }

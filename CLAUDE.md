@@ -268,6 +268,20 @@ git checkout -b feature/M#.#.#-description-v2
 
 ## Documentation Updates (After Every Session)
 
+### Core Documentation Definition
+
+**"Core documentation" refers to these 5 files that must stay synchronized:**
+
+1. `docs/current-story.md` - Current milestone status and progress
+2. `docs/next-prompt.md` - Implementation guidance for next milestone
+3. `docs/roadmap.md` - Milestone tracking and execution order
+4. `docs/requirements.md` - Functional requirements and completion status
+5. `docs/project-index.md` - Central navigation hub and metrics
+
+These files form the single source of truth for project status. When one changes, the others likely need updates too.
+
+### Session Documentation Updates
+
 1. Update `docs/current-story.md` with progress
 2. Create/update learning notes in `docs/learning-notes/`
 3. Mark completed phases with actual hours
@@ -275,13 +289,7 @@ git checkout -b feature/M#.#.#-description-v2
 
 ### Milestone Completion Documentation (MANDATORY)
 
-**After completing ANY milestone (M#.#.#), automatically update ALL 5 core documentation files:**
-
-1. `docs/current-story.md` - Mark milestone complete, update status
-2. `docs/next-prompt.md` - Replace with next milestone's implementation guidance
-3. `docs/roadmap.md` - Update milestone status, dates, hours
-4. `docs/requirements.md` - Mark requirements complete, update version
-5. `docs/project-index.md` - Update current phase, recent activity, metrics
+**After completing ANY milestone (M#.#.#), automatically update ALL 5 core documentation files.**
 
 **Do this automatically without being asked.** The user should not need to request documentation updates after milestone completion.
 

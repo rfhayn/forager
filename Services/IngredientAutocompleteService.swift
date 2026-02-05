@@ -5,6 +5,8 @@
 //  Created for M2.3: Recipe Creation & Editing
 //  Parse-then-autocomplete pattern for intelligent ingredient matching
 //
+//  M7.3.4: Added householdKey filtering to prevent ghost data from other households
+//
 
 import Foundation
 import CoreData
@@ -13,15 +15,27 @@ import Combine
 class IngredientAutocompleteService: ObservableObject {
     private let context: NSManagedObjectContext
     private let parsingService: IngredientParsingService
-    
+
+    // M7.3.4: Household key for filtering templates to current scope
+    // Mutable to allow configuration after init (since @EnvironmentObject isn't available in init)
+    private var householdKey: String?
+
     @Published var suggestions: [IngredientTemplate] = []
     @Published var lastSearchDuration: TimeInterval = 0
-    
+
     private var searchCancellable: AnyCancellable?
-    
-    init(context: NSManagedObjectContext, parsingService: IngredientParsingService) {
+
+    // M7.3.4: Updated init to accept optional householdKey for filtering
+    init(context: NSManagedObjectContext, parsingService: IngredientParsingService, householdKey: String? = nil) {
         self.context = context
         self.parsingService = parsingService
+        self.householdKey = householdKey
+    }
+
+    // M7.3.4: Configure householdKey after initialization
+    // Call this in onAppear when HouseholdService is available
+    func configure(householdKey: String?) {
+        self.householdKey = householdKey
     }
     
     // MARK: - Parse-Then-Autocomplete (Core Pattern)
@@ -85,53 +99,70 @@ class IngredientAutocompleteService: ObservableObject {
     }
     
     // MARK: - Multi-Pass Search Implementation
-    
+
+    // M7.3.4: Helper to build householdKey predicate
+    private func householdKeyPredicate() -> NSPredicate {
+        if let key = householdKey {
+            return NSPredicate(format: "householdKey == %@", key)
+        } else {
+            return NSPredicate(format: "householdKey == nil")
+        }
+    }
+
     private func exactPrefixMatch(query: String) -> [IngredientTemplate] {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name BEGINSWITH[cd] %@", query)
+        // M7.3.4: Combine search predicate with householdKey filter
+        let searchPredicate = NSPredicate(format: "name BEGINSWITH[cd] %@", query)
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [searchPredicate, householdKeyPredicate()])
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ]
         request.fetchLimit = 10
-        
+
         return (try? context.fetch(request)) ?? []
     }
-    
+
     private func wordBoundaryMatch(query: String) -> [IngredientTemplate] {
         // Match words that start with query
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", " \(query)")
+        // M7.3.4: Combine search predicate with householdKey filter
+        let searchPredicate = NSPredicate(format: "name CONTAINS[cd] %@", " \(query)")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [searchPredicate, householdKeyPredicate()])
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ]
         request.fetchLimit = 10
-        
+
         return (try? context.fetch(request)) ?? []
     }
-    
+
     private func containsMatch(query: String) -> [IngredientTemplate] {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
+        // M7.3.4: Combine search predicate with householdKey filter
+        let searchPredicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [searchPredicate, householdKeyPredicate()])
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ]
         request.fetchLimit = 10
-        
+
         return (try? context.fetch(request)) ?? []
     }
-    
+
     private func fuzzyMatch(query: String) -> [IngredientTemplate] {
         // Get all templates and filter by Levenshtein distance
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        // M7.3.4: Apply householdKey filter before fetching
+        request.predicate = householdKeyPredicate()
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false)
         ]
-        
+
         let allTemplates = (try? context.fetch(request)) ?? []
-        
+
         return allTemplates.filter { template in
             guard let name = template.name else { return false }
             let distance = levenshteinDistance(query.lowercased(), name.lowercased())
@@ -176,10 +207,4 @@ class IngredientAutocompleteService: ObservableObject {
         searchIngredients(fullText: testText)
         return lastSearchDuration < 0.1 // Target: < 0.1s
     }
-}//
-//  IngredientAutocompleteService.swift
-//  forager
-//
-//  Created by Richard Hayn on 10/3/25.
-//
-
+}

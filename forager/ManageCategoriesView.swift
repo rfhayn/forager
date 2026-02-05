@@ -183,10 +183,17 @@ struct ManageCategoriesView: View {
     }
     
     // MARK: - Enhanced Category Deletion Protection
+    // M7.3.4: Filter by householdKey to only count templates in current scope
     private func checkIngredientTemplateAssignments(for category: Category) -> Int {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "category == %@", category.displayName)
-        
+
+        // M7.3.4: Filter by both category name AND householdKey
+        if let householdKey = householdService.currentHouseholdKey {
+            request.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", category.displayName, householdKey)
+        } else {
+            request.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", category.displayName)
+        }
+
         do {
             let assignedTemplates = try viewContext.fetch(request)
             print("📊 Category '\(category.displayName)' has \(assignedTemplates.count) assigned ingredient templates")
@@ -398,19 +405,26 @@ struct ManageCategoriesView: View {
     }
     
     // MARK: - Reassignment Implementation
+    // M7.3.4: Filter by householdKey to only reassign templates in current scope
     private func reassignIngredientTemplates(from sourceCategory: Category, to targetCategory: Category) {
         let sourceCategoryID = sourceCategory.objectID
         let targetCategoryID = targetCategory.objectID
         let sourceCategoryName = sourceCategory.displayName
         let targetCategoryName = targetCategory.displayName
-        
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
         PersistenceController.shared.performWrite({ context in
             // Get references to categories in write context
             let sourceCategoryInContext = context.object(with: sourceCategoryID) as! Category
-            
+
+            // M7.3.4: Filter by both category name AND householdKey
             let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-            request.predicate = NSPredicate(format: "category == %@", sourceCategoryName)
-            
+            if let householdKey = currentHouseholdKey {
+                request.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", sourceCategoryName, householdKey)
+            } else {
+                request.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", sourceCategoryName)
+            }
+
             do {
                 let templates = try context.fetch(request)
                 for template in templates {
@@ -418,43 +432,49 @@ struct ManageCategoriesView: View {
                     let templateName = template.name ?? "Unknown"
                     print("🔄 Reassigned '\(templateName)' from '\(sourceCategoryName)' to '\(targetCategoryName)'")
                 }
-                
+
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
                 print("✅ Successfully reassigned \(templates.count) ingredient templates and deleted category '\(sourceCategoryName)'")
             } catch {
                 print("❌ Error during reassignment: \(error)")
             }
-            
+
         }, onError: { error in
             DispatchQueue.main.async {
                 self.errorMessage = "Failed to reassign ingredients: \(error.localizedDescription)"
                 self.showingError = true
             }
         })
-        
+
         // Clean up state
         showingReassignmentDialog = false
         categoryToDelete = nil
         selectedReassignmentCategory = nil
     }
     
+    // M7.3.4: Filter by householdKey to only move templates in current scope
     private func moveIngredientTemplatesToUncategorized(from sourceCategory: Category) {
         let sourceCategoryID = sourceCategory.objectID
         let sourceCategoryName = sourceCategory.displayName
-        
+        let currentHouseholdKey = householdService.currentHouseholdKey
+
         PersistenceController.shared.performWrite({ context in
             // Get reference to category in write context
             let sourceCategoryInContext = context.object(with: sourceCategoryID) as! Category
-            
-            // Find or create the Uncategorized category
+
+            // M7.3.4: Find Uncategorized category within the same household scope
             let uncategorizedRequest: NSFetchRequest<Category> = Category.fetchRequest()
-            uncategorizedRequest.predicate = NSPredicate(format: "name ==[c] %@", "Uncategorized")
-            
+            if let householdKey = currentHouseholdKey {
+                uncategorizedRequest.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", "Uncategorized", householdKey)
+            } else {
+                uncategorizedRequest.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", "Uncategorized")
+            }
+
             do {
                 let uncategorizedCategories = try context.fetch(uncategorizedRequest)
                 let uncategorizedCategory: Category
-                
+
                 if let existing = uncategorizedCategories.first {
                     uncategorizedCategory = existing
                 } else {
@@ -466,20 +486,26 @@ struct ManageCategoriesView: View {
                     uncategorizedCategory.isDefault = false
                     uncategorizedCategory.dateCreated = Date()
                     uncategorizedCategory.sortOrder = Int16.max
+                    // M7.3.4: Set householdKey for proper scoping
+                    uncategorizedCategory.householdKey = currentHouseholdKey
                     print("✅ Created Uncategorized category during reassignment")
                 }
-                
-                // Move ingredient templates to Uncategorized
+
+                // M7.3.4: Move only ingredient templates in current household scope
                 let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-                templateRequest.predicate = NSPredicate(format: "category == %@", sourceCategoryName)
-                
+                if let householdKey = currentHouseholdKey {
+                    templateRequest.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", sourceCategoryName, householdKey)
+                } else {
+                    templateRequest.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", sourceCategoryName)
+                }
+
                 let templates = try context.fetch(templateRequest)
                 for template in templates {
                     template.category = uncategorizedCategory.displayName  // Assign to Uncategorized, not nil
                     let templateName = template.name ?? "Unknown"
                     print("🔄 Moved '\(templateName)' to Uncategorized category")
                 }
-                
+
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
                 print("✅ Successfully moved \(templates.count) ingredient templates to Uncategorized and deleted category '\(sourceCategoryName)'")

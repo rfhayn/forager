@@ -205,31 +205,12 @@ class CloudKitSyncMonitor: ObservableObject {
         }
     }
     
-    /// M7.1.2: Map CKError codes to user-friendly messages
+    /// M7.3.4: Map CKError codes to user-friendly messages (updated to use CloudKitErrorMapper)
     /// Provides actionable guidance for common sync failures
     /// Returns appropriate error message based on error type
     private func mapCloudKitError(errorCode: Int) -> String {
-        // Map CKError.Code cases (CloudKit framework errors)
-        switch errorCode {
-        case 3: // CKError.networkUnavailable
-            return "Network unavailable. Sync will resume when online."
-        case 4: // CKError.networkFailure
-            return "Network error. Will retry automatically."
-        case 9: // CKError.notAuthenticated
-            return "Not signed into iCloud. Please sign in to enable sync."
-        case 25: // CKError.quotaExceeded
-            return "iCloud storage full. Please free up space to continue syncing."
-        case 26: // CKError.zoneNotFound
-            return "Sync zone not found. Recreating..."
-        case 14: // CKError.serverRecordChanged
-            return "Conflict detected. Will resolve automatically."
-        case 2: // CKError.internalError
-            return "CloudKit internal error. Will retry shortly."
-        case 6: // CKError.serverRejectedRequest
-            return "Server rejected request. Check CloudKit configuration."
-        default:
-            return "Sync error (code \(errorCode)). Will retry automatically."
-        }
+        // M7.3.4: Delegate to centralized mapper to avoid duplicate code and magic numbers
+        return CloudKitErrorMapper.message(forCode: errorCode)
     }
     
     // MARK: - Testing Helpers
