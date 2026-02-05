@@ -34,21 +34,6 @@ struct foragerApp: App {
     
     // M7.2.2 Task 3: CloudKit share invitation handling via SceneDelegate
     @StateObject private var householdService: HouseholdService
-    
-    // Tab selection tracking
-    @State private var selectedTab: Tab = .lists
-    
-    // Navigation paths for each tab (for pop-to-root functionality)
-    @State private var listsPath = NavigationPath()
-    @State private var ingredientsPath = NavigationPath()
-    @State private var recipesPath = NavigationPath()
-    @State private var mealPlansPath = NavigationPath()
-
-    // Pop-to-root triggers for sheet dismissal
-    @State private var listsPopToRoot = false
-    @State private var ingredientsPopToRoot = false
-    @State private var recipesPopToRoot = false
-    @State private var mealPlansPopToRoot = false
 
     // M7.2.2 Task 3: Initialize HouseholdService
     init() {
@@ -69,55 +54,9 @@ struct foragerApp: App {
                 persistence: persistenceController  // ✅ Phase 2.6: Added persistence parameter
             )
             
-            TabView(selection: $selectedTab) {
-                NavigationStack(path: $listsPath) {
-                    WeeklyListsView(popToRoot: $listsPopToRoot)
-                }
-                .tabItem {
-                    Label("Lists", systemImage: "list.clipboard")
-                }
-                .tag(Tab.lists)
-                
-                NavigationStack(path: $ingredientsPath) {
-                    IngredientsView(popToRoot: $ingredientsPopToRoot)
-                }
-                .tabItem {
-                    Label("Ingredients", systemImage: "leaf.circle")
-                }
-                .tag(Tab.ingredients)
-                
-                NavigationStack(path: $recipesPath) {
-                    RecipeListView(popToRoot: $recipesPopToRoot)
-                }
-                .tabItem {
-                    Label("Recipes", systemImage: "book.pages")
-                }
-                .tag(Tab.recipes)
-                
-                NavigationStack(path: $mealPlansPath) {
-                    MealPlansListView(popToRoot: $mealPlansPopToRoot)
-                }
-                .tabItem {
-                    Label("Meal Plans", systemImage: "calendar")
-                }
-                .tag(Tab.mealPlans)
-
-                // M7.4: Unified Search Tab (Apple Music pattern)
-                UnifiedSearchView()
-                    .tabItem {
-                        Label("Search", systemImage: "magnifyingglass")
-                    }
-                    .tag(Tab.search)
-
-                // M7.4: Settings moved to hamburger menu (was causing 6 tabs = "More" button)
-            }
-            .onChange(of: selectedTab) { oldTab, newTab in
-                // Pop to root when tapping the already-selected tab
-                // This is standard iOS tab bar behavior
-                if oldTab == newTab {
-                    handlePopToRoot(for: newTab)
-                }
-            }
+            // M7.4: Custom Apple Music-style bottom navigation
+            // Grouped pill for main tabs + inline search expansion
+            CustomBottomNavigationView()
             .environment(\.managedObjectContext, persistenceController.container.viewContext)
             .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
             .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
@@ -149,39 +88,6 @@ struct foragerApp: App {
         }
     }
 
-    // MARK: - Tab Pop-to-Root Handler
-
-    // Clears navigation path and triggers sheet dismissal for the specified tab
-    private func handlePopToRoot(for tab: Tab) {
-        switch tab {
-        case .lists:
-            listsPath = NavigationPath()
-            listsPopToRoot.toggle()
-        case .ingredients:
-            ingredientsPath = NavigationPath()
-            ingredientsPopToRoot.toggle()
-        case .recipes:
-            recipesPath = NavigationPath()
-            recipesPopToRoot.toggle()
-        case .mealPlans:
-            mealPlansPath = NavigationPath()
-            mealPlansPopToRoot.toggle()
-        case .search:
-            break // Search has no navigation stack
-        }
-    }
-}
-
-// MARK: - Tab Enumeration
-
-// Defines all tabs in the app for type-safe selection tracking
-// M7.4: Settings removed from tabs, will be in hamburger menu
-enum Tab {
-    case lists
-    case ingredients
-    case recipes
-    case mealPlans
-    case search
 }
 
 // MARK: - Custom Button Styles
