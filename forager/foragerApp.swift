@@ -109,14 +109,7 @@ struct foragerApp: App {
                     }
                     .tag(Tab.search)
 
-                // M3 Phase 3: Settings Tab (replaces DEBUG-only Migration tab)
-                // M7.2.2 FIX: No longer needs context - uses environmentObject
-                // TODO M7.4: Will move to hamburger menu
-                SettingsView()
-                    .tabItem {
-                        Label("Settings", systemImage: "gear")
-                    }
-                    .tag(Tab.settings)
+                // M7.4: Settings moved to hamburger menu (was causing 6 tabs = "More" button)
             }
             .onChange(of: selectedTab) { oldTab, newTab in
                 // Pop to root when tapping the already-selected tab
@@ -175,8 +168,6 @@ struct foragerApp: App {
             mealPlansPopToRoot.toggle()
         case .search:
             break // Search has no navigation stack
-        case .settings:
-            break // Settings has no navigation stack
         }
     }
 }
@@ -184,13 +175,13 @@ struct foragerApp: App {
 // MARK: - Tab Enumeration
 
 // Defines all tabs in the app for type-safe selection tracking
+// M7.4: Settings removed from tabs, will be in hamburger menu
 enum Tab {
     case lists
     case ingredients
     case recipes
     case mealPlans
     case search
-    case settings
 }
 
 // MARK: - Custom Button Styles
