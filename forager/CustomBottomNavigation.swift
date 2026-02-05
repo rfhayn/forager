@@ -128,10 +128,10 @@ struct CustomBottomNavigationView: View {
         .padding(.horizontal, 4)
         .background(
             Capsule()
-                .fill(Color(.systemBackground).opacity(0.95))
+                .fill(.regularMaterial)
                 .overlay(
                     Capsule()
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+                        .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                 )
         )
     }
@@ -153,10 +153,10 @@ struct CustomBottomNavigationView: View {
                 .frame(width: 44, height: 44)
                 .background(
                     Circle()
-                        .fill(Color(.systemBackground).opacity(0.95))
+                        .fill(.regularMaterial)
                         .overlay(
                             Circle()
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+                                .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                         )
                 )
         }
@@ -181,10 +181,10 @@ struct CustomBottomNavigationView: View {
                     .frame(width: 44, height: 44)
                     .background(
                         Circle()
-                            .fill(Color(.systemBackground).opacity(0.95))
+                            .fill(.regularMaterial)
                             .overlay(
                                 Circle()
-                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+                                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                             )
                     )
             }
@@ -216,10 +216,10 @@ struct CustomBottomNavigationView: View {
             .frame(height: 44)
             .background(
                 Capsule()
-                    .fill(Color(.systemBackground).opacity(0.95))
+                    .fill(.regularMaterial)
                     .overlay(
                         Capsule()
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+                            .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                     )
             )
         }
