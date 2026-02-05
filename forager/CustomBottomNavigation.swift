@@ -125,6 +125,15 @@ struct CustomBottomNavigationView: View {
                 .buttonStyle(.plain)
             }
         }
+        .padding(.horizontal, 4)
+        .background(
+            Capsule()
+                .fill(Color(.systemBackground).opacity(0.8))
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                )
+        )
     }
 
     @Namespace private var tabAnimation
@@ -142,6 +151,14 @@ struct CustomBottomNavigationView: View {
                 .font(.system(size: 22, weight: .medium))
                 .foregroundColor(.primary.opacity(0.5))
                 .frame(width: 44, height: 44)
+                .background(
+                    Circle()
+                        .fill(Color(.systemBackground).opacity(0.8))
+                        .overlay(
+                            Circle()
+                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                        )
+                )
         }
         .buttonStyle(.plain)
     }
@@ -162,6 +179,14 @@ struct CustomBottomNavigationView: View {
                     .font(.system(size: 22, weight: .medium))
                     .foregroundColor(.primary)
                     .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color(.systemBackground).opacity(0.8))
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                            )
+                    )
             }
             .buttonStyle(.plain)
 
@@ -187,7 +212,16 @@ struct CustomBottomNavigationView: View {
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 12)
             .frame(height: 44)
+            .background(
+                Capsule()
+                    .fill(Color(.systemBackground).opacity(0.8))
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                    )
+            )
         }
     }
 }
