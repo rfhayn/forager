@@ -266,7 +266,7 @@ struct RecipeListView: View {
                 }
                 .onDelete(perform: deleteRecipes)
             }
-            .listStyle(PlainListStyle())
+            .listStyle(InsetGroupedListStyle())
         }
     }
     
