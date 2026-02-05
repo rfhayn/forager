@@ -22,24 +22,14 @@ struct WeeklyListsView: View {
 
     // M7.3.2: Filter lists based on current household context
     // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
-    // M7.4: Added search filtering
     private var weeklyLists: [WeeklyList] {
         let currentHouseholdKey = householdService.currentHouseholdKey
-        let householdFiltered = allWeeklyLists.filter { list in
+        return allWeeklyLists.filter { list in
             if let householdKey = currentHouseholdKey {
                 return list.householdKey == householdKey
             } else {
                 return list.householdKey == nil
             }
-        }
-
-        // M7.4: Apply search filter if search text is not empty
-        if searchText.isEmpty {
-            return householdFiltered
-        }
-
-        return householdFiltered.filter { list in
-            (list.name ?? "").localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -48,17 +38,10 @@ struct WeeklyListsView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var refreshID = UUID()
-
-    // M7.4: Search state for .searchable() pattern
-    @State private var searchText = ""
     
     var body: some View {
         contentView
             .navigationTitle("Grocery Lists")
-            .searchable(
-                text: $searchText,
-                prompt: "Search lists..."
-            )
             .toolbar {
                 toolbarContent
             }

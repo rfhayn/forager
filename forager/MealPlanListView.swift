@@ -28,24 +28,14 @@ struct MealPlansListView: View {
 
     // M7.3.2: Filter meal plans based on current household context
     // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
-    // M7.4: Added search filtering
     private var allMealPlans: [MealPlan] {
         let currentHouseholdKey = householdService.currentHouseholdKey
-        let householdFiltered = allMealPlansFetch.filter { plan in
+        return allMealPlansFetch.filter { plan in
             if let householdKey = currentHouseholdKey {
                 return plan.householdKey == householdKey
             } else {
                 return plan.householdKey == nil
             }
-        }
-
-        // M7.4: Apply search filter if search text is not empty
-        if searchText.isEmpty {
-            return householdFiltered
-        }
-
-        return householdFiltered.filter { plan in
-            (plan.name ?? "").localizedCaseInsensitiveContains(searchText)
         }
     }
 
@@ -53,9 +43,6 @@ struct MealPlansListView: View {
     @State private var showingCreateSheet = false
     @State private var showCompleted = false  // Completed section collapsed by default
     @State private var refreshID = UUID()
-
-    // M7.4: Search state for .searchable() pattern
-    @State private var searchText = ""
     
     // M4.2.4: Service for plan management
     @StateObject private var mealPlanService = MealPlanService.shared
@@ -63,10 +50,6 @@ struct MealPlansListView: View {
     var body: some View {
         contentView
             .navigationTitle("Meal Plans")
-            .searchable(
-                text: $searchText,
-                prompt: "Search meal plans..."
-            )
             .toolbar {
                 toolbarContent
             }

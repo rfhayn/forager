@@ -117,10 +117,6 @@ struct IngredientsView: View {
         }
         .navigationTitle("Ingredients")
         .navigationBarTitleDisplayMode(.large)
-        .searchable(
-            text: $searchText,
-            prompt: "Search ingredients..."
-        )
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 // Enhanced toolbar with bulk category assignment

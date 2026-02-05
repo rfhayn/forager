@@ -43,14 +43,12 @@ struct foragerApp: App {
     @State private var ingredientsPath = NavigationPath()
     @State private var recipesPath = NavigationPath()
     @State private var mealPlansPath = NavigationPath()
-    @State private var categoriesPath = NavigationPath()
-    
+
     // Pop-to-root triggers for sheet dismissal
     @State private var listsPopToRoot = false
     @State private var ingredientsPopToRoot = false
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
-    @State private var categoriesPopToRoot = false
 
     // M7.2.2 Task 3: Initialize HouseholdService
     init() {
@@ -103,17 +101,17 @@ struct foragerApp: App {
                     Label("Meal Plans", systemImage: "calendar")
                 }
                 .tag(Tab.mealPlans)
-                
-                NavigationStack(path: $categoriesPath) {
-                    ManageCategoriesView(popToRoot: $categoriesPopToRoot)
-                }
-                .tabItem {
-                    Label("Categories", systemImage: "folder.badge.gearshape")
-                }
-                .tag(Tab.categories)
-                
+
+                // M7.4: Unified Search Tab (Apple Music pattern)
+                UnifiedSearchView()
+                    .tabItem {
+                        Label("Search", systemImage: "magnifyingglass")
+                    }
+                    .tag(Tab.search)
+
                 // M3 Phase 3: Settings Tab (replaces DEBUG-only Migration tab)
                 // M7.2.2 FIX: No longer needs context - uses environmentObject
+                // TODO M7.4: Will move to hamburger menu
                 SettingsView()
                     .tabItem {
                         Label("Settings", systemImage: "gear")
@@ -175,9 +173,8 @@ struct foragerApp: App {
         case .mealPlans:
             mealPlansPath = NavigationPath()
             mealPlansPopToRoot.toggle()
-        case .categories:
-            categoriesPath = NavigationPath()
-            categoriesPopToRoot.toggle()
+        case .search:
+            break // Search has no navigation stack
         case .settings:
             break // Settings has no navigation stack
         }
@@ -192,7 +189,7 @@ enum Tab {
     case ingredients
     case recipes
     case mealPlans
-    case categories
+    case search
     case settings
 }
 
