@@ -72,7 +72,10 @@ struct CustomBottomNavigationView: View {
             if !isSearchActive {
                 // Pill-shaped container with 4 main tabs
                 tabPillContainer
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .leading).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
             }
 
             Spacer()
@@ -80,21 +83,23 @@ struct CustomBottomNavigationView: View {
             if isSearchActive {
                 // Expanded search bar
                 expandedSearchBar
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .trailing).combined(with: .opacity)
+                    ))
             } else {
                 // Circular search button
                 searchButton
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(
-            .ultraThinMaterial,
-            in: RoundedRectangle(cornerRadius: 16)
+            Color(.systemBackground).opacity(0.95)
         )
-        .padding(.horizontal, 8)
-        .padding(.bottom, 8)
+        .clipShape(RoundedRectangle(cornerRadius: 0))
+        .shadow(color: Color.black.opacity(0.05), radius: 1, x: 0, y: -1)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSearchActive)
     }
 
@@ -104,74 +109,93 @@ struct CustomBottomNavigationView: View {
         HStack(spacing: 0) {
             ForEach(NavigationTab.mainTabs, id: \.self) { tab in
                 Button {
-                    withAnimation {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedTab = tab
                     }
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 2) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 20))
+                            .font(.system(size: 18, weight: .medium))
                         Text(tab.title)
-                            .font(.caption2)
+                            .font(.system(size: 10, weight: .medium))
                     }
-                    .foregroundColor(selectedTab == tab ? .white : .primary)
+                    .foregroundColor(selectedTab == tab ? .white : .primary.opacity(0.7))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 4)
                     .background(
-                        selectedTab == tab ? Color.accentColor : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 12)
+                        Group {
+                            if selectedTab == tab {
+                                Capsule()
+                                    .fill(Color.accentColor)
+                                    .matchedGeometryEffect(id: "selectedTab", in: tabAnimation)
+                            }
+                        }
                     )
                 }
+                .buttonStyle(.plain)
             }
         }
-        .padding(4)
+        .padding(3)
         .background(
-            Color(.secondarySystemBackground),
-            in: Capsule()
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
         )
     }
+
+    @Namespace private var tabAnimation
 
     // MARK: - Search Button
 
     private var searchButton: some View {
         Button {
-            withAnimation {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 isSearchActive = true
                 isSearchFocused = true
             }
         } label: {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 20))
-                .foregroundColor(.primary)
-                .frame(width: 50, height: 50)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.primary.opacity(0.7))
+                .frame(width: 44, height: 44)
                 .background(
-                    Color(.secondarySystemBackground),
-                    in: Circle()
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
                 )
         }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Expanded Search Bar
 
     private var expandedSearchBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             // Home/back button
             Button {
-                withAnimation {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     searchText = ""
                     isSearchActive = false
                     isSearchFocused = false
                 }
             } label: {
                 Image(systemName: "house.fill")
-                    .font(.system(size: 20))
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.primary)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+                    )
             }
+            .buttonStyle(.plain)
 
             // Search field
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.secondary)
 
                 TextField("Search everything...", text: $searchText)
@@ -184,14 +208,18 @@ struct CustomBottomNavigationView: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16))
                             .foregroundColor(.secondary)
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(
-                Color(.tertiarySystemBackground),
-                in: RoundedRectangle(cornerRadius: 10)
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
             )
         }
     }
