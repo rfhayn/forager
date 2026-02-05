@@ -88,11 +88,14 @@ struct UnifiedSearchView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // M7.4: Persistent search bar at top (Apple Music pattern)
+                // M7.4: Search bar with cancel button (Apple Music pattern)
                 searchBarSection
 
                 // Results or empty state
-                if searchText.isEmpty {
+                if searchText.isEmpty && !isSearchFocused {
+                    emptyStateView
+                } else if searchText.isEmpty && isSearchFocused {
+                    // Show recent searches or suggestions when focused but empty
                     emptyStateView
                 } else if hasResults {
                     searchResultsView
@@ -100,8 +103,9 @@ struct UnifiedSearchView: View {
                     noResultsView
                 }
             }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(isSearchFocused ? "" : "Search")
+            .navigationBarTitleDisplayMode(isSearchFocused ? .inline : .large)
+            .animation(.default, value: isSearchFocused)
         }
     }
 
@@ -109,29 +113,42 @@ struct UnifiedSearchView: View {
 
     private var searchBarSection: some View {
         HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-                .font(.body)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+                    .font(.body)
 
-            TextField("Lists, Ingredients, Recipes, Meal Plans...", text: $searchText)
-                .focused($isSearchFocused)
-                .textFieldStyle(.plain)
-                .autocorrectionDisabled()
+                TextField("Lists, Ingredients, Recipes, Meal Plans...", text: $searchText)
+                    .focused($isSearchFocused)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
 
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
+            .padding(10)
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(10)
+
+            // Cancel button appears when search is active (Apple Music pattern)
+            if isSearchFocused {
+                Button("Cancel") {
+                    searchText = ""
+                    isSearchFocused = false
+                }
+                .foregroundColor(.blue)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
-        .padding(12)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
         .padding(.horizontal)
         .padding(.vertical, 8)
+        .animation(.default, value: isSearchFocused)
     }
 
     // MARK: - Empty State
