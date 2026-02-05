@@ -44,23 +44,22 @@ struct PreHouseholdDataMigrationSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Scrollable content
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Icon
-                        Image(systemName: "square.and.arrow.up.on.square")
-                            .font(.system(size: 50))
-                            .foregroundColor(.blue)
-                            .padding(.top, 16)
-                        
-                        // Title
-                        Text("Move Existing Data to Household?")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .multilineTextAlignment(.center)
-                        
-                        // Data summary
-                        VStack(alignment: .leading, spacing: 10) {
+                // M7.4: Removed ScrollView - content fits in .large sheet
+                VStack(spacing: 20) {
+                    // Icon
+                    Image(systemName: "square.and.arrow.up.on.square")
+                        .font(.system(size: 50))
+                        .foregroundColor(.blue)
+                        .padding(.top, 16)
+
+                    // Title
+                    Text("Move Existing Data to Household?")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+
+                    // Data summary
+                    VStack(alignment: .leading, spacing: 10) {
                             if recipeCount > 0 {
                                 HStack {
                                     Image(systemName: "book.pages")
@@ -112,7 +111,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             }
                         }
                         .padding(.horizontal)
-                        
+
                         // Explanation
                         Text("Moving data to the household makes it visible to all members. You can keep it personal if you prefer.")
                             .font(.subheadline)
@@ -121,7 +120,9 @@ struct PreHouseholdDataMigrationSheet: View {
                             .padding(.horizontal, 24)
                             .padding(.bottom, 8)
                     }
-                }
+                    .padding(.top, 8)
+
+                Spacer()
                 
                 // Fixed buttons at bottom (always visible)
                 VStack(spacing: 10) {
@@ -155,7 +156,7 @@ struct PreHouseholdDataMigrationSheet: View {
             .navigationTitle("Migration")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
         .presentationDragIndicator(.visible)
     }
 }
