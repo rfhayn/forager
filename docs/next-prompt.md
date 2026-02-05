@@ -3,45 +3,31 @@
 **Last Updated**: February 5, 2026
 **For Milestone**: M7.4 - UI Polish & Pre-Launch Fixes
 **Status**: READY TO START
-**Prerequisites**: M7.3.4 merged to main
+**Prerequisites**: M7.3.4 merged to main ✅
 **Branch**: `feature/M7.4-ui-polish-pre-launch`
 **PRD**: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
 ---
 
-## **IMMEDIATE ACTION: MERGE M7.3.4 TO MAIN**
+## **BEFORE STARTING M7.4: Optional Setup**
 
-Before starting M7.4, merge the current branch:
+### Claude GitHub Actions (Optional)
+
+There's a pending branch with Claude GitHub Actions workflows for automated code review and @claude mentions in PRs/issues:
 
 ```bash
-gh pr create --title "M7.3.3 + M7.3.4: Remove Member, Delete Household, Error Handling & Stability" --body "$(cat <<'EOF'
-## Summary
-- M7.3.3: Remove member (owner-only), delete household with data migration
-- M7.3.4: Error handling improvements, ghost data fixes, CloudKit logging
-
-## Changes
-- Remove member via swipe-to-delete (owner only)
-- Delete household with migrate/clean delete options
-- Ghost data bug fix (loadCurrentHousehold no longer auto-clears left flag)
-- Check Again button replaces exit(0) in AcceptInvitationSheet
-- CloudKitErrorMapper and CloudKitLogger utilities
-- Offline leave handling with pending leave queue
-- householdKey filtering across all autocomplete surfaces
-
-## Testing
-- Offline leave: PASSED
-- Rejoin + ghost data: PASSED
-- Multi-device leave: SKIPPED (user decision)
-- OSLog validation: VALIDATED
-- Regression testing: SKIPPED (user decision - exhaustive testing done)
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-EOF
-)"
-
-gh pr merge --squash --delete-branch
-git checkout main && git pull origin main
+# Branch: origin/add-claude-github-actions-1770245526389
+# Contains:
+#   - .github/workflows/claude-code-review.yml (auto code review on PRs)
+#   - .github/workflows/claude.yml (@claude mention responses)
 ```
+
+**To set up:**
+1. Go to GitHub repo → Settings → Secrets and variables → Actions
+2. Add secret: `CLAUDE_CODE_OAUTH_TOKEN` (get from Claude Code settings)
+3. Merge the branch: `git checkout add-claude-github-actions-1770245526389 && gh pr create && gh pr merge`
+
+**To skip:** Just ignore the branch and start M7.4.
 
 ---
 
