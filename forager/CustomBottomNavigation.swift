@@ -49,18 +49,22 @@ struct CustomBottomNavigationView: View {
         case .lists:
             NavigationStack {
                 WeeklyListsView(popToRoot: $listsPopToRoot)
+                    .hamburgerMenu()
             }
         case .ingredients:
             NavigationStack {
                 IngredientsView(popToRoot: $ingredientsPopToRoot)
+                    .hamburgerMenu()
             }
         case .recipes:
             NavigationStack {
                 RecipeListView(popToRoot: $recipesPopToRoot)
+                    .hamburgerMenu()
             }
         case .mealPlans:
             NavigationStack {
                 MealPlansListView(popToRoot: $mealPlansPopToRoot)
+                    .hamburgerMenu()
             }
         }
     }
