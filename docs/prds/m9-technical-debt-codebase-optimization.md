@@ -1,10 +1,10 @@
 # M9: Technical Debt & Codebase Optimization - PRD
 
-**Version**: 1.0
+**Version**: 1.1
 **Created**: January 4, 2026
 **Status**: PLANNED
 **Dependencies**: M7 Complete, M8 Complete
-**Estimated Effort**: 135-173 hours (17-22 weeks part-time)
+**Estimated Effort**: 137-176 hours (17-22 weeks part-time)
 
 ---
 
@@ -65,6 +65,7 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 
 | Category | Issues | Severity | Est. Effort |
 |----------|--------|----------|-------------|
+| **Compiler Warnings** | 18 | 2 High, 16 Low | 2-3h |
 | Code Duplication | 8 | 4 High, 4 Med | 15-20h |
 | Code Size/Complexity | 4 | 3 High, 1 Med | 25-30h |
 | Architecture | 6 | 2 High, 4 Med | 45-55h |
@@ -72,11 +73,142 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 | SwiftUI Patterns | 3 | 1 Med, 2 Low | 12-16h |
 | Service Layer | 2 | 1 Med, 1 Low | 13-17h |
 | Core Data | 3 | 2 High, 1 Med | 15-20h |
-| **TOTAL** | **29** | **10 High, 14 Med, 5 Low** | **135-173h** |
+| **TOTAL** | **47** | **12 High, 14 Med, 21 Low** | **137-176h** |
 
 ---
 
 ## 🏗️ **PHASED IMPLEMENTATION PLAN**
+
+### **PHASE 0: Warning Resolution** (2-3 hours, 1 session)
+
+**Objective**: Achieve zero-warning build as clean baseline before refactoring
+
+**Why First?**
+- Establishes professional code quality baseline
+- Prevents warnings from masking new issues during refactoring
+- Addresses 2 critical issues (deprecations, missing switch case)
+- Quick win with immediate visibility
+
+---
+
+**M9.0.1: Critical Fixes** (1-1.5 hours)
+
+**Tasks:**
+
+1. **Fix Deprecated CloudKit APIs** (45-60 min) - **P0**
+   - **File**: `HouseholdService.swift`
+   - **Problem**: `discoverUserIdentity(withUserRecordID:completionHandler:)` and `userIdentity(forUserRecordID:)` deprecated in iOS 17.0
+   - **Solution**: Migrate to `CKContainer.userIdentity(forUserRecordID:)` async/await API
+
+   ```swift
+   // Before (deprecated)
+   container.discoverUserIdentity(withUserRecordID: recordID) { identity, error in
+       // completion handler pattern
+   }
+
+   // After (modern)
+   let identity = try await container.userIdentity(forUserRecordID: recordID)
+   ```
+
+   - **Risk**: Medium - CloudKit API behavior may differ slightly
+   - **Testing**: Verify user identity resolution still works for household members
+
+2. **Fix Missing Switch Case** (15 min) - **P0**
+   - **File**: `ShareParticipant.swift`
+   - **Problem**: Switch must be exhaustive - missing case: `unknown`
+   - **Solution**: Add `unknown` case with appropriate handling
+
+   ```swift
+   // Add to switch statement
+   case .unknown:
+       // Handle unknown participant type gracefully
+       return .pending  // Or appropriate default
+   @unknown default:
+       return .pending  // Future-proof for new cases
+   ```
+
+   - **Risk**: Low - defensive programming
+   - **Testing**: Verify share participant display still works
+
+---
+
+**M9.0.2: Unused Variable Cleanup** (30-45 min)
+
+**Tasks:**
+
+1. **DatePickerSheet.swift** (5 min)
+   - Replace `plan` and `meal` bindings with boolean tests or `_`
+
+   ```swift
+   // Before
+   if let plan = mealPlan { ... }
+
+   // After (if only checking existence)
+   if mealPlan != nil { ... }
+   ```
+
+2. **ManageCategoriesView.swift** (5 min)
+   - Remove or use `targetCategoryID` initialization
+
+3. **MealPlanDetailView.swift** (5 min)
+   - Remove unused `scalingService` initialization or integrate into view
+
+4. **HouseholdScopeProvider.swift** (5 min)
+   - Replace `storeID` with `_` if value not needed
+
+5. **HouseholdService.swift** (10 min)
+   - Fix 2-3 unused `householdName` initializations
+   - Either use the values or remove the assignments
+
+6. **IngredientTemplateValidationTests.swift** (5 min)
+   - Remove unused `report` variable or add assertion
+
+---
+
+**M9.0.3: Code Quality Fixes** (30-45 min)
+
+**Tasks:**
+
+1. **`var` → `let` Mutations** (15 min)
+   - **NSValidationTests.swift**: Change `var allPassed` to `let allPassed` (×2)
+   - **IngredientTemplateService.swift**: Change `var result` to `let result`
+
+2. **Unnecessary Cast Removal** (5 min)
+   - **PersistenceController.swift**: Remove redundant `as! NSPersistentCloudKitContainer` cast
+
+3. **Unnecessary Nil Coalescing** (10 min)
+   - **IngredientTemplateValidationTests.swift**: Remove `??` operators on non-optional `String` values (×2)
+
+4. **Unnecessary `await`** (5 min)
+   - **ShareParticipant.swift**: Remove `await` from non-async expression
+
+---
+
+**Deliverables:**
+- ✅ Zero compiler warnings (down from 18)
+- ✅ Deprecated CloudKit APIs migrated to modern equivalents
+- ✅ All switch statements exhaustive
+- ✅ Clean build baseline established
+
+**Success Metrics:**
+| Metric | Before | After |
+|--------|--------|-------|
+| Compiler warnings | 18 | 0 |
+| Deprecation warnings | 2 | 0 |
+| Missing case warnings | 1 | 0 |
+| Unused variable warnings | 8 | 0 |
+
+**Risk Assessment:**
+- **High**: Deprecated CloudKit API migration (test thoroughly)
+- **Low**: All other fixes are mechanical cleanup
+
+**Testing Checklist:**
+- [ ] Build succeeds with zero warnings
+- [ ] Household member invitation still works (CloudKit identity)
+- [ ] Share participant display works correctly
+- [ ] All existing functionality unchanged
+
+---
 
 ### **PHASE 1: Quick Wins & Critical Fixes** (20-25 hours, 3 weeks)
 
@@ -894,6 +1026,7 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 
 | ID | Requirement | Phase | Priority |
 |----|-------------|-------|----------|
+| **FR-TD-000** | Achieve zero-warning build baseline | Phase 0 | P0 |
 | **FR-TD-001** | Consolidate duplicated utility functions | Phase 1 | P0 |
 | **FR-TD-002** | Add Core Data indexes for performance | Phase 1 | P0 |
 | **FR-TD-003** | Fix thread safety violations | Phase 1 | P0 |
@@ -948,14 +1081,16 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 
 ## 📅 **TIMELINE ESTIMATE**
 
-### **Aggressive Timeline** (135 hours)
+### **Aggressive Timeline** (137 hours)
+- **Phase 0**: 1 session (2h) - Warning resolution
 - **Phase 1**: 3 weeks (20h) - Quick wins
 - **Phase 2**: 6 weeks (40h) - Architecture
 - **Phase 3**: 8 weeks (60h) - Performance
 - **Phase 4**: 3 weeks (15h) - Quality
 - **Total**: 20 weeks (~5 months part-time)
 
-### **Conservative Timeline** (173 hours)
+### **Conservative Timeline** (176 hours)
+- **Phase 0**: 1 session (3h) - Warning resolution
 - **Phase 1**: 4 weeks (25h) - Quick wins
 - **Phase 2**: 8 weeks (50h) - Architecture
 - **Phase 3**: 10 weeks (70h) - Performance
@@ -1007,6 +1142,6 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 ---
 
 **Document Status**: DRAFT
-**Next Review**: After M7 completion
+**Next Review**: After M8 completion
 **Owner**: Rich Hayn
-**Last Updated**: January 4, 2026
+**Last Updated**: February 6, 2026
