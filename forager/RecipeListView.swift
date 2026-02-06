@@ -141,10 +141,6 @@ struct RecipeListView: View {
                 }
             }
             .navigationTitle("Recipes")
-            .searchable(
-                text: $searchText,
-                prompt: "Search recipes, ingredients, instructions..."
-            )
             .searchSuggestions {
                 if !searchText.isEmpty && !searchHistory.isEmpty {
                     searchSuggestionsView
@@ -270,7 +266,7 @@ struct RecipeListView: View {
                 }
                 .onDelete(perform: deleteRecipes)
             }
-            .listStyle(PlainListStyle())
+            .listStyle(InsetGroupedListStyle())
         }
     }
     

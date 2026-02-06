@@ -129,11 +129,9 @@ struct WeeklyListsView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
+            // M7.4: Standardized to simple "+" icon (iOS convention)
             Button(action: generateListFromStaples) {
-                HStack {
-                    Image(systemName: "cart.badge.plus")
-                    Text("Generate")
-                }
+                Image(systemName: "plus")
             }
             .disabled(isGeneratingList)
         }

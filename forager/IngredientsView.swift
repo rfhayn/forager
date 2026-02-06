@@ -104,9 +104,10 @@ struct IngredientsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Search and Filter Section
-            searchAndFilterSection
-            
+            // M7.4: Removed search bar, now using .searchable() for Apple Music pattern
+            // Filter Section
+            filterSection
+
             // Main Content
             if filteredIngredients.isEmpty {
                 emptyStateView
@@ -219,46 +220,19 @@ struct IngredientsView: View {
         }
     }
     
-    // MARK: - Search and Filter Section
-    private var searchAndFilterSection: some View {
+    // MARK: - M7.4: Filter Section (search moved to .searchable())
+    private var filterSection: some View {
         VStack(spacing: 16) {
-            // IMPROVED: More prominent search bar following iOS design guidelines
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.body)
-                
-                TextField("Search ingredients...", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .font(.body)
-                
-                if !searchText.isEmpty {
-                    Button("Clear") {
-                        searchText = ""
-                    }
-                    .font(.body)
-                    .foregroundColor(.blue)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.separator), lineWidth: 0.5)
-            )
-            
             // FIXED: Single-line filter layout that's clean and organized
             HStack(spacing: 8) {
-                // Category Filter
+                // Category Filter - larger button
                 Menu {
                     Button("All Categories") {
                         selectedCategory = "All Categories"
                     }
-                    
+
                     Divider()
-                    
+
                     ForEach(Array(Set(ingredients.compactMap { $0.category ?? "Uncategorized" })).sorted(), id: \.self) { category in
                         Button(category) {
                             selectedCategory = category
@@ -268,10 +242,11 @@ struct IngredientsView: View {
                     FilterPill(
                         text: selectedCategory == "All Categories" ? "All Categories" : selectedCategory,
                         isSelected: selectedCategory != "All Categories",
-                        systemImage: "folder"
+                        systemImage: "folder",
+                        size: .large
                     )
                 }
-                
+
                 // Staples Filter
                 Button(action: {
                     showStaplesOnly.toggle()
@@ -279,11 +254,12 @@ struct IngredientsView: View {
                     FilterPill(
                         text: "Staples",
                         isSelected: showStaplesOnly,
-                        systemImage: "pin.fill"
+                        systemImage: "pin.fill",
+                        size: .regular
                     )
                 }
-                
-                // Sort Options
+
+                // Sort Options - compact button
                 Menu {
                     ForEach(SortOption.allCases, id: \.self) { option in
                         Button(option.displayName) {
@@ -294,10 +270,11 @@ struct IngredientsView: View {
                     FilterPill(
                         text: sortOption.displayName,
                         isSelected: false, // Keep sort neutral since it's always active
-                        systemImage: "arrow.up.arrow.down"
+                        systemImage: "arrow.up.arrow.down",
+                        size: .compact
                     )
                 }
-                
+
                 Spacer()
             }
         }
@@ -575,31 +552,60 @@ enum SortOption: CaseIterable {
         case .alphabetical: return "A-Z"
         case .category: return "Category"
         case .usage: return "Usage"
-        case .staplesFirst: return "Staples First"
+        case .staplesFirst: return "Staples"
         }
     }
 }
 
 // MARK: - Filter Pill Component - OPTIMIZED for single line layout
 struct FilterPill: View {
+    enum Size {
+        case compact, regular, large
+
+        var horizontalPadding: CGFloat {
+            switch self {
+            case .compact: return 8
+            case .regular: return 10
+            case .large: return 14
+            }
+        }
+
+        var verticalPadding: CGFloat {
+            switch self {
+            case .compact: return 5
+            case .regular: return 6
+            case .large: return 7
+            }
+        }
+
+        var fontSize: Font {
+            switch self {
+            case .compact: return .caption2
+            case .regular: return .caption
+            case .large: return .caption
+            }
+        }
+    }
+
     let text: String
     let isSelected: Bool
     let systemImage: String
-    
+    var size: Size = .regular
+
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: systemImage)
-                .font(.caption2)
+                .font(size == .compact ? .caption2 : .caption)
                 .fontWeight(.medium)
-            
+
             Text(text)
-                .font(.caption)
+                .font(size.fontSize)
                 .fontWeight(.medium)
                 .lineLimit(1)
-                .truncationMode(.tail)
+                .fixedSize()
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, size.horizontalPadding)
+        .padding(.vertical, size.verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(isSelected ? Color.accentColor : Color(.secondarySystemBackground))

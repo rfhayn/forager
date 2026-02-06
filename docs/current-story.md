@@ -1,10 +1,66 @@
 # Current Development Story
 
 **Last Updated**: February 5, 2026
-**Status**: M7.3.4 ✅ **COMPLETE** - Ready to merge
-**Total Progress**: ~158 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.3.3-remove-member-delete-household`
+**Status**: M7.4 ✅ **COMPLETE** - Ready to merge
+**Total Progress**: ~162 hours | 89% planning accuracy
+**Current Branch**: `feature/M7.4-ui-polish-pre-launch`
 **Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+
+---
+
+## ✅ **M7.4: UI POLISH & PRE-LAUNCH FIXES - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 5, 2026
+**Branch**: `feature/M7.4-ui-polish-pre-launch`
+**PRD**: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
+
+### **What Was Implemented** ✅
+
+**Ad-hoc UI Polish (retroactively documented):**
+
+1. **Apple Music-Style Bottom Navigation** - CustomBottomNavigation.swift
+   - Grouped pill container with 4 main tabs
+   - Separate circular search button that expands inline
+   - Two-step search interaction (expand bar, then tap to focus)
+   - Smooth spring animations on state changes
+   - `.regularMaterial` for iOS 26 Liquid Glass design
+
+2. **Hamburger Menu Navigation** - HamburgerMenuModifier.swift
+   - Settings and Categories moved from tabs to hamburger menu
+   - Sheet-based navigation with full-height presentation
+   - Consistent access across all main views
+
+3. **Settings Restructure** - SettingsView.swift
+   - Clear visual hierarchy with section groupings
+   - Migration status banner for post-household users
+   - Household Management section (contextual, owner-only options)
+   - App Information section with version display
+
+4. **Keyboard Search Bar Fix** - CustomBottomNavigation.swift
+   - Removed `.ignoresSafeArea(.keyboard)` that blocked keyboard avoidance
+   - iOS natural keyboard avoidance now pushes nav bar up correctly
+
+5. **Ingredients Filter Pill Sizing** - IngredientsView.swift
+   - Added FilterPill.Size enum (compact, regular, large)
+   - "All Categories" uses `.large` to prevent text truncation
+   - "Staples First" shortened to "Staples" with `.compact` size
+   - Sort button uses `.compact` size
+
+### **Files Modified/Created**
+- `forager/CustomBottomNavigation.swift` - NEW: Apple Music-style navigation
+- `forager/HamburgerMenuModifier.swift` - NEW: Hamburger menu sheet
+- `forager/SettingsView.swift` - Restructured with clear hierarchy
+- `forager/IngredientsView.swift` - FilterPill sizing improvements
+- `docs/prds/active/m7.4-ui-polish-pre-launch.md` - NEW: Retroactive PRD
+
+### **Testing Status**
+| Test | Status | Notes |
+|------|--------|-------|
+| Bottom nav animations | ✅ PASSED | Smooth spring transitions |
+| Search keyboard interaction | ✅ PASSED | Keyboard pushes nav bar up |
+| Filter pill readability | ✅ PASSED | No text truncation |
+| Hamburger menu navigation | ✅ PASSED | Settings/Categories accessible |
 
 ---
 
@@ -201,8 +257,8 @@
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
-| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
-| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
+| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
+| **M8.1: Parsing Resilience & Telemetry** | 🚀 NEXT | 3-4h |
 | M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
@@ -234,8 +290,8 @@
 
 ---
 
-**Last Session**: February 5, 2026 - M7.3.4 Complete, Roadmap Updated
-**Next Action**: Merge PR to main, then start M7.4 UI Polish
-**Branch**: `feature/M7.3.3-remove-member-delete-household` (includes M7.3.4 work)
-**Confidence**: **GREEN** (all P0/P1 implemented, testing complete, roadmap finalized)
-**Version**: February 5, 2026 - Roadmap Updated for App Store Launch
+**Last Session**: February 5, 2026 - M7.4 Complete, Ready for M8.1
+**Next Action**: Merge PR to main, then start M8.1 Parsing Resilience
+**Branch**: `feature/M7.4-ui-polish-pre-launch`
+**Confidence**: **GREEN** (UI polish complete, M8.1 PRD audited and ready)
+**Version**: February 5, 2026 - M7.4 Complete, M8.1 Ready

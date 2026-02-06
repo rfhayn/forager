@@ -221,7 +221,7 @@ git branch -d feature/M#.#.#-description
 
 **Branch naming**: `feature/M#.#.#-brief-kebab-case` (3-5 words max)
 
-**Commit message format**: Always prefix with `M#.#.#:` in imperative mood.
+**Commit message format**: Always prefix with `M#.#.#:` in imperative mood. **Do NOT add Co-Authored-By credits**.
 
 Good commits:
 ```

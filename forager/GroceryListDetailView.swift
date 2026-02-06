@@ -215,16 +215,7 @@ struct GroceryListDetailView: View {
                 .padding(.horizontal)
                 .padding(.top, 4)
             }
-            
-            // Hint text
-            if !showingAutocomplete {
-                Text("Tap + or press return to add")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal)
-                    .padding(.top, 4)
-            }
-            
+
             Divider()
                 .padding(.top, 12)
         }

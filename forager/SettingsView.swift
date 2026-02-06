@@ -123,14 +123,15 @@ struct SettingsView: View {
     }
     
     // MARK: - M7.2.1: Household Section
-    
+    // M7.4: Restructured for better visual hierarchy and cleaner UX
+
     // Household management section for creating and viewing household details
     // Enables users to share grocery lists, recipes, and meal plans with family
     private var householdSection: some View {
-        Section {
+        Group {
             if let household = householdService.currentHousehold {
-                // User is in a household - show details
-                VStack(alignment: .leading, spacing: 8) {
+                // M7.4: HOUSEHOLD INFORMATION section
+                Section {
                     // M7.3.1: Editable household name (owner only)
                     HStack {
                         if isEditingName {
@@ -166,7 +167,7 @@ struct SettingsView: View {
                                 }
                             }
                         } else {
-                            // Display mode - tappable text
+                            // M7.4: Removed "Tap to rename" instruction - pencil icon is sufficient
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack {
                                     Text("Household Name")
@@ -180,12 +181,6 @@ struct SettingsView: View {
                                 }
                                 Text(household.name ?? "Unnamed Household")
                                     .fontWeight(.medium)
-
-                                if isCurrentUserOwner {
-                                    Text("Tap to rename")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
-                                }
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -196,55 +191,18 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    
-                    // M7.2.2 Task 4: Link to members list
-                    NavigationLink {
-                        HouseholdMembersView(household: household, service: householdService)
-                    } label: {
-                        HStack {
-                            Text("Members")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                            if isSyncingMembers {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                    .padding(.trailing, 4)
-                                Text("Syncing...")
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.secondary)
-                            } else {
-                                // M7.2.2 Refactor: Use CKShare participant count
-                                Text("\(participantCount)")
-                                    .fontWeight(.medium)
-                            }
-                        }
-                    }
 
-                    // M7.3.2: Refresh members button (Issue #3)
-                    if isCurrentUserOwner && !isSyncingMembers {
-                        Button(action: {
-                            refreshMembers()
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.clockwise")
-                                Text("Refresh Members")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .foregroundColor(.blue)
-                        }
-                    }
-                    
+                    // Owner information
                     HStack {
                         Text("Owner")
                             .foregroundColor(.secondary)
                         Spacer()
-                        // M7.2.2 Refactor: Use CKShare owner
                         Text(ownerDisplayName)
                             .fontWeight(.medium)
                     }
+                } header: {
+                    Text("Household Information")
                 }
-                .padding(.vertical, 4)
                 .task {
                     // M7.3.1: Check if current user is owner
                     isCurrentUserOwner = await householdService.isOwner(household: household)
@@ -256,72 +214,58 @@ struct SettingsView: View {
                     }
                 }
 
-                // M7.2.2: Invite Member button
-                Button(action: {
-                    showInviteMemberSheet = true
-                }) {
-                    HStack {
-                        Image(systemName: "person.badge.plus")
-                        Text("Invite Member")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .padding(.top, 8)
-
-                // M7.3.2: Leave Household button (non-owners only)
-                if !isCurrentUserOwner {
-                    Button(action: {
-                        showLeaveConfirmation = true
-                    }) {
+                // M7.4: MEMBERS section
+                Section {
+                    // M7.2.2 Task 4: Link to members list
+                    NavigationLink {
+                        HouseholdMembersView(household: household, service: householdService)
+                    } label: {
                         HStack {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                            Text("Leave Household")
+                            Image(systemName: "person.2")
+                                .foregroundColor(.blue)
+                            Text("Members")
+                            Spacer()
+                            if isSyncingMembers {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .padding(.trailing, 4)
+                                Text("Syncing...")
+                                    .foregroundColor(.secondary)
+                            } else {
+                                Text("\(participantCount)")
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .foregroundColor(.red)
-                        .cornerRadius(10)
                     }
-                    .padding(.top, 8)
-                }
 
-                // M7.3.3: Delete Household button (owner-only)
-                if isCurrentUserOwner {
-                    Button(role: .destructive, action: {
-                        showDeleteConfirmation = true
-                    }) {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete Household")
+                    #if DEBUG
+                    // M7.4: Moved Refresh Members to DEBUG-only
+                    // M7.3.2: Refresh members button (Issue #3)
+                    if isCurrentUserOwner && !isSyncingMembers {
+                        Button(action: {
+                            refreshMembers()
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.clockwise")
+                                Text("Refresh Members")
+                            }
+                            .foregroundColor(.blue)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.red.opacity(0.1))
-                        .foregroundColor(.red)
-                        .cornerRadius(10)
                     }
-                    .padding(.top, 8)
+                    #endif
+                } header: {
+                    Text("Members")
                 }
 
-            } else {
-                // No household - show create button
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Create or join a household to share grocery lists, recipes, and meal plans with family or roommates.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
+                // M7.4: ACTIONS section
+                Section {
+                    // M7.2.2: Invite Member button
                     Button(action: {
-                        showCreateHouseholdSheet = true
+                        showInviteMemberSheet = true
                     }) {
                         HStack {
-                            Image(systemName: "house.fill")
-                            Text("Create Household")
+                            Image(systemName: "paperplane")
+                            Text("Invite Member")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -329,14 +273,74 @@ struct SettingsView: View {
                         .foregroundColor(.white)
                         .cornerRadius(10)
                     }
+
+                    // M7.3.2: Leave Household button (non-owners only)
+                    if !isCurrentUserOwner {
+                        Button(action: {
+                            showLeaveConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                Text("Leave Household")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .foregroundColor(.red)
+                            .cornerRadius(10)
+                        }
+                    }
+
+                    // M7.4: Moved Delete to bottom of actions section (iOS convention)
+                    // M7.3.3: Delete Household button (owner-only)
+                    if isCurrentUserOwner {
+                        Button(role: .destructive, action: {
+                            showDeleteConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete Household")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .foregroundColor(.red)
+                            .cornerRadius(10)
+                        }
+                    }
+                } header: {
+                    Text("Actions")
                 }
-            }
-        } header: {
-            Text("Household")
-        } footer: {
-            if householdService.currentHousehold == nil {
-                Text("All household members will automatically see and share all grocery lists, recipes, and meal plans.")
-                    .font(.caption)
+
+            } else {
+                // No household - show create button
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Create or join a household to share grocery lists, recipes, and meal plans with family or roommates.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Button(action: {
+                            showCreateHouseholdSheet = true
+                        }) {
+                            HStack {
+                                Image(systemName: "house.fill")
+                                Text("Create Household")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                } header: {
+                    Text("Household")
+                } footer: {
+                    Text("All household members will automatically see and share all grocery lists, recipes, and meal plans.")
+                        .font(.caption)
+                }
             }
         }
     }
