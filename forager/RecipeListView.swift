@@ -783,6 +783,9 @@ struct RecipeDetailView: View {
     // M3 PHASE 4: Recipe Scaling State
     @State private var showingScalingSheet = false
     private let scalingService: RecipeScalingService
+
+    // M8.1: Ingredient editing state
+    @State private var editingIngredient: Ingredient?
     
     // M3 PHASE 4: Initialize scaling service
     init(recipe: Recipe) {
@@ -912,6 +915,10 @@ struct RecipeDetailView: View {
                     print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
                 }
             }
+        }
+        // M8.1: Edit ingredient sheet
+        .sheet(item: $editingIngredient) { ingredient in
+            EditIngredientSheet(ingredient: ingredient)
         }
     }
     
@@ -1089,6 +1096,14 @@ struct RecipeDetailView: View {
                         
                         ForEach(categoryIngredients, id: \.objectID) { ingredient in
                             ingredientRowView(ingredient: ingredient)
+                                .contentShape(Rectangle())
+                                .contextMenu {
+                                    Button {
+                                        editingIngredient = ingredient
+                                    } label: {
+                                        Label("Edit Ingredient", systemImage: "pencil")
+                                    }
+                                }
                         }
                     }
                 }
@@ -1129,23 +1144,34 @@ struct RecipeDetailView: View {
     }
     
     // M3: Updated to use displayText - M3.5: USES COMPUTED PROPERTIES
+    // M8.1: Added low-confidence badge and edit context menu
     private func ingredientRowView(ingredient: Ingredient) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Circle()
                 .fill(Color.secondary.opacity(0.6))
                 .frame(width: 6, height: 6)
                 .padding(.top, 6)
-            
+
             VStack(alignment: .leading, spacing: 4) {
-                // M3.5: Use ingredientDisplayName (handles nil)
-                Text(ingredient.ingredientDisplayName)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                
+                HStack(spacing: 6) {
+                    // M3.5: Use ingredientDisplayName (handles nil)
+                    Text(ingredient.ingredientDisplayName)
+                        .font(.body)
+                        .foregroundColor(.primary)
+
+                    // M8.1: Low confidence indicator
+                    if ingredient.parseConfidence < 0.5 {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                            .font(.caption2)
+                            .help("Tap to edit - parsing confidence low")
+                    }
+                }
+
                 // M4.3.1: Removed redundant displayText tag
                 // The ingredient name already includes quantity info
                 // Only show notes if they exist
-                
+
                 if let notes = ingredient.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
                    !notes.isEmpty {
                     Text(notes)
@@ -1154,7 +1180,7 @@ struct RecipeDetailView: View {
                         .italic()
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 2)

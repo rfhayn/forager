@@ -1,10 +1,63 @@
 # Current Development Story
 
-**Last Updated**: February 5, 2026
-**Status**: M7.4 ✅ **COMPLETE** - Ready to merge
-**Total Progress**: ~162 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.4-ui-polish-pre-launch`
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+**Last Updated**: February 6, 2026
+**Status**: M8.1 🔄 **IN PROGRESS** - Parsing Telemetry Service complete
+**Total Progress**: ~164 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.1-parsing-resilience-telemetry`
+**Current Milestone**: M8 - Ingredient Parsing Intelligence
+
+---
+
+## 🔄 **M8.1: PARSING RESILIENCE & TELEMETRY - IN PROGRESS**
+
+**Status**: 🔄 **IN PROGRESS**
+**Session**: February 6, 2026
+**Branch**: `feature/M8.1-parsing-resilience-telemetry`
+**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
+
+### **What's Been Implemented** ✅
+
+**Phase 3: Telemetry Logging (COMPLETE)**
+
+1. **ParsingTelemetryService** - `Services/ParsingTelemetryService.swift`
+   - Logs parsing events with confidence scores
+   - Logs user corrections (before/after)
+   - JSON persistence to Documents folder
+   - Analysis APIs (getStatistics, getLowConfidenceEvents)
+   - Privacy-safe (local storage only)
+
+2. **Unit Tests** - `foragerTests/Services/ParsingTelemetryServiceTests.swift`
+   - 20/20 tests passing
+   - Test isolation with synchronous reset methods
+   - Covers event logging, correction logging, statistics, edge cases
+
+3. **Test Plan** - `docs/testing/M8.1-ParsingTelemetryService-test-plan.md`
+   - 26 test cases documented across 6 categories
+
+### **Remaining Work** 📋
+
+**Phase 1: Low-Confidence UI Detection (~1.5 hours)**
+- [ ] M8.1.1: Yellow badge for parseConfidence < 0.5
+  - RecipeDetailView.ingredientRowView
+  - GroceryListItemRow (update existing isParseable check)
+  - AddIngredientsToListView
+  - RecipeScalingView (read-only badge)
+- [ ] M8.1.2: Context menu with "Edit Ingredient" option
+
+**Phase 2: Structured Edit Form (~1.5 hours)**
+- [ ] M8.1.3: Create EditIngredientSheet.swift
+- [ ] M8.1.4: Save & update logic (parseConfidence = 1.0 after manual edit)
+
+**Wire Up Telemetry**
+- [ ] Wire ParsingTelemetryService to IngredientParsingService
+- [ ] Log corrections from EditIngredientSheet save handler
+
+### **Files Created/Modified**
+- `Services/ParsingTelemetryService.swift` - NEW (~400 lines)
+- `foragerTests/Services/ParsingTelemetryServiceTests.swift` - NEW (~660 lines)
+- `foragerTests/Info.plist` - NEW (test target)
+- `foragerUITests/Info.plist` - NEW (test target)
+- `docs/testing/M8.1-ParsingTelemetryService-test-plan.md` - NEW
 
 ---
 
