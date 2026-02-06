@@ -346,6 +346,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 - **[ADR 008: Shared Zone Architecture](008-shared-zone-architecture.md)** - Foundation for household sharing
 - **[M7.2.2 Implementation](../learning-notes/26-m7.2.2-public-link-sharing.md)** - Complete implementation journey
 - **[M7.2.2 Completion](../learning-notes/27-m7.2.2-member-invitation-completion.md)** - Testing results
+- **[M7 Complete Journey](../learning-notes/29-m7-cloudkit-household-journey.md)** - Full retrospective
 
 ---
 

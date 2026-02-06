@@ -1,9 +1,15 @@
 # M7 Architecture: CloudKit Shared Zone for Household Collaboration
 
-**Document Type**: Architecture Decision & Technical Framework  
-**Created**: December 21, 2025  
-**Status**: Approved for M7.2+ Implementation  
-**Related Learning Note**: [25-m7-architecture-pivot-ckshare-vs-shared-zone.md](../learning-notes/25-m7-architecture-pivot-ckshare-vs-shared-zone.md)
+**Document Type**: Architecture Decision & Technical Framework
+**Created**: December 21, 2025
+**Last Updated**: February 6, 2026
+**Status**: ✅ IMPLEMENTED - Production Ready
+**Related Learning Notes**:
+- [25-m7-architecture-pivot-ckshare-vs-shared-zone.md](../learning-notes/25-m7-architecture-pivot-ckshare-vs-shared-zone.md)
+- [26-m7.2.2-public-link-sharing.md](../learning-notes/26-m7.2.2-public-link-sharing.md)
+- [27-m7.2.2-member-invitation-completion.md](../learning-notes/27-m7.2.2-member-invitation-completion.md)
+- [29-m7-cloudkit-household-journey.md](../learning-notes/29-m7-cloudkit-household-journey.md)
+**Related ADR**: [ADR 009 - Public Link Sharing](009-public-link-sharing-household-invitations.md) (iOS 18.x workaround)
 
 ---
 
@@ -330,22 +336,81 @@ class HouseholdService {
     }
     
     /// Invites a member to the household
-    func inviteMember(email: String, to household: Household) async throws {
-        guard let share = household.shareRecord else {
-            throw HouseholdError.noShareRecord
+    /// NOTE: UICloudSharingController is broken on iOS 18.x (see ADR 009)
+    /// Implementation uses public link sharing instead
+    func inviteMember(to household: Household) async throws -> URL {
+        let share = try await getShare(for: household)
+
+        // Enable public link sharing (iOS 18.x workaround - see ADR 009)
+        if share.publicPermission == .none {
+            share.publicPermission = .readWrite
+            let store = persistenceController.container
+                .persistentStoreCoordinator.persistentStores.first!
+            try await persistenceController.container
+                .persistUpdatedShare(share, in: store)
         }
-        
-        // Present UICloudSharingController to send invitation
-        let controller = UICloudSharingController(
-            share: share,
-            container: CKContainer(identifier: "iCloud.com.richhayn.forager")
-        )
-        
-        // Set email as pre-filled recipient
-        // iOS handles invitation sending
+
+        // Return URL for sharing via UIActivityViewController
+        return share.url!
     }
 }
 ```
+
+---
+
+## 🏗️ **Actual Implementation (M7.2.3)**
+
+> **Note**: The implementation evolved during M7.2.3 to use a more robust dual-store architecture. See [Learning Note 29](../learning-notes/29-m7-cloudkit-household-journey.md) for the complete journey.
+
+### Dual-Store Architecture
+
+Instead of switching database scopes dynamically, the production implementation uses two persistent stores:
+
+```swift
+// PersistenceController.swift
+private(set) var privateStore: NSPersistentStore!  // forager.sqlite
+private(set) var sharedStore: NSPersistentStore!   // forager_shared.sqlite
+```
+
+### DataScope Enum
+
+```swift
+enum DataScope {
+    case personal
+    case household(id: NSManagedObjectID, store: NSPersistentStore)
+}
+```
+
+### Attach-Then-Share Pattern
+
+The critical migration pattern for creating households:
+
+```swift
+// 1. Create household in private store
+let household = Household(context: context)
+context.assign(household, to: persistence.privateStore)
+
+// 2. Attach existing data via relationships
+household.addToRecipes(NSSet(array: personalRecipes))
+
+// 3. Save to private store
+try context.save()
+
+// 4. Share (CloudKit moves entire graph to shared zone)
+try await persistence.container.share([household], to: nil)
+
+// 5. Refresh all objects (they moved stores)
+context.refreshAllObjects()
+```
+
+### Key Components Built
+
+| Component | Purpose |
+|-----------|---------|
+| `PersistenceController` | NSPersistentCloudKitContainer with dual stores |
+| `HouseholdScopeProvider` | Resolves active scope from household state |
+| `ManagedObjectFactory` | Automatic store assignment based on scope |
+| `CategoryDeduplicator` | Self-healing duplicate prevention |
 
 ---
 
@@ -885,22 +950,31 @@ func leavehousehold() async throws {
 
 ## ✅ **Validation & Approval**
 
-**Architecture Validated**: December 21, 2025  
-**Approved By**: Rich (Product Owner)  
-**Implementation Start**: After M7.2 PRD complete  
+**Architecture Validated**: December 21, 2025
+**Implementation Completed**: February 5, 2026
+**Approved By**: Rich (Product Owner)
 
-**Validation Questions Answered:**
-- ✅ CKShare vs Shared Zone decision clear
-- ✅ Use case well-defined (household collaboration)
-- ✅ Technical approach documented
-- ✅ Migration path understood
-- ✅ Security/privacy addressed
+**Implementation Status:**
+- ✅ M7.2.1: Household Setup & Shared Zone - COMPLETE
+- ✅ M7.2.2: Member Invitation & Acceptance - COMPLETE (with iOS 18.x workaround)
+- ✅ M7.2.3: CloudKit Hardening & Dual-Store Architecture - COMPLETE
+- ✅ M7.3: Household Management (Leave, Delete, Remove) - COMPLETE
+- ✅ M7.3.4: Error Handling & Stability - COMPLETE
+- ✅ M7.4: UI Polish & Pre-Launch - COMPLETE
 
-**Ready for Implementation**: YES ✅
+**Key Learnings from Implementation:**
+- iOS 18.x has UICloudSharingController regression → Pivoted to public link sharing (ADR 009)
+- CloudKit propagation takes ~30 seconds, not 3 seconds
+- Dual-store architecture is more robust than dynamic scope switching
+- External AI validation (ChatGPT, Gemini) caught 4 production-breaking bugs
+- See [Learning Note 29](../learning-notes/29-m7-cloudkit-household-journey.md) for complete retrospective
+
+**Production Status**: ✅ READY
 
 ---
 
-**Version**: 1.0  
-**Author**: Claude (with Rich's requirements)  
-**Date**: December 21, 2025  
-**Status**: Approved for M7.2+ Implementation
+**Version**: 2.0
+**Author**: Claude (with Rich's requirements)
+**Created**: December 21, 2025
+**Last Updated**: February 6, 2026
+**Status**: ✅ IMPLEMENTED - Production Ready

@@ -52,6 +52,17 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
+### **February 6, 2026** - M7 Retrospective Documentation 📚
+- **Created**: Learning Note 29 - Complete M7 CloudKit & Household Journey retrospective
+- **Key Content**:
+  - 800+ line comprehensive narrative covering all M7 pivots and lessons
+  - External AI validation story (ChatGPT & Gemini catching production bugs)
+  - iOS 18.x UICloudSharingController regression and public link workaround
+  - Time estimates vs actuals (~60h actual vs 27-37h estimated)
+  - Newsletter-ready source material for "Systems Over Vibes" series
+- **ADR Updates**: ADR 008 & 009 verified and updated (not stale)
+- **Documentation**: [29-m7-cloudkit-household-journey.md](learning-notes/29-m7-cloudkit-household-journey.md)
+
 ### **February 5, 2026** - M7.3.4 COMPLETE ✅ + Roadmap Updated
 - **Completed**: Error handling improvements, ghost data fixes, CloudKit logging
 - **Key Achievements**:
@@ -164,7 +175,7 @@
   - ❌ Factory exists but nothing uses it yet (no creation points updated)
   - ⚠️ Design challenge: How to use factory in background contexts?
 - **Documentation**:
-  - [learning-notes/29-m7.2.3-phase-2.5-manual-core-data-files.md](learning-notes/29-m7.2.3-phase-2.5-manual-core-data-files.md) - Complete debugging journey
+  - [learning-notes/29-m7-cloudkit-household-journey.md](learning-notes/29-m7-cloudkit-household-journey.md) - Complete M7 CloudKit journey retrospective
   - [current-story.md](current-story.md) - Phase 2.5 marked complete
   - [next-prompt.md](next-prompt.md) - Phase 2.6 ready with design options
 - **Planning Accuracy**: 58% (1h estimated, 1.75h actual - underestimated codegen complexity)
@@ -531,8 +542,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 8.3
-**Last Updated**: February 5, 2026
+**Version**: 8.4
+**Last Updated**: February 6, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git
