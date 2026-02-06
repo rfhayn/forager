@@ -37,7 +37,6 @@ struct CustomBottomNavigationView: View {
                 bottomNavigationBar
             }
         }
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 
     // MARK: - Content View

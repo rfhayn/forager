@@ -78,6 +78,9 @@
 		9B731C872E5364A300CE26F0 /* Ingredient+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C772E5364A300CE26F0 /* Ingredient+CoreDataClass.swift */; };
 		9B731C882E5364A300CE26F0 /* Tag+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7B2E5364A300CE26F0 /* Tag+CoreDataClass.swift */; };
 		9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */; };
+		9B78C7312F35342D00B24679 /* UnifiedSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */; };
+		9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */; };
+		9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */; };
 		9B8CC1CE2F12818600E7D0A3 /* PasteInvitationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */; };
 		9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */; };
 		9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */; };
@@ -199,6 +202,9 @@
 		9B731C7C2E5364A300CE26F0 /* Tag+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tag+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedSearchView.swift; sourceTree = "<group>"; };
+		9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBottomNavigation.swift; sourceTree = "<group>"; };
+		9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HamburgerMenuView.swift; sourceTree = "<group>"; };
 		9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteInvitationSheet.swift; sourceTree = "<group>"; };
 		9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+Extensions.swift"; sourceTree = "<group>"; };
 		9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+Extensions.swift"; sourceTree = "<group>"; };
@@ -261,6 +267,9 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXGroup;
 			children = (
+				9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */,
+				9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */,
+				9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */,
 				9B2735D42F1526A60068C5FE /* SceneDelegate.swift */,
 				9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */,
 				9BD3C3AB2F0A9E6500F50495 /* PreHouseholdDataMigrationSheet.swift */,
@@ -552,7 +561,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */,
 				9B1B396D2EF4E48C001E1876 /* MigrationTestHelper.swift in Sources */,
+				9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */,
 				85ADBDC12EA91ED600E3B1B5 /* ComputedPropertiesTests.swift in Sources */,
 				9B731C7F2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift in Sources */,
 				85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */,
@@ -618,6 +629,7 @@
 				9B0555602EDB665C00A57B34 /* RecipePIckerSheet.swift in Sources */,
 				9B0555612EDB665C00A57B34 /* AddIngredientView.swift in Sources */,
 				9B0555622EDB665C00A57B34 /* DatePickerSheet.swift in Sources */,
+				9B78C7312F35342D00B24679 /* UnifiedSearchView.swift in Sources */,
 				9B0555632EDB665C00A57B34 /* IngredientsView.swift in Sources */,
 				9BE1A4AE2F05807500C59861 /* CloudKitTestHarnessView.swift in Sources */,
 				9B0555642EDB665C00A57B34 /* GroceryListDetailView.swift in Sources */,

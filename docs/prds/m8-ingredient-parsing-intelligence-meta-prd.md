@@ -298,6 +298,33 @@ struct StructuredQuantity {
 - UI extensible for ML-powered suggestions (M8.4)
 - Architecture allows easy replacement of parser
 
+### **Pre-Implementation Audit (February 5, 2026)**
+
+**Core Data Fields - CONFIRMED**:
+| Field | Entity | Status |
+|-------|--------|--------|
+| `parseConfidence` | Ingredient | ✅ Exists (Ingredient+CoreDataProperties.swift:29) |
+| `parseConfidence` | GroceryListItem | ✅ Exists (GroceryListItem+CoreDataProperties.swift:30) |
+| `notes` | Ingredient | ✅ Exists (Ingredient+CoreDataProperties.swift:23) |
+
+**No Core Data changes needed for M8.1.**
+
+**View Inventory for Yellow Badge**:
+| View | File Location | M8.1 Action |
+|------|---------------|-------------|
+| RecipeDetailView.ingredientRowView() | RecipeListView.swift:1132 | Add yellow badge + context menu |
+| GroceryListItemRow | GroceryListDetailView.swift:657 | Update existing indicator to use parseConfidence |
+| AddIngredientsToListView | Line 617 | Add yellow badge + context menu |
+| RecipeScalingView | Line 187 | Add yellow badge (read-only) |
+| CreateRecipeView | Line 373 | **SKIP** - inline editing mode |
+| EditRecipeView | Line 381 | **SKIP** - inline editing mode |
+
+**Existing Partial Implementation**:
+GroceryListItemRow (lines 684-692) already has confidence indicators using `isParseable` boolean.
+M8.1 will update this to use `parseConfidence < 0.5` for consistency.
+
+---
+
 ### **Phase Breakdown - M8.1**
 
 #### **Phase 1: Low-Confidence UI Detection** (1.5 hours)
@@ -322,14 +349,38 @@ HStack {
 ```
 
 *Files Modified*:
-- `Views/Recipes/RecipeDetailView.swift`
-- `Views/GroceryLists/GroceryListItemRow.swift`
-- `Views/Recipes/AddIngredientsToListView.swift`
+- `forager/RecipeListView.swift` (RecipeDetailView is defined inside this file at line 765)
+- `forager/GroceryListDetailView.swift` (GroceryListItemRow is defined inside this file at line 657)
+- `forager/AddIngredientsToListView.swift`
+- `forager/RecipeScalingView.swift` (read-only context, badge only)
+
+**NOTE (from Feb 5, 2026 audit)**:
+- GroceryListItemRow already has PARTIAL implementation (lines 684-692) using `isParseable` boolean
+- Need to update to use `parseConfidence < 0.5` for consistency
+- CreateRecipeView/EditRecipeView use inline text editing - yellow badge NOT needed there (users are actively typing)
+
+*Existing GroceryListItemRow code to update*:
+```swift
+// CURRENT (uses isParseable boolean):
+if item.isParseable {
+    Image(systemName: "checkmark.circle.fill")
+} else if let displayText = item.displayText... {
+    Image(systemName: "questionmark.circle.fill")
+}
+
+// UPDATE TO (use parseConfidence threshold):
+if item.parseConfidence >= 0.5 {
+    // High confidence - green or no indicator
+} else {
+    Image(systemName: "exclamationmark.triangle.fill")
+        .foregroundColor(.yellow)
+}
+```
 
 *Testing*:
 - Create test ingredient with confidence = 0.3
 - Verify yellow indicator appears
-- Verify tooltip shows on hover (macOS) or long-press (iOS)
+- Verify existing high-confidence items unchanged
 
 ---
 
@@ -359,14 +410,15 @@ HStack {
 ```
 
 *Files Modified*:
-- Create `Views/Shared/EditIngredientSheet.swift`
-- Update `RecipeDetailView.swift`
-- Update `GroceryListDetailView.swift`
+- Create `forager/EditIngredientSheet.swift` (NEW - ~150 lines)
+- Update `forager/RecipeListView.swift` (RecipeDetailView.ingredientRowView at line 1132)
+- Update `forager/GroceryListDetailView.swift` (GroceryListItemRow at line 657)
+- Update `forager/AddIngredientsToListView.swift` (ingredient rows at line 617)
 
 *Testing*:
-- Long-press ingredient → "Edit" appears
-- Tap "Edit" → Sheet opens
-- Verify sheet for both Recipe and GroceryListItem
+- Long-press ingredient → "Edit" appears in context menu
+- Tap "Edit" → Sheet opens with pre-filled values
+- Verify sheet for both Recipe Ingredient and GroceryListItem entities
 
 ---
 

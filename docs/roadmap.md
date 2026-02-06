@@ -1,7 +1,7 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 5, 2026
-**Current Phase**: M7.3.4 COMPLETE ✅ | **M7.4 UI Polish 🚀 Next**
+**Current Phase**: M7.4 COMPLETE ✅ | **M8.1 Parsing Resilience 🚀 Next**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, preparing for App Store launch
 **Execution Order**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -764,10 +764,11 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
   - P1: CloudKitErrorMapper, OSLog integration
   - Bonus: householdKey filtering across all autocomplete surfaces
 
-**M7.4: UI Polish & Pre-Launch Fixes (4-6 hours) - 🚀 NEXT**
-- Ad-hoc UI issues identified during app review
-- Visual consistency fixes
-- Minor UX improvements before App Store
+**M7.4: UI Polish & Pre-Launch Fixes (~4 hours) - ✅ COMPLETE**
+- Apple Music-style bottom navigation with inline search
+- Hamburger menu for Settings/Categories
+- Keyboard search bar fix
+- Filter pill sizing improvements
 - **Note**: Original M7.4 (Sync Status UI) was SKIPPED - dual-store architecture makes it unnecessary
 - PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
@@ -1401,9 +1402,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Merge M7.3.4, then start M7.4 UI Polish
+**Next Action**: Merge M7.4, then start M8.1 Parsing Resilience
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.3.4 complete (~65h). Preparing for App Store launch with M7.4 UI Polish → M8.1-M8.3 Parsing → M7.6-M7.7 submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h). Preparing for App Store launch with M8.1-M8.3 Parsing → M7.6-M7.7 submission.
 
 ---
 
@@ -1412,13 +1413,13 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
-| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
-| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
+| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
+| **M8.1: Parsing Resilience & Telemetry** | 🚀 NEXT | 3-4h |
 | M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
-| **Pre-Launch Total** | | **~22-28h** |
+| **Pre-Launch Total** | | **~18-24h** |
 
 ### **Post-Launch Roadmap**
 
