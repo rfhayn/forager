@@ -181,10 +181,19 @@ class ParsingTelemetryService: ObservableObject {
             self?.saveTelemetryData()
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.sessionEventCount += 1
+        // Update counters synchronously for immediate visibility in tests
+        // Safe because these are simple increments and @Published handles thread safety
+        if Thread.isMainThread {
+            sessionEventCount += 1
             if parseConfidence < Self.lowConfidenceThreshold {
-                self?.sessionLowConfidenceCount += 1
+                sessionLowConfidenceCount += 1
+            }
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.sessionEventCount += 1
+                if parseConfidence < Self.lowConfidenceThreshold {
+                    self?.sessionLowConfidenceCount += 1
+                }
             }
         }
 
@@ -225,8 +234,13 @@ class ParsingTelemetryService: ObservableObject {
             self?.saveTelemetryData()
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.sessionCorrectionCount += 1
+        // Update counter synchronously for immediate visibility in tests
+        if Thread.isMainThread {
+            sessionCorrectionCount += 1
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.sessionCorrectionCount += 1
+            }
         }
 
         #if DEBUG
@@ -305,13 +319,59 @@ class ParsingTelemetryService: ObservableObject {
             self?.saveTelemetryData()
         }
 
-        DispatchQueue.main.async { [weak self] in
-            self?.sessionEventCount = 0
-            self?.sessionCorrectionCount = 0
-            self?.sessionLowConfidenceCount = 0
+        // Reset counters synchronously for immediate visibility
+        if Thread.isMainThread {
+            sessionEventCount = 0
+            sessionCorrectionCount = 0
+            sessionLowConfidenceCount = 0
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.sessionEventCount = 0
+                self?.sessionCorrectionCount = 0
+                self?.sessionLowConfidenceCount = 0
+            }
         }
 
         print("📊 [Telemetry] All data cleared")
+    }
+
+    // MARK: - Testing Support
+
+    /// Synchronously reset all telemetry data for test isolation
+    /// This method blocks until reset is complete - use only in tests
+    func resetForTesting() {
+        // Synchronously clear in-memory data
+        queue.sync {
+            telemetryData = ParsingTelemetryData()
+        }
+
+        // Synchronously update counters on main thread
+        if Thread.isMainThread {
+            sessionEventCount = 0
+            sessionCorrectionCount = 0
+            sessionLowConfidenceCount = 0
+        } else {
+            DispatchQueue.main.sync {
+                sessionEventCount = 0
+                sessionCorrectionCount = 0
+                sessionLowConfidenceCount = 0
+            }
+        }
+
+        // Synchronously delete the JSON file
+        queue.sync {
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+
+        #if DEBUG
+        print("📊 [Telemetry] Reset for testing complete")
+        #endif
+    }
+
+    /// Wait for all pending async operations to complete
+    /// Useful in tests to ensure data is persisted before assertions
+    func waitForPendingOperations() {
+        queue.sync { /* barrier */ }
     }
 
     // MARK: - Private Methods

@@ -23,19 +23,12 @@ final class ParsingTelemetryServiceTests: XCTestCase {
     override func setUp() {
         super.setUp()
         service = ParsingTelemetryService.shared
-        // Clear data before each test for isolation
-        service.clearAllData()
-
-        // Wait for async clear to complete
-        let expectation = XCTestExpectation(description: "Clear data")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Synchronously reset for test isolation
+        service.resetForTesting()
     }
 
     override func tearDown() {
-        service.clearAllData()
+        service.resetForTesting()
         service = nil
         super.tearDown()
     }
@@ -54,16 +47,12 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
         XCTAssertNotNil(eventId, "Event ID should not be nil")
-
-        // Wait for async update
-        let expectation = XCTestExpectation(description: "Session count update")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertEqual(self.service.sessionEventCount, 1, "Session event count should be 1")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(service.sessionEventCount, 1, "Session event count should be 1")
     }
 
     /// TEST-TEL-002: Low Confidence Event Detection
@@ -88,14 +77,12 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Low confidence count")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertEqual(self.service.sessionEventCount, 2, "Should have 2 total events")
-            XCTAssertEqual(self.service.sessionLowConfidenceCount, 1, "Should have 1 low confidence event")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(service.sessionEventCount, 2, "Should have 2 total events")
+        XCTAssertEqual(service.sessionLowConfidenceCount, 1, "Should have 1 low confidence event")
     }
 
     /// TEST-TEL-003: Multiple Event Sources
@@ -117,17 +104,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             parseConfidence: 0.9, source: .mealPlanBulkAdd
         )
 
-        // Then - Wait for persistence and check statistics
-        let expectation = XCTestExpectation(description: "Source breakdown")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let stats = self.service.getStatistics()
-            XCTAssertEqual(stats.totalEvents, 3, "Should have 3 events")
-            XCTAssertEqual(stats.sourceBreakdown[.recipeIngredient], 1)
-            XCTAssertEqual(stats.sourceBreakdown[.groceryListItem], 1)
-            XCTAssertEqual(stats.sourceBreakdown[.mealPlanBulkAdd], 1)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Wait for async operations
+        service.waitForPendingOperations()
+
+        // Then
+        let stats = service.getStatistics()
+        XCTAssertEqual(stats.totalEvents, 3, "Should have 3 events")
+        XCTAssertEqual(stats.sourceBreakdown[.recipeIngredient], 1)
+        XCTAssertEqual(stats.sourceBreakdown[.groceryListItem], 1)
+        XCTAssertEqual(stats.sourceBreakdown[.mealPlanBulkAdd], 1)
     }
 
     /// TEST-TEL-004: Nil Quantity/Unit Handling
@@ -142,18 +127,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
         XCTAssertNotNil(eventId, "Should log event with nil quantity/unit")
-
-        let expectation = XCTestExpectation(description: "Nil handling")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let events = self.service.getAllParsingEvents()
-            XCTAssertEqual(events.count, 1)
-            XCTAssertNil(events.first?.parsedQuantity)
-            XCTAssertNil(events.first?.parsedUnit)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let events = service.getAllParsingEvents()
+        XCTAssertEqual(events.count, 1)
+        XCTAssertNil(events.first?.parsedQuantity)
+        XCTAssertNil(events.first?.parsedUnit)
     }
 
     /// TEST-TEL-005: Empty/Whitespace Input Handling
@@ -176,13 +158,11 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Empty input")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertEqual(self.service.sessionEventCount, 2, "Should log empty inputs")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(service.sessionEventCount, 2, "Should log empty inputs")
     }
 
     /// TEST-TEL-006: Special Characters in Input
@@ -197,21 +177,19 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
-        // Then
-        let expectation = XCTestExpectation(description: "Special chars")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let events = self.service.getAllParsingEvents()
-            XCTAssertEqual(events.count, 1)
-            XCTAssertTrue(events.first?.rawInput.contains("\"") ?? false, "Quotes should be preserved")
-            XCTAssertTrue(events.first?.rawInput.contains("(") ?? false, "Parentheses should be preserved")
+        // Wait for async operations
+        service.waitForPendingOperations()
 
-            // Verify JSON export handles special characters
-            let json = self.service.exportAsJSON()
-            XCTAssertNotNil(json)
-            XCTAssertTrue(json?.contains("fresh") ?? false)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Then
+        let events = service.getAllParsingEvents()
+        XCTAssertEqual(events.count, 1)
+        XCTAssertTrue(events.first?.rawInput.contains("\"") ?? false, "Quotes should be preserved")
+        XCTAssertTrue(events.first?.rawInput.contains("(") ?? false, "Parentheses should be preserved")
+
+        // Verify JSON export handles special characters
+        let json = service.exportAsJSON()
+        XCTAssertNotNil(json)
+        XCTAssertTrue(json?.contains("fresh") ?? false)
     }
 
     // MARK: - P0: Correction Logging Tests
@@ -240,13 +218,11 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Correction logged")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            XCTAssertEqual(self.service.sessionCorrectionCount, 1, "Should have 1 correction")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(service.sessionCorrectionCount, 1, "Should have 1 correction")
     }
 
     /// TEST-TEL-008: Correction Change Detection - Name Only
@@ -263,19 +239,17 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cup"
         )
 
-        // Then
-        let expectation = XCTestExpectation(description: "Name change detection")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let corrections = self.service.getAllCorrectionEvents()
-            XCTAssertEqual(corrections.count, 1)
+        // Wait for async operations
+        service.waitForPendingOperations()
 
-            let correction = corrections.first!
-            XCTAssertTrue(correction.nameChanged, "Name should be marked as changed")
-            XCTAssertFalse(correction.quantityChanged, "Quantity should not be marked as changed")
-            XCTAssertFalse(correction.unitChanged, "Unit should not be marked as changed")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Then
+        let corrections = service.getAllCorrectionEvents()
+        XCTAssertEqual(corrections.count, 1)
+
+        let correction = corrections.first!
+        XCTAssertTrue(correction.nameChanged, "Name should be marked as changed")
+        XCTAssertFalse(correction.quantityChanged, "Quantity should not be marked as changed")
+        XCTAssertFalse(correction.unitChanged, "Unit should not be marked as changed")
     }
 
     /// TEST-TEL-009: Correction Change Detection - Quantity Only
@@ -292,17 +266,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Quantity change detection")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let corrections = self.service.getAllCorrectionEvents()
-            let correction = corrections.first!
-            XCTAssertFalse(correction.nameChanged)
-            XCTAssertTrue(correction.quantityChanged, "Quantity should be marked as changed")
-            XCTAssertFalse(correction.unitChanged)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let corrections = service.getAllCorrectionEvents()
+        let correction = corrections.first!
+        XCTAssertFalse(correction.nameChanged)
+        XCTAssertTrue(correction.quantityChanged, "Quantity should be marked as changed")
+        XCTAssertFalse(correction.unitChanged)
     }
 
     /// TEST-TEL-010: Correction Change Detection - Unit Only
@@ -319,17 +291,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cups"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Unit change detection")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let corrections = self.service.getAllCorrectionEvents()
-            let correction = corrections.first!
-            XCTAssertFalse(correction.nameChanged)
-            XCTAssertFalse(correction.quantityChanged)
-            XCTAssertTrue(correction.unitChanged, "Unit should be marked as changed")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let corrections = service.getAllCorrectionEvents()
+        let correction = corrections.first!
+        XCTAssertFalse(correction.nameChanged)
+        XCTAssertFalse(correction.quantityChanged)
+        XCTAssertTrue(correction.unitChanged, "Unit should be marked as changed")
     }
 
     /// TEST-TEL-011: Correction Without Original Event ID
@@ -346,15 +316,13 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Correction without event ID")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let corrections = self.service.getAllCorrectionEvents()
-            XCTAssertEqual(corrections.count, 1, "Should log correction without event ID")
-            XCTAssertNil(corrections.first?.originalEventId)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let corrections = service.getAllCorrectionEvents()
+        XCTAssertEqual(corrections.count, 1, "Should log correction without event ID")
+        XCTAssertNil(corrections.first?.originalEventId)
     }
 
     // MARK: - P0: Persistence Tests
@@ -382,34 +350,31 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // When
-        let expectation = XCTestExpectation(description: "JSON export")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let json = self.service.exportAsJSON()
+        let json = service.exportAsJSON()
 
-            // Then
-            XCTAssertNotNil(json, "JSON export should not be nil")
+        // Then
+        XCTAssertNotNil(json, "JSON export should not be nil")
 
-            // Verify it's valid JSON by parsing it
-            if let jsonData = json?.data(using: .utf8) {
-                do {
-                    let parsed = try JSONSerialization.jsonObject(with: jsonData)
-                    XCTAssertNotNil(parsed, "Should be valid JSON")
-                } catch {
-                    XCTFail("JSON parsing failed: \(error)")
-                }
+        // Verify it's valid JSON by parsing it
+        if let jsonData = json?.data(using: .utf8) {
+            do {
+                let parsed = try JSONSerialization.jsonObject(with: jsonData)
+                XCTAssertNotNil(parsed, "Should be valid JSON")
+            } catch {
+                XCTFail("JSON parsing failed: \(error)")
             }
-
-            // Verify key fields are present
-            XCTAssertTrue(json?.contains("parsingEvents") ?? false)
-            XCTAssertTrue(json?.contains("correctionEvents") ?? false)
-            XCTAssertTrue(json?.contains("schemaVersion") ?? false)
-            XCTAssertTrue(json?.contains("rawInput") ?? false)
-            XCTAssertTrue(json?.contains("parseConfidence") ?? false)
-
-            expectation.fulfill()
         }
-        wait(for: [expectation], timeout: 1.0)
+
+        // Verify key fields are present
+        XCTAssertTrue(json?.contains("parsingEvents") ?? false)
+        XCTAssertTrue(json?.contains("correctionEvents") ?? false)
+        XCTAssertTrue(json?.contains("schemaVersion") ?? false)
+        XCTAssertTrue(json?.contains("rawInput") ?? false)
+        XCTAssertTrue(json?.contains("parseConfidence") ?? false)
     }
 
     /// TEST-TEL-014: Clear All Data
@@ -436,26 +401,21 @@ final class ParsingTelemetryServiceTests: XCTestCase {
         )
 
         // Wait for data to be logged
-        let setupExpectation = XCTestExpectation(description: "Setup")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            setupExpectation.fulfill()
-        }
-        wait(for: [setupExpectation], timeout: 1.0)
+        service.waitForPendingOperations()
+
+        // Verify data exists
+        XCTAssertEqual(service.sessionEventCount, 1)
+        XCTAssertEqual(service.sessionCorrectionCount, 1)
 
         // When
-        service.clearAllData()
+        service.resetForTesting()
 
         // Then
-        let expectation = XCTestExpectation(description: "Clear data")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            XCTAssertEqual(self.service.sessionEventCount, 0, "Session event count should be 0")
-            XCTAssertEqual(self.service.sessionCorrectionCount, 0, "Session correction count should be 0")
-            XCTAssertEqual(self.service.sessionLowConfidenceCount, 0, "Low confidence count should be 0")
-            XCTAssertEqual(self.service.getAllParsingEvents().count, 0, "Events array should be empty")
-            XCTAssertEqual(self.service.getAllCorrectionEvents().count, 0, "Corrections array should be empty")
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        XCTAssertEqual(service.sessionEventCount, 0, "Session event count should be 0")
+        XCTAssertEqual(service.sessionCorrectionCount, 0, "Session correction count should be 0")
+        XCTAssertEqual(service.sessionLowConfidenceCount, 0, "Low confidence count should be 0")
+        XCTAssertEqual(service.getAllParsingEvents().count, 0, "Events array should be empty")
+        XCTAssertEqual(service.getAllCorrectionEvents().count, 0, "Corrections array should be empty")
     }
 
     // MARK: - P1: Statistics Tests
@@ -504,24 +464,21 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedName: "corrected2", correctedQuantity: 1.0, correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // When
-        let expectation = XCTestExpectation(description: "Statistics")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            let stats = self.service.getStatistics()
+        let stats = service.getStatistics()
 
-            // Then
-            XCTAssertEqual(stats.totalEvents, 10, "Should have 10 events")
-            XCTAssertEqual(stats.totalCorrections, 2, "Should have 2 corrections")
-            // Low confidence: 0.2, 0.4, 0.3 (3 events < 0.5)
-            XCTAssertEqual(stats.lowConfidenceCount, 3, "Should have 3 low confidence events")
-            XCTAssertEqual(stats.lowConfidenceRate, 0.3, accuracy: 0.01, "Low confidence rate should be 30%")
-            // Average: (0.2+0.4+0.6+0.8+1.0+0.3+0.5+0.7+0.9+0.95) / 10 = 6.35 / 10 = 0.635
-            XCTAssertEqual(stats.averageConfidence, 0.635, accuracy: 0.01, "Average confidence should be ~0.635")
-            XCTAssertEqual(stats.correctionRate, 0.2, accuracy: 0.01, "Correction rate should be 20%")
-
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Then
+        XCTAssertEqual(stats.totalEvents, 10, "Should have 10 events")
+        XCTAssertEqual(stats.totalCorrections, 2, "Should have 2 corrections")
+        // Low confidence: 0.2, 0.4, 0.3 (3 events < 0.5)
+        XCTAssertEqual(stats.lowConfidenceCount, 3, "Should have 3 low confidence events")
+        XCTAssertEqual(stats.lowConfidenceRate, 0.3, accuracy: 0.01, "Low confidence rate should be 30%")
+        // Average: (0.2+0.4+0.6+0.8+1.0+0.3+0.5+0.7+0.9+0.95) / 10 = 6.35 / 10 = 0.635
+        XCTAssertEqual(stats.averageConfidence, 0.635, accuracy: 0.01, "Average confidence should be ~0.635")
+        XCTAssertEqual(stats.correctionRate, 0.2, accuracy: 0.01, "Correction rate should be 20%")
     }
 
     /// TEST-TEL-018: Get Low Confidence Events Filter
@@ -539,20 +496,17 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             )
         }
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // When / Then
-        let expectation = XCTestExpectation(description: "Filter")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            // Default threshold (0.5): should get 2 events (0.2, 0.4)
-            let defaultFiltered = self.service.getLowConfidenceEvents()
-            XCTAssertEqual(defaultFiltered.count, 2, "Default threshold should return 2 events")
+        // Default threshold (0.5): should get 2 events (0.2, 0.4)
+        let defaultFiltered = service.getLowConfidenceEvents()
+        XCTAssertEqual(defaultFiltered.count, 2, "Default threshold should return 2 events")
 
-            // Custom threshold (0.7): should get 3 events (0.2, 0.4, 0.6)
-            let customFiltered = self.service.getLowConfidenceEvents(threshold: 0.7)
-            XCTAssertEqual(customFiltered.count, 3, "Threshold 0.7 should return 3 events")
-
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Custom threshold (0.7): should get 3 events (0.2, 0.4, 0.6)
+        let customFiltered = service.getLowConfidenceEvents(threshold: 0.7)
+        XCTAssertEqual(customFiltered.count, 3, "Threshold 0.7 should return 3 events")
     }
 
     // MARK: - P1: Edge Cases
@@ -577,22 +531,19 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .groceryListItem
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // Then
-        let expectation = XCTestExpectation(description: "Unicode")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let events = self.service.getAllParsingEvents()
-            XCTAssertEqual(events.count, 2)
-            XCTAssertTrue(events.contains { $0.rawInput.contains("カップ") })
-            XCTAssertTrue(events.contains { $0.rawInput.contains("🥕") })
+        let events = service.getAllParsingEvents()
+        XCTAssertEqual(events.count, 2)
+        XCTAssertTrue(events.contains { $0.rawInput.contains("カップ") })
+        XCTAssertTrue(events.contains { $0.rawInput.contains("🥕") })
 
-            // Verify JSON export handles Unicode
-            let json = self.service.exportAsJSON()
-            XCTAssertTrue(json?.contains("小麦粉") ?? false)
-            XCTAssertTrue(json?.contains("🥕") ?? false)
-
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Verify JSON export handles Unicode
+        let json = service.exportAsJSON()
+        XCTAssertTrue(json?.contains("小麦粉") ?? false)
+        XCTAssertTrue(json?.contains("🥕") ?? false)
     }
 
     /// TEST-TEL-022: Rapid Sequential Logging
@@ -609,15 +560,13 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             )
         }
 
-        // Then - Wait for all async operations
-        let expectation = XCTestExpectation(description: "Rapid logging")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            let events = self.service.getAllParsingEvents()
-            XCTAssertEqual(events.count, 100, "All 100 events should be logged")
-            XCTAssertEqual(self.service.sessionEventCount, 100)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
+        // Wait for all async operations
+        service.waitForPendingOperations()
+
+        // Then
+        let events = service.getAllParsingEvents()
+        XCTAssertEqual(events.count, 100, "All 100 events should be logged")
+        XCTAssertEqual(service.sessionEventCount, 100)
     }
 
     /// TEST-TEL-023: Confidence Boundary Values
@@ -642,19 +591,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             source: .recipeIngredient
         )
 
-        // Then
-        let expectation = XCTestExpectation(description: "Boundary values")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            // Low confidence is < 0.5, so only 0.0 should count
-            XCTAssertEqual(self.service.sessionLowConfidenceCount, 1, "Only confidence 0.0 should be low")
+        // Wait for async operations
+        service.waitForPendingOperations()
 
-            let lowEvents = self.service.getLowConfidenceEvents()
-            XCTAssertEqual(lowEvents.count, 1)
-            XCTAssertEqual(lowEvents.first?.parseConfidence, 0.0)
+        // Then - Low confidence is < 0.5, so only 0.0 should count
+        XCTAssertEqual(service.sessionLowConfidenceCount, 1, "Only confidence 0.0 should be low")
 
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        let lowEvents = service.getLowConfidenceEvents()
+        XCTAssertEqual(lowEvents.count, 1)
+        XCTAssertEqual(lowEvents.first?.parseConfidence, 0.0)
     }
 
     // MARK: - P2: Performance Tests
@@ -673,6 +618,7 @@ final class ParsingTelemetryServiceTests: XCTestCase {
                     source: .recipeIngredient
                 )
             }
+            service.waitForPendingOperations()
         }
         // XCTest will report average time - should be < 100ms
     }
@@ -701,18 +647,15 @@ final class ParsingTelemetryServiceTests: XCTestCase {
             correctedName: "corrected", correctedQuantity: 1.0, correctedUnit: "cup"
         )
 
+        // Wait for async operations
+        service.waitForPendingOperations()
+
         // When
-        let expectation = XCTestExpectation(description: "Formatted strings")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            let stats = self.service.getStatistics()
+        let stats = service.getStatistics()
 
-            // Then - Verify formatted strings work
-            XCTAssertTrue(stats.formattedLowConfidenceRate.contains("%"))
-            XCTAssertTrue(stats.formattedAverageConfidence.contains("%"))
-            XCTAssertTrue(stats.formattedCorrectionRate.contains("%"))
-
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        // Then - Verify formatted strings work
+        XCTAssertTrue(stats.formattedLowConfidenceRate.contains("%"))
+        XCTAssertTrue(stats.formattedAverageConfidence.contains("%"))
+        XCTAssertTrue(stats.formattedCorrectionRate.contains("%"))
     }
 }
