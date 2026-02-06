@@ -144,7 +144,7 @@ struct CustomBottomNavigationView: View {
         Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                 isSearchActive = true
-                isSearchFocused = true
+                // Don't focus yet - let user tap the field to show keyboard
             }
         } label: {
             Image(systemName: "magnifyingglass")
