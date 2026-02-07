@@ -1,72 +1,116 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 5, 2026
+**Last Updated**: February 7, 2026
 **For Milestone**: M8.1 - Parsing Resilience & Telemetry
-**Status**: READY TO START
-**Prerequisites**: M7.4 merged to main ✅
+**Status**: USER TESTING PHASE
 **Branch**: `feature/M8.1-parsing-resilience-telemetry`
-**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md` (M8.1 section)
+**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
 
 ---
 
-## **M8.1: PARSING RESILIENCE & TELEMETRY**
+## **M8.1: CURRENT STATE**
 
-**Goal**: Professional UX for parsing failures + telemetry to understand real user patterns.
+### **Core Implementation: COMPLETE ✅**
 
-**Estimated Time**: 3-4 hours
+All code is written and committed. Ready for user testing.
 
-**Pre-Implementation Audit**: ✅ COMPLETE (see PRD for details)
+| Feature | Status | Location |
+|---------|--------|----------|
+| ParsingTelemetryService | ✅ COMPLETE | `Services/ParsingTelemetryService.swift` |
+| Unit tests (20/20 passing) | ✅ COMPLETE | `foragerTests/Services/ParsingTelemetryServiceTests.swift` |
+| Yellow badge (Recipes) | ✅ COMPLETE | `forager/RecipeListView.swift` |
+| Yellow badge (Grocery) | ✅ COMPLETE | `forager/GroceryListDetailView.swift` |
+| Context menu editing | ✅ COMPLETE | `forager/RecipeListView.swift` |
+| EditIngredientSheet | ✅ COMPLETE | `forager/EditIngredientSheet.swift` |
+| Telemetry integration | ✅ COMPLETE | `Services/IngredientParsingService.swift` |
+| Sample test recipes | ✅ COMPLETE | 3 recipes with low-confidence ingredients |
 
-### **Core Features**
+### **Remaining Work**
 
-1. **Yellow Badge for Low Confidence** (parseConfidence < 0.5)
-   - Visual indicator on ingredient rows in RecipeDetailView
-   - Existing partial implementation in GroceryListItemRow to update
+1. **User Testing**
+   - Run app on device
+   - Create test recipes (Recipes → ⋯ → Create Test Recipes)
+   - Verify yellow badges appear on recipes 12-14
+   - Add low-confidence ingredients to grocery list
+   - Verify badges appear in grocery list view
+   - Test context menu → Edit Ingredient → EditIngredientSheet
 
-2. **EditIngredientSheet**
-   - Context menu → "Edit Ingredient"
-   - Pre-filled with parsed values
-   - User corrections feed telemetry
+2. **Final Steps After Testing**
+   - Any UI tweaks based on feedback
+   - Merge PR to main: `gh pr merge --squash --delete-branch`
 
-3. **ParsingTelemetryService**
-   - Log parsing events to local JSON
-   - Track: raw input, parsed result, confidence, user edits
-   - Foundation for M8.2 analysis
+---
 
-### **Key Files to Modify**
+## **HOW TO TEST LOW-CONFIDENCE BADGES**
 
-| File | Location | Action |
-|------|----------|--------|
-| `RecipeListView.swift` | Lines 1132+ | Add yellow badge to ingredientRowView() |
-| `GroceryListDetailView.swift` | Lines 657+ | Update existing indicator |
-| NEW `EditIngredientSheet.swift` | - | Create sheet for editing |
-| NEW `ParsingTelemetryService.swift` | Services/ | Telemetry logging |
+### **Step 1: Create Test Recipes**
+1. Run app on device
+2. Go to **Recipes** tab
+3. Tap menu (⋯) → **Create Test Recipes**
+4. Creates 14 recipes (11 existing + 3 new with low-confidence)
 
-### **Git Workflow**
+### **Step 2: View Yellow Badges in Recipes**
+Open these recipes to see yellow ⚠️ badges:
+- **Recipe 12: Simple Seasoned Rice** - "salt to taste", "pepper as needed", etc.
+- **Recipe 13: Rustic Garlic Bread** - "butter as desired", "2-3 cloves garlic", etc.
+- **Recipe 14: Quick Avocado Toast** - "salt and pepper to taste", "a drizzle of olive oil", etc.
 
-```bash
-git checkout main && git pull origin main
-git checkout -b feature/M8.1-parsing-resilience-telemetry
-git push -u origin feature/M8.1-parsing-resilience-telemetry
+### **Step 3: View Yellow Badges in Grocery List**
+1. Open a recipe with low-confidence ingredients
+2. Add ingredients to a grocery list
+3. Go to **Lists** tab → Open the list
+4. Low-confidence items show yellow ⚠️ badge
+
+### **Step 4: Test Edit Flow**
+1. Long-press on an ingredient in a recipe
+2. Tap "Edit Ingredient" from context menu
+3. EditIngredientSheet opens with parsed values
+4. Make changes and save
+5. Badge should disappear (parseConfidence = 1.0 after manual edit)
+
+---
+
+## **LOW-CONFIDENCE EXAMPLES**
+
+These patterns get `parseConfidence < 0.5`:
+
+| Input | Confidence | Reason |
+|-------|------------|--------|
+| "salt to taste" | 0.0 | No numeric quantity |
+| "pepper as needed" | 0.0 | No numeric quantity |
+| "a pinch of saffron" | 0.3 | Non-numeric quantity phrase |
+| "some butter" | 0.0 | No quantity |
+| "2-3 cloves garlic" | 0.3 | Range not parseable to single number |
+| "a handful of parsley" | 0.3 | Non-numeric quantity phrase |
+| "fresh herbs to garnish" | 0.0 | No quantity |
+
+---
+
+## **COMMITS ON BRANCH**
+
+```
+731b212 M8.1: Add ParsingTelemetryService test plan
+963bd78 M8.1: Add XCTest unit tests for ParsingTelemetryService
+32498b2 M8.1: Add missing Info.plist files for test targets
+7b797c8 M8.1: Add test isolation and fix async race conditions
+759628a M8.1: Add EditIngredientSheet and yellow badge UI
+0fb1c88 M8.1: Add yellow badge to grocery list and sample low-confidence recipes
 ```
 
-### **Exit Criteria**
-
-- [ ] Yellow badge visible on low-confidence ingredients
-- [ ] Context menu "Edit Ingredient" opens EditIngredientSheet
-- [ ] User edits save correctly and update UI
-- [ ] Telemetry logs parsing events to JSON file
-- [ ] Zero regressions in existing parsing behavior
-
 ---
 
-## **PRE-LAUNCH ROADMAP**
+## **AFTER M8.1 MERGES**
+
+### **Next: M8.2 Telemetry Analysis (2h)**
+- Dashboard view for viewing telemetry data
+- Statistics display (total events, low-confidence rate, corrections)
+- Export functionality for analysis
+
+### **Pre-Launch Roadmap**
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.3.4: Error Handling | ✅ COMPLETE | - |
-| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| **M8.1: Parsing Resilience & Telemetry** | 🚀 NEXT | 3-4h |
+| **M8.1: Parsing Resilience & Telemetry** | 🔄 USER TESTING | 3-4h |
 | M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
@@ -74,28 +118,20 @@ git push -u origin feature/M8.1-parsing-resilience-telemetry
 
 ---
 
-## **KEY CONTEXT FOR M8.1**
+## **KEY FILES FOR CONTEXT**
 
-### **Existing Infrastructure**
+If picking up from previous session, these are the key M8.1 files:
 
-- `parseConfidence` field exists on both `Ingredient` and `GroceryListItem` entities
-- `notes` field exists on `Ingredient` for storing original text
-- `IngredientParsingService` handles all parsing
-- GroceryListItemRow already has partial confidence indicator (lines 684-692)
-
-### **Views That Need Yellow Badge**
-
-1. **RecipeDetailView** (inside RecipeListView.swift:1132)
-   - Primary target - ingredient rows need badge + context menu
-
-2. **GroceryListItemRow** (GroceryListDetailView.swift:657)
-   - Already has partial implementation - needs update
-
-### **Views to SKIP**
-
-- CreateRecipeView / EditRecipeView - use inline editing, badges don't apply
+```
+Services/ParsingTelemetryService.swift     # Telemetry logging service
+Services/IngredientParsingService.swift    # Modified - logs to telemetry
+forager/EditIngredientSheet.swift          # NEW - structured edit form
+forager/RecipeListView.swift               # Yellow badge + context menu
+forager/GroceryListDetailView.swift        # Yellow badge in list view
+foragerTests/Services/ParsingTelemetryServiceTests.swift  # 20/20 tests
+```
 
 ---
 
-**Version**: February 5, 2026 - M8.1 Ready
-**Dependencies**: M7.4 merged to main
+**Version**: February 7, 2026 - M8.1 User Testing Phase
+**Dependencies**: All code complete, awaiting user validation
