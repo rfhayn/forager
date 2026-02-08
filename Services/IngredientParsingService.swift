@@ -42,8 +42,8 @@ class IngredientParsingService: ObservableObject {
     private let context: NSManagedObjectContext
     private let templateService: IngredientTemplateService
 
-    // M8.3: Internal parser instance (will become HybridIngredientParser in Phase 4)
-    private let parser: IngredientParser = RegexIngredientParser()
+    // M8.3: Hybrid parser routes between regex (fast) and NLP (fallback)
+    private let parser: IngredientParser = HybridIngredientParser()
 
     // Performance tracking
     @Published var lastParsingDuration: TimeInterval = 0
