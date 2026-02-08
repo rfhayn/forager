@@ -657,7 +657,34 @@ struct RecipeListView: View {
                 ]
             )
 
-        print("✅ Created 14 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1)")
+            // M8.3: Recipe 15 - Tests unicode fractions, parentheticals, compound phrases
+            createRecipe(
+                title: "Hearty Tortilla Soup",
+                instructions: """
+                1. Sauté onion and garlic in oil
+                2. Add tomatoes, broth, and spices
+                3. Simmer 20 minutes
+                4. Add chicken and beans
+                5. Serve with tortilla strips and toppings
+                """,
+                servings: 6,
+                prepTime: 15,
+                cookTime: 25,
+                ingredients: [
+                    "1 can (14.5 oz) diced tomatoes",
+                    "½ cup sour cream",
+                    "¼ tsp cayenne",
+                    "one and a half cups chicken broth",
+                    "two cloves garlic",
+                    "⅓ cup chopped cilantro",
+                    "2-3 cups shredded chicken",
+                    "1 can (15 oz) black beans",
+                    "a handful of tortilla strips",
+                    "lime juice to taste"
+                ]
+            )
+
+        print("✅ Created 15 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1 + M8.3)")
     }
     
     // Helper function to create a recipe with ingredients
