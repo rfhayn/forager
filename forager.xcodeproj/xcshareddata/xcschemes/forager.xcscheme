@@ -13,8 +13,13 @@
             buildForProfiling = "YES"
             buildForArchiving = "YES"
             buildForAnalyzing = "YES">
-            <AutocreatedTestPlanReference>
-            </AutocreatedTestPlanReference>
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "9B731C282E535C3100CE26F0"
+               BuildableName = "forager.app"
+               BlueprintName = "forager"
+               ReferencedContainer = "container:forager.xcodeproj">
+            </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
@@ -35,9 +40,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9B731C3C2E535C3300CE26F0"
-               BuildableName = "GroceryRecipeManagerTests.xctest"
-               BlueprintName = "GroceryRecipeManagerTests"
-               ReferencedContainer = "container:GroceryRecipeManager.xcodeproj">
+               BuildableName = "foragerTests.xctest"
+               BlueprintName = "foragerTests"
+               ReferencedContainer = "container:forager.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -46,9 +51,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "9B731C462E535C3300CE26F0"
-               BuildableName = "GroceryRecipeManagerUITests.xctest"
-               BlueprintName = "GroceryRecipeManagerUITests"
-               ReferencedContainer = "container:GroceryRecipeManager.xcodeproj">
+               BuildableName = "foragerUITests.xctest"
+               BlueprintName = "foragerUITests"
+               ReferencedContainer = "container:forager.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>

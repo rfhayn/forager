@@ -327,6 +327,12 @@ class RegexIngredientParser: IngredientParser {
             let potentialUnit = match[2]
             let rest = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
 
+            // Defer "a pinch of...", "a handful of..." to descriptive amount pattern
+            if (wordNum == "a" || wordNum == "an"),
+               Self.descriptiveAmountMap.keys.contains(potentialUnit) {
+                return nil
+            }
+
             if let numericValue = Self.wordNumberMap[wordNum] {
                 var unit: String? = potentialUnit
                 var name = rest
