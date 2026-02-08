@@ -1,10 +1,106 @@
 # Current Development Story
 
-**Last Updated**: February 7, 2026
-**Status**: M8.1 ✅ **COMPLETE** | M8.2 🚀 **NEXT**
-**Total Progress**: ~170 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
+**Last Updated**: February 8, 2026
+**Status**: M8.3 ✅ **COMPLETE** | M7.6 🚀 **NEXT**
+**Total Progress**: ~181 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to merge)
 **Current Milestone**: M8 - Ingredient Parsing Intelligence
+
+---
+
+## ✅ **M8.3: HYBRID NLP PARSER - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 8, 2026
+**Branch**: `feature/M8.3-hybrid-nlp-parser`
+**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
+
+### **What Was Delivered** ✅
+
+**1. Protocol Abstraction** - `Services/Parsing/IngredientParser.swift`
+   - `IngredientParser` protocol with `parse(_ input:) -> ParserResult`
+   - `ParserResult` value type with confidence, parserUsed tracking
+
+**2. Enhanced Regex Parser** - `Services/Parsing/RegexIngredientParser.swift` (~650 lines)
+   - 7 pattern categories in priority order:
+     1. Unicode fractions: ½, ¼, ⅓, 1½ (combined forms)
+     2. Range patterns: "2-3 cloves garlic", "1 to 2 cups"
+     3. Parenthetical patterns: "1 can (14.5 oz) tomatoes"
+     4. Compound phrases: "one and a half cups", "two cups"
+     5. Standard qty+unit+name (existing, preserved)
+     6. Qualifier patterns: "salt to taste", "garlic, minced"
+     7. Descriptive amounts: "a pinch of salt", "a handful"
+   - Expanded known units: stick, bag, bottle, box, jar, sprig
+   - Word-to-number mapping (one→1 through twelve→12)
+   - Unicode fraction map (15 fraction characters)
+
+**3. NLP Fallback Parser** - `Services/Parsing/NLPIngredientParser.swift` (~310 lines)
+   - Apple NaturalLanguage framework with NLTagger
+   - Part-of-speech tagging for token classification
+   - Qualifier phrase detection and separation
+   - Confidence capped at 0.75 (lower ceiling than regex)
+
+**4. Hybrid Router** - `Services/Parsing/HybridIngredientParser.swift` (~60 lines)
+   - Regex first (microseconds), NLP fallback if confidence < 0.8
+   - Returns whichever parser produces higher confidence
+   - Tracks parserUsed: "regex", "nlp", or "hybrid"
+
+**5. Service Integration** - `Services/IngredientParsingService.swift`
+   - Delegates to HybridIngredientParser (no public API change)
+   - All call sites unchanged (zero modifications needed)
+
+**6. Telemetry Enhancement** - `Services/ParsingTelemetryService.swift`
+   - Added `parserUsed` field to `ParsingTelemetryEvent`
+   - Schema version bumped to 2 (backward compatible)
+
+**7. Test Suite** - 3 test files (~600 lines total)
+   - `RegexIngredientParserTests`: 30 tests (regression + new patterns)
+   - `NLPIngredientParserTests`: 12 tests (fallback behavior)
+   - `HybridIngredientParserTests`: 16 tests (router + integration)
+   - Performance benchmarks included
+
+### **Confidence Tiers**
+
+| Scenario | Confidence |
+|----------|-----------|
+| Full parse: qty + unit + name | 1.0 |
+| Unicode fraction + unit + name | 1.0 |
+| Unicode fraction + name (no unit) | 0.90 |
+| Range + unit + name | 0.85 |
+| Compound phrase + unit | 0.85 |
+| Range + name (no unit) | 0.80 |
+| Parenthetical parsed | 0.80 |
+| Qty + name (no unit) | 0.75 |
+| NLP full parse (capped) | 0.75 |
+| Qualifier detected | 0.70 |
+| Descriptive amount | 0.60 |
+| NLP qty + name | 0.60 |
+| NLP name + notes | 0.50 |
+| NLP name only | 0.30 |
+| Nothing parsed | 0.0 |
+
+### **Files Created/Modified**
+
+| File | Status | Lines |
+|------|--------|-------|
+| `Services/Parsing/IngredientParser.swift` | NEW | ~35 |
+| `Services/Parsing/RegexIngredientParser.swift` | NEW | ~650 |
+| `Services/Parsing/NLPIngredientParser.swift` | NEW | ~310 |
+| `Services/Parsing/HybridIngredientParser.swift` | NEW | ~60 |
+| `foragerTests/Services/Parsing/RegexIngredientParserTests.swift` | NEW | ~260 |
+| `foragerTests/Services/Parsing/NLPIngredientParserTests.swift` | NEW | ~100 |
+| `foragerTests/Services/Parsing/HybridIngredientParserTests.swift` | NEW | ~150 |
+| `Services/IngredientParsingService.swift` | MODIFIED | Delegate to hybrid parser |
+| `Services/ParsingTelemetryService.swift` | MODIFIED | +parserUsed field |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build on iPhone 17 Pro |
+| Regression | ✅ PASSING | All existing patterns preserved |
+| New patterns | ✅ IMPLEMENTED | 6 new pattern categories |
+| Performance | ✅ TARGET MET | <0.1s per parse |
 
 ---
 
@@ -329,9 +425,8 @@
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
 | M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
-| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
+| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
+| **M7.6: External TestFlight** | 🚀 NEXT | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
 
 **Note**: Original M7.4 (Sync Status UI) was **SKIPPED** - dual-store architecture makes it unnecessary. M7.4 repurposed for UI polish.
@@ -360,8 +455,8 @@
 
 ---
 
-**Last Session**: February 7, 2026 - M8.1 COMPLETE
-**Next Action**: Commit final changes, merge PR to main, then start M8.2
-**Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
+**Last Session**: February 8, 2026 - M8.3 COMPLETE
+**Next Action**: Merge M8.3 PR to main, then start M7.6 External TestFlight
+**Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to merge)
 **Confidence**: **GREEN** (All features delivered, tested, clean build)
-**Version**: February 7, 2026 - M8.1 Complete
+**Version**: February 8, 2026 - M8.3 Complete

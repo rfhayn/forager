@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 7, 2026
-**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M8.1 telemetry foundation complete, preparing for App Store launch
-**Execution Order**: M8.2-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 8, 2026
+**Current Phase**: M8.3 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M8.1+M8.3 parsing intelligence complete, preparing for App Store launch
+**Execution Order**: M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -980,7 +980,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **Exit Point**: Can stop here if top patterns are rare
 - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
 
-**M8.3: Hybrid NLP Parser (8-10 hours) - IMPLEMENTATION** 🚀
+**M8.3: Hybrid NLP Parser (~11 hours) - COMPLETE** ✅
 - HybridIngredientParser with protocol abstraction
 - RegexIngredientParser (existing logic extracted)
 - NLPIngredientParser using Apple NaturalLanguage
@@ -1402,9 +1402,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Start M8.2 Telemetry Analysis & Strategy
+**Next Action**: Merge M8.3, start M7.6 External TestFlight
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1 complete (~3h). Preparing for App Store launch with M8.2-M8.3 Parsing → M7.6-M7.7 submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1+M8.3 complete (~14h). Preparing for App Store launch with M7.6-M7.7 submission.
 
 ---
 
@@ -1415,8 +1415,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
 | M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
+| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
 | **Pre-Launch Total** | | **~18-24h** |
