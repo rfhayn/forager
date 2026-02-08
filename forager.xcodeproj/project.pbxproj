@@ -82,6 +82,9 @@
 		9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */; };
 		9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */; };
 		9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */; };
+		E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */; };
+		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
+		C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */; };
 		9B8CC1CE2F12818600E7D0A3 /* PasteInvitationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */; };
 		9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */; };
 		9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */; };
@@ -207,6 +210,9 @@
 		9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBottomNavigation.swift; sourceTree = "<group>"; };
 		9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HamburgerMenuView.swift; sourceTree = "<group>"; };
 		9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingTelemetryServiceTests.swift; sourceTree = "<group>"; };
+		A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIngredientParserTests.swift; sourceTree = "<group>"; };
+		25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLPIngredientParserTests.swift; sourceTree = "<group>"; };
+		C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridIngredientParserTests.swift; sourceTree = "<group>"; };
 		9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteInvitationSheet.swift; sourceTree = "<group>"; };
 		9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+Extensions.swift"; sourceTree = "<group>"; };
 		9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+Extensions.swift"; sourceTree = "<group>"; };
@@ -434,9 +440,20 @@
 		9B78C7B52F36335900B24679 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				52E9560AEAAE424DA939DD38 /* Parsing */,
 				9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		52E9560AEAAE424DA939DD38 /* Parsing */ = {
+			isa = PBXGroup;
+			children = (
+				A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */,
+				25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */,
+				C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */,
+			);
+			path = Parsing;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -684,6 +701,9 @@
 			files = (
 				9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */,
 				9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */,
+				E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */,
+				09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */,
+				C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
