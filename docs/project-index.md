@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 7, 2026
+**Last Updated**: February 8, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M8 - Ingredient Parsing Intelligence
-**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
-**Next Priority**: M8.2 - Telemetry Analysis & Strategy
-**Execution Order (Pre-Launch)**: M8.2-M8.3 → M7.6-M7.7 (App Store)
+**Current Phase**: M8.3 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Next Priority**: M7.6 - External TestFlight
+**Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -74,6 +74,15 @@
   - Newsletter-ready source material for "Systems Over Vibes" series
 - **ADR Updates**: ADR 008 & 009 verified and updated (not stale)
 - **Documentation**: [29-m7-cloudkit-household-journey.md](learning-notes/29-m7-cloudkit-household-journey.md)
+
+### **February 8, 2026** - M8.3 COMPLETE ✅
+- **Hybrid NLP Parser**: Protocol-based architecture with 7 regex pattern categories + NLP fallback
+- **New ADR**: [ADR 010 - Hybrid Parser Confidence Routing](architecture/010-hybrid-parser-confidence-routing.md)
+- **Key decisions**: Confidence-driven routing (0.8 threshold), NLP confidence cap (0.75), pattern priority ordering
+- **Zero call site changes** — all 6 consumers unchanged
+- **Documentation**:
+  - [30-m8.3-hybrid-parser-implementation.md](learning-notes/30-m8.3-hybrid-parser-implementation.md) - Implementation journey and learnings
+  - [ADR 010](architecture/010-hybrid-parser-confidence-routing.md) - Architectural decision record
 
 ### **February 5, 2026** - M7.3.4 COMPLETE ✅ + Roadmap Updated
 - **Completed**: Error handling improvements, ghost data fixes, CloudKit logging

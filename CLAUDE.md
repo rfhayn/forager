@@ -323,10 +323,11 @@ docs/
 
 ## Architecture Decision Records
 
-9 ADRs in `docs/architecture/`:
+10 ADRs in `docs/architecture/`:
 - **ADR 007**: Core Data change process (read before any schema changes)
 - **ADR 008**: Shared zone architecture (dual-store foundation)
 - **ADR 009**: Public link sharing (bypasses broken UICloudSharingController on iOS 18.x)
+- **ADR 010**: Hybrid parser confidence routing (regex fast path + NLP fallback)
 - **Service Layer Pattern**: M7.5+ standard for all Core Data writes
 
 ## Code Standards
