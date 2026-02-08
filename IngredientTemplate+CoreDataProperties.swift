@@ -18,7 +18,6 @@ extension IngredientTemplate {
     @NSManaged public var id: UUID?
     @NSManaged public var name: String?
     @NSManaged public var canonicalName: String?
-    @NSManaged public var normalizedName: String?
     @NSManaged public var category: String?
     @NSManaged public var usageCount: Int32
     @NSManaged public var dateCreated: Date?

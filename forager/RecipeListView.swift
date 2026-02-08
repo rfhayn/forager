@@ -851,9 +851,6 @@ struct RecipeDetailView: View {
     @State private var showingScalingSheet = false
     private let scalingService: RecipeScalingService
 
-    // M8.1: Ingredient editing state
-    @State private var editingIngredient: Ingredient?
-    
     // M3 PHASE 4: Initialize scaling service
     init(recipe: Recipe) {
         self.recipe = recipe
@@ -982,10 +979,6 @@ struct RecipeDetailView: View {
                     print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
                 }
             }
-        }
-        // M8.1: Edit ingredient sheet
-        .sheet(item: $editingIngredient) { ingredient in
-            EditIngredientSheet(ingredient: ingredient)
         }
     }
     
@@ -1163,14 +1156,6 @@ struct RecipeDetailView: View {
                         
                         ForEach(categoryIngredients, id: \.objectID) { ingredient in
                             ingredientRowView(ingredient: ingredient)
-                                .contentShape(Rectangle())
-                                .contextMenu {
-                                    Button {
-                                        editingIngredient = ingredient
-                                    } label: {
-                                        Label("Edit Ingredient", systemImage: "pencil")
-                                    }
-                                }
                         }
                     }
                 }

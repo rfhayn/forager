@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 5, 2026
-**Current Phase**: M7.4 COMPLETE ✅ | **M8.1 Parsing Resilience 🚀 Next**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, preparing for App Store launch
-**Execution Order**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 7, 2026
+**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M8.1 telemetry foundation complete, preparing for App Store launch
+**Execution Order**: M8.2-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -964,12 +964,12 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **Phase Breakdown:**
 
-**M8.1: Parsing Resilience & Telemetry (3-4 hours) - FOUNDATION** ✨
-- Yellow badge for parseConfidence < 0.5
-- EditIngredientSheet with pre-filled values
-- ParsingTelemetryService logging to local JSON
-- Professional UX even for unparseable inputs
-- **Exit Point**: Can stop here if parsing failures are rare (<2%)
+**M8.1: Parsing Resilience & Telemetry (~3 hours) - ✅ COMPLETE**
+- Yellow badge for parseConfidence < 0.5 on recipe detail and grocery list views
+- ParsingTelemetryService logging to local JSON (20/20 tests passing)
+- Telemetry integration in IngredientParsingService
+- Sample low-confidence recipes for testing
+- Scope reduction: EditIngredientSheet removed (redundant with inline editing, M8.3 will improve parser)
 - **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
 
 **M8.2: Telemetry Analysis & Strategy (2 hours) - INSIGHTS** 📊
@@ -1402,9 +1402,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Merge M7.4, then start M8.1 Parsing Resilience
+**Next Action**: Start M8.2 Telemetry Analysis & Strategy
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h). Preparing for App Store launch with M8.1-M8.3 Parsing → M7.6-M7.7 submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1 complete (~3h). Preparing for App Store launch with M8.2-M8.3 Parsing → M7.6-M7.7 submission.
 
 ---
 
@@ -1414,8 +1414,8 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| **M8.1: Parsing Resilience & Telemetry** | 🚀 NEXT | 3-4h |
-| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
+| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |

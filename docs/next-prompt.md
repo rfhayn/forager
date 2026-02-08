@@ -1,137 +1,101 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 7, 2026
-**For Milestone**: M8.1 - Parsing Resilience & Telemetry
-**Status**: USER TESTING PHASE
-**Branch**: `feature/M8.1-parsing-resilience-telemetry`
+**For Milestone**: M8.2 - Telemetry Analysis & Strategy
+**Status**: READY TO START
+**Prerequisite**: Merge M8.1 PR to main first
 **PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
 
 ---
 
-## **M8.1: CURRENT STATE**
+## **M8.2: TELEMETRY ANALYSIS & STRATEGY**
 
-### **Core Implementation: COMPLETE ✅**
+### **Goal**
+Analyze real parsing telemetry data collected by M8.1's ParsingTelemetryService to identify the most impactful failure patterns and create a prioritized implementation strategy for M8.3.
 
-All code is written and committed. Ready for user testing.
+### **Prerequisites**
+- M8.1 merged to main ✅
+- Telemetry data collected from real usage (ParsingTelemetryService)
+- Some recipes created/used to generate parsing events
 
-| Feature | Status | Location |
-|---------|--------|----------|
-| ParsingTelemetryService | ✅ COMPLETE | `Services/ParsingTelemetryService.swift` |
-| Unit tests (20/20 passing) | ✅ COMPLETE | `foragerTests/Services/ParsingTelemetryServiceTests.swift` |
-| Yellow badge (Recipes) | ✅ COMPLETE | `forager/RecipeListView.swift` |
-| Yellow badge (Grocery) | ✅ COMPLETE | `forager/GroceryListDetailView.swift` |
-| Context menu editing | ✅ COMPLETE | `forager/RecipeListView.swift` |
-| EditIngredientSheet | ✅ COMPLETE | `forager/EditIngredientSheet.swift` |
-| Telemetry integration | ✅ COMPLETE | `Services/IngredientParsingService.swift` |
-| Sample test recipes | ✅ COMPLETE | 3 recipes with low-confidence ingredients |
+### **Phase 1: Dashboard View (1 hour)**
 
-### **Remaining Work**
+**M8.2.1: Telemetry Dashboard**
+- Create a simple view accessible from Settings
+- Display statistics from `ParsingTelemetryService.shared.getStatistics()`
+  - Total parsing events
+  - Low-confidence count and rate
+  - Total user corrections
+  - Most common failure patterns
+- Display recent low-confidence events from `getLowConfidenceEvents()`
+- Group failures by pattern type (no quantity, range, non-numeric phrase, etc.)
 
-1. **User Testing**
-   - Run app on device
-   - Create test recipes (Recipes → ⋯ → Create Test Recipes)
-   - Verify yellow badges appear on recipes 12-14
-   - Add low-confidence ingredients to grocery list
-   - Verify badges appear in grocery list view
-   - Test context menu → Edit Ingredient → EditIngredientSheet
+**Key files:**
+- `Services/ParsingTelemetryService.swift` — already has `getStatistics()` and `getLowConfidenceEvents()` APIs
+- New: `forager/TelemetryDashboardView.swift`
 
-2. **Final Steps After Testing**
-   - Any UI tweaks based on feedback
-   - Merge PR to main: `gh pr merge --squash --delete-branch`
+### **Phase 2: Pattern Analysis (30 min)**
 
----
+**M8.2.2: Failure Pattern Categorization**
+- Analyze telemetry data to identify top failure patterns
+- Categorize by type:
+  - Range patterns: "2-3 cloves"
+  - Non-numeric quantities: "a pinch of", "a handful"
+  - No quantity: "salt to taste", "pepper as needed"
+  - Parenthetical: "1 can (14.5 oz)"
+  - Qualifier phrases: "garlic, minced"
+- Rank by frequency and user correction rate
 
-## **HOW TO TEST LOW-CONFIDENCE BADGES**
+### **Phase 3: Strategy Document (30 min)**
 
-### **Step 1: Create Test Recipes**
-1. Run app on device
-2. Go to **Recipes** tab
-3. Tap menu (⋯) → **Create Test Recipes**
-4. Creates 14 recipes (11 existing + 3 new with low-confidence)
+**M8.2.3: M8.3 Implementation Strategy**
+- Create prioritized list of patterns for M8.3 Hybrid NLP Parser
+- Calculate ROI: effort to implement vs frequency of occurrence
+- Determine which patterns can be handled by improved regex vs NLP
+- Document in `docs/prds/m8.3-implementation-strategy.md`
 
-### **Step 2: View Yellow Badges in Recipes**
-Open these recipes to see yellow ⚠️ badges:
-- **Recipe 12: Simple Seasoned Rice** - "salt to taste", "pepper as needed", etc.
-- **Recipe 13: Rustic Garlic Bread** - "butter as desired", "2-3 cloves garlic", etc.
-- **Recipe 14: Quick Avocado Toast** - "salt and pepper to taste", "a drizzle of olive oil", etc.
+### **Exit Criteria**
+- [ ] Dashboard view showing telemetry statistics
+- [ ] Top 10 failure patterns identified and ranked
+- [ ] Clear strategy for M8.3 (which patterns to tackle, regex vs NLP)
+- [ ] ROI analysis documenting effort vs impact
 
-### **Step 3: View Yellow Badges in Grocery List**
-1. Open a recipe with low-confidence ingredients
-2. Add ingredients to a grocery list
-3. Go to **Lists** tab → Open the list
-4. Low-confidence items show yellow ⚠️ badge
-
-### **Step 4: Test Edit Flow**
-1. Long-press on an ingredient in a recipe
-2. Tap "Edit Ingredient" from context menu
-3. EditIngredientSheet opens with parsed values
-4. Make changes and save
-5. Badge should disappear (parseConfidence = 1.0 after manual edit)
+### **Estimated Time**: 2 hours
 
 ---
 
-## **LOW-CONFIDENCE EXAMPLES**
-
-These patterns get `parseConfidence < 0.5`:
-
-| Input | Confidence | Reason |
-|-------|------------|--------|
-| "salt to taste" | 0.0 | No numeric quantity |
-| "pepper as needed" | 0.0 | No numeric quantity |
-| "a pinch of saffron" | 0.3 | Non-numeric quantity phrase |
-| "some butter" | 0.0 | No quantity |
-| "2-3 cloves garlic" | 0.3 | Range not parseable to single number |
-| "a handful of parsley" | 0.3 | Non-numeric quantity phrase |
-| "fresh herbs to garnish" | 0.0 | No quantity |
-
----
-
-## **COMMITS ON BRANCH**
+## **KEY FILES FOR CONTEXT**
 
 ```
-731b212 M8.1: Add ParsingTelemetryService test plan
-963bd78 M8.1: Add XCTest unit tests for ParsingTelemetryService
-32498b2 M8.1: Add missing Info.plist files for test targets
-7b797c8 M8.1: Add test isolation and fix async race conditions
-759628a M8.1: Add EditIngredientSheet and yellow badge UI
-0fb1c88 M8.1: Add yellow badge to grocery list and sample low-confidence recipes
+Services/ParsingTelemetryService.swift     # Has getStatistics(), getLowConfidenceEvents()
+Services/IngredientParsingService.swift    # Logs events to telemetry
+forager/RecipeListView.swift               # Yellow badges on low-confidence ingredients
+forager/GroceryListDetailView.swift        # Yellow badges in grocery list
+foragerTests/Services/ParsingTelemetryServiceTests.swift  # 20/20 tests
 ```
 
 ---
 
-## **AFTER M8.1 MERGES**
+## **AFTER M8.2**
 
-### **Next: M8.2 Telemetry Analysis (2h)**
-- Dashboard view for viewing telemetry data
-- Statistics display (total events, low-confidence rate, corrections)
-- Export functionality for analysis
+### **M8.3: Hybrid NLP Parser (8-10 hours)**
+- Protocol-based parser abstraction
+- RegexIngredientParser (extract existing logic)
+- NLPIngredientParser using Apple NaturalLanguage
+- Pattern-specific handlers based on M8.2 analysis
+- Target: 95% → 98%+ accuracy
 
 ### **Pre-Launch Roadmap**
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| **M8.1: Parsing Resilience & Telemetry** | 🔄 USER TESTING | 3-4h |
-| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
+| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
 
 ---
 
-## **KEY FILES FOR CONTEXT**
-
-If picking up from previous session, these are the key M8.1 files:
-
-```
-Services/ParsingTelemetryService.swift     # Telemetry logging service
-Services/IngredientParsingService.swift    # Modified - logs to telemetry
-forager/EditIngredientSheet.swift          # NEW - structured edit form
-forager/RecipeListView.swift               # Yellow badge + context menu
-forager/GroceryListDetailView.swift        # Yellow badge in list view
-foragerTests/Services/ParsingTelemetryServiceTests.swift  # 20/20 tests
-```
-
----
-
-**Version**: February 7, 2026 - M8.1 User Testing Phase
-**Dependencies**: All code complete, awaiting user validation
+**Version**: February 7, 2026 - M8.2 Ready
+**Dependencies**: M8.1 complete, telemetry collecting data

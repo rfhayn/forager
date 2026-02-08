@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 5, 2026
+**Last Updated**: February 7, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
-**Current Phase**: M7.3.4 ✅ COMPLETE | **M7.4 UI Polish 🚀 Next**
-**Next Priority**: M7.4 - UI Polish & Pre-Launch Fixes
-**Execution Order (Pre-Launch)**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store)
+**Current Milestone**: M8 - Ingredient Parsing Intelligence
+**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
+**Next Priority**: M8.2 - Telemetry Analysis & Strategy
+**Execution Order (Pre-Launch)**: M8.2-M8.3 → M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -51,6 +51,18 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 7, 2026** - M8.1 Parsing Resilience & Telemetry COMPLETE ✅
+- **Completed**: ParsingTelemetryService, yellow badges, telemetry integration (~3 hours)
+- **Key Deliverables**:
+  - ParsingTelemetryService with local JSON logging (20/20 tests passing)
+  - Yellow badge on low-confidence ingredients in recipe detail and grocery list views
+  - Telemetry integration in IngredientParsingService
+  - Sample low-confidence recipes for testing
+- **Scope Reduction**: EditIngredientSheet removed (redundant with inline editing, M8.3 will improve parser)
+- **Bug Fixes**: Removed phantom `normalizedName` from IngredientTemplate+CoreDataProperties.swift
+- **Total Progress**: ~170 hours
+- **Next**: M8.2 Telemetry Analysis & Strategy
 
 ### **February 6, 2026** - M7 Retrospective Documentation 📚
 - **Created**: Learning Note 29 - Complete M7 CloudKit & Household Journey retrospective
@@ -228,7 +240,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~155 hours
+- **Total Development Time**: ~170 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -253,14 +265,14 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M7.3.4**: ✅ COMPLETE (Feb 5, 2026)
-  - Ghost data bug fix, Check Again button, CloudKitErrorMapper/Logger
-  - householdKey filtering across all autocomplete surfaces
-  - Branch `feature/M7.3.3-remove-member-delete-household` ready to merge
-- **M7.4**: UI Polish & Pre-Launch Fixes 🚀 NEXT
-  - Ad-hoc UI issues identified during app review
-  - Visual consistency fixes before App Store submission
-  - PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
+- **M8.1**: ✅ COMPLETE (Feb 7, 2026)
+  - ParsingTelemetryService, yellow badges, telemetry integration
+  - Scope reduced: EditIngredientSheet removed (redundant)
+  - Bug fix: phantom normalizedName removed from IngredientTemplate
+- **M8.2**: Telemetry Analysis & Strategy 🚀 NEXT
+  - Dashboard view showing telemetry statistics
+  - Pattern analysis and failure categorization
+  - M8.3 implementation strategy document
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -306,14 +318,13 @@ _[Previous entries remain the same through December 23...]_
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.3.4: Error Handling | ✅ COMPLETE | - |
-| **M7.4: UI Polish & Pre-Launch Fixes** | 📋 NEXT | 4-6h |
-| M8.1: Parsing Resilience & Telemetry | 📋 PLANNED | 3-4h |
-| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
+| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
+| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
-| **Pre-Launch Total** | | **~22-28h** |
+| **Pre-Launch Total** | | **~15-20h** |
 
 ### **Post-Launch Roadmap**
 
@@ -325,11 +336,12 @@ _[Previous entries remain the same through December 23...]_
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10+: Future Features | FUTURE | 48-72h |
 
-### **Key Decisions (February 5, 2026)**
+### **Key Decisions (February 7, 2026)**
 1. Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
-2. M7.4 repurposed for UI Polish & Pre-Launch Fixes
+2. M7.4 repurposed for UI Polish & Pre-Launch Fixes ✅ COMPLETE
 3. M8.1-M8.3 before launch - Fix "3 avocados" parsing issue (95% → 98% accuracy)
-4. M7.5 deferred post-launch - developer-facing code quality
+4. M8.1 scope reduced - EditIngredientSheet removed (redundant, M8.3 will improve parser)
+5. M7.5 deferred post-launch - developer-facing code quality
 
 ---
 
@@ -348,7 +360,7 @@ _[Previous entries remain the same through December 23...]_
 
 ## 🗺️ **COMPLETE MILESTONE ROADMAP**
 
-### **✅ Completed Milestones** (M1-M5.0, M7.0-M7.2.3: ~119.5 hours)
+### **✅ Completed Milestones** (M1-M5.0, M7.0-M7.4, M8.1: ~170 hours)
 
 **M1: Professional Grocery Management** (32 hours) - August 2025
 - Store-layout optimized grocery lists
@@ -452,10 +464,11 @@ _[Previous entries remain the same through December 23...]_
 - **Target**: 50%+ coverage, AI reviewer operational
 
 **M8: Ingredient Parsing Intelligence** (13-16 hours core, +15-20h optional ML) 🧠
-- **M8.1**: Parsing Resilience & Telemetry (3-4h) - Foundation
-  - Yellow badge for low confidence, EditIngredientSheet, telemetry logging
+- **M8.1**: Parsing Resilience & Telemetry (~3h) - ✅ COMPLETE
+  - Yellow badge for low confidence, ParsingTelemetryService, telemetry integration
+  - EditIngredientSheet removed (scope reduction — redundant with inline editing)
   - **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
-- **M8.2**: Telemetry Analysis & Strategy (2h) - Insights
+- **M8.2**: Telemetry Analysis & Strategy (2h) - 🚀 NEXT
   - Analyze real telemetry, prioritize improvements, ROI analysis
   - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
 - **M8.3**: Hybrid NLP Parser (8-10h) - Implementation
@@ -542,8 +555,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 8.4
-**Last Updated**: February 6, 2026
+**Version**: 8.5
+**Last Updated**: February 7, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

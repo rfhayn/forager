@@ -1,79 +1,57 @@
 # Current Development Story
 
 **Last Updated**: February 7, 2026
-**Status**: M8.1 🔄 **IN PROGRESS** - Core implementation complete, testing phase
-**Total Progress**: ~168 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.1-parsing-resilience-telemetry`
+**Status**: M8.1 ✅ **COMPLETE** | M8.2 🚀 **NEXT**
+**Total Progress**: ~170 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
 **Current Milestone**: M8 - Ingredient Parsing Intelligence
 
 ---
 
-## 🔄 **M8.1: PARSING RESILIENCE & TELEMETRY - IN PROGRESS**
+## ✅ **M8.1: PARSING RESILIENCE & TELEMETRY - COMPLETE**
 
-**Status**: 🔄 **IN PROGRESS** (Core implementation complete, user testing phase)
+**Status**: ✅ **COMPLETE**
 **Sessions**: February 6-7, 2026
 **Branch**: `feature/M8.1-parsing-resilience-telemetry`
 **PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
 
-### **What's Been Implemented** ✅
+### **What Was Delivered** ✅
 
-**Phase 1: Telemetry Service (COMPLETE)**
-
-1. **ParsingTelemetryService** - `Services/ParsingTelemetryService.swift` (~400 lines)
+**1. ParsingTelemetryService** - `Services/ParsingTelemetryService.swift` (~400 lines)
    - Logs parsing events with confidence scores
    - Logs user corrections (before/after)
    - JSON persistence to Documents folder
    - Analysis APIs (getStatistics, getLowConfidenceEvents)
    - Privacy-safe (local storage only)
-   - Synchronous counter updates for test reliability
 
-2. **Unit Tests** - `foragerTests/Services/ParsingTelemetryServiceTests.swift` (~660 lines)
-   - **20/20 tests passing**
+**2. Unit Tests** - `foragerTests/Services/ParsingTelemetryServiceTests.swift` (~660 lines)
+   - 20/20 tests passing
    - Test isolation with `resetForTesting()` and `waitForPendingOperations()`
-   - Covers event logging, correction logging, statistics, edge cases
-   - Fixed async race conditions with Thread.isMainThread check
 
-3. **Test Plan** - `docs/testing/M8.1-ParsingTelemetryService-test-plan.md`
-   - 26 test cases documented across 6 categories
-
-**Phase 2: Low-Confidence UI (COMPLETE)**
-
-4. **Yellow Badge in RecipeListView** - `forager/RecipeListView.swift`
-   - Yellow exclamation triangle (⚠️) for `parseConfidence < 0.5`
+**3. Yellow Badge (Recipes)** - `forager/RecipeListView.swift`
+   - Yellow exclamation triangle for `parseConfidence < 0.5`
    - Shows in ingredient rows within recipe detail view
-   - `.help()` modifier provides accessibility hint
 
-5. **Yellow Badge in GroceryListDetailView** - `forager/GroceryListDetailView.swift`
-   - Updated existing indicator to use `parseConfidence < 0.5`
-   - Visible when user is browsing grocery list (most useful location)
+**4. Yellow Badge (Grocery List)** - `forager/GroceryListDetailView.swift`
+   - Low-confidence indicator in grocery list view
 
-6. **Context Menu for Editing** - `forager/RecipeListView.swift`
-   - "Edit Ingredient" context menu on ingredient rows
-   - Opens EditIngredientSheet
-
-**Phase 3: Structured Edit Form (COMPLETE)**
-
-7. **EditIngredientSheet** - `forager/EditIngredientSheet.swift` (~330 lines)
-   - Structured form with quantity, unit, name, notes fields
-   - Handles both `Ingredient` and `GroceryListItem` entities
-   - Original text section for low-confidence items
-   - Validation with user-friendly error messages
-   - Sets `parseConfidence = 1.0` after manual edit (max confidence)
-   - Logs corrections to ParsingTelemetryService
-
-**Phase 4: Telemetry Integration (COMPLETE)**
-
-8. **IngredientParsingService Integration** - `Services/IngredientParsingService.swift`
+**5. Telemetry Integration** - `Services/IngredientParsingService.swift`
    - Added `source` parameter to `parseToStructured()`
    - Logs all parsing events to ParsingTelemetryService
-   - Tracks `.recipeIngredient` and `.groceryListItem` sources
 
-**Phase 5: Test Data (COMPLETE)**
-
-9. **Sample Low-Confidence Recipes** - `forager/RecipeListView.swift`
-   - Added 3 sample recipes (12-14) with low-confidence ingredients
-   - Ingredients like "salt to taste", "pepper as needed", "a pinch of"
+**6. Sample Test Recipes** - `forager/RecipeListView.swift`
+   - 3 sample recipes with low-confidence ingredients for validation
    - Access via: Recipes → Menu (⋯) → Create Test Recipes
+
+### **What Was Removed (Scope Reduction)**
+
+- **EditIngredientSheet** — Removed structured edit form. Users can already edit ingredients inline via the recipe edit view. The structured form would be replaced by M8.3's improved parser anyway.
+- **Context menu on ingredient rows** — Removed (was only used to launch EditIngredientSheet)
+
+### **Bug Fixes During Testing**
+
+- **Crash fix**: `IngredientTemplate.normalizedName` was declared in CoreDataProperties but didn't exist in the Core Data model. Removed phantom property.
+- **Build fix**: Cleaned up all references from project.pbxproj
 
 ### **Files Created/Modified**
 
@@ -81,29 +59,13 @@
 |------|--------|-------|
 | `Services/ParsingTelemetryService.swift` | NEW | ~400 |
 | `foragerTests/Services/ParsingTelemetryServiceTests.swift` | NEW | ~660 |
-| `forager/EditIngredientSheet.swift` | NEW | ~330 |
 | `docs/testing/M8.1-ParsingTelemetryService-test-plan.md` | NEW | - |
 | `foragerTests/Info.plist` | NEW | - |
 | `foragerUITests/Info.plist` | NEW | - |
 | `Services/IngredientParsingService.swift` | MODIFIED | +10 |
-| `forager/RecipeListView.swift` | MODIFIED | +80 |
+| `forager/RecipeListView.swift` | MODIFIED | +60 |
 | `forager/GroceryListDetailView.swift` | MODIFIED | +10 |
-| `forager.xcodeproj/project.pbxproj` | MODIFIED | +4 entries |
-
-### **Commits on Branch**
-
-1. `731b212` - M8.1: Add ParsingTelemetryService test plan
-2. `963bd78` - M8.1: Add XCTest unit tests for ParsingTelemetryService
-3. `32498b2` - M8.1: Add missing Info.plist files for test targets
-4. `7b797c8` - M8.1: Add test isolation and fix async race conditions
-5. `759628a` - M8.1: Add EditIngredientSheet and yellow badge UI
-6. `0fb1c88` - M8.1: Add yellow badge to grocery list and sample low-confidence recipes
-
-### **Remaining Work** 📋
-
-- [ ] User testing with sample recipes (create test recipes, verify badge visibility)
-- [ ] Any UI tweaks based on feedback
-- [ ] Merge PR to main
+| `IngredientTemplate+CoreDataProperties.swift` | MODIFIED | -1 (removed phantom normalizedName) |
 
 ### **Testing Status**
 
@@ -111,33 +73,8 @@
 |------|--------|-------|
 | Unit tests | ✅ 20/20 PASSING | All telemetry service tests pass |
 | Build | ✅ BUILD SUCCEEDED | Clean build on iPhone 17 Pro |
-| Yellow badge (Recipes) | ⏳ USER TESTING | Sample recipes created |
-| Yellow badge (Grocery) | ⏳ USER TESTING | Indicator added |
-| Edit sheet | ⏳ USER TESTING | Context menu wired |
-
-### **How to Test Low-Confidence Badge**
-
-1. Run the app on device
-2. Go to **Recipes** tab
-3. Tap menu (⋯) → **Create Test Recipes**
-4. Creates 14 recipes including 3 with low-confidence ingredients:
-   - Recipe 12: "Simple Seasoned Rice"
-   - Recipe 13: "Rustic Garlic Bread"
-   - Recipe 14: "Quick Avocado Toast"
-5. Open any of these recipes to see yellow badges
-6. Add ingredients to a grocery list
-7. Open grocery list to see badges there too
-
-### **Low-Confidence Examples**
-
-These ingredient patterns get `parseConfidence < 0.5`:
-- "salt to taste" → confidence 0.0
-- "pepper as needed" → confidence 0.0
-- "a pinch of saffron" → confidence 0.3
-- "some butter" → confidence 0.0
-- "2-3 cloves garlic" → confidence 0.3 (range not numeric)
-- "a handful of parsley" → confidence 0.3
-- "butter as desired" → confidence 0.0
+| Yellow badge (Recipes) | ✅ VERIFIED | Badges visible on low-confidence ingredients |
+| Yellow badge (Grocery) | ✅ VERIFIED | Indicator shows in grocery list |
 
 ---
 
@@ -391,8 +328,8 @@ These ingredient patterns get `parseConfidence < 0.5`:
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| **M8.1: Parsing Resilience & Telemetry** | 🔄 IN PROGRESS | 3-4h |
-| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
+| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
@@ -423,8 +360,8 @@ These ingredient patterns get `parseConfidence < 0.5`:
 
 ---
 
-**Last Session**: February 7, 2026 - M8.1 Core Implementation Complete
-**Next Action**: User testing with sample recipes, then merge PR to main
-**Branch**: `feature/M8.1-parsing-resilience-telemetry`
-**Confidence**: **GREEN** (All core features implemented, testing in progress)
-**Version**: February 7, 2026 - M8.1 Core Complete
+**Last Session**: February 7, 2026 - M8.1 COMPLETE
+**Next Action**: Commit final changes, merge PR to main, then start M8.2
+**Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
+**Confidence**: **GREEN** (All features delivered, tested, clean build)
+**Version**: February 7, 2026 - M8.1 Complete
