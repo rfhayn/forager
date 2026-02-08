@@ -86,9 +86,10 @@ class IngredientParsingService: ObservableObject {
     }
     
     // MARK: - Structured Quantity Parsing (NEW)
-    
+
     /// Parse ingredient text into structured quantity format
-    func parseToStructured(text: String) -> StructuredQuantity {
+    /// M8.1: Now logs telemetry for low-confidence parses
+    func parseToStructured(text: String, source: ParsingTelemetryEvent.ParsingSource = .recipeIngredient) -> StructuredQuantity {
         let startTime = CFAbsoluteTimeGetCurrent()
         
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -127,7 +128,17 @@ class IngredientParsingService: ObservableObject {
         
         let duration = CFAbsoluteTimeGetCurrent() - startTime
         self.lastParsingDuration = duration
-        
+
+        // M8.1: Log telemetry for all parsing events
+        _ = ParsingTelemetryService.shared.logParsingEvent(
+            rawInput: text,
+            parsedName: parsed.displayName,
+            parsedQuantity: numericValue,
+            parsedUnit: standardUnit,
+            parseConfidence: confidence,
+            source: source
+        )
+
         return StructuredQuantity(
             numericValue: numericValue,
             standardUnit: standardUnit,

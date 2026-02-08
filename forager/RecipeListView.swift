@@ -589,8 +589,75 @@ struct RecipeListView: View {
                     "2 tbsp salad dressing"
                 ]
             )
-        
-        print("✅ Created 11 test recipes with comprehensive variation coverage (M4.3.5 Phase 4)")
+
+            // M8.1: Recipe 12 - Tests LOW CONFIDENCE parsing (for yellow badge)
+            createRecipe(
+                title: "Simple Seasoned Rice",
+                instructions: """
+                1. Rinse rice under cold water
+                2. Combine rice and water in pot
+                3. Bring to boil, reduce heat
+                4. Cover and simmer 18 minutes
+                5. Fluff with fork and season
+                """,
+                servings: 4,
+                prepTime: 5,
+                cookTime: 20,
+                ingredients: [
+                    "2 cups rice",
+                    "salt to taste",
+                    "pepper as needed",
+                    "a pinch of saffron",
+                    "some butter",
+                    "fresh herbs to garnish"
+                ]
+            )
+
+            // M8.1: Recipe 13 - More LOW CONFIDENCE ingredients
+            createRecipe(
+                title: "Rustic Garlic Bread",
+                instructions: """
+                1. Preheat oven to 375°F
+                2. Slice bread lengthwise
+                3. Spread garlic butter mixture
+                4. Bake until golden, about 10 minutes
+                5. Sprinkle with herbs
+                """,
+                servings: 6,
+                prepTime: 10,
+                cookTime: 10,
+                ingredients: [
+                    "1 loaf french bread",
+                    "butter as desired",
+                    "2-3 cloves garlic",
+                    "a handful of parsley",
+                    "parmesan to taste"
+                ]
+            )
+
+            // M8.1: Recipe 14 - Mixed confidence ingredients
+            createRecipe(
+                title: "Quick Avocado Toast",
+                instructions: """
+                1. Toast bread until golden
+                2. Mash avocado with fork
+                3. Spread on toast
+                4. Season and top as desired
+                """,
+                servings: 2,
+                prepTime: 5,
+                cookTime: 3,
+                ingredients: [
+                    "2 slices bread",
+                    "1 ripe avocado",
+                    "salt and pepper to taste",
+                    "a drizzle of olive oil",
+                    "red pepper flakes as desired",
+                    "fresh lemon juice to taste"
+                ]
+            )
+
+        print("✅ Created 14 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1)")
     }
     
     // Helper function to create a recipe with ingredients
@@ -783,7 +850,7 @@ struct RecipeDetailView: View {
     // M3 PHASE 4: Recipe Scaling State
     @State private var showingScalingSheet = false
     private let scalingService: RecipeScalingService
-    
+
     // M3 PHASE 4: Initialize scaling service
     init(recipe: Recipe) {
         self.recipe = recipe
@@ -1129,23 +1196,34 @@ struct RecipeDetailView: View {
     }
     
     // M3: Updated to use displayText - M3.5: USES COMPUTED PROPERTIES
+    // M8.1: Added low-confidence badge and edit context menu
     private func ingredientRowView(ingredient: Ingredient) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Circle()
                 .fill(Color.secondary.opacity(0.6))
                 .frame(width: 6, height: 6)
                 .padding(.top, 6)
-            
+
             VStack(alignment: .leading, spacing: 4) {
-                // M3.5: Use ingredientDisplayName (handles nil)
-                Text(ingredient.ingredientDisplayName)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                
+                HStack(spacing: 6) {
+                    // M3.5: Use ingredientDisplayName (handles nil)
+                    Text(ingredient.ingredientDisplayName)
+                        .font(.body)
+                        .foregroundColor(.primary)
+
+                    // M8.1: Low confidence indicator
+                    if ingredient.parseConfidence < 0.5 {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                            .font(.caption2)
+                            .help("Tap to edit - parsing confidence low")
+                    }
+                }
+
                 // M4.3.1: Removed redundant displayText tag
                 // The ingredient name already includes quantity info
                 // Only show notes if they exist
-                
+
                 if let notes = ingredient.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
                    !notes.isEmpty {
                     Text(notes)
@@ -1154,7 +1232,7 @@ struct RecipeDetailView: View {
                         .italic()
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 2)

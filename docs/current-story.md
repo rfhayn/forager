@@ -1,10 +1,80 @@
 # Current Development Story
 
-**Last Updated**: February 5, 2026
-**Status**: M7.4 ✅ **COMPLETE** - Ready to merge
-**Total Progress**: ~162 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.4-ui-polish-pre-launch`
-**Current Milestone**: M7 - CloudKit Sync, Household Sharing & External TestFlight
+**Last Updated**: February 7, 2026
+**Status**: M8.1 ✅ **COMPLETE** | M8.2 🚀 **NEXT**
+**Total Progress**: ~170 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
+**Current Milestone**: M8 - Ingredient Parsing Intelligence
+
+---
+
+## ✅ **M8.1: PARSING RESILIENCE & TELEMETRY - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Sessions**: February 6-7, 2026
+**Branch**: `feature/M8.1-parsing-resilience-telemetry`
+**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
+
+### **What Was Delivered** ✅
+
+**1. ParsingTelemetryService** - `Services/ParsingTelemetryService.swift` (~400 lines)
+   - Logs parsing events with confidence scores
+   - Logs user corrections (before/after)
+   - JSON persistence to Documents folder
+   - Analysis APIs (getStatistics, getLowConfidenceEvents)
+   - Privacy-safe (local storage only)
+
+**2. Unit Tests** - `foragerTests/Services/ParsingTelemetryServiceTests.swift` (~660 lines)
+   - 20/20 tests passing
+   - Test isolation with `resetForTesting()` and `waitForPendingOperations()`
+
+**3. Yellow Badge (Recipes)** - `forager/RecipeListView.swift`
+   - Yellow exclamation triangle for `parseConfidence < 0.5`
+   - Shows in ingredient rows within recipe detail view
+
+**4. Yellow Badge (Grocery List)** - `forager/GroceryListDetailView.swift`
+   - Low-confidence indicator in grocery list view
+
+**5. Telemetry Integration** - `Services/IngredientParsingService.swift`
+   - Added `source` parameter to `parseToStructured()`
+   - Logs all parsing events to ParsingTelemetryService
+
+**6. Sample Test Recipes** - `forager/RecipeListView.swift`
+   - 3 sample recipes with low-confidence ingredients for validation
+   - Access via: Recipes → Menu (⋯) → Create Test Recipes
+
+### **What Was Removed (Scope Reduction)**
+
+- **EditIngredientSheet** — Removed structured edit form. Users can already edit ingredients inline via the recipe edit view. The structured form would be replaced by M8.3's improved parser anyway.
+- **Context menu on ingredient rows** — Removed (was only used to launch EditIngredientSheet)
+
+### **Bug Fixes During Testing**
+
+- **Crash fix**: `IngredientTemplate.normalizedName` was declared in CoreDataProperties but didn't exist in the Core Data model. Removed phantom property.
+- **Build fix**: Cleaned up all references from project.pbxproj
+
+### **Files Created/Modified**
+
+| File | Status | Lines |
+|------|--------|-------|
+| `Services/ParsingTelemetryService.swift` | NEW | ~400 |
+| `foragerTests/Services/ParsingTelemetryServiceTests.swift` | NEW | ~660 |
+| `docs/testing/M8.1-ParsingTelemetryService-test-plan.md` | NEW | - |
+| `foragerTests/Info.plist` | NEW | - |
+| `foragerUITests/Info.plist` | NEW | - |
+| `Services/IngredientParsingService.swift` | MODIFIED | +10 |
+| `forager/RecipeListView.swift` | MODIFIED | +60 |
+| `forager/GroceryListDetailView.swift` | MODIFIED | +10 |
+| `IngredientTemplate+CoreDataProperties.swift` | MODIFIED | -1 (removed phantom normalizedName) |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Unit tests | ✅ 20/20 PASSING | All telemetry service tests pass |
+| Build | ✅ BUILD SUCCEEDED | Clean build on iPhone 17 Pro |
+| Yellow badge (Recipes) | ✅ VERIFIED | Badges visible on low-confidence ingredients |
+| Yellow badge (Grocery) | ✅ VERIFIED | Indicator shows in grocery list |
 
 ---
 
@@ -258,8 +328,8 @@
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| **M8.1: Parsing Resilience & Telemetry** | 🚀 NEXT | 3-4h |
-| M8.2: Telemetry Analysis | 📋 PLANNED | 2h |
+| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
+| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
 | M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
 | M7.6: External TestFlight | 📋 PLANNED | 2-3h |
 | M7.7: App Store Submission | 📋 PLANNED | 2-3h |
@@ -290,8 +360,8 @@
 
 ---
 
-**Last Session**: February 5, 2026 - M7.4 Complete, Ready for M8.1
-**Next Action**: Merge PR to main, then start M8.1 Parsing Resilience
-**Branch**: `feature/M7.4-ui-polish-pre-launch`
-**Confidence**: **GREEN** (UI polish complete, M8.1 PRD audited and ready)
-**Version**: February 5, 2026 - M7.4 Complete, M8.1 Ready
+**Last Session**: February 7, 2026 - M8.1 COMPLETE
+**Next Action**: Commit final changes, merge PR to main, then start M8.2
+**Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
+**Confidence**: **GREEN** (All features delivered, tested, clean build)
+**Version**: February 7, 2026 - M8.1 Complete

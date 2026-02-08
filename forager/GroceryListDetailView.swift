@@ -679,17 +679,13 @@ struct GroceryListItemRow: View {
                             .foregroundColor(item.isCompleted ? .secondary : (item.isParseable ? .primary : .primary.opacity(0.85)))
                             .lineLimit(2)
                         
-                        // M3 PHASE 6: Visual indicator for quantity type
-                        if !item.isCompleted {
-                            if item.isParseable {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.green.opacity(0.6))
-                            } else if let displayText = item.displayText, !displayText.isEmpty, displayText != "1" {
-                                Image(systemName: "questionmark.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.orange.opacity(0.6))
-                            }
+                        // M8.1: Low confidence indicator (replaces M3 PHASE 6 indicators)
+                        // Shows yellow warning for parseConfidence < 0.5
+                        if !item.isCompleted && item.parseConfidence < 0.5 {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption2)
+                                .foregroundColor(.yellow)
+                                .help("Low parsing confidence - tap to review")
                         }
                     }
                     

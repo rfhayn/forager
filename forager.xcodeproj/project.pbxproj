@@ -81,6 +81,7 @@
 		9B78C7312F35342D00B24679 /* UnifiedSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */; };
 		9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */; };
 		9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */; };
+		9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */; };
 		9B8CC1CE2F12818600E7D0A3 /* PasteInvitationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */; };
 		9B9C38AD2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */; };
 		9B9C38AE2EFC3C49006E7DBD /* Household+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */; };
@@ -205,6 +206,7 @@
 		9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedSearchView.swift; sourceTree = "<group>"; };
 		9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBottomNavigation.swift; sourceTree = "<group>"; };
 		9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HamburgerMenuView.swift; sourceTree = "<group>"; };
+		9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingTelemetryServiceTests.swift; sourceTree = "<group>"; };
 		9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteInvitationSheet.swift; sourceTree = "<group>"; };
 		9B9C38AB2EFC3C49006E7DBD /* Household+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Household+Extensions.swift"; sourceTree = "<group>"; };
 		9B9C38AC2EFC3C49006E7DBD /* HouseholdMember+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HouseholdMember+Extensions.swift"; sourceTree = "<group>"; };
@@ -232,6 +234,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		9B78C7B32F36332900B24679 /* New Folder */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "New Folder";
+			sourceTree = "<group>";
+		};
 		9BADD71F2E64E79A00D677DC /* Services */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Services;
@@ -325,6 +332,8 @@
 		9B0555692EDB69CD00A57B34 /* foragerTests */ = {
 			isa = PBXGroup;
 			children = (
+				9B78C7B52F36335900B24679 /* Services */,
+				9B78C7B32F36332900B24679 /* New Folder */,
 				9B56ECA82F08293B00877716 /* PersistenceTests */,
 			);
 			path = foragerTests;
@@ -422,6 +431,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9B78C7B52F36335900B24679 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -459,6 +476,9 @@
 			);
 			dependencies = (
 				9B731C3F2E535C3300CE26F0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9B78C7B32F36332900B24679 /* New Folder */,
 			);
 			name = foragerTests;
 			packageProductDependencies = (
@@ -663,6 +683,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */,
+				9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -889,7 +910,7 @@
 		9B731C562E535C3300CE26F0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/forager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/forager";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
@@ -902,14 +923,14 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GroceryRecipeManager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GroceryRecipeManager";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/forager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/forager";
 			};
 			name = Debug;
 		};
 		9B731C572E535C3300CE26F0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/forager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/forager";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
@@ -922,7 +943,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GroceryRecipeManager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GroceryRecipeManager";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/forager.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/forager";
 			};
 			name = Release;
 		};

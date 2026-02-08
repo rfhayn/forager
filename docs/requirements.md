@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 5, 2026
-**Version**: 5.0
-**Current Milestone**: M7.3.4 Complete ✅ | **M7.4 UI Polish 🚀 Next**
-**Execution Order (Pre-Launch)**: M7.4 → M8.1-M8.3 → M7.6-M7.7 (App Store)
+**Last Updated**: February 7, 2026
+**Version**: 5.1
+**Current Milestone**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
+**Execution Order (Pre-Launch)**: M8.2-M8.3 → M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -401,16 +401,18 @@ M6 was originally planned after M5, but deferred to execute after M7 completes. 
 | **FR-CK-019** | **CloudKit account status** | Display iCloud sign-in status | M7.4.2 | 🎯 **User awareness** |
 | **FR-CK-020** | **Sync diagnostics** | Debug view for troubleshooting | M7.4.2 | 🎯 **Supportability** |
 
-### **Functional Requirements - Parsing Resilience & Polish (M7.5 - NEW)** 💡
+### **Functional Requirements - Parsing Resilience & Polish (M8.1) - ✅ COMPLETE**
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-PR-001** | **Low-confidence detection** | Yellow badge for parseConfidence < 0.5 | M7.5.1 | 🎯 **Graceful degradation** |
-| **FR-PR-002** | **Edit ingredient button** | "Review" button on low-confidence items | M7.5.1 | 🎯 **User correction flow** |
-| **FR-PR-003** | **Structured edit form** | EditIngredientSheet with quantity/unit/name fields | M7.5.2 | 🎯 **Professional UX** |
-| **FR-PR-004** | **Pre-filled edit values** | Parse results pre-populate edit form | M7.5.2 | 🎯 **Efficient editing** |
-| **FR-PR-005** | **Telemetry logging** | ParsingTelemetryService logs failures to local JSON | M7.5.3 | 🎯 **Data for M8.0** |
-| **FR-PR-006** | **Privacy-safe telemetry** | No user identification, local storage only | M7.5.3 | 🎯 **Privacy compliance** |
+_Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full details._
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-PR-001** | **Low-confidence detection** | ✅ Yellow badge for parseConfidence < 0.5 | M8.1 | 🎯 **Graceful degradation** |
+| **FR-PR-002** | **Edit ingredient button** | ❌ REMOVED (scope reduction) | M8.1 | — |
+| **FR-PR-003** | **Structured edit form** | ❌ REMOVED (scope reduction) | M8.1 | — |
+| **FR-PR-004** | **Pre-filled edit values** | ❌ REMOVED (scope reduction) | M8.1 | — |
+| **FR-PR-005** | **Telemetry logging** | ✅ ParsingTelemetryService with local JSON | M8.1 | 🎯 **Data for M8.2+** |
+| **FR-PR-006** | **Privacy-safe telemetry** | ✅ Local storage only, no user ID | M8.1 | 🎯 **Privacy compliance** |
 
 ### **Functional Requirements - External TestFlight**
 
@@ -453,18 +455,18 @@ M6 was originally planned after M5, but deferred to execute after M7 completes. 
 **Summary**: Data-driven parsing evolution from 95% → 98% → 99.5% accuracy through hybrid NLP and optional ML
 **PRD**: [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
 
-### **Functional Requirements - Resilience & Telemetry (M8.1)**
+### **Functional Requirements - Resilience & Telemetry (M8.1) - ✅ COMPLETE**
 
-_Note: These 6 requirements were originally specified in M7.5 and are included here for completeness_
+_Note: These requirements were originally specified in M7.5. M8.1 completed Feb 7, 2026 (~3h). Scope reduced: EditIngredientSheet removed as redundant (users edit inline via recipe edit view, M8.3 will improve parser)._
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-PR-001** | **Low-confidence detection** | Yellow badge for parseConfidence < 0.5 | M8.1 | 🎯 **Graceful degradation** |
-| **FR-PR-002** | **Edit ingredient button** | "Review" button on low-confidence items | M8.1 | 🎯 **User correction flow** |
-| **FR-PR-003** | **Structured edit form** | EditIngredientSheet with quantity/unit/name fields | M8.1 | 🎯 **Professional UX** |
-| **FR-PR-004** | **Pre-filled edit values** | Parse results pre-populate edit form | M8.1 | 🎯 **Efficient editing** |
-| **FR-PR-005** | **Telemetry logging** | ParsingTelemetryService logs failures to local JSON | M8.1 | 🎯 **Data for M8.2+** |
-| **FR-PR-006** | **Privacy-safe telemetry** | No user identification, local storage only | M8.1 | 🎯 **Privacy compliance** |
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-PR-001** | **Low-confidence detection** | ✅ Yellow badge for parseConfidence < 0.5 on recipe detail and grocery list | M8.1 | 🎯 **Graceful degradation** |
+| **FR-PR-002** | **Edit ingredient button** | ❌ REMOVED (scope reduction — inline editing via recipe edit view sufficient) | M8.1 | — |
+| **FR-PR-003** | **Structured edit form** | ❌ REMOVED (scope reduction — M8.3 parser improvements will reduce need) | M8.1 | — |
+| **FR-PR-004** | **Pre-filled edit values** | ❌ REMOVED (scope reduction — dependent on FR-PR-003) | M8.1 | — |
+| **FR-PR-005** | **Telemetry logging** | ✅ ParsingTelemetryService with local JSON, 20/20 tests passing | M8.1 | 🎯 **Data for M8.2+** |
+| **FR-PR-006** | **Privacy-safe telemetry** | ✅ No user identification, local storage only | M8.1 | 🎯 **Privacy compliance** |
 
 ### **Functional Requirements - Hybrid NLP Parser (M8.3)**
 
@@ -671,9 +673,9 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | Household Foundation | 3 | ✅ Complete (M7.2.1) |
 | Shared Data Architecture | 6 | ✅ Complete (M7.2.3 Phases 0, 2, 4) |
 | CloudKit Collaboration | 17 | 🔄 In Progress (M7.2.2-M7.2.4, M7.3-M7.4) |
-| **Parsing Resilience** | **6** | ⏳ **Planned (M7.5)** ← NEW |
-| **Parsing Improvements** | **10** | ⏳ **Planned (M8.0)** ← NEW |
-| **ML Parsing (Optional)** | **8** | ⏳ **Planned (M9.5)** ← NEW |
+| **Parsing Resilience** | **3 delivered + 3 removed** | ✅ **Complete (M8.1)** |
+| **Parsing Improvements** | **10** | ⏳ **Planned (M8.3)** |
+| **ML Parsing (Optional)** | **8** | ⏳ **Planned (M8.4)** |
 | Analytics & Insights | 7 | ⏳ Planned (M8.1-M8.4) |
 | Health & Nutrition | 4 | ⏳ Planned (M9.1-M9.4) |
 | Budget Intelligence | 4 | ⏳ Planned (M10) |
@@ -773,7 +775,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit sync and collaboration (52 requirements: 22 complete, 30 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (144 complete, 30 in progress, 36 planned).
 
-**Last Updated**: February 3, 2026
-**Version**: 4.9
-**Next Update**: After M7.3.4 Error Handling & Stability Improvements
-**Current Focus**: M7.3.4 🚀 - Error Handling & Stability Improvements (RESCOPED)
+**Last Updated**: February 7, 2026
+**Version**: 5.1
+**Next Update**: After M8.2 Telemetry Analysis & Strategy
+**Current Focus**: M8.2 🚀 - Telemetry Analysis & Strategy
