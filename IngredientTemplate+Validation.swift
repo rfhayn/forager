@@ -116,8 +116,56 @@ extension IngredientTemplate {
         }
     }
     
+    // MARK: - M8.3.1: Template Quality Heuristics
+
+    /// Detects template names that likely contain leaked quantities, units, or qualifiers.
+    /// Used to show a yellow review badge on the Ingredients tab so users can clean up
+    /// problematic names that slipped through parsing.
+    var needsReview: Bool {
+        guard let name = name?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !name.isEmpty else { return false }
+
+        let lower = name.lowercased()
+
+        // 1. Contains parenthetical text — e.g. "butter (room temperature, about 2 tbsp)"
+        if name.contains("(") { return true }
+
+        // 2. Contains digits or Unicode fraction characters
+        let fractions = CharacterSet(charactersIn: "½⅓¼⅔¾⅛⅜⅝⅞")
+        if name.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) || fractions.contains($0) }) {
+            return true
+        }
+
+        // 3. Ends with qualifier phrases — e.g. "herbs to garnish", "salt to taste"
+        let qualifierSuffixes = [
+            "to taste", "to garnish", "as needed", "for serving",
+            "for garnish", "as desired", "to serve", "for topping"
+        ]
+        for suffix in qualifierSuffixes {
+            if lower.hasSuffix(suffix) { return true }
+        }
+
+        // 4. First word is a known unit/measure — e.g. "loaf french bread", "can tomatoes"
+        let words = lower.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        if words.count > 1 {
+            let unitPrefixes: Set<String> = [
+                "loaf", "loaves", "bunch", "bunches", "head", "heads",
+                "sprig", "sprigs", "slice", "slices", "piece", "pieces",
+                "can", "cans", "jar", "jars", "bag", "bags",
+                "package", "packages", "box", "boxes", "bottle", "bottles",
+                "cup", "cups", "tablespoon", "tablespoons", "tbsp",
+                "teaspoon", "teaspoons", "tsp", "pinch", "dash", "handful"
+            ]
+            if let firstWord = words.first, unitPrefixes.contains(firstWord) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     // MARK: - Computed Properties for Common Queries
-    
+
     /// Returns true if template has a category assigned
     var hasCategory: Bool {
         return category != nil && !(category?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? false)

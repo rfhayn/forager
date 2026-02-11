@@ -564,15 +564,9 @@ struct EditRecipeView: View {
         
         for (index, ingredientInput) in formData.ingredients.enumerated() {
             if ingredientInput.template == nil {
+                // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
                 let parsed = parsingService.parseIngredient(text: ingredientInput.fullText)
-                
-                let newTemplate = IngredientTemplate(context: viewContext)
-                newTemplate.id = UUID()
-                newTemplate.name = parsed.name
-                newTemplate.category = nil
-                newTemplate.usageCount = 0
-                newTemplate.dateCreated = Date()
-                
+                let newTemplate = templateService.findOrCreateTemplate(name: parsed.name)
                 formData.ingredients[index].template = newTemplate
             }
         }

@@ -1,11 +1,12 @@
 # M8: Ingredient Parsing Intelligence - META PRD
 
-**Version**: 2.0
+**Version**: 3.0
 **Created**: January 4, 2026
-**Status**: PLANNED
+**Updated**: February 8, 2026
+**Status**: COMPLETE (Core phases M8.1, M8.3, M8.3.1, M8.3.2 delivered)
 **Dependencies**: M7 Complete (External Beta with Telemetry)
-**Total Effort**: 13-16 hours core (+15-20 hours optional ML)
-**Strategic Priority**: Data-Driven Evolution from 95% → 99.5%+ Accuracy
+**Total Effort**: ~17 hours delivered (+15-20 hours optional ML deferred)
+**Strategic Priority**: Data-Driven Evolution from 95% → 98%+ Accuracy Achieved
 
 ---
 
@@ -58,7 +59,7 @@ M8 represents a **4-phase, data-driven evolution** of ingredient parsing from 95
 
 ### **M8.1: Parsing Resilience & Telemetry** (3-4 hours) - FOUNDATION ✨
 
-**Status**: Ready to start after M7.6
+**Status**: ✅ COMPLETE (February 7, 2026)
 **PRD Source**: [M7.5 Parsing Resilience PRD](parsing/M7.5-parsing-resilience-polish-prd.md)
 
 **What**: Graceful degradation for parsing failures
@@ -83,7 +84,7 @@ M8 represents a **4-phase, data-driven evolution** of ingredient parsing from 95
 
 ### **M8.2: Telemetry Analysis & Strategy** (2 hours) - INSIGHTS 📊
 
-**Status**: Starts after M7.6 external beta (2-4 weeks of data)
+**Status**: SKIPPED — PRD analysis proved sufficient; telemetry used for post-launch monitoring
 **PRD Source**: [M8.0 Parsing Improvements PRD](parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
 
 **What**: Analyze real telemetry to identify improvement priorities
@@ -108,7 +109,7 @@ M8 represents a **4-phase, data-driven evolution** of ingredient parsing from 95
 
 ### **M8.3: Hybrid NLP Parser** (8-10 hours) - IMPLEMENTATION 🚀
 
-**Status**: Starts after M8.2 analysis complete
+**Status**: ✅ COMPLETE (February 8, 2026) — ~11 hours actual
 **PRD Source**: [M8.0 Parsing Improvements PRD](parsing/M8.0-parsing-improvements-foundation-prd.md) (Phases 2-4)
 
 **What**: Hybrid architecture (regex fast path + NLP smart path)

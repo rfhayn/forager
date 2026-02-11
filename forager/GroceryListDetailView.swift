@@ -24,9 +24,6 @@ struct GroceryListDetailView: View {
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
     
-    // M3 PHASE 6: Consolidation service
-    @StateObject private var mergeService: QuantityMergeService
-    
     // INLINE ADD: State
     @State private var quickAddText = ""
     @State private var showingAutocomplete = false
@@ -41,11 +38,6 @@ struct GroceryListDetailView: View {
     @State private var newIngredientName = ""
     @State private var newIngredientCategory = ""
     @State private var markAsStaple = false
-    
-    // M3 PHASE 6: Consolidation state
-    @State private var showingConsolidation = false
-    @State private var consolidationAnalysis: MergeAnalysis?
-    @State private var consolidationOpportunities: Int = 0
     
     // FIX: Use @FetchRequest instead of relationship for live progress updates
     @FetchRequest private var listItemsFetch: FetchedResults<GroceryListItem>
@@ -68,9 +60,6 @@ struct GroceryListDetailView: View {
         _templateService = StateObject(wrappedValue: templateSvc)
         _parsingService = StateObject(wrappedValue: parsingSvc)
         _autocompleteService = StateObject(wrappedValue: autocompleteSvc)
-        
-        // M3 PHASE 6: Initialize merge service
-        _mergeService = StateObject(wrappedValue: QuantityMergeService(context: context))
         
         // FIX: Configure FetchRequest for this specific list's items
         let listID = weeklyList.id ?? UUID()
@@ -108,20 +97,6 @@ struct GroceryListDetailView: View {
         .sheet(isPresented: $showingAddToTemplates) {
             addToTemplatesSheet
         }
-        // M3 PHASE 6: Consolidation sheet
-        .sheet(isPresented: $showingConsolidation) {
-            if let analysis = consolidationAnalysis {
-                ConsolidationPreviewView(
-                    analysis: analysis,
-                    mergeService: mergeService,
-                    onComplete: {
-                        updateConsolidationAnalysis()
-                    }
-                )
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-            }
-        }
         .onAppear {
             // M7.3.4: Configure autocomplete service with current householdKey
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
@@ -129,12 +104,6 @@ struct GroceryListDetailView: View {
             if let firstCategory = categories.first {
                 defaultCategory = firstCategory.displayName
             }
-            // M3 PHASE 6: Initialize consolidation analysis
-            updateConsolidationAnalysis()
-        }
-        // M3 PHASE 6: Update consolidation analysis when items change
-        .onChange(of: listItems.count) { _, _ in
-            updateConsolidationAnalysis()
         }
     }
     
@@ -385,24 +354,19 @@ struct GroceryListDetailView: View {
     }
     
     // PHASE 3: Save new ingredient to templates
+    // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
     private func saveToTemplates() {
-        // Create new IngredientTemplate
-        let newTemplate = IngredientTemplate(context: viewContext)
-        newTemplate.id = UUID()
-        newTemplate.name = newIngredientName
-        newTemplate.category = newIngredientCategory
+        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
-        newTemplate.usageCount = 1
-        newTemplate.dateCreated = Date()
-        
+
         do {
-            try viewContext.save()
+            if viewContext.hasChanges {
+                try viewContext.save()
+            }
             print("✅ Created new ingredient template: \(newIngredientName)")
-            print("   📂 Category: \(newIngredientCategory)")
-            print("   ⭐ Staple: \(markAsStaple)")
-            
+
             showingAddToTemplates = false
-            
+
         } catch {
             print("❌ Failed to save ingredient: \(error)")
             showingAddToTemplates = false
@@ -511,24 +475,6 @@ struct GroceryListDetailView: View {
     
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        // M3 PHASE 6: Consolidate button with badge
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button {
-                showConsolidationPreview()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.triangle.merge")
-                    if consolidationOpportunities > 0 {
-                        Text("(\(consolidationOpportunities))")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-            .disabled(consolidationOpportunities == 0)
-            .foregroundColor(consolidationOpportunities > 0 ? .blue : .gray)
-        }
-        
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: { showingAddItem = true }) {
                 Label("Add with Options", systemImage: "plus.square")
@@ -635,21 +581,6 @@ struct GroceryListDetailView: View {
         }
     }
     
-    // MARK: - M3 Phase 6: Consolidation Functions
-    
-    private func updateConsolidationAnalysis() {
-        let analysis = mergeService.analyzeMergeOpportunities(for: weeklyList)
-        consolidationAnalysis = analysis
-        consolidationOpportunities = analysis.totalSavings
-    }
-    
-    private func showConsolidationPreview() {
-        updateConsolidationAnalysis()
-        
-        if let analysis = consolidationAnalysis, analysis.hasMergeOpportunities {
-            showingConsolidation = true
-        }
-    }
 }
 
 // MARK: - List Item Row Component
@@ -679,9 +610,8 @@ struct GroceryListItemRow: View {
                             .foregroundColor(item.isCompleted ? .secondary : (item.isParseable ? .primary : .primary.opacity(0.85)))
                             .lineLimit(2)
                         
-                        // M8.1: Low confidence indicator (replaces M3 PHASE 6 indicators)
-                        // Shows yellow warning for parseConfidence < 0.5
-                        if !item.isCompleted && item.parseConfidence < 0.5 {
+                        // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
+                        if !item.isCompleted && item.parseConfidence < 0.7 {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption2)
                                 .foregroundColor(.yellow)

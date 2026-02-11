@@ -608,7 +608,7 @@ struct RecipeListView: View {
                     "salt to taste",
                     "pepper as needed",
                     "a pinch of saffron",
-                    "some butter",
+                    "butter (room temperature, European-style, about 2 tablespoons or so)",
                     "fresh herbs to garnish"
                 ]
             )
@@ -657,7 +657,34 @@ struct RecipeListView: View {
                 ]
             )
 
-        print("✅ Created 14 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1)")
+            // M8.3: Recipe 15 - Tests unicode fractions, parentheticals, compound phrases
+            createRecipe(
+                title: "Hearty Tortilla Soup",
+                instructions: """
+                1. Sauté onion and garlic in oil
+                2. Add tomatoes, broth, and spices
+                3. Simmer 20 minutes
+                4. Add chicken and beans
+                5. Serve with tortilla strips and toppings
+                """,
+                servings: 6,
+                prepTime: 15,
+                cookTime: 25,
+                ingredients: [
+                    "1 can (14.5 oz) diced tomatoes",
+                    "½ cup sour cream",
+                    "¼ tsp cayenne",
+                    "one and a half cups chicken broth",
+                    "two cloves garlic",
+                    "⅓ cup chopped cilantro",
+                    "2-3 cups shredded chicken",
+                    "1 can (15 oz) black beans",
+                    "a handful of tortilla strips",
+                    "lime juice to taste"
+                ]
+            )
+
+        print("✅ Created 15 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1 + M8.3)")
     }
     
     // Helper function to create a recipe with ingredients
@@ -1211,8 +1238,8 @@ struct RecipeDetailView: View {
                         .font(.body)
                         .foregroundColor(.primary)
 
-                    // M8.1: Low confidence indicator
-                    if ingredient.parseConfidence < 0.5 {
+                    // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
+                    if ingredient.parseConfidence < 0.7 {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.yellow)
                             .font(.caption2)

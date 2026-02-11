@@ -1,10 +1,208 @@
 # Current Development Story
 
-**Last Updated**: February 7, 2026
-**Status**: M8.1 ✅ **COMPLETE** | M8.2 🚀 **NEXT**
-**Total Progress**: ~170 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
-**Current Milestone**: M8 - Ingredient Parsing Intelligence
+**Last Updated**: February 8, 2026
+**Status**: M8 ✅ **COMPLETE** | M7.6 🚀 **NEXT**
+**Total Progress**: ~187 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to merge)
+**Current Milestone**: M8 - Ingredient Parsing Intelligence (ALL CORE PHASES COMPLETE)
+
+---
+
+## ✅ **M8.3: HYBRID NLP PARSER - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 8, 2026
+**Branch**: `feature/M8.3-hybrid-nlp-parser`
+**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
+
+### **What Was Delivered** ✅
+
+**1. Protocol Abstraction** - `Services/Parsing/IngredientParser.swift`
+   - `IngredientParser` protocol with `parse(_ input:) -> ParserResult`
+   - `ParserResult` value type with confidence, parserUsed tracking
+
+**2. Enhanced Regex Parser** - `Services/Parsing/RegexIngredientParser.swift` (~650 lines)
+   - 7 pattern categories in priority order:
+     1. Unicode fractions: ½, ¼, ⅓, 1½ (combined forms)
+     2. Range patterns: "2-3 cloves garlic", "1 to 2 cups"
+     3. Parenthetical patterns: "1 can (14.5 oz) tomatoes"
+     4. Compound phrases: "one and a half cups", "two cups"
+     5. Standard qty+unit+name (existing, preserved)
+     6. Qualifier patterns: "salt to taste", "garlic, minced"
+     7. Descriptive amounts: "a pinch of salt", "a handful"
+   - Expanded known units: stick, bag, bottle, box, jar, sprig
+   - Word-to-number mapping (one→1 through twelve→12)
+   - Unicode fraction map (15 fraction characters)
+
+**3. NLP Fallback Parser** - `Services/Parsing/NLPIngredientParser.swift` (~310 lines)
+   - Apple NaturalLanguage framework with NLTagger
+   - Part-of-speech tagging for token classification
+   - Qualifier phrase detection and separation
+   - Confidence capped at 0.75 (lower ceiling than regex)
+
+**4. Hybrid Router** - `Services/Parsing/HybridIngredientParser.swift` (~60 lines)
+   - Regex first (microseconds), NLP fallback if confidence < 0.8
+   - Returns whichever parser produces higher confidence
+   - Tracks parserUsed: "regex", "nlp", or "hybrid"
+
+**5. Service Integration** - `Services/IngredientParsingService.swift`
+   - Delegates to HybridIngredientParser (no public API change)
+   - All call sites unchanged (zero modifications needed)
+
+**6. Telemetry Enhancement** - `Services/ParsingTelemetryService.swift`
+   - Added `parserUsed` field to `ParsingTelemetryEvent`
+   - Schema version bumped to 2 (backward compatible)
+
+**7. Test Suite** - 3 test files (~600 lines total)
+   - `RegexIngredientParserTests`: 30 tests (regression + new patterns)
+   - `NLPIngredientParserTests`: 12 tests (fallback behavior)
+   - `HybridIngredientParserTests`: 16 tests (router + integration)
+   - Performance benchmarks included
+
+### **Confidence Tiers**
+
+| Scenario | Confidence |
+|----------|-----------|
+| Full parse: qty + unit + name | 1.0 |
+| Unicode fraction + unit + name | 1.0 |
+| Unicode fraction + name (no unit) | 0.90 |
+| Range + unit + name | 0.85 |
+| Compound phrase + unit | 0.85 |
+| Range + name (no unit) | 0.80 |
+| Parenthetical parsed | 0.80 |
+| Qty + name (no unit) | 0.75 |
+| NLP full parse (capped) | 0.75 |
+| Qualifier detected | 0.70 |
+| Descriptive amount | 0.60 |
+| NLP qty + name | 0.60 |
+| NLP name + notes | 0.50 |
+| NLP name only | 0.30 |
+| Nothing parsed | 0.0 |
+
+### **Files Created/Modified**
+
+| File | Status | Lines |
+|------|--------|-------|
+| `Services/Parsing/IngredientParser.swift` | NEW | ~35 |
+| `Services/Parsing/RegexIngredientParser.swift` | NEW | ~650 |
+| `Services/Parsing/NLPIngredientParser.swift` | NEW | ~310 |
+| `Services/Parsing/HybridIngredientParser.swift` | NEW | ~60 |
+| `foragerTests/Services/Parsing/RegexIngredientParserTests.swift` | NEW | ~260 |
+| `foragerTests/Services/Parsing/NLPIngredientParserTests.swift` | NEW | ~100 |
+| `foragerTests/Services/Parsing/HybridIngredientParserTests.swift` | NEW | ~150 |
+| `Services/IngredientParsingService.swift` | MODIFIED | Delegate to hybrid parser |
+| `Services/ParsingTelemetryService.swift` | MODIFIED | +parserUsed field |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build on iPhone 17 Pro |
+| Regression | ✅ PASSING | All existing patterns preserved |
+| New patterns | ✅ IMPLEMENTED | 6 new pattern categories |
+| Performance | ✅ TARGET MET | <0.1s per parse |
+
+---
+
+## ✅ **M8.3.1: TEMPLATE NAME HYGIENE & BADGE FIX - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 8, 2026
+**Branch**: `feature/M8.3-hybrid-nlp-parser` (same branch as M8.3)
+**PRD**: `docs/prds/complete/m8.3.1-template-hygiene-badge-fix.md`
+
+### **What Was Delivered** ✅
+
+**1. Centralized Template Creation** - 5 view files modified
+   - All template creation paths now route through `findOrCreateTemplate`
+   - Ensures 4-phase normalization (case, plural, abbreviation, variation)
+   - Sets `canonicalName` for semantic deduplication
+   - Files: CreateRecipeView, EditRecipeView, AddListItemView, GroceryListDetailView, AddIngredientsToListView
+
+**2. Template Quality Heuristic** - `IngredientTemplate+Validation.swift`
+   - `needsReview` computed property with 4 detection rules:
+     1. Parenthetical text: "butter (room temperature)"
+     2. Digits/Unicode fractions: "2 cloves garlic", "½ cup"
+     3. Qualifier suffixes: "salt to taste", "herbs for garnish"
+     4. Leading unit words: "loaf french bread", "can tomatoes"
+
+**3. Review UI on Ingredients Tab** - `IngredientsView.swift`
+   - Yellow triangle badges on templates needing review
+   - "Review (N)" filter pill with count badge
+   - Scrollable filter pills (prevents overflow)
+   - Bottom scroll clearance fix for custom navigation
+
+**4. Merge-on-Rename Dedup** - `IngredientsView.swift`
+   - Renaming a template to an existing name merges instead of blocking
+   - Reassigns all Ingredient relationships, sums usage counts, deletes old template
+   - `.buttonStyle(.borderless)` fix for List row tap handling
+   - Error callback from child rows to parent view
+
+**5. Compound Plural Normalization** - `IngredientTemplateService.swift`
+   - `alwaysPluralSuffixes` last-word matching for compound names
+   - "black beans", "red pepper flakes", "tortilla strips" stay plural
+   - `normalize(name:)` changed to internal for test access
+
+**6. Badge Threshold Calibration** - `RecipeListView.swift`, `GroceryListDetailView.swift`
+   - Raised from `< 0.5` to `< 0.7` (aligned with M8.3 confidence tiers)
+
+**7. Unit Tests** - 21 new tests
+   - `IngredientTemplateValidationTests.swift` (17 tests): needsReview heuristic coverage
+   - `IngredientTemplateNormalizationTests.swift` (21 tests): compound plural + normalization pipeline
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `IngredientTemplate+Validation.swift` | MODIFIED | +needsReview heuristic |
+| `Services/IngredientTemplateService.swift` | MODIFIED | Compound plural fix, normalize → internal |
+| `forager/IngredientsView.swift` | MODIFIED | Badges, filter, merge-on-rename, scroll fix |
+| `forager/CreateRecipeView.swift` | MODIFIED | Route through findOrCreateTemplate |
+| `forager/EditRecipeView.swift` | MODIFIED | Route through findOrCreateTemplate |
+| `forager/AddListItemView.swift` | MODIFIED | Route through findOrCreateTemplate |
+| `forager/GroceryListDetailView.swift` | MODIFIED | Route through findOrCreateTemplate |
+| `forager/AddIngredientsToListView.swift` | MODIFIED | Route through findOrCreateTemplate |
+| `forager/RecipeListView.swift` | MODIFIED | Badge threshold → 0.7 |
+| `foragerTests/Services/IngredientTemplateValidationTests.swift` | NEW | 17 tests |
+| `foragerTests/Services/IngredientTemplateNormalizationTests.swift` | NEW | 21 tests |
+
+---
+
+## ✅ **M8.3.2: AUTO-MERGE GROCERY QUANTITIES - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 8, 2026
+**Branch**: `feature/M8.3-hybrid-nlp-parser` (same branch as M8.3)
+**PRD**: `docs/prds/complete/m8.3.2-auto-merge-grocery-quantities.md`
+
+### **What Was Delivered** ✅
+
+**1. GroceryMergeService** - `Services/GroceryMergeService.swift`
+   - Pure computation service (no Core Data dependency)
+   - Handles: same-unit addition, convertible-unit conversion, incompatible-unit rejection
+   - Parseable/unparseable collision handling
+   - Display text formatting
+   - Confidence tracking: `min(existing, incoming)`
+
+**2. Wired into AddIngredientsToListView** - `forager/AddIngredientsToListView.swift`
+   - Replaces string concatenation ("8 oz + 12 oz") with numeric merging ("20 oz")
+   - Source recipe tracking preserved
+
+**3. Consolidation Button Removed** - `forager/GroceryListDetailView.swift`
+   - Manual merge button removed from grocery list toolbar
+   - Related state and functions cleaned up
+
+**4. Unit Tests** - 19 tests
+   - `GroceryMergeServiceTests.swift`: Same-unit, convertible, incompatible, confidence, display text
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `Services/GroceryMergeService.swift` | NEW | Pure merge logic service |
+| `foragerTests/Services/GroceryMergeServiceTests.swift` | NEW | 19 tests |
+| `forager/AddIngredientsToListView.swift` | MODIFIED | Auto-merge wiring |
+| `forager/GroceryListDetailView.swift` | MODIFIED | Consolidation button removed |
 
 ---
 
@@ -322,21 +520,49 @@
 
 ## **What's Next**
 
-### **Before App Store Launch**
+### **Pre-Launch Roadmap** 🚀
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
 | M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
-| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
-| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
+| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
+| M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
+| M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
 
-**Note**: Original M7.4 (Sync Status UI) was **SKIPPED** - dual-store architecture makes it unnecessary. M7.4 repurposed for UI polish.
+**M7.6 Phases** (8 phases — PRD: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`):
 
-### **After App Store Launch**
+| Phase | Description | Est. |
+|-------|-------------|------|
+| M7.6.1 | App Configuration (display name, iOS 18 target, launch screen) | 0.5h |
+| M7.6.2 | Production Gating (`#if DEBUG` for developer tools) | 0.5h |
+| M7.6.3 | Onboarding Flow (first-launch walkthrough, Settings replay) | 3-4h |
+| M7.6.4 | Schema Cleanup P0 (remove Tag + LeaveRequest, fix plannedMeals cardinality) | 1-1.5h |
+| M7.6.5 | Schema Cleanup P1 (rename ownerEmail, fix delete rules, code-schema mismatches) | 1-1.5h |
+| M7.6.6 | Schema Cleanup P2 (remove unused fields, fix sourceURL tags hack, naming) | 1-1.5h |
+| M7.6.7 | TestFlight Submission (CloudKit Production deploy, archive, submit) | 1.5h |
+| M7.6.8 | Public Beta Link (after Apple approval, 24-48h wait) | 0.25h |
+
+**M7.7 Phases** (4 phases — PRD: `docs/prds/active/m7.7-app-store-submission.md`):
+
+| Phase | Description | Est. |
+|-------|-------------|------|
+| M7.7.1 | Beta Landing Page (GitHub Pages) | 1-2h |
+| M7.7.2 | GitHub README Update (portfolio quality) | 0.5h |
+| M7.7.3 | App Store Listing (metadata, screenshots, copy) | 1-2h |
+| M7.7.4 | App Store Submission | 0.5h |
+
+**Key Decisions (February 8, 2026)**:
+- iOS 18 target (deliberate — avoids ~104 mechanical API changes for no market)
+- Display name: `forager - Smart Meal Planner` (lowercase 'forager')
+- Core Data schema cleanup before Production deployment (append-only once deployed)
+- LinkedIn showcase removed — user handles via newsletter
+- Onboarding: 4-page horizontal walkthrough, first-launch + Settings replay
+
+### **Post-Launch Roadmap**
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
@@ -360,8 +586,8 @@
 
 ---
 
-**Last Session**: February 7, 2026 - M8.1 COMPLETE
-**Next Action**: Commit final changes, merge PR to main, then start M8.2
-**Branch**: `feature/M8.1-parsing-resilience-telemetry` (ready to merge)
-**Confidence**: **GREEN** (All features delivered, tested, clean build)
-**Version**: February 7, 2026 - M8.1 Complete
+**Last Session**: February 8, 2026 - M7.6/M7.7 scoped, PRDs written, core docs updated
+**Next Action**: Commit all uncommitted work, merge M8.3 branch to main, then start M7.6
+**Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to commit + merge)
+**Confidence**: **GREEN** (All features delivered, tested, clean build, 102 M8 tests)
+**Version**: February 8, 2026 - M7.6/M7.7 Scoped

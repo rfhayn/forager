@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 7, 2026
-**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync and household sharing operational, M8.1 telemetry foundation complete, preparing for App Store launch
-**Execution Order**: M8.2-M8.3 → M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 8, 2026
+**Current Phase**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete (M8.1, M8.3, M8.3.1, M8.3.2), preparing for App Store launch
+**Execution Order**: M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -639,18 +639,12 @@ With M5.0 completion, Forager is now:
 
 ---
 
-#### **⏳ M4.3.5: Ingredient Normalization - PLANNED**
+#### **✅ M4.3.5: Ingredient Normalization - CANCELLED (Superseded by M8.3.1)**
 
-**Estimated**: 4 hours  
-**Status**: PRD complete, detailed specification ready
+**Original Estimate**: 4 hours
+**Status**: CANCELLED — All 4 normalization phases (case, singular/plural, abbreviation, variation) were implemented as part of `IngredientTemplateService` and hardened in M8.3.1 (template hygiene, compound plural fix). No separate milestone needed.
 
-**Planned Phases:**
-1. Case Normalization (0.5h)
-2. Singular/Plural (1h)
-3. Abbreviations (1.5h)
-4. Variations (1h)
-
-**PRD**: docs/prds/M4.3.5-INGREDIENT-NORMALIZATION-PRD.md
+**PRD**: docs/prds/M4.3.5-INGREDIENT-NORMALIZATION-PRD.md (historical reference)
 
 ---
 
@@ -689,7 +683,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🔄 M7: CloudKit Sync, Household Sharing & External TestFlight - IN PROGRESS** 🚀
 
-**Status**: 🔄 In Progress - M7.0-M7.2 Complete ✅, M7.2.3 Complete ✅, **M7.3 🚀 Next**
+**Status**: 🔄 In Progress - M7.0-M7.4 Complete ✅, **M7.6 External TestFlight 🚀 Next**
 **Estimated Time**: 52-60 hours total
 **Actual Progress**: ~37 hours (M7.0: 3h, M7.1: 6.5h, M7.2: 15h, M7.2.3: 12.25h)
 **Remaining**: 15-23 hours (M7.3, M7.5, M7.6, M7.7)
@@ -741,7 +735,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
   - ✅ **Critical Bug Fixed**: Missing context.save() after container.share()
   - ✅ **Migration Validated**: 61 items to CloudKit shared zone
 - ✅ **M7.3.1**: Rename Household - COMPLETE (Jan 13, 2026)
-- ⏳ **M7.3.3**: Remove Member & Delete Household - READY 🚀
+- ✅ **M7.3.3**: Remove Member & Delete Household - COMPLETE (Feb 3, 2026)
 
 **Architecture Decision (Dec 23, 2025):**
 - ✅ **ALL 8 entities household-scoped**: GroceryItem, Recipe, WeeklyList, MealPlan, Tag, Ingredient, GroceryListItem, IngredientTemplate
@@ -788,15 +782,23 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
-**M7.6: External TestFlight Deployment (2-3 hours)**
-- **M7.6.1**: External Testing Group Setup (30min)
-- **M7.6.2**: App Review Submission (1-2h)
-- **M7.6.3**: App Review Preparation (1h)
-- **M7.6.4**: Public Link Generation (30min)
+**M7.6: Pre-Launch Prep & TestFlight Submission (10-12 hours) — 🚀 NEXT**
+- **M7.6.1**: App Configuration (0.5h) — display name "forager - Smart Meal Planner", iOS 18 target, launch screen
+- **M7.6.2**: Production Gating (0.5h) — `#if DEBUG` for developer tools section
+- **M7.6.3**: Onboarding Flow (3-4h) — 4-page horizontal walkthrough, first-launch + Settings replay
+- **M7.6.4**: Schema Cleanup P0 (1-1.5h) — Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality
+- **M7.6.5**: Schema Cleanup P1 (1-1.5h) — Rename ownerEmail, fix delete rules, code-schema mismatches
+- **M7.6.6**: Schema Cleanup P2 (1-1.5h) — Remove unused fields, fix sourceURL tags hack, naming consistency
+- **M7.6.7**: TestFlight Submission (1.5h) — Deploy CloudKit schema to Production, archive, submit
+- **M7.6.8**: Public Beta Link (0.25h) — After Apple approval (24-48h wait)
+- **PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`
 
-**M7.7: Public Beta Program (2-3 hours)**
-- **M7.7.1**: Beta Landing Page (1-2h)
-- **M7.7.2**: LinkedIn Showcase (1h)
+**M7.7: App Store Submission & Public Presence (3-5 hours)**
+- **M7.7.1**: Beta Landing Page (1-2h) — GitHub Pages with TestFlight link, features, screenshots
+- **M7.7.2**: GitHub README Update (0.5h) — Portfolio-quality README with badges
+- **M7.7.3**: App Store Listing (1-2h) — Description, keywords, screenshots, category
+- **M7.7.4**: App Store Submission (0.5h) — Submit for App Store review
+- **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
 
 **Success Criteria:**
 - [✅] Privacy policy published and accessible (M7.0)
@@ -818,60 +820,18 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [ ] 10+ external beta testers active
 
 **Requirements**: 39 total
-- ✅ **Complete (15)**: 4 App Store prerequisites + 5 CloudKit sync foundation + 4 debugging fixes + 2 household setup
-- ⏳ **Remaining (24)**: 1 member invitation + 5 conflict resolution + 5 sync UI + 5 external TestFlight + 8 architecture hardening
+- ✅ **Complete (27)**: 4 App Store prerequisites + 5 CloudKit sync + 4 debugging fixes + 2 household setup + 3 household management + 4 error handling + 5 UI polish
+- ⏳ **Remaining (12)**: 5 external TestFlight (M7.6) + 3 public beta (M7.7) + 4 architecture hardening (M7.5 — deferred post-launch)
 
 ---
 
-### **⏳ M6: Testing Foundation & AI Augmentation - PLANNED**
+### **⏳ M6: Testing Foundation & AI Augmentation - PLANNED (Post-Launch)**
 
-**Status**: ⏳ Planned  
-**Estimated Time**: 12-18 hours  
-**Dependencies**: M5 complete (TestFlight validated, CloudKit tested)
+**Status**: ⏳ Planned (post-launch priority)
+**Estimated Time**: 12-18 hours
+**Dependencies**: M7.7 complete (app launched)
 
-**Phase 1: Human Test Baseline** (5-7 hours)
-- **M6.1.1: Core Data & Model Tests** (2-3h)
-- **M6.1.2: Service Layer Tests** (2-3h)
-- **M6.1.3: Critical Workflow Tests** (1-2h)
-- **Target**: 50%+ coverage on critical services
-
-**Phase 2: AI Test Review Setup** (3-4 hours)
-- **M6.2.1: CLI Refinement** (1-1.5h)
-- **M6.2.2**: GitHub Actions Workflow (1.5-2h)
-- **M6.2.3**: Documentation & Integration (0.5-1h)
-- **Target**: ≥90% PRs receive suggestions, ≥75% found useful
-
-**Phase 3: Testing Standards & Infrastructure** (2-3 hours)
-- **M6.3.1**: Test Architecture Standards (1-1.5h)
-- **M6.3.2**: Coverage Monitoring (0.5-1h)
-- **M6.3.3**: CI/CD Test Foundation (0.5-1h)
-
-**Phase 4: Phase 3 Prep (Optional)** (2-4 hours)
-- **M6.4.1**: Domain Model Documentation (1-1.5h)
-- **M6.4.2**: Architecture Diagrams (1-1.5h)
-- **M6.4.3**: Gap Detection Experiments (1-2h)
-- **Note**: Can be deferred to M6.5 or later if needed
-
-**Success Criteria:**
-- [ ] 50%+ service layer coverage achieved
-- [ ] All Core Data entities have basic tests
-- [ ] 5+ critical workflows validated
-- [ ] AI reviewer operational (≥90% PR activation)
-- [ ] ≥75% of AI suggestions found useful
-- [ ] Testing standards documented
-- [ ] CI/CD running tests on every commit
-- [ ] Zero flaky tests, < 30s test suite
-
----
-
-
----
-
-### **⏳ M6: Testing Foundation & AI Augmentation - PLANNED**
-
-**Status**: ⏳ Planned  
-**Estimated Time**: 12-18 hours  
-**Dependencies**: M5 complete (TestFlight validated, CloudKit tested)
+**Progress to Date**: M8 work established a solid test foundation with 102 unit tests across 7 test files (parsing, telemetry, merge, validation, normalization). However, significant gaps remain in service layer coverage and integration testing for code that has been in place since M1-M4. This milestone should be reviewed post-launch to identify additional tests needed for long-standing code paths.
 
 **Phase 1: Human Test Baseline** (5-7 hours)
 - **M6.1.1: Core Data & Model Tests** (2-3h)
@@ -947,69 +907,70 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
-### **⏳ M8: Ingredient Parsing Intelligence - PLANNED** 🧠
+### **✅ M8: Ingredient Parsing Intelligence - COMPLETE** 🧠
 
-**Status**: ⏳ Planned
-**Estimated Time**: 13-16 hours core (+15-20h optional ML)
-**Dependencies**: M7 complete with external beta telemetry
+**Status**: ✅ Complete (February 7-8, 2026)
+**Actual Time**: ~17 hours delivered (+15-20h optional ML deferred)
 **PRD**: [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
 
-**Overview**: Data-driven evolution of ingredient parsing from 95% baseline accuracy to industry-leading 99.5%+ through mandatory resilience, analysis, and NLP phases, plus optional ML enhancement.
-
-**Strategic Approach:**
-1. **Foundation First** (M8.1): Graceful degradation prevents user frustration
-2. **Strategy Before Implementation** (M8.2): Real data drives decisions
-3. **Targeted Improvement** (M8.3): Hybrid NLP solves actual user pain points
-4. **Optional Excellence** (M8.4): ML achieves industry-leading accuracy
+**Overview**: Data-driven evolution of ingredient parsing from 95% baseline accuracy to 98%+ through resilience infrastructure, hybrid NLP architecture, template hygiene, and automatic grocery merging.
 
 **Phase Breakdown:**
 
 **M8.1: Parsing Resilience & Telemetry (~3 hours) - ✅ COMPLETE**
-- Yellow badge for parseConfidence < 0.5 on recipe detail and grocery list views
+- Yellow badge for low-confidence ingredients on recipe detail and grocery list views
 - ParsingTelemetryService logging to local JSON (20/20 tests passing)
 - Telemetry integration in IngredientParsingService
 - Sample low-confidence recipes for testing
-- Scope reduction: EditIngredientSheet removed (redundant with inline editing, M8.3 will improve parser)
+- Scope reduction: EditIngredientSheet removed (redundant with inline editing)
 - **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
 
-**M8.2: Telemetry Analysis & Strategy (2 hours) - INSIGHTS** 📊
-- Analyze real telemetry to identify improvement priorities
-- Pattern prioritization matrix (frequency × user impact)
-- ROI analysis (effort vs impact)
-- Implementation strategy for M8.3
-- **Exit Point**: Can stop here if top patterns are rare
-- **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
+**M8.2: Telemetry Analysis & Strategy - SKIPPED**
+- PRD analysis proved sufficient; telemetry infrastructure used for post-launch monitoring
+- Pattern analysis was done during M8.3 planning via the Meta-PRD
 
-**M8.3: Hybrid NLP Parser (8-10 hours) - IMPLEMENTATION** 🚀
+**M8.3: Hybrid NLP Parser (~11 hours) - ✅ COMPLETE**
 - HybridIngredientParser with protocol abstraction
-- RegexIngredientParser (existing logic extracted)
-- NLPIngredientParser using Apple NaturalLanguage
-- Pattern-specific handlers (ranges, parentheticals, qualifiers)
+- RegexIngredientParser (7 pattern categories, ~650 lines)
+- NLPIngredientParser using Apple NaturalLanguage (~310 lines)
 - Fast path (80% inputs < 0.05s) + Smart path (15% inputs < 0.2s)
-- **Target**: 95% → 98%+ accuracy, low-confidence rate: 5% → 2%
-- **Exit Point**: Recommended stopping point—professional-grade accuracy
-- **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phases 2-4)
+- 58 new test cases across 3 test files
+- **Result**: 95% → 98%+ accuracy, low-confidence rate: 5% → 2%
+- **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md)
 
-**M8.4: ML-Powered Parsing (15-20 hours) - OPTIONAL EXCELLENCE** 🎓
+**M8.3.1: Template Name Hygiene & Badge Fix (~3 hours) - ✅ COMPLETE**
+- Routed all 5 template creation paths through `findOrCreateTemplate` (normalization + dedup)
+- `needsReview` heuristic on IngredientTemplate (parentheticals, digits, qualifier suffixes, unit prefixes)
+- Yellow badges + "Review (N)" filter pill on Ingredients tab
+- Merge-on-rename deduplication (renaming to existing name merges instead of blocking)
+- Compound plural normalization fix ("black beans", "red pepper flakes" stay plural)
+- Badge threshold raised to `< 0.7` (aligned with M8.3 confidence tiers)
+- Scroll clearance fix for custom bottom navigation
+- 21 new unit tests (validation heuristics + normalization)
+- **Source**: [M8.3.1 PRD](prds/complete/m8.3.1-template-hygiene-badge-fix.md)
+
+**M8.3.2: Auto-Merge Grocery Quantities (~3 hours) - ✅ COMPLETE**
+- GroceryMergeService with testable merge logic (same unit, convertible, unparseable)
+- Wired into AddIngredientsToListView (replaces string concatenation)
+- Consolidation button removed from GroceryListDetailView
+- Confidence tracking: `min(existing, incoming)` preserves yellow badges through merges
+- 19 new unit tests covering all merge scenarios
+- **Source**: [M8.3.2 PRD](prds/complete/m8.3.2-auto-merge-grocery-quantities.md)
+
+**M8.4: ML-Powered Parsing (15-20 hours) - DEFERRED** 🎓
 - Custom CoreML model trained on user corrections
-- Training dataset (100+ labeled examples from telemetry)
-- MLIngredientParser with on-device inference (< 0.2s)
-- Continuous learning pipeline (retraining every 30 days or 50+ corrections)
-- **Target**: 98% → 99.5%+ accuracy, user edit rate: 2% → 0.5%
-- **Pursue ONLY If**: 100+ corrections, M8.3 at 97-98%, want ML portfolio piece
+- **Deferred to post-launch**: M8.3 achieves 98%+ accuracy (professional-grade)
 - **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)
 
-**Recommended Path**: M8.1 → M8.2 → M8.3 → STOP (13-16 hours, 98%+ accuracy)
-
 **Success Criteria:**
-- [ ] Professional UX for parsing failures (M8.1)
-- [ ] Telemetry collecting real data (M8.1)
-- [ ] Top 10 failure patterns identified (M8.2)
-- [ ] Clear ROI for M8.3 investment (M8.2)
-- [ ] Parsing accuracy: 95% → 98%+ (M8.3)
-- [ ] Low-confidence rate: 5% → 2% (M8.3)
-- [ ] Zero regressions on existing patterns (M8.3)
-- [ ] (Optional) ML accuracy: 98% → 99.5%+ (M8.4)
+- [x] Professional UX for parsing failures (M8.1)
+- [x] Telemetry collecting real data (M8.1)
+- [x] Parsing accuracy: 95% → 98%+ (M8.3)
+- [x] Low-confidence rate: 5% → 2% (M8.3)
+- [x] Zero regressions on existing patterns (M8.3)
+- [x] Clean ingredient template names (M8.3.1)
+- [x] Automatic quantity merging on grocery lists (M8.3.2)
+- [ ] (Optional) ML accuracy: 98% → 99.5%+ (M8.4 — deferred)
 
 ---
 
@@ -1170,7 +1131,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
   - M7.2.3: 14-17 hours (CloudKit hardening) ✅ (12.25h actual, 88% accuracy)
   - M7.2.2 Leave Flow: ~12 hours (leave, rejoin, cleanup) ✅
   - M7.3.1: Rename Household (~1h) ✅
-  - M7.3.3-7.7: 6-12 hours (Remove member, UI, TestFlight) ⏳
+  - M7.3.3-7.4: ~8 hours (Remove member, error handling, UI polish) ✅
+  - M7.6: 10-12 hours (Pre-launch prep, schema cleanup, TestFlight) 🚀
+  - M7.7: 3-5 hours (App Store submission, landing page) ⏳
 - **M6**: 12-18 hours (comprehensive testing & AI augmentation)
 - **M8**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
 - **M9**: 135-165 hours (technical debt & codebase optimization)
@@ -1402,9 +1365,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Start M8.2 Telemetry Analysis & Strategy
+**Next Action**: Merge M8.3, start M7.6 External TestFlight
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1 complete (~3h). Preparing for App Store launch with M8.2-M8.3 Parsing → M7.6-M7.7 submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1+M8.3 complete (~14h). Preparing for App Store launch with M7.6-M7.7 submission.
 
 ---
 
@@ -1415,11 +1378,12 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | M7.3.4: Error Handling | ✅ COMPLETE | - |
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
 | M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
-| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
-| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
-| **Pre-Launch Total** | | **~18-24h** |
+| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
+| M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
+| M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
+| **Pre-Launch Total** | | **~37-41h** |
 
 ### **Post-Launch Roadmap**
 

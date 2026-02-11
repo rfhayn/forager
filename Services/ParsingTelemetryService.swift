@@ -20,6 +20,7 @@ struct ParsingTelemetryEvent: Codable, Identifiable {
     let parsedQuantity: Double?
     let parsedUnit: String?
     let parseConfidence: Float
+    let parserUsed: String?     // M8.3: "regex", "nlp", or "hybrid"
     let source: ParsingSource
 
     /// Where the parsing occurred
@@ -36,6 +37,7 @@ struct ParsingTelemetryEvent: Codable, Identifiable {
         parsedQuantity: Double?,
         parsedUnit: String?,
         parseConfidence: Float,
+        parserUsed: String? = nil,
         source: ParsingSource
     ) {
         self.id = UUID()
@@ -45,6 +47,7 @@ struct ParsingTelemetryEvent: Codable, Identifiable {
         self.parsedQuantity = parsedQuantity
         self.parsedUnit = parsedUnit
         self.parseConfidence = parseConfidence
+        self.parserUsed = parserUsed
         self.source = source
     }
 }
@@ -103,7 +106,7 @@ struct ParsingTelemetryData: Codable {
     var correctionEvents: [ParsingCorrectionEvent]
     var schemaVersion: Int
 
-    static let currentSchemaVersion = 1
+    static let currentSchemaVersion = 2  // M8.3: Added parserUsed field
 
     init() {
         self.parsingEvents = []
@@ -165,6 +168,7 @@ class ParsingTelemetryService: ObservableObject {
         parsedQuantity: Double?,
         parsedUnit: String?,
         parseConfidence: Float,
+        parserUsed: String? = nil,
         source: ParsingTelemetryEvent.ParsingSource
     ) -> UUID {
         let event = ParsingTelemetryEvent(
@@ -173,6 +177,7 @@ class ParsingTelemetryService: ObservableObject {
             parsedQuantity: parsedQuantity,
             parsedUnit: parsedUnit,
             parseConfidence: parseConfidence,
+            parserUsed: parserUsed,
             source: source
         )
 

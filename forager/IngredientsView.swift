@@ -92,6 +92,7 @@ struct IngredientsView: View {
     @State private var searchText = ""
     @State private var selectedCategory = "All Categories"
     @State private var showStaplesOnly = false
+    @State private var showNeedsReviewOnly = false
     @State private var sortOption: SortOption = .staplesFirst
     @State private var isEditMode = false
     @State private var selectedIngredients: Set<IngredientTemplate> = []
@@ -222,8 +223,8 @@ struct IngredientsView: View {
     
     // MARK: - M7.4: Filter Section (search moved to .searchable())
     private var filterSection: some View {
-        VStack(spacing: 16) {
-            // FIXED: Single-line filter layout that's clean and organized
+        // M8.3.1: ScrollView prevents pill overflow on narrow screens
+        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 // Category Filter - larger button
                 Menu {
@@ -259,6 +260,18 @@ struct IngredientsView: View {
                     )
                 }
 
+                // M8.3.1: Needs Review filter — shows templates with problematic names
+                Button(action: {
+                    showNeedsReviewOnly.toggle()
+                }) {
+                    FilterPill(
+                        text: "Review\(needsReviewCount > 0 ? " (\(needsReviewCount))" : "")",
+                        isSelected: showNeedsReviewOnly,
+                        systemImage: "exclamationmark.triangle",
+                        size: .regular
+                    )
+                }
+
                 // Sort Options - compact button
                 Menu {
                     ForEach(SortOption.allCases, id: \.self) { option in
@@ -274,12 +287,10 @@ struct IngredientsView: View {
                         size: .compact
                     )
                 }
-
-                Spacer()
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(.vertical, 12)
         .background(Color(.systemGroupedBackground))
     }
     
@@ -310,6 +321,10 @@ struct IngredientsView: View {
                                 categoryChangePayload = CategoryChangePayload(
                                     ingredientTemplates: [ingredient]
                                 )
+                            },
+                            onError: { message in
+                                errorMessage = message
+                                showingError = true
                             }
                         )
                     }
@@ -320,6 +335,10 @@ struct IngredientsView: View {
             }
         }
         .listStyle(InsetGroupedListStyle())
+        // M8.3.1: Add bottom padding so the custom navigation bar doesn't cover the last row
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            Color.clear.frame(height: 70)
+        }
     }
     
     // MARK: - Category Header
@@ -367,28 +386,39 @@ struct IngredientsView: View {
     }
     
     // MARK: - Computed Properties
+
+    // M8.3.1: Count of templates needing review (for badge on filter pill)
+    private var needsReviewCount: Int {
+        ingredients.filter { $0.needsReview }.count
+    }
+
     private var filteredIngredients: [IngredientTemplate] {
         var filtered = Array(ingredients)
-        
+
         // Apply search filter
         if !searchText.isEmpty {
             filtered = filtered.filter { ingredient in
                 ingredient.name?.localizedCaseInsensitiveContains(searchText) == true
             }
         }
-        
+
         // Apply category filter
         if selectedCategory != "All Categories" {
             filtered = filtered.filter { ingredient in
                 (ingredient.category ?? "Uncategorized") == selectedCategory
             }
         }
-        
+
         // Apply staples filter
         if showStaplesOnly {
             filtered = filtered.filter { $0.isStaple }
         }
-        
+
+        // M8.3.1: Apply needs-review filter
+        if showNeedsReviewOnly {
+            filtered = filtered.filter { $0.needsReview }
+        }
+
         // Apply sorting
         return applySorting(to: filtered)
     }
@@ -626,6 +656,7 @@ struct IngredientRowView: View {
     let onSelectionChanged: (Bool) -> Void
     let onStapleToggle: () -> Void
     let onCategoryAssign: () -> Void
+    var onError: ((String) -> Void)?
 
     @Environment(\.managedObjectContext) private var viewContext
     // M7.3.4: Household service for filtering duplicate checks by householdKey
@@ -670,8 +701,16 @@ struct IngredientRowView: View {
                             startNameEdit()
                         }
                     }
+
+                // M8.3.1: Yellow badge for templates that need name cleanup
+                if ingredient.needsReview {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption2)
+                        .foregroundColor(.yellow)
+                        .help("Name may contain quantities or qualifiers — tap name to edit")
+                }
             }
-            
+
             Spacer()
             
             // Actions - conditional based on editing state
@@ -683,12 +722,14 @@ struct IngredientRowView: View {
                     }
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    
+                    .buttonStyle(.borderless)
+
                     Button("Save") {
                         saveNameEdit()
                     }
                     .font(.caption)
                     .foregroundColor(.blue)
+                    .buttonStyle(.borderless)
                     .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             } else {
@@ -737,36 +778,79 @@ struct IngredientRowView: View {
     
     private func saveNameEdit() {
         let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         guard !trimmedName.isEmpty else {
-            errorMessage = "Ingredient name cannot be empty"
-            showingError = true
+            reportError("Ingredient name cannot be empty")
             return
         }
-        
-        // M7.3.4: Check for duplicates within current household scope only (excluding current ingredient)
+
+        #if DEBUG
+        print("📝 M8.3.1: saveNameEdit called — renaming '\(ingredient.name ?? "nil")' → '\(trimmedName)'")
+        #endif
+
+        // M8.3.1: Check for existing template with same name (for merge-on-rename)
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         if let householdKey = householdService.currentHouseholdKey {
             request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == %@", trimmedName, ingredient, householdKey)
         } else {
             request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == nil", trimmedName, ingredient)
         }
-        
+
         do {
-            let existingIngredients = try viewContext.fetch(request)
-            if !existingIngredients.isEmpty {
-                errorMessage = "An ingredient with this name already exists"
-                showingError = true
-                return
+            let duplicates = try viewContext.fetch(request)
+
+            if let existingTemplate = duplicates.first {
+                #if DEBUG
+                print("📝 M8.3.1: Merging into existing '\(existingTemplate.name ?? "nil")' (moving \(ingredient.ingredients?.count ?? 0) ingredients)")
+                #endif
+
+                // M8.3.1: Merge — move all ingredient relationships to the existing template
+                if let ingredientsToMove = ingredient.ingredients as? Set<Ingredient> {
+                    for ing in ingredientsToMove {
+                        ing.ingredientTemplate = existingTemplate
+                    }
+                }
+
+                // Sum usage counts and preserve staple status
+                existingTemplate.usageCount += ingredient.usageCount
+                if ingredient.isStaple { existingTemplate.isStaple = true }
+                existingTemplate.updatedAt = Date()
+
+                // Delete the old (now-empty) template
+                viewContext.delete(ingredient)
+                try viewContext.save()
+
+                #if DEBUG
+                print("✅ M8.3.1: Merge complete — deleted old template")
+                #endif
+
+                isEditingName = false
+            } else {
+                // No duplicate — just rename
+                ingredient.name = trimmedName
+                ingredient.canonicalName = IngredientTemplate.canonicalName(from: trimmedName)
+                ingredient.updatedAt = Date()
+                try viewContext.save()
+
+                #if DEBUG
+                print("✅ M8.3.1: Renamed to '\(trimmedName)'")
+                #endif
+
+                isEditingName = false
             }
-            
-            // Save the new name
-            ingredient.name = trimmedName
-            try viewContext.save()
-            isEditingName = false
-            
         } catch {
-            errorMessage = "Failed to save changes: \(error.localizedDescription)"
+            #if DEBUG
+            print("❌ M8.3.1: Save failed — \(error)")
+            #endif
+            reportError("Failed to save: \(error.localizedDescription)")
+        }
+    }
+
+    private func reportError(_ message: String) {
+        if let onError = onError {
+            onError(message)
+        } else {
+            errorMessage = message
             showingError = true
         }
     }

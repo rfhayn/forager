@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 7, 2026
+**Last Updated**: February 8, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8 - Ingredient Parsing Intelligence
-**Current Phase**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
-**Next Priority**: M8.2 - Telemetry Analysis & Strategy
-**Execution Order (Pre-Launch)**: M8.2-M8.3 → M7.6-M7.7 (App Store)
+**Current Milestone**: M8 ✅ COMPLETE — Ingredient Parsing Intelligence
+**Current Phase**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Next Priority**: M7.6 - External TestFlight
+**Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -52,6 +52,37 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
+### **February 8, 2026** - M7.6/M7.7 Scoped & PRDs Written 📋
+- **Completed**: Full scope definition and PRDs for M7.6 (8 phases) and M7.7 (4 phases)
+- **Key Decisions**:
+  - iOS 18 deployment target (deliberate — avoids ~104 API changes for no market)
+  - Display name: `forager - Smart Meal Planner` (lowercase 'forager')
+  - Core Data schema cleanup before CloudKit Production deployment (P0/P1/P2)
+  - 4-page onboarding walkthrough (first-launch + Settings replay)
+  - Developer tools gated behind `#if DEBUG`
+  - LinkedIn post removed (handled via newsletter)
+- **Schema audit findings**: 2 dead entities (Tag, LeaveRequest), wrong cardinality (Recipe.plannedMeals), misnamed field (ownerEmail), 5 code-schema mismatches, 6 unused fields
+- **PRDs**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`, `docs/prds/active/m7.7-app-store-submission.md`
+- **All 5 core docs updated**
+
+### **February 8, 2026** - M8.3.1 Template Hygiene & M8.3.2 Auto-Merge COMPLETE ✅
+- **Completed**: Template name hygiene, review badges, grocery auto-merge (~6 hours combined)
+- **Key Deliverables**:
+  - All template creation paths routed through findOrCreateTemplate (normalization + dedup)
+  - `needsReview` heuristic + "Review" filter pill on Ingredients tab
+  - Merge-on-rename deduplication, compound plural fix
+  - GroceryMergeService with automatic quantity aggregation (19 tests)
+  - 21 new validation/normalization tests
+  - Badge threshold raised to < 0.7
+
+### **February 8, 2026** - M8.3 Hybrid NLP Parser COMPLETE ✅
+- **Completed**: Protocol-based hybrid parser architecture (~11 hours)
+- **Key Deliverables**:
+  - HybridIngredientParser with confidence-based routing (regex + NLP)
+  - 7 regex pattern categories, NLP fallback with Apple NaturalLanguage
+  - 58 new tests, zero public API changes
+  - ADR 010, Learning Note 30
+
 ### **February 7, 2026** - M8.1 Parsing Resilience & Telemetry COMPLETE ✅
 - **Completed**: ParsingTelemetryService, yellow badges, telemetry integration (~3 hours)
 - **Key Deliverables**:
@@ -74,6 +105,15 @@
   - Newsletter-ready source material for "Systems Over Vibes" series
 - **ADR Updates**: ADR 008 & 009 verified and updated (not stale)
 - **Documentation**: [29-m7-cloudkit-household-journey.md](learning-notes/29-m7-cloudkit-household-journey.md)
+
+### **February 8, 2026** - M8.3 COMPLETE ✅
+- **Hybrid NLP Parser**: Protocol-based architecture with 7 regex pattern categories + NLP fallback
+- **New ADR**: [ADR 010 - Hybrid Parser Confidence Routing](architecture/010-hybrid-parser-confidence-routing.md)
+- **Key decisions**: Confidence-driven routing (0.8 threshold), NLP confidence cap (0.75), pattern priority ordering
+- **Zero call site changes** — all 6 consumers unchanged
+- **Documentation**:
+  - [30-m8.3-hybrid-parser-implementation.md](learning-notes/30-m8.3-hybrid-parser-implementation.md) - Implementation journey and learnings
+  - [ADR 010](architecture/010-hybrid-parser-confidence-routing.md) - Architectural decision record
 
 ### **February 5, 2026** - M7.3.4 COMPLETE ✅ + Roadmap Updated
 - **Completed**: Error handling improvements, ghost data fixes, CloudKit logging
@@ -240,7 +280,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~170 hours
+- **Total Development Time**: ~187 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -265,14 +305,14 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
-- **M8.1**: ✅ COMPLETE (Feb 7, 2026)
-  - ParsingTelemetryService, yellow badges, telemetry integration
-  - Scope reduced: EditIngredientSheet removed (redundant)
-  - Bug fix: phantom normalizedName removed from IngredientTemplate
-- **M8.2**: Telemetry Analysis & Strategy 🚀 NEXT
-  - Dashboard view showing telemetry statistics
-  - Pattern analysis and failure categorization
-  - M8.3 implementation strategy document
+- **M8**: ✅ COMPLETE (Feb 7-8, 2026) — All core phases delivered
+  - **M8.1**: Parsing telemetry + yellow badges (~3h)
+  - **M8.2**: Skipped (PRD analysis sufficient)
+  - **M8.3**: Hybrid NLP parser with 7 pattern categories (~11h)
+  - **M8.3.1**: Template hygiene, review badges, merge-on-rename (~3h)
+  - **M8.3.2**: Auto-merge grocery quantities (~3h)
+  - **M8.4**: ML-powered parsing — deferred post-launch
+- **Total M8 tests**: 102 unit tests across 7 test files
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
@@ -320,11 +360,12 @@ _[Previous entries remain the same through December 23...]_
 |------|--------|------------|
 | M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
 | M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
-| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
-| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
-| **Pre-Launch Total** | | **~15-20h** |
+| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
+| M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
+| M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
+| **Pre-Launch Total** | | **~13-17h remaining** |
 
 ### **Post-Launch Roadmap**
 
@@ -336,12 +377,17 @@ _[Previous entries remain the same through December 23...]_
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10+: Future Features | FUTURE | 48-72h |
 
-### **Key Decisions (February 7, 2026)**
+### **Key Decisions (February 8, 2026)**
 1. Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
 2. M7.4 repurposed for UI Polish & Pre-Launch Fixes ✅ COMPLETE
-3. M8.1-M8.3 before launch - Fix "3 avocados" parsing issue (95% → 98% accuracy)
-4. M8.1 scope reduced - EditIngredientSheet removed (redundant, M8.3 will improve parser)
-5. M7.5 deferred post-launch - developer-facing code quality
+3. M8.1-M8.3.2 completed before launch - parsing accuracy 95% → 98%+, template hygiene, auto-merge
+4. M8.2 **SKIPPED** - PRD analysis proved sufficient; telemetry for post-launch monitoring
+5. M8.4 **DEFERRED** post-launch - M8.3 achieves professional-grade 98%+ accuracy
+6. M7.5 deferred post-launch - developer-facing code quality
+7. iOS 18 deployment target - deliberate decision, avoids ~104 mechanical API changes
+8. Core Data schema cleanup (M7.6.4-M7.6.6) gates TestFlight - CloudKit Production is append-only
+9. Display name: `forager - Smart Meal Planner` (lowercase 'forager')
+10. LinkedIn showcase removed from M7.7 - handled via newsletter
 
 ---
 
@@ -555,8 +601,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 8.5
-**Last Updated**: February 7, 2026
+**Version**: 9.0
+**Last Updated**: February 8, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

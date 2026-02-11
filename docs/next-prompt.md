@@ -1,101 +1,110 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 7, 2026
-**For Milestone**: M8.2 - Telemetry Analysis & Strategy
+**Last Updated**: February 8, 2026
+**For Milestone**: M7.6 — Pre-Launch Prep & TestFlight Submission
 **Status**: READY TO START
-**Prerequisite**: Merge M8.1 PR to main first
-**PRD**: `docs/prds/m8-ingredient-parsing-intelligence-meta-prd.md`
+**Prerequisite**: Commit all M8.3.1+M8.3.2 work, merge M8.3 PR to main
 
 ---
 
-## **M8.2: TELEMETRY ANALYSIS & STRATEGY**
+## **M7.6: PRE-LAUNCH PREP & TESTFLIGHT**
 
-### **Goal**
-Analyze real parsing telemetry data collected by M8.1's ParsingTelemetryService to identify the most impactful failure patterns and create a prioritized implementation strategy for M8.3.
+### **Context**
+- M8 (Ingredient Parsing Intelligence) is fully complete: M8.1, M8.3, M8.3.1, M8.3.2
+- All work needs committing and merging to main before starting M7.6
+- 102 M8 unit tests, clean build, user-confirmed working
+- M7.0-M7.4 all complete (CloudKit, household sharing, UI polish)
 
-### **Prerequisites**
-- M8.1 merged to main ✅
-- Telemetry data collected from real usage (ParsingTelemetryService)
-- Some recipes created/used to generate parsing events
+### **Before Starting M7.6**
+1. Commit all uncommitted M8.3.1+M8.3.2 changes on `feature/M8.3-hybrid-nlp-parser`
+2. Create PR and squash-merge to main
+3. Create new branch: `feature/M7.6-pre-launch-testflight`
 
-### **Phase 1: Dashboard View (1 hour)**
+### **Phase Execution Order**
 
-**M8.2.1: Telemetry Dashboard**
-- Create a simple view accessible from Settings
-- Display statistics from `ParsingTelemetryService.shared.getStatistics()`
-  - Total parsing events
-  - Low-confidence count and rate
-  - Total user corrections
-  - Most common failure patterns
-- Display recent low-confidence events from `getLowConfidenceEvents()`
-- Group failures by pattern type (no quantity, range, non-numeric phrase, etc.)
+M7.6 has 8 phases. Phases 1-6 can be done in any order. All must complete before phase 7 (submission).
 
-**Key files:**
-- `Services/ParsingTelemetryService.swift` — already has `getStatistics()` and `getLowConfidenceEvents()` APIs
-- New: `forager/TelemetryDashboardView.swift`
+**Start with quick wins:**
+1. **M7.6.1** (30 min) — Display name, iOS 18 target, launch screen
+2. **M7.6.2** (30 min) — Wrap developer tools in `#if DEBUG`
 
-### **Phase 2: Pattern Analysis (30 min)**
+**Then the bigger pieces:**
+3. **M7.6.4** (1-1.5h) — Schema P0: Remove Tag, LeaveRequest, fix plannedMeals
+4. **M7.6.5** (1-1.5h) — Schema P1: Rename ownerEmail, fix delete rules, code mismatches
+5. **M7.6.6** (1-1.5h) — Schema P2: Remove unused fields, fix sourceURL tags hack
+6. **M7.6.3** (3-4h) — Onboarding walkthrough (largest piece, do last before submission)
 
-**M8.2.2: Failure Pattern Categorization**
-- Analyze telemetry data to identify top failure patterns
-- Categorize by type:
-  - Range patterns: "2-3 cloves"
-  - Non-numeric quantities: "a pinch of", "a handful"
-  - No quantity: "salt to taste", "pepper as needed"
-  - Parenthetical: "1 can (14.5 oz)"
-  - Qualifier phrases: "garlic, minced"
-- Rank by frequency and user correction rate
+**Then submit:**
+7. **M7.6.7** (1.5h) — Deploy CloudKit schema to Production, archive, submit to TestFlight
+8. **M7.6.8** (15 min) — Generate public link after Apple approval (24-48h wait)
 
-### **Phase 3: Strategy Document (30 min)**
+### **Key Technical Details**
 
-**M8.2.3: M8.3 Implementation Strategy**
-- Create prioritized list of patterns for M8.3 Hybrid NLP Parser
-- Calculate ROI: effort to implement vs frequency of occurrence
-- Determine which patterns can be handled by improved regex vs NLP
-- Document in `docs/prds/m8.3-implementation-strategy.md`
+**Schema Cleanup (M7.6.4-M7.6.6)**:
+- Create Core Data model v3 (current is v2)
+- CloudKit Production schema is **append-only** once deployed — changes are permanent
+- Lightweight migration should handle all changes
+- Test migration with existing v2 data before submitting
 
-### **Exit Criteria**
-- [ ] Dashboard view showing telemetry statistics
-- [ ] Top 10 failure patterns identified and ranked
-- [ ] Clear strategy for M8.3 (which patterns to tackle, regex vs NLP)
-- [ ] ROI analysis documenting effort vs impact
+**P0 Changes (M7.6.4):**
+- Delete `Tag` entity (unused, never implemented)
+- Delete `LeaveRequest` entity (deprecated, replaced by KeychainHelper)
+- Change `Recipe.plannedMeals` from toOne (maxCount=1) to toMany
 
-### **Estimated Time**: 2 hours
+**P1 Changes (M7.6.5):**
+- Remove `Recipe.titleKey` attribute + `byTitleKey` fetch index (dead)
+- Add `Household.ownerRecordName`, migrate from `ownerEmail`, remove old field
+- Change `Household.mealPlans` delete rule from Nullify to Cascade
+- Add `PlannedMeal.household` relationship + `householdKey` attribute to schema
+- Add `Household.plannedMeals` inverse relationship to schema
 
----
+**P2 Changes (M7.6.6):**
+- Remove `GroceryItem.ingredientTemplate` and `stapleItems` (unused relationships)
+- Remove `GroceryListItem.isFromRecipe` (write-only, replaced by contributingRecipes)
+- Add `Recipe.tags` attribute, migrate from `sourceURL` prefix hack
+- Standardize `dateCreated`/`createdDate` naming
+- Fix `byisActiveandstateDate` index typo
 
-## **KEY FILES FOR CONTEXT**
+**Onboarding (M7.6.3):**
+- 4-page horizontal walkthrough using `TabView` + `.tabViewStyle(.page)`
+- `@AppStorage("hasCompletedOnboarding")` for first-launch detection
+- Present as `.fullScreenCover` from app root
+- "Replay Onboarding" row in Settings
+
+**Production Gating (M7.6.2):**
+- Wrap `developerToolsSection` in `#if DEBUG` in SettingsView.swift
+- Gate "Create Test Recipes" in RecipeListView.swift
+
+### **Key Files for Context**
 
 ```
-Services/ParsingTelemetryService.swift     # Has getStatistics(), getLowConfidenceEvents()
-Services/IngredientParsingService.swift    # Logs events to telemetry
-forager/RecipeListView.swift               # Yellow badges on low-confidence ingredients
-forager/GroceryListDetailView.swift        # Yellow badges in grocery list
-foragerTests/Services/ParsingTelemetryServiceTests.swift  # 20/20 tests
+forager/SettingsView.swift                    # M7.6.2: Developer tools gating
+forager/forager.xcdatamodeld/                 # M7.6.4-6: Schema changes (v2 → v3)
+forager/foragerApp.swift                      # M7.6.3: Onboarding presentation
+forager/CustomBottomNavigation.swift          # M7.6.3: Alternative onboarding host
+Services/HouseholdService.swift               # M7.6.5: ownerEmail → ownerRecordName
+Household+CoreDataProperties.swift            # M7.6.5: Schema alignment
+PlannedMeal+CoreDataProperties.swift          # M7.6.5: Schema alignment
+docs/prds/active/m7.6-pre-launch-testflight.md  # Full PRD with all details
+docs/prds/active/m7.7-app-store-submission.md    # M7.7 PRD for after TestFlight
+```
+
+### **Verification**
+
+After each schema phase, verify:
+```bash
+xcodebuild -project forager.xcodeproj -scheme forager \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+```
+
+After all phases, run tests:
+```bash
+xcodebuild test -project forager.xcodeproj -scheme forager \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -only-testing:foragerTests
 ```
 
 ---
 
-## **AFTER M8.2**
-
-### **M8.3: Hybrid NLP Parser (8-10 hours)**
-- Protocol-based parser abstraction
-- RegexIngredientParser (extract existing logic)
-- NLPIngredientParser using Apple NaturalLanguage
-- Pattern-specific handlers based on M8.2 analysis
-- Target: 95% → 98%+ accuracy
-
-### **Pre-Launch Roadmap**
-
-| Task | Status | Est. Hours |
-|------|--------|------------|
-| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| **M8.2: Telemetry Analysis** | 🚀 NEXT | 2h |
-| M8.3: Hybrid NLP Parser | 📋 PLANNED | 8-10h |
-| M7.6: External TestFlight | 📋 PLANNED | 2-3h |
-| M7.7: App Store Submission | 📋 PLANNED | 2-3h |
-
----
-
-**Version**: February 7, 2026 - M8.2 Ready
-**Dependencies**: M8.1 complete, telemetry collecting data
+**Version**: February 8, 2026 - M7.6 Ready
+**Dependencies**: M8 complete, all work committed and merged to main
