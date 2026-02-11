@@ -608,7 +608,7 @@ struct RecipeListView: View {
                     "salt to taste",
                     "pepper as needed",
                     "a pinch of saffron",
-                    "some butter",
+                    "butter (room temperature, European-style, about 2 tablespoons or so)",
                     "fresh herbs to garnish"
                 ]
             )
@@ -1238,8 +1238,8 @@ struct RecipeDetailView: View {
                         .font(.body)
                         .foregroundColor(.primary)
 
-                    // M8.1: Low confidence indicator
-                    if ingredient.parseConfidence < 0.5 {
+                    // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
+                    if ingredient.parseConfidence < 0.7 {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.yellow)
                             .font(.caption2)

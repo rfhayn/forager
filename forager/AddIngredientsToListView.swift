@@ -10,6 +10,8 @@ struct AddIngredientsToListView: View {
     // M4.3.2: Servings state for scaled recipe addition
     @State private var selectedServings: Int
     private let scalingService: RecipeScalingService
+    private let templateService: IngredientTemplateService
+    private let mergeService: GroceryMergeService
     
     @State private var selectedIngredients: Set<UUID> = []
     @State private var isProcessing = false
@@ -37,8 +39,10 @@ struct AddIngredientsToListView: View {
         let servings = targetServings ?? Int(recipe.servings)
         _selectedServings = State(initialValue: servings)
         
-        // Initialize scaling service (regular property, not @StateObject)
+        // Initialize services (regular properties, not @StateObject)
         self.scalingService = RecipeScalingService(context: context)
+        self.templateService = IngredientTemplateService(context: context)
+        self.mergeService = GroceryMergeService()
     }
     
     // M4.3.2: Computed property for scale factor
@@ -271,48 +275,20 @@ struct AddIngredientsToListView: View {
             return selectedIngredients.contains(id)
         }
         
-        // Use viewContext directly
+        // M8.3.1: Route all template creation through findOrCreateTemplate
         for ingredient in selectedIngredientsList {
             guard let fullName = ingredient.name?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !fullName.isEmpty else { continue }
-            
-            // IMPROVED: Extract clean ingredient name for template matching
+
             let cleanName = extractCleanIngredientName(from: fullName)
-            print("Looking for ingredient: '\(fullName)' -> clean: '\(cleanName)'")
-            
-            // Find or create template using the CLEAN name
-            let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-            request.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
-            
-            do {
-                let template: IngredientTemplate
-                if let existing = try viewContext.fetch(request).first {
-                    template = existing
-                    print("Found existing template: '\(existing.name ?? "nil")'")
-                } else {
-                    template = IngredientTemplate(context: viewContext)
-                    template.id = UUID()
-                    template.name = cleanName  // Store CLEAN name
-                    template.usageCount = 0
-                    template.dateCreated = Date()
-                    template.category = nil  // Will be handled by category assignment flow
-                    template.isStaple = false // Default value
-                    print("Created new template: '\(cleanName)'")
-                }
-                
-                // Update usage count and ESTABLISH RELATIONSHIP
-                template.usageCount += 1
-                ingredient.ingredientTemplate = template
-                
-            } catch {
-                print("Error creating template: \(error)")
-            }
+            let template = templateService.findOrCreateTemplate(name: cleanName)
+            ingredient.ingredientTemplate = template
         }
-        
-        // Save context
+
         do {
-            try viewContext.save()
-            print("Templates prepared successfully")
+            if viewContext.hasChanges {
+                try viewContext.save()
+            }
             completion(true)
         } catch {
             print("Error saving templates: \(error)")
@@ -445,23 +421,32 @@ struct AddIngredientsToListView: View {
             
             // Check for existing items by clean name
             if let existingItem = findExistingItem(named: cleanName, in: existingItems) {
-                // M3: Simple quantity merging using displayText for now
-                // Phase 5 will enhance this with numeric operations
-                let existingDisplayText = existingItem.displayText ?? ""
-                let newDisplayText = fullIngredientText
-                
-                // M4.3.1: Only merge non-empty displayText to avoid empty strings
-                if !newDisplayText.isEmpty && newDisplayText != "1" && !existingDisplayText.isEmpty {
-                    existingItem.displayText = "\(existingDisplayText) + \(newDisplayText)"
-                } else if !newDisplayText.isEmpty && newDisplayText != "1" {
-                    existingItem.displayText = newDisplayText
+                // M8.3.2: Numeric merge via GroceryMergeService
+                let existing = GroceryMergeInput(
+                    numericValue: existingItem.numericValue,
+                    standardUnit: existingItem.standardUnit,
+                    isParseable: existingItem.isParseable,
+                    parseConfidence: Double(existingItem.parseConfidence)
+                )
+                let incoming = GroceryMergeInput(
+                    numericValue: ingredient.isParseable ? ingredient.numericValue * scaleFactor : 0,
+                    standardUnit: ingredient.standardUnit,
+                    isParseable: ingredient.isParseable,
+                    parseConfidence: Double(ingredient.parseConfidence)
+                )
+                let result = mergeService.merge(existing: existing, incoming: incoming)
+
+                existingItem.numericValue = result.numericValue
+                existingItem.parseConfidence = Float(result.parseConfidence)
+                if result.didMergeQuantity {
+                    existingItem.displayText = result.displayText
+                    existingItem.standardUnit = result.standardUnit
                 }
-                
-                // M4.3.1: Add recipe to sourceRecipes relationship
+
                 existingItem.addToSourceRecipes(recipe)
-                
+
                 mergeCount += 1
-                print("Merged quantities for '\(cleanName)' and added recipe source")
+                print("Merged quantities for '\(cleanName)': \(result.displayText) (didMerge: \(result.didMergeQuantity))")
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)

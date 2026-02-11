@@ -351,25 +351,20 @@ struct AddListItemView: View {
     }
     
     // PHASE 3: Save new ingredient to templates
+    // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
     private func saveToTemplates() {
-        // Create new IngredientTemplate
-        let newTemplate = IngredientTemplate(context: viewContext)
-        newTemplate.id = UUID()
-        newTemplate.name = newIngredientName
-        newTemplate.category = newIngredientCategory
+        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
-        newTemplate.usageCount = 1
-        newTemplate.dateCreated = Date()
-        
+
         do {
-            try viewContext.save()
+            if viewContext.hasChanges {
+                try viewContext.save()
+            }
             print("✅ Created new ingredient template: \(newIngredientName)")
-            print("   📁 Category: \(newIngredientCategory)")
-            print("   ⭐ Staple: \(markAsStaple)")
-            
+
             showingAddToTemplates = false
-            dismiss() // Dismiss main view
-            
+            dismiss()
+
         } catch {
             errorMessage = "Failed to save ingredient: \(error.localizedDescription)"
             showingError = true

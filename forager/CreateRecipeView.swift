@@ -575,17 +575,9 @@ struct CreateRecipeView: View {
         // First, ensure all ingredients have templates created
         for (index, ingredientInput) in formData.ingredients.enumerated() {
             if ingredientInput.template == nil {
-                // Create new template for this ingredient
+                // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
                 let parsed = parsingService.parseIngredient(text: ingredientInput.fullText)
-                
-                let newTemplate = IngredientTemplate(context: viewContext)
-                newTemplate.id = UUID()
-                newTemplate.name = parsed.name
-                newTemplate.category = nil  // Will be assigned in modal or left uncategorized
-                newTemplate.usageCount = 0
-                newTemplate.dateCreated = Date()
-                
-                // Update the ingredient input with the new template
+                let newTemplate = templateService.findOrCreateTemplate(name: parsed.name)
                 formData.ingredients[index].template = newTemplate
             }
         }

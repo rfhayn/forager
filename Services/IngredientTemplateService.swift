@@ -70,10 +70,23 @@ class IngredientTemplateService: ObservableObject {
         if alwaysPlural.contains(checkName) {
             return checkName  // Return the stripped version in plural form
         }
-        
+
         // If the original (with qualifiers) is in the list, use that
         if alwaysPlural.contains(lowercased) {
             return lowercased
+        }
+
+        // M8.3.1: Check if the LAST WORD is inherently plural
+        // Handles compound names like "black beans", "red pepper flakes", "tortilla strips"
+        let alwaysPluralSuffixes: Set<String> = [
+            "beans", "chickpeas", "chips", "croutons", "crumbs",
+            "flakes", "greens", "lentils", "noodles", "oats",
+            "peas", "seeds", "sprinkles", "strips"
+        ]
+        let words = checkName.split(separator: " ").map(String.init)
+        if words.count > 1, let lastWord = words.last,
+           alwaysPluralSuffixes.contains(lastWord) {
+            return checkName
         }
         
         // Irregular plurals mapping (check these next)
@@ -239,7 +252,8 @@ class IngredientTemplateService: ObservableObject {
     // Phase 2: Singular/plural normalization
     // Phase 3: Abbreviation expansion
     // Phase 4: Variation handling (qualifiers and descriptors)
-    private func normalize(name: String) -> String {
+    // M8.3.1: Changed from private to internal for unit test access via @testable import
+    func normalize(name: String) -> String {
         var normalized = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
         // Phase 1: Case normalization
