@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 7, 2026
-**Version**: 5.1
-**Current Milestone**: M8.1 ✅ COMPLETE | **M8.2 Telemetry Analysis 🚀 Next**
-**Execution Order (Pre-Launch)**: M8.2-M8.3 → M7.6-M7.7 (App Store)
+**Last Updated**: February 8, 2026
+**Version**: 6.0
+**Current Milestone**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -414,15 +414,28 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 | **FR-PR-005** | **Telemetry logging** | ✅ ParsingTelemetryService with local JSON | M8.1 | 🎯 **Data for M8.2+** |
 | **FR-PR-006** | **Privacy-safe telemetry** | ✅ Local storage only, no user ID | M8.1 | 🎯 **Privacy compliance** |
 
-### **Functional Requirements - External TestFlight**
+### **Functional Requirements - Pre-Launch Prep (M7.6)**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-TF-011** | **External testing group** | Create public external testing group | M7.6.1 | 🎯 **Public beta** |
-| **FR-TF-012** | **App Review submission** | Pass Apple's external testing review | M7.6.2 | 🎯 **Public distribution** |
-| **FR-TF-013** | **Public TestFlight link** | Generate shareable public link | M7.6.4 | 🎯 **Easy distribution** |
-| **FR-TF-014** | **Beta landing page** | Professional web page for beta | M7.7.1 | 🎯 **Professional showcase** |
-| **FR-TF-015** | **LinkedIn showcase** | Public post with beta link | M7.7.2 | 🎯 **Professional visibility** |
+| **FR-PL-001** | **App configuration** | Display name "forager - Smart Meal Planner", iOS 18 target, launch screen | M7.6.1 | 🎯 **Brand identity** |
+| **FR-PL-002** | **Production gating** | Developer tools hidden in Release builds via `#if DEBUG` | M7.6.2 | 🎯 **Production quality** |
+| **FR-PL-003** | **Onboarding walkthrough** | 4-page first-launch walkthrough with Settings replay | M7.6.3 | 🎯 **User guidance** |
+| **FR-PL-004** | **Schema P0 cleanup** | Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality | M7.6.4 | 🎯 **Schema hygiene** |
+| **FR-PL-005** | **Schema P1 cleanup** | Rename ownerEmail, fix delete rules, code-schema mismatches | M7.6.5 | 🎯 **Data integrity** |
+| **FR-PL-006** | **Schema P2 cleanup** | Remove unused fields, fix sourceURL tags hack, naming consistency | M7.6.6 | 🎯 **Clean schema** |
+| **FR-TF-011** | **External testing group** | Create public external testing group | M7.6.7 | 🎯 **Public beta** |
+| **FR-TF-012** | **App Review submission** | Pass Apple's external testing review | M7.6.7 | 🎯 **Public distribution** |
+| **FR-TF-013** | **Public TestFlight link** | Generate shareable public link | M7.6.8 | 🎯 **Easy distribution** |
+
+### **Functional Requirements - App Store Submission (M7.7)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-TF-014** | **Beta landing page** | GitHub Pages with TestFlight link, features, screenshots | M7.7.1 | 🎯 **Professional showcase** |
+| **FR-TF-016** | **GitHub README** | Portfolio-quality README with badges and tech stack | M7.7.2 | 🎯 **Portfolio presentation** |
+| **FR-TF-017** | **App Store listing** | Description, keywords, screenshots, category, age rating | M7.7.3 | 🎯 **Store presence** |
+| **FR-TF-018** | **App Store submission** | Submit for App Store review and approval | M7.7.4 | 🎯 **Public availability** |
 
 ### **Non-Functional Requirements - M7**
 
@@ -447,12 +460,11 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 
 ---
 
-## 🔮 **M8: INGREDIENT PARSING INTELLIGENCE - PLANNED** 🧠
+## ✅ **M8: INGREDIENT PARSING INTELLIGENCE - COMPLETE** 🧠
 
-**Status**: ⏳ Planned
-**Estimated**: 13-16 hours core (+15-20h optional ML)
-**Dependencies**: M7 complete with external beta telemetry
-**Summary**: Data-driven parsing evolution from 95% → 98% → 99.5% accuracy through hybrid NLP and optional ML
+**Status**: ✅ Complete (February 7-8, 2026)
+**Actual Effort**: ~17 hours (M8.1: 3h, M8.3: 11h, M8.3.1: 3h, M8.3.2: 3h)
+**Summary**: Parsing accuracy 95% → 98%+, template hygiene, automatic grocery merging. M8.2 skipped (PRD analysis sufficient), M8.4 ML deferred post-launch.
 **PRD**: [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
 
 ### **Functional Requirements - Resilience & Telemetry (M8.1) - ✅ COMPLETE**
@@ -461,27 +473,54 @@ _Note: These requirements were originally specified in M7.5. M8.1 completed Feb 
 
 | ID | Requirement | Implementation | Milestone | Value |
 |----|-------------|----------------|-----------|-------|
-| **FR-PR-001** | **Low-confidence detection** | ✅ Yellow badge for parseConfidence < 0.5 on recipe detail and grocery list | M8.1 | 🎯 **Graceful degradation** |
+| **FR-PR-001** | **Low-confidence detection** | ✅ Yellow badge for parseConfidence < 0.7 on recipe detail and grocery list (threshold raised in M8.3.1) | M8.1 | 🎯 **Graceful degradation** |
 | **FR-PR-002** | **Edit ingredient button** | ❌ REMOVED (scope reduction — inline editing via recipe edit view sufficient) | M8.1 | — |
 | **FR-PR-003** | **Structured edit form** | ❌ REMOVED (scope reduction — M8.3 parser improvements will reduce need) | M8.1 | — |
 | **FR-PR-004** | **Pre-filled edit values** | ❌ REMOVED (scope reduction — dependent on FR-PR-003) | M8.1 | — |
 | **FR-PR-005** | **Telemetry logging** | ✅ ParsingTelemetryService with local JSON, 20/20 tests passing | M8.1 | 🎯 **Data for M8.2+** |
 | **FR-PR-006** | **Privacy-safe telemetry** | ✅ No user identification, local storage only | M8.1 | 🎯 **Privacy compliance** |
 
-### **Functional Requirements - Hybrid NLP Parser (M8.3)**
+### **Functional Requirements - Hybrid NLP Parser (M8.3) - ✅ COMPLETE**
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-PI-001** | **Hybrid parser architecture** | Protocol-based abstraction (regex + NLP + future ML) | M8.3 | 🎯 **Extensibility** |
-| **FR-PI-002** | **Fast path optimization** | RegexIngredientParser for 80% of inputs (< 0.05s) | M8.3 | 🎯 **Performance** |
-| **FR-PI-003** | **Smart path NLP** | NLPIngredientParser using Apple NaturalLanguage | M8.3 | 🎯 **Accuracy** |
-| **FR-PI-004** | **Range pattern support** | "2-3 cloves" → 2.5 cloves average | M8.3 | 🎯 **Common pattern** |
-| **FR-PI-005** | **Parenthetical extraction** | "1 can (14.5 oz)" → 14.5 oz, can | M8.3 | 🎯 **Complex parsing** |
-| **FR-PI-006** | **Qualifier separation** | "garlic, minced" → garlic (notes: minced) | M8.3 | 🎯 **Detail preservation** |
-| **FR-PI-007** | **Confidence calibration** | Accurate confidence scores (0.0-1.0) for routing | M8.3 | 🎯 **Smart routing** |
-| **FR-PI-008** | **Performance budgets** | p50 < 0.05s, p95 < 0.3s, p99 < 0.5s | M8.3 | 🎯 **Responsiveness** |
-| **FR-PI-009** | **Telemetry enhancement** | Track parser used, durations, confidence scores | M8.3 | 🎯 **Monitoring** |
-| **FR-PI-010** | **Regression prevention** | Comprehensive test suite (existing + new patterns) | M8.3 | 🎯 **Quality assurance** |
+_Completed February 8, 2026 (~11h). Protocol-based hybrid parser with 7 regex pattern categories + NLP fallback. 58 new tests._
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-PI-001** | **Hybrid parser architecture** | ✅ IngredientParser protocol + HybridIngredientParser router | M8.3 | 🎯 **Extensibility** |
+| **FR-PI-002** | **Fast path optimization** | ✅ RegexIngredientParser for 80% of inputs (< 0.05s) | M8.3 | 🎯 **Performance** |
+| **FR-PI-003** | **Smart path NLP** | ✅ NLPIngredientParser using Apple NaturalLanguage (~310 lines) | M8.3 | 🎯 **Accuracy** |
+| **FR-PI-004** | **Range pattern support** | ✅ "2-3 cloves" → 2.5 cloves average | M8.3 | 🎯 **Common pattern** |
+| **FR-PI-005** | **Parenthetical extraction** | ✅ "1 can (14.5 oz)" → 14.5 oz, can | M8.3 | 🎯 **Complex parsing** |
+| **FR-PI-006** | **Qualifier separation** | ✅ "garlic, minced" → garlic (notes: minced) | M8.3 | 🎯 **Detail preservation** |
+| **FR-PI-007** | **Confidence calibration** | ✅ 0.0-1.0 confidence tiers with routing at 0.8 threshold | M8.3 | 🎯 **Smart routing** |
+| **FR-PI-008** | **Performance budgets** | ✅ < 0.1s per parse (all patterns) | M8.3 | 🎯 **Responsiveness** |
+| **FR-PI-009** | **Telemetry enhancement** | ✅ parserUsed field added (schema v2) | M8.3 | 🎯 **Monitoring** |
+| **FR-PI-010** | **Regression prevention** | ✅ 58 tests across 3 files (30 regex + 12 NLP + 16 hybrid) | M8.3 | 🎯 **Quality assurance** |
+
+### **Functional Requirements - Template Hygiene & Badge Fix (M8.3.1) - ✅ COMPLETE**
+
+_Completed February 8, 2026 (~3h). Fixed template name pollution and badge threshold. 21 new tests._
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-TH-001** | **Centralized template creation** | ✅ All 5 creation paths routed through findOrCreateTemplate | M8.3.1 | 🎯 **Data integrity** |
+| **FR-TH-002** | **Template quality heuristic** | ✅ needsReview computed property (4 detection rules) | M8.3.1 | 🎯 **User guidance** |
+| **FR-TH-003** | **Review filter on Ingredients tab** | ✅ Yellow badges + "Review (N)" filter pill | M8.3.1 | 🎯 **Discoverability** |
+| **FR-TH-004** | **Merge-on-rename dedup** | ✅ Renaming to existing name merges templates | M8.3.1 | 🎯 **Clean library** |
+| **FR-TH-005** | **Compound plural preservation** | ✅ "black beans", "red pepper flakes" stay plural | M8.3.1 | 🎯 **Correctness** |
+| **FR-TH-006** | **Badge threshold calibration** | ✅ Raised from < 0.5 to < 0.7 (aligned with M8.3 tiers) | M8.3.1 | 🎯 **Visibility** |
+
+### **Functional Requirements - Auto-Merge Grocery Quantities (M8.3.2) - ✅ COMPLETE**
+
+_Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding same ingredient from multiple recipes. 19 new tests._
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-GM-001** | **Automatic quantity merging** | ✅ GroceryMergeService with same-unit, convertible-unit, and incompatible-unit handling | M8.3.2 | 🎯 **Core value** |
+| **FR-GM-002** | **Unit conversion during merge** | ✅ Converts via UnitConversionService (cups/tbsp/tsp, lbs/oz) | M8.3.2 | 🎯 **Smart merging** |
+| **FR-GM-003** | **Source recipe tracking** | ✅ Both recipe sources associated with merged item | M8.3.2 | 🎯 **Traceability** |
+| **FR-GM-004** | **Confidence preservation** | ✅ min(existing, incoming) — never hides uncertainty | M8.3.2 | 🎯 **Data integrity** |
+| **FR-GM-005** | **Consolidation button removed** | ✅ Manual merge button removed from grocery list toolbar | M8.3.2 | 🎯 **Simplified UX** |
 
 ### **Functional Requirements - ML Enhancement (M8.4 - OPTIONAL)** 💡
 
@@ -511,7 +550,7 @@ _Note: These requirements were originally specified in M7.5. M8.1 completed Feb 
 | **NFR-ML-004** | **Privacy compliance** | 100% on-device, no cloud calls | M8.4 | 🎯 **User trust** |
 | **NFR-ML-005** | **Zero regressions** | Existing patterns maintain/improve accuracy | M8 All | 🎯 **Quality** |
 
-**M8 Summary (Planned)**: 32 requirements across 4 phases: resilience & telemetry (6), hybrid NLP parser (10), ML enhancement (8 optional), and non-functional requirements (10). Achieves professional-grade 98%+ accuracy (M8.3) with optional industry-leading 99.5%+ ML enhancement (M8.4). Exit points after each phase allow flexible ROI optimization.
+**M8 Summary (Complete)**: 43 requirements across 5 phases: resilience & telemetry (6 ✅), hybrid NLP parser (10 ✅), template hygiene (6 ✅), auto-merge grocery (5 ✅), ML enhancement (8 deferred), and non-functional requirements (10). Professional-grade 98%+ accuracy achieved. M8.2 skipped (PRD analysis sufficient). M8.4 ML deferred post-launch. Total: ~17 hours, 102 unit tests.
 
 ---
 
@@ -775,7 +814,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit sync and collaboration (52 requirements: 22 complete, 30 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (144 complete, 30 in progress, 36 planned).
 
-**Last Updated**: February 7, 2026
-**Version**: 5.1
-**Next Update**: After M8.2 Telemetry Analysis & Strategy
-**Current Focus**: M8.2 🚀 - Telemetry Analysis & Strategy
+**Last Updated**: February 8, 2026
+**Version**: 6.0
+**Next Update**: After M7.6 Pre-Launch Prep & TestFlight
+**Current Focus**: M7.6 🚀 - Pre-Launch Prep & TestFlight Submission
