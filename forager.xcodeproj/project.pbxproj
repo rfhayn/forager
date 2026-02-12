@@ -9,11 +9,8 @@
 /* Begin PBXBuildFile section */
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
 		85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */; };
-		85ADBDBB2EA90D6F00E3B1B5 /* IngredientTemplateValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBA2EA90D6D00E3B1B5 /* IngredientTemplateValidationTests.swift */; };
 		85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */; };
 		85ADBDBF2EA91EB800E3B1B5 /* Ingredient+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBE2EA91EB600E3B1B5 /* Ingredient+ComputedProperties.swift */; };
-		85ADBDC12EA91ED600E3B1B5 /* ComputedPropertiesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDC02EA91ED400E3B1B5 /* ComputedPropertiesTests.swift */; };
-		85ADBDC82EA97DEE00E3B1B5 /* M3ValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDC72EA97DE600E3B1B5 /* M3ValidationTests.swift */; };
 		9B0555442EDB665C00A57B34 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9B0555202EDB665C00A57B34 /* Assets.xcassets */; };
 		9BFA76022F5A000000A76001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9BFA76012F5A000000A76001 /* LaunchScreen.storyboard */; };
 		9B0555452EDB665C00A57B34 /* forager.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552E2EDB665C00A57B34 /* forager.xcdatamodeld */; };
@@ -135,11 +132,8 @@
 /* Begin PBXFileReference section */
 		25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLPIngredientParserTests.swift; sourceTree = "<group>"; };
 		85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IngredientTemplate+Validation.swift"; sourceTree = "<group>"; };
-		85ADBDBA2EA90D6D00E3B1B5 /* IngredientTemplateValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateValidationTests.swift; sourceTree = "<group>"; };
 		85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+ComputedProperties.swift"; sourceTree = "<group>"; };
 		85ADBDBE2EA91EB600E3B1B5 /* Ingredient+ComputedProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ingredient+ComputedProperties.swift"; sourceTree = "<group>"; };
-		85ADBDC02EA91ED400E3B1B5 /* ComputedPropertiesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputedPropertiesTests.swift; sourceTree = "<group>"; };
-		85ADBDC72EA97DE600E3B1B5 /* M3ValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = M3ValidationTests.swift; sourceTree = "<group>"; };
 		9B05551B2EDB665C00A57B34 /* AddCategoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddCategoryView.swift; sourceTree = "<group>"; };
 		9B05551C2EDB665C00A57B34 /* AddIngredientsToListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddIngredientsToListView.swift; sourceTree = "<group>"; };
 		9B05551D2EDB665C00A57B34 /* AddIngredientView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddIngredientView.swift; sourceTree = "<group>"; };
@@ -393,7 +387,6 @@
 				9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */,
 				9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */,
 				9B1B39642EF4BA71001E1876 /* Category+Extensions.swift */,
-				85ADBDC02EA91ED400E3B1B5 /* ComputedPropertiesTests.swift */,
 				9B0555412EDB665C00A57B34 /* forager */,
 				9B0555692EDB69CD00A57B34 /* foragerTests */,
 				9B0555722EDB6A0D00A57B34 /* foragerUITests */,
@@ -415,8 +408,6 @@
 				9B56ECB12F0857FB00877716 /* IngredientTemplate+CoreDataProperties.swift */,
 				9B1B39662EF4DED6001E1876 /* IngredientTemplate+Extensions.swift */,
 				85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */,
-				85ADBDBA2EA90D6D00E3B1B5 /* IngredientTemplateValidationTests.swift */,
-				85ADBDC72EA97DE600E3B1B5 /* M3ValidationTests.swift */,
 				9BE384A32F088918001929B8 /* MealPlan+CoreDataClass.swift */,
 				9B56ECB72F0859E800877716 /* MealPlan+CoreDataProperties.swift */,
 				9BD3C3AD2F0ABE2500F50495 /* MealPlan+Extensions.swift */,
@@ -605,12 +596,10 @@
 				9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */,
 				9B1B396D2EF4E48C001E1876 /* MigrationTestHelper.swift in Sources */,
 				9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */,
-				85ADBDC12EA91ED600E3B1B5 /* ComputedPropertiesTests.swift in Sources */,
 				9B731C7F2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift in Sources */,
 				85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */,
 				9BF1F8CC2E566BFF00E79B3F /* Category+CoreDataProperties.swift in Sources */,
 				9B731C832E5364A300CE26F0 /* Ingredient+CoreDataProperties.swift in Sources */,
-				85ADBDBB2EA90D6F00E3B1B5 /* IngredientTemplateValidationTests.swift in Sources */,
 				9BCE1C452EC612E4009B0109 /* GroceryListItem+ComputedProperties.swift in Sources */,
 				9B0555452EDB665C00A57B34 /* forager.xcdatamodeld in Sources */,
 				9B0555462EDB665C00A57B34 /* ManageCategoriesView.swift in Sources */,
@@ -685,7 +674,6 @@
 				9BF1F8CA2E566BCC00E79B3F /* Category+CoreDataClass.swift in Sources */,
 				85ADBDBF2EA91EB800E3B1B5 /* Ingredient+ComputedProperties.swift in Sources */,
 				85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */,
-				85ADBDC82EA97DEE00E3B1B5 /* M3ValidationTests.swift in Sources */,
 				9B31714D2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift in Sources */,
 				9BC663462EE25D95006836A5 /* CloudKitSyncTestView.swift in Sources */,
 				9B731C862E5364A300CE26F0 /* Tag+CoreDataProperties.swift in Sources */,

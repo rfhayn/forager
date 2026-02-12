@@ -25,6 +25,7 @@
 | Feb 8 | M7.6 | CoreData/Schema | CloudKit Production schema is append-only once deployed — record types and fields can never be removed or renamed. Clean up before first Production deploy | CloudKit Console: verify Development schema before deploying | → ADR 007 |
 | Feb 11 | M7.6.2 | Swift/Preview | `#Preview` macros are stripped from Release builds by the compiler, like `#if DEBUG`. Print statements inside preview blocks don't need explicit gating | Build Release config — preview code absent from binary | Raw |
 | Feb 11 | M7.6.2 | Xcode/Scheme | Switching Xcode Run scheme to Release for testing persists in `.xcscheme` file. Always switch back to Debug after, or you'll commit a Release config that disables `#if DEBUG` code and debug symbols | `git diff` the scheme file after testing; restore if changed | Raw |
+| Feb 11 | M7.6.2 | Xcode/pbxproj | Dead test files in the app target compile into the production binary — class metadata and string literals survive even if functions are never called. Remove from `PBXSourcesBuildPhase` or move to test target | Build succeeds after removal; `git diff` pbxproj confirms entries removed | Raw |
 | Feb 8 | M8.3 | Parser/Architecture | Confidence-based routing (regex fast path + NLP fallback) avoids NLP overhead for 85%+ of inputs while maintaining accuracy for edge cases | Unit tests: verify regex returns >0.8 confidence for common patterns, NLP activates below threshold | → ADR 010 |
 
 ---
