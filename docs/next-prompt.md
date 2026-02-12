@@ -1,31 +1,27 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 8, 2026
+**Last Updated**: February 11, 2026
 **For Milestone**: M7.6 — Pre-Launch Prep & TestFlight Submission
-**Status**: READY TO START
-**Prerequisite**: Commit all M8.3.1+M8.3.2 work, merge M8.3 PR to main
+**Status**: IN PROGRESS (M7.6.1 ✅ COMPLETE)
+**Branch**: `feature/M7.6-pre-launch-testflight`
 
 ---
 
 ## **M7.6: PRE-LAUNCH PREP & TESTFLIGHT**
 
 ### **Context**
-- M8 (Ingredient Parsing Intelligence) is fully complete: M8.1, M8.3, M8.3.1, M8.3.2
-- All work needs committing and merging to main before starting M7.6
-- 102 M8 unit tests, clean build, user-confirmed working
-- M7.0-M7.4 all complete (CloudKit, household sharing, UI polish)
-
-### **Before Starting M7.6**
-1. Commit all uncommitted M8.3.1+M8.3.2 changes on `feature/M8.3-hybrid-nlp-parser`
-2. Create PR and squash-merge to main
-3. Create new branch: `feature/M7.6-pre-launch-testflight`
+- M8 complete and merged to main (PR #30)
+- M7.6.1 App Configuration complete (deployment target, launch screen with light/dark)
+- On branch `feature/M7.6-pre-launch-testflight`
 
 ### **Phase Execution Order**
 
 M7.6 has 8 phases. Phases 1-6 can be done in any order. All must complete before phase 7 (submission).
 
-**Start with quick wins:**
-1. **M7.6.1** (30 min) — Display name, iOS 18 target, launch screen
+**Completed:**
+1. ✅ **M7.6.1** (30 min) — Display name, iOS 18.0 target, branded launch screen
+
+**Next quick win:**
 2. **M7.6.2** (30 min) — Wrap developer tools in `#if DEBUG`
 
 **Then the bigger pieces:**
@@ -106,5 +102,5 @@ xcodebuild test -project forager.xcodeproj -scheme forager \
 
 ---
 
-**Version**: February 8, 2026 - M7.6 Ready
-**Dependencies**: M8 complete, all work committed and merged to main
+**Version**: February 11, 2026 - M7.6.1 Complete, M7.6.2 Next
+**Dependencies**: M8 complete and merged to main ✅

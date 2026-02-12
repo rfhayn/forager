@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: February 8, 2026
+**Last Updated**: February 11, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8 ✅ COMPLETE — Ingredient Parsing Intelligence
-**Current Phase**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
-**Next Priority**: M7.6 - External TestFlight
+**Current Milestone**: M7.6 🔄 IN PROGRESS — Pre-Launch Prep & TestFlight
+**Current Phase**: M7.6.1 ✅ COMPLETE | **M7.6.2 Production Gating 🚀 Next**
+**Next Priority**: M7.6.2 - Production Gating (#if DEBUG)
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,19 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 11, 2026** - M7.6.1 App Configuration COMPLETE ✅
+- **Completed**: Display name, iOS 18.0 deployment target, branded launch screen with light/dark mode
+- **Key Deliverables**:
+  - Deployment target lowered from 18.5 → 18.0 (no API changes needed)
+  - LaunchScreen.storyboard with centered sprout icon and branded background colors
+  - Light mode: cream background (#F5F0E1) with light sprout
+  - Dark mode: charcoal background (#121212) with dark sprout
+  - Transparent sprout PNGs (Vision framework background removal) for seamless blending
+  - Asset catalog appearance variants for automatic light/dark resolution
+- **Key Learning**: UILaunchScreen plist dict does NOT resolve asset catalog dark mode variants — must use storyboard approach
+- **Branch**: `feature/M7.6-pre-launch-testflight`
+- **Next**: M7.6.2 Production Gating (#if DEBUG)
 
 ### **February 8, 2026** - M7.6/M7.7 Scoped & PRDs Written 📋
 - **Completed**: Full scope definition and PRDs for M7.6 (8 phases) and M7.7 (4 phases)
@@ -363,7 +376,7 @@ _[Previous entries remain the same through December 23...]_
 | M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
 | M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🔄 IN PROGRESS | 10-12h |
 | M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
 | **Pre-Launch Total** | | **~13-17h remaining** |
 
@@ -601,8 +614,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.0
-**Last Updated**: February 8, 2026
+**Version**: 9.1
+**Last Updated**: February 11, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

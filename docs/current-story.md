@@ -1,10 +1,52 @@
 # Current Development Story
 
-**Last Updated**: February 8, 2026
-**Status**: M8 ✅ **COMPLETE** | M7.6 🚀 **NEXT**
-**Total Progress**: ~187 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to merge)
-**Current Milestone**: M8 - Ingredient Parsing Intelligence (ALL CORE PHASES COMPLETE)
+**Last Updated**: February 11, 2026
+**Status**: M7.6 🔄 **IN PROGRESS** | M7.6.1 ✅ COMPLETE
+**Total Progress**: ~188 hours | 89% planning accuracy
+**Current Branch**: `feature/M7.6-pre-launch-testflight`
+**Current Milestone**: M7.6 - Pre-Launch Prep & TestFlight Submission
+
+---
+
+## ✅ **M7.6.1: APP CONFIGURATION - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 11, 2026
+**Branch**: `feature/M7.6-pre-launch-testflight`
+**PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`
+
+### **What Was Delivered** ✅
+
+**1. Deployment Target** — iOS 18.5 → 18.0
+   - All 4 build configurations updated (app Debug/Release, test Debug/Release)
+   - No iOS 18.1+ APIs in use (verified via codebase scan)
+
+**2. Launch Screen** — Branded storyboard with light/dark mode support
+   - `LaunchScreen.storyboard` with centered sprout icon on themed background
+   - `LaunchIcon` image set with transparent sprout (Vision framework background removal)
+   - `LaunchBackground` color set with light (cream) and dark (charcoal) variants
+   - Asset catalog appearance variants resolve automatically per system appearance
+
+**3. Display Name** — Already correctly set as "forager" (no change needed)
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager.xcodeproj/project.pbxproj` | MODIFIED | Deployment target 18.0, storyboard refs, removed auto-gen launch |
+| `forager/Info.plist` | MODIFIED | Added UILaunchStoryboardName |
+| `forager/LaunchScreen.storyboard` | NEW | Centered icon + named color background |
+| `forager/Assets.xcassets/LaunchIcon.imageset/` | NEW | Transparent sprout @1x/2x/3x, light+dark |
+| `forager/Assets.xcassets/LaunchBackground.colorset/` | NEW | Cream (light) + charcoal (dark) |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build |
+| Light mode launch screen | ✅ VERIFIED | Cream background, sprout centered |
+| Dark mode launch screen | ✅ VERIFIED | Dark background, bright sprout |
+| Deployment target | ✅ VERIFIED | MinimumOSVersion = 18.0 in compiled plist |
 
 ---
 
@@ -530,14 +572,14 @@
 | M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
 | M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🔄 IN PROGRESS | 10-12h |
 | M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
 
 **M7.6 Phases** (8 phases — PRD: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`):
 
 | Phase | Description | Est. |
 |-------|-------------|------|
-| M7.6.1 | App Configuration (display name, iOS 18 target, launch screen) | 0.5h |
+| M7.6.1 | App Configuration (display name, iOS 18 target, launch screen) | ✅ 0.5h |
 | M7.6.2 | Production Gating (`#if DEBUG` for developer tools) | 0.5h |
 | M7.6.3 | Onboarding Flow (first-launch walkthrough, Settings replay) | 3-4h |
 | M7.6.4 | Schema Cleanup P0 (remove Tag + LeaveRequest, fix plannedMeals cardinality) | 1-1.5h |
@@ -586,8 +628,8 @@
 
 ---
 
-**Last Session**: February 8, 2026 - M7.6/M7.7 scoped, PRDs written, core docs updated
-**Next Action**: Commit all uncommitted work, merge M8.3 branch to main, then start M7.6
-**Branch**: `feature/M8.3-hybrid-nlp-parser` (ready to commit + merge)
-**Confidence**: **GREEN** (All features delivered, tested, clean build, 102 M8 tests)
-**Version**: February 8, 2026 - M7.6/M7.7 Scoped
+**Last Session**: February 11, 2026 - M7.6.1 App Configuration complete
+**Next Action**: M7.6.2 Production Gating (#if DEBUG)
+**Branch**: `feature/M7.6-pre-launch-testflight`
+**Confidence**: **GREEN** (M7.6.1 complete, clean build, launch screen verified on device)
+**Version**: February 11, 2026 - M7.6.1 Complete
