@@ -39,7 +39,9 @@ class OptimizedRecipeDataService: ObservableObject {
             
             return recipes
         } catch {
+            #if DEBUG
             print("Error fetching recipes: \(error)")
+            #endif
             return []
         }
     }
@@ -63,7 +65,9 @@ class OptimizedRecipeDataService: ObservableObject {
             
             return recipes.first
         } catch {
+            #if DEBUG
             print("Error fetching recipe: \(error)")
+            #endif
             return nil
         }
     }

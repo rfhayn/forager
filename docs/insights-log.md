@@ -23,6 +23,8 @@
 | Feb 11 | M7.6.2 | SwiftUI/ViewBuilder | `#if DEBUG` / `#else` inside `@ViewBuilder` closures works cleanly as long as both branches return the same type — no type erasure needed. Good pattern for swapping debug vs production UI | Build succeeds in both configurations; visual check in simulator | Raw |
 | Feb 11 | M7.6.2 | Xcode/Simulator | You can test Release builds in the simulator: Edit Scheme (Cmd+<) → Run → Info → change Build Configuration to "Release". Remember to switch back to Debug when done | Run in simulator with Release config; verify debug UI is absent | Raw |
 | Feb 8 | M7.6 | CoreData/Schema | CloudKit Production schema is append-only once deployed — record types and fields can never be removed or renamed. Clean up before first Production deploy | CloudKit Console: verify Development schema before deploying | → ADR 007 |
+| Feb 11 | M7.6.2 | Swift/Preview | `#Preview` macros are stripped from Release builds by the compiler, like `#if DEBUG`. Print statements inside preview blocks don't need explicit gating | Build Release config — preview code absent from binary | Raw |
+| Feb 11 | M7.6.2 | Xcode/Scheme | Switching Xcode Run scheme to Release for testing persists in `.xcscheme` file. Always switch back to Debug after, or you'll commit a Release config that disables `#if DEBUG` code and debug symbols | `git diff` the scheme file after testing; restore if changed | Raw |
 | Feb 8 | M8.3 | Parser/Architecture | Confidence-based routing (regex fast path + NLP fallback) avoids NLP overhead for 85%+ of inputs while maintaining accuracy for edge cases | Unit tests: verify regex returns >0.8 confidence for common patterns, NLP activates below threshold | → ADR 010 |
 
 ---

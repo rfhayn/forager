@@ -154,7 +154,9 @@ class QuantityMigrationService: ObservableObject {
                 totalToMigrate: totalIngredients + totalGroceryItems
             )
         } catch {
+            #if DEBUG
             print("Error generating migration preview: \(error)")
+            #endif
             return MigrationPreview(
                 sampleIngredients: [],
                 sampleGroceryItems: [],
@@ -194,9 +196,13 @@ class QuantityMigrationService: ObservableObject {
         // Save context
         do {
             try context.save()
+            #if DEBUG
             print("✅ Migration saved successfully")
+            #endif
         } catch {
+            #if DEBUG
             print("❌ Error saving migration: \(error)")
+            #endif
         }
         
         return MigrationSummary(
@@ -224,7 +230,9 @@ class QuantityMigrationService: ObservableObject {
                 let textToMigrate = getTextToMigrate(from: ingredient)
                 
                 guard !textToMigrate.isEmpty else {
+                    #if DEBUG
                     print("⚠️ Ingredient \(ingredient.id?.uuidString.prefix(8) ?? "?") has no text to migrate")
+                    #endif
                     failed += 1
                     continue
                 }
@@ -245,18 +253,26 @@ class QuantityMigrationService: ObservableObject {
                 
                 if structured.isParseable {
                     successful += 1
+                    #if DEBUG
                     print("✅ Migrated ingredient: '\(textToMigrate)' -> \(structured.numericValue ?? 0) \(structured.standardUnit ?? "")")
+                    #endif
                 } else {
                     failed += 1
+                    #if DEBUG
                     print("❌ FAILED ingredient: '\(textToMigrate)' - confidence: \(structured.parseConfidence)")
+                    #endif
                 }
             }
             
+            #if DEBUG
             print("📊 Ingredients: \(successful) successful, \(failed) failed out of \(ingredients.count)")
+            #endif
             return (total: ingredients.count, successful: successful, failed: failed)
             
         } catch {
+            #if DEBUG
             print("❌ Error fetching ingredients for migration: \(error)")
+            #endif
             return (total: 0, successful: 0, failed: 0)
         }
     }
@@ -274,7 +290,9 @@ class QuantityMigrationService: ObservableObject {
                 let textToMigrate = getTextToMigrate(from: item)
                 
                 guard !textToMigrate.isEmpty else {
+                    #if DEBUG
                     print("⚠️ GroceryListItem \(item.id?.uuidString.prefix(8) ?? "?") has no text to migrate")
+                    #endif
                     failed += 1
                     continue
                 }
@@ -295,18 +313,26 @@ class QuantityMigrationService: ObservableObject {
                 
                 if structured.isParseable {
                     successful += 1
+                    #if DEBUG
                     print("✅ Migrated item: '\(textToMigrate)' -> \(structured.numericValue ?? 0) \(structured.standardUnit ?? "")")
+                    #endif
                 } else {
                     failed += 1
+                    #if DEBUG
                     print("❌ FAILED item: '\(textToMigrate)' - confidence: \(structured.parseConfidence)")
+                    #endif
                 }
             }
             
+            #if DEBUG
             print("📊 Grocery Items: \(successful) successful, \(failed) failed out of \(items.count)")
+            #endif
             return (total: items.count, successful: successful, failed: failed)
             
         } catch {
+            #if DEBUG
             print("❌ Error fetching grocery items for migration: \(error)")
+            #endif
             return (total: 0, successful: 0, failed: 0)
         }
     }
@@ -383,10 +409,14 @@ class QuantityMigrationService: ObservableObject {
             }
             
             try context.save()
+            #if DEBUG
             print("✅ Migration rolled back successfully")
+            #endif
             
         } catch {
+            #if DEBUG
             print("❌ Error during rollback: \(error)")
+            #endif
         }
     }
 }

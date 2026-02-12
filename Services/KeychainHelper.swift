@@ -42,7 +42,9 @@ enum KeychainHelper {
         )
         pending.append(leave)
         savePendingLeaves(pending)
+        #if DEBUG
         print("📝 M7.3.4: Queued pending leave for household \(householdID)")
+        #endif
     }
 
     /// Returns all pending leaves
@@ -59,7 +61,9 @@ enum KeychainHelper {
         var pending = pendingLeaves()
         pending.removeAll { $0.householdID == householdID }
         savePendingLeaves(pending)
+        #if DEBUG
         print("✅ M7.3.4: Removed pending leave for household \(householdID)")
+        #endif
     }
 
     /// Clears all pending leaves

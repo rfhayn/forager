@@ -25,7 +25,9 @@ extension IngredientTemplate {
             if let existingHousehold = try? context.fetch(fetchRequest).first {
                 household = existingHousehold
                 householdKey = existingHousehold.id?.uuidString
+                #if DEBUG
                 print("🏠 M7.2.3 Phase 4.3: Auto-assigned IngredientTemplate '\(name ?? "untitled")' to household '\(existingHousehold.name ?? "unknown")'")
+                #endif
             }
         }
     }

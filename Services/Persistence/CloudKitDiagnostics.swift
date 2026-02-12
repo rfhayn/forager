@@ -93,7 +93,9 @@ final class CloudKitDiagnostics: ObservableObject {
             self?.handleCloudKitEvent(notification)
         }
         
+        #if DEBUG
         print("☁️ M7.2.3: CloudKit diagnostics observer active")
+        #endif
     }
     
     /// Handle incoming CloudKit event notification
@@ -184,13 +186,19 @@ final class CloudKitDiagnostics: ObservableObject {
         
         if let endDate = event.endDate {
             let duration = endDate.timeIntervalSince(event.startDate)
+            #if DEBUG
             print("☁️ M7.2.3: CloudKit \(typeString) \(statusString) (\(String(format: "%.2f", duration))s)")
+            #endif
         } else {
+            #if DEBUG
             print("☁️ M7.2.3: CloudKit \(typeString) started...")
+            #endif
         }
         
         if let error = event.error {
+            #if DEBUG
             print("   Error: \(error.localizedDescription)")
+            #endif
         }
     }
     
@@ -198,7 +206,9 @@ final class CloudKitDiagnostics: ObservableObject {
     
     /// Manually trigger sync (for testing)
     func triggerSync() {
+        #if DEBUG
         print("☁️ M7.2.3: Manual sync trigger requested")
+        #endif
         // Note: NSPersistentCloudKitContainer doesn't have a public sync trigger
         // Sync happens automatically based on save operations
         // This is here for potential future use or custom sync logic
@@ -207,7 +217,9 @@ final class CloudKitDiagnostics: ObservableObject {
     /// Clear recent events history
     func clearHistory() {
         recentEvents.removeAll()
+        #if DEBUG
         print("☁️ M7.2.3: Event history cleared")
+        #endif
     }
     
     /// Get sync status summary for debugging

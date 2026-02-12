@@ -31,8 +31,10 @@ class IngredientTemplateValidationTests {
             let templates = try context.fetch(fetchRequest)
             report.totalTemplates = templates.count
             
+            #if DEBUG
             print("🔍 Validating \(templates.count) IngredientTemplate entities...")
             print("")
+            #endif
             
             for template in templates {
                 validateSingleTemplate(template, report: &report)
@@ -41,7 +43,9 @@ class IngredientTemplateValidationTests {
             report.printSummary()
             
         } catch {
+            #if DEBUG
             print("❌ Failed to fetch templates: \(error.localizedDescription)")
+            #endif
             report.errors.append(("Fetch Error", error.localizedDescription))
         }
         
@@ -63,17 +67,21 @@ class IngredientTemplateValidationTests {
             let templateName = template.name ?? "Unknown"
             report.errors.append((templateName, error.localizedDescription ?? "Unknown error"))
             
+            #if DEBUG
             print("❌ Validation Error: \(templateName)")
             print("   Error: \(error.localizedDescription ?? "Unknown")")
             print("   Suggestion: \(error.recoverySuggestion ?? "None")")
             print("")
+            #endif
             
         } catch {
             report.invalidTemplates += 1
             let templateName = template.name ?? "Unknown"
             report.errors.append((templateName, error.localizedDescription))
+            #if DEBUG
             print("❌ Unexpected Error: \(templateName) - \(error)")
             print("")
+            #endif
         }
     }
     
@@ -106,11 +114,17 @@ class IngredientTemplateValidationTests {
         
         // Print warnings if any
         if !warnings.isEmpty {
+            #if DEBUG
             print("⚠️ Warnings for '\(template.displayName)':")
+            #endif
             for warning in warnings {
+                #if DEBUG
                 print("   - \(warning)")
+                #endif
             }
+            #if DEBUG
             print("")
+            #endif
         }
     }
     
@@ -118,7 +132,9 @@ class IngredientTemplateValidationTests {
     
     /// Test name validation rules
     func testNameValidation() {
+        #if DEBUG
         print("🧪 Testing name validation rules...")
+        #endif
         
         // Test 1: Empty name
         testValidation(name: "", shouldPass: false, testName: "Empty name")
@@ -140,13 +156,17 @@ class IngredientTemplateValidationTests {
         let limitName = String(repeating: "a", count: 100)
         testValidation(name: limitName, shouldPass: true, testName: "At limit (100 chars)")
         
+        #if DEBUG
         print("✅ Name validation tests complete")
         print("")
+        #endif
     }
     
     /// Test category validation rules
     func testCategoryValidation() {
+        #if DEBUG
         print("🧪 Testing category validation rules...")
+        #endif
         
         // Test 1: Nil category (uncategorized) - should pass
         testValidation(name: "test ingredient", category: nil, shouldPass: true, testName: "Nil category")
@@ -164,13 +184,17 @@ class IngredientTemplateValidationTests {
         let longCategory = String(repeating: "a", count: 51)
         testValidation(name: "test ingredient", category: longCategory, shouldPass: false, testName: "Too long category")
         
+        #if DEBUG
         print("✅ Category validation tests complete")
         print("")
+        #endif
     }
     
     /// Test usage count validation
     func testUsageCountValidation() {
+        #if DEBUG
         print("🧪 Testing usage count validation...")
+        #endif
         
         // Test 1: Zero usage count - valid
         testValidation(name: "test", usageCount: 0, shouldPass: true, testName: "Zero usage")
@@ -187,8 +211,10 @@ class IngredientTemplateValidationTests {
         // Test 5: Over limit
         testValidation(name: "test", usageCount: 10001, shouldPass: false, testName: "Over limit (10,001)")
         
+        #if DEBUG
         print("✅ Usage count validation tests complete")
         print("")
+        #endif
     }
     
     // MARK: - Helper Methods
@@ -211,15 +237,23 @@ class IngredientTemplateValidationTests {
         do {
             try template.validateTemplateData()
             if shouldPass {
+                #if DEBUG
                 print("   ✅ PASS: \(testName)")
+                #endif
             } else {
+                #if DEBUG
                 print("   ❌ FAIL: \(testName) - Expected validation error but passed")
+                #endif
             }
         } catch {
             if !shouldPass {
+                #if DEBUG
                 print("   ✅ PASS: \(testName) - Correctly caught error")
+                #endif
             } else {
+                #if DEBUG
                 print("   ❌ FAIL: \(testName) - Unexpected error: \(error.localizedDescription)")
+                #endif
             }
         }
         
@@ -241,6 +275,7 @@ struct ValidationReport {
     var errors: [(String, String)] = []
     
     mutating func printSummary() {
+        #if DEBUG
         print("")
         print("=" * 70)
         print("📊 VALIDATION REPORT SUMMARY")
@@ -256,18 +291,27 @@ struct ValidationReport {
         print("   • Frequently Used (10+): \(frequentlyUsedTemplates)")
         print("   • Staples: \(stapleTemplates)")
         print("")
+        #endif
         
         if errors.isEmpty {
+            #if DEBUG
             print("✨ NO VALIDATION ERRORS FOUND - All templates are valid!")
+            #endif
         } else {
+            #if DEBUG
             print("⚠️ ERRORS FOUND (\(errors.count)):")
+            #endif
             for (name, error) in errors {
+                #if DEBUG
                 print("   • \(name): \(error)")
+                #endif
             }
         }
         
+        #if DEBUG
         print("")
         print("=" * 70)
+        #endif
     }
     
     private func percentage(_ value: Int, of total: Int) -> Int {
@@ -290,10 +334,12 @@ extension String {
 func runIngredientTemplateValidation(context: NSManagedObjectContext) {
     let tester = IngredientTemplateValidationTests(context: context)
     
+    #if DEBUG
     print("")
     print("🚀 STARTING INGREDIENT TEMPLATE VALIDATION")
     print("=" * 70)
     print("")
+    #endif
     
     // Run individual validation rule tests
     tester.testNameValidation()
@@ -304,7 +350,9 @@ func runIngredientTemplateValidation(context: NSManagedObjectContext) {
     let report = tester.validateAllTemplates()
     
     // Return report for further analysis if needed
+    #if DEBUG
     print("")
     print("🏁 VALIDATION COMPLETE")
     print("")
+    #endif
 }

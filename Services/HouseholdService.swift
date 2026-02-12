@@ -101,7 +101,9 @@ class HouseholdService: ObservableObject {
     // M7.2.2: Keychain-backed left-household tracking (survives reinstalls)
     private func markHouseholdAsLeft(_ householdID: String) {
         KeychainHelper.markHouseholdAsLeft(householdID)
+        #if DEBUG
         print("📝 M7.2.2: Marked household \(householdID) as left (Keychain — survives reinstall)")
+        #endif
     }
 
     private func hasLeftHousehold(_ householdID: String) -> Bool {
@@ -110,7 +112,9 @@ class HouseholdService: ObservableObject {
 
     func clearLeftHouseholdFlag(_ householdID: String) {
         KeychainHelper.clearLeftHouseholdFlag(householdID)
+        #if DEBUG
         print("📝 M7.2.2: Cleared left flag for household \(householdID)")
+        #endif
     }
 
     // M7.2.2 FIX: Derived household key with fallback
@@ -131,7 +135,9 @@ class HouseholdService: ObservableObject {
         if let recipes = household.recipes as? Set<Recipe>,
            let firstRecipe = recipes.first(where: { $0.householdKey != nil }) {
             let derivedKey = firstRecipe.householdKey
+            #if DEBUG
             print("⚠️ M7.2.2: household.id is nil, derived key from recipe: \(derivedKey ?? "nil")")
+            #endif
             return derivedKey
         }
 
@@ -139,11 +145,15 @@ class HouseholdService: ObservableObject {
         if let templates = household.ingredientTemplates as? Set<IngredientTemplate>,
            let firstTemplate = templates.first(where: { $0.householdKey != nil }) {
             let derivedKey = firstTemplate.householdKey
+            #if DEBUG
             print("⚠️ M7.2.2: household.id is nil, derived key from template: \(derivedKey ?? "nil")")
+            #endif
             return derivedKey
         }
 
+        #if DEBUG
         print("⚠️ M7.2.2: Could not derive household key - no data with householdKey found")
+        #endif
         return nil
     }
     
@@ -310,7 +320,9 @@ class HouseholdService: ObservableObject {
         try viewContext.save()
 
         // CloudKit syncs automatically via NSPersistentCloudKitContainer
+        #if DEBUG
         print("✅ M7.3.1: Household renamed to: \(trimmedName)")
+        #endif
     }
 
     /// M7.3.2: Allows a member to leave a household
@@ -663,14 +675,18 @@ class HouseholdService: ObservableObject {
         let isParticipant = await isCurrentUserParticipant(in: household)
 
         if !isParticipant {
+            #if DEBUG
             print("👋 M7.3.3: Detected removal from household — cleaning up")
+            #endif
 
             // Capture householdKey before clearing currentHousehold
             let householdKey = household.id?.uuidString
 
             // Clear current household so UI shows "Create Household"
             currentHousehold = nil
+            #if DEBUG
             print("✅ M7.3.3: Household cleared — UI will show 'Create Household'")
+            #endif
 
             // Mark this household as "left" so we don't re-join on next sync
             if let householdID = householdKey {
@@ -682,27 +698,37 @@ class HouseholdService: ObservableObject {
             // data with householdKey can remain and cause duplicates on rejoin
             if let key = householdKey {
                 let deletedByKey = deleteHouseholdLinkedData(householdKey: key)
+                #if DEBUG
                 print("✅ M7.3.3: Deleted \(deletedByKey) objects with householdKey=\(key)")
+                #endif
             }
 
             // Also purge any remaining shared store objects
             let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+            #if DEBUG
             print("✅ M7.3.3: Purged \(deletedFromStore) shared store objects")
+            #endif
 
             // M7.3.3 FIX: Reset context BEFORE destroying shared store
             // This clears all in-memory managed object references, preventing crashes
             // when SwiftUI tries to access objects from the destroyed store
             viewContext.reset()
+            #if DEBUG
             print("✅ M7.3.3: Reset viewContext to clear in-memory references")
+            #endif
 
             // M7.3.3 FIX: Destroy and recreate shared store to clear local SQLite cache
             // This is more aggressive but necessary to prevent duplicates on rejoin
             // CloudKit will re-sync fresh data when user rejoins
             do {
                 try PersistenceController.shared.destroyAndRecreateSharedStore()
+                #if DEBUG
                 print("✅ M7.3.3: Destroyed and recreated shared store")
+                #endif
             } catch {
+                #if DEBUG
                 print("⚠️ M7.3.3: Failed to recreate shared store: \(error)")
+                #endif
             }
         }
     }
@@ -715,14 +741,18 @@ class HouseholdService: ObservableObject {
         do {
             let stale = try viewContext.fetch(request)
             if !stale.isEmpty {
+                #if DEBUG
                 print("🧹 M7.2.2: Cleaning up \(stale.count) stale leave request(s) from prior versions")
+                #endif
                 for lr in stale {
                     viewContext.delete(lr)
                 }
                 try viewContext.save()
             }
         } catch {
+            #if DEBUG
             print("⚠️ M7.2.2: Could not clean up leave requests: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -739,18 +769,24 @@ class HouseholdService: ObservableObject {
             if let knownIDs = knownParticipantRecordIDs {
                 let departed = knownIDs.subtracting(currentIDs)
                 if !departed.isEmpty {
+                    #if DEBUG
                     print("👋 M7.2.2: Detected \(departed.count) participant departure(s)")
+                    #endif
 
                     // Log remaining participants
                     for p in share.participants {
                         let name = p.userIdentity.nameComponents.map {
                             PersonNameComponentsFormatter().string(from: $0)
                         } ?? p.userIdentity.userRecordID?.recordName ?? "Unknown"
+                        #if DEBUG
                         print("   Remaining: \(name) (\(p.role == .owner ? "Owner" : "Member"))")
+                        #endif
                     }
 
                     for departedID in departed {
+                        #if DEBUG
                         print("   Departed: \(departedID)")
+                        #endif
                     }
 
                     await sendMemberLeftNotification(
@@ -763,7 +799,9 @@ class HouseholdService: ObservableObject {
             knownParticipantRecordIDs = currentIDs
         } catch {
             // Non-fatal — CKShare fetch can fail if network is unavailable
+            #if DEBUG
             print("⚠️ M7.2.2: Could not check participants: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -782,9 +820,13 @@ class HouseholdService: ObservableObject {
 
         do {
             try await UNUserNotificationCenter.current().add(request)
+            #if DEBUG
             print("📬 M7.2.2: Sent member left notification")
+            #endif
         } catch {
+            #if DEBUG
             print("⚠️ M7.2.2: Failed to send notification: \(error)")
+            #endif
         }
     }
 
@@ -1003,12 +1045,14 @@ class HouseholdService: ObservableObject {
             // User can recreate meal assignments manually
         }
 
+        #if DEBUG
         print("📊 M7.2.2: Migrated household data to personal:")
         print("   \(categorySet.count - skippedCategories) categories (\(skippedCategories) skipped — already exist)")
         print("   \(templateSet.count - skippedTemplates) ingredient templates (\(skippedTemplates) skipped — already exist)")
         print("   \(recipeSet.count - skippedRecipes) recipes (\(skippedRecipes) skipped — already exist)")
         print("   \(listSet.count - skippedLists) weekly lists (\(skippedLists) skipped — already exist)")
         print("   \(mealPlanSet.count - skippedPlans) meal plans (\(skippedPlans) skipped — already exist)")
+        #endif
     }
 
 
@@ -1036,7 +1080,9 @@ class HouseholdService: ObservableObject {
             // Compare recordNames (stable identifiers)
             return currentRecordID.recordName == ownerEmail
         } catch {
+            #if DEBUG
             print("⚠️ Failed to verify ownership: \(error)")
+            #endif
             return false
         }
     }
@@ -1147,7 +1193,9 @@ class HouseholdService: ObservableObject {
             // Use recordName as stable owner identifier (not email, but reliable)
             let ownerIdentifier = userRecordID.recordName
 
+            #if DEBUG
             print("📝 Owner identifier (userRecordID): \(ownerIdentifier)")
+            #endif
 
             // 2. Create Household entity in Private Store (will be shared after)
             let household = Household(context: viewContext)
@@ -1329,14 +1377,18 @@ class HouseholdService: ObservableObject {
 
                 self.container.discoverUserIdentity(withUserRecordID: recordID) { identity, error in
                     if let error = error {
+                        #if DEBUG
                         print("⚠️ Failed to discover identity: \(error)")
+                        #endif
                         // Fallback to userRecordID as identifier
                         continuation.resume(returning: (recordID.recordName, "Me"))
                         return
                     }
 
                     guard let identity = identity else {
+                        #if DEBUG
                         print("⚠️ No identity found, using fallback")
+                        #endif
                         continuation.resume(returning: (recordID.recordName, "Me"))
                         return
                     }
@@ -1350,12 +1402,18 @@ class HouseholdService: ObservableObject {
                         let formatter = PersonNameComponentsFormatter()
                         formatter.style = .medium
                         displayName = formatter.string(from: nameComponents)
+                        #if DEBUG
                         print("✅ Retrieved display name: \(displayName)")
+                        #endif
                     } else {
+                        #if DEBUG
                         print("⚠️ Name components not available, using 'Me' as fallback")
+                        #endif
                     }
 
+                    #if DEBUG
                     print("✅ Retrieved email: \(email)")
+                    #endif
                     continuation.resume(returning: (email, displayName))
                 }
             }
@@ -1393,9 +1451,11 @@ class HouseholdService: ObservableObject {
         // Get live share from CloudKit
         let share = try await getShare(for: household)
 
+        #if DEBUG
         print("📝 Creating shareable invitation URL...")
         print("   Current participants: \(share.participants.count)")
         print("   Current publicPermission: \(share.publicPermission.rawValue)")
+        #endif
 
         // Set share metadata for the recipient's acceptance dialog
         let householdName = household.name ?? "a household"
@@ -1407,25 +1467,35 @@ class HouseholdService: ObservableObject {
         let needsPermissionUpdate = share.publicPermission == .none
         if needsPermissionUpdate {
             share.publicPermission = .readWrite
+            #if DEBUG
             print("✅ Enabled public link sharing (readWrite)")
+            #endif
         } else {
+            #if DEBUG
             print("ℹ️ Share already has public permissions")
+            #endif
         }
 
         // Persist share metadata and permission changes
         let persistenceController = PersistenceController.shared
         let privateStore = persistenceController.privateStore
         try await persistenceController.container.persistUpdatedShare(share, in: privateStore)
+        #if DEBUG
         print("✅ Share updated")
+        #endif
 
         // Get the invitation URL from the share itself
         // The share URL is what recipients will use to join
         guard let invitationURL = share.url else {
+            #if DEBUG
             print("❌ Share missing URL")
+            #endif
             throw HouseholdError.noInvitationURL
         }
 
+        #if DEBUG
         print("✅ One-time invitation URL created: \(invitationURL)")
+        #endif
 
         return invitationURL
     }
@@ -1457,9 +1527,13 @@ class HouseholdService: ObservableObject {
             return p1.displayName < p2.displayName
         }
 
+        #if DEBUG
         print("📋 Got \(participants.count) participants from CKShare")
+        #endif
         for p in participants {
+            #if DEBUG
             print("   - \(p.displayName) (\(p.isOwner ? "Owner" : "Member"), \(p.acceptanceStatus.displayText))")
+            #endif
         }
 
         return participants
@@ -1473,7 +1547,9 @@ class HouseholdService: ObservableObject {
             let share = try await getShare(for: household)
             return share.participants.count
         } catch {
+            #if DEBUG
             print("⚠️ Could not get participant count: \(error)")
+            #endif
             return 0
         }
     }
@@ -1487,21 +1563,29 @@ class HouseholdService: ObservableObject {
             let share = try await getShare(for: household)
             // currentUserParticipant is non-nil if user is in the share
             let isParticipant = share.currentUserParticipant != nil
+            #if DEBUG
             print("🔍 isCurrentUserParticipant: \(isParticipant)")
+            #endif
             return isParticipant
         } catch HouseholdError.noShareRecord {
             // M7.3.3: noShareRecord means the share is gone — user was likely removed
             // Don't assume participant just because data is in shared store
+            #if DEBUG
             print("⚠️ Could not check participant status: noShareRecord")
             print("   Share not found — user was likely removed")
+            #endif
             return false
         } catch {
+            #if DEBUG
             print("⚠️ Could not check participant status: \(error)")
+            #endif
             // Network or transient error — if household is in shared store,
             // assume participant (data synced via CloudKit)
             let sharedStore = PersistenceController.shared.sharedStore
             if household.objectID.persistentStore == sharedStore {
+                #if DEBUG
                 print("   Household is in shared store - assuming participant")
+                #endif
                 return true
             }
             return false
@@ -1518,7 +1602,9 @@ class HouseholdService: ObservableObject {
             let isCurrentUser = (owner == share.currentUserParticipant)
             return ShareParticipant(from: owner, isCurrentUser: isCurrentUser)
         } catch {
+            #if DEBUG
             print("⚠️ Could not get owner participant: \(error)")
+            #endif
             return nil
         }
     }
@@ -1534,7 +1620,9 @@ class HouseholdService: ObservableObject {
             }
             return nil
         } catch {
+            #if DEBUG
             print("⚠️ Could not get current user participant: \(error)")
+            #endif
             return nil
         }
     }
@@ -1567,12 +1655,16 @@ class HouseholdService: ObservableObject {
             // 5. Update current household
             currentHousehold = household
 
+            #if DEBUG
             print("✅ Invitation accepted")
             print("✅ Member activated: \(currentEmail)")
             print("✅ Joined household: \(household.name ?? "Unknown")")
+            #endif
 
         } catch {
+            #if DEBUG
             print("❌ Failed to accept invitation: \(error)")
+            #endif
             throw HouseholdError.invitationFailed(error.localizedDescription)
         }
     }
@@ -1593,19 +1685,27 @@ class HouseholdService: ObservableObject {
 
         do {
             // FIRST: Check CloudKit shared database directly
+            #if DEBUG
             print("   Checking CloudKit shared database for shared zones...")
+            #endif
             let sharedDatabase = container.sharedCloudDatabase
 
             // Fetch all shared record zones
             let allZones = try await sharedDatabase.allRecordZones()
+            #if DEBUG
             print("   Found \(allZones.count) shared zone(s) in CloudKit")
+            #endif
 
             for zone in allZones {
+                #if DEBUG
                 print("      Zone: \(zone.zoneID.zoneName) (owner: \(zone.zoneID.ownerName))")
+                #endif
             }
 
             // SECOND: Force a CloudKit sync to pull any new data
+            #if DEBUG
             print("   Forcing Core Data refresh...")
+            #endif
             viewContext.refreshAllObjects()
 
             // Wait a moment for sync to propagate
@@ -1615,18 +1715,24 @@ class HouseholdService: ObservableObject {
             let fetchRequest: NSFetchRequest<Household> = Household.fetchRequest()
             let households = try viewContext.fetch(fetchRequest)
 
+            #if DEBUG
             print("   Found \(households.count) household(s) in local database")
+            #endif
 
             if households.isEmpty && allZones.count > 0 {
+                #if DEBUG
                 print("   No households found in local database")
                 print("   BUT found \(allZones.count) shared zones in CloudKit")
                 print("   ⚠️ NSPersistentCloudKitContainer hasn't synced the shared zone yet")
                 print("   ⚠️ This is a known limitation - shared zones require app restart to sync")
                 print("   💡 Solution: Close the app completely and reopen it")
+                #endif
                 return
             } else if households.isEmpty {
+                #if DEBUG
                 print("   No households found - invitation may not have synced yet")
                 print("   Try again in a few seconds or check CloudKit Dashboard")
+                #endif
                 return
             }
 
@@ -1635,7 +1741,9 @@ class HouseholdService: ObservableObject {
 
             // Find a household where this user is a participant (via CKShare)
             for household in households {
+                #if DEBUG
                 print("   Checking household: \(household.name ?? "Unnamed")")
+                #endif
 
                 // Check if user is a participant via CKShare (the source of truth)
                 let isParticipant = await isCurrentUserParticipant(in: household)
@@ -1644,11 +1752,15 @@ class HouseholdService: ObservableObject {
                 // But only if they haven't re-joined (re-joining clears the flag below)
                 if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
                     if !isParticipant {
+                        #if DEBUG
                         print("   ⏭️ Skipping - user has left this household locally")
+                        #endif
                         continue
                     }
                     // User re-joined this household - clear the left flag
+                    #if DEBUG
                     print("   🔄 User previously left but has re-joined - clearing left flag")
+                    #endif
                     clearLeftHouseholdFlag(householdID)
                 }
 
@@ -1678,7 +1790,9 @@ class HouseholdService: ObservableObject {
     /// Handles: permission grants, iCloud name changes, device name changes
     func refreshCurrentMemberDisplayName() async {
         guard let household = currentHousehold else {
+            #if DEBUG
             print("🔄 Display name refresh: No household, skipping")
+            #endif
             return
         }
 
@@ -1688,12 +1802,16 @@ class HouseholdService: ObservableObject {
 
             // Find current user's member record
             guard let currentMember = household.memberArray.first(where: { $0.email == currentEmail }) else {
+                #if DEBUG
                 print("🔄 Display name refresh: Current user not found in household members")
+                #endif
                 return
             }
 
             let oldName = currentMember.displayName ?? "Unknown"
+            #if DEBUG
             print("🔄 Refreshing display name for: \(oldName)")
+            #endif
 
             // Attempt to get latest display name from CloudKit
             var newDisplayName: String?
@@ -1706,10 +1824,14 @@ class HouseholdService: ObservableObject {
                     let formatter = PersonNameComponentsFormatter()
                     formatter.style = .medium
                     newDisplayName = formatter.string(from: nameComponents)
+                    #if DEBUG
                     print("   ✅ Got display name from CloudKit identity: \(newDisplayName!)")
+                    #endif
                 }
             } catch {
+                #if DEBUG
                 print("   ℹ️ CloudKit identity lookup failed: \(error.localizedDescription)")
+                #endif
             }
 
             // Try 2: Device name extraction
@@ -1719,14 +1841,18 @@ class HouseholdService: ObservableObject {
                 // Pattern 1: "John's iPhone" -> "John"
                 if let range = deviceName.range(of: "'s ") {
                     newDisplayName = String(deviceName[..<range.lowerBound])
+                    #if DEBUG
                     print("   ✅ Extracted from device name: \(newDisplayName!)")
+                    #endif
                 }
                 // Pattern 2: "Rich iPhone" -> "Rich"
                 else if deviceName.contains("iPhone") || deviceName.contains("iPad") {
                     let components = deviceName.components(separatedBy: " ")
                     if components.count >= 2 && (components[1] == "iPhone" || components[1] == "iPad") {
                         newDisplayName = components[0]
+                        #if DEBUG
                         print("   ✅ Extracted from device name: \(newDisplayName!)")
+                        #endif
                     }
                 }
             }
@@ -1735,7 +1861,9 @@ class HouseholdService: ObservableObject {
             if newDisplayName == nil {
                 if !currentEmail.hasPrefix("_") || currentEmail.count <= 20 {
                     newDisplayName = extractDisplayName(from: currentEmail)
+                    #if DEBUG
                     print("   ✅ Extracted from email: \(newDisplayName!)")
+                    #endif
                 }
             }
 
@@ -1743,7 +1871,9 @@ class HouseholdService: ObservableObject {
             if let newDisplayName = newDisplayName, newDisplayName != oldName {
                 currentMember.displayName = newDisplayName
                 try viewContext.save()
+                #if DEBUG
                 print("✅ Updated display name: '\(oldName)' → '\(newDisplayName)'")
+                #endif
 
                 // Refresh household to trigger UI update
                 viewContext.refresh(household, mergeChanges: true)
@@ -1751,13 +1881,19 @@ class HouseholdService: ObservableObject {
                 // Trigger objectWillChange to update UI
                 objectWillChange.send()
             } else if newDisplayName == nil {
+                #if DEBUG
                 print("   ℹ️ No better name found, keeping: \(oldName)")
+                #endif
             } else {
+                #if DEBUG
                 print("   ℹ️ Display name unchanged: \(oldName)")
+                #endif
             }
 
         } catch {
+            #if DEBUG
             print("❌ Error refreshing display name: \(error)")
+            #endif
         }
     }
 
@@ -1842,7 +1978,9 @@ class HouseholdService: ObservableObject {
     private func deleteHouseholdLinkedData(householdKey: String) -> Int {
         var deletedCount = 0
 
+        #if DEBUG
         print("🔍 M7.3.3: deleteHouseholdLinkedData starting for key: \(householdKey)")
+        #endif
 
         // M7.3.3 FIX: Refresh context to ensure we see latest state from all stores
         viewContext.refreshAllObjects()
@@ -1852,13 +1990,17 @@ class HouseholdService: ObservableObject {
         recipeRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         do {
             let recipes = try viewContext.fetch(recipeRequest)
+            #if DEBUG
             print("   Found \(recipes.count) recipes to delete")
+            #endif
             for recipe in recipes {
                 viewContext.delete(recipe)
                 deletedCount += 1
             }
         } catch {
+            #if DEBUG
             print("   ❌ Recipe fetch error: \(error)")
+            #endif
         }
 
         // Delete weekly lists with this householdKey
@@ -1866,13 +2008,17 @@ class HouseholdService: ObservableObject {
         listRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         do {
             let lists = try viewContext.fetch(listRequest)
+            #if DEBUG
             print("   Found \(lists.count) weekly lists to delete")
+            #endif
             for list in lists {
                 viewContext.delete(list)
                 deletedCount += 1
             }
         } catch {
+            #if DEBUG
             print("   ❌ WeeklyList fetch error: \(error)")
+            #endif
         }
 
         // Delete meal plans with this householdKey
@@ -1880,13 +2026,17 @@ class HouseholdService: ObservableObject {
         mealPlanRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         do {
             let mealPlans = try viewContext.fetch(mealPlanRequest)
+            #if DEBUG
             print("   Found \(mealPlans.count) meal plans to delete")
+            #endif
             for mealPlan in mealPlans {
                 viewContext.delete(mealPlan)
                 deletedCount += 1
             }
         } catch {
+            #if DEBUG
             print("   ❌ MealPlan fetch error: \(error)")
+            #endif
         }
 
         // Delete categories with this householdKey
@@ -1894,13 +2044,17 @@ class HouseholdService: ObservableObject {
         categoryRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         do {
             let categories = try viewContext.fetch(categoryRequest)
+            #if DEBUG
             print("   Found \(categories.count) categories to delete")
+            #endif
             for category in categories {
                 viewContext.delete(category)
                 deletedCount += 1
             }
         } catch {
+            #if DEBUG
             print("   ❌ Category fetch error: \(error)")
+            #endif
         }
 
         // Delete ingredient templates with this householdKey
@@ -1908,27 +2062,39 @@ class HouseholdService: ObservableObject {
         templateRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         do {
             let templates = try viewContext.fetch(templateRequest)
+            #if DEBUG
             print("   Found \(templates.count) ingredient templates to delete")
+            #endif
             for template in templates {
                 viewContext.delete(template)
                 deletedCount += 1
             }
         } catch {
+            #if DEBUG
             print("   ❌ IngredientTemplate fetch error: \(error)")
+            #endif
         }
 
         if viewContext.hasChanges {
             do {
                 try viewContext.save()
+                #if DEBUG
                 print("   ✅ Context saved successfully")
+                #endif
             } catch {
+                #if DEBUG
                 print("   ❌ Context save error: \(error)")
+                #endif
             }
         } else {
+            #if DEBUG
             print("   ⚠️ No changes to save")
+            #endif
         }
 
+        #if DEBUG
         print("🔍 M7.3.3: deleteHouseholdLinkedData complete, deleted \(deletedCount) objects")
+        #endif
         return deletedCount
     }
 
@@ -1950,26 +2116,38 @@ class HouseholdService: ObservableObject {
     /// M7.3.3: Comprehensive diagnostic dump for troubleshooting sync issues
     /// Call this from Settings or debug view to understand what data is where
     func dumpCategorySyncDiagnostics() {
+        #if DEBUG
         print("\n" + String(repeating: "=", count: 60))
         print("🔍 M7.3.3 CATEGORY SYNC DIAGNOSTICS")
         print(String(repeating: "=", count: 60))
+        #endif
 
         // 1. Current household state
+        #if DEBUG
         print("\n📦 HOUSEHOLD STATE:")
+        #endif
         if let household = currentHousehold {
+            #if DEBUG
             print("   Name: \(household.name ?? "Unknown")")
             print("   ID (UUID): \(household.id?.uuidString ?? "NIL")")
             print("   Owner: \(household.ownerEmail ?? "Unknown")")
+            #endif
             if let store = household.objectID.persistentStore {
+                #if DEBUG
                 print("   Store: \(store.url?.lastPathComponent ?? "unknown")")
+                #endif
             }
         } else {
+            #if DEBUG
             print("   No current household")
+            #endif
         }
 
         // 2. Derived household key
+        #if DEBUG
         print("\n🔑 HOUSEHOLD KEY:")
         print("   currentHouseholdKey: \(currentHouseholdKey ?? "NIL")")
+        #endif
 
         // 3. Fetch ALL categories (both stores)
         let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
@@ -1977,7 +2155,9 @@ class HouseholdService: ObservableObject {
 
         do {
             let allCategories = try viewContext.fetch(categoryRequest)
+            #if DEBUG
             print("\n📂 ALL CATEGORIES IN DATABASE (\(allCategories.count) total):")
+            #endif
 
             let persistenceController = PersistenceController.shared
             let privateStore = persistenceController.privateStore
@@ -2001,13 +2181,17 @@ class HouseholdService: ObservableObject {
                 }
 
                 let hasHouseholdRelation = category.household != nil
+                #if DEBUG
                 print("   [\(storeName)] '\(category.name ?? "unnamed")' - householdKey: \(category.householdKey ?? "nil"), relationship: \(hasHouseholdRelation ? "YES" : "NO")")
+                #endif
             }
 
+            #if DEBUG
             print("\n📊 STORE SUMMARY:")
             print("   Private store categories: \(privateCount)")
             print("   Shared store categories: \(sharedCount)")
             print("   Unknown store categories: \(unknownStoreCount)")
+            #endif
 
             // 4. Check what the filter would show
             let filteredCategories = allCategories.filter { category in
@@ -2017,19 +2201,27 @@ class HouseholdService: ObservableObject {
                     return category.householdKey == nil
                 }
             }
+            #if DEBUG
             print("\n🎯 FILTER RESULT (\(filteredCategories.count) categories would show):")
+            #endif
             for category in filteredCategories {
+                #if DEBUG
                 print("   '\(category.name ?? "unnamed")'")
+                #endif
             }
 
         } catch {
+            #if DEBUG
             print("   ❌ Error fetching categories: \(error)")
+            #endif
         }
 
         // 5. Check WeeklyLists for comparison
         let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
         if let allLists = try? viewContext.fetch(listRequest) {
+            #if DEBUG
             print("\n📋 WEEKLY LISTS FOR COMPARISON (\(allLists.count) total):")
+            #endif
             let persistenceController = PersistenceController.shared
             for list in allLists.prefix(10) {
                 let storeName: String
@@ -2040,12 +2232,16 @@ class HouseholdService: ObservableObject {
                 } else {
                     storeName = "UNKNOWN"
                 }
+                #if DEBUG
                 print("   [\(storeName)] '\(list.name ?? "unnamed")' - householdKey: \(list.householdKey ?? "nil")")
+                #endif
             }
         }
 
+        #if DEBUG
         print("\n" + String(repeating: "=", count: 60))
         print("END DIAGNOSTICS")
         print(String(repeating: "=", count: 60) + "\n")
+        #endif
     }
 }

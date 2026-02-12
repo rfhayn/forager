@@ -155,7 +155,9 @@ class ParsingTelemetryService: ObservableObject {
         // Load existing data or create new
         self.telemetryData = Self.loadTelemetryData(from: fileURL) ?? ParsingTelemetryData()
 
+        #if DEBUG
         print("📊 ParsingTelemetryService initialized - \(telemetryData.parsingEvents.count) events, \(telemetryData.correctionEvents.count) corrections loaded")
+        #endif
     }
 
     // MARK: - Public API
@@ -337,7 +339,9 @@ class ParsingTelemetryService: ObservableObject {
             }
         }
 
+        #if DEBUG
         print("📊 [Telemetry] All data cleared")
+        #endif
     }
 
     // MARK: - Testing Support
@@ -389,7 +393,9 @@ class ParsingTelemetryService: ObservableObject {
             let data = try encoder.encode(telemetryData)
             try data.write(to: fileURL, options: .atomic)
         } catch {
+            #if DEBUG
             print("📊 [Telemetry] Failed to save: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -404,7 +410,9 @@ class ParsingTelemetryService: ObservableObject {
             decoder.dateDecodingStrategy = .iso8601
             return try decoder.decode(ParsingTelemetryData.self, from: data)
         } catch {
+            #if DEBUG
             print("📊 [Telemetry] Failed to load: \(error.localizedDescription)")
+            #endif
             return nil
         }
     }

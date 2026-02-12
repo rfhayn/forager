@@ -95,13 +95,17 @@ final class PersistenceController {
         // - Benefit: Fast iteration during development, CloudKit testing when needed
         #if !DEBUG || ENABLE_CLOUDKIT_DEBUG
         container = NSPersistentCloudKitContainer(name: "forager")
+        #if DEBUG
         print("☁️ M7.2.3: Using NSPersistentCloudKitContainer (CloudKit ENABLED)")
+        #endif
         #else
         container = NSPersistentCloudKitContainer(name: "forager") as! NSPersistentCloudKitContainer
         // Note: In pure Debug mode without flag, consider using:
         // let regularContainer = NSPersistentContainer(name: "forager")
         // For now, keeping CloudKit enabled to maintain type compatibility
+        #if DEBUG
         print("⚡ M7.2.3: Using NSPersistentCloudKitContainer (Debug mode - consider disabling CloudKit for faster iteration)")
+        #endif
         #endif
 
         // M7.2.2: Configure dual-store architecture for CloudKit sharing
@@ -142,7 +146,9 @@ final class PersistenceController {
             let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .private, inMemory: true)
             let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .shared, inMemory: true)
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
+            #if DEBUG
             print("🧪 M7.2.2: Dual in-memory stores configured")
+            #endif
         } else {
             // Production: separate SQLite files for private and shared data
             let privateStoreURL = appSupportURL.appendingPathComponent("forager.sqlite")
@@ -153,9 +159,11 @@ final class PersistenceController {
 
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
 
+            #if DEBUG
             print("✅ M7.2.2: Dual-store architecture configured")
             print("   Private Store: \(privateStoreURL.lastPathComponent)")
             print("   Shared Store:  \(sharedStoreURL.lastPathComponent)")
+            #endif
         }
     }
 
@@ -184,7 +192,9 @@ final class PersistenceController {
         }
         #else
         if scope == .private {
+            #if DEBUG
             print("☁️ M7.2.2: CloudKit sync enabled (Production)")
+            #endif
         }
         #endif
 
@@ -204,18 +214,22 @@ final class PersistenceController {
     private func loadPersistentStores() {
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
+                #if DEBUG
                 print("❌ M7.2.2: Store loading FAILED")
                 print("   Error: \(error.localizedDescription)")
                 print("   Details: \(error.userInfo)")
+                #endif
                 fatalError("❌ M7.2.2: Core Data store loading failed: \(error), \(error.userInfo)")
             }
 
             // Log each store as it loads
             let scope = storeDescription.cloudKitContainerOptions?.databaseScope
             let scopeName = scope == .private ? "Private" : (scope == .shared ? "Shared" : "Unknown")
+            #if DEBUG
             print("✅ M7.2.2: \(scopeName) store loaded")
             print("   URL: \(storeDescription.url?.lastPathComponent ?? "unknown")")
             print("   CloudKit Scope: .\(scopeName.lowercased())")
+            #endif
         }
     }
     
@@ -224,7 +238,9 @@ final class PersistenceController {
     private func configureViewContext() {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        #if DEBUG
         print("✅ M7.2.3: View context configured with object-trump merge policy")
+        #endif
     }
     
     // MARK: - M7.2.2: Shared Store Lifecycle
@@ -267,12 +283,16 @@ final class PersistenceController {
         guard let store = coordinator.persistentStores.first(where: {
             $0.url?.lastPathComponent == "forager_shared.sqlite"
         }) else {
+            #if DEBUG
             print("ℹ️ M7.2.2: No shared store to destroy")
+            #endif
             return
         }
 
         let storeURL = store.url!
+        #if DEBUG
         print("🔄 M7.2.2: Destroying shared store at \(storeURL.lastPathComponent)")
+        #endif
 
         // Remove from coordinator
         try coordinator.remove(store)
@@ -304,7 +324,9 @@ final class PersistenceController {
             throw error
         }
 
+        #if DEBUG
         print("✅ M7.2.2: Shared store recreated")
+        #endif
     }
 
     // MARK: - Background Context Management
@@ -328,9 +350,13 @@ final class PersistenceController {
             if context.hasChanges {
                 do {
                     try context.save()
+                    #if DEBUG
                     print("✅ M7.2.3: Background context saved successfully")
+                    #endif
                 } catch {
+                    #if DEBUG
                     print("❌ M7.2.3: Background save failed: \(error)")
+                    #endif
                     DispatchQueue.main.async {
                         onError?(error)
                     }
@@ -353,10 +379,14 @@ final class PersistenceController {
                 // Save if any changes were made
                 if context.hasChanges {
                     try context.save()
+                    #if DEBUG
                     print("✅ M7.2.3 Phase 3.6: One-time setup completed")
+                    #endif
                 }
             } catch {
+                #if DEBUG
                 print("❌ M7.2.3 Phase 3.6: One-time setup failed: \(error)")
+                #endif
             }
         }
     }

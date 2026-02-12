@@ -48,7 +48,9 @@ final class DefaultSeeder {
     private static func markSeedingComplete() {
         UserDefaults.standard.set(true, forKey: defaultsSeedingKey)
         UserDefaults.standard.set(Date(), forKey: "M7.2.3_DefaultsSeedingDate")
+        #if DEBUG
         print("✅ M7.2.3: Default seeding marked as complete")
+        #endif
     }
     
     // MARK: - Default Categories Data
@@ -82,19 +84,25 @@ final class DefaultSeeder {
     static func seedDefaultsIfNeeded(in context: NSManagedObjectContext) throws {
         // Quick exit if already seeded on THIS device
         if hasSeededDefaults {
+            #if DEBUG
             print("ℹ️ M7.2.3: Defaults already seeded on this device, skipping")
+            #endif
             return
         }
         
         // Check local database - maybe CloudKit already synced categories
         let categoryCount = (try? context.count(for: Category.fetchRequest())) ?? 0
         if categoryCount >= defaultCategories.count {
+            #if DEBUG
             print("✅ M7.2.3: Categories already exist (count: \(categoryCount)), skipping seeding")
+            #endif
             markSeedingComplete()
             return
         }
         
+        #if DEBUG
         print("🌱 M7.2.3: Starting default data seeding...")
+        #endif
         let startTime = Date()
         
         // Seed default categories using repository (Phase 3.1)
@@ -104,8 +112,10 @@ final class DefaultSeeder {
         markSeedingComplete()
         
         let duration = Date().timeIntervalSince(startTime)
+        #if DEBUG
         print("✅ M7.2.3: Default seeding completed in \(String(format: "%.2f", duration))s")
         print("   Note: CategoryDeduplicator will handle any cross-device duplicates after CloudKit sync")
+        #endif
     }
     
     // MARK: - Category Seeding (Phase 3.1: Using Repository)
@@ -118,7 +128,9 @@ final class DefaultSeeder {
     /// - Parameter context: Core Data managed object context
     /// - Throws: Core Data errors during fetch or save
     private static func seedDefaultCategories(in context: NSManagedObjectContext) throws {
+        #if DEBUG
         print("🏷️ M7.2.3 Phase 3.1: Seeding default categories via repository...")
+        #endif
         
         // Create repository instance
         let repository = HouseholdCategoryRepository(context: context)
@@ -146,9 +158,13 @@ final class DefaultSeeder {
         // Save if any changes were made
         if context.hasChanges {
             try context.save()
+            #if DEBUG
             print("✅ M7.2.3 Phase 3.1: Repository seeding complete - \(createdCount) created, \(existingCount) existing")
+            #endif
         } else {
+            #if DEBUG
             print("ℹ️ M7.2.3 Phase 3.1: All \(existingCount) categories already exist")
+            #endif
         }
     }
     
@@ -189,7 +205,9 @@ final class DefaultSeeder {
         householdID: NSManagedObjectID,
         persistence: PersistenceController
     ) async {
+        #if DEBUG
         print("🌱 M7.2.3 Phase 2.6: Seeding household categories with factory pattern...")
+        #endif
         
         // M7.2.3 Phase 2.6: Construct DataScope with StoreID (Gemini feedback)
         let scope = DataScope.household(id: householdID, storeID: .shared)
@@ -215,11 +233,15 @@ final class DefaultSeeder {
                     createdCount += 1
                     
                 } catch {
+                    #if DEBUG
                     print("❌ M7.2.3 Phase 2.6: Failed to create category '\(name)': \(error)")
+                    #endif
                 }
             }
             
+            #if DEBUG
             print("✅ M7.2.3 Phase 2.6: Factory seeding complete - \(createdCount) categories created")
+            #endif
         }
     }
     

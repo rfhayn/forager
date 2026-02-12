@@ -88,7 +88,9 @@ class UserPreferencesService: ObservableObject {
                 createDefaultPreferences()
             }
         } catch {
+            #if DEBUG
             print("❌ Error loading preferences: \(error.localizedDescription)")
+            #endif
             // Create defaults on error
             createDefaultPreferences()
         }
@@ -143,7 +145,9 @@ class UserPreferencesService: ObservableObject {
     // Called automatically via setupAutoSave() when properties change
     private func savePreferences(duration: Int, startDay: Int, autoName: Bool, showSource: Bool) {
         guard let prefs = preferences else {
+            #if DEBUG
             print("⚠️ No preferences object to save")
+            #endif
             return
         }
         
@@ -170,7 +174,9 @@ class UserPreferencesService: ObservableObject {
             do {
                 try context.save()
             } catch {
+                #if DEBUG
                 print("❌ Error saving preferences: \(error.localizedDescription)")
+                #endif
             }
         }
     }

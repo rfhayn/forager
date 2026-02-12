@@ -111,7 +111,9 @@ class MealPlanService: ObservableObject {
             lastOperationDuration = CFAbsoluteTimeGetCurrent() - startTime
         } catch {
             lastError = error
+            #if DEBUG
             print("Error loading active meal plan: \(error)")
+            #endif
         }
     }
     
@@ -148,7 +150,9 @@ class MealPlanService: ObservableObject {
             return plan
         } catch {
             lastError = error
+            #if DEBUG
             print("Error creating meal plan: \(error)")
+            #endif
             context.rollback()
             return nil
         }
@@ -169,7 +173,9 @@ class MealPlanService: ObservableObject {
             plannedMeals = []
         } catch {
             lastError = error
+            #if DEBUG
             print("Error archiving meal plan: \(error)")
+            #endif
             context.rollback()
         }
     }
@@ -187,7 +193,9 @@ class MealPlanService: ObservableObject {
             }
         } catch {
             lastError = error
+            #if DEBUG
             print("Error deleting meal plan: \(error)")
+            #endif
             context.rollback()
         }
     }
@@ -249,7 +257,9 @@ class MealPlanService: ObservableObject {
             return .valid
         } catch {
             lastError = error
+            #if DEBUG
             print("Error validating plan dates: \(error)")
+            #endif
             return .invalidDate
         }
     }
@@ -298,7 +308,9 @@ class MealPlanService: ObservableObject {
             loadActiveMealPlan()
         } catch {
             lastError = error
+            #if DEBUG
             print("Error updating active plan status: \(error)")
+            #endif
         }
     }
     
@@ -334,7 +346,9 @@ class MealPlanService: ObservableObject {
             lastOperationDuration = CFAbsoluteTimeGetCurrent() - startTime
         } catch {
             lastError = error
+            #if DEBUG
             print("Error updating completed status: \(error)")
+            #endif
         }
     }
     
@@ -354,7 +368,9 @@ class MealPlanService: ObservableObject {
             return plans.first
         } catch {
             lastError = error
+            #if DEBUG
             print("Error fetching active plan: \(error)")
+            #endif
             return nil
         }
     }
@@ -373,7 +389,9 @@ class MealPlanService: ObservableObject {
             return try context.fetch(fetchRequest)
         } catch {
             lastError = error
+            #if DEBUG
             print("Error fetching upcoming plans: \(error)")
+            #endif
             return []
         }
     }
@@ -393,7 +411,9 @@ class MealPlanService: ObservableObject {
             return try context.fetch(fetchRequest)
         } catch {
             lastError = error
+            #if DEBUG
             print("Error fetching completed plans: \(error)")
+            #endif
             return []
         }
     }
@@ -416,7 +436,9 @@ class MealPlanService: ObservableObject {
             lastOperationDuration = CFAbsoluteTimeGetCurrent() - startTime
         } catch {
             lastError = error
+            #if DEBUG
             print("Error loading planned meals: \(error)")
+            #endif
         }
     }
     
@@ -443,12 +465,16 @@ class MealPlanService: ObservableObject {
         do {
             let existingMeals = try context.fetch(fetchRequest)
             if !existingMeals.isEmpty {
+                #if DEBUG
                 print("Date \(date) already has a planned meal in this plan")
+                #endif
                 return nil
             }
         } catch {
             lastError = error
+            #if DEBUG
             print("Error checking for existing meal: \(error)")
+            #endif
             return nil
         }
         
@@ -487,7 +513,9 @@ class MealPlanService: ObservableObject {
             
         } catch {
             lastError = error
+            #if DEBUG
             print("❌ M7.2.3 Phase 3.4: Error adding recipe to meal plan: \(error)")
+            #endif
             context.rollback()
             return nil
         }
@@ -505,7 +533,9 @@ class MealPlanService: ObservableObject {
             loadPlannedMeals(for: plan) // Reload to update published array
         } catch {
             lastError = error
+            #if DEBUG
             print("Error removing planned meal: \(error)")
+            #endif
             context.rollback()
         }
     }
@@ -520,7 +550,9 @@ class MealPlanService: ObservableObject {
             try context.save()
         } catch {
             lastError = error
+            #if DEBUG
             print("Error marking meal as completed: \(error)")
+            #endif
             context.rollback()
         }
     }
@@ -537,7 +569,9 @@ class MealPlanService: ObservableObject {
             try context.save()
         } catch {
             lastError = error
+            #if DEBUG
             print("Error updating servings: \(error)")
+            #endif
             context.rollback()
         }
     }
@@ -600,7 +634,9 @@ class MealPlanService: ObservableObject {
             }
             try context.save()
         } catch {
+            #if DEBUG
             print("Error deactivating plans: \(error)")
+            #endif
         }
     }
     
