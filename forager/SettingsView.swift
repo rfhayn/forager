@@ -603,7 +603,9 @@ struct SettingsView: View {
 
             } catch {
                 // Show error in console (could add alert UI here)
+                #if DEBUG
                 print("❌ Error leaving household: \(error)")
+                #endif
             }
         }
     }
@@ -618,7 +620,9 @@ struct SettingsView: View {
                 )
                 await householdService.loadCurrentHousehold()
             } catch {
+                #if DEBUG
                 print("❌ Error deleting household: \(error)")
+                #endif
             }
         }
     }
@@ -767,7 +771,9 @@ struct CreateHouseholdSheet: View {
             } catch {
                 errorMessage = error.localizedDescription
                 showError = true
+                #if DEBUG
                 print("❌ Failed to create household: \(error)")
+                #endif
             }
             isCreating = false
         }

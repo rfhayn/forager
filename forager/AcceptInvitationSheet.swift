@@ -136,21 +136,27 @@ struct AcceptInvitationSheet: View {
         defer { isAccepting = false }
 
         do {
+            #if DEBUG
             print("📝 Accepting CloudKit share...")
+            #endif
 
             // Accept the share in CloudKit using metadata
             let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
             let acceptedShare = try await container.accept(share)
 
+            #if DEBUG
             print("✅ Share accepted in CloudKit: \(acceptedShare.recordID)")
             print("⏳ Waiting for CloudKit sync (this may take 10-30 seconds)...")
+            #endif
 
             // Retry loop: wait for household to sync
             var household: Household?
             let maxRetries = 6
 
             for attempt in 1...maxRetries {
+                #if DEBUG
                 print("   Attempt \(attempt)/\(maxRetries) - waiting 5 seconds...")
+                #endif
                 try await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
 
                 // Check for household using auto-member creation logic
@@ -158,10 +164,14 @@ struct AcceptInvitationSheet: View {
 
                 if let found = service.currentHousehold {
                     household = found
+                    #if DEBUG
                     print("✅ Household synced! Found: \(found.name ?? "Unnamed")")
+                    #endif
                     break
                 } else {
+                    #if DEBUG
                     print("   Not yet synced... (\(attempt * 5) seconds elapsed)")
+                    #endif
                 }
             }
 
@@ -174,20 +184,26 @@ struct AcceptInvitationSheet: View {
                         try await service.acceptInvitation(for: household)
                     } else {
                         // Member already active (auto-created) - just dismiss
+                        #if DEBUG
                         print("✅ Member already active - household ready to use")
+                        #endif
                     }
                 }
                 dismiss()
             } else {
                 // Household didn't sync in time - show retry alert
+                #if DEBUG
                 print("⚠️ Household not synced after 30 seconds - showing retry alert")
+                #endif
                 showRetryAlert = true
             }
 
         } catch {
             errorMessage = error.localizedDescription
             showError = true
+            #if DEBUG
             print("❌ Failed to accept invitation: \(error)")
+            #endif
         }
     }
 
@@ -196,16 +212,22 @@ struct AcceptInvitationSheet: View {
         isRetrying = true
         defer { isRetrying = false }
 
+        #if DEBUG
         print("🔄 M7.3.4: Retrying household check...")
+        #endif
 
         // Check for household using auto-member creation logic
         await service.checkForAcceptedInvitations()
 
         if let found = service.currentHousehold {
+            #if DEBUG
             print("✅ M7.3.4: Household found on retry: \(found.name ?? "Unnamed")")
+            #endif
             dismiss()
         } else {
+            #if DEBUG
             print("⚠️ M7.3.4: Household still not synced - showing retry alert again")
+            #endif
             showRetryAlert = true
         }
     }

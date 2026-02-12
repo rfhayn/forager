@@ -169,9 +169,13 @@ struct RecipeListView: View {
                         date: date,
                         mealPlan: plan
                     ) {
+                        #if DEBUG
                         print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
+                        #endif
                     } else {
+                        #if DEBUG
                         print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
+                        #endif
                     }
                 }
             }
@@ -695,7 +699,9 @@ struct RecipeListView: View {
                 ]
             )
 
+        #if DEBUG
         print("✅ Created 15 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1 + M8.3)")
+        #endif
     }
     
     // Helper function to create a recipe with ingredients
@@ -713,16 +719,24 @@ struct RecipeListView: View {
         
         do {
             try viewContext.save()
+            #if DEBUG
             print("✅ Saved recipe: '\(title)'")
+            #endif
             
             addIngredientsWithParsing(to: newRecipe, ingredients: ingredients, in: viewContext)
+            #if DEBUG
             print("   - Created \(ingredients.count) ingredients for '\(title)'")
+            #endif
             
             try viewContext.save()
+            #if DEBUG
             print("✅ Saved ingredients for: '\(title)'")
+            #endif
         } catch {
+            #if DEBUG
             print("❌ Error creating recipe '\(title)': \(error)")
             print("   Error details: \(error.localizedDescription)")
+            #endif
             viewContext.rollback()
         }
     }
@@ -744,12 +758,16 @@ struct RecipeListView: View {
             // M4.3.5 FIX: Create/link ingredient template (was missing!)
             // Extract ingredient name from parsed result and create template
             let ingredientName = parsed.displayName
+            #if DEBUG
             print("      Parsing '\(text)' -> template name: '\(ingredientName)'")
+            #endif
             
             if !ingredientName.isEmpty && ingredientName.lowercased() != "unknown ingredient" {
                 ingredient.ingredientTemplate = templateService.findOrCreateTemplate(name: ingredientName)
             } else {
+                #if DEBUG
                 print("      ⚠️ WARNING: Skipping template creation for empty/unknown ingredient")
+                #endif
             }
             
             // M4.3.1 FIX: Populate all structured quantity fields
@@ -767,9 +785,13 @@ struct RecipeListView: View {
             
             do {
                 try viewContext.save()
+                #if DEBUG
                 print("Recipe(s) deleted successfully")
+                #endif
             } catch {
+                #if DEBUG
                 print("Error deleting recipes: \(error)")
+                #endif
             }
         }
     }
@@ -982,9 +1004,13 @@ struct RecipeDetailView: View {
                 recipe.recordRecipeUsage()
                 do {
                     try viewContext.save()
+                    #if DEBUG
                     print("Recipe marked as used successfully")
+                    #endif
                 } catch {
+                    #if DEBUG
                     print("Error marking recipe as used: \(error)")
+                    #endif
                 }
             }
             Button("Cancel", role: .cancel) {}
@@ -1012,9 +1038,13 @@ struct RecipeDetailView: View {
                     date: date,
                     mealPlan: plan
                 ) {
+                    #if DEBUG
                     print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
+                    #endif
                 } else {
+                    #if DEBUG
                     print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
+                    #endif
                 }
             }
         }

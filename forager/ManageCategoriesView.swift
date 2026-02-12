@@ -196,10 +196,14 @@ struct ManageCategoriesView: View {
 
         do {
             let assignedTemplates = try viewContext.fetch(request)
+            #if DEBUG
             print("📊 Category '\(category.displayName)' has \(assignedTemplates.count) assigned ingredient templates")
+            #endif
             return assignedTemplates.count
         } catch {
+            #if DEBUG
             print("❌ Error checking ingredient template assignments: \(error)")
+            #endif
             return 0
         }
     }
@@ -220,9 +224,11 @@ struct ManageCategoriesView: View {
         let groceryItemCount = category.groceryItemsArray.count
         let ingredientTemplateCount = checkIngredientTemplateAssignments(for: category)
         
+        #if DEBUG
         print("🔍 Category '\(category.displayName)' deletion check:")
         print("   - Grocery items: \(groceryItemCount)")
         print("   - Ingredient templates: \(ingredientTemplateCount)")
+        #endif
         
         if ingredientTemplateCount > 0 {
             // Category has ingredient template assignments - show enhanced dialog
@@ -238,7 +244,9 @@ struct ManageCategoriesView: View {
     private func prepareReassignmentOptions(excluding categoryToExclude: Category) {
         reassignmentCategories = categories.filter { $0 != categoryToExclude }
         selectedReassignmentCategory = reassignmentCategories.first
+        #if DEBUG
         print("📋 Prepared \(reassignmentCategories.count) reassignment options")
+        #endif
     }
     
     private func enhancedDeleteAlertMessage(for category: Category) -> String {
@@ -430,14 +438,20 @@ struct ManageCategoriesView: View {
                 for template in templates {
                     template.category = targetCategoryName  // Assign String, not Category object
                     let templateName = template.name ?? "Unknown"
+                    #if DEBUG
                     print("🔄 Reassigned '\(templateName)' from '\(sourceCategoryName)' to '\(targetCategoryName)'")
+                    #endif
                 }
 
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
+                #if DEBUG
                 print("✅ Successfully reassigned \(templates.count) ingredient templates and deleted category '\(sourceCategoryName)'")
+                #endif
             } catch {
+                #if DEBUG
                 print("❌ Error during reassignment: \(error)")
+                #endif
             }
 
         }, onError: { error in
@@ -488,7 +502,9 @@ struct ManageCategoriesView: View {
                     uncategorizedCategory.sortOrder = Int16.max
                     // M7.3.4: Set householdKey for proper scoping
                     uncategorizedCategory.householdKey = currentHouseholdKey
+                    #if DEBUG
                     print("✅ Created Uncategorized category during reassignment")
+                    #endif
                 }
 
                 // M7.3.4: Move only ingredient templates in current household scope
@@ -503,15 +519,21 @@ struct ManageCategoriesView: View {
                 for template in templates {
                     template.category = uncategorizedCategory.displayName  // Assign to Uncategorized, not nil
                     let templateName = template.name ?? "Unknown"
+                    #if DEBUG
                     print("🔄 Moved '\(templateName)' to Uncategorized category")
+                    #endif
                 }
 
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
+                #if DEBUG
                 print("✅ Successfully moved \(templates.count) ingredient templates to Uncategorized and deleted category '\(sourceCategoryName)'")
+                #endif
                 
             } catch {
+                #if DEBUG
                 print("❌ Error moving templates to Uncategorized: \(error)")
+                #endif
             }
             
         }, onError: { error in
@@ -546,7 +568,9 @@ struct ManageCategoriesView: View {
                 categoryToUpdate.sortOrder = update.sortOrder
             }
             
+            #if DEBUG
             print("✅ Reordered categories successfully")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 self.errorMessage = "Failed to reorder categories: \(error.localizedDescription)"
@@ -588,12 +612,16 @@ struct ManageCategoriesView: View {
                 }
                 
                 if itemCount > 0 {
+                    #if DEBUG
                     print("📝 Updated \(itemCount) item\(itemCount == 1 ? "" : "s") - removed category relationship but preserved category name '\(categoryName)'")
+                    #endif
                 }
             }
             
             context.delete(categoryToDelete)
+            #if DEBUG
             print("✅ Deleted category: \(categoryName)")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 self.errorMessage = "Failed to delete category: \(error.localizedDescription)"
@@ -612,7 +640,9 @@ struct ManageCategoriesView: View {
         
         PersistenceController.shared.performWrite({ context in
             Category.resetToDefaultOrder(in: context)
+            #if DEBUG
             print("✅ Reset categories to default order")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 self.errorMessage = "Failed to reset order: \(error.localizedDescription)"

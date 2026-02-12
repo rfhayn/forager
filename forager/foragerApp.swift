@@ -69,7 +69,9 @@ struct foragerApp: App {
 
                 // Check if user already has a household (e.g., new device, reinstall)
                 if householdService.currentHousehold == nil {
+                    #if DEBUG
                     print("🔍 App launch: Checking for existing households...")
+                    #endif
                     await householdService.checkForAcceptedInvitations()
                 }
 
@@ -80,7 +82,9 @@ struct foragerApp: App {
             // M7.2.2 FIX: Listen for CloudKit share acceptance from SceneDelegate
             // This ensures the SAME HouseholdService instance is used (not a new one)
             .onReceive(NotificationCenter.default.publisher(for: .cloudKitShareAccepted)) { _ in
+                #if DEBUG
                 print("📬 Received cloudKitShareAccepted notification")
+                #endif
                 Task {
                     await householdService.checkForAcceptedInvitations()
                 }

@@ -41,12 +41,16 @@ struct CategoryRepository {
         
         // Return existing if found
         if let existing = try? context.fetch(request).first {
+            #if DEBUG
             print("📦 CategoryRepository: Found existing '\(displayName)' (normalized: '\(normalized)')")
+            #endif
             return existing
         }
         
         // Create new if doesn't exist
+        #if DEBUG
         print("✨ CategoryRepository: Creating new '\(displayName)' (normalized: '\(normalized)')")
+        #endif
         let category = Category(context: context)
         category.name = displayName
         category.normalizedName = normalized

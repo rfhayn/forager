@@ -65,12 +65,18 @@ struct HouseholdDebugView: View {
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         do {
             let results = try viewContext.fetch(request)
+            #if DEBUG
             print("🔍 Force fetch found \(results.count) households:")
+            #endif
             for household in results {
+                #if DEBUG
                 print("   - \(household.name ?? "Unnamed") (ID: \(household.id?.uuidString ?? "nil"))")
+                #endif
             }
         } catch {
+            #if DEBUG
             print("❌ Force fetch failed: \(error)")
+            #endif
         }
     }
 }

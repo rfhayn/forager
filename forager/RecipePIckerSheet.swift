@@ -216,7 +216,9 @@ struct RecipePickerSheet: View {
         do {
             recipes = try viewContext.fetch(fetchRequest)
         } catch {
+            #if DEBUG
             print("Error fetching recipes: \(error)")
+            #endif
             recipes = []
         }
     }
@@ -250,7 +252,9 @@ struct RecipePickerSheet: View {
             dismiss()
         } else {
             // Error adding recipe
+            #if DEBUG
             print("Error adding recipe to meal plan")
+            #endif
         }
     }
 }

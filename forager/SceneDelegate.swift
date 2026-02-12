@@ -20,9 +20,11 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
         _ windowScene: UIWindowScene,
         userDidAcceptCloudKitShareWith cloudKitShareMetadata: CKShare.Metadata
     ) {
+        #if DEBUG
         print("📨 CloudKit share invitation received (app running)")
         print("   Share URL: \(cloudKitShareMetadata.share.url?.absoluteString ?? "none")")
         print("   Root record: \(cloudKitShareMetadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
+        #endif
 
         acceptShareInvitation(metadata: cloudKitShareMetadata)
     }
@@ -36,9 +38,11 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
     ) {
         // Check if launched via CloudKit share invitation
         if let cloudKitShareMetadata = connectionOptions.cloudKitShareMetadata {
+            #if DEBUG
             print("📨 CloudKit share invitation received (cold start)")
             print("   Share URL: \(cloudKitShareMetadata.share.url?.absoluteString ?? "none")")
             print("   Root record: \(cloudKitShareMetadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
+            #endif
 
             acceptShareInvitation(metadata: cloudKitShareMetadata)
         }
@@ -49,7 +53,9 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
     /// Accepts a CloudKit share invitation using NSPersistentCloudKitContainer's built-in method
     /// This properly integrates the shared data into Core Data's persistence layer
     private func acceptShareInvitation(metadata: CKShare.Metadata) {
+        #if DEBUG
         print("🔄 Accepting share invitation...")
+        #endif
 
         let persistenceController = PersistenceController.shared
         let sharedStore = persistenceController.sharedStore
@@ -61,9 +67,11 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
         existingRequest.fetchLimit = 1
         if let existingHouseholds = try? viewContext.fetch(existingRequest),
            let existing = existingHouseholds.first {
+            #if DEBUG
             print("⚠️ M7.3.3: User already in household '\(existing.name ?? "Unknown")'")
             print("   Cannot accept new share invitation")
             print("   User must leave/delete current household first")
+            #endif
 
             // Post notification to inform UI about the conflict
             DispatchQueue.main.async {
@@ -83,17 +91,23 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
             into: sharedStore
         ) { _, error in
             if let error = error {
+                #if DEBUG
                 print("❌ Failed to accept share invitation: \(error)")
                 print("   Error details: \(error.localizedDescription)")
+                #endif
             } else {
+                #if DEBUG
                 print("✅ Share invitation accepted successfully")
                 print("   Core Data will now sync household data from CloudKit")
                 print("   This may take 10-30 seconds depending on data size")
+                #endif
 
                 // M7.2.2 FIX: Post notification instead of creating a new HouseholdService instance
                 // The main app's HouseholdService will listen for this and check for invitations
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    #if DEBUG
                     print("📢 Posting notification to check for accepted invitations")
+                    #endif
                     NotificationCenter.default.post(
                         name: .cloudKitShareAccepted,
                         object: nil

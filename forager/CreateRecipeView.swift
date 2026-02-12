@@ -652,9 +652,11 @@ struct CreateRecipeView: View {
             try viewContext.save()
             
             // M7.2.3 Phase 4.3: Verify household auto-assignment
+            #if DEBUG
             print("✅ M7.2.3 Phase 4.3: Recipe saved - '\(recipe.title ?? "")'")
             print("   Household: \(recipe.household?.name ?? "nil")")
             print("   Household Key: \(recipe.householdKey ?? "nil")")
+            #endif
             
             hasUnsavedChanges = false
             isSaving = false
@@ -664,7 +666,9 @@ struct CreateRecipeView: View {
             isSaving = false
             validationErrors = [ValidationError.noInstructions] // Reuse for generic error
             showingValidationErrors = true
+            #if DEBUG
             print("Error saving recipe: \(error)")
+            #endif
         }
     }
 }

@@ -185,7 +185,9 @@ struct AddStapleView: View {
                 newStaple.lastPurchased = lastPurchased
             }
             
+            #if DEBUG
             print("✅ Created new staple: \(name) in \(selectedCategory)")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 errorMessage = "Failed to save staple: \(error.localizedDescription)"
@@ -213,7 +215,9 @@ struct AddStapleView: View {
                 itemToUpdate.lastPurchased = lastPurchased
             }
             
+            #if DEBUG
             print("✅ Converted '\(itemToUpdate.name ?? "Unknown")' to staple in \(selectedCategory)")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 errorMessage = "Failed to convert item to staple: \(error.localizedDescription)"
@@ -230,7 +234,9 @@ struct AddStapleView: View {
         dismiss()
         
         // TODO: Could implement navigation to edit the existing staple
+        #if DEBUG
         print("ℹ️ User should edit existing staple: \(item.name ?? "Unknown")")
+        #endif
     }
 }
 

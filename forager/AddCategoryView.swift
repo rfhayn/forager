@@ -131,7 +131,9 @@ struct AddCategoryView: View {
             let maxSortOrder = (try? context.fetch(categoryRequest).map(\.sortOrder).max()) ?? 5
             newCategory.sortOrder = maxSortOrder + 1
 
+            #if DEBUG
             print("✅ Created new category: \(trimmedName)")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 errorMessage = "Failed to save category: \(error.localizedDescription)"

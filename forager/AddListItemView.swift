@@ -279,7 +279,9 @@ struct AddListItemView: View {
         
         if let category = template.category, !category.isEmpty {
             selectedCategory = category
+            #if DEBUG
             print("📋 Auto-populated category: \(category)")
+            #endif
         }
     }
     
@@ -326,11 +328,15 @@ struct AddListItemView: View {
         
         do {
             try viewContext.save()
+            #if DEBUG
             print("✅ Added item to list: \(parsed.displayName)")
+            #endif
             
             // PHASE 3: Check if this is a new ingredient
             if selectedTemplate == nil {
+                #if DEBUG
                 print("   ℹ️ New ingredient detected: \(parsed.name)")
+                #endif
                 
                 // Prepare data for template creation prompt
                 newIngredientName = parsed.name
@@ -340,7 +346,9 @@ struct AddListItemView: View {
                 // Show the add to templates sheet
                 showingAddToTemplates = true
             } else {
+                #if DEBUG
                 print("   ✓ Matched to existing template: \(selectedTemplate?.name ?? "unknown")")
+                #endif
                 dismiss() // Close immediately if template exists
             }
             
@@ -360,7 +368,9 @@ struct AddListItemView: View {
             if viewContext.hasChanges {
                 try viewContext.save()
             }
+            #if DEBUG
             print("✅ Created new ingredient template: \(newIngredientName)")
+            #endif
 
             showingAddToTemplates = false
             dismiss()

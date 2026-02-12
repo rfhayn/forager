@@ -50,8 +50,9 @@ struct EditStapleView: View {
         self._lastPurchased = State(initialValue: staple.lastPurchased)
         self._includeLastPurchased = State(initialValue: staple.lastPurchased != nil)
         
-        // Debug logging to see what data we're getting
+        #if DEBUG
         print("📝 EditStapleView init - Name: \(staple.name ?? "nil"), Category: \(staple.effectiveCategory)")
+        #endif
     }
     
     var body: some View {
@@ -167,7 +168,9 @@ struct EditStapleView: View {
                 stapleToUpdate.lastPurchased = nil
             }
             
+            #if DEBUG
             print("✅ Updated staple: \(trimmedName) in \(selectedCategory)")
+            #endif
         }, onError: { error in
             DispatchQueue.main.async {
                 errorMessage = "Failed to save changes: \(error.localizedDescription)"

@@ -252,11 +252,15 @@ struct CloudKitSyncTestView: View {
         do {
             try viewContext.save()
             testDataResult = "✅ Test list created - watch for sync!"
+            #if DEBUG
             print("✅ Created test weekly list with 2 items")
             print("   Waiting for CloudKit sync notification...")
+            #endif
         } catch {
             testDataResult = "❌ Failed to create test data: \(error.localizedDescription)"
+            #if DEBUG
             print("❌ Failed to create test data: \(error)")
+            #endif
             syncMonitor.handleSyncError(error)
         }
     }

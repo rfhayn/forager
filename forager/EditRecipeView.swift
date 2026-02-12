@@ -628,7 +628,9 @@ struct EditRecipeView: View {
             isSaving = false
             validationErrors = [ValidationError.noInstructions]
             showingValidationErrors = true
+            #if DEBUG
             print("Error updating recipe: \(error)")
+            #endif
         }
     }
 }

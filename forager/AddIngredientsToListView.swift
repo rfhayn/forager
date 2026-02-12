@@ -291,7 +291,9 @@ struct AddIngredientsToListView: View {
             }
             completion(true)
         } catch {
+            #if DEBUG
             print("Error saving templates: \(error)")
+            #endif
             completion(false)
         }
     }
@@ -376,7 +378,9 @@ struct AddIngredientsToListView: View {
                 addToShoppingList(targetList: newList)
             }
         } catch {
+            #if DEBUG
             print("Error fetching/creating weekly list: \(error)")
+            #endif
             processingMessage = "Error accessing shopping lists"
             isProcessing = false
         }
@@ -417,7 +421,9 @@ struct AddIngredientsToListView: View {
                 cleanName = extractCleanIngredientName(from: fullIngredientText)
             }
             
+            #if DEBUG
             print("DEBUG: Processing ingredient '\(fullIngredientText)' -> clean: '\(cleanName)' (scale: \(scaleFactor)x)")
+            #endif
             
             // Check for existing items by clean name
             if let existingItem = findExistingItem(named: cleanName, in: existingItems) {
@@ -446,7 +452,9 @@ struct AddIngredientsToListView: View {
                 existingItem.addToSourceRecipes(recipe)
 
                 mergeCount += 1
+                #if DEBUG
                 print("Merged quantities for '\(cleanName)': \(result.displayText) (didMerge: \(result.didMergeQuantity))")
+                #endif
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)
@@ -478,14 +486,20 @@ struct AddIngredientsToListView: View {
                    let categoryString = template.category,
                    !categoryString.isEmpty {
                     listItem.categoryName = categoryString
+                    #if DEBUG
                     print("Assigned category '\(categoryString)' to '\(cleanName)'")
+                    #endif
                 } else {
                     listItem.categoryName = "UNCATEGORIZED"
+                    #if DEBUG
                     print("Assigned UNCATEGORIZED to '\(cleanName)'")
+                    #endif
                 }
                 
                 targetList.addToItems(listItem)
+                #if DEBUG
                 print("Created new item: \(fullIngredientText)")
+                #endif
             }
         }
         
@@ -494,9 +508,13 @@ struct AddIngredientsToListView: View {
             
             // M4.3.2 Phase 2: Enhanced success message with scale info
             let scaleInfo = scaleFactor != 1.0 ? " (scaled \(String(format: "%.1f", scaleFactor))x)" : ""
+            #if DEBUG
             print("Successfully added \(selectedIngredientsToAdd.count) ingredients\(scaleInfo)")
+            #endif
             if mergeCount > 0 {
+                #if DEBUG
                 print("Merged quantities for \(mergeCount) existing items")
+                #endif
             }
             
             DispatchQueue.main.async {
@@ -504,7 +522,9 @@ struct AddIngredientsToListView: View {
                 self.presentationMode.wrappedValue.dismiss()
             }
         } catch {
+            #if DEBUG
             print("Error saving grocery list items: \(error)")
+            #endif
             DispatchQueue.main.async {
                 self.processingMessage = "Error saving items"
                 self.isProcessing = false
@@ -566,7 +586,9 @@ struct AddIngredientsToListView: View {
         do {
             return try viewContext.fetch(request).first
         } catch {
+            #if DEBUG
             print("Error fetching template: \(error)")
+            #endif
             return nil
         }
     }
