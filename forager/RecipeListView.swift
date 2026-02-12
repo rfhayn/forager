@@ -196,6 +196,7 @@ struct RecipeListView: View {
     private var enhancedEmptyStateView: some View {
         if searchText.isEmpty {
             // Standard empty state when no search
+            #if DEBUG
             StandardEmptyStateView(
                 iconName: "book.closed",
                 title: "No Recipes Yet",
@@ -204,6 +205,16 @@ struct RecipeListView: View {
                 buttonText: "Generate 11 Test Recipes",
                 buttonAction: createSampleRecipe
             )
+            #else
+            StandardEmptyStateView(
+                iconName: "book.closed",
+                title: "No Recipes Yet",
+                subtitle: "Start building your recipe collection!",
+                buttonIcon: "plus.circle.fill",
+                buttonText: "Add Recipe",
+                buttonAction: { showingAddRecipe = true }
+            )
+            #endif
         } else {
             // Search-specific empty state
             VStack(spacing: 20) {
