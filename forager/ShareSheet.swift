@@ -22,6 +22,7 @@ struct ShareSheet: UIViewControllerRepresentable {
         )
 
         controller.completionWithItemsHandler = { activityType, completed, returnedItems, error in
+            #if DEBUG
             if let error = error {
                 print("❌ Share failed: \(error)")
             } else if completed {
@@ -29,6 +30,7 @@ struct ShareSheet: UIViewControllerRepresentable {
             } else {
                 print("ℹ️ User cancelled share")
             }
+            #endif
 
             DispatchQueue.main.async {
                 onDismiss?()

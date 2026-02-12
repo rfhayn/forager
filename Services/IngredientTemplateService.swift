@@ -295,7 +295,9 @@ class IngredientTemplateService: ObservableObject {
             self.lastSearchDuration = duration
             return templates
         } catch {
+            #if DEBUG
             print("Error searching ingredient templates: \(error)")
+            #endif
             return []
         }
     }
@@ -318,7 +320,9 @@ class IngredientTemplateService: ObservableObject {
             self.popularIngredients = templates
             return templates
         } catch {
+            #if DEBUG
             print("Error loading popular ingredients: \(error)")
+            #endif
             return []
         }
     }
@@ -356,7 +360,9 @@ class IngredientTemplateService: ObservableObject {
             return template
             
         } catch {
+            #if DEBUG
             print("❌ M7.2.3 Phase 3.3: Error creating template: \(error)")
+            #endif
             // Fallback: create directly (shouldn't happen but safety net)
             let template = IngredientTemplate(context: context)
             template.id = UUID()
@@ -376,7 +382,9 @@ class IngredientTemplateService: ObservableObject {
         do {
             try context.save()
         } catch {
+            #if DEBUG
             print("Error updating template usage: \(error)")
+            #endif
         }
     }
     
@@ -406,12 +414,18 @@ class IngredientTemplateService: ObservableObject {
             
             if migratedCount > 0 {
                 try context.save()
+                #if DEBUG
                 print("M4.3.5: Migrated \(migratedCount) templates to normalized names")
+                #endif
             } else {
+                #if DEBUG
                 print("M4.3.5: No templates needed migration")
+                #endif
             }
         } catch {
+            #if DEBUG
             print("Error migrating templates: \(error)")
+            #endif
         }
     }
 }

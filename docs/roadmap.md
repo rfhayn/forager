@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 8, 2026
-**Current Phase**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete (M8.1, M8.3, M8.3.1, M8.3.2), preparing for App Store launch
+**Last Updated**: February 12, 2026
+**Current Phase**: **M7.6 Pre-Launch Prep 🔄 IN PROGRESS** (M7.6.1-M7.6.6 ✅, M7.6.7 next)
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 in progress
 **Execution Order**: M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -782,10 +782,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
-**M7.6: Pre-Launch Prep & TestFlight Submission (10-12 hours) — 🚀 NEXT**
-- **M7.6.1**: App Configuration (0.5h) — display name "forager - Smart Meal Planner", iOS 18 target, launch screen
-- **M7.6.2**: Production Gating (0.5h) — `#if DEBUG` for developer tools section
-- **M7.6.3**: Onboarding Flow (3-4h) — 4-page horizontal walkthrough, first-launch + Settings replay
+**M7.6: Pre-Launch Prep & TestFlight Submission (10-12 hours) — 🔄 IN PROGRESS**
+- **M7.6.1**: App Configuration (0.5h) — ✅ COMPLETE (iOS 18.0 target, branded launch screen with light/dark)
+- **M7.6.2**: Production Gating (0.5h) — ✅ COMPLETE (`#if DEBUG` for developer tools)
+- **M7.6.3**: Onboarding Flow (~4h) — ✅ COMPLETE (coach marks, sample data, first-launch loading screen)
 - **M7.6.4**: Schema Cleanup P0 (1-1.5h) — Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality
 - **M7.6.5**: Schema Cleanup P1 (1-1.5h) — Rename ownerEmail, fix delete rules, code-schema mismatches
 - **M7.6.6**: Schema Cleanup P2 (1-1.5h) — Remove unused fields, fix sourceURL tags hack, naming consistency
@@ -1365,9 +1365,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Merge M8.3, start M7.6 External TestFlight
+**Next Action**: M7.6.7 TestFlight Submission
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8.1+M8.3 complete (~14h). Preparing for App Store launch with M7.6-M7.7 submission.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8 complete (~17h), M7.6.1-M7.6.6 complete. Ready for TestFlight submission (M7.6.7).
 
 ---
 

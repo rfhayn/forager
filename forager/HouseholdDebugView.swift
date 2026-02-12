@@ -31,7 +31,7 @@ struct HouseholdDebugView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(household.name ?? "Unnamed")
                                 .font(.headline)
-                            Text("Owner: \(household.ownerEmail ?? "Unknown")")
+                            Text("Owner: \(household.ownerRecordName ?? household.ownerEmail ?? "Unknown")")
                                 .font(.caption)
                             Text("Members: \(household.members?.count ?? 0)")
                                 .font(.caption)
@@ -65,12 +65,18 @@ struct HouseholdDebugView: View {
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         do {
             let results = try viewContext.fetch(request)
+            #if DEBUG
             print("🔍 Force fetch found \(results.count) households:")
+            #endif
             for household in results {
+                #if DEBUG
                 print("   - \(household.name ?? "Unnamed") (ID: \(household.id?.uuidString ?? "nil"))")
+                #endif
             }
         } catch {
+            #if DEBUG
             print("❌ Force fetch failed: \(error)")
+            #endif
         }
     }
 }

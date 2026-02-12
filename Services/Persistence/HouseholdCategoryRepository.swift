@@ -52,7 +52,9 @@ final class HouseholdCategoryRepository {
         let normalizedName = Category.normalizedName(from: name)
         
         if let existing = try findByNormalizedName(normalizedName) {
+            #if DEBUG
             print("ℹ️ M7.2.3: Category '\(name)' already exists (normalized: '\(normalizedName)')")
+            #endif
             return existing
         }
         
@@ -67,7 +69,9 @@ final class HouseholdCategoryRepository {
         category.dateCreated = Date()
         category.updatedAt = Date()
         
+        #if DEBUG
         print("✅ M7.2.3: Created category '\(name)' (normalized: '\(normalizedName)')")
+        #endif
         
         return category
     }

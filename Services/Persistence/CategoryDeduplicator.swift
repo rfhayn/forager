@@ -82,7 +82,9 @@ final class CategoryDeduplicator {
                 let parts = compoundKey.split(separator: "|", maxSplits: 1)
                 let normalizedName = String(parts.first ?? "")
                 let scope = parts.count > 1 ? String(parts[1]) : "personal"
+                #if DEBUG
                 print("⚠️ M7.2.3: Found \(categories.count) duplicates for '\(normalizedName)' in scope '\(scope)'")
+                #endif
                 
                 // Keep the oldest one (earliest dateCreated)
                 let sorted = categories.sorted { (a, b) in
@@ -95,11 +97,15 @@ final class CategoryDeduplicator {
                 let keeper = sorted.first!
                 let duplicates = Array(sorted.dropFirst())
                 
+                #if DEBUG
                 print("  ✅ Keeping: '\(keeper.displayName)' (created: \(keeper.dateCreated ?? Date()))")
+                #endif
                 
                 // Delete duplicates
                 for duplicate in duplicates {
+                    #if DEBUG
                     print("  🗑️ Deleting: '\(duplicate.displayName)' (created: \(duplicate.dateCreated ?? Date()))")
+                    #endif
                     context.delete(duplicate)
                     deletedCount += 1
                 }
@@ -109,10 +115,14 @@ final class CategoryDeduplicator {
         // Save if we deleted anything
         if deletedCount > 0 {
             try context.save()
+            #if DEBUG
             print("✅ M7.2.3: Removed \(deletedCount) duplicate categories")
             print("   CloudKit will sync deletions to other devices")
+            #endif
         } else {
+            #if DEBUG
             print("✅ M7.2.3: No duplicate categories found")
+            #endif
         }
         
         return deletedCount

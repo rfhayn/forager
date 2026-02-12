@@ -49,7 +49,9 @@ struct PlannedMealRepository {
     ) -> PlannedMeal {
         // Validate meal type
         guard PlannedMeal.isValidMealType(mealType) else {
+            #if DEBUG
             print("⚠️ PlannedMealRepository: Invalid meal type '\(mealType)', defaulting to 'dinner'")
+            #endif
             return getOrCreate(
                 date: date,
                 mealType: "dinner",
@@ -68,11 +70,15 @@ struct PlannedMealRepository {
         
         // Return existing if found (update recipe if different)
         if let existing = try? context.fetch(request).first {
+            #if DEBUG
             print("📦 PlannedMealRepository: Found existing meal for slot '\(slotKey)'")
+            #endif
             
             // Update recipe if changed
             if existing.recipe != recipe {
+                #if DEBUG
                 print("🔄 PlannedMealRepository: Updating recipe for slot '\(slotKey)'")
+                #endif
                 existing.recipe = recipe
             }
             
@@ -85,7 +91,9 @@ struct PlannedMealRepository {
         }
         
         // Create new if doesn't exist
+        #if DEBUG
         print("✨ PlannedMealRepository: Creating new meal for slot '\(slotKey)'")
+        #endif
         let meal = PlannedMeal(context: context)
         meal.date = date
         meal.mealType = mealType.lowercased()

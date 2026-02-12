@@ -121,7 +121,9 @@ struct InviteMemberSheet: View {
             // Create one-time invitation URL (works around UICloudSharingController issues)
             let url = try await service.createOneTimeInvitationURL(household: household)
 
+            #if DEBUG
             print("📝 Presenting share sheet with one-time URL...")
+            #endif
 
             // Store URL and present share sheet
             invitationURL = url
@@ -130,7 +132,9 @@ struct InviteMemberSheet: View {
         } catch {
             errorMessage = error.localizedDescription
             showingError = true
+            #if DEBUG
             print("❌ Failed to create invitation: \(error)")
+            #endif
         }
     }
 }

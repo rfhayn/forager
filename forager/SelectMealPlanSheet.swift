@@ -316,7 +316,9 @@ struct SelectMealPlanSheet: View {
                 errorMessage = nil
             }
         } catch {
+            #if DEBUG
             print("Error checking date availability: \(error)")
+            #endif
             dateHasRecipe = false
             errorMessage = nil
         }

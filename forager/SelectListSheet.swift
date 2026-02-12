@@ -290,7 +290,9 @@ struct SelectListSheet: View {
             onSelect(newList, adjustedServings)
             dismiss()
         } catch {
+            #if DEBUG
             print("Error creating new list: \(error)")
+            #endif
         }
     }
     
@@ -344,8 +346,10 @@ struct SelectListSheet_Previews: PreviewProvider {
         
         return SelectListSheet(
             onSelect: { list, servings in
+                #if DEBUG
                 print("Selected list: \(list.name ?? "Unnamed")")
                 print("Adjusted servings: \(servings)")
+                #endif
             },
             recipes: sampleRecipes
         )

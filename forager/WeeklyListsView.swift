@@ -166,7 +166,9 @@ struct WeeklyListsView: View {
             do {
                 let stapleTemplates = try context.fetch(stapleRequest)
                 
+                #if DEBUG
                 print("📋 Generating list from \(stapleTemplates.count) staple templates")
+                #endif
                 
                 // 3. Create GroceryListItems from staple templates
                 for (index, template) in stapleTemplates.enumerated() {
@@ -195,13 +197,19 @@ struct WeeklyListsView: View {
                     // Link to the weekly list
                     newList.addToItems(listItem)
                     
+                    #if DEBUG
                     print("  ✓ Added '\(template.name ?? "Unknown")' in category '\(listItem.categoryName ?? "None")'")
+                    #endif
                 }
                 
+                #if DEBUG
                 print("✅ Generated grocery list with \(stapleTemplates.count) items from ingredient templates")
+                #endif
                 
             } catch {
+                #if DEBUG
                 print("❌ Error fetching staple templates: \(error)")
+                #endif
                 DispatchQueue.main.async {
                     self.errorMessage = "Failed to fetch staples: \(error.localizedDescription)"
                     self.showingError = true
@@ -234,7 +242,9 @@ struct WeeklyListsView: View {
             PersistenceController.shared.performWrite({ context in
                 let listToDelete = context.object(with: listID)
                 context.delete(listToDelete) // Cascade delete will handle items
+                #if DEBUG
                 print("✅ Deleted weekly list: \(list.name ?? "Unnamed")")
+                #endif
             }, onError: { error in
                 errorMessage = "Failed to delete list: \(error.localizedDescription)"
                 showingError = true

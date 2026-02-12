@@ -19,7 +19,13 @@ import UIKit  // M7.2.3 Phase 4.4: Required for UIDevice
 /// Does NOT handle: Seeding (DefaultSeeder), Migrations (old Persistence.swift), Diagnostics (CloudKitDiagnostics)
 /// 
 /// This is the NEW clean PersistenceController extracted from bloated Persistence.swift
-final class PersistenceController {
+final class PersistenceController: ObservableObject {
+
+    // MARK: - M7.6.3: First-Launch Loading State
+
+    /// Signals when one-time setup (seeding, migrations) is complete.
+    /// SwiftUI splash screen observes this to know when to transition to main content.
+    @Published var isReady = false
     
     // MARK: - Singleton
     
@@ -95,27 +101,30 @@ final class PersistenceController {
         // - Benefit: Fast iteration during development, CloudKit testing when needed
         #if !DEBUG || ENABLE_CLOUDKIT_DEBUG
         container = NSPersistentCloudKitContainer(name: "forager")
+        #if DEBUG
         print("☁️ M7.2.3: Using NSPersistentCloudKitContainer (CloudKit ENABLED)")
+        #endif
         #else
         container = NSPersistentCloudKitContainer(name: "forager") as! NSPersistentCloudKitContainer
         // Note: In pure Debug mode without flag, consider using:
         // let regularContainer = NSPersistentContainer(name: "forager")
         // For now, keeping CloudKit enabled to maintain type compatibility
+        #if DEBUG
         print("⚡ M7.2.3: Using NSPersistentCloudKitContainer (Debug mode - consider disabling CloudKit for faster iteration)")
+        #endif
         #endif
 
         // M7.2.2: Configure dual-store architecture for CloudKit sharing
         // Research from ChatGPT & Gemini confirms this is REQUIRED for shared database sync
         configureDualStoreArchitecture(inMemory: inMemory)
 
-        loadPersistentStores()
-        configureViewContext()
-
-        // M7.2.3 Phase 3.6: Perform setup immediately
-        // DefaultSeeder now queries CloudKit directly, no observer needed!
-        if !inMemory {
-            performOneTimeSetup()
+        if inMemory {
+            // M7.6.3: Preview/test — load synchronously and mark ready immediately
+            loadPersistentStores()
+            configureViewContext()
+            isReady = true
         }
+        // M7.6.3: Production store loading deferred to prepare() so SwiftUI splash renders first
     }
     
     // MARK: - Private Configuration
@@ -142,7 +151,9 @@ final class PersistenceController {
             let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .private, inMemory: true)
             let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .shared, inMemory: true)
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
+            #if DEBUG
             print("🧪 M7.2.2: Dual in-memory stores configured")
+            #endif
         } else {
             // Production: separate SQLite files for private and shared data
             let privateStoreURL = appSupportURL.appendingPathComponent("forager.sqlite")
@@ -153,9 +164,11 @@ final class PersistenceController {
 
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
 
+            #if DEBUG
             print("✅ M7.2.2: Dual-store architecture configured")
             print("   Private Store: \(privateStoreURL.lastPathComponent)")
             print("   Shared Store:  \(sharedStoreURL.lastPathComponent)")
+            #endif
         }
     }
 
@@ -184,7 +197,9 @@ final class PersistenceController {
         }
         #else
         if scope == .private {
+            #if DEBUG
             print("☁️ M7.2.2: CloudKit sync enabled (Production)")
+            #endif
         }
         #endif
 
@@ -204,18 +219,22 @@ final class PersistenceController {
     private func loadPersistentStores() {
         container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
+                #if DEBUG
                 print("❌ M7.2.2: Store loading FAILED")
                 print("   Error: \(error.localizedDescription)")
                 print("   Details: \(error.userInfo)")
+                #endif
                 fatalError("❌ M7.2.2: Core Data store loading failed: \(error), \(error.userInfo)")
             }
 
             // Log each store as it loads
             let scope = storeDescription.cloudKitContainerOptions?.databaseScope
             let scopeName = scope == .private ? "Private" : (scope == .shared ? "Shared" : "Unknown")
+            #if DEBUG
             print("✅ M7.2.2: \(scopeName) store loaded")
             print("   URL: \(storeDescription.url?.lastPathComponent ?? "unknown")")
             print("   CloudKit Scope: .\(scopeName.lowercased())")
+            #endif
         }
     }
     
@@ -224,7 +243,9 @@ final class PersistenceController {
     private func configureViewContext() {
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        #if DEBUG
         print("✅ M7.2.3: View context configured with object-trump merge policy")
+        #endif
     }
     
     // MARK: - M7.2.2: Shared Store Lifecycle
@@ -267,12 +288,16 @@ final class PersistenceController {
         guard let store = coordinator.persistentStores.first(where: {
             $0.url?.lastPathComponent == "forager_shared.sqlite"
         }) else {
+            #if DEBUG
             print("ℹ️ M7.2.2: No shared store to destroy")
+            #endif
             return
         }
 
         let storeURL = store.url!
+        #if DEBUG
         print("🔄 M7.2.2: Destroying shared store at \(storeURL.lastPathComponent)")
+        #endif
 
         // Remove from coordinator
         try coordinator.remove(store)
@@ -304,7 +329,9 @@ final class PersistenceController {
             throw error
         }
 
+        #if DEBUG
         print("✅ M7.2.2: Shared store recreated")
+        #endif
     }
 
     // MARK: - Background Context Management
@@ -328,9 +355,13 @@ final class PersistenceController {
             if context.hasChanges {
                 do {
                     try context.save()
+                    #if DEBUG
                     print("✅ M7.2.3: Background context saved successfully")
+                    #endif
                 } catch {
+                    #if DEBUG
                     print("❌ M7.2.3: Background save failed: \(error)")
+                    #endif
                     DispatchQueue.main.async {
                         onError?(error)
                     }
@@ -341,23 +372,79 @@ final class PersistenceController {
     
     // MARK: - M7.2.3 Phase 3.6: One-Time Setup
     
+    /// M7.6.3: Called by foragerApp after the splash screen is visible.
+    /// Loads persistent stores on a background thread (the slow part), then
+    /// configures the view context and runs one-time setup (seeding/migrations).
+    /// Sets isReady = true when complete.
+    func prepare() {
+        guard !isReady else { return }
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
+            self.loadPersistentStores()
+            DispatchQueue.main.async { [self] in
+                self.configureViewContext()
+                self.performOneTimeSetup()
+            }
+        }
+    }
+
     /// Performs one-time setup operations (seeding, migrations)
     /// M7.2.3 Phase 3.6: DefaultSeeder queries CloudKit directly for true idempotence
-    /// Called immediately during initialization (no observer/timeout needed!)
     private func performOneTimeSetup() {
         container.performBackgroundTask { context in
             do {
                 // M7.2.3 Phase 3.6: Use DefaultSeeder for truly idempotent category creation
                 try DefaultSeeder.seedDefaultsIfNeeded(in: context)
-                
+
+                // M7.6.3: Seed sample data for onboarding (after categories exist)
+                SampleDataSeeder.seedSampleDataIfNeeded(in: context)
+
+                // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
+                Self.migrateSourceURLTagsIfNeeded(in: context)
+
                 // Save if any changes were made
                 if context.hasChanges {
                     try context.save()
-                    print("✅ M7.2.3 Phase 3.6: One-time setup completed")
+                    #if DEBUG
+                    print("✅ One-time setup completed")
+                    #endif
                 }
             } catch {
-                print("❌ M7.2.3 Phase 3.6: One-time setup failed: \(error)")
+                #if DEBUG
+                print("❌ One-time setup failed: \(error)")
+                #endif
+            }
+
+            // M7.6.3: Signal readiness on main thread so SwiftUI splash transitions
+            DispatchQueue.main.async { [weak self] in
+                self?.isReady = true
             }
         }
+    }
+
+    /// M7.6.6: One-time migration from sourceURL "tags:" prefix to dedicated tags attribute
+    /// Idempotent — only touches recipes where sourceURL starts with "tags:" and tags is nil
+    private static func migrateSourceURLTagsIfNeeded(in context: NSManagedObjectContext) {
+        // Guard: skip if the current model doesn't have the tags attribute yet
+        // (prevents crash if .xccurrentversion points to an older model)
+        guard let recipeEntity = NSEntityDescription.entity(forEntityName: "Recipe", in: context),
+              recipeEntity.attributesByName["tags"] != nil else {
+            return
+        }
+
+        let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        request.predicate = NSPredicate(format: "sourceURL BEGINSWITH %@ AND tags == nil", "tags:")
+
+        guard let recipes = try? context.fetch(request), !recipes.isEmpty else { return }
+
+        for recipe in recipes {
+            if let sourceURL = recipe.sourceURL, sourceURL.hasPrefix("tags:") {
+                recipe.tags = String(sourceURL.dropFirst(5))
+                recipe.sourceURL = nil
+            }
+        }
+
+        #if DEBUG
+        print("📋 M7.6.6: Migrated tags from sourceURL for \(recipes.count) recipe(s)")
+        #endif
     }
 }

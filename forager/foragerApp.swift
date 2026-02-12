@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CloudKit
+import Combine
 
 // MARK: - M7.2.3 Phase 2.4: Environment Key for ManagedObjectFactory
 
@@ -31,9 +32,17 @@ struct foragerApp: App {
     // M7.1.2: CloudKit sync monitoring - observing shared instance from PersistenceController
     // Using @ObservedObject since PersistenceController owns the instance
     @StateObject private var syncMonitor = CloudKitSyncMonitor()
-    
+
     // M7.2.2 Task 3: CloudKit share invitation handling via SceneDelegate
     @StateObject private var householdService: HouseholdService
+
+    // M7.6.3: Coach mark onboarding
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var showCoachMarks = false
+    @State private var selectedTab: NavigationTab = .lists
+
+    // M7.6.3: First-launch loading screen — bridged from PersistenceController.$isReady
+    @State private var isReady = false
 
     // M7.2.2 Task 3: Initialize HouseholdService
     init() {
@@ -54,40 +63,92 @@ struct foragerApp: App {
                 persistence: persistenceController  // ✅ Phase 2.6: Added persistence parameter
             )
             
-            // M7.4: Custom Apple Music-style bottom navigation
-            // Grouped pill for main tabs + inline search expansion
-            CustomBottomNavigationView()
-            .environment(\.managedObjectContext, persistenceController.container.viewContext)
-            .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
-            .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
-            .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
-            // M7.2.2: CloudKit share invitations now handled by SceneDelegate
-            // M7.2.2: Check for existing households on app launch (new device scenario)
-            .task {
-                // Give CloudKit a moment to sync on first launch
-                try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
+            // M7.6.3: Show loading splash until one-time setup completes,
+            // then transition to main content
+            Group {
+                if isReady {
+                    // M7.4: Custom Apple Music-style bottom navigation
+                    CustomBottomNavigationView(selectedTab: $selectedTab, showCoachMarks: $showCoachMarks)
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                    .environment(\.managedObjectFactory, objectFactory) // M7.2.3 Phase 2.4: Inject factory
+                    .environmentObject(householdService) // M7.2.3 Phase 2.4: Make household service available
+                    .environmentObject(syncMonitor) // M7.1.2: Make sync monitor available to all views
+                    // M7.2.2: Check for existing households on app launch (new device scenario)
+                    .task {
+                        // Give CloudKit a moment to sync on first launch
+                        try? await Task.sleep(nanoseconds: 3_000_000_000) // 3 seconds
 
-                // Check if user already has a household (e.g., new device, reinstall)
-                if householdService.currentHousehold == nil {
-                    print("🔍 App launch: Checking for existing households...")
-                    await householdService.checkForAcceptedInvitations()
+                        // Check if user already has a household (e.g., new device, reinstall)
+                        if householdService.currentHousehold == nil {
+                            #if DEBUG
+                            print("🔍 App launch: Checking for existing households...")
+                            #endif
+                            await householdService.checkForAcceptedInvitations()
+                        }
+
+                        // Refresh display name on every launch
+                        // Handles: iCloud name changes, device name changes
+                        await householdService.refreshCurrentMemberDisplayName()
+                    }
+                    // M7.6.3: Show coach mark onboarding after splash dismisses
+                    .onAppear {
+                        if !hasCompletedOnboarding {
+                            showCoachMarks = true
+                        }
+                    }
+                    // M7.6.3: Listen for replay onboarding from Settings
+                    .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
+                        hasCompletedOnboarding = false
+                        showCoachMarks = true
+                    }
+                    // M7.2.2 FIX: Listen for CloudKit share acceptance from SceneDelegate
+                    .onReceive(NotificationCenter.default.publisher(for: .cloudKitShareAccepted)) { _ in
+                        #if DEBUG
+                        print("📬 Received cloudKitShareAccepted notification")
+                        #endif
+                        Task {
+                            await householdService.checkForAcceptedInvitations()
+                        }
+                    }
+                } else {
+                    AppLoadingView()
+                        .onAppear {
+                            persistenceController.prepare()
+                        }
                 }
-
-                // Refresh display name on every launch
-                // Handles: iCloud name changes, device name changes
-                await householdService.refreshCurrentMemberDisplayName()
             }
-            // M7.2.2 FIX: Listen for CloudKit share acceptance from SceneDelegate
-            // This ensures the SAME HouseholdService instance is used (not a new one)
-            .onReceive(NotificationCenter.default.publisher(for: .cloudKitShareAccepted)) { _ in
-                print("📬 Received cloudKitShareAccepted notification")
-                Task {
-                    await householdService.checkForAcceptedInvitations()
+            // M7.6.3: Bridge PersistenceController's @Published isReady to local @State
+            .onReceive(persistenceController.$isReady) { ready in
+                if ready {
+                    withAnimation(.easeIn(duration: 0.3)) {
+                        isReady = true
+                    }
                 }
             }
         }
     }
 
+}
+
+// MARK: - M7.6.3: First-Launch Loading Screen
+
+/// Branded splash shown while one-time setup (seeding, migrations) completes.
+/// Matches the storyboard launch screen aesthetic using the same named color and icon assets.
+private struct AppLoadingView: View {
+    var body: some View {
+        ZStack {
+            Color("LaunchBackground")
+                .ignoresSafeArea()
+            VStack(spacing: 24) {
+                Image("LaunchIcon")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 120)
+                ProgressView()
+                    .tint(.secondary)
+            }
+        }
+    }
 }
 
 // MARK: - Custom Button Styles

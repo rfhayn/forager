@@ -259,13 +259,17 @@ struct GroceryListDetailView: View {
         
         do {
             try viewContext.save()
+            #if DEBUG
             print("✅ Quick added: \(parsed.name) to \(categoryToUse)")
             print("   🔍 Template search result: \(selectedTemplate?.name ?? "nil")")
+            #endif
             
             // PHASE 3: Check if this is a new ingredient
             if selectedTemplate == nil {
+                #if DEBUG
                 print("   ⚠️ NEW INGREDIENT DETECTED - Should show modal")
                 print("   📝 Ingredient name: \(parsed.name)")
+                #endif
                 
                 // Prepare data for template creation prompt
                 newIngredientName = parsed.name
@@ -275,10 +279,14 @@ struct GroceryListDetailView: View {
                 // Show the add to templates sheet
                 DispatchQueue.main.async {
                     self.showingAddToTemplates = true
+                    #if DEBUG
                     print("   📲 Modal trigger set to true")
+                    #endif
                 }
             } else {
+                #if DEBUG
                 print("   ✓ Matched to existing template: \(selectedTemplate?.name ?? "unknown")")
+                #endif
             }
             
             // Clear the field
@@ -287,7 +295,9 @@ struct GroceryListDetailView: View {
             showingAutocomplete = false
             
         } catch {
+            #if DEBUG
             print("❌ Failed to quick add item: \(error)")
+            #endif
         }
     }
     
@@ -363,12 +373,16 @@ struct GroceryListDetailView: View {
             if viewContext.hasChanges {
                 try viewContext.save()
             }
+            #if DEBUG
             print("✅ Created new ingredient template: \(newIngredientName)")
+            #endif
 
             showingAddToTemplates = false
 
         } catch {
+            #if DEBUG
             print("❌ Failed to save ingredient: \(error)")
+            #endif
             showingAddToTemplates = false
         }
     }
@@ -554,7 +568,9 @@ struct GroceryListDetailView: View {
         do {
             try viewContext.save()
         } catch {
+            #if DEBUG
             print("❌ Failed to toggle completion: \(error)")
+            #endif
         }
     }
     
@@ -564,7 +580,9 @@ struct GroceryListDetailView: View {
         do {
             try viewContext.save()
         } catch {
+            #if DEBUG
             print("❌ Failed to delete item: \(error)")
+            #endif
         }
     }
     
@@ -577,7 +595,9 @@ struct GroceryListDetailView: View {
         do {
             try viewContext.save()
         } catch {
+            #if DEBUG
             print("❌ Failed to mark all complete: \(error)")
+            #endif
         }
     }
     

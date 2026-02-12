@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: February 8, 2026
+**Last Updated**: February 12, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8 ✅ COMPLETE — Ingredient Parsing Intelligence
-**Current Phase**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
-**Next Priority**: M7.6 - External TestFlight
+**Current Milestone**: M7.6 🔄 IN PROGRESS — Pre-Launch Prep & TestFlight
+**Current Phase**: M7.6.1-M7.6.6 ✅ COMPLETE | **M7.6.7 TestFlight Submission 🚀 Next**
+**Next Priority**: M7.6.7 - TestFlight Submission
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,31 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 12, 2026** - M7.6.3 Loading Screen + Learning Note 31 ✅
+- **Completed**: Branded SwiftUI loading screen bridging storyboard → main app
+- **Key Deliverables**:
+  - Two-phase `PersistenceController` init: fast container creation deferred from slow `loadPersistentStores()`
+  - `AppLoadingView` matching storyboard aesthetic (named color + icon assets, light/dark)
+  - `@Published var isReady` with Combine `onReceive` bridge to `@State` in foragerApp
+  - Animated crossfade transition from splash to main content
+- **Key Learning**: `loadPersistentStores()` is the slow call (~0.5-2s) — splitting into two phases lets SwiftUI render the splash before stores finish loading
+- **Learning Note 31**: Core Data Schema Evolution & CloudKit Constraints — promoted 7 insights from M7.6.4-M7.6.6 schema cleanup
+- **Branch**: `feature/M7.6-pre-launch-testflight`
+- **Next**: M7.6.7 TestFlight Submission (all prerequisites complete)
+
+### **February 11, 2026** - M7.6.1 App Configuration COMPLETE ✅
+- **Completed**: Display name, iOS 18.0 deployment target, branded launch screen with light/dark mode
+- **Key Deliverables**:
+  - Deployment target lowered from 18.5 → 18.0 (no API changes needed)
+  - LaunchScreen.storyboard with centered sprout icon and branded background colors
+  - Light mode: cream background (#F5F0E1) with light sprout
+  - Dark mode: charcoal background (#121212) with dark sprout
+  - Transparent sprout PNGs (Vision framework background removal) for seamless blending
+  - Asset catalog appearance variants for automatic light/dark resolution
+- **Key Learning**: UILaunchScreen plist dict does NOT resolve asset catalog dark mode variants — must use storyboard approach
+- **Branch**: `feature/M7.6-pre-launch-testflight`
+- **Next**: M7.6.2 Production Gating (#if DEBUG)
 
 ### **February 8, 2026** - M7.6/M7.7 Scoped & PRDs Written 📋
 - **Completed**: Full scope definition and PRDs for M7.6 (8 phases) and M7.7 (4 phases)
@@ -363,7 +388,7 @@ _[Previous entries remain the same through December 23...]_
 | M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
 | M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | 🚀 NEXT | 10-12h |
+| **M7.6: Pre-Launch Prep & TestFlight** | 🔄 IN PROGRESS | 10-12h |
 | M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
 | **Pre-Launch Total** | | **~13-17h remaining** |
 
@@ -397,7 +422,8 @@ _[Previous entries remain the same through December 23...]_
 2. **Naming Standards**: Always use M#.#.# format (enforced in [project-naming-standards.md](project-naming-standards.md))
 3. **Documentation Updates**: Update [current-story.md](current-story.md) after EVERY session
 4. **Learning Notes**: Create comprehensive notes after phase completion
-5. **Git Workflow**: Feature branches with frequent commits (15-30 min), squash merge to main
+5. **Insights Log**: Log technical insights to [insights-log.md](insights-log.md) during every session
+6. **Git Workflow**: Feature branches with frequent commits (15-30 min), squash merge to main
 6. **Zero Technical Debt**: Maintain quality standards throughout
 7. **Performance Targets**: <0.5s for operations, <5s for CloudKit sync
 8. **Manual Core Data**: Requires BOTH +CoreDataClass AND +CoreDataProperties files
@@ -588,7 +614,8 @@ _[Previous entries remain the same through December 23...]_
 ## 📚 **LEARNING RESOURCES**
 
 ### **Internal Knowledge**
-- [learning-notes/](learning-notes/) - 29+ implementation journey notes
+- [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
+- [learning-notes/](learning-notes/) - 31 implementation journey notes
 - [architecture/](architecture/) - 8+ architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
 - [git-workflow-for-milestones.md](git-workflow-for-milestones.md) - Complete git workflow guide
@@ -601,8 +628,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.0
-**Last Updated**: February 8, 2026
+**Version**: 9.1
+**Last Updated**: February 11, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

@@ -41,12 +41,16 @@ struct IngredientTemplateRepository {
         
         // Return existing if found
         if let existing = try? context.fetch(request).first {
+            #if DEBUG
             print("📦 IngredientTemplateRepository: Found existing '\(displayName)' (canonical: '\(canonical)')")
+            #endif
             return existing
         }
         
         // Create new if doesn't exist
+        #if DEBUG
         print("✨ IngredientTemplateRepository: Creating new '\(displayName)' (canonical: '\(canonical)')")
+        #endif
         let template = IngredientTemplate(context: context)
         template.name = displayName
         template.canonicalName = canonical

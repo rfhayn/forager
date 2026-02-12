@@ -10,12 +10,28 @@
 import SwiftUI
 
 // M7.4: Custom bottom navigation container
+// M7.6.3: Accepts optional external tab binding + coach mark state
 struct CustomBottomNavigationView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var householdService: HouseholdService
 
-    // Tab selection and search state
-    @State private var selectedTab: NavigationTab = .lists
+    // M7.6.3: External tab binding for coach mark control, with internal fallback
+    private var externalSelectedTab: Binding<NavigationTab>?
+    @State private var internalSelectedTab: NavigationTab = .lists
+    private var selectedTab: NavigationTab {
+        get { externalSelectedTab?.wrappedValue ?? internalSelectedTab }
+    }
+    private func setSelectedTab(_ tab: NavigationTab) {
+        if externalSelectedTab != nil {
+            externalSelectedTab?.wrappedValue = tab
+        } else {
+            internalSelectedTab = tab
+        }
+    }
+
+    // M7.6.3: Coach mark overlay state
+    @Binding var showCoachMarks: Bool
+
     @State private var isSearchActive = false
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
@@ -25,6 +41,12 @@ struct CustomBottomNavigationView: View {
     @State private var ingredientsPopToRoot = false
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
+
+    // M7.6.3: Initializer with optional external tab binding
+    init(selectedTab: Binding<NavigationTab>? = nil, showCoachMarks: Binding<Bool> = .constant(false)) {
+        self.externalSelectedTab = selectedTab
+        self._showCoachMarks = showCoachMarks
+    }
 
     var body: some View {
         ZStack {
@@ -36,7 +58,23 @@ struct CustomBottomNavigationView: View {
                 Spacer()
                 bottomNavigationBar
             }
+
+            // M7.6.3: Coach mark overlay
+            if showCoachMarks {
+                CoachMarkOverlay(
+                    isActive: $showCoachMarks,
+                    selectedTab: coachMarkTabBinding
+                )
+            }
         }
+    }
+
+    // M7.6.3: Binding adapter for coach mark tab control
+    private var coachMarkTabBinding: Binding<NavigationTab> {
+        Binding(
+            get: { selectedTab },
+            set: { setSelectedTab($0) }
+        )
     }
 
     // MARK: - Content View
@@ -108,7 +146,7 @@ struct CustomBottomNavigationView: View {
             ForEach(NavigationTab.mainTabs, id: \.self) { tab in
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selectedTab = tab
+                        setSelectedTab(tab)
                     }
                 } label: {
                     VStack(spacing: 3) {
@@ -133,6 +171,7 @@ struct CustomBottomNavigationView: View {
                         .strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5)
                 )
         )
+        .coachMarkAnchor("tabBar")
     }
 
     @Namespace private var tabAnimation
@@ -259,7 +298,7 @@ enum NavigationTab: String, CaseIterable {
 // MARK: - Preview
 
 #Preview {
-    CustomBottomNavigationView()
+    CustomBottomNavigationView(selectedTab: nil, showCoachMarks: .constant(false))
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
         .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
 }

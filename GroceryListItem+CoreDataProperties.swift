@@ -23,7 +23,6 @@ extension GroceryListItem {
     @NSManaged public var displayText: String?
     @NSManaged public var id: UUID?
     @NSManaged public var isCompleted: Bool
-    @NSManaged public var isFromRecipe: Bool
     @NSManaged public var isParseable: Bool
     @NSManaged public var name: String?
     @NSManaged public var numericValue: Double

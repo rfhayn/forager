@@ -18,7 +18,8 @@ extension Household {
     @NSManaged public var id: UUID?
     @NSManaged public var name: String?
     @NSManaged public var createdDate: Date?
-    @NSManaged public var ownerEmail: String?
+    @NSManaged public var ownerEmail: String?      // Deprecated: renamed to ownerRecordName in v4
+    @NSManaged public var ownerRecordName: String?
     @NSManaged public var shareRecord: Data?
     @NSManaged public var members: NSSet?
     @NSManaged public var categories: NSSet?
@@ -27,7 +28,6 @@ extension Household {
     @NSManaged public var plannedMeals: NSSet?
     @NSManaged public var recipes: NSSet?
     @NSManaged public var weeklyLists: NSSet?
-    @NSManaged public var leaveRequests: NSSet?
 }
 
 // MARK: Generated accessors for members
@@ -140,22 +140,6 @@ extension Household {
 
     @objc(removeWeeklyLists:)
     @NSManaged public func removeFromWeeklyLists(_ values: NSSet)
-}
-
-// MARK: Generated accessors for leaveRequests
-extension Household {
-
-    @objc(addLeaveRequestsObject:)
-    @NSManaged public func addToLeaveRequests(_ value: LeaveRequest)
-
-    @objc(removeLeaveRequestsObject:)
-    @NSManaged public func removeFromLeaveRequests(_ value: LeaveRequest)
-
-    @objc(addLeaveRequests:)
-    @NSManaged public func addToLeaveRequests(_ values: NSSet)
-
-    @objc(removeLeaveRequests:)
-    @NSManaged public func removeFromLeaveRequests(_ values: NSSet)
 }
 
 extension Household: Identifiable {

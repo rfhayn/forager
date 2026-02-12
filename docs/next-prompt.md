@@ -1,110 +1,121 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 8, 2026
+**Last Updated**: February 12, 2026
 **For Milestone**: M7.6 — Pre-Launch Prep & TestFlight Submission
-**Status**: READY TO START
-**Prerequisite**: Commit all M8.3.1+M8.3.2 work, merge M8.3 PR to main
+**Status**: M7.6.1-M7.6.6 ✅ COMPLETE | **M7.6.7 TestFlight Submission 🚀 NEXT**
+**Branch**: `feature/M7.6-pre-launch-testflight`
 
 ---
 
-## **M7.6: PRE-LAUNCH PREP & TESTFLIGHT**
+## **M7.6.7: TESTFLIGHT SUBMISSION**
 
 ### **Context**
-- M8 (Ingredient Parsing Intelligence) is fully complete: M8.1, M8.3, M8.3.1, M8.3.2
-- All work needs committing and merging to main before starting M7.6
-- 102 M8 unit tests, clean build, user-confirmed working
-- M7.0-M7.4 all complete (CloudKit, household sharing, UI polish)
+- All prerequisites complete: app config, production gating, onboarding, schema cleanup, loading screen
+- Branch `feature/M7.6-pre-launch-testflight` has all M7.6.1-M7.6.6 changes
+- Core Data model is at v5 (v2→v3→v4→v5 lightweight migration chain)
+- Schema is clean — dead entities removed, misnamed fields fixed, code-schema mismatches resolved
+- CloudKit Development schema needs to be deployed to Production before archiving
 
-### **Before Starting M7.6**
-1. Commit all uncommitted M8.3.1+M8.3.2 changes on `feature/M8.3-hybrid-nlp-parser`
-2. Create PR and squash-merge to main
-3. Create new branch: `feature/M7.6-pre-launch-testflight`
+### **Pre-Submission Checklist**
 
-### **Phase Execution Order**
+Before starting M7.6.7, verify the branch is ready:
 
-M7.6 has 8 phases. Phases 1-6 can be done in any order. All must complete before phase 7 (submission).
+1. **Merge branch to main** — All M7.6.1-M7.6.6 work needs to be on main for the archive
+   ```bash
+   # Create PR and squash merge
+   gh pr create --title "M7.6: Pre-launch prep — schema cleanup, onboarding, loading screen" --fill
+   gh pr merge --squash --delete-branch
+   git checkout main && git pull origin main
+   ```
 
-**Start with quick wins:**
-1. **M7.6.1** (30 min) — Display name, iOS 18 target, launch screen
-2. **M7.6.2** (30 min) — Wrap developer tools in `#if DEBUG`
+2. **Clean build from main**
+   ```bash
+   xcodebuild -project forager.xcodeproj -scheme forager \
+     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
+   ```
 
-**Then the bigger pieces:**
-3. **M7.6.4** (1-1.5h) — Schema P0: Remove Tag, LeaveRequest, fix plannedMeals
-4. **M7.6.5** (1-1.5h) — Schema P1: Rename ownerEmail, fix delete rules, code mismatches
-5. **M7.6.6** (1-1.5h) — Schema P2: Remove unused fields, fix sourceURL tags hack
-6. **M7.6.3** (3-4h) — Onboarding walkthrough (largest piece, do last before submission)
+3. **Verify on physical device** — Fresh install, onboarding flows, loading screen
 
-**Then submit:**
-7. **M7.6.7** (1.5h) — Deploy CloudKit schema to Production, archive, submit to TestFlight
-8. **M7.6.8** (15 min) — Generate public link after Apple approval (24-48h wait)
+### **M7.6.7 Tasks (Manual — Xcode & Apple Portals)**
 
-### **Key Technical Details**
+These steps are performed manually in Xcode and Apple's web portals:
 
-**Schema Cleanup (M7.6.4-M7.6.6)**:
-- Create Core Data model v3 (current is v2)
-- CloudKit Production schema is **append-only** once deployed — changes are permanent
-- Lightweight migration should handle all changes
-- Test migration with existing v2 data before submitting
+#### 1. Deploy CloudKit Schema to Production
+- Open [CloudKit Console](https://icloud.developer.apple.com/dashboard)
+- Navigate to Schema → Deploy to Production
+- **Review all record types** — verify Tag and LeaveRequest are NOT present
+- **Deploy** — this is **permanent and irreversible**
+- Verify deployment succeeded
 
-**P0 Changes (M7.6.4):**
-- Delete `Tag` entity (unused, never implemented)
-- Delete `LeaveRequest` entity (deprecated, replaced by KeychainHelper)
-- Change `Recipe.plannedMeals` from toOne (maxCount=1) to toMany
+#### 2. Complete App Privacy Questionnaire
+- [App Store Connect](https://appstoreconnect.apple.com) → App Privacy
+- Mark "Data Not Collected" (local + iCloud only, no analytics)
+- Save and verify "Complete" status
 
-**P1 Changes (M7.6.5):**
-- Remove `Recipe.titleKey` attribute + `byTitleKey` fetch index (dead)
-- Add `Household.ownerRecordName`, migrate from `ownerEmail`, remove old field
-- Change `Household.mealPlans` delete rule from Nullify to Cascade
-- Add `PlannedMeal.household` relationship + `householdKey` attribute to schema
-- Add `Household.plannedMeals` inverse relationship to schema
+#### 3. Verify App Store Metadata
+- Display name: "forager - Smart Meal Planner"
+- Bundle name: "forager"
+- Privacy policy URL working
+- Category: Food & Drink
+- Age rating: 4+
 
-**P2 Changes (M7.6.6):**
-- Remove `GroceryItem.ingredientTemplate` and `stapleItems` (unused relationships)
-- Remove `GroceryListItem.isFromRecipe` (write-only, replaced by contributingRecipes)
-- Add `Recipe.tags` attribute, migrate from `sourceURL` prefix hack
-- Standardize `dateCreated`/`createdDate` naming
-- Fix `byisActiveandstateDate` index typo
+#### 4. Archive and Upload Build
+- Xcode → Product → Archive (Release configuration)
+- Distribute App → App Store Connect
+- Wait for processing (5-15 minutes)
 
-**Onboarding (M7.6.3):**
-- 4-page horizontal walkthrough using `TabView` + `.tabViewStyle(.page)`
-- `@AppStorage("hasCompletedOnboarding")` for first-launch detection
-- Present as `.fullScreenCover` from app root
-- "Replay Onboarding" row in Settings
+#### 5. Create External Testing Group
+- TestFlight → External Testing → Create Group
+- Name: "Public Beta Testers"
+- Enable public link
 
-**Production Gating (M7.6.2):**
-- Wrap `developerToolsSection` in `#if DEBUG` in SettingsView.swift
-- Gate "Create Test Recipes" in RecipeListView.swift
+#### 6. Complete Test Information
+```
+What to Test:
+- Create grocery lists organized by store section
+- Add recipes and scale ingredient quantities
+- Plan meals for the week, then generate your grocery list
+- Set up a household and invite family members to collaborate
+- Look for the yellow badge on ingredients — it indicates
+  the parser wasn't fully confident in how it read the input
+
+Feedback Email: [your email]
+Privacy Policy URL: [existing URL]
+```
+
+#### 7. Submit for External Review
+- Select build → attach to external group → submit
+- Apple reviews within 24-48 hours typically
+
+### **After Submission**
+
+- **M7.6.8** (15 min): After Apple approval (24-48h), generate public TestFlight link
+- **M7.7**: App Store Submission & Public Presence (3-5h)
+  - M7.7.1: Beta Landing Page (GitHub Pages)
+  - M7.7.2: GitHub README Update
+  - M7.7.3: App Store Listing
+  - M7.7.4: App Store Submission
 
 ### **Key Files for Context**
 
 ```
-forager/SettingsView.swift                    # M7.6.2: Developer tools gating
-forager/forager.xcdatamodeld/                 # M7.6.4-6: Schema changes (v2 → v3)
-forager/foragerApp.swift                      # M7.6.3: Onboarding presentation
-forager/CustomBottomNavigation.swift          # M7.6.3: Alternative onboarding host
-Services/HouseholdService.swift               # M7.6.5: ownerEmail → ownerRecordName
-Household+CoreDataProperties.swift            # M7.6.5: Schema alignment
-PlannedMeal+CoreDataProperties.swift          # M7.6.5: Schema alignment
-docs/prds/active/m7.6-pre-launch-testflight.md  # Full PRD with all details
-docs/prds/active/m7.7-app-store-submission.md    # M7.7 PRD for after TestFlight
+docs/prds/active/m7.6-pre-launch-prep-testflight.md  # Full PRD with all M7.6 details
+docs/prds/active/m7.7-app-store-submission.md         # M7.7 PRD for after TestFlight
+docs/learning-notes/31-m7.6-core-data-schema-evolution.md  # Schema evolution learnings
+docs/architecture/007-core-data-change-process.md      # Core Data change process ADR
 ```
 
-### **Verification**
+### **Risk Mitigation**
 
-After each schema phase, verify:
-```bash
-xcodebuild -project forager.xcodeproj -scheme forager \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
-```
-
-After all phases, run tests:
-```bash
-xcodebuild test -project forager.xcodeproj -scheme forager \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -only-testing:foragerTests
-```
+| Risk | Mitigation |
+|------|------------|
+| CloudKit schema deploy fails | All schema changes tested in Development; v5 builds and runs cleanly |
+| Apple rejects for missing privacy policy | M7.0 already completed — privacy policy published and linked |
+| Lightweight migration fails on Production data | Tested v2→v5 migration with existing data, zero data loss |
+| Debug UI visible in Release | M7.6.2 wrapped all dev tools in `#if DEBUG` |
+| Crashes on launch | Loading screen + two-phase init tested on physical device |
 
 ---
 
-**Version**: February 8, 2026 - M7.6 Ready
-**Dependencies**: M8 complete, all work committed and merged to main
+**Version**: February 12, 2026 - M7.6.7 TestFlight Submission Ready
+**Dependencies**: M7.6.1-M7.6.6 ✅ COMPLETE, branch ready to merge

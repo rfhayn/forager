@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 8, 2026
-**Version**: 6.0
-**Current Milestone**: M8 ✅ COMPLETE | **M7.6 External TestFlight 🚀 Next**
+**Last Updated**: February 11, 2026
+**Version**: 6.1
+**Current Milestone**: M7.6 🔄 IN PROGRESS (M7.6.1 ✅)
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -418,9 +418,9 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-PL-001** | **App configuration** | Display name "forager - Smart Meal Planner", iOS 18 target, launch screen | M7.6.1 | 🎯 **Brand identity** |
+| **FR-PL-001** | **App configuration** | ✅ iOS 18.0 target, branded launch screen (light/dark), display name "forager" | M7.6.1 | 🎯 **Brand identity** |
 | **FR-PL-002** | **Production gating** | Developer tools hidden in Release builds via `#if DEBUG` | M7.6.2 | 🎯 **Production quality** |
-| **FR-PL-003** | **Onboarding walkthrough** | 4-page first-launch walkthrough with Settings replay | M7.6.3 | 🎯 **User guidance** |
+| **FR-PL-003** | **Onboarding walkthrough** | ✅ Coach mark overlays on real app, sample data seeding, first-launch loading screen, Settings replay | M7.6.3 | 🎯 **User guidance** |
 | **FR-PL-004** | **Schema P0 cleanup** | Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality | M7.6.4 | 🎯 **Schema hygiene** |
 | **FR-PL-005** | **Schema P1 cleanup** | Rename ownerEmail, fix delete rules, code-schema mismatches | M7.6.5 | 🎯 **Data integrity** |
 | **FR-PL-006** | **Schema P2 cleanup** | Remove unused fields, fix sourceURL tags hack, naming consistency | M7.6.6 | 🎯 **Clean schema** |

@@ -612,12 +612,10 @@ struct CreateRecipeView: View {
             recipe.usageCount = 0
             recipe.lastUsed = nil
             
-            // Parse and store tags (simple comma-separated string storage)
+            // Store tags in dedicated field
             let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
             if !tagsString.isEmpty {
-                // Store tags as comma-separated string in sourceURL field for now
-                // (In production, you'd have a proper Tag entity)
-                recipe.sourceURL = "tags:" + tagsString
+                recipe.tags = tagsString
             }
             
             // Step 2: Create Ingredients with Template links
@@ -652,9 +650,11 @@ struct CreateRecipeView: View {
             try viewContext.save()
             
             // M7.2.3 Phase 4.3: Verify household auto-assignment
+            #if DEBUG
             print("✅ M7.2.3 Phase 4.3: Recipe saved - '\(recipe.title ?? "")'")
             print("   Household: \(recipe.household?.name ?? "nil")")
             print("   Household Key: \(recipe.householdKey ?? "nil")")
+            #endif
             
             hasUnsavedChanges = false
             isSaving = false
@@ -664,7 +664,9 @@ struct CreateRecipeView: View {
             isSaving = false
             validationErrors = [ValidationError.noInstructions] // Reuse for generic error
             showingValidationErrors = true
+            #if DEBUG
             print("Error saving recipe: \(error)")
+            #endif
         }
     }
 }

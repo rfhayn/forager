@@ -50,20 +50,26 @@ final class HouseholdIngredientTemplateRepository {
         let canonicalName = IngredientTemplate.canonicalName(from: name)
         
         if let existing = try findByCanonicalName(canonicalName) {
+            #if DEBUG
             print("ℹ️ M7.2.3: Template '\(name)' already exists (canonical: '\(canonicalName)')")
+            #endif
             
             // Update category if provided and different
             if let newCategory = category, newCategory != existing.category {
                 existing.category = newCategory
                 existing.updatedAt = Date()
+                #if DEBUG
                 print("   Updated category: '\(existing.category ?? "nil")' → '\(newCategory)'")
+                #endif
             }
             
             // Update staple status if different
             if isStaple != existing.isStaple {
                 existing.isStaple = isStaple
                 existing.updatedAt = Date()
+                #if DEBUG
                 print("   Updated staple status: \(isStaple)")
+                #endif
             }
             
             return existing
@@ -80,7 +86,9 @@ final class HouseholdIngredientTemplateRepository {
         template.dateCreated = Date()
         template.updatedAt = Date()
         
+        #if DEBUG
         print("✅ M7.2.3: Created template '\(name)' (canonical: '\(canonicalName)')")
+        #endif
         
         return template
     }

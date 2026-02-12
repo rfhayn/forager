@@ -52,8 +52,7 @@ final class MigrationValidationTests: XCTestCase {
             "GroceryItem",
             "GroceryListItem",
             "WeeklyList",
-            "PlannedMeal",
-            "Tag"
+            "PlannedMeal"
         ]
         
         for entityName in requiredEntities {

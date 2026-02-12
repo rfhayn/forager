@@ -50,12 +50,16 @@ final class HouseholdPlannedMealRepository {
         let slotKey = PlannedMeal.generateSlotKey(date: date, mealType: mealType)
         
         if let existing = try findBySlotKey(slotKey) {
+            #if DEBUG
             print("ℹ️ M7.2.3: Planned meal for '\(slotKey)' already exists")
+            #endif
             
             // Update recipe if provided and different
             if let newRecipe = recipe, newRecipe != existing.recipe {
                 existing.recipe = newRecipe
+                #if DEBUG
                 print("   Updated recipe: '\(newRecipe.title ?? "Untitled")'")
+                #endif
             }
             
             return existing
@@ -72,7 +76,9 @@ final class HouseholdPlannedMealRepository {
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
+        #if DEBUG
         print("✅ M7.2.3: Created planned meal for '\(slotKey)' on \(dateFormatter.string(from: date))")
+        #endif
         
         return plannedMeal
     }
@@ -150,7 +156,9 @@ final class HouseholdPlannedMealRepository {
     /// - Parameter plannedMeal: Planned meal to delete
     func delete(_ plannedMeal: PlannedMeal) {
         context.delete(plannedMeal)
+        #if DEBUG
         print("🗑️ M7.2.3: Deleted planned meal for '\(plannedMeal.slotKey ?? "unknown")'")
+        #endif
     }
     
     // MARK: - Private Helper Methods

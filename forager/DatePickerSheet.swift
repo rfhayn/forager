@@ -187,7 +187,9 @@ struct DatePickerSheet: View {
     private func handleDateSelection(_ date: Date) {
         // Ensure we have an active meal plan
         guard let activePlan = mealPlanService.activeMealPlan else {
+            #if DEBUG
             print("No active meal plan available")
+            #endif
             return
         }
         

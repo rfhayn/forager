@@ -244,7 +244,9 @@ struct MealPlanDetailView: View {
         do {
             allRecipes = try viewContext.fetch(fetchRequest)
         } catch {
+            #if DEBUG
             print("Error fetching recipes: \(error)")
+            #endif
             allRecipes = []
         }
     }
@@ -266,7 +268,9 @@ struct MealPlanDetailView: View {
         ) {
             // Success - meal added
         } else {
+            #if DEBUG
             print("Error adding recipe to meal plan")
+            #endif
         }
     }
     
@@ -277,7 +281,9 @@ struct MealPlanDetailView: View {
         do {
             try viewContext.save()
         } catch {
+            #if DEBUG
             print("Error removing planned meal: \(error)")
+            #endif
         }
     }
     
@@ -411,7 +417,9 @@ struct MealPlanDetailView: View {
                 )
             }
         } catch {
+            #if DEBUG
             print("Error saving bulk add: \(error)")
+            #endif
             await MainActor.run {
                 isBulkAdding = false
             }
@@ -478,12 +486,16 @@ struct MealPlanDetailView: View {
         // Save changes to Core Data
         do {
             try viewContext.save()
+            #if DEBUG
             print("M4.3.4: Meal completion toggled to: \(meal.isCompleted)")  // Debug logging
+            #endif
             
             // M4.3.4: Force UI refresh
             refreshID = UUID()
         } catch {
+            #if DEBUG
             print("M4.3.4: Error toggling meal completion: \(error)")
+            #endif
             // Revert the toggle on error
             meal.isCompleted.toggle()
             meal.completedDate = nil

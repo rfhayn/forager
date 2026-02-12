@@ -122,7 +122,9 @@ struct PasteInvitationSheet: View {
         defer { isAccepting = false }
 
         do {
+            #if DEBUG
             print("🔗 Attempting to accept invitation from URL: \(invitationURL)")
+            #endif
 
             // Parse URL
             guard let url = URL(string: invitationURL.trimmingCharacters(in: .whitespaces)) else {
@@ -134,18 +136,24 @@ struct PasteInvitationSheet: View {
                 throw HouseholdError.invitationFailed("Not an iCloud share URL")
             }
 
+            #if DEBUG
             print("📝 Fetching share metadata from CloudKit...")
+            #endif
 
             // Fetch share metadata
             let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
             let metadata = try await container.shareMetadata(for: url)
 
+            #if DEBUG
             print("✅ Fetched share metadata")
             print("   Root record: \(metadata.hierarchicalRootRecordID?.recordName ?? "unknown")")
             print("   Container: \(metadata.containerIdentifier)")
+            #endif
 
             // Accept the share via NSPersistentCloudKitContainer so Core Data mirroring picks it up
+            #if DEBUG
             print("📝 Accepting share via NSPersistentCloudKitContainer...")
+            #endif
             let persistenceController = PersistenceController.shared
             let sharedStore = persistenceController.sharedStore
 
@@ -162,16 +170,22 @@ struct PasteInvitationSheet: View {
                 }
             }
 
+            #if DEBUG
             print("✅ Share accepted via NSPersistentCloudKitContainer")
+            #endif
 
             // Wait for CloudKit sync to propagate with retries
+            #if DEBUG
             print("⏳ Waiting for CloudKit sync (this may take 10-30 seconds)...")
+            #endif
 
             var household: Household?
             let maxRetries = 6
 
             for attempt in 1...maxRetries {
+                #if DEBUG
                 print("   Attempt \(attempt)/\(maxRetries) - waiting 5 seconds...")
+                #endif
                 try await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
 
                 // Check for household
@@ -179,10 +193,14 @@ struct PasteInvitationSheet: View {
 
                 if let found = service.currentHousehold {
                     household = found
+                    #if DEBUG
                     print("✅ Household synced! Found: \(found.name ?? "Unnamed")")
+                    #endif
                     break
                 } else {
+                    #if DEBUG
                     print("   Not yet... (\(attempt * 5) seconds elapsed)")
+                    #endif
                 }
             }
 
@@ -196,7 +214,9 @@ struct PasteInvitationSheet: View {
                         try await service.acceptInvitation(for: household)
                     } else {
                         // Member already active (auto-created) - just dismiss
+                        #if DEBUG
                         print("✅ Member already active - no need to accept invitation")
+                        #endif
                     }
                 }
                 dismiss()
@@ -207,7 +227,9 @@ struct PasteInvitationSheet: View {
         } catch {
             errorMessage = error.localizedDescription
             showError = true
+            #if DEBUG
             print("❌ Failed to accept invitation: \(error)")
+            #endif
         }
     }
 }

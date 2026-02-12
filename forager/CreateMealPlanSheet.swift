@@ -295,7 +295,9 @@ struct CreateMealPlanSheet: View {
                 dismiss()
             }
         } catch {
+            #if DEBUG
             print("Error creating meal plan: \(error)")
+            #endif
             validationError = "Failed to create meal plan. Please try again."
         }
     }

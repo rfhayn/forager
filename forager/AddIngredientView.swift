@@ -74,7 +74,9 @@ struct AddIngredientView: View {
             try viewContext.save()
             dismiss()
         } catch {
+            #if DEBUG
             print("Error saving ingredient: \(error)")
+            #endif
         }
     }
 }

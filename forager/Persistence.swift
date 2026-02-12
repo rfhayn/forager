@@ -33,7 +33,9 @@ extension IngredientTemplate {
     /// Safely toggles staple status with error handling
     func toggleStapleStatus() -> Bool {
         guard let context = managedObjectContext else {
+            #if DEBUG
             print("❌ Cannot toggle staple status - no managed object context")
+            #endif
             return false
         }
         
@@ -42,12 +44,16 @@ extension IngredientTemplate {
         do {
             if context.hasChanges {
                 try context.save()
+                #if DEBUG
                 print("✅ Staple status updated for: \(name ?? "Unknown")")
+                #endif
                 return true
             }
             return true // No changes needed
         } catch {
+            #if DEBUG
             print("❌ Failed to save staple status change: \(error)")
+            #endif
             isStaple.toggle() // Revert the change
             return false
         }
@@ -56,7 +62,9 @@ extension IngredientTemplate {
     /// Updates category assignment with validation
     func assignCategory(_ newCategory: String?) -> Bool {
         guard let context = managedObjectContext else {
+            #if DEBUG
             print("❌ Cannot assign category - no managed object context")
+            #endif
             return false
         }
         
@@ -66,12 +74,16 @@ extension IngredientTemplate {
         do {
             if context.hasChanges {
                 try context.save()
+                #if DEBUG
                 print("✅ Category updated for \(name ?? "Unknown"): \(oldCategory ?? "None") → \(newCategory ?? "None")")
+                #endif
                 return true
             }
             return true // No changes needed
         } catch {
+            #if DEBUG
             print("❌ Failed to save category assignment: \(error)")
+            #endif
             category = oldCategory // Revert the change
             return false
         }
@@ -102,11 +114,15 @@ extension Category {
             // Always put Uncategorized last
             if let uncategorized = categories.first(where: { $0.displayName.lowercased() == "uncategorized" }) {
                 uncategorized.sortOrder = sortOrder
+                #if DEBUG
                 print("✅ Uncategorized category moved to position \(sortOrder)")
+                #endif
             }
             
         } catch {
+            #if DEBUG
             print("❌ Error updating sort order for Uncategorized: \(error)")
+            #endif
         }
     }
 }

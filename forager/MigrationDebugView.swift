@@ -337,11 +337,17 @@ struct MigrationDebugView: View {
         let validation = migrationService.validateMigration()
         
         if validation.isValid {
+            #if DEBUG
             print("✅ Validation passed!")
+            #endif
         } else {
+            #if DEBUG
             print("⚠️ Validation issues found:")
+            #endif
             for issue in validation.issues {
+                #if DEBUG
                 print("  - \(issue)")
+                #endif
             }
         }
     }

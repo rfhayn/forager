@@ -39,7 +39,9 @@ public class Category: NSManagedObject {
                     isDefault: true
                 )
             } catch {
+                #if DEBUG
                 print("❌ M7.2.3: Error creating category '\(name)': \(error)")
+                #endif
             }
         }
     }
@@ -52,13 +54,19 @@ public class Category: NSManagedObject {
         do {
             let allCategories = try repository.findAll()
             if allCategories.isEmpty {
+                #if DEBUG
                 print("🏷️ M7.2.3: No categories found, creating defaults...")
+                #endif
                 createDefaultCategories(in: context)
             } else {
+                #if DEBUG
                 print("ℹ️ M7.2.3: Categories already exist (\(allCategories.count) found)")
+                #endif
             }
         } catch {
+            #if DEBUG
             print("❌ M7.2.3: Error checking for existing categories: \(error)")
+            #endif
             // Fallback: try creating defaults anyway (repository will handle duplicates)
             createDefaultCategories(in: context)
         }
@@ -83,7 +91,9 @@ public class Category: NSManagedObject {
                 }
             }
         } catch {
+            #if DEBUG
             print("Error resetting category order: \\(error)")
+            #endif
         }
     }
 }

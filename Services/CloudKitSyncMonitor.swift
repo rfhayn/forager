@@ -61,7 +61,9 @@ class CloudKitSyncMonitor: ObservableObject {
     
     init() {
         setupNotificationObservers()
+        #if DEBUG
         print("📡 CloudKitSyncMonitor initialized - monitoring remote changes")
+        #endif
     }
     
     // MARK: - Notification Observers
@@ -90,14 +92,20 @@ class CloudKitSyncMonitor: ObservableObject {
         
         // Extract notification details for debugging
         if let storeUUID = notification.userInfo?[NSStoreUUIDKey] as? String {
+            #if DEBUG
             print("📡 CloudKit sync event #\(syncEventCount) - Store: \(storeUUID.prefix(8))...")
+            #endif
         } else {
+            #if DEBUG
             print("📡 CloudKit sync event #\(syncEventCount)")
+            #endif
         }
         
         // Check for transaction details
         if let historyToken = notification.userInfo?[NSPersistentHistoryTokenKey] {
+            #if DEBUG
             print("   History token present: \(historyToken)")
+            #endif
         }
         
         // Update sync state
@@ -105,7 +113,9 @@ class CloudKitSyncMonitor: ObservableObject {
         lastSyncDate = Date()
         syncError = nil
         
+        #if DEBUG
         print("   ✅ Sync state updated: synced at \(lastSyncDate!)")
+        #endif
         
         // M7.2.3 Phase 3.8: Run deduplication after import events
         // This handles the case where multiple devices seeded simultaneously
@@ -131,13 +141,17 @@ class CloudKitSyncMonitor: ObservableObject {
                     if deletedCount > 0 {
                         // Deduplication happened - log it
                         DispatchQueue.main.async {
+                            #if DEBUG
                             print("🧹 M7.2.3: Auto-deduplication removed \(deletedCount) duplicate categories")
+                            #endif
                         }
                     }
                 } catch {
                     // Log error but don't fail - deduplication is best-effort
                     DispatchQueue.main.async {
+                        #if DEBUG
                         print("⚠️ M7.2.3: Deduplication failed: \(error)")
+                        #endif
                     }
                 }
             }
@@ -150,7 +164,9 @@ class CloudKitSyncMonitor: ObservableObject {
     /// Forces CloudKit to sync by saving the context
     /// NSPersistentCloudKitContainer will detect changes and sync
     func triggerManualSync(context: NSManagedObjectContext) {
+        #if DEBUG
         print("🔄 Manual sync triggered")
+        #endif
         syncState = .syncing
         
         // Save context to trigger CloudKit sync
@@ -158,14 +174,20 @@ class CloudKitSyncMonitor: ObservableObject {
         if context.hasChanges {
             do {
                 try context.save()
+                #if DEBUG
                 print("✅ Context saved - CloudKit will sync changes")
+                #endif
             } catch {
+                #if DEBUG
                 print("❌ Failed to save context: \(error)")
+                #endif
                 handleSyncError(error)
             }
         } else {
             // No changes, but still notify CloudKit to check for remote updates
+            #if DEBUG
             print("⚠️ No local changes - waiting for remote sync notification")
+            #endif
         }
         
         // Reset to idle after brief UI feedback if no notification received
@@ -173,7 +195,9 @@ class CloudKitSyncMonitor: ObservableObject {
             if self?.syncState == .syncing {
                 // If no notification received within 2 seconds, assume idle
                 self?.syncState = .idle
+                #if DEBUG
                 print("⚠️ Manual sync timeout - no notification received")
+                #endif
             }
         }
     }
@@ -191,14 +215,18 @@ class CloudKitSyncMonitor: ObservableObject {
         let errorCode = ckError.code
         let errorDomain = ckError.domain
         
+        #if DEBUG
         print("❌ CloudKit sync error: \(errorDomain) code \(errorCode)")
         print("   Error: \(error.localizedDescription)")
+        #endif
         
         // Map common CloudKit errors to user-friendly messages
         if errorDomain == CKError.errorDomain {
             let friendlyMessage = mapCloudKitError(errorCode: errorCode)
             syncState = .error(friendlyMessage)
+            #if DEBUG
             print("   User message: \(friendlyMessage)")
+            #endif
         } else {
             // Generic error handling
             syncState = .error(error.localizedDescription)
@@ -222,7 +250,9 @@ class CloudKitSyncMonitor: ObservableObject {
         lastSyncDate = nil
         syncError = nil
         syncEventCount = 0
+        #if DEBUG
         print("🔄 CloudKit sync state reset")
+        #endif
     }
     
     // MARK: - Debugging Helpers
@@ -250,7 +280,9 @@ extension PersistenceController {
     /// Access via PersistenceController.shared.syncMonitor
     static var syncMonitor: CloudKitSyncMonitor = {
         let monitor = CloudKitSyncMonitor()
+        #if DEBUG
         print("📡 CloudKitSyncMonitor created for PersistenceController")
+        #endif
         return monitor
     }()
 }

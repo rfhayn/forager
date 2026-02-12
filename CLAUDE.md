@@ -287,6 +287,26 @@ These files form the single source of truth for project status. When one changes
 3. Mark completed phases with actual hours
 4. Update `docs/next-prompt.md` for next phase
 
+### Insights Logging (During Every Session)
+
+**Whenever you share a technical insight with the user, log it to `docs/insights-log.md`.**
+
+Insights are non-obvious technical observations discovered during implementation — gotchas, platform behaviors, architectural trade-offs, or patterns worth remembering. Each entry must include:
+
+| Column | Description |
+|--------|-------------|
+| Date | Session date |
+| Milestone | Current M#.#.# being worked on |
+| Topic | Hierarchical tag (e.g., `iOS/LaunchScreen`, `Swift/Release`, `CoreData/Schema`) |
+| Insight | The observation — what was learned |
+| Verification | How to test or confirm the insight |
+| Status | `Raw` for new entries, `→ ADR ###` or `→ LN ##` when promoted |
+
+**Promotion rules** — periodically review the log:
+- **3+ insights on same topic** → Write a Learning Note
+- **Architectural decision with trade-offs** → Write an ADR
+- **Recurring gotcha** → Add to CLAUDE.md or development-guidelines.md
+
 ### Milestone Completion Documentation (MANDATORY)
 
 **After completing ANY milestone (M#.#.#), automatically update ALL 5 core documentation files.**
@@ -306,6 +326,7 @@ docs/
 ├── requirements.md                 # Functional requirements
 ├── roadmap.md                      # Milestone tracking
 ├── project-index.md                # Central navigation hub
+├── insights-log.md                 # Technical insights triage inbox
 ├── prds/                           # Product Requirements Documents
 │   ├── active/                     # Current milestone PRDs
 │   └── complete/                   # Completed feature PRDs
