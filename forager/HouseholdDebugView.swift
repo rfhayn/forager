@@ -31,7 +31,7 @@ struct HouseholdDebugView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(household.name ?? "Unnamed")
                                 .font(.headline)
-                            Text("Owner: \(household.ownerEmail ?? "Unknown")")
+                            Text("Owner: \(household.ownerRecordName ?? household.ownerEmail ?? "Unknown")")
                                 .font(.caption)
                             Text("Members: \(household.members?.count ?? 0)")
                                 .font(.caption)

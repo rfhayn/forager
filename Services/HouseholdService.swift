@@ -259,6 +259,13 @@ class HouseholdService: ObservableObject {
 
                 if isMember {
                     currentHousehold = household
+
+                    // M7.6.5: One-time migration from ownerEmail to ownerRecordName
+                    if household.ownerRecordName == nil, let legacy = household.ownerEmail, !legacy.isEmpty {
+                        household.ownerRecordName = legacy
+                        try? viewContext.save()
+                    }
+
                     CloudKitLogger.householdLoaded(household.name, householdID: household.id?.uuidString ?? "NIL")
 
                     if let storeURL = household.objectID.persistentStore?.url {
@@ -1029,7 +1036,8 @@ class HouseholdService: ObservableObject {
     /// Checks if current user is the owner of the household
     /// Uses userRecordID for reliable comparison without requiring discoverability
     func isOwner(household: Household) async -> Bool {
-        guard let ownerEmail = household.ownerEmail else { return false }
+        // M7.6.5: Use ownerRecordName (preferred), fall back to ownerEmail for pre-migration data
+        guard let ownerIdentifier = household.ownerRecordName ?? household.ownerEmail else { return false }
 
         do {
             // Get current user's recordID (always available, no discoverability required)
@@ -1048,7 +1056,7 @@ class HouseholdService: ObservableObject {
             }
 
             // Compare recordNames (stable identifiers)
-            return currentRecordID.recordName == ownerEmail
+            return currentRecordID.recordName == ownerIdentifier
         } catch {
             #if DEBUG
             print("⚠️ Failed to verify ownership: \(error)")
@@ -1171,7 +1179,8 @@ class HouseholdService: ObservableObject {
             let household = Household(context: viewContext)
             household.id = UUID()
             household.name = name
-            household.ownerEmail = ownerIdentifier  // Stable userRecordID
+            household.ownerRecordName = ownerIdentifier
+            household.ownerEmail = ownerIdentifier  // Deprecated field, kept for v3→v4 migration compatibility
             household.createdDate = Date()
 
             // 3. Create owner as first member
@@ -2100,7 +2109,7 @@ class HouseholdService: ObservableObject {
             #if DEBUG
             print("   Name: \(household.name ?? "Unknown")")
             print("   ID (UUID): \(household.id?.uuidString ?? "NIL")")
-            print("   Owner: \(household.ownerEmail ?? "Unknown")")
+            print("   Owner: \(household.ownerRecordName ?? household.ownerEmail ?? "Unknown")")
             #endif
             if let store = household.objectID.persistentStore {
                 #if DEBUG

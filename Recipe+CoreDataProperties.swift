@@ -28,7 +28,6 @@ extension Recipe {
     @NSManaged public var servings: Int16
     @NSManaged public var sourceURL: String?
     @NSManaged public var title: String?
-    @NSManaged public var titleKey: String?       // M7.1.3: Semantic key for duplicate detection
     @NSManaged public var usageCount: Int32
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?

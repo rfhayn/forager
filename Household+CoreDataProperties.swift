@@ -18,7 +18,8 @@ extension Household {
     @NSManaged public var id: UUID?
     @NSManaged public var name: String?
     @NSManaged public var createdDate: Date?
-    @NSManaged public var ownerEmail: String?
+    @NSManaged public var ownerEmail: String?      // Deprecated: renamed to ownerRecordName in v4
+    @NSManaged public var ownerRecordName: String?
     @NSManaged public var shareRecord: Data?
     @NSManaged public var members: NSSet?
     @NSManaged public var categories: NSSet?
