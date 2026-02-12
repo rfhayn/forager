@@ -199,25 +199,18 @@ extension Recipe {
     }
     
     // MARK: - Tags Properties
-    
-    /// Returns array of tags extracted from sourceURL
+
+    /// Returns array of tags from dedicated tags attribute
     var recipeTags: [String] {
-        guard let sourceURL = sourceURL, sourceURL.hasPrefix("tags:") else {
-            return []
-        }
-        let tagsString: String = String(sourceURL.dropFirst(5))
-        return tagsString
-            .components(separatedBy: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        return tagsList
     }
-    
+
     /// Returns formatted tags string for display
     var recipeTagsDescription: String {
-        let tags: [String] = recipeTags
-        return tags.isEmpty ? "No tags" : tags.joined(separator: ", ")
+        let tagArray: [String] = recipeTags
+        return tagArray.isEmpty ? "No tags" : tagArray.joined(separator: ", ")
     }
-    
+
     /// Returns true if recipe has any tags
     var hasRecipeTags: Bool {
         return !recipeTags.isEmpty

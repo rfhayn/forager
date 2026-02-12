@@ -25,7 +25,6 @@ extension GroceryItem {
     @NSManaged public var lastPurchased: Date?
     @NSManaged public var name: String?
     @NSManaged public var categoryEntity: Category?
-    @NSManaged public var ingredientTemplate: IngredientTemplate?
 
 }
 

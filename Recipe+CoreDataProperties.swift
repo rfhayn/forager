@@ -27,6 +27,7 @@ extension Recipe {
     @NSManaged public var prepTime: Int16
     @NSManaged public var servings: Int16
     @NSManaged public var sourceURL: String?
+    @NSManaged public var tags: String?
     @NSManaged public var title: String?
     @NSManaged public var usageCount: Int32
     @NSManaged public var household: Household?

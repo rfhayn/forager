@@ -375,19 +375,42 @@ final class PersistenceController {
             do {
                 // M7.2.3 Phase 3.6: Use DefaultSeeder for truly idempotent category creation
                 try DefaultSeeder.seedDefaultsIfNeeded(in: context)
-                
+
+                // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
+                Self.migrateSourceURLTagsIfNeeded(in: context)
+
                 // Save if any changes were made
                 if context.hasChanges {
                     try context.save()
                     #if DEBUG
-                    print("✅ M7.2.3 Phase 3.6: One-time setup completed")
+                    print("✅ One-time setup completed")
                     #endif
                 }
             } catch {
                 #if DEBUG
-                print("❌ M7.2.3 Phase 3.6: One-time setup failed: \(error)")
+                print("❌ One-time setup failed: \(error)")
                 #endif
             }
         }
+    }
+
+    /// M7.6.6: One-time migration from sourceURL "tags:" prefix to dedicated tags attribute
+    /// Idempotent — only touches recipes where sourceURL starts with "tags:" and tags is nil
+    private static func migrateSourceURLTagsIfNeeded(in context: NSManagedObjectContext) {
+        let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        request.predicate = NSPredicate(format: "sourceURL BEGINSWITH %@ AND tags == nil", "tags:")
+
+        guard let recipes = try? context.fetch(request), !recipes.isEmpty else { return }
+
+        for recipe in recipes {
+            if let sourceURL = recipe.sourceURL, sourceURL.hasPrefix("tags:") {
+                recipe.tags = String(sourceURL.dropFirst(5))
+                recipe.sourceURL = nil
+            }
+        }
+
+        #if DEBUG
+        print("📋 M7.6.6: Migrated tags from sourceURL for \(recipes.count) recipe(s)")
+        #endif
     }
 }

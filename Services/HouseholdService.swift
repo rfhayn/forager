@@ -915,6 +915,7 @@ class HouseholdService: ObservableObject {
             newRecipe.cookTime = oldRecipe.cookTime
             newRecipe.prepTime = oldRecipe.prepTime
             newRecipe.sourceURL = oldRecipe.sourceURL
+            newRecipe.tags = oldRecipe.tags
             newRecipe.dateCreated = Date()
             newRecipe.isFavorite = oldRecipe.isFavorite
             newRecipe.usageCount = 0
@@ -982,7 +983,6 @@ class HouseholdService: ObservableObject {
                 newItem.categoryName = oldItem.categoryName
                 newItem.sortOrder = oldItem.sortOrder
                 newItem.isCompleted = oldItem.isCompleted
-                newItem.isFromRecipe = false
                 newItem.isParseable = oldItem.isParseable
                 newItem.parseConfidence = oldItem.parseConfidence
                 newItem.weeklyList = newList

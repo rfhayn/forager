@@ -212,14 +212,11 @@ public class Recipe: NSManagedObject {
         return title ?? "Untitled Recipe"
     }
     
-    /// Tags extracted from sourceURL (format: "tags:tag1,tag2,tag3")
-    public var tags: [String] {
-        guard let sourceURL = sourceURL,
-              sourceURL.hasPrefix("tags:") else {
+    /// Tags parsed from the dedicated tags attribute (comma-separated)
+    public var tagsList: [String] {
+        guard let tagsString = tags, !tagsString.isEmpty else {
             return []
         }
-        
-        let tagsString = String(sourceURL.dropFirst(5)) // Remove "tags:" prefix
         return tagsString
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }

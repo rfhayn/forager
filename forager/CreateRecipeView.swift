@@ -612,12 +612,10 @@ struct CreateRecipeView: View {
             recipe.usageCount = 0
             recipe.lastUsed = nil
             
-            // Parse and store tags (simple comma-separated string storage)
+            // Store tags in dedicated field
             let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
             if !tagsString.isEmpty {
-                // Store tags as comma-separated string in sourceURL field for now
-                // Tags stored as comma-separated string in sourceURL (M7.6.6 will add dedicated tags field)
-                recipe.sourceURL = "tags:" + tagsString
+                recipe.tags = tagsString
             }
             
             // Step 2: Create Ingredients with Template links

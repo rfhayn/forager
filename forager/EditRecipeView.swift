@@ -153,8 +153,8 @@ struct EditRecipeView: View {
         formData.instructions = recipe.instructions ?? ""
         formData.isFavorite = recipe.isFavorite
         
-        if let sourceURL = recipe.sourceURL, sourceURL.hasPrefix("tags:") {
-            formData.tags = String(sourceURL.dropFirst(5))
+        if let tags = recipe.tags, !tags.isEmpty {
+            formData.tags = tags
         }
         
         if let ingredientsSet = recipe.ingredients as? Set<Ingredient> {
@@ -592,9 +592,9 @@ struct EditRecipeView: View {
             
             let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
             if !tagsString.isEmpty {
-                recipe.sourceURL = "tags:" + tagsString
+                recipe.tags = tagsString
             } else {
-                recipe.sourceURL = nil
+                recipe.tags = nil
             }
             
             if let existingIngredients = recipe.ingredients as? Set<Ingredient> {
