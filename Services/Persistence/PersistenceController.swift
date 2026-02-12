@@ -19,7 +19,13 @@ import UIKit  // M7.2.3 Phase 4.4: Required for UIDevice
 /// Does NOT handle: Seeding (DefaultSeeder), Migrations (old Persistence.swift), Diagnostics (CloudKitDiagnostics)
 /// 
 /// This is the NEW clean PersistenceController extracted from bloated Persistence.swift
-final class PersistenceController {
+final class PersistenceController: ObservableObject {
+
+    // MARK: - M7.6.3: First-Launch Loading State
+
+    /// Signals when one-time setup (seeding, migrations) is complete.
+    /// SwiftUI splash screen observes this to know when to transition to main content.
+    @Published var isReady = false
     
     // MARK: - Singleton
     
@@ -112,14 +118,13 @@ final class PersistenceController {
         // Research from ChatGPT & Gemini confirms this is REQUIRED for shared database sync
         configureDualStoreArchitecture(inMemory: inMemory)
 
-        loadPersistentStores()
-        configureViewContext()
-
-        // M7.2.3 Phase 3.6: Perform setup immediately
-        // DefaultSeeder now queries CloudKit directly, no observer needed!
-        if !inMemory {
-            performOneTimeSetup()
+        if inMemory {
+            // M7.6.3: Preview/test — load synchronously and mark ready immediately
+            loadPersistentStores()
+            configureViewContext()
+            isReady = true
         }
+        // M7.6.3: Production store loading deferred to prepare() so SwiftUI splash renders first
     }
     
     // MARK: - Private Configuration
@@ -367,14 +372,31 @@ final class PersistenceController {
     
     // MARK: - M7.2.3 Phase 3.6: One-Time Setup
     
+    /// M7.6.3: Called by foragerApp after the splash screen is visible.
+    /// Loads persistent stores on a background thread (the slow part), then
+    /// configures the view context and runs one-time setup (seeding/migrations).
+    /// Sets isReady = true when complete.
+    func prepare() {
+        guard !isReady else { return }
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
+            self.loadPersistentStores()
+            DispatchQueue.main.async { [self] in
+                self.configureViewContext()
+                self.performOneTimeSetup()
+            }
+        }
+    }
+
     /// Performs one-time setup operations (seeding, migrations)
     /// M7.2.3 Phase 3.6: DefaultSeeder queries CloudKit directly for true idempotence
-    /// Called immediately during initialization (no observer/timeout needed!)
     private func performOneTimeSetup() {
         container.performBackgroundTask { context in
             do {
                 // M7.2.3 Phase 3.6: Use DefaultSeeder for truly idempotent category creation
                 try DefaultSeeder.seedDefaultsIfNeeded(in: context)
+
+                // M7.6.3: Seed sample data for onboarding (after categories exist)
+                SampleDataSeeder.seedSampleDataIfNeeded(in: context)
 
                 // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
                 Self.migrateSourceURLTagsIfNeeded(in: context)
@@ -391,12 +413,24 @@ final class PersistenceController {
                 print("❌ One-time setup failed: \(error)")
                 #endif
             }
+
+            // M7.6.3: Signal readiness on main thread so SwiftUI splash transitions
+            DispatchQueue.main.async { [weak self] in
+                self?.isReady = true
+            }
         }
     }
 
     /// M7.6.6: One-time migration from sourceURL "tags:" prefix to dedicated tags attribute
     /// Idempotent — only touches recipes where sourceURL starts with "tags:" and tags is nil
     private static func migrateSourceURLTagsIfNeeded(in context: NSManagedObjectContext) {
+        // Guard: skip if the current model doesn't have the tags attribute yet
+        // (prevents crash if .xccurrentversion points to an older model)
+        guard let recipeEntity = NSEntityDescription.entity(forEntityName: "Recipe", in: context),
+              recipeEntity.attributesByName["tags"] != nil else {
+            return
+        }
+
         let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         request.predicate = NSPredicate(format: "sourceURL BEGINSWITH %@ AND tags == nil", "tags:")
 

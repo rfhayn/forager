@@ -26,6 +26,8 @@ struct SettingsView: View {
     
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
+
+    // M7.6.3: Onboarding replay (signals parent via NotificationCenter)
     
     // M7.2.1: Household creation sheet state
     @State private var showCreateHouseholdSheet = false
@@ -519,6 +521,19 @@ struct SettingsView: View {
     // Provides access to privacy policy and app version
     private var aboutSection: some View {
         Section {
+            // M7.6.3: Replay Onboarding (signals foragerApp via notification)
+            Button {
+                NotificationCenter.default.post(name: .replayOnboarding, object: nil)
+            } label: {
+                HStack {
+                    Image(systemName: "hand.wave")
+                        .foregroundColor(.blue)
+                    Text("Replay Onboarding")
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+            }
+
             // Privacy Policy link
             // Opens privacy policy in in-app Safari browser
             Button {

@@ -56,10 +56,15 @@ struct HamburgerMenuModifier: ViewModifier {
                         Image(systemName: "line.3.horizontal")
                             .font(.system(size: 18, weight: .medium))
                     }
+                    .coachMarkAnchor("hamburger")
                 }
             }
             .sheet(isPresented: $showingMenu) {
                 HamburgerMenuSheet()
+            }
+            // M7.6.3: Dismiss menu when onboarding replay is triggered from Settings
+            .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
+                showingMenu = false
             }
     }
 }
