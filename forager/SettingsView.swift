@@ -65,9 +65,11 @@ struct SettingsView: View {
                 // M4.3.1: Display Options
                 displayOptionsSection
                 
-                // M7.1.2: Developer Tools
+                // M7.1.2: Developer Tools (hidden in production)
+                #if DEBUG
                 developerToolsSection
-                
+                #endif
+
                 // M7.0.2: About & Privacy
                 aboutSection
                 

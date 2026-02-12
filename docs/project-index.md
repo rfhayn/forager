@@ -410,7 +410,8 @@ _[Previous entries remain the same through December 23...]_
 2. **Naming Standards**: Always use M#.#.# format (enforced in [project-naming-standards.md](project-naming-standards.md))
 3. **Documentation Updates**: Update [current-story.md](current-story.md) after EVERY session
 4. **Learning Notes**: Create comprehensive notes after phase completion
-5. **Git Workflow**: Feature branches with frequent commits (15-30 min), squash merge to main
+5. **Insights Log**: Log technical insights to [insights-log.md](insights-log.md) during every session
+6. **Git Workflow**: Feature branches with frequent commits (15-30 min), squash merge to main
 6. **Zero Technical Debt**: Maintain quality standards throughout
 7. **Performance Targets**: <0.5s for operations, <5s for CloudKit sync
 8. **Manual Core Data**: Requires BOTH +CoreDataClass AND +CoreDataProperties files
@@ -601,6 +602,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📚 **LEARNING RESOURCES**
 
 ### **Internal Knowledge**
+- [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
 - [learning-notes/](learning-notes/) - 29+ implementation journey notes
 - [architecture/](architecture/) - 8+ architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
