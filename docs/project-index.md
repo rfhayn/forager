@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: February 11, 2026
+**Last Updated**: February 12, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7.6 🔄 IN PROGRESS — Pre-Launch Prep & TestFlight
-**Current Phase**: M7.6.1 ✅ COMPLETE | **M7.6.2 Production Gating 🚀 Next**
-**Next Priority**: M7.6.2 - Production Gating (#if DEBUG)
+**Current Phase**: M7.6.1-M7.6.6 ✅ COMPLETE | **M7.6.7 TestFlight Submission 🚀 Next**
+**Next Priority**: M7.6.7 - TestFlight Submission
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,18 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 12, 2026** - M7.6.3 Loading Screen + Learning Note 31 ✅
+- **Completed**: Branded SwiftUI loading screen bridging storyboard → main app
+- **Key Deliverables**:
+  - Two-phase `PersistenceController` init: fast container creation deferred from slow `loadPersistentStores()`
+  - `AppLoadingView` matching storyboard aesthetic (named color + icon assets, light/dark)
+  - `@Published var isReady` with Combine `onReceive` bridge to `@State` in foragerApp
+  - Animated crossfade transition from splash to main content
+- **Key Learning**: `loadPersistentStores()` is the slow call (~0.5-2s) — splitting into two phases lets SwiftUI render the splash before stores finish loading
+- **Learning Note 31**: Core Data Schema Evolution & CloudKit Constraints — promoted 7 insights from M7.6.4-M7.6.6 schema cleanup
+- **Branch**: `feature/M7.6-pre-launch-testflight`
+- **Next**: M7.6.7 TestFlight Submission (all prerequisites complete)
 
 ### **February 11, 2026** - M7.6.1 App Configuration COMPLETE ✅
 - **Completed**: Display name, iOS 18.0 deployment target, branded launch screen with light/dark mode
@@ -603,7 +615,7 @@ _[Previous entries remain the same through December 23...]_
 
 ### **Internal Knowledge**
 - [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
-- [learning-notes/](learning-notes/) - 29+ implementation journey notes
+- [learning-notes/](learning-notes/) - 31 implementation journey notes
 - [architecture/](architecture/) - 8+ architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
 - [git-workflow-for-milestones.md](git-workflow-for-milestones.md) - Complete git workflow guide
