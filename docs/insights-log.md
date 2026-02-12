@@ -26,8 +26,11 @@
 | Feb 11 | M7.6.2 | Swift/Preview | `#Preview` macros are stripped from Release builds by the compiler, like `#if DEBUG`. Print statements inside preview blocks don't need explicit gating | Build Release config — preview code absent from binary | Raw |
 | Feb 11 | M7.6.2 | Xcode/Scheme | Switching Xcode Run scheme to Release for testing persists in `.xcscheme` file. Always switch back to Debug after, or you'll commit a Release config that disables `#if DEBUG` code and debug symbols | `git diff` the scheme file after testing; restore if changed | Raw |
 | Feb 11 | M7.6.2 | Xcode/pbxproj | Dead test files in the app target compile into the production binary — class metadata and string literals survive even if functions are never called. Remove from `PBXSourcesBuildPhase` or move to test target | Build succeeds after removal; `git diff` pbxproj confirms entries removed | Raw |
+| Feb 12 | M7.6.4 | CoreData/Migration | Lightweight migration supports entity deletion, toOne→toMany cardinality changes, and hierarchy restructuring out of the box. Only attribute type changes (String→Int), entity hierarchy merges, and data transforms require custom mapping models or staged migrations | `NSMappingModel.inferredMappingModel(forSourceModel:destinationModel:)` returns non-nil if supported | Raw |
 | Feb 8 | M8.3 | Parser/Architecture | Confidence-based routing (regex fast path + NLP fallback) avoids NLP overhead for 85%+ of inputs while maintaining accuracy for edge cases | Unit tests: verify regex returns >0.8 confidence for common patterns, NLP activates below threshold | → ADR 010 |
+| Feb 12 | M7.6.4 | CoreData/Versioning | Each `.xcdatamodel` inside `.xcdatamodeld` is a full schema snapshot. The `.xccurrentversion` plist tells Core Data which is active. Old model versions must remain in the bundle — Core Data needs them as the source to compute lightweight migrations | Add new model version, verify `NSMappingModel.inferredMappingModel` returns non-nil for old→new | Raw |
+| Feb 12 | M7.6.4 | Xcode/CoreData | Editing `.xccurrentversion` outside Xcode while the project is open can get reverted — Xcode overwrites it from its in-memory project state on build. Either close Xcode first or re-set the file after build. The committed state is what matters for production | Edit file, run build, re-read file to check if reverted | Raw |
 
 ---
 
-**Last Updated**: February 11, 2026
+**Last Updated**: February 12, 2026

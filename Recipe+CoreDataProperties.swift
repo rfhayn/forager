@@ -34,7 +34,24 @@ extension Recipe {
     @NSManaged public var householdKey: String?
     @NSManaged public var groceryListItems: NSSet?
     @NSManaged public var ingredients: NSSet?
-    @NSManaged public var plannedMeals: PlannedMeal?
+    @NSManaged public var plannedMeals: NSSet?
+
+}
+
+// MARK: Generated accessors for plannedMeals
+extension Recipe {
+
+    @objc(addPlannedMealsObject:)
+    @NSManaged public func addToPlannedMeals(_ value: PlannedMeal)
+
+    @objc(removePlannedMealsObject:)
+    @NSManaged public func removeFromPlannedMeals(_ value: PlannedMeal)
+
+    @objc(addPlannedMeals:)
+    @NSManaged public func addToPlannedMeals(_ values: NSSet)
+
+    @objc(removePlannedMeals:)
+    @NSManaged public func removeFromPlannedMeals(_ values: NSSet)
 
 }
 

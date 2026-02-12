@@ -616,7 +616,7 @@ struct CreateRecipeView: View {
             let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
             if !tagsString.isEmpty {
                 // Store tags as comma-separated string in sourceURL field for now
-                // (In production, you'd have a proper Tag entity)
+                // Tags stored as comma-separated string in sourceURL (M7.6.6 will add dedicated tags field)
                 recipe.sourceURL = "tags:" + tagsString
             }
             

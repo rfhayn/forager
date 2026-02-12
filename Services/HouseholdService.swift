@@ -646,11 +646,8 @@ class HouseholdService: ObservableObject {
         }
     }
 
-    /// Processes pending leave requests (owner-only)
-    /// Call this on app launch and when CloudKit sync events occur
     /// M7.2.2: Checks for member departures via CKShare participant polling (owner-only).
-    /// Replaces the old processLeaveRequests() — we no longer create or process LeaveRequest entities.
-    /// Also cleans up any stale LeaveRequests from prior app versions.
+    /// Non-owners check if they've been removed from the household.
     func checkForMemberDepartures() async {
         guard let household = currentHousehold else {
             return
@@ -664,9 +661,6 @@ class HouseholdService: ObservableObject {
 
         // Primary departure detection — check CKShare participants directly (owner-only)
         await detectParticipantDepartures(household: household)
-
-        // Clean up any leftover LeaveRequests from prior app versions
-        cleanupStaleLeaveRequests()
     }
 
     /// M7.3.3: Checks if the current user has been removed from the household
@@ -733,32 +727,8 @@ class HouseholdService: ObservableObject {
         }
     }
 
-    /// Cleans up ALL leave requests from the shared zone.
-    /// LeaveRequests are no longer created — this removes any leftover from prior app versions.
-    private func cleanupStaleLeaveRequests() {
-        let request: NSFetchRequest<LeaveRequest> = LeaveRequest.fetchRequest()
-
-        do {
-            let stale = try viewContext.fetch(request)
-            if !stale.isEmpty {
-                #if DEBUG
-                print("🧹 M7.2.2: Cleaning up \(stale.count) stale leave request(s) from prior versions")
-                #endif
-                for lr in stale {
-                    viewContext.delete(lr)
-                }
-                try viewContext.save()
-            }
-        } catch {
-            #if DEBUG
-            print("⚠️ M7.2.2: Could not clean up leave requests: \(error.localizedDescription)")
-            #endif
-        }
-    }
-
     // M7.2.2: Primary mechanism for detecting member departures on owner's device.
     // Compares current CKShare participants against known set by record ID.
-    // More reliable than LeaveRequests because it uses the CKShare as source of truth.
     private func detectParticipantDepartures(household: Household) async {
         do {
             let share = try await getShare(for: household)
