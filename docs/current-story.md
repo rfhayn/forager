@@ -1,9 +1,9 @@
 # Current Development Story
 
-**Last Updated**: February 12, 2026
-**Status**: M7.6 🔄 **IN PROGRESS** | M7.6.1-M7.6.6 ✅ COMPLETE | M7.6.3 loading screen ✅
+**Last Updated**: February 13, 2026
+**Status**: M7.6 🔄 **IN PROGRESS** | M7.6.1-M7.6.7 code prep ✅ COMPLETE | TestFlight manual submission pending
 **Total Progress**: ~188 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.6-pre-launch-testflight`
+**Current Branch**: `main` (M7.6 branch merged via PR #31)
 **Current Milestone**: M7.6 - Pre-Launch Prep & TestFlight Submission
 
 ---
@@ -629,7 +629,7 @@
 | M7.6.4 | Schema Cleanup P0 (remove Tag + LeaveRequest, fix plannedMeals cardinality) | ✅ ~1h |
 | M7.6.5 | Schema Cleanup P1 (rename ownerEmail, fix delete rules, code-schema mismatches) | ✅ ~1.5h |
 | M7.6.6 | Schema Cleanup P2 (remove unused fields, fix sourceURL tags hack, naming) | ✅ ~1.5h |
-| M7.6.7 | TestFlight Submission (CloudKit Production deploy, archive, submit) | 1.5h |
+| M7.6.7 | TestFlight Submission — Code prep ✅ (version bump to 1.1), manual portal steps pending | 1.5h |
 | M7.6.8 | Public Beta Link (after Apple approval, 24-48h wait) | 0.25h |
 
 **M7.7 Phases** (4 phases — PRD: `docs/prds/active/m7.7-app-store-submission.md`):
@@ -672,8 +672,8 @@
 
 ---
 
-**Last Session**: February 12, 2026 - M7.6.3 loading screen complete
-**Next Action**: M7.6.7 TestFlight Submission (all prerequisites complete)
-**Branch**: `feature/M7.6-pre-launch-testflight`
-**Confidence**: **GREEN** (M7.6.1-M7.6.6 complete + loading screen, clean build, verified on device)
-**Version**: February 12, 2026 - M7.6.3 Loading Screen Complete
+**Last Session**: February 13, 2026 - Core docs synchronized, README updated
+**Next Action**: M7.6.7 TestFlight Submission (manual Apple portal steps: CloudKit Production deploy, archive, upload, submit for review)
+**Branch**: `main` (M7.6 branch merged via PR #31, M7.6.7 version bump committed on main)
+**Confidence**: **GREEN** (M7.6.1-M7.6.7 code prep complete, clean build, verified on device)
+**Version**: February 13, 2026 - Documentation Sync & README Update

@@ -1,8 +1,8 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 11, 2026
-**Version**: 6.1
-**Current Milestone**: M7.6 🔄 IN PROGRESS (M7.6.1 ✅)
+**Last Updated**: February 13, 2026
+**Version**: 6.2
+**Current Milestone**: M7.6 🔄 IN PROGRESS (M7.6.1-M7.6.6 ✅, M7.6.7 code prep ✅, TestFlight submission pending)
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -418,12 +418,12 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-PL-001** | **App configuration** | ✅ iOS 18.0 target, branded launch screen (light/dark), display name "forager" | M7.6.1 | 🎯 **Brand identity** |
-| **FR-PL-002** | **Production gating** | Developer tools hidden in Release builds via `#if DEBUG` | M7.6.2 | 🎯 **Production quality** |
-| **FR-PL-003** | **Onboarding walkthrough** | ✅ Coach mark overlays on real app, sample data seeding, first-launch loading screen, Settings replay | M7.6.3 | 🎯 **User guidance** |
-| **FR-PL-004** | **Schema P0 cleanup** | Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality | M7.6.4 | 🎯 **Schema hygiene** |
-| **FR-PL-005** | **Schema P1 cleanup** | Rename ownerEmail, fix delete rules, code-schema mismatches | M7.6.5 | 🎯 **Data integrity** |
-| **FR-PL-006** | **Schema P2 cleanup** | Remove unused fields, fix sourceURL tags hack, naming consistency | M7.6.6 | 🎯 **Clean schema** |
+| **FR-PL-001** | **App configuration** | ✅ iOS 18.0 target, branded launch screen (light/dark), display name "forager" | M7.6.1 | ✅ **Brand identity** |
+| **FR-PL-002** | **Production gating** | ✅ Developer tools hidden in Release builds via `#if DEBUG` | M7.6.2 | ✅ **Production quality** |
+| **FR-PL-003** | **Onboarding walkthrough** | ✅ Coach mark overlays on real app, sample data seeding, first-launch loading screen, Settings replay | M7.6.3 | ✅ **User guidance** |
+| **FR-PL-004** | **Schema P0 cleanup** | ✅ Removed Tag + LeaveRequest entities, fixed Recipe.plannedMeals cardinality | M7.6.4 | ✅ **Schema hygiene** |
+| **FR-PL-005** | **Schema P1 cleanup** | ✅ Renamed ownerEmail, fixed delete rules, code-schema mismatches | M7.6.5 | ✅ **Data integrity** |
+| **FR-PL-006** | **Schema P2 cleanup** | ✅ Removed unused fields, fixed sourceURL tags hack, naming consistency | M7.6.6 | ✅ **Clean schema** |
 | **FR-TF-011** | **External testing group** | Create public external testing group | M7.6.7 | 🎯 **Public beta** |
 | **FR-TF-012** | **App Review submission** | Pass Apple's external testing review | M7.6.7 | 🎯 **Public distribution** |
 | **FR-TF-013** | **Public TestFlight link** | Generate shareable public link | M7.6.8 | 🎯 **Easy distribution** |
@@ -451,12 +451,12 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 | **NFR-PR-001** | **Edit form load < 0.2s** | Instant edit form display | M7.5.2 | 🎯 **Responsive UX** |
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
-**M7 Summary**: 54 total requirements
-- **Complete (28)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Dead code cleanup (1)
-- **In Progress (26)**: Repository hardening (4 from M7.2.3 remaining), Error handling & stability (5 from M7.3.4 rescoped), Conflict resolution (5), Sync UI polish (5), Parsing resilience (6), External TestFlight (5)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅
-- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working.
-- **Next**: M7.3.4 - Error Handling & Stability Improvements (RESCOPED)
+**M7 Summary**: 52 total requirements
+- **Complete (34)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Error handling & stability (5 from M7.3.4), UI polish (2 from M7.4), Pre-launch prep (6 from M7.6.1-M7.6.6)
+- **In Progress (18)**: Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), TestFlight submission (2 from M7.6.7-M7.6.8), App Store submission (4 from M7.7)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅, M7.3.4 ✅, M7.4 ✅, M7.6.1-M7.6.6 ✅
+- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working. Pre-launch prep complete (onboarding, schema cleanup, loading screen).
+- **Next**: M7.6.7 TestFlight Submission (manual Apple portal steps)
 
 ---
 
@@ -689,12 +689,12 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ### **By Status**
 
-| Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M9.5 (Opt) | Total |
+| Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M8.4 (Opt) | Total |
 |--------|----|----|----|----|------|----|----|-----------|------------|-------|
-| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 22 | 0 | 0 | 0 | **144** |
-| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 | 0 | **30** |
-| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 24 | 4 | 8 | **36** |
-| **Total** | **19** | **37** | **33** | **19** | **14** | **52** | **24** | **4** | **8** | **210** |
+| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 34 | 27 | 0 | 0 | **183** |
+| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 | **18** |
+| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 8 | **12** |
+| **Total** | **19** | **37** | **33** | **19** | **14** | **52** | **27** | **4** | **8** | **213** |
 
 ### **By Category**
 
@@ -712,18 +712,21 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | Household Foundation | 3 | ✅ Complete (M7.2.1) |
 | Shared Data Architecture | 6 | ✅ Complete (M7.2.3 Phases 0, 2, 4) |
 | CloudKit Collaboration | 17 | 🔄 In Progress (M7.2.2-M7.2.4, M7.3-M7.4) |
-| **Parsing Resilience** | **3 delivered + 3 removed** | ✅ **Complete (M8.1)** |
-| **Parsing Improvements** | **10** | ⏳ **Planned (M8.3)** |
+| **Parsing Resilience (M8.1)** | **3 delivered + 3 removed** | ✅ **Complete** |
+| **Hybrid NLP Parser (M8.3)** | **10** | ✅ **Complete** |
+| **Template Hygiene (M8.3.1)** | **6** | ✅ **Complete** |
+| **Auto-Merge Grocery (M8.3.2)** | **5** | ✅ **Complete** |
 | **ML Parsing (Optional)** | **8** | ⏳ **Planned (M8.4)** |
-| Analytics & Insights | 7 | ⏳ Planned (M8.1-M8.4) |
-| Health & Nutrition | 4 | ⏳ Planned (M9.1-M9.4) |
-| Budget Intelligence | 4 | ⏳ Planned (M10) |
-| AI Assistant | 4 | ⏳ Planned (M11) |
-| Advanced Collaboration | 3 | ⏳ Planned (M12) |
-| **Complete** | **144** | **69% (144/210)** |
-| **In Progress** | **30** | **14% (30/210)** |
-| **Planned (Mandatory)** | **28** | **13% (28/210)** |
-| **Planned (Optional)** | **8** | **4% (8/210)** |
+| Pre-Launch Prep (M7.6) | 9 | 🔄 In Progress (M7.6.1-M7.6.6 ✅, M7.6.7-M7.6.8 pending) |
+| Analytics & Insights | 12 | ⏳ Planned (M10) |
+| Health & Nutrition | 4 | ⏳ Planned (M11) |
+| Budget Intelligence | 4 | ⏳ Planned (M12) |
+| AI Assistant | 4 | ⏳ Planned (M13) |
+| Advanced Collaboration | 3 | ⏳ Planned (M14) |
+| **Complete** | **183** | **86% (183/213)** |
+| **In Progress** | **18** | **8% (18/213)** |
+| **Planned (Mandatory)** | **4** | **2% (4/213)** |
+| **Planned (Optional)** | **8** | **4% (8/213)** |
 
 ### **Performance Requirements Status**
 
@@ -734,8 +737,8 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | Autocomplete | < 0.1s | < 0.08s | ✅ Exceeded |
 | **Parsing (M3 baseline)** | **< 0.05s** | **< 0.03s** | ✅ **Exceeded** |
 | **Parsing accuracy (M3)** | **> 95%** | **~95%** | ✅ **Met** |
-| **Parsing accuracy (M8.0 target)** | **≥ 98%** | **TBD** | ⏳ **Planned** |
-| **Parsing accuracy (M9.5 target)** | **≥ 99.5%** | **TBD** | ⏳ **Optional** |
+| **Parsing accuracy (M8.3 target)** | **≥ 98%** | **98%+** | ✅ **Achieved** |
+| **Parsing accuracy (M8.4 target)** | **≥ 99.5%** | **TBD** | ⏳ **Optional (deferred)** |
 | Scaling | < 0.5s | < 0.4s | ✅ Exceeded |
 | Consolidation analysis | < 0.5s | < 0.3s | ✅ Exceeded |
 | Merge execution | < 1s | < 0.8s | ✅ Exceeded |
@@ -812,9 +815,9 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 adds CloudKit sync and collaboration (52 requirements: 22 complete, 30 in progress). M8-M9 build parsing intelligence (18 mandatory + 8 optional). Complete platform: 210 total requirements (144 complete, 30 in progress, 36 planned).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 requirements delivered). Complete platform: 213 total requirements (183 complete, 18 in progress, 12 planned).
 
-**Last Updated**: February 8, 2026
-**Version**: 6.0
-**Next Update**: After M7.6 Pre-Launch Prep & TestFlight
-**Current Focus**: M7.6 🚀 - Pre-Launch Prep & TestFlight Submission
+**Last Updated**: February 13, 2026
+**Version**: 6.2
+**Next Update**: After M7.6.7 TestFlight Submission
+**Current Focus**: M7.6.7 🚀 - TestFlight Submission (manual Apple portal steps)

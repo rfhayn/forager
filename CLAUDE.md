@@ -20,7 +20,7 @@ open forager.xcodeproj
 # Press Cmd+R in Xcode to build and run
 ```
 
-- iOS 18.5+, Xcode 15.0+, macOS Sonoma 14.0+
+- iOS 18.0+, Xcode 15.0+, macOS Sonoma 14.0+
 - No external dependencies (pure Swift/iOS frameworks)
 - No test infrastructure yet (planned for M6)
 - Debug builds: CloudKit DISABLED (faster local development)

@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 12, 2026
-**Current Phase**: **M7.6 Pre-Launch Prep 🔄 IN PROGRESS** (M7.6.1-M7.6.6 ✅, M7.6.7 next)
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 in progress
+**Last Updated**: February 13, 2026
+**Current Phase**: **M7.6 Pre-Launch Prep 🔄 IN PROGRESS** (M7.6.1-M7.6.6 ✅, M7.6.7 code prep ✅, TestFlight submission pending)
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 nearly complete
 **Execution Order**: M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -22,7 +22,7 @@
 - **Data-driven ingredient parsing improvements** (M8: 4 phases, 95% → 98%+ accuracy)
 
 ---
-## 📊 **CURRENT STATE - November 2025**
+## 📊 **CURRENT STATE - February 2026**
 
 ### **Completed Milestones** ✅
 
@@ -470,11 +470,11 @@ With M5.0 completion, Forager is now:
 
 ---
 
-### **🚀 M4.3: Enhanced Grocery Integration - IN PROGRESS**
+### **✅ M4.3: Enhanced Grocery Integration - COMPLETE**
 
-**Status**: 🔄 Active (M4.3.1-3 complete, M4.3.4 next)  
-**Estimated Time**: 11.75 hours total (7.25h complete, 4.75h remaining)  
-**Target Completion**: November-December 2025
+**Status**: ✅ Complete
+**Total Time**: ~14.25 hours (M4.3.1: 3.5h, M4.3.2: 1.25h, M4.3.3: 2.5h, M4.3.4: 1h, M4.3.5: 5.5h)
+**Completed**: November 2025
 
 #### **Component Breakdown:**
 
@@ -625,12 +625,12 @@ With M5.0 completion, Forager is now:
 
 ---
 
-#### **🚀 M4.3.4: Meal Completion Tracking - READY**
+#### **✅ M4.3.4: Meal Completion Tracking - COMPLETE**
 
-**Estimated**: 45 minutes  
-**Status**: Prerequisites complete, ready to begin
+**Completed**: November 24, 2025
+**Actual Time**: 1.0 hour
 
-**Planned Features:**
+**Delivered:**
 - isCompleted boolean property on PlannedMeal
 - Checkbox/checkmark UI on meal rows
 - Visual feedback (strikethrough, opacity)
@@ -786,10 +786,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M7.6.1**: App Configuration (0.5h) — ✅ COMPLETE (iOS 18.0 target, branded launch screen with light/dark)
 - **M7.6.2**: Production Gating (0.5h) — ✅ COMPLETE (`#if DEBUG` for developer tools)
 - **M7.6.3**: Onboarding Flow (~4h) — ✅ COMPLETE (coach marks, sample data, first-launch loading screen)
-- **M7.6.4**: Schema Cleanup P0 (1-1.5h) — Remove Tag + LeaveRequest entities, fix Recipe.plannedMeals cardinality
-- **M7.6.5**: Schema Cleanup P1 (1-1.5h) — Rename ownerEmail, fix delete rules, code-schema mismatches
-- **M7.6.6**: Schema Cleanup P2 (1-1.5h) — Remove unused fields, fix sourceURL tags hack, naming consistency
-- **M7.6.7**: TestFlight Submission (1.5h) — Deploy CloudKit schema to Production, archive, submit
+- **M7.6.4**: Schema Cleanup P0 (~1h) — ✅ COMPLETE (removed Tag + LeaveRequest, fixed Recipe.plannedMeals)
+- **M7.6.5**: Schema Cleanup P1 (~1.5h) — ✅ COMPLETE (renamed ownerEmail, fixed delete rules, code-schema mismatches)
+- **M7.6.6**: Schema Cleanup P2 (~1.5h) — ✅ COMPLETE (removed unused fields, fixed sourceURL tags hack, naming)
+- **M7.6.7**: TestFlight Submission (1.5h) — 🔄 Code prep ✅ (version bump to 1.1), manual Apple portal steps pending
 - **M7.6.8**: Public Beta Link (0.25h) — After Apple approval (24-48h wait)
 - **PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`
 
@@ -1120,7 +1120,16 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M7.2.3**: 12.25 hours (estimated 14-17h) - ✅ 88% accuracy
 - **M7.2.2 Leave**: ~12 hours (leave flow, rejoin fix, dead code cleanup)
 - **M7.3.1**: Rename Household (~1h)
-- **Total Completed**: ~147 hours
+- **M7.3.3**: Remove Member & Delete Household (~3h)
+- **M7.3.4**: Error Handling & Stability (~2h)
+- **M7.4**: UI Polish & Pre-Launch Fixes (~4h)
+- **M8.1**: Parsing Resilience & Telemetry (~3h)
+- **M8.3**: Hybrid NLP Parser (~11h)
+- **M8.3.1**: Template Hygiene & Badge Fix (~3h)
+- **M8.3.2**: Auto-Merge Grocery Quantities (~3h)
+- **M7.6**: Pre-Launch Prep (M7.6.1-M7.6.6) (~9h)
+- **M7.6.7**: Version bump & code prep (~0.5h)
+- **Total Completed**: ~188 hours
 
 ### **Planned Core Platform:**
 - **M7**: 27-37 hours base, 32-42 hours with buffer (CloudKit sync + external TestFlight)
@@ -1365,9 +1374,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M7.6.7 TestFlight Submission
+**Next Action**: M7.6.7 TestFlight Submission (manual Apple portal steps)
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8 complete (~17h), M7.6.1-M7.6.6 complete. Ready for TestFlight submission (M7.6.7).
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.4 complete (~69h), M8 complete (~17h), M7.6.1-M7.6.7 code prep complete (~9.5h). Total: ~188 hours. Ready for TestFlight submission.
 
 ---
 

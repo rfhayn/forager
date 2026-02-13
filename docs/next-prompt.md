@@ -1,9 +1,9 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 12, 2026
+**Last Updated**: February 13, 2026
 **For Milestone**: M7.6 — Pre-Launch Prep & TestFlight Submission
-**Status**: M7.6.1-M7.6.6 ✅ COMPLETE | **M7.6.7 TestFlight Submission 🚀 NEXT**
-**Branch**: `feature/M7.6-pre-launch-testflight`
+**Status**: M7.6.1-M7.6.7 code prep ✅ COMPLETE | **M7.6.7 Manual Submission 🚀 NEXT**
+**Branch**: `main` (M7.6 branch merged via PR #31, M7.6.7 version bump committed)
 
 ---
 
@@ -18,23 +18,13 @@
 
 ### **Pre-Submission Checklist**
 
-Before starting M7.6.7, verify the branch is ready:
+✅ **Already completed:**
 
-1. **Merge branch to main** — All M7.6.1-M7.6.6 work needs to be on main for the archive
-   ```bash
-   # Create PR and squash merge
-   gh pr create --title "M7.6: Pre-launch prep — schema cleanup, onboarding, loading screen" --fill
-   gh pr merge --squash --delete-branch
-   git checkout main && git pull origin main
-   ```
+1. ~~**Merge branch to main**~~ — ✅ DONE (PR #31 squash-merged, M7.6.7 version bump committed on main)
 
-2. **Clean build from main**
-   ```bash
-   xcodebuild -project forager.xcodeproj -scheme forager \
-     -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
-   ```
+2. ~~**Clean build from main**~~ — ✅ DONE (BUILD SUCCEEDED)
 
-3. **Verify on physical device** — Fresh install, onboarding flows, loading screen
+3. **Verify on physical device** — Fresh install, onboarding flows, loading screen (do this before archiving)
 
 ### **M7.6.7 Tasks (Manual — Xcode & Apple Portals)**
 
@@ -117,5 +107,5 @@ docs/architecture/007-core-data-change-process.md      # Core Data change proces
 
 ---
 
-**Version**: February 12, 2026 - M7.6.7 TestFlight Submission Ready
-**Dependencies**: M7.6.1-M7.6.6 ✅ COMPLETE, branch ready to merge
+**Version**: February 13, 2026 - M7.6.7 Manual Submission Steps Remaining
+**Dependencies**: M7.6.1-M7.6.7 code prep ✅ COMPLETE, merged to main, version bumped to 1.1

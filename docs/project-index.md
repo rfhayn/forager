@@ -1,10 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: February 12, 2026
+**Last Updated**: February 13, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M7.6 🔄 IN PROGRESS — Pre-Launch Prep & TestFlight
-**Current Phase**: M7.6.1-M7.6.6 ✅ COMPLETE | **M7.6.7 TestFlight Submission 🚀 Next**
-**Next Priority**: M7.6.7 - TestFlight Submission
+**Current Phase**: M7.6.1-M7.6.7 code prep ✅ COMPLETE | **TestFlight manual submission 🚀 Next**
+**Next Priority**: M7.6.7 - TestFlight Submission (manual Apple portal steps)
 **Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -305,7 +305,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~187 hours
+- **Total Development Time**: ~188 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -341,7 +341,7 @@ _[Previous entries remain the same through December 23...]_
 
 ### **Technology Stack**
 - **Language**: Swift 5.9+
-- **UI Framework**: SwiftUI (iOS 18.5+)
+- **UI Framework**: SwiftUI (iOS 18.0+)
 - **Persistence**: Core Data → CloudKit (M7.1)
 - **Cloud Backend**: CloudKit (NSPersistentCloudKitContainer)
 - **Testing**: XCTest framework + TestFlight
@@ -616,7 +616,7 @@ _[Previous entries remain the same through December 23...]_
 ### **Internal Knowledge**
 - [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
 - [learning-notes/](learning-notes/) - 31 implementation journey notes
-- [architecture/](architecture/) - 8+ architecture decision records
+- [architecture/](architecture/) - 10 architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
 - [git-workflow-for-milestones.md](git-workflow-for-milestones.md) - Complete git workflow guide
 
@@ -628,8 +628,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.1
-**Last Updated**: February 11, 2026
+**Version**: 9.2
+**Last Updated**: February 13, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git
