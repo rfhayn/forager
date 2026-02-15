@@ -782,18 +782,18 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
-**M7.6: Pre-Launch Prep & TestFlight Submission (10-12 hours) — 🔄 IN PROGRESS**
+**M7.6: Pre-Launch Prep & TestFlight Submission (~12 hours) — ✅ COMPLETE**
 - **M7.6.1**: App Configuration (0.5h) — ✅ COMPLETE (iOS 18.0 target, branded launch screen with light/dark)
 - **M7.6.2**: Production Gating (0.5h) — ✅ COMPLETE (`#if DEBUG` for developer tools)
 - **M7.6.3**: Onboarding Flow (~4h) — ✅ COMPLETE (coach marks, sample data, first-launch loading screen)
 - **M7.6.4**: Schema Cleanup P0 (~1h) — ✅ COMPLETE (removed Tag + LeaveRequest, fixed Recipe.plannedMeals)
 - **M7.6.5**: Schema Cleanup P1 (~1.5h) — ✅ COMPLETE (renamed ownerEmail, fixed delete rules, code-schema mismatches)
 - **M7.6.6**: Schema Cleanup P2 (~1.5h) — ✅ COMPLETE (removed unused fields, fixed sourceURL tags hack, naming)
-- **M7.6.7**: TestFlight Submission (1.5h) — 🔄 Code prep ✅ (version bump to 1.1), manual Apple portal steps pending
-- **M7.6.8**: Public Beta Link (0.25h) — After Apple approval (24-48h wait)
-- **PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`
+- **M7.6.7**: TestFlight Submission (~2h) — ✅ COMPLETE (schema deployed to Production, archive uploaded, Apple approved, external testers active)
+- **M7.6.8**: Owner Display Name Fix + Beta Bugs (~3h) — ✅ COMPLETE (PRs #32, #33 — repurposed ownerEmail for display name, fixed empty nameComponents detection, cross-device verified)
+- **PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`, `docs/prds/complete/m7.6.8-owner-display-name-fix.md`
 
-**M7.7: App Store Submission & Public Presence (3-5 hours)**
+**M7.7: App Store Submission & Public Presence (3-5 hours) — 📋 READY**
 - **M7.7.1**: Beta Landing Page (1-2h) — GitHub Pages with TestFlight link, features, screenshots
 - **M7.7.2**: GitHub README Update (0.5h) — Portfolio-quality README with badges
 - **M7.7.3**: App Store Listing (1-2h) — Description, keywords, screenshots, category

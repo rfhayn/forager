@@ -424,9 +424,10 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 | **FR-PL-004** | **Schema P0 cleanup** | ✅ Removed Tag + LeaveRequest entities, fixed Recipe.plannedMeals cardinality | M7.6.4 | ✅ **Schema hygiene** |
 | **FR-PL-005** | **Schema P1 cleanup** | ✅ Renamed ownerEmail, fixed delete rules, code-schema mismatches | M7.6.5 | ✅ **Data integrity** |
 | **FR-PL-006** | **Schema P2 cleanup** | ✅ Removed unused fields, fixed sourceURL tags hack, naming consistency | M7.6.6 | ✅ **Clean schema** |
-| **FR-TF-011** | **External testing group** | Create public external testing group | M7.6.7 | 🎯 **Public beta** |
-| **FR-TF-012** | **App Review submission** | Pass Apple's external testing review | M7.6.7 | 🎯 **Public distribution** |
-| **FR-TF-013** | **Public TestFlight link** | Generate shareable public link | M7.6.8 | 🎯 **Easy distribution** |
+| **FR-TF-011** | **External testing group** | ✅ Created "Public Beta Testers" group with public link | M7.6.7 | ✅ **Public beta** |
+| **FR-TF-012** | **App Review submission** | ✅ Apple approved for external testing | M7.6.7 | ✅ **Public distribution** |
+| **FR-TF-013** | **Public TestFlight link** | ✅ Public link active, external testers onboarded | M7.6.8 | ✅ **Easy distribution** |
+| **FR-TF-019** | **Owner display name on shared record** | ✅ Repurposed ownerEmail to store display name on Household root record | M7.6.8 | ✅ **Cross-device identity** |
 
 ### **Functional Requirements - App Store Submission (M7.7)**
 
@@ -452,11 +453,11 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
 **M7 Summary**: 52 total requirements
-- **Complete (34)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Error handling & stability (5 from M7.3.4), UI polish (2 from M7.4), Pre-launch prep (6 from M7.6.1-M7.6.6)
-- **In Progress (18)**: Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), TestFlight submission (2 from M7.6.7-M7.6.8), App Store submission (4 from M7.7)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅, M7.3.4 ✅, M7.4 ✅, M7.6.1-M7.6.6 ✅
-- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working. Pre-launch prep complete (onboarding, schema cleanup, loading screen).
-- **Next**: M7.6.7 TestFlight Submission (manual Apple portal steps)
+- **Complete (38)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Error handling & stability (5 from M7.3.4), UI polish (2 from M7.4), Pre-launch prep (6 from M7.6.1-M7.6.6), TestFlight & beta (4 from M7.6.7-M7.6.8)
+- **In Progress (14)**: Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), App Store submission (4 from M7.7)
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅, M7.3.4 ✅, M7.4 ✅, M7.6 ✅
+- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working. TestFlight live with external testers. Cross-device owner display name verified.
+- **Next**: M7.7 App Store Submission & Public Presence
 
 ---
 

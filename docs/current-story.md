@@ -1,10 +1,76 @@
 # Current Development Story
 
-**Last Updated**: February 13, 2026
-**Status**: M7.6 🔄 **IN PROGRESS** | M7.6.1-M7.6.7 code prep ✅ COMPLETE | TestFlight manual submission pending
-**Total Progress**: ~188 hours | 89% planning accuracy
-**Current Branch**: `main` (M7.6 branch merged via PR #31)
-**Current Milestone**: M7.6 - Pre-Launch Prep & TestFlight Submission
+**Last Updated**: February 15, 2026
+**Status**: M7.6 ✅ **COMPLETE** | M7.7 📋 **READY**
+**Total Progress**: ~190 hours | 89% planning accuracy
+**Current Branch**: `main`
+**Current Milestone**: M7.7 - App Store Submission & Public Presence
+
+---
+
+## ✅ **M7.6.8: OWNER DISPLAY NAME FIX - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 15, 2026
+**Branch**: `feature/M7.6.8-owner-display-name-fix` (PR #33, squash merged)
+**PRD**: `docs/prds/complete/m7.6.8-owner-display-name-fix.md`
+
+### **What Was Delivered** ✅
+
+**Fixed owner display name on shared Household record.** After CloudKit sharing, the owner's name showed as blank or "(You)" on both devices because `container.share()` only migrates the root record — HouseholdMember stays in the private store.
+
+**1. Repurposed `ownerEmail` Field**
+   - Added `ownerDisplayName` computed alias on Household entity
+   - Stores owner's name on the shared root record (survives CloudKit share migration)
+   - No schema change needed — reused deprecated field
+
+**2. Fixed Empty Name Detection**
+   - iOS 16+ returns empty `nameComponents` (not nil) for current user
+   - `PersonNameComponentsFormatter` produces `""`, not "You"
+   - Added empty/whitespace check to trigger name lookup
+
+**3. Multi-Strategy Name Resolution**
+   - Strategy 1-2: HouseholdMember relationship/fetch (existing)
+   - Strategy 3: Household.ownerDisplayName (NEW — shared root record)
+   - Strategy 4: UserDefaults cache (existing)
+
+**4. Migration for Existing Households**
+   - Detects `_`-prefixed recordNames in `ownerDisplayName`
+   - Replaces with cached display name from UserDefaults on launch
+
+### **Also Delivered (PR #32)**
+
+**M7.6.8 TestFlight Beta Bug Fixes:**
+- Fixed onboarding tap-through bug (`.ultraThinMaterial` intercepting touches)
+- Fixed household creation error handling with retry logic
+- Multi-strategy owner name lookup with UserDefaults cache
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build |
+| Owner device name display | ✅ VERIFIED | Name shows correctly after create and on relaunch |
+| Joinee device name display | ✅ VERIFIED | Owner name visible via TestFlight on second device |
+| Existing household migration | ✅ VERIFIED | `_`-prefixed recordName replaced with cached name |
+| Owner-only actions | ✅ VERIFIED | isOwner() works via ownerRecordName |
+
+---
+
+## ✅ **M7.6.7: TESTFLIGHT SUBMISSION - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Sessions**: February 12-15, 2026
+
+### **What Was Delivered** ✅
+
+- CloudKit schema deployed to Production
+- App Privacy questionnaire completed
+- Archive uploaded to App Store Connect (build 10, v1.1)
+- External testing group created with public link
+- Apple review approved
+- TestFlight distributed to external testers
+- Owner display name fix verified cross-device
 
 ---
 
@@ -616,8 +682,8 @@
 | M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
 | M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | 🔄 IN PROGRESS | 10-12h |
-| M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
+| **M7.6: Pre-Launch Prep & TestFlight** | ✅ COMPLETE | ~12h |
+| **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
 
 **M7.6 Phases** (8 phases — PRD: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`):
 
@@ -629,8 +695,8 @@
 | M7.6.4 | Schema Cleanup P0 (remove Tag + LeaveRequest, fix plannedMeals cardinality) | ✅ ~1h |
 | M7.6.5 | Schema Cleanup P1 (rename ownerEmail, fix delete rules, code-schema mismatches) | ✅ ~1.5h |
 | M7.6.6 | Schema Cleanup P2 (remove unused fields, fix sourceURL tags hack, naming) | ✅ ~1.5h |
-| M7.6.7 | TestFlight Submission — Code prep ✅ (version bump to 1.1), manual portal steps pending | 1.5h |
-| M7.6.8 | Public Beta Link (after Apple approval, 24-48h wait) | 0.25h |
+| M7.6.7 | TestFlight Submission — ✅ COMPLETE (schema deployed, archive uploaded, Apple approved) | ~2h |
+| M7.6.8 | Owner Display Name Fix + TestFlight Beta Bugs — ✅ COMPLETE (PRs #32, #33) | ~3h |
 
 **M7.7 Phases** (4 phases — PRD: `docs/prds/active/m7.7-app-store-submission.md`):
 
@@ -672,8 +738,8 @@
 
 ---
 
-**Last Session**: February 13, 2026 - Core docs synchronized, README updated
-**Next Action**: M7.6.7 TestFlight Submission (manual Apple portal steps: CloudKit Production deploy, archive, upload, submit for review)
-**Branch**: `main` (M7.6 branch merged via PR #31, M7.6.7 version bump committed on main)
-**Confidence**: **GREEN** (M7.6.1-M7.6.7 code prep complete, clean build, verified on device)
-**Version**: February 13, 2026 - Documentation Sync & README Update
+**Last Session**: February 15, 2026 - M7.6 COMPLETE, TestFlight live with external testers
+**Next Action**: M7.7 - App Store Submission & Public Presence
+**Branch**: `main` (all M7.6 work merged via PRs #31, #32, #33)
+**Confidence**: **GREEN** (M7.6 complete, TestFlight approved, cross-device sharing verified)
+**Version**: February 15, 2026 - M7.6 Complete, M7.7 Ready

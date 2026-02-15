@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 13, 2026
+**Last Updated**: February 15, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M7.6 🔄 IN PROGRESS — Pre-Launch Prep & TestFlight
-**Current Phase**: M7.6.1-M7.6.7 code prep ✅ COMPLETE | **TestFlight manual submission 🚀 Next**
-**Next Priority**: M7.6.7 - TestFlight Submission (manual Apple portal steps)
-**Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
+**Current Milestone**: M7.7 📋 READY — App Store Submission & Public Presence
+**Current Phase**: M7.6 ✅ COMPLETE | **M7.7 📋 READY**
+**Next Priority**: M7.7.1 - Beta Landing Page (GitHub Pages)
+**Execution Order (Pre-Launch)**: M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -51,6 +51,20 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 15, 2026** - M7.6 COMPLETE ✅ — TestFlight Live
+- **Completed**: M7.6.7 TestFlight submission + M7.6.8 owner display name fix
+- **Key Deliverables**:
+  - CloudKit schema deployed to Production
+  - Archive uploaded, Apple review approved, external testers active
+  - Fixed owner display name: repurposed `ownerEmail` to store name on shared Household root record
+  - Fixed empty `nameComponents` detection (iOS 16+ returns empty, not nil)
+  - Cross-device name display verified via TestFlight on owner + joinee devices
+- **PRs**: #32 (TestFlight beta bugs), #33 (owner display name fix)
+- **PRD**: `docs/prds/complete/m7.6.8-owner-display-name-fix.md`
+- **Insights**: 3 new entries logged (CloudKit sharing root record, field repurposing, CKShare nameComponents)
+- **Build**: v1.1 build 10
+- **Next**: M7.7 App Store Submission & Public Presence
 
 ### **February 12, 2026** - M7.6.3 Loading Screen + Learning Note 31 ✅
 - **Completed**: Branded SwiftUI loading screen bridging storyboard → main app
@@ -305,7 +319,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~188 hours
+- **Total Development Time**: ~190 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -388,8 +402,8 @@ _[Previous entries remain the same through December 23...]_
 | M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
 | M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
 | M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | 🔄 IN PROGRESS | 10-12h |
-| M7.7: App Store Submission & Public Presence | 📋 PLANNED | 3-5h |
+| **M7.6: Pre-Launch Prep & TestFlight** | ✅ COMPLETE | ~12h |
+| **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
 | **Pre-Launch Total** | | **~13-17h remaining** |
 
 ### **Post-Launch Roadmap**
@@ -506,14 +520,14 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-### **🚀 In Progress** (M7.2.2: 2-3 hours)
+### **📋 Ready** (M7.7: 3-5 hours)
 
-**M7.2.2: Member Invitation & Acceptance** (2-3 hours) - 🚀 READY
-- Code complete, awaiting 2 physical iPhones for testing
-- Household invitation flow
-- CKShare acceptance
-- Bi-directional sync validation
-- Members list verification
+**M7.7: App Store Submission & Public Presence** (3-5 hours) - 📋 READY
+- M7.7.1: Beta Landing Page (GitHub Pages)
+- M7.7.2: GitHub README Update
+- M7.7.3: App Store Listing
+- M7.7.4: App Store Submission
+- **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
 
 ---
 
@@ -628,8 +642,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.2
-**Last Updated**: February 13, 2026
+**Version**: 9.3
+**Last Updated**: February 15, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git
