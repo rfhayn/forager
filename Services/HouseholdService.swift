@@ -1647,8 +1647,11 @@ class HouseholdService: ObservableObject {
             // M7.6.8: CKShare often doesn't provide nameComponents for the owner
             // on their own device. Fall back to HouseholdMember's displayName which
             // is resolved by refreshCurrentMemberDisplayName() with a 3-level fallback.
+            // Match by recordName (participant.id) or email (participant.email).
             if participant.displayName == "You" || participant.displayName == "User" {
-                if let member = household.memberArray.first(where: { $0.email == participant.id }) {
+                if let member = household.memberArray.first(where: {
+                    $0.email == participant.id || $0.email == participant.email
+                }) {
                     if let memberName = member.displayName, memberName != "Me", !memberName.isEmpty {
                         participant = ShareParticipant(
                             id: participant.id,
@@ -1943,13 +1946,19 @@ class HouseholdService: ObservableObject {
         }
 
         do {
-            // Get current user's email/identifier
+            // M7.6.8: Get both recordName and email for robust member lookup.
+            // HouseholdMember.email may store either the recordName or an email,
+            // depending on which version of createHouseholdAndShare created it.
+            let userRecordID = try await container.userRecordID()
+            let recordName = userRecordID.recordName
             let currentEmail = try await getCurrentUserEmail()
 
-            // Find current user's member record
-            guard let currentMember = household.memberArray.first(where: { $0.email == currentEmail }) else {
+            // Find current user's member record by either identifier
+            guard let currentMember = household.memberArray.first(where: {
+                $0.email == currentEmail || $0.email == recordName
+            }) else {
                 #if DEBUG
-                print("🔄 Display name refresh: Current user not found in household members")
+                print("🔄 Display name refresh: Current user not found (tried email=\(currentEmail), recordName=\(recordName))")
                 #endif
                 return
             }
