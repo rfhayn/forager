@@ -1144,6 +1144,29 @@ class HouseholdService: ObservableObject {
             }
         }
 
+        // M7.6.8: Pre-flight check — verify iCloud account is available
+        let accountStatus = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKAccountStatus, Error>) in
+            container.accountStatus { status, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: status)
+                }
+            }
+        }
+
+        guard accountStatus == .available else {
+            let statusName: String
+            switch accountStatus {
+            case .noAccount: statusName = "No iCloud account signed in"
+            case .restricted: statusName = "iCloud access is restricted"
+            case .couldNotDetermine: statusName = "Could not determine iCloud status"
+            case .temporarilyUnavailable: statusName = "iCloud is temporarily unavailable"
+            @unknown default: statusName = "iCloud unavailable (status: \(accountStatus.rawValue))"
+            }
+            throw HouseholdError.creationFailed(statusName)
+        }
+
         do {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
@@ -1199,7 +1222,11 @@ class HouseholdService: ObservableObject {
             }
 
             // 5. Save to Core Data (household in Private Store initially)
-            try viewContext.save()
+            do {
+                try viewContext.save()
+            } catch {
+                throw HouseholdError.creationFailed("Failed to save household locally: \(Self.extractDetailedError(error))")
+            }
 
             #if DEBUG
             household.logStoreIdentity()  // Should show "Private Store"
@@ -1209,7 +1236,28 @@ class HouseholdService: ObservableObject {
             // M7.2.2: With dual-store setup, let Core Data determine the correct store
             // Household is in viewContext, which will resolve to the appropriate store
             let persistenceController = PersistenceController.shared
-            let (_, share, _) = try await persistenceController.container.share([household], to: nil)
+            let share: CKShare
+            do {
+                let (_, createdShare, _) = try await persistenceController.container.share([household], to: nil)
+                share = createdShare
+            } catch {
+                // M7.6.8: Roll back the local save so the user isn't stuck with a
+                // ghost household that blocks future creation attempts
+                #if DEBUG
+                print("⚠️ M7.6.8: container.share() failed — rolling back local household")
+                #endif
+                if moveExistingData {
+                    rollbackMigratedData(household)
+                }
+                viewContext.delete(ownerMember)
+                viewContext.delete(household)
+                try? viewContext.save()
+
+                // Extract the real CloudKit error from the NSError chain
+                let detail = Self.extractDetailedError(error)
+                CloudKitLogger.householdError("container.share() failed", householdID: nil, error: error)
+                throw HouseholdError.creationFailed("CloudKit sharing failed: \(detail)")
+            }
 
             #if DEBUG
             print("✅ CKShare created: \(share.recordID.recordName)")
@@ -1247,15 +1295,49 @@ class HouseholdService: ObservableObject {
 
             return household
 
+        } catch let householdError as HouseholdError {
+            // Re-throw already-formatted household errors
+            throw householdError
         } catch {
             CloudKitLogger.householdError("Household creation failed", householdID: nil, error: error)
-            throw HouseholdError.creationFailed(error.localizedDescription)
+            throw HouseholdError.creationFailed(Self.extractDetailedError(error))
         }
     }
     
     /// Migrates ALL existing personal data to household
     /// Attaches recipes, lists, meal plans, categories, and ingredient templates
     /// Sets both household relationship AND householdKey for CloudKit sync
+    // M7.6.8: Drill into NSError chain to find the actual underlying error message.
+    // CloudKit errors from NSPersistentCloudKitContainer are often wrapped in
+    // multiple NSError layers where localizedDescription just shows "Cocoa error XXXXX".
+    private static func extractDetailedError(_ error: Error) -> String {
+        let nsError = error as NSError
+
+        // Check for underlying CloudKit error
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
+            let underlyingNS = underlying as NSError
+            if underlyingNS.domain == CKErrorDomain {
+                // Found the actual CloudKit error
+                return underlyingNS.localizedDescription
+            }
+            // Recurse into deeper layers
+            return extractDetailedError(underlying)
+        }
+
+        // Check for multiple underlying errors
+        if let underlyingErrors = nsError.userInfo["NSDetailedErrors"] as? [Error], let first = underlyingErrors.first {
+            return extractDetailedError(first)
+        }
+
+        // Fall back to the best available description
+        let description = nsError.localizedDescription
+        if description.contains("Cocoa error") {
+            // Generic Cocoa error — add the domain and code for diagnostics
+            return "\(description) [domain: \(nsError.domain), code: \(nsError.code)]"
+        }
+        return description
+    }
+
     private func migratePersonalDataToHousehold(_ household: Household) throws {
         #if DEBUG
         print("\n🔄 Migrating ALL personal data to household...")
@@ -1329,6 +1411,34 @@ class HouseholdService: ObservableObject {
         #endif
     }
     
+    /// M7.6.8: Undo migratePersonalDataToHousehold by clearing household references.
+    /// Called when container.share() fails after the local save succeeded,
+    /// so the user's personal data isn't left orphaned on a ghost household.
+    private func rollbackMigratedData(_ household: Household) {
+        let entities: [(NSFetchRequest<NSManagedObject>, String)] = [
+            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
+            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
+            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
+            (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
+        ]
+
+        for (request, name) in entities {
+            request.predicate = NSPredicate(format: "household == %@", household)
+            if let objects = try? viewContext.fetch(request) {
+                for obj in objects {
+                    obj.setValue(nil, forKey: "household")
+                    obj.setValue(nil, forKey: "householdKey")
+                }
+                #if DEBUG
+                if !objects.isEmpty {
+                    print("   Rolled back \(objects.count) \(name)(s)")
+                }
+                #endif
+            }
+        }
+    }
+
     // MARK: - CloudKit Integration
 
     /// Gets the current user's email from CloudKit
