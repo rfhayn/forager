@@ -1642,7 +1642,26 @@ class HouseholdService: ObservableObject {
 
         for ckParticipant in share.participants {
             let isCurrentUser = (ckParticipant == share.currentUserParticipant)
-            let participant = ShareParticipant(from: ckParticipant, isCurrentUser: isCurrentUser)
+            var participant = ShareParticipant(from: ckParticipant, isCurrentUser: isCurrentUser)
+
+            // M7.6.8: CKShare often doesn't provide nameComponents for the owner
+            // on their own device. Fall back to HouseholdMember's displayName which
+            // is resolved by refreshCurrentMemberDisplayName() with a 3-level fallback.
+            if participant.displayName == "You" || participant.displayName == "User" {
+                if let member = household.memberArray.first(where: { $0.email == participant.id }) {
+                    if let memberName = member.displayName, memberName != "Me", !memberName.isEmpty {
+                        participant = ShareParticipant(
+                            id: participant.id,
+                            displayName: memberName,
+                            email: participant.email,
+                            isOwner: participant.isOwner,
+                            isCurrentUser: participant.isCurrentUser,
+                            acceptanceStatus: participant.acceptanceStatus
+                        )
+                    }
+                }
+            }
+
             participants.append(participant)
         }
 
