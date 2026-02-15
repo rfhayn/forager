@@ -673,10 +673,12 @@ struct CreateHouseholdSheet: View {
     @ObservedObject var householdService: HouseholdService
     
     @State private var householdName: String = ""
+    @State private var ownerDisplayName: String = ""
+    @State private var isLoadingName: Bool = true
     @State private var isCreating: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
-    
+
     // M7.2.3 Phase 4.1: Migration flow state
     @State private var showMigrationSheet: Bool = false
     @State private var personalDataCounts: (recipes: Int, lists: Int, mealPlans: Int, categories: Int, templates: Int) = (0, 0, 0, 0, 0)
@@ -688,13 +690,32 @@ struct CreateHouseholdSheet: View {
                 Section(header: Text("Household Details")) {
                     TextField("Household Name", text: $householdName)
                         .autocapitalization(.words)
+
+                    HStack {
+                        TextField("Your Name", text: $ownerDisplayName)
+                            .autocapitalization(.words)
+                        if isLoadingName {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                    }
                 }
 
                 Section {
-                    Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates. Your name will be pulled from your iCloud account.")
+                    Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
+            }
+            .task {
+                // M7.6.8: Auto-populate name from iCloud if available
+                do {
+                    let info = try await householdService.resolveCurrentUserName()
+                    if ownerDisplayName.isEmpty && info != "Me" {
+                        ownerDisplayName = info
+                    }
+                } catch {}
+                isLoadingName = false
             }
             .navigationTitle("Create Household")
             .navigationBarTitleDisplayMode(.inline)
@@ -710,7 +731,7 @@ struct CreateHouseholdSheet: View {
                     Button("Create") {
                         checkPersonalDataAndCreate()
                     }
-                    .disabled(householdName.isEmpty || isCreating)
+                    .disabled(householdName.isEmpty || ownerDisplayName.isEmpty || isCreating)
                 }
             }
             .overlay {
@@ -782,6 +803,7 @@ struct CreateHouseholdSheet: View {
             do {
                 _ = try await householdService.createHouseholdAndShare(
                     name: householdName,
+                    ownerName: ownerDisplayName,
                     moveExistingData: shouldMigrateData
                 )
                 dismiss()
