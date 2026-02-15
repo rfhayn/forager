@@ -1241,9 +1241,21 @@ class HouseholdService: ObservableObject {
                 let (_, createdShare, _) = try await persistenceController.container.share([household], to: nil)
                 share = createdShare
             } catch {
-                // M7.6.8: Extract the real CloudKit error from the NSError chain
+                // M7.6.8: Roll back the local save so the user isn't stuck with a
+                // ghost household that blocks future creation attempts
+                #if DEBUG
+                print("⚠️ M7.6.8: container.share() failed — rolling back local household")
+                #endif
+                if moveExistingData {
+                    rollbackMigratedData(household)
+                }
+                viewContext.delete(ownerMember)
+                viewContext.delete(household)
+                try? viewContext.save()
+
+                // Extract the real CloudKit error from the NSError chain
                 let detail = Self.extractDetailedError(error)
-                CloudKitLogger.householdError("container.share() failed", householdID: household.id?.uuidString, error: error)
+                CloudKitLogger.householdError("container.share() failed", householdID: nil, error: error)
                 throw HouseholdError.creationFailed("CloudKit sharing failed: \(detail)")
             }
 
@@ -1399,6 +1411,34 @@ class HouseholdService: ObservableObject {
         #endif
     }
     
+    /// M7.6.8: Undo migratePersonalDataToHousehold by clearing household references.
+    /// Called when container.share() fails after the local save succeeded,
+    /// so the user's personal data isn't left orphaned on a ghost household.
+    private func rollbackMigratedData(_ household: Household) {
+        let entities: [(NSFetchRequest<NSManagedObject>, String)] = [
+            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
+            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
+            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
+            (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
+        ]
+
+        for (request, name) in entities {
+            request.predicate = NSPredicate(format: "household == %@", household)
+            if let objects = try? viewContext.fetch(request) {
+                for obj in objects {
+                    obj.setValue(nil, forKey: "household")
+                    obj.setValue(nil, forKey: "householdKey")
+                }
+                #if DEBUG
+                if !objects.isEmpty {
+                    print("   Rolled back \(objects.count) \(name)(s)")
+                }
+                #endif
+            }
+        }
+    }
+
     // MARK: - CloudKit Integration
 
     /// Gets the current user's email from CloudKit
