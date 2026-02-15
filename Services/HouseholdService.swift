@@ -1232,31 +1232,24 @@ class HouseholdService: ObservableObject {
             household.logStoreIdentity()  // Should show "Private Store"
             #endif
 
-            // 6. CRITICAL: Share the household using container.share()
-            // M7.2.2: With dual-store setup, let Core Data determine the correct store
-            // Household is in viewContext, which will resolve to the appropriate store
+            // 6. Share the household via CloudKit with retry
+            // M7.6.8: On fresh installs, CloudKit may not have finished exporting the
+            // household record before share() runs. Retry with backoff to allow export.
             let persistenceController = PersistenceController.shared
             let share: CKShare
             do {
-                let (_, createdShare, _) = try await persistenceController.container.share([household], to: nil)
-                share = createdShare
+                share = try await shareWithRetry(household: household, persistence: persistenceController)
             } catch {
-                // M7.6.8: Roll back the local save so the user isn't stuck with a
-                // ghost household that blocks future creation attempts
+                // Share failed even after retries — rollback the ghost household
+                CloudKitLogger.householdError("CloudKit sharing failed after retries, rolling back", householdID: household.id?.uuidString, error: error)
                 #if DEBUG
-                print("⚠️ M7.6.8: container.share() failed — rolling back local household")
+                print("🔙 Rolling back ghost household and migrated data...")
                 #endif
-                if moveExistingData {
-                    rollbackMigratedData(household)
-                }
+                rollbackMigratedData(household)
                 viewContext.delete(ownerMember)
                 viewContext.delete(household)
                 try? viewContext.save()
-
-                // Extract the real CloudKit error from the NSError chain
-                let detail = Self.extractDetailedError(error)
-                CloudKitLogger.householdError("container.share() failed", householdID: nil, error: error)
-                throw HouseholdError.creationFailed("CloudKit sharing failed: \(detail)")
+                throw HouseholdError.creationFailed("CloudKit sharing failed: \(Self.extractDetailedError(error))")
             }
 
             #if DEBUG
@@ -1437,6 +1430,49 @@ class HouseholdService: ObservableObject {
                 #endif
             }
         }
+    }
+
+    // MARK: - CloudKit Share Retry
+
+    /// M7.6.8: Retry container.share() with exponential backoff.
+    /// On fresh installs, CloudKit may not have finished exporting records
+    /// when share() is called immediately after a local save. Retries up to
+    /// 3 times with 2s/4s delays to allow the export to complete.
+    private func shareWithRetry(
+        household: Household,
+        persistence: PersistenceController,
+        maxAttempts: Int = 3
+    ) async throws -> CKShare {
+        var lastError: Error?
+
+        for attempt in 1...maxAttempts {
+            do {
+                let (_, share, _) = try await persistence.container.share(
+                    [household], to: nil
+                )
+                #if DEBUG
+                if attempt > 1 {
+                    print("✅ share() succeeded on attempt \(attempt)/\(maxAttempts)")
+                }
+                #endif
+                return share
+            } catch {
+                lastError = error
+                #if DEBUG
+                print("⚠️ share() attempt \(attempt)/\(maxAttempts) failed: \(Self.extractDetailedError(error))")
+                #endif
+
+                if attempt < maxAttempts {
+                    let delaySeconds = Int(pow(2.0, Double(attempt))) // 2s, 4s
+                    #if DEBUG
+                    print("   Retrying in \(delaySeconds)s...")
+                    #endif
+                    try await Task.sleep(nanoseconds: UInt64(delaySeconds) * 1_000_000_000)
+                }
+            }
+        }
+
+        throw lastError!
     }
 
     // MARK: - CloudKit Integration
