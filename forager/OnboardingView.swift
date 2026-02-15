@@ -139,7 +139,7 @@ struct CoachMarkOverlay: View {
             // Dimmed backdrop with optional spotlight cutout
             spotlightLayer
 
-            // Tap gesture to advance (non-final steps)
+            // Tap target for dimmed area outside the card (non-final steps)
             if !step.isFinalStep {
                 Color.clear
                     .contentShape(Rectangle())
@@ -241,10 +241,32 @@ struct CoachMarkOverlay: View {
                 }
             }
 
-            // Step counter
-            Text("\(currentStep + 1) of \(steps.count)")
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
+            // Step counter with back button
+            HStack {
+                if currentStep > 0 && !step.isFinalStep {
+                    Button {
+                        goBack()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+
+                Spacer()
+
+                Text("\(currentStep + 1) of \(steps.count)")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+
+                Spacer()
+
+                // Balance the back button width
+                if currentStep > 0 && !step.isFinalStep {
+                    Color.clear
+                        .frame(width: 12, height: 12)
+                }
+            }
 
             Text(step.title)
                 .font(.title2)
@@ -286,6 +308,12 @@ struct CoachMarkOverlay: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
         )
+        // Card tap advances on non-final steps (Button takes priority for back)
+        .onTapGesture {
+            if !step.isFinalStep {
+                advanceStep()
+            }
+        }
     }
 
     // MARK: - Final Step Buttons
@@ -330,6 +358,23 @@ struct CoachMarkOverlay: View {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             currentStep += 1
+            applyTabSwitch()
+
+            withAnimation(.easeOut(duration: 0.3)) {
+                cardVisible = true
+            }
+        }
+    }
+
+    private func goBack() {
+        guard currentStep > 0 else { return }
+
+        withAnimation(.easeInOut(duration: 0.25)) {
+            cardVisible = false
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            currentStep -= 1
             applyTabSwitch()
 
             withAnimation(.easeOut(duration: 0.3)) {
