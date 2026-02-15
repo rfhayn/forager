@@ -267,6 +267,19 @@ class HouseholdService: ObservableObject {
                         try? viewContext.save()
                     }
 
+                    // M7.6.8: Migrate ownerEmail from recordName to display name
+                    // Pre-M7.6.8 households stored ownerIdentifier in ownerEmail.
+                    // If it still looks like a recordName (starts with "_"), overwrite
+                    // with the cached display name so the shared root record carries a
+                    // human-readable name for other participants to see.
+                    if let current = household.ownerDisplayName,
+                       current.hasPrefix("_"),
+                       let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+                       !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
+                        household.ownerDisplayName = cached
+                        try? viewContext.save()
+                    }
+
                     CloudKitLogger.householdLoaded(household.name, householdID: household.id?.uuidString ?? "NIL")
 
                     if let storeURL = household.objectID.persistentStore?.url {
@@ -1037,8 +1050,8 @@ class HouseholdService: ObservableObject {
     /// Checks if current user is the owner of the household
     /// Uses userRecordID for reliable comparison without requiring discoverability
     func isOwner(household: Household) async -> Bool {
-        // M7.6.5: Use ownerRecordName (preferred), fall back to ownerEmail for pre-migration data
-        guard let ownerIdentifier = household.ownerRecordName ?? household.ownerEmail else { return false }
+        // M7.6.8: Use ownerRecordName only (ownerEmail repurposed for display name)
+        guard let ownerIdentifier = household.ownerRecordName else { return false }
 
         do {
             // Get current user's recordID (always available, no discoverability required)
@@ -1207,7 +1220,7 @@ class HouseholdService: ObservableObject {
             household.id = UUID()
             household.name = name
             household.ownerRecordName = ownerIdentifier
-            household.ownerEmail = ownerIdentifier  // Deprecated field, kept for v3→v4 migration compatibility
+            household.ownerDisplayName = ownerName  // M7.6.8: Store display name on shared root record
             household.createdDate = Date()
 
             // 3. Create owner as first member
@@ -1475,12 +1488,18 @@ class HouseholdService: ObservableObject {
             return try? viewContext.fetch(request).first
         }()
 
+        // Strategy 3: Household entity field (shared root record, works cross-device)
+        if isOwner, let name = household.ownerDisplayName, !name.isEmpty,
+           name != "Me", name != "You", name != "User" {
+            return name
+        }
+
         // Use member's displayName if it's a real name
         if let name = member?.displayName, !name.isEmpty, name != "Me", name != "You", name != "User" {
             return name
         }
 
-        // Strategy 3: UserDefaults cache (set during household creation)
+        // Strategy 4: UserDefaults cache (set during household creation)
         if isOwner, let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
            !cached.isEmpty, cached != "Me" {
             // Also update the member record so future lookups work directly
@@ -1716,11 +1735,13 @@ class HouseholdService: ObservableObject {
             let isCurrentUser = (ckParticipant == share.currentUserParticipant)
             var participant = ShareParticipant(from: ckParticipant, isCurrentUser: isCurrentUser)
 
-            // M7.6.8: CKShare often doesn't provide nameComponents for the current
-            // user on their own device. Fall back to HouseholdMember's displayName.
-            // Uses direct Core Data fetch (more reliable than relationship traversal
-            // after CloudKit store migration).
-            if participant.displayName == "You" || participant.displayName == "User" {
+            // M7.6.8: CKShare often provides empty or generic names for the current
+            // user on their own device (nameComponents may be present but empty).
+            // Fall back to Household entity, HouseholdMember, or UserDefaults cache.
+            let needsNameLookup = participant.displayName.trimmingCharacters(in: .whitespaces).isEmpty
+                || participant.displayName == "You"
+                || participant.displayName == "User"
+            if needsNameLookup {
                 let betterName = lookupMemberName(
                     participantID: participant.id,
                     participantEmail: participant.email,
@@ -2369,7 +2390,8 @@ class HouseholdService: ObservableObject {
             #if DEBUG
             print("   Name: \(household.name ?? "Unknown")")
             print("   ID (UUID): \(household.id?.uuidString ?? "NIL")")
-            print("   Owner: \(household.ownerRecordName ?? household.ownerEmail ?? "Unknown")")
+            print("   Owner ID: \(household.ownerRecordName ?? "Unknown")")
+            print("   Owner Name: \(household.ownerDisplayName ?? "Not set")")
             #endif
             if let store = household.objectID.persistentStore {
                 #if DEBUG

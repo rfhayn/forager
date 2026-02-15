@@ -8,6 +8,13 @@
 import CoreData
 
 extension Household {
+    /// M7.6.8: Owner display name stored on the shared root record.
+    /// Repurposes ownerEmail field so the name survives CloudKit share migration.
+    public var ownerDisplayName: String? {
+        get { ownerEmail }
+        set { ownerEmail = newValue }
+    }
+
     /// Returns count of household members
     public var memberCount: Int {
         return members?.count ?? 0
