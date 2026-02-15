@@ -673,7 +673,6 @@ struct CreateHouseholdSheet: View {
     @ObservedObject var householdService: HouseholdService
     
     @State private var householdName: String = ""
-    @State private var ownerDisplayName: String = ""
     @State private var isCreating: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
@@ -689,13 +688,10 @@ struct CreateHouseholdSheet: View {
                 Section(header: Text("Household Details")) {
                     TextField("Household Name", text: $householdName)
                         .autocapitalization(.words)
-                    
-                    TextField("Your Name", text: $ownerDisplayName)
-                        .autocapitalization(.words)
                 }
-                
+
                 Section {
-                    Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates.")
+                    Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates. Your name will be pulled from your iCloud account.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -714,7 +710,7 @@ struct CreateHouseholdSheet: View {
                     Button("Create") {
                         checkPersonalDataAndCreate()
                     }
-                    .disabled(householdName.isEmpty || ownerDisplayName.isEmpty || isCreating)
+                    .disabled(householdName.isEmpty || isCreating)
                 }
             }
             .overlay {
@@ -786,7 +782,6 @@ struct CreateHouseholdSheet: View {
             do {
                 _ = try await householdService.createHouseholdAndShare(
                     name: householdName,
-                    ownerName: ownerDisplayName,
                     moveExistingData: shouldMigrateData
                 )
                 dismiss()

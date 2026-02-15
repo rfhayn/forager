@@ -1117,10 +1117,9 @@ class HouseholdService: ObservableObject {
     /// Creates household and migrates existing personal data if requested
     /// - Parameters:
     ///   - name: Name of the household
-    ///   - ownerName: Display name for the owner
     ///   - moveExistingData: Whether to migrate existing personal data to household
     /// - Returns: The newly created Household
-    func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
+    func createHouseholdAndShare(name: String, moveExistingData: Bool) async throws -> Household {
         isLoading = true
         creationStatus = "Checking iCloud account…"
         defer {
@@ -1176,32 +1175,18 @@ class HouseholdService: ObservableObject {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
             print("   Household: \(name)")
-            print("   Owner: \(ownerName)")
             print("   Move existing data: \(moveExistingData)")
             #endif
 
-            // 1. Get userRecordID as stable owner identifier
+            // 1. Get userRecordID and resolve display name from iCloud identity
             creationStatus = "Connecting to iCloud…"
-            // Note: recordID.recordName is always available without discoverability permissions
-            let userRecordID = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord.ID, Error>) in
-                container.fetchUserRecordID { recordID, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                        return
-                    }
-                    guard let recordID = recordID else {
-                        continuation.resume(throwing: HouseholdError.emailNotFound)
-                        return
-                    }
-                    continuation.resume(returning: recordID)
-                }
-            }
-
-            // Use recordName as stable owner identifier (not email, but reliable)
-            let ownerIdentifier = userRecordID.recordName
+            let userInfo = try await getCurrentUserInfo()
+            let ownerIdentifier = userInfo.email  // Stable userRecordID-based identifier
+            let ownerName = userInfo.displayName
 
             #if DEBUG
-            print("📝 Owner identifier (userRecordID): \(ownerIdentifier)")
+            print("📝 Owner identifier: \(ownerIdentifier)")
+            print("📝 Owner display name: \(ownerName)")
             #endif
 
             // 2. Create Household entity in Private Store (will be shared after)
@@ -1213,11 +1198,11 @@ class HouseholdService: ObservableObject {
             household.ownerEmail = ownerIdentifier  // Deprecated field, kept for v3→v4 migration compatibility
             household.createdDate = Date()
 
-            // 3. Create owner as first member
+            // 3. Create owner as first member with iCloud-resolved name
             let ownerMember = HouseholdMember(context: viewContext)
             ownerMember.id = UUID()
             ownerMember.email = ownerIdentifier  // Stable userRecordID
-            ownerMember.displayName = ownerName  // User-provided display name
+            ownerMember.displayName = ownerName  // Auto-resolved from iCloud identity
             ownerMember.role = "owner"
             ownerMember.status = "active"
             ownerMember.joinedDate = Date()

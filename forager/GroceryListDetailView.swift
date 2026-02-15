@@ -46,7 +46,13 @@ struct GroceryListDetailView: View {
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)
         ]
-    ) private var categories: FetchedResults<Category>
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.6.8: Filter categories by household scope to prevent duplicates
+    private var categories: [Category] {
+        let key = householdService.currentHouseholdKey
+        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
     
     // INLINE ADD: Initialize services AND configure FetchRequest for live updates
     init(weeklyList: WeeklyList) {

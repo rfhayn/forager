@@ -7,26 +7,32 @@ import CoreData
 struct CategoryChangeModal: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     // Data
     let ingredientTemplates: [IngredientTemplate]
     let onAssignmentsComplete: () -> Void
-    
+
     // FIXED: Use NSManagedObjectID as stable keys but match CategoryAssignmentModal state pattern
     @State private var categoryAssignments: [NSManagedObjectID: String?] = [:]
     @State private var showingAddCategory = false
     @State private var isLoading = false
     @State private var errorMessage: String?
-    
+
     // Fetch existing categories
     @FetchRequest(
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
             NSSortDescriptor(keyPath: \Category.name, ascending: true)
         ]
-    ) private var categories: FetchedResults<Category>
-    
-    // Filter out "Uncategorized" from assignment options
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.6.8: Filter by household scope, then exclude "Uncategorized"
+    private var categories: [Category] {
+        let key = householdService.currentHouseholdKey
+        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
+
     private var realCategories: [Category] {
         categories.filter { $0.displayName.lowercased() != "uncategorized" }
     }

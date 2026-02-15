@@ -7,14 +7,21 @@ import CoreData
 struct AddIngredientView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     @State private var name = ""
     @State private var selectedCategory = "Uncategorized"
     @State private var isStaple = false
-    
+
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)]
-    ) private var categories: FetchedResults<Category>
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.6.8: Filter categories by household scope to prevent duplicates
+    private var categories: [Category] {
+        let key = householdService.currentHouseholdKey
+        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
     
     var body: some View {
         NavigationView {

@@ -4,7 +4,8 @@ import CoreData
 struct AddStapleView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     // Dynamic categories fetch (sorted by custom order)
     @FetchRequest(
         sortDescriptors: [
@@ -12,7 +13,13 @@ struct AddStapleView: View {
             NSSortDescriptor(keyPath: \Category.name, ascending: true)
         ],
         animation: .default
-    ) private var categories: FetchedResults<Category>
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.6.8: Filter categories by household scope to prevent duplicates
+    private var categories: [Category] {
+        let key = householdService.currentHouseholdKey
+        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
     
     // Form state
     @State private var name = ""

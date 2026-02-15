@@ -4,20 +4,21 @@ import CoreData
 struct EditStapleView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    
+    @EnvironmentObject private var householdService: HouseholdService
+
     // The staple item being edited
     let staple: GroceryItem
-    
+
     // Form state - initialized from existing staple
     @State private var name: String
     @State private var selectedCategory: String
     @State private var lastPurchased: Date?
     @State private var includeLastPurchased: Bool
-    
+
     // Error handling
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
     // Dynamic categories fetch (sorted by custom order)
     @FetchRequest(
         sortDescriptors: [
@@ -25,7 +26,13 @@ struct EditStapleView: View {
             NSSortDescriptor(keyPath: \Category.name, ascending: true)
         ],
         animation: .default
-    ) private var categories: FetchedResults<Category>
+    ) private var allCategories: FetchedResults<Category>
+
+    // M7.6.8: Filter categories by household scope to prevent duplicates
+    private var categories: [Category] {
+        let key = householdService.currentHouseholdKey
+        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
     
     // Validation
     private var isFormValid: Bool {
