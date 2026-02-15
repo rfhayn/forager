@@ -1215,6 +1215,8 @@ class HouseholdService: ObservableObject {
             ownerMember.id = UUID()
             ownerMember.email = ownerIdentifier  // Stable userRecordID
             ownerMember.displayName = ownerName  // From UI (auto-populated or user-entered)
+            // Cache for fallback when CKShare and member lookup both fail
+            UserDefaults.standard.set(ownerName, forKey: "cachedOwnerDisplayName")
             ownerMember.role = "owner"
             ownerMember.status = "active"
             ownerMember.joinedDate = Date()
@@ -1444,6 +1446,54 @@ class HouseholdService: ObservableObject {
 
     // MARK: - User Name Resolution
 
+    /// M7.6.8: Look up a HouseholdMember's displayName using multiple matching strategies.
+    /// Tries: relationship, direct fetch, UserDefaults cache, then any non-empty member name.
+    private func lookupMemberName(
+        participantID: String,
+        participantEmail: String?,
+        isOwner: Bool,
+        household: Household
+    ) -> String? {
+        // Find the member via relationship or direct fetch
+        let member: HouseholdMember? = {
+            // Strategy 1: Match via relationship
+            if let m = household.memberArray.first(where: {
+                $0.email == participantID ||
+                (participantEmail != nil && $0.email == participantEmail) ||
+                (isOwner && $0.role == "owner")
+            }) {
+                return m
+            }
+
+            // Strategy 2: Direct Core Data fetch
+            let request: NSFetchRequest<HouseholdMember> = HouseholdMember.fetchRequest()
+            request.predicate = NSPredicate(
+                format: "household == %@ AND (email == %@ OR role == %@)",
+                household, participantID, isOwner ? "owner" : ""
+            )
+            request.fetchLimit = 1
+            return try? viewContext.fetch(request).first
+        }()
+
+        // Use member's displayName if it's a real name
+        if let name = member?.displayName, !name.isEmpty, name != "Me", name != "You", name != "User" {
+            return name
+        }
+
+        // Strategy 3: UserDefaults cache (set during household creation)
+        if isOwner, let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+           !cached.isEmpty, cached != "Me" {
+            // Also update the member record so future lookups work directly
+            if let member = member {
+                member.displayName = cached
+                try? viewContext.save()
+            }
+            return cached
+        }
+
+        return nil
+    }
+
     /// M7.6.8: Resolve the current user's display name for household creation.
     /// Tries iCloud identity first, falls back to "Me".
     /// Called by CreateHouseholdSheet to auto-populate the name field.
@@ -1666,24 +1716,26 @@ class HouseholdService: ObservableObject {
             let isCurrentUser = (ckParticipant == share.currentUserParticipant)
             var participant = ShareParticipant(from: ckParticipant, isCurrentUser: isCurrentUser)
 
-            // M7.6.8: CKShare often doesn't provide nameComponents for the owner
-            // on their own device. Fall back to HouseholdMember's displayName which
-            // is resolved by refreshCurrentMemberDisplayName() with a 3-level fallback.
-            // Match by recordName (participant.id) or email (participant.email).
+            // M7.6.8: CKShare often doesn't provide nameComponents for the current
+            // user on their own device. Fall back to HouseholdMember's displayName.
+            // Uses direct Core Data fetch (more reliable than relationship traversal
+            // after CloudKit store migration).
             if participant.displayName == "You" || participant.displayName == "User" {
-                if let member = household.memberArray.first(where: {
-                    $0.email == participant.id || $0.email == participant.email
-                }) {
-                    if let memberName = member.displayName, memberName != "Me", !memberName.isEmpty {
-                        participant = ShareParticipant(
-                            id: participant.id,
-                            displayName: memberName,
-                            email: participant.email,
-                            isOwner: participant.isOwner,
-                            isCurrentUser: participant.isCurrentUser,
-                            acceptanceStatus: participant.acceptanceStatus
-                        )
-                    }
+                let betterName = lookupMemberName(
+                    participantID: participant.id,
+                    participantEmail: participant.email,
+                    isOwner: participant.isOwner,
+                    household: household
+                )
+                if let name = betterName {
+                    participant = ShareParticipant(
+                        id: participant.id,
+                        displayName: name,
+                        email: participant.email,
+                        isOwner: participant.isOwner,
+                        isCurrentUser: participant.isCurrentUser,
+                        acceptanceStatus: participant.acceptanceStatus
+                    )
                 }
             }
 
@@ -2042,6 +2094,16 @@ class HouseholdService: ObservableObject {
                     print("   ✅ Extracted from email: \(newDisplayName!)")
                     #endif
                 }
+            }
+
+            // Try 4: UserDefaults cache (set during household creation)
+            if newDisplayName == nil,
+               let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+               !cached.isEmpty, cached != "Me" {
+                newDisplayName = cached
+                #if DEBUG
+                print("   ✅ Got display name from UserDefaults cache: \(cached)")
+                #endif
             }
 
             // Only update if we found a better name and it's different
