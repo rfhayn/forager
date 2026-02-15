@@ -88,6 +88,7 @@ class HouseholdService: ObservableObject {
     @Published var currentHousehold: Household?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var creationStatus: String?
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -1121,7 +1122,11 @@ class HouseholdService: ObservableObject {
     /// - Returns: The newly created Household
     func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
         isLoading = true
-        defer { isLoading = false }
+        creationStatus = "Checking iCloud account…"
+        defer {
+            isLoading = false
+            creationStatus = nil
+        }
 
         // M7.3.3: Prevent creating a household when already in one
         // User must leave/delete their current household first
@@ -1176,6 +1181,7 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 1. Get userRecordID as stable owner identifier
+            creationStatus = "Connecting to iCloud…"
             // Note: recordID.recordName is always available without discoverability permissions
             let userRecordID = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKRecord.ID, Error>) in
                 container.fetchUserRecordID { recordID, error in
@@ -1199,6 +1205,7 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 2. Create Household entity in Private Store (will be shared after)
+            creationStatus = "Creating household…"
             let household = Household(context: viewContext)
             household.id = UUID()
             household.name = name
@@ -1218,10 +1225,12 @@ class HouseholdService: ObservableObject {
 
             // 4. Migrate existing data if requested
             if moveExistingData {
+                creationStatus = "Migrating your data…"
                 try migratePersonalDataToHousehold(household)
             }
 
             // 5. Save to Core Data (household in Private Store initially)
+            creationStatus = "Saving to device…"
             do {
                 try viewContext.save()
             } catch {
@@ -1236,9 +1245,12 @@ class HouseholdService: ObservableObject {
             // M7.6.8: On fresh installs, CloudKit may not have finished exporting the
             // household record before share() runs. Retry with backoff to allow export.
             let persistenceController = PersistenceController.shared
+            creationStatus = "Setting up CloudKit sharing…"
             let share: CKShare
             do {
-                share = try await shareWithRetry(household: household, persistence: persistenceController)
+                share = try await shareWithRetry(household: household, persistence: persistenceController) { status in
+                    self.creationStatus = status
+                }
             } catch {
                 // Share failed even after retries — rollback the ghost household
                 CloudKitLogger.householdError("CloudKit sharing failed after retries, rolling back", householdID: household.id?.uuidString, error: error)
@@ -1257,6 +1269,7 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 7. CRITICAL: Save context immediately to persist the share
+            creationStatus = "Finalizing…"
             // M7.2.3 Phase 4.4 FIX: Without this save, CKShare exists in-memory but never syncs to CloudKit!
             try viewContext.save()
 
@@ -1438,10 +1451,12 @@ class HouseholdService: ObservableObject {
     /// On fresh installs, CloudKit may not have finished exporting records
     /// when share() is called immediately after a local save. Retries up to
     /// 3 times with 2s/4s delays to allow the export to complete.
+    /// The onStatus closure updates the UI with progress messages.
     private func shareWithRetry(
         household: Household,
         persistence: PersistenceController,
-        maxAttempts: Int = 3
+        maxAttempts: Int = 3,
+        onStatus: @MainActor (String) -> Void
     ) async throws -> CKShare {
         var lastError: Error?
 
@@ -1464,10 +1479,12 @@ class HouseholdService: ObservableObject {
 
                 if attempt < maxAttempts {
                     let delaySeconds = Int(pow(2.0, Double(attempt))) // 2s, 4s
+                    await onStatus("Waiting for CloudKit sync… (retry \(attempt) of \(maxAttempts - 1))")
                     #if DEBUG
                     print("   Retrying in \(delaySeconds)s...")
                     #endif
                     try await Task.sleep(nanoseconds: UInt64(delaySeconds) * 1_000_000_000)
+                    await onStatus("Retrying CloudKit share…")
                 }
             }
         }

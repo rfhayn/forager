@@ -719,11 +719,18 @@ struct CreateHouseholdSheet: View {
             }
             .overlay {
                 if isCreating {
-                    ProgressView("Creating household...")
-                        .padding()
-                        .background(Color(.systemBackground))
-                        .cornerRadius(10)
-                        .shadow(radius: 10)
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text(householdService.creationStatus ?? "Creating household…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .animation(.easeInOut(duration: 0.2), value: householdService.creationStatus)
+                    }
+                    .padding(24)
+                    .background(.regularMaterial)
+                    .cornerRadius(16)
+                    .shadow(radius: 10)
                 }
             }
             .alert("Error Creating Household", isPresented: $showError) {
