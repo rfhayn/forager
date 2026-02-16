@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 13, 2026
-**Current Phase**: **M7.6 Pre-Launch Prep 🔄 IN PROGRESS** (M7.6.1-M7.6.6 ✅, M7.6.7 code prep ✅, TestFlight submission pending)
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 nearly complete
-**Execution Order**: M7.6-M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 15, 2026
+**Current Phase**: **M7.6 ✅ COMPLETE** | **M7.7 📋 READY**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live
+**Execution Order**: M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+ → M15 (UX Design System)
 
 ---
 
@@ -1068,6 +1068,74 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
+### **⏳ M15: UX Design System & Visual Refresh - PLANNED** 🎨
+
+**Status**: 📋 Planned
+**Estimated Time**: 50-70 hours total
+**Dependencies**: App Store launch complete (M7.7), iOS 26 SDK available
+**PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
+
+**Overview**: Comprehensive visual refresh with warm color palette, custom typography, and full iOS 26 Liquid Glass adoption. Raises deployment target from iOS 18 to iOS 26. Replaces custom bottom navigation with native Liquid Glass TabView.
+
+**Phase Breakdown:**
+
+**M15.1: Design System Foundation & Liquid Glass TabView (8-10 hours)**
+- ForagerTheme.swift with semantic color tokens (38 Asset Catalog adaptive color sets)
+- Typography system (SF Pro Rounded UI, New York serif for recipes)
+- Raise deployment target from iOS 18 to iOS 26
+- Replace CustomBottomNavigation with native Liquid Glass TabView
+- Remove HamburgerMenuModifier (Settings/Categories become standard tabs)
+
+**M15.2: Color & Typography Migration (8-10 hours)**
+- Apply semantic color tokens across all views
+- Implement typography scale with dynamic type support
+- Border and divider system migration
+- Category color system (11 colors with light/dark variants)
+
+**M15.3: Grocery Lists UX Overhaul (8-10 hours)**
+- Smart sorting toggle (category/priority)
+- Enhanced swipe actions with SF Symbols
+- Progress bar redesign with semantic colors
+- Quick-add field redesign
+
+**M15.4: Recipes UX Overhaul (6-8 hours)**
+- Card-based recipe list with hero images
+- Structured recipe detail with tabbed sections
+- Glass-effect floating action buttons
+- Enhanced search with filter chips
+
+**M15.5: Meal Plans & Ingredients UX (6-8 hours)**
+- Horizontal day strip calendar
+- Drag-and-drop meal reordering
+- Ingredient library cards with usage indicators
+- Category management visual refresh
+
+**M15.6: Liquid Glass Polish & App Icon (6-8 hours)**
+- `.glassEffect()` on toolbars, sheets, and floating elements
+- `.tabBarMinimizeBehavior(.onScrollDown)` for content-first scrolling
+- `tabViewBottomAccessory` for contextual actions
+- `Tab(role: .search)` for native search integration
+- Layered app icon via Icon Composer (glass-over-sprout)
+
+**M15.7: Dark Mode, Accessibility & Final QA (6-10 hours)**
+- Dark mode audit of all 38 color tokens
+- WCAG AA contrast verification (all pairings ≥ 4.5:1 text, ≥ 3:1 UI)
+- Dynamic Type audit (all text scales correctly)
+- VoiceOver audit and reduce-motion support
+- Haptic feedback integration
+- Cross-screen regression testing
+
+**Success Criteria:**
+- [ ] All views use ForagerTheme semantic tokens (zero hard-coded colors)
+- [ ] Liquid Glass TabView replaces custom bottom navigation
+- [ ] WCAG AA compliance across all color pairings
+- [ ] Dark mode fully functional with proper token resolution
+- [ ] iOS 26 deployment target with full Liquid Glass adoption
+- [ ] Layered app icon renders correctly in Icon Composer
+- [ ] All existing features maintain functionality (zero regressions)
+
+---
+
 ### **⏳ M11-M14: Advanced Intelligence Platform - PLANNED**
 
 **Status**: ⏳ Future Development
@@ -1404,6 +1472,13 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10: Analytics & Insights | PLANNED | 8-12h |
 | M11-M14: Advanced Features | FUTURE | 40-60h |
+| **M15: UX Design System & Visual Refresh** | 📋 PLANNED | 50-70h |
+
+### **Key Decisions (February 15, 2026)**
+
+11. **M15 UX Design System PRD created** — Comprehensive visual refresh with 7 phases
+12. **iOS 26 deployment target** for M15 — Full Liquid Glass adoption (no `if #available` needed)
+13. **Liquid Glass is a must-do** — Not deferred, integrated into M15.1 and M15.6
 
 ### **Key Decisions (February 5, 2026)**
 

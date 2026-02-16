@@ -55,5 +55,23 @@ docs/current-story.md  # Project status
 
 ---
 
+## **UPCOMING: M15 — UX Design System & Visual Refresh**
+
+**Status**: 📋 PLANNED (post-launch)
+**PRD**: `docs/prds/active/m15-ux-design-system.md`
+**Estimated**: 50-70 hours across 7 phases
+**iOS Deployment Target**: Raised to iOS 26 (Liquid Glass adoption)
+
+M15 delivers a comprehensive visual refresh with a warm color palette, custom typography system, and full iOS 26 Liquid Glass adoption. Key phases:
+- M15.1: Design System Foundation & Liquid Glass TabView (8-10h)
+- M15.2: Color & Typography Migration (8-10h)
+- M15.3: Grocery Lists UX Overhaul (8-10h)
+- M15.4: Recipes UX Overhaul (6-8h)
+- M15.5: Meal Plans & Ingredients UX (6-8h)
+- M15.6: Liquid Glass Polish & App Icon (6-8h)
+- M15.7: Dark Mode, Accessibility & Final QA (6-10h)
+
+---
+
 **Version**: February 15, 2026 - M7.7 Ready
 **Dependencies**: M7.6 ✅ COMPLETE, TestFlight live, build 10 (v1.1)

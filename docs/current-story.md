@@ -724,6 +724,7 @@
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10: Analytics & Insights | PLANNED | 8-12h |
 | M11-M14: Advanced Features | FUTURE | 40-60h |
+| **M15: UX Design System & Visual Refresh** | 📋 PLANNED | 50-70h |
 
 ---
 
