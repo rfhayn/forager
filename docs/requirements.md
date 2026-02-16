@@ -1,10 +1,10 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 13, 2026
-**Version**: 6.2
-**Current Milestone**: M7.6 🔄 IN PROGRESS (M7.6.1-M7.6.6 ✅, M7.6.7 code prep ✅, TestFlight submission pending)
-**Execution Order (Pre-Launch)**: M7.6-M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 15, 2026
+**Version**: 6.3
+**Current Milestone**: M7.6 ✅ COMPLETE | M7.7 📋 READY
+**Execution Order (Pre-Launch)**: M7.7 (App Store)
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+ → M15 (UX Design System)
 
 ---
 
@@ -686,16 +686,79 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
+## 🎨 **M15: UX DESIGN SYSTEM & VISUAL REFRESH - PLANNED**
+
+**Status**: 📋 Planned (post-launch)
+**Estimated**: 50-70 hours (7 phases)
+**Dependencies**: App Store launch (M7.7), iOS 26 SDK
+**Summary**: Comprehensive visual refresh with warm color palette, custom typography, Liquid Glass adoption, and iOS 26 deployment target
+**PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
+
+### **Functional Requirements - Design System Foundation (M15.1)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-UX-001** | **ForagerTheme design system** | Semantic color tokens, typography scale, spacing constants | M15.1 | 🎯 **Design consistency** |
+| **FR-UX-002** | **Raise deployment target to iOS 26** | Remove iOS 18 target, adopt iOS 26 APIs without availability checks | M15.1 | 🎯 **Liquid Glass access** |
+| **FR-UX-003** | **Liquid Glass TabView migration** | Replace CustomBottomNavigation + HamburgerMenuModifier with native TabView | M15.1 | 🎯 **Native experience** |
+| **FR-UX-004** | **Asset Catalog color sets** | 38 adaptive color sets (backgrounds, surfaces, text, accent, semantic, borders, categories) | M15.1 | 🎯 **Theme infrastructure** |
+
+### **Functional Requirements - Color & Typography (M15.2)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-UX-005** | **Warm color palette migration** | Forest green (#2D5016), bark (#2C2418), cream (#F5F0E8), canvas (#FDFBF7) | M15.2 | 🎯 **Brand identity** |
+| **FR-UX-006** | **Typography system** | SF Pro Rounded for UI, New York serif for recipe content, monospaced digits | M15.2 | 🎯 **Visual hierarchy** |
+| **FR-UX-007** | **Category color system** | 11 category colors with light/dark variants, all ≥ 3:1 contrast | M15.2 | 🎯 **Visual organization** |
+
+### **Functional Requirements - Screen Overhauls (M15.3-M15.5)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-UX-008** | **Grocery list UX refresh** | Smart sorting, enhanced swipe actions, progress bar redesign | M15.3 | 🎯 **Shopping efficiency** |
+| **FR-UX-009** | **Recipe UX refresh** | Card-based list, tabbed detail view, glass-effect FABs | M15.4 | 🎯 **Recipe experience** |
+| **FR-UX-010** | **Meal plan UX refresh** | Horizontal day strip, drag-and-drop reordering | M15.5 | 🎯 **Planning experience** |
+| **FR-UX-011** | **Ingredients UX refresh** | Library cards with usage indicators, category visual refresh | M15.5 | 🎯 **Ingredient management** |
+
+### **Functional Requirements - Liquid Glass & Polish (M15.6)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-UX-012** | **Liquid Glass effects** | `.glassEffect()` on toolbars, sheets, floating elements | M15.6 | 🎯 **iOS 26 native** |
+| **FR-UX-013** | **Tab bar behaviors** | `.tabBarMinimizeBehavior(.onScrollDown)`, `tabViewBottomAccessory` | M15.6 | 🎯 **Content-first** |
+| **FR-UX-014** | **Layered app icon** | Glass-over-sprout via Icon Composer | M15.6 | 🎯 **Brand refresh** |
+
+### **Functional Requirements - Accessibility & QA (M15.7)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-UX-015** | **Dark mode audit** | All 38 color tokens verified in dark mode | M15.7 | 🎯 **Dark mode quality** |
+| **FR-UX-016** | **WCAG AA compliance** | All color pairings ≥ 4.5:1 (text), ≥ 3:1 (UI elements) | M15.7 | 🎯 **Accessibility** |
+| **FR-UX-017** | **Dynamic Type support** | All text scales correctly across all size classes | M15.7 | 🎯 **Inclusivity** |
+| **FR-UX-018** | **Haptic feedback** | Contextual haptics for key interactions (add, complete, delete) | M15.7 | 🎯 **Tactile polish** |
+
+### **Non-Functional Requirements - M15**
+
+| ID | Requirement | Target | Milestone | Value |
+|----|-------------|--------|-----------|-------|
+| **NFR-UX-001** | **Zero regressions** | All existing features maintain functionality | M15 All | 🎯 **Quality** |
+| **NFR-UX-002** | **60fps UI performance** | All animations smooth, no frame drops | M15 All | 🎯 **Smoothness** |
+| **NFR-UX-003** | **Zero hard-coded colors** | All views use ForagerTheme semantic tokens | M15 All | 🎯 **Maintainability** |
+
+**M15 Summary (Planned)**: 21 requirements across 7 phases: design system foundation (4), color & typography (3), screen overhauls (4), Liquid Glass polish (3), accessibility & QA (4), and non-functional (3). Full iOS 26 Liquid Glass adoption with warm color palette and custom typography.
+
+---
+
 ## 📊 **REQUIREMENTS SUMMARY**
 
 ### **By Status**
 
-| Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M8.4 (Opt) | Total |
-|--------|----|----|----|----|------|----|----|-----------|------------|-------|
-| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 34 | 27 | 0 | 0 | **183** |
-| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 | **18** |
-| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 8 | **12** |
-| **Total** | **19** | **37** | **33** | **19** | **14** | **52** | **27** | **4** | **8** | **213** |
+| Status | M1 | M2 | M3 | M4 | M5.0 | M7 | M8 | M9 (Core) | M8.4 (Opt) | M15 | Total |
+|--------|----|----|----|----|------|----|----|-----------|------------|-----|-------|
+| ✅ Complete | 19 | 37 | 33 | 19 | 14 | 34 | 27 | 0 | 0 | 0 | **183** |
+| 🔄 In Progress | 0 | 0 | 0 | 0 | 0 | 18 | 0 | 0 | 0 | 0 | **18** |
+| ⏳ Planned | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 4 | 8 | 21 | **33** |
+| **Total** | **19** | **37** | **33** | **19** | **14** | **52** | **27** | **4** | **8** | **21** | **234** |
 
 ### **By Category**
 
@@ -724,10 +787,11 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | Budget Intelligence | 4 | ⏳ Planned (M12) |
 | AI Assistant | 4 | ⏳ Planned (M13) |
 | Advanced Collaboration | 3 | ⏳ Planned (M14) |
-| **Complete** | **183** | **86% (183/213)** |
-| **In Progress** | **18** | **8% (18/213)** |
-| **Planned (Mandatory)** | **4** | **2% (4/213)** |
-| **Planned (Optional)** | **8** | **4% (8/213)** |
+| **UX Design System (M15)** | **21** | ⏳ **Planned** |
+| **Complete** | **183** | **78% (183/234)** |
+| **In Progress** | **18** | **8% (18/234)** |
+| **Planned (Mandatory)** | **25** | **11% (25/234)** |
+| **Planned (Optional)** | **8** | **3% (8/234)** |
 
 ### **Performance Requirements Status**
 
@@ -816,9 +880,9 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 requirements delivered). Complete platform: 213 total requirements (183 complete, 18 in progress, 12 planned).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 requirements delivered). M15 UX Design System planned (21 requirements). Complete platform: 234 total requirements (183 complete, 18 in progress, 33 planned).
 
-**Last Updated**: February 13, 2026
-**Version**: 6.2
-**Next Update**: After M7.6.7 TestFlight Submission
-**Current Focus**: M7.6.7 🚀 - TestFlight Submission (manual Apple portal steps)
+**Last Updated**: February 15, 2026
+**Version**: 6.3
+**Next Update**: After M7.7 App Store Submission
+**Current Focus**: M7.7 📋 - App Store Submission & Public Presence

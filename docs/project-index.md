@@ -6,7 +6,7 @@
 **Current Phase**: M7.6 ✅ COMPLETE | **M7.7 📋 READY**
 **Next Priority**: M7.7.1 - Beta Landing Page (GitHub Pages)
 **Execution Order (Pre-Launch)**: M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+ → M15 (UX Design System)
 
 ---
 
@@ -415,6 +415,7 @@ _[Previous entries remain the same through December 23...]_
 | M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10+: Future Features | FUTURE | 48-72h |
+| **M15: UX Design System & Visual Refresh** | 📋 PLANNED | 50-70h |
 
 ### **Key Decisions (February 8, 2026)**
 1. Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
@@ -610,18 +611,33 @@ _[Previous entries remain the same through December 23...]_
 - Family preference learning
 - Advanced sharing controls
 
+**M15: UX Design System & Visual Refresh** (50-70 hours) 🎨
+- ForagerTheme design system with semantic color tokens
+- Warm color palette (forest green, bark, cream, canvas)
+- Typography system (SF Pro Rounded + New York serif)
+- iOS 26 deployment target with full Liquid Glass adoption
+- Liquid Glass TabView replacing custom bottom navigation
+- Screen-by-screen UX overhauls (grocery, recipes, meal plans, ingredients)
+- Layered app icon via Icon Composer
+- WCAG AA compliance, dark mode, Dynamic Type, haptics
+- **PRD**: `docs/prds/active/m15-ux-design-system.md`
+
 ---
 
 ### **Milestone Timeline Summary**
 
 **Core Platform (M1-M10)**: ~220-270 hours estimated (core) or ~235-290 hours (with M8.4 ML)
-- **Completed (M1-M7 partial)**: ~119.5 hours ✅
+- **Completed (M1-M8)**: ~190 hours ✅
 - **Remaining (M6-M10)**: ~200-253 hours (core) or ~215-273 hours (with M8.4 ML)
 
 **Advanced Intelligence Platform (M11-M14)**: 40-60 hours total
 - Dependencies: M1-M10 complete
 
-**Total Project Estimate**: ~260-330 hours (core) or ~275-350 hours (with M8.4 ML)
+**UX Design System (M15)**: 50-70 hours total
+- Dependencies: App Store launch, iOS 26 SDK
+- 7 phases with full Liquid Glass adoption
+
+**Total Project Estimate**: ~310-400 hours (core) or ~325-420 hours (with M8.4 ML + M15)
 
 ---
 
