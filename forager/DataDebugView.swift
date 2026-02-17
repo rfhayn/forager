@@ -19,7 +19,7 @@ struct DataDebugView: View {
                     .font(.system(.caption, design: .monospaced))
                     .padding()
                     .background(Color(.systemGray6))
-                    .cornerRadius(8)
+                    .cornerRadius(ForagerTheme.Radius.sm)
                 
                 Button("Refresh Data Check") {
                     checkData()

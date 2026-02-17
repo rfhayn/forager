@@ -64,7 +64,7 @@ struct MigrationDebugView: View {
             
             Text("This migration will parse existing quantity data and populate structured fields for recipe scaling and smart consolidation.")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -79,7 +79,7 @@ struct MigrationDebugView: View {
             VStack(spacing: 8) {
                 HStack {
                     Text("Total Items:")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     Text("\(preview.totalToMigrate)")
                         .fontWeight(.medium)
@@ -87,16 +87,16 @@ struct MigrationDebugView: View {
                 
                 HStack {
                     Text("Estimated Success Rate:")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     Text("\(Int(preview.estimatedSuccessRate * 100))%")
                         .fontWeight(.medium)
-                        .foregroundColor(preview.estimatedSuccessRate > 0.8 ? .green : .orange)
+                        .foregroundStyle(preview.estimatedSuccessRate > 0.8 ? ForagerTheme.statusSuccessFG : ForagerTheme.statusWarningFG)
                 }
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
             
             // Sample Previews
             if !preview.sampleIngredients.isEmpty {
@@ -125,7 +125,7 @@ struct MigrationDebugView: View {
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .cornerRadius(ForagerTheme.Radius.lg)
         .shadow(radius: 2)
     }
     
@@ -134,17 +134,17 @@ struct MigrationDebugView: View {
             HStack {
                 Text(original)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
                 if structured.isParseable {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                         .font(.caption)
                 } else {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                         .font(.caption)
                 }
             }
@@ -152,11 +152,11 @@ struct MigrationDebugView: View {
             if let numericValue = structured.numericValue {
                 Text("→ \(numericValue, specifier: "%.2f") \(structured.standardUnit ?? "")")
                     .font(.caption2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentSecondary)
             } else {
                 Text("→ Text-only (no numeric value)")
                     .font(.caption2)
-                    .foregroundColor(.orange)
+                    .foregroundStyle(ForagerTheme.statusWarningFG)
             }
         }
         .padding(.vertical, 4)
@@ -175,9 +175,9 @@ struct MigrationDebugView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .background(ForagerTheme.accentPrimary)
+                .foregroundStyle(.white)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .disabled(isMigrating)
             
@@ -191,9 +191,9 @@ struct MigrationDebugView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(isMigrating ? Color.gray : Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .background(isMigrating ? ForagerTheme.textTertiary : ForagerTheme.statusSuccessFG)
+                .foregroundStyle(.white)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .disabled(isMigrating || migrationService.isComplete)
             
@@ -208,9 +208,9 @@ struct MigrationDebugView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.purple)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .background(ForagerTheme.accentSecondary)
+                    .foregroundStyle(.white)
+                    .cornerRadius(ForagerTheme.Radius.md)
                 }
             }
         }
@@ -227,21 +227,21 @@ struct MigrationDebugView: View {
                     icon: "list.bullet",
                     label: "Total Items",
                     value: "\(summary.totalItems)",
-                    color: .blue
+                    color: ForagerTheme.accentSecondary
                 )
                 
                 resultRow(
                     icon: "checkmark.circle.fill",
                     label: "Successful",
                     value: "\(summary.totalSuccessful) (\(Int(summary.successRate * 100))%)",
-                    color: .green
+                    color: ForagerTheme.statusSuccessFG
                 )
                 
                 resultRow(
                     icon: "exclamationmark.triangle.fill",
                     label: "Failed",
                     value: "\(summary.totalFailed)",
-                    color: summary.totalFailed > 0 ? .orange : .secondary
+                    color: summary.totalFailed > 0 ? ForagerTheme.statusWarningFG : ForagerTheme.textSecondary
                 )
                 
                 Divider()
@@ -250,54 +250,54 @@ struct MigrationDebugView: View {
                     icon: "leaf",
                     label: "Ingredients",
                     value: "\(summary.ingredientsSuccessful)/\(summary.totalIngredients)",
-                    color: .purple
+                    color: ForagerTheme.accentSecondary
                 )
                 
                 resultRow(
                     icon: "cart",
                     label: "Grocery Items",
                     value: "\(summary.groceryItemsSuccessful)/\(summary.totalGroceryItems)",
-                    color: .indigo
+                    color: ForagerTheme.accentSecondary
                 )
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
             
             // Success message
             if summary.successRate >= 0.8 {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                     Text("Migration successful! Ready for recipe scaling and smart consolidation.")
                         .font(.subheadline)
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                 }
                 .padding()
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(8)
+                .background(ForagerTheme.statusSuccessFG.opacity(0.1))
+                .cornerRadius(ForagerTheme.Radius.sm)
             }
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .cornerRadius(ForagerTheme.Radius.lg)
         .shadow(radius: 2)
     }
     
     private func resultRow(icon: String, label: String, value: String, color: Color) -> some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .frame(width: 24)
             
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             Spacer()
             
             Text(value)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
     
@@ -311,11 +311,11 @@ struct MigrationDebugView: View {
             
             Text("\(Int(migrationService.migrationProgress * 100))%")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .cornerRadius(ForagerTheme.Radius.md)
     }
     
     // MARK: - Actions

@@ -49,11 +49,11 @@ struct CloudKitTestHarnessView: View {
                                 ProgressView()
                                     .scaleEffect(0.8)
                                 Text("Syncing...")
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(ForagerTheme.accentSecondary)
                             }
                         } else {
                             Text("Idle")
-                                .foregroundColor(.green)
+                                .foregroundStyle(ForagerTheme.statusSuccessFG)
                         }
                     }
                     
@@ -62,10 +62,10 @@ struct CloudKitTestHarnessView: View {
                         Spacer()
                         if let lastSync = diagnostics.lastSyncDate {
                             Text(lastSync, style: .relative)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         } else {
                             Text("Never")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         }
                     }
                     
@@ -73,10 +73,10 @@ struct CloudKitTestHarnessView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Last Error")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                             Text(error)
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundStyle(ForagerTheme.statusDangerFG)
                         }
                     }
                     
@@ -84,7 +84,7 @@ struct CloudKitTestHarnessView: View {
                         Text("Total Events")
                         Spacer()
                         Text("\(diagnostics.eventCount)")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
                 
@@ -92,7 +92,7 @@ struct CloudKitTestHarnessView: View {
                 Section {
                     if diagnostics.recentEvents.isEmpty {
                         Text("No events yet")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .italic()
                     } else {
                         ForEach(diagnostics.recentEvents) { event in
@@ -157,8 +157,8 @@ struct CloudKitTestHarnessView: View {
                         ForEach(testResults.indices, id: \.self) { index in
                             Text(testResults[index])
                                 .font(.caption)
-                                .foregroundColor(testResults[index].hasPrefix("✅") ? .green : 
-                                               testResults[index].hasPrefix("❌") ? .red : .secondary)
+                                .foregroundStyle(testResults[index].hasPrefix("✅") ? ForagerTheme.statusSuccessFG :
+                                               testResults[index].hasPrefix("❌") ? ForagerTheme.statusDangerFG : ForagerTheme.textSecondary)
                         }
                         
                         Button("Clear Results") {
@@ -172,7 +172,7 @@ struct CloudKitTestHarnessView: View {
                 Section("Raw Status") {
                     Text(diagnostics.getStatusSummary())
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .navigationTitle("☁️ CloudKit Test Harness")
@@ -375,7 +375,7 @@ private struct EventRow: View {
         HStack(alignment: .top, spacing: 12) {
             // Event type icon
             Image(systemName: event.success ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                .foregroundColor(event.success ? .green : .red)
+                .foregroundStyle(event.success ? ForagerTheme.statusSuccessFG : ForagerTheme.statusDangerFG)
                 .font(.caption)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -386,14 +386,14 @@ private struct EventRow: View {
                     Spacer()
                     Text(event.timestamp, style: .time)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 // Error message if present
                 if let error = event.errorMessage {
                     Text(error)
                         .font(.caption2)
-                        .foregroundColor(.red)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                 }
             }
         }
