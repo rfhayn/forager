@@ -599,7 +599,7 @@ struct AddIngredientsToListView: View {
         VStack(spacing: 20) {
             ProgressView()
             Text(processingMessage)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     
@@ -613,7 +613,7 @@ struct AddIngredientsToListView: View {
             List {
                 if groupedIngredients.isEmpty {
                     Text("No ingredients available")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .listRowBackground(Color.clear)
                 } else {
                     ForEach(sortedCategoryNames, id: \.self) { categoryName in
@@ -643,7 +643,7 @@ struct AddIngredientsToListView: View {
                 HStack {
                     Text("Recipe makes:")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     Text("\(recipe.servings) servings")
                         .font(.subheadline)
@@ -654,14 +654,14 @@ struct AddIngredientsToListView: View {
                 HStack {
                     Text("Adding for:")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     
                     Stepper(value: $selectedServings, in: 1...100) {
                         Text("\(selectedServings) servings")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(selectedServings != recipe.servings ? .blue : .primary)
+                            .foregroundStyle(selectedServings != recipe.servings ? .blue : .primary)
                     }
                 }
                 
@@ -670,10 +670,10 @@ struct AddIngredientsToListView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "scalemass")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Text("Quantities will be scaled \(scaleFactor, specifier: "%.1f")×")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Spacer()
                     }
                 }
@@ -698,7 +698,7 @@ struct AddIngredientsToListView: View {
             if let ingredientsSet = recipe.ingredients {
                 Text("\(ingredientsSet.count) ingredients available")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
         .padding(.horizontal)
@@ -713,14 +713,14 @@ struct AddIngredientsToListView: View {
                 toggleIngredientSelection(ingredient)
             }) {
                 Image(systemName: isSelected(ingredient) ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected(ingredient) ? .green : .gray)
+                    .foregroundStyle(isSelected(ingredient) ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
                     .font(.title3)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(ingredient.name ?? "Unknown ingredient")
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 // M4.3.2 Phase 2: Show scaled quantities with original for reference
                 HStack(spacing: 4) {
@@ -729,7 +729,7 @@ struct AddIngredientsToListView: View {
                     if !scaled.isEmpty {
                         Text(scaled)
                             .font(.caption)
-                            .foregroundColor(scaleFactor != 1.0 ? .blue : .secondary)
+                            .foregroundStyle(scaleFactor != 1.0 ? .blue : .secondary)
                         
                         // Show original quantity for reference when scaled
                         if scaleFactor != 1.0, let originalId = ingredient.id,
@@ -737,10 +737,10 @@ struct AddIngredientsToListView: View {
                            !original.isEmpty && original != scaled {
                             Text("•")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                             Text("(was: \(original))")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                                 .italic()
                         }
                     }
@@ -776,17 +776,17 @@ struct AddIngredientsToListView: View {
                         .frame(width: 8, height: 8)
                     Text(category)
                         .font(.caption2)
-                        .foregroundColor(ForagerTheme.categoryColor(for: category))
+                        .foregroundStyle(ForagerTheme.categoryColor(for: category))
                 }
             } else {
                 // Template exists but needs category - orange warning
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     Text("Needs Category")
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
         } else {
@@ -806,17 +806,17 @@ struct AddIngredientsToListView: View {
                             .frame(width: 8, height: 8)
                         Text(category)
                             .font(.caption2)
-                            .foregroundColor(ForagerTheme.categoryColor(for: category))
+                            .foregroundStyle(ForagerTheme.categoryColor(for: category))
                     }
                 } else {
                     // Template exists but needs category
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.caption2)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Text("Needs Category")
                             .font(.caption2)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                     }
                 }
             } else {
@@ -824,10 +824,10 @@ struct AddIngredientsToListView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "plus.circle")
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("New Template")
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
             }
         }
@@ -838,7 +838,7 @@ struct AddIngredientsToListView: View {
             HStack {
                 Text("\(selectedIngredients.count) ingredients selected")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -847,7 +847,7 @@ struct AddIngredientsToListView: View {
                         preselectAllIngredients()
                     }
                     .font(.subheadline)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                 }
             }
             .padding(.horizontal)
@@ -861,13 +861,13 @@ struct AddIngredientsToListView: View {
             Text(categoryName.uppercased())
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             Spacer()
             
             Text("\(count)")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     

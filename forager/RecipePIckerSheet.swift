@@ -118,7 +118,7 @@ struct RecipePickerSheet: View {
         HStack(spacing: 8) {
             Image(systemName: "calendar")
                 .font(.title3)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
             
             Text("Adding to \(formattedShortDate)")
                 .font(.headline)
@@ -126,7 +126,7 @@ struct RecipePickerSheet: View {
             Spacer()
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(ForagerTheme.accentPrimary.opacity(0.1))
     }
     
     // M4.2.1-3: Search field with autocomplete behavior
@@ -134,7 +134,7 @@ struct RecipePickerSheet: View {
     private var searchField: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             TextField("Search recipes...", text: $searchText)
                 .focused($isSearchFocused)
@@ -146,13 +146,13 @@ struct RecipePickerSheet: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
         }
         .padding(12)
         .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(10)
+        .cornerRadius(ForagerTheme.Radius.md)
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
@@ -181,7 +181,7 @@ struct RecipePickerSheet: View {
         VStack(spacing: 16) {
             Image(systemName: searchText.isEmpty ? "fork.knife.circle" : "magnifyingglass")
                 .font(.system(size: 60))
-                .foregroundColor(.gray)
+                .foregroundStyle(ForagerTheme.textTertiary)
             
             Text(searchText.isEmpty ? "No Recipes Yet" : "No Matching Recipes")
                 .font(.headline)
@@ -190,7 +190,7 @@ struct RecipePickerSheet: View {
                  "Create some recipes to add them to your meal plan" :
                  "Try a different search term")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxHeight: .infinity)
@@ -274,7 +274,7 @@ struct RecipeRowView: View {
             // Recipe header
             HStack {
                 Image(systemName: "fork.knife")
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                     .font(.body)
                 
                 Text(recipe.title ?? "Untitled Recipe")
@@ -287,13 +287,13 @@ struct RecipeRowView: View {
             // Recipe metadata
             Text("\(recipe.ingredients?.count ?? 0) ingredients • Serves \(Int(recipe.servings))")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             // Servings adjuster
             HStack {
                 Text("Servings:")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -305,7 +305,7 @@ struct RecipeRowView: View {
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.title3)
-                        .foregroundColor(servings > 1 ? .blue : .gray)
+                        .foregroundStyle(servings > 1 ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .disabled(servings <= 1)
@@ -324,7 +324,7 @@ struct RecipeRowView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
-                        .foregroundColor(servings < 99 ? .blue : .gray)
+                        .foregroundStyle(servings < 99 ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .disabled(servings >= 99)
@@ -335,11 +335,11 @@ struct RecipeRowView: View {
                 Text("Add to Plan")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
-                    .background(Color.blue)
-                    .cornerRadius(8)
+                    .background(ForagerTheme.accentPrimary)
+                    .cornerRadius(ForagerTheme.Radius.sm)
             }
             .buttonStyle(.plain)
         }

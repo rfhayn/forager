@@ -167,7 +167,7 @@ struct CreateRecipeView: View {
                 
                 HStack {
                     Text("Servings")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     Stepper(value: $formData.servings, in: 1...99) {
                         Text("\(formData.servings)")
@@ -180,7 +180,7 @@ struct CreateRecipeView: View {
                 
                 HStack {
                     Image(systemName: formData.isFavorite ? "heart.fill" : "heart")
-                        .foregroundColor(formData.isFavorite ? .red : .gray)
+                        .foregroundStyle(formData.isFavorite ? ForagerTheme.statusDangerFG : ForagerTheme.textTertiary)
                     
                     Toggle("Mark as Favorite", isOn: $formData.isFavorite)
                 }
@@ -190,7 +190,7 @@ struct CreateRecipeView: View {
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
         }
     }
     
@@ -206,15 +206,15 @@ struct CreateRecipeView: View {
                 Button(action: { showingPrepTimePicker = true }) {
                     HStack {
                         Image(systemName: "clock")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                             .frame(width: 24)
                         Text("Prep Time")
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(formatTime(formData.prepTime))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .font(.caption)
                     }
                     .padding(.vertical, 8)
@@ -226,15 +226,15 @@ struct CreateRecipeView: View {
                 Button(action: { showingCookTimePicker = true }) {
                     HStack {
                         Image(systemName: "flame")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                             .frame(width: 24)
                         Text("Cook Time")
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(formatTime(formData.cookTime))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .font(.caption)
                     }
                     .padding(.vertical, 8)
@@ -244,12 +244,12 @@ struct CreateRecipeView: View {
                     Divider()
                     HStack {
                         Image(systemName: "checkmark.circle")
-                            .foregroundColor(.green)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
                             .frame(width: 24)
                         Text("Total Time")
                         Spacer()
                         Text(formatTime(formData.totalTime))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .fontWeight(.medium)
                     }
                     .padding(.vertical, 8)
@@ -257,7 +257,7 @@ struct CreateRecipeView: View {
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
         }
         .onChange(of: formData.prepTime) { oldValue, newValue in
             hasUnsavedChanges = true
@@ -312,7 +312,7 @@ struct CreateRecipeView: View {
                         Button(action: addIngredientManually) {
                             Image(systemName: "plus.circle.fill")
                                 .font(.title2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
                         }
                         .disabled(currentIngredientText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
@@ -328,12 +328,12 @@ struct CreateRecipeView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(template.name ?? "")
                                                 .font(.body)
-                                                .foregroundColor(.primary)
+                                                .foregroundStyle(.primary)
                                             
                                             if let category = template.category, !category.isEmpty {
                                                 Text(category)
                                                     .font(.caption)
-                                                    .foregroundColor(.secondary)
+                                                    .foregroundStyle(ForagerTheme.textSecondary)
                                             }
                                         }
                                         
@@ -342,11 +342,11 @@ struct CreateRecipeView: View {
                                         if template.usageCount > 0 {
                                             Text("\(template.usageCount)")
                                                 .font(.caption2)
-                                                .foregroundColor(.secondary)
+                                                .foregroundStyle(ForagerTheme.textSecondary)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
                                                 .background(Color(.systemGray5))
-                                                .cornerRadius(4)
+                                                .cornerRadius(ForagerTheme.Radius.xs)
                                         }
                                     }
                                     .padding(.horizontal, 12)
@@ -361,7 +361,7 @@ struct CreateRecipeView: View {
                             }
                         }
                         .background(Color(.systemBackground))
-                        .cornerRadius(8)
+                        .cornerRadius(ForagerTheme.Radius.sm)
                         .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
                         .padding(.top, 4)
                     }
@@ -391,7 +391,7 @@ struct CreateRecipeView: View {
             }
             .padding()
             .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
         }
     }
     
@@ -400,7 +400,7 @@ struct CreateRecipeView: View {
             // Status indicator
             Text(ingredient.statusIndicator.indicator)
                 .font(.caption)
-                .foregroundColor(statusColor(ingredient.statusIndicator))
+                .foregroundStyle(statusColor(ingredient.statusIndicator))
                 .frame(width: 20)
             
             // Editable ingredient text
@@ -430,17 +430,17 @@ struct CreateRecipeView: View {
                         if let category = template.category, !category.isEmpty {
                             Text(category)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         } else {
                             Text(ingredient.statusIndicator.description)
                                 .font(.caption)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(ForagerTheme.statusWarningFG)
                         }
                     }
                 } else {
                     Text("New ingredient - needs category")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
             
@@ -461,7 +461,7 @@ struct CreateRecipeView: View {
                 .frame(minHeight: 150)
                 .padding(8)
                 .background(Color(.systemBackground))
-                .cornerRadius(8)
+                .cornerRadius(ForagerTheme.Radius.sm)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color(.systemGray4), lineWidth: 1)
@@ -487,7 +487,7 @@ struct CreateRecipeView: View {
             
             Text("Example: quick and easy, leftovers, family favorite")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     
@@ -495,9 +495,9 @@ struct CreateRecipeView: View {
     
     private func statusColor(_ status: IngredientStatus) -> Color {
         switch status {
-        case .ready: return .green
-        case .needsCategory: return .orange
-        case .needsTemplate: return .gray
+        case .ready: return ForagerTheme.statusSuccessFG
+        case .needsCategory: return ForagerTheme.statusWarningFG
+        case .needsTemplate: return ForagerTheme.textTertiary
         }
     }
     
@@ -687,7 +687,7 @@ struct TimePickerSheet: View {
                     VStack {
                         Text("Hours")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         
                         Picker("Hours", selection: $hours) {
                             ForEach(0..<24) { hour in
@@ -702,7 +702,7 @@ struct TimePickerSheet: View {
                     VStack {
                         Text("Minutes")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         
                         Picker("Minutes", selection: $minutes) {
                             ForEach(0..<60) { minute in

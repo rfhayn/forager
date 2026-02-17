@@ -76,29 +76,29 @@ struct RecipeScalingView: View {
                 VStack {
                     Text("Original")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Text("\(recipe.servings)")
                         .font(.title)
                         .fontWeight(.bold)
                     Text("servings")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 Image(systemName: "arrow.right")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 VStack {
                     Text("Scaled")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Text("\(scaledServings)")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("servings")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
         }
@@ -162,7 +162,7 @@ struct RecipeScalingView: View {
                             Text(formatScaleFactor(factor) + "x")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                                 .position(x: position, y: 28)
                         }
                     }
@@ -179,7 +179,7 @@ struct RecipeScalingView: View {
             Section {
                 Text(scaled.summary)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
             
             ForEach(sortedCategoryNames(for: scaled), id: \.self) { categoryName in
@@ -196,7 +196,7 @@ struct RecipeScalingView: View {
     private func ingredientRow(_ ingredient: ScaledIngredient) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: ingredient.wasScaled ? "checkmark.circle.fill" : "info.circle")
-                .foregroundColor(ingredient.wasScaled ? .green : .orange)
+                .foregroundStyle(ingredient.wasScaled ? ForagerTheme.statusSuccessFG : ForagerTheme.statusWarningFG)
                 .font(.title3)
             
             VStack(alignment: .leading, spacing: 4) {
@@ -206,12 +206,12 @@ struct RecipeScalingView: View {
                 
                 Text(ingredient.displayText)
                     .font(.subheadline)
-                    .foregroundColor(ingredient.wasScaled ? .primary : .secondary)
+                    .foregroundStyle(ingredient.wasScaled ? .primary : .secondary)
                 
                 if !ingredient.wasScaled, let original = ingredient.originalText {
                     Text("Original: \(original)")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
         }

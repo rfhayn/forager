@@ -97,12 +97,12 @@ struct AddListItemView: View {
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text(template.name ?? "")
                                                     .font(.body)
-                                                    .foregroundColor(.primary)
+                                                    .foregroundStyle(.primary)
                                                 
                                                 if let category = template.category, !category.isEmpty {
                                                     Text(category)
                                                         .font(.caption)
-                                                        .foregroundColor(.secondary)
+                                                        .foregroundStyle(ForagerTheme.textSecondary)
                                                 }
                                             }
                                             
@@ -111,7 +111,7 @@ struct AddListItemView: View {
                                             if template.isStaple {
                                                 Image(systemName: "star.fill")
                                                     .font(.caption)
-                                                    .foregroundColor(.orange)
+                                                    .foregroundStyle(ForagerTheme.statusWarningFG)
                                             }
                                         }
                                         .padding(.vertical, 8)
@@ -126,7 +126,7 @@ struct AddListItemView: View {
                                 }
                             }
                             .background(Color(.systemBackground))
-                            .cornerRadius(8)
+                            .cornerRadius(ForagerTheme.Radius.sm)
                             .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                             .padding(.top, 4)
                         }
@@ -134,17 +134,17 @@ struct AddListItemView: View {
                     
                     Text("Enter with quantity (e.g., \"2 cups flour\") or just the item name")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     
                     if let template = selectedTemplate {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
+                                .foregroundStyle(ForagerTheme.statusSuccessFG)
                                 .font(.caption)
                             
                             Text("Using ingredient: \(template.name ?? "")")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                             
                             Spacer()
                         }
@@ -163,7 +163,7 @@ struct AddListItemView: View {
                         .pickerStyle(.menu)
                     } else {
                         Text("Loading categories...")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
                 
@@ -178,7 +178,7 @@ struct AddListItemView: View {
                 Section {
                     Text("Items added manually will be marked as 'Added' items.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .navigationTitle("Add Item")
@@ -218,7 +218,7 @@ struct AddListItemView: View {
                 Section(header: Text("New Ingredient")) {
                     HStack {
                         Text("Name:")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Spacer()
                         Text(newIngredientName)
                             .fontWeight(.medium)
@@ -238,7 +238,7 @@ struct AddListItemView: View {
                     
                     Text("Staple items automatically appear when generating new grocery lists.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 Section {
