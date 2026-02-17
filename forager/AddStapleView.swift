@@ -62,7 +62,7 @@ struct AddStapleView: View {
                         }
                     } else {
                         Text("Loading categories...")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
                 
