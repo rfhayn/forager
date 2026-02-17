@@ -345,7 +345,7 @@ struct IngredientsView: View {
     private func categoryHeader(categoryName: String, count: Int) -> some View {
         HStack {
             Circle()
-                .fill(categoryColor(for: categoryName))
+                .fill(ForagerTheme.categoryColor(for: categoryName))
                 .frame(width: 16, height: 16)
                 .overlay(
                     Text(categoryEmoji(for: categoryName))
@@ -546,31 +546,19 @@ struct IngredientsView: View {
             }
         }
     }
-    
-    // MARK: - Helper Methods
-    private func categoryColor(for categoryName: String) -> Color {
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "deli & meat": return .red
-        case "dairy & fridge": return .blue
-        case "bread & frozen": return .orange
-        case "boxed & canned": return .brown
-        case "snacks, drinks, & other": return .purple
-        default: return .gray
-        }
-    }
-    
+
     private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName.lowercased() {
-        case "produce": return "🥬"
-        case "deli & meat": return "🥩"
-        case "dairy & fridge": return "🥛"
-        case "bread & frozen": return "🍞"
-        case "boxed & canned": return "📦"
-        case "snacks, drinks, & other": return "🥤"
-        default: return "📦"
+        switch categoryName {
+        case "Produce": return "🥬"
+        case "Deli & Meat": return "🥩"
+        case "Dairy & Fridge": return "🥛"
+        case "Bread & Frozen": return "🍞"
+        case "Boxed & Canned": return "📦"
+        case "Snacks, Drinks, & Other": return "🥤"
+        default: return "📋"
         }
     }
+
 }
 
 // MARK: - Sort Options
@@ -678,7 +666,7 @@ struct IngredientRowView: View {
             
             // Category indicator
             Circle()
-                .fill(categoryColor(for: ingredient.category ?? "Uncategorized"))
+                .fill(ForagerTheme.categoryColor(for: ingredient.category ?? "Uncategorized"))
                 .frame(width: 12, height: 12)
             
             // INLINE EDITING: Ingredient name with tap-to-edit functionality
@@ -855,17 +843,6 @@ struct IngredientRowView: View {
         }
     }
     
-    private func categoryColor(for categoryName: String) -> Color {
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "deli & meat": return .red
-        case "dairy & fridge": return .blue
-        case "bread & frozen": return .orange
-        case "boxed & canned": return .brown
-        case "snacks, drinks, & other": return .purple
-        default: return .gray
-        }
-    }
 }
 
 #Preview {

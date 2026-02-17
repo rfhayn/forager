@@ -1234,7 +1234,7 @@ struct RecipeDetailView: View {
     private func categoryHeaderView(categoryName: String, count: Int) -> some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(categoryColor(for: categoryName))
+                .fill(ForagerTheme.categoryColor(for: categoryName))
                 .frame(width: 12, height: 12)
                 .overlay(
                     Text(categoryEmoji(for: categoryName))
@@ -1307,29 +1307,7 @@ struct RecipeDetailView: View {
         .padding(.leading, 8)
     }
     
-    private func categoryColor(for categoryName: String) -> Color {
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "deli & meat": return .red
-        case "dairy & fridge": return .blue
-        case "bread & frozen": return .orange
-        case "boxed & canned": return .brown
-        case "snacks, drinks, & other": return .purple
-        default: return .gray
-        }
-    }
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName.lowercased() {
-        case "produce": return "🥬"
-        case "deli & meat": return "🥩"
-        case "dairy & fridge": return "🥛"
-        case "bread & frozen": return "🍞"
-        case "boxed & canned": return "📦"
-        case "snacks, drinks, & other": return "🥤"
-        default: return "📦"
-        }
-    }
     
     private func instructionsSection(_ instructions: String) -> some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -1340,6 +1318,18 @@ struct RecipeDetailView: View {
             Text(instructions)
                 .font(.body)
                 .lineSpacing(4)
+        }
+    }
+
+    private func categoryEmoji(for categoryName: String) -> String {
+        switch categoryName {
+        case "Produce": return "🥬"
+        case "Deli & Meat": return "🥩"
+        case "Dairy & Fridge": return "🥛"
+        case "Bread & Frozen": return "🍞"
+        case "Boxed & Canned": return "📦"
+        case "Snacks, Drinks, & Other": return "🥤"
+        default: return "📋"
         }
     }
 }

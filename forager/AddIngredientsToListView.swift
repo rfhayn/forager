@@ -772,11 +772,11 @@ struct AddIngredientsToListView: View {
                 // Has category - show it with color dot
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(categoryColor(for: category))
+                        .fill(ForagerTheme.categoryColor(for: category))
                         .frame(width: 8, height: 8)
                     Text(category)
                         .font(.caption2)
-                        .foregroundColor(categoryColor(for: category))
+                        .foregroundColor(ForagerTheme.categoryColor(for: category))
                 }
             } else {
                 // Template exists but needs category - orange warning
@@ -802,11 +802,11 @@ struct AddIngredientsToListView: View {
                     // Has category
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(categoryColor(for: category))
+                            .fill(ForagerTheme.categoryColor(for: category))
                             .frame(width: 8, height: 8)
                         Text(category)
                             .font(.caption2)
-                            .foregroundColor(categoryColor(for: category))
+                            .foregroundColor(ForagerTheme.categoryColor(for: category))
                     }
                 } else {
                     // Template exists but needs category
@@ -871,18 +871,6 @@ struct AddIngredientsToListView: View {
         }
     }
     
-    private func categoryColor(for categoryName: String) -> Color {
-        // Map category names to colors (you can customize this)
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "meat": return .red
-        case "dairy": return .blue
-        case "pantry": return .orange
-        case "frozen": return .cyan
-        case "bakery": return .brown
-        default: return .gray
-        }
-    }
     
     private func isSelected(_ ingredient: Ingredient) -> Bool {
         guard let id = ingredient.id else { return false }
