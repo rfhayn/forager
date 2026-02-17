@@ -1,12 +1,12 @@
 # Forager - Project Index
 
-**Last Updated**: February 15, 2026
+**Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M7.7 📋 READY — App Store Submission & Public Presence
-**Current Phase**: M7.6 ✅ COMPLETE | **M7.7 📋 READY**
-**Next Priority**: M7.7.1 - Beta Landing Page (GitHub Pages)
-**Execution Order (Pre-Launch)**: M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+ → M15 (UX Design System)
+**Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
+**Current Phase**: M15 🚀 **ACTIVE** | M7.7 📋 **QUEUED**
+**Next Priority**: M15.1 - Design System Foundation & Liquid Glass TabView
+**Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -51,6 +51,14 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15 Elevated to Pre-Launch 🚀
+- **Decision**: M15 UX Design System elevated to pre-launch — polished UI before App Store debut
+- **Rationale**: Better brand impression, design phase already complete (mockups, PRD v1.1, 5-phase review)
+- **New sequence**: M15 → TestFlight push → M7.7 App Store submission
+- **Architecture benefit**: M15 first reduces M7.5 scope (native TabView replaces custom navigation)
+- **TestFlight**: Build 10 (v1.1) live, LinkedIn share imminent
+- **Core docs**: All 5 updated to reflect new execution order
 
 ### **February 15, 2026** - M7.6 COMPLETE ✅ — TestFlight Live
 - **Completed**: M7.6.7 TestFlight submission + M7.6.8 owner display name fix
@@ -397,14 +405,11 @@ _[Previous entries remain the same through December 23...]_
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
-| M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
-| M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | ✅ COMPLETE | ~12h |
-| **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
-| **Pre-Launch Total** | | **~13-17h remaining** |
+| M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
+| **M15: UX Design System & Visual Refresh** | 🚀 **ACTIVE** | 50-70h |
+| TestFlight push (post-M15) | 📋 PLANNED | ~1h |
+| **M7.7: App Store Submission & Public Presence** | 📋 QUEUED | 3-5h |
+| **Pre-Launch Total** | | **~54-76h remaining** |
 
 ### **Post-Launch Roadmap**
 
@@ -415,7 +420,11 @@ _[Previous entries remain the same through December 23...]_
 | M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10+: Future Features | FUTURE | 48-72h |
-| **M15: UX Design System & Visual Refresh** | 📋 PLANNED | 50-70h |
+
+### **Key Decisions (February 17, 2026)**
+14. **M15 elevated to pre-launch** — polished UI before App Store debut
+15. **New launch sequence**: M15 → TestFlight push → M7.7 App Store submission
+16. **M15 first reduces M7.5 scope** — native TabView replaces custom navigation
 
 ### **Key Decisions (February 8, 2026)**
 1. Original M7.4 (Sync Status UI) **SKIPPED** - dual-store architecture makes it unnecessary
@@ -611,7 +620,7 @@ _[Previous entries remain the same through December 23...]_
 - Family preference learning
 - Advanced sharing controls
 
-**M15: UX Design System & Visual Refresh** (50-70 hours) 🎨
+**M15: UX Design System & Visual Refresh** (50-70 hours) 🎨 — 🚀 ACTIVE
 - ForagerTheme design system with semantic color tokens
 - Warm color palette (forest green, bark, cream, canvas)
 - Typography system (SF Pro Rounded + New York serif)
@@ -620,6 +629,7 @@ _[Previous entries remain the same through December 23...]_
 - Screen-by-screen UX overhauls (grocery, recipes, meal plans, ingredients)
 - Layered app icon via Icon Composer
 - WCAG AA compliance, dark mode, Dynamic Type, haptics
+- **Design phase complete**: HTML mockups, PRD v1.1, 5-phase design review
 - **PRD**: `docs/prds/active/m15-ux-design-system.md`
 
 ---
@@ -658,8 +668,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.3
-**Last Updated**: February 15, 2026
+**Version**: 9.4
+**Last Updated**: February 17, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git

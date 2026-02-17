@@ -1,10 +1,10 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 15, 2026
-**Version**: 6.3
-**Current Milestone**: M7.6 ✅ COMPLETE | M7.7 📋 READY
-**Execution Order (Pre-Launch)**: M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+ → M15 (UX Design System)
+**Last Updated**: February 17, 2026
+**Version**: 6.4
+**Current Milestone**: M15 🚀 ACTIVE | M7.7 📋 QUEUED
+**Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
+**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
 
@@ -686,11 +686,11 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
-## 🎨 **M15: UX DESIGN SYSTEM & VISUAL REFRESH - PLANNED**
+## 🎨 **M15: UX DESIGN SYSTEM & VISUAL REFRESH - ACTIVE**
 
-**Status**: 📋 Planned (post-launch)
+**Status**: 🚀 Active (design complete, implementation starting)
 **Estimated**: 50-70 hours (7 phases)
-**Dependencies**: App Store launch (M7.7), iOS 26 SDK
+**Dependencies**: iOS 26 SDK
 **Summary**: Comprehensive visual refresh with warm color palette, custom typography, Liquid Glass adoption, and iOS 26 deployment target
 **PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
 
@@ -882,7 +882,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 requirements delivered). M15 UX Design System planned (21 requirements). Complete platform: 234 total requirements (183 complete, 18 in progress, 33 planned).
 
-**Last Updated**: February 15, 2026
-**Version**: 6.3
-**Next Update**: After M7.7 App Store Submission
-**Current Focus**: M7.7 📋 - App Store Submission & Public Presence
+**Last Updated**: February 17, 2026
+**Version**: 6.4
+**Next Update**: After M15.1 Design System Foundation
+**Current Focus**: M15 🚀 - UX Design System & Visual Refresh
