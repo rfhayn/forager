@@ -56,73 +56,72 @@ struct SettingsView: View {
     @State private var ownerDisplayName: String = "Unknown"
 
     var body: some View {
-        NavigationView {
-            Form {
-                // M7.2.1: Household Management
-                householdSection
-                
-                // M4.1: Meal Planning Preferences
-                mealPlanningSection
-                
-                // M4.3.1: Display Options
-                displayOptionsSection
-                
-                // M7.1.2: Developer Tools (hidden in production)
-                #if DEBUG
-                developerToolsSection
-                #endif
+        // M15.1: NavigationView removed — SettingsView is inside NavigationStack from TabView
+        Form {
+            // M7.2.1: Household Management
+            householdSection
 
-                // M7.0.2: About & Privacy
-                aboutSection
-                
-                // M3: Data Management with Migration - Hidden after migration complete
-                // migrationSection
+            // M15.1: Data Management (Ingredients & Categories relocated from tabs)
+            dataManagementSection
+
+            // M4.1: Meal Planning Preferences
+            mealPlanningSection
+
+            // M4.3.1: Display Options
+            displayOptionsSection
+
+            // M7.1.2: Developer Tools (hidden in production)
+            #if DEBUG
+            developerToolsSection
+            #endif
+
+            // M7.0.2: About & Privacy
+            aboutSection
+        }
+        .navigationTitle("Settings")
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            SafariView(url: URL(string: "https://rfhayn.github.io/forager/privacy.html")!)
+                .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showCreateHouseholdSheet) {
+            CreateHouseholdSheet(householdService: householdService)
+        }
+        .sheet(isPresented: $showInviteMemberSheet) {
+            if let household = householdService.currentHousehold {
+                InviteMemberSheet(service: householdService, household: household)
             }
-            .navigationTitle("Settings")
-            .sheet(isPresented: $showingPrivacyPolicy) {
-                SafariView(url: URL(string: "https://rfhayn.github.io/forager/privacy.html")!)
-                    .ignoresSafeArea()
-            }
-            .sheet(isPresented: $showCreateHouseholdSheet) {
-                CreateHouseholdSheet(householdService: householdService)
-            }
-            .sheet(isPresented: $showInviteMemberSheet) {
+        }
+        .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
+            Button("Migrate & Leave", role: .destructive) {
+                shouldMigrateData = true
                 if let household = householdService.currentHousehold {
-                    InviteMemberSheet(service: householdService, household: household)
+                    leaveHousehold(household)
                 }
             }
-            .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
-                Button("Migrate & Leave", role: .destructive) {
-                    shouldMigrateData = true
-                    if let household = householdService.currentHousehold {
-                        leaveHousehold(household)
-                    }
+            Button("Clean App & Leave", role: .destructive) {
+                shouldMigrateData = false
+                if let household = householdService.currentHousehold {
+                    leaveHousehold(household)
                 }
-                Button("Clean App & Leave", role: .destructive) {
-                    shouldMigrateData = false
-                    if let household = householdService.currentHousehold {
-                        leaveHousehold(household)
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh with a clean app.")
             }
-            .alert("Delete Household?", isPresented: $showDeleteConfirmation) {
-                Button("Migrate & Delete", role: .destructive) {
-                    if let household = householdService.currentHousehold {
-                        deleteHousehold(household, migrateData: true)
-                    }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh with a clean app.")
+        }
+        .alert("Delete Household?", isPresented: $showDeleteConfirmation) {
+            Button("Migrate & Delete", role: .destructive) {
+                if let household = householdService.currentHousehold {
+                    deleteHousehold(household, migrateData: true)
                 }
-                Button("Clean Delete", role: .destructive) {
-                    if let household = householdService.currentHousehold {
-                        deleteHousehold(household, migrateData: false)
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This permanently deletes the household and removes all members' access. Choose 'Migrate & Delete' to keep a personal copy, or 'Clean Delete' to remove everything.")
             }
+            Button("Clean Delete", role: .destructive) {
+                if let household = householdService.currentHousehold {
+                    deleteHousehold(household, migrateData: false)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This permanently deletes the household and removes all members' access. Choose 'Migrate & Delete' to keep a personal copy, or 'Clean Delete' to remove everything.")
         }
     }
     
@@ -349,6 +348,25 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - M15.1: Data Management Section (relocated from tabs — ADR 011)
+
+    private var dataManagementSection: some View {
+        Section {
+            NavigationLink {
+                IngredientsView(popToRoot: .constant(false))
+            } label: {
+                Label("Ingredients", systemImage: "leaf.circle")
+            }
+            NavigationLink {
+                ManageCategoriesView(popToRoot: .constant(false))
+            } label: {
+                Label("Categories", systemImage: "folder.badge.gearshape")
+            }
+        } header: {
+            Text("Data")
+        }
+    }
+
     // MARK: - M4.1: Meal Planning Section
     
     // Meal planning preferences for user configuration

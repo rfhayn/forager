@@ -86,27 +86,25 @@ struct UnifiedSearchView: View {
     }
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // M7.4: Search bar with cancel button (Apple Music pattern)
-                searchBarSection
+        // M15.1: NavigationView removed — UnifiedSearchView is inside NavigationStack from TabView
+        VStack(spacing: 0) {
+            // M7.4: Search bar with cancel button (Apple Music pattern)
+            searchBarSection
 
-                // Results or empty state
-                if searchText.isEmpty && !isSearchFocused {
-                    emptyStateView
-                } else if searchText.isEmpty && isSearchFocused {
-                    // Show recent searches or suggestions when focused but empty
-                    emptyStateView
-                } else if hasResults {
-                    searchResultsView
-                } else {
-                    noResultsView
-                }
+            // Results or empty state
+            if searchText.isEmpty && !isSearchFocused {
+                emptyStateView
+            } else if searchText.isEmpty && isSearchFocused {
+                emptyStateView
+            } else if hasResults {
+                searchResultsView
+            } else {
+                noResultsView
             }
-            .navigationTitle(isSearchFocused ? "" : "Search")
-            .navigationBarTitleDisplayMode(isSearchFocused ? .inline : .large)
-            .animation(.default, value: isSearchFocused)
         }
+        .navigationTitle(isSearchFocused ? "" : "Search")
+        .navigationBarTitleDisplayMode(isSearchFocused ? .inline : .large)
+        .animation(.default, value: isSearchFocused)
     }
 
     // MARK: - Search Bar Section
