@@ -151,7 +151,7 @@ struct SettingsView: View {
                                         isEditingName = false
                                         renameError = nil
                                     }
-                                    .foregroundColor(.gray)
+                                    .foregroundStyle(ForagerTheme.textTertiary)
                                     .font(.caption)
 
                                     Spacer()
@@ -166,7 +166,7 @@ struct SettingsView: View {
                                 if let error = renameError {
                                     Text(error)
                                         .font(.caption)
-                                        .foregroundColor(.red)
+                                        .foregroundStyle(ForagerTheme.statusDangerFG)
                                 }
                             }
                         } else {
@@ -174,11 +174,11 @@ struct SettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack {
                                     Text("Household Name")
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                     Spacer()
                                     if isCurrentUserOwner {
                                         Image(systemName: "pencil")
-                                            .foregroundColor(.blue)
+                                            .foregroundStyle(ForagerTheme.accentSecondary)
                                             .font(.caption)
                                     }
                                 }
@@ -198,7 +198,7 @@ struct SettingsView: View {
                     // Owner information
                     HStack {
                         Text("Owner")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Spacer()
                         Text(ownerDisplayName)
                             .fontWeight(.medium)
@@ -225,7 +225,7 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "person.2")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(ForagerTheme.accentSecondary)
                             Text("Members")
                             Spacer()
                             if isSyncingMembers {
@@ -233,10 +233,10 @@ struct SettingsView: View {
                                     .scaleEffect(0.8)
                                     .padding(.trailing, 4)
                                 Text("Syncing...")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             } else {
                                 Text("\(participantCount)")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
                         }
                     }
@@ -252,7 +252,7 @@ struct SettingsView: View {
                                 Image(systemName: "arrow.clockwise")
                                 Text("Refresh Members")
                             }
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentSecondary)
                         }
                     }
                     #endif
@@ -272,9 +272,9 @@ struct SettingsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .background(ForagerTheme.accentPrimary)
+                        .foregroundStyle(.white)
+                        .cornerRadius(ForagerTheme.Radius.md)
                     }
 
                     // M7.3.2: Leave Household button (non-owners only)
@@ -288,9 +288,9 @@ struct SettingsView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .cornerRadius(10)
+                            .background(ForagerTheme.statusDangerFG.opacity(0.1))
+                            .foregroundStyle(ForagerTheme.statusDangerFG)
+                            .cornerRadius(ForagerTheme.Radius.md)
                         }
                     }
 
@@ -306,9 +306,9 @@ struct SettingsView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .cornerRadius(10)
+                            .background(ForagerTheme.statusDangerFG.opacity(0.1))
+                            .foregroundStyle(ForagerTheme.statusDangerFG)
+                            .cornerRadius(ForagerTheme.Radius.md)
                         }
                     }
                 } header: {
@@ -321,7 +321,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Create or join a household to share grocery lists, recipes, and meal plans with family or roommates.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Button(action: {
@@ -333,9 +333,9 @@ struct SettingsView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .background(ForagerTheme.accentPrimary)
+                            .foregroundStyle(.white)
+                            .cornerRadius(ForagerTheme.Radius.md)
                         }
                     }
                 } header: {
@@ -433,13 +433,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "icloud.and.arrow.up")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("CloudKit Sync Status")
                             .font(.headline)
                         Text("Monitor sync events and test CloudKit")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -452,13 +452,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "wrench.and.screwdriver")
-                        .foregroundColor(.purple)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("CloudKit Test Harness")
                             .font(.headline)
                         Text("Test duplicate prevention and repository patterns")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -473,13 +473,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "house.circle")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     VStack(alignment: .leading) {
                         Text("Household Debug")
                             .font(.headline)
                         Text("View all households in database")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -494,13 +494,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "arrow.counterclockwise")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     VStack(alignment: .leading) {
                         Text("Reset Migration")
                             .font(.headline)
                         Text("Re-run Stage A migration for testing")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -513,13 +513,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "stethoscope")
-                        .foregroundColor(.teal)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("Category Sync Diagnostic")
                             .font(.headline)
                         Text("Dump category store & householdKey info")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -545,9 +545,9 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "hand.wave")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     Text("Replay Onboarding")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Spacer()
                 }
             }
@@ -559,12 +559,12 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "hand.raised")
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                     Text("Privacy Policy")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Image(systemName: "arrow.up.right.square")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .font(.caption)
                 }
             }
@@ -587,13 +587,13 @@ struct SettingsView: View {
             NavigationLink(destination: MigrationDebugView(context: viewContext)) {
                 HStack {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("Quantity Migration")
                             .font(.headline)
                         Text("Convert ingredients to structured format")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -722,7 +722,7 @@ struct CreateHouseholdSheet: View {
                 Section {
                     Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .task {
@@ -758,13 +758,13 @@ struct CreateHouseholdSheet: View {
                         ProgressView()
                         Text(householdService.creationStatus ?? "Creating household…")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                             .animation(.easeInOut(duration: 0.2), value: householdService.creationStatus)
                     }
                     .padding(24)
                     .background(.regularMaterial)
-                    .cornerRadius(16)
+                    .cornerRadius(ForagerTheme.Radius.lg)
                     .shadow(radius: 10)
                 }
             }

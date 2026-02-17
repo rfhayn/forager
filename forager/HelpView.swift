@@ -24,7 +24,7 @@ struct HelpView: View {
                 Section {
                     Text("Learn how to use the quantity management features to make your grocery shopping and recipe planning more efficient.")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .padding(.vertical, 8)
                 }
                 
@@ -143,14 +143,14 @@ struct HelpView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
                                     Image(systemName: "sparkles")
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                     Text("Coming Soon")
                                         .font(.subheadline)
                                         .fontWeight(.semibold)
                                 }
                                 Text("Metric conversions (liters, grams, etc.) are planned for a future update!")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
                         }
                         .padding(.vertical, 8)
@@ -220,7 +220,7 @@ private struct HelpItem: View {
             
             Text(description)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
 }
@@ -234,7 +234,7 @@ private struct ConversionGroup: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentSecondary)
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
@@ -244,10 +244,10 @@ private struct ConversionGroup: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                     Text(conversion)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
         }
@@ -261,13 +261,13 @@ private struct TipItem: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentSecondary)
                 .font(.title3)
                 .frame(width: 24)
             
             Text(tip)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
 }
