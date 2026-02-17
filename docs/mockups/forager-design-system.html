@@ -1,0 +1,4246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager M15 — Design System Mockups</title>
+<style>
+  /* ───────────────────────────────────────────────
+     DESIGN TOKENS (from PRD Section 4)
+     ─────────────────────────────────────────────── */
+  :root {
+    /* Brand */
+    --forest-green: #2D5016;
+    --leaf-green: #4A7C2E;
+    --spring-green: #6B9B37;
+    --bark: #2C2418;
+    --stone: #7A7067;
+    --pebble: #B0A89E;
+    --sand: #D4CBC0;
+    --cream: #F5F0E8;
+    --canvas: #FDFBF7;
+
+    /* Semantic: Backgrounds */
+    --bg-canvas: #FDFBF7;
+    --bg-primary: #F5F0E8;
+    --bg-secondary: #EDE6D8;
+    --bg-tertiary: #E4DDD0;
+
+    /* Semantic: Surfaces */
+    --surface-primary: #FFFFFF;
+    --surface-secondary: #F8F4EE;
+    --surface-accent: #E8F0E0;
+    --surface-warning: #FFF8E6;
+    --surface-danger: #FFF0EE;
+    --surface-success: #EEF6EE;
+
+    /* Semantic: Text */
+    --text-primary: #2C2418;
+    --text-secondary: #5A5347;
+    --text-tertiary: #6A6057;
+    --text-disabled: #B0A89E;
+    --text-link: #2D6A3F;
+
+    /* Semantic: Accent */
+    --accent-primary: #2D5016;
+    --accent-secondary: #4A7C2E;
+    --accent-tertiary: #6B9B37;
+    --accent-tint: #E8F0E0;
+
+    /* Semantic: Status */
+    --success-fg: #2D7A2D;
+    --success-bg: #EEF6EE;
+    --warning-fg: #8B6607;
+    --warning-bg: #FFF8E6;
+    --danger-fg: #C4402F;
+    --danger-bg: #FFF0EE;
+    --info-fg: #3D7A9C;
+    --info-bg: #EEF6FA;
+
+    /* Semantic: Borders */
+    --border-default: #D4CBC0;
+    --border-subtle: #E0D8CC;
+    --border-strong: #C8BFB3;
+    --border-accent: #4A7C2E;
+
+    /* Category Colors */
+    --cat-produce: #357A30;
+    --cat-dairy: #3A7CA5;
+    --cat-deli: #A8382E;
+    --cat-bread: #B07828;
+    --cat-pantry: #7A5D3F;
+    --cat-frozen: #4A7D95;
+    --cat-beverages: #6D5098;
+    --cat-snacks: #C06A2F;
+    --cat-seafood: #267080;
+    --cat-household: #5E6E60;
+    --cat-uncategorized: #7A7067;
+
+    /* Shadows (bark-tinted) */
+    --shadow-1: 0 1px 3px rgba(44,36,24, 0.08);
+    --shadow-2: 0 2px 8px rgba(44,36,24, 0.12);
+    --shadow-3: 0 4px 16px rgba(44,36,24, 0.16);
+
+    /* Spacing */
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 12px;
+    --sp-lg: 16px;
+    --sp-xl: 24px;
+    --sp-xxl: 32px;
+
+    /* Radius */
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+
+    /* Type Scale */
+    --font-2xs: 10px;   /* badges, dot labels, tab labels */
+    --font-xs: 12px;    /* captions, category headers, meta */
+    --font-sm: 13px;    /* pills, secondary text, footnotes */
+    --font-base: 15px;  /* body, settings rows, ingredients */
+    --font-md: 17px;    /* buttons, item names, step text */
+    --font-lg: 20px;    /* card titles, nav inline titles */
+    --font-xl: 28px;    /* section titles, hero headers */
+    --font-2xl: 34px;   /* large nav titles */
+
+    /* Button */
+    --btn-primary-bg: #2D5016;
+    --btn-primary-text: #FFFFFF;
+    --btn-primary-pressed: #1F3A0F;
+    --btn-disabled-bg: #D4CBC0;
+  }
+
+  /* Dark mode overrides */
+  [data-theme="dark"] {
+    --forest-green: #7BC08A;
+    --leaf-green: #5AAD5A;
+    --spring-green: #3D8B37;
+    --bark: #F0EBE3;
+    --stone: #938D83;
+    --pebble: #5A5650;
+    --sand: #443F38;
+    --cream: #221E16;
+    --canvas: #1C1A14;
+
+    --bg-canvas: #1C1A14;
+    --bg-primary: #221E16;
+    --bg-secondary: #2A251C;
+    --bg-tertiary: #332E24;
+
+    --surface-primary: #2E2A1F;
+    --surface-secondary: #363127;
+    --surface-accent: #2A3520;
+    --surface-warning: #332B18;
+    --surface-danger: #331E1A;
+    --surface-success: #1E3020;
+
+    --text-primary: #F0EBE3;
+    --text-secondary: #C4BDB2;
+    --text-tertiary: #A09A90;
+    --text-disabled: #5A5650;
+    --text-link: #7BC08A;
+
+    --accent-primary: #7BC08A;
+    --accent-secondary: #5AAD5A;
+    --accent-tertiary: #3D8B37;
+    --accent-tint: #2A3520;
+
+    --success-fg: #5AAD5A;
+    --success-bg: #1E3020;
+    --warning-fg: #D4A62B;
+    --warning-bg: #332B18;
+    --danger-fg: #E06050;
+    --danger-bg: #331E1A;
+    --info-fg: #5A9BBD;
+    --info-bg: #1A2830;
+
+    --border-default: #443F38;
+    --border-subtle: #3A3630;
+    --border-strong: #4E4840;
+    --border-accent: #5AAD5A;
+
+    --cat-produce: #5AAD54;
+    --cat-dairy: #5AADCF;
+    --cat-deli: #D4605A;
+    --cat-bread: #D4A04A;
+    --cat-pantry: #B09070;
+    --cat-frozen: #6AADC0;
+    --cat-beverages: #9A7DC8;
+    --cat-snacks: #E08A50;
+    --cat-seafood: #45A0B0;
+    --cat-household: #8DA890;
+    --cat-uncategorized: #938D83;
+
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+
+    --btn-primary-bg: #7BC08A;
+    --btn-primary-text: #1C1A14;
+    --btn-primary-pressed: #5AAD5A;
+    --btn-disabled-bg: #3A3630;
+  }
+
+  /* ───────────────────────────────────────────────
+     BASE STYLES
+     ─────────────────────────────────────────────── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'SF Pro', system-ui, sans-serif;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* iPhone frame */
+  .phone-frame {
+    width: 393px;
+    height: 852px;
+    background: var(--bg-canvas);
+    border-radius: 47px;
+    border: 8px solid #1A1A1A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-theme="dark"] .phone-frame {
+    border-color: #333;
+  }
+
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 54px;
+    padding: 14px 30px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* Dynamic Island */
+  .dynamic-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    height: 83px;
+    padding: 6px 16px 34px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    background: rgba(245,240,232, 0.75);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
+    border-top: 0.5px solid var(--border-subtle);
+    flex-shrink: 0;
+  }
+
+  [data-theme="dark"] .tab-bar {
+    background: rgba(28,26,20, 0.75);
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+  }
+
+  .tab-item.active { color: var(--accent-primary); }
+
+  .tab-item svg { width: 24px; height: 24px; fill: currentColor; }
+
+  /* Nav bar */
+  .nav-bar {
+    padding: 0 var(--sp-lg) var(--sp-sm);
+    flex-shrink: 0;
+    position: relative;
+    text-align: center;
+    min-height: 44px;
+  }
+
+  .nav-bar h1 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--text-primary);
+  }
+
+  /* Detail nav bar — centered small title with back + trailing actions */
+  .nav-bar .nav-back {
+    position: absolute;
+    left: var(--sp-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-size: 15px;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+  }
+
+  .nav-bar .nav-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    pointer-events: none;
+  }
+
+  .nav-bar .nav-trailing {
+    position: absolute;
+    right: var(--sp-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .nav-add-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    border: none;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: absolute;
+    right: var(--sp-lg);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  /* ───────────────────────────────────────────────
+     PAGE LAYOUT
+     ─────────────────────────────────────────────── */
+  .page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--sp-xl) var(--sp-lg);
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--sp-xxl);
+    padding-bottom: var(--sp-xl);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .page-header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .page-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .section {
+    margin-bottom: 64px;
+  }
+
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-lg);
+    padding-left: 6px;
+    border-left: 4px solid var(--accent-primary);
+  }
+
+  .section-subtitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-md);
+  }
+
+  /* Controls bar */
+  .controls-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--sp-md) var(--sp-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .controls-bar label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .theme-toggle {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+
+  .theme-toggle button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .theme-toggle button.active {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    border-radius: var(--r-sm);
+  }
+
+  /* ───────────────────────────────────────────────
+     COLOR SWATCHES
+     ─────────────────────────────────────────────── */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--sp-md);
+    margin-bottom: var(--sp-xl);
+  }
+
+  .color-swatch {
+    border-radius: var(--r-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .color-swatch .swatch-preview {
+    height: 64px;
+  }
+
+  .color-swatch .swatch-info {
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--surface-primary);
+  }
+
+  .color-swatch .swatch-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .color-swatch .swatch-hex {
+    font-size: 12px;
+    font-family: 'SF Mono', monospace;
+    color: var(--text-tertiary);
+  }
+
+  /* ───────────────────────────────────────────────
+     TYPOGRAPHY SAMPLES
+     ─────────────────────────────────────────────── */
+  .type-sample {
+    padding: var(--sp-lg);
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    margin-bottom: var(--sp-md);
+    box-shadow: var(--shadow-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border: 1px solid var(--border-subtle);
+  }
+
+  .type-sample .label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    margin-left: var(--sp-lg);
+  }
+
+  .font-rounded { font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; }
+  .font-mono { font-variant-numeric: tabular-nums; }
+
+  /* ───────────────────────────────────────────────
+     PHONE SCREEN MOCKUPS
+     ─────────────────────────────────────────────── */
+  .mockup-row {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: var(--sp-xl) 0;
+  }
+
+  .mockup-wrapper {
+    text-align: center;
+    max-width: 393px;
+  }
+
+  .mockup-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: var(--sp-md);
+    margin-bottom: var(--sp-xs);
+  }
+
+  .mockup-sublabel {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* Content inside phone */
+  .content-area {
+    flex: 1;
+    padding: 0 var(--sp-lg);
+    overflow-y: auto;
+  }
+
+  /* Category strip */
+  .cat-strip {
+    border-left: 4px solid var(--cat-produce);
+    padding-left: var(--sp-md);
+  }
+
+  .cat-strip.dairy { border-left-color: var(--cat-dairy); }
+  .cat-strip.deli { border-left-color: var(--cat-deli); }
+  .cat-strip.bread { border-left-color: var(--cat-bread); }
+  .cat-strip.pantry { border-left-color: var(--cat-pantry); }
+  .cat-strip.frozen { border-left-color: var(--cat-frozen); }
+
+  /* Grocery item row */
+  .grocery-row {
+    display: flex;
+    align-items: center;
+    padding: var(--sp-md) 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: var(--sp-md);
+  }
+
+  .grocery-row:last-child { border-bottom: none; }
+
+  .grocery-checkbox {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-secondary);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+  }
+
+  .grocery-checkbox.checked {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+  }
+
+  .grocery-checkbox.checked::after {
+    content: "✓";
+    color: var(--btn-primary-text);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .grocery-row.checked .item-name {
+    text-decoration: line-through;
+    color: var(--text-disabled);
+  }
+
+  .grocery-row.checked .item-qty {
+    color: var(--text-disabled);
+  }
+
+  .item-info {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: var(--sp-md);
+  }
+  .item-name { font-size: 17px; color: var(--text-primary); }
+  .item-qty {
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .item-meta { font-size: 12px; color: var(--text-tertiary); }
+
+  /* Recipe card */
+  .recipe-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--sp-md);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .recipe-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+  }
+
+  .recipe-card-header-band {
+    display: none; /* Removed — category colors reserved for grocery lists only */
+  }
+
+  .recipe-card-body {
+    padding: var(--sp-lg);
+    text-align: left;
+  }
+
+  .recipe-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-xs);
+  }
+
+  .recipe-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .timing-pills {
+    display: flex;
+    gap: var(--sp-sm);
+  }
+
+  .timing-pill {
+    background: var(--accent-tint);
+    color: var(--leaf-green);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
+  }
+
+  /* Progress ring */
+  .progress-ring-container {
+    width: 56px;
+    height: 56px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .progress-ring-container svg {
+    transform: rotate(-90deg);
+    width: 56px;
+    height: 56px;
+  }
+
+  .progress-ring-bg {
+    fill: none;
+    stroke: var(--bg-secondary);
+    stroke-width: 4;
+  }
+
+  .progress-ring-fill {
+    fill: none;
+    stroke: var(--accent-primary);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+
+  .progress-ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: none;
+    border-radius: var(--r-sm);
+    font-size: 17px;
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.1s;
+  }
+
+  .btn-primary:active { transform: scale(0.97); background: var(--btn-primary-pressed); }
+
+  .btn-secondary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-tint);
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-secondary);
+    border-radius: var(--r-sm);
+    font-size: 17px;
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.1s;
+  }
+
+  /* Filter pills */
+  .filter-pills {
+    display: flex;
+    gap: var(--sp-sm);
+    overflow-x: auto;
+    padding: var(--sp-sm) 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-pills::-webkit-scrollbar { display: none; }
+
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+  }
+
+  .filter-pill.inactive {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  .filter-pill.active {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+  }
+
+  .filter-pill .cat-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Sticky bottom bar */
+  .bottom-bar {
+    padding: var(--sp-md) var(--sp-lg);
+    padding-bottom: 0;
+    background: var(--bg-canvas);
+    flex-shrink: 0;
+  }
+
+  /* Progress bar (sticky bottom) */
+  .progress-bar-bottom {
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: var(--sp-sm) var(--sp-lg);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--forest-green);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* Category section header */
+  .cat-section-header {
+    position: relative;
+    text-align: center;
+    padding: var(--sp-sm) 0;
+  }
+
+  .cat-section-header .cat-color-bar {
+    display: none;
+  }
+
+  .cat-section-header .cat-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+  }
+
+  .cat-section-header .cat-right {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+  }
+
+  .cat-section-header .cat-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    background: var(--bg-secondary);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .cat-section-header .chevron {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    transition: transform 0.3s;
+  }
+
+  /* Meal plan day strip */
+  .day-strip {
+    display: flex;
+    justify-content: center;
+    gap: var(--sp-sm);
+    padding: var(--sp-md) 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .day-strip::-webkit-scrollbar { display: none; }
+
+  .day-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sp-sm) var(--sp-md);
+    border-radius: var(--r-md);
+    min-width: 48px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .day-chip .day-label {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+  }
+
+  .day-chip .day-num {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .day-chip .day-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 2px;
+    background: transparent;
+  }
+
+  .day-chip .day-dot.filled { background: var(--accent-primary); }
+  .day-chip .day-dot.empty { border: 1.5px solid var(--border-default); }
+
+  .day-chip.today {
+    background: var(--forest-green);
+    border-radius: var(--r-md);
+  }
+
+  .day-chip.today .day-label,
+  .day-chip.today .day-num { color: var(--btn-primary-text); }
+
+  .day-chip.today .day-dot.filled { background: var(--surface-primary); }
+
+  /* Meal card */
+  .meal-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-subtle);
+    overflow: hidden;
+    margin-bottom: var(--sp-md);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .meal-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+  }
+
+  .meal-card-inner {
+    display: flex;
+    gap: var(--sp-md);
+    padding: var(--sp-lg);
+  }
+
+  .meal-card .meal-color-bar {
+    display: none; /* Removed — category colors reserved for grocery lists only */
+  }
+
+  .meal-card .meal-info {
+    flex: 1;
+    text-align: left;
+  }
+
+  .meal-card .meal-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+  }
+
+  .meal-card .meal-servings {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    text-align: left;
+  }
+
+  .recipe-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px var(--sp-md);
+    background: var(--surface-primary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    margin-bottom: var(--sp-sm);
+  }
+
+  .recipe-picker span {
+    font-size: 15px;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .recipe-picker .chevron {
+    color: var(--text-disabled);
+    font-size: 13px;
+  }
+
+  .quick-select-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .quick-pill {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .meal-card .meal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: var(--sp-md);
+  }
+
+  .meal-action-btn {
+    flex: 1;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 0;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .meal-action-btn.done-toggle {
+    background: transparent;
+    border: 1.5px solid var(--border-default);
+    color: var(--text-secondary);
+  }
+  .meal-action-btn.done-toggle.checked {
+    background: var(--accent-tint);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .meal-action-btn.swap-btn {
+    background: transparent;
+    border: 1.5px solid var(--border-default);
+    color: var(--text-secondary);
+  }
+
+  .meal-action-btn.remove-btn {
+    background: transparent;
+    border: 1.5px solid var(--danger-fg);
+    color: var(--danger-fg);
+  }
+
+  /* Unplanned day slot — match meal-card height */
+  .unplanned-day-slot {
+    padding: var(--sp-md);
+    border: 1.5px dashed var(--border-default);
+    border-radius: var(--r-md);
+    background: transparent;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Quick add bar */
+  .quick-add-bar {
+    display: flex;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm);
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    border: 1px solid var(--border-default);
+    margin: var(--sp-sm) 0;
+  }
+
+  .quick-add-bar input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 17px;
+    font-family: inherit;
+    color: var(--text-primary);
+    outline: none;
+    padding: var(--sp-sm);
+  }
+
+  .quick-add-bar input::placeholder {
+    color: var(--text-disabled);
+  }
+
+  .quick-add-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    border: none;
+    color: var(--btn-primary-text);
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* List overview card */
+  .list-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: var(--sp-md);
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .list-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+  }
+
+  .list-card-body {
+    display: flex;
+    align-items: center;
+  }
+
+  .list-card .list-info {
+    flex: 1;
+    padding: var(--sp-lg);
+    text-align: left;
+  }
+
+  .list-card .list-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .list-card .list-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .list-card .progress-zone {
+    width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex-shrink: 0;
+  }
+
+  .list-card-divider {
+    height: 0.5px;
+    background: var(--border-subtle);
+    margin: 0 var(--sp-lg);
+  }
+
+  .category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: var(--sp-sm) var(--sp-lg) var(--sp-md);
+  }
+
+  .cat-chip {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 3px 8px;
+    border-radius: var(--r-xs);
+    white-space: nowrap;
+  }
+  .cat-chip.produce  { background: color-mix(in srgb, var(--cat-produce) 12%, transparent); color: var(--cat-produce); }
+  .cat-chip.dairy    { background: color-mix(in srgb, var(--cat-dairy) 12%, transparent); color: var(--cat-dairy); }
+  .cat-chip.deli     { background: color-mix(in srgb, var(--cat-deli) 12%, transparent); color: var(--cat-deli); }
+  .cat-chip.pantry   { background: color-mix(in srgb, var(--cat-pantry) 12%, transparent); color: var(--cat-pantry); }
+  .cat-chip.frozen   { background: color-mix(in srgb, var(--cat-frozen) 12%, transparent); color: var(--cat-frozen); }
+  .cat-chip.snacks   { background: color-mix(in srgb, var(--cat-snacks) 12%, transparent); color: var(--cat-snacks); }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px var(--sp-xl);
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: var(--sp-md);
+    opacity: 0.6;
+  }
+
+  .empty-state h3 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .empty-state p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-lg);
+  }
+
+  /* Recipe detail hero */
+  .recipe-hero {
+    padding: var(--sp-lg);
+    text-align: left;
+  }
+
+  .recipe-hero .hero-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .recipe-hero .hero-timing {
+    display: flex;
+    gap: var(--sp-lg);
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-lg);
+  }
+
+  .recipe-hero .hero-timing span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .ingredient-row {
+    display: flex;
+    align-items: baseline;
+    padding: var(--sp-sm) 0;
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: 6px;
+  }
+
+  .ingredient-row:last-child { border-bottom: none; }
+
+  .ingredient-bullet {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--leaf-green);
+    flex-shrink: 0;
+    margin-top: 8px;
+  }
+
+  .ingredient-bullet.warning { background: var(--warning-fg); }
+
+  .ingredient-qty {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    font-size: 15px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ingredient-name {
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .recipe-section-header {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    padding: var(--sp-md) 0 var(--sp-sm);
+    margin-top: var(--sp-md);
+    text-align: left;
+  }
+
+  .instruction-step {
+    display: flex;
+    align-items: first baseline;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) 0;
+  }
+
+  .step-number {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--forest-green);
+    min-width: 20px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+
+  .step-text {
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    text-align: left;
+  }
+
+  /* Scale pills */
+  .scale-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: var(--sp-xs) 0 var(--sp-sm);
+  }
+
+  .scale-pill {
+    flex: 1;
+    padding: 4px 0;
+    border-radius: var(--r-sm);
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border-default);
+    background: transparent;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    transition: all 0.15s;
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .scale-pill.active {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    border-color: var(--accent-primary);
+  }
+
+  /* Settings screens */
+  .settings-group {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: var(--sp-md);
+    overflow: hidden;
+    text-align: left;
+  }
+
+  .settings-section-header {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    padding: var(--sp-md) var(--sp-lg) var(--sp-xs);
+    text-align: left;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    padding: 11px var(--sp-lg);
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: var(--sp-md);
+    text-align: left;
+  }
+
+  .settings-row:last-child { border-bottom: none; }
+
+  .settings-row-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .settings-row-label {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .settings-row-value {
+    font-size: 15px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+  }
+
+  .settings-row .chevron {
+    color: var(--text-disabled);
+    font-size: 13px;
+  }
+
+  .settings-toggle {
+    width: 42px;
+    height: 26px;
+    border-radius: 13px;
+    background: var(--bg-tertiary);
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .settings-toggle.on {
+    background: var(--accent-secondary);
+  }
+
+  .settings-toggle::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--surface-primary);
+    top: 2px;
+    left: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform 0.15s;
+  }
+
+  .settings-toggle.on::after {
+    transform: translateX(16px);
+  }
+
+  .settings-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+
+  .stepper-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    color: var(--accent-primary);
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+
+  .stepper-value {
+    width: 32px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-left: 1px solid var(--border-default);
+    border-right: 1px solid var(--border-default);
+    padding: 4px 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .settings-footer {
+    text-align: center;
+    padding: var(--sp-lg);
+    font-size: 12px;
+    color: var(--text-disabled);
+  }
+
+  .member-row {
+    display: flex;
+    align-items: center;
+    padding: 10px var(--sp-lg);
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: var(--sp-md);
+    text-align: left;
+  }
+
+  .member-row:last-child { border-bottom: none; }
+
+  .member-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .member-info {
+    flex: 1;
+  }
+
+  .member-name {
+    font-size: 15px;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .member-role {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .role-badge {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .role-badge.owner {
+    background: var(--accent-tint);
+    color: var(--accent-primary);
+  }
+
+  .role-badge.member {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  .category-row {
+    display: flex;
+    align-items: center;
+    padding: 10px var(--sp-lg);
+    border-bottom: 0.5px solid var(--border-subtle);
+    gap: var(--sp-sm);
+    text-align: left;
+  }
+
+  .category-row:last-child { border-bottom: none; }
+
+  .drag-handle {
+    color: var(--text-disabled);
+    font-size: 13px;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+  }
+
+  .category-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .category-row-name {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .category-row-count {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
+
+  .category-row .lock-icon {
+    font-size: 12px;
+    color: var(--text-disabled);
+  }
+
+  .btn-outline {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-primary);
+    border-radius: var(--r-sm);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .btn-danger-outline {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    color: var(--danger-fg);
+    border: 1.5px solid var(--danger-fg);
+    border-radius: var(--r-sm);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .sync-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--success-fg);
+  }
+
+  .sync-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success-fg);
+  }
+
+  /* Ingredient library card */
+  .ingredient-lib-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-subtle);
+    padding: var(--sp-md) var(--sp-lg);
+    margin-bottom: var(--sp-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .ingredient-lib-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+  }
+
+  .ingredient-lib-card .usage-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-tint);
+    color: var(--accent-primary);
+  }
+
+  .ingredient-lib-card .lib-name {
+    flex: 1;
+    font-size: 17px;
+    color: var(--text-primary);
+    text-align: left;
+  }
+
+  .ingredient-lib-card .lib-category {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* Category border override — .ingredient-lib-card's border shorthand
+     resets border-left from .cat-strip (same specificity, later source).
+     Compound selector (2 classes) ensures category color wins. */
+  .ingredient-lib-card.cat-strip { border-left: 4px solid var(--cat-produce); }
+  .ingredient-lib-card.cat-strip.dairy { border-left-color: var(--cat-dairy); }
+  .ingredient-lib-card.cat-strip.deli { border-left-color: var(--cat-deli); }
+  .ingredient-lib-card.cat-strip.bread { border-left-color: var(--cat-bread); }
+  .ingredient-lib-card.cat-strip.pantry { border-left-color: var(--cat-pantry); }
+  .ingredient-lib-card.cat-strip.frozen { border-left-color: var(--cat-frozen); }
+
+  /* Review banner */
+  .review-banner {
+    background: var(--surface-warning);
+    border: 1px solid var(--warning-fg);
+    border-radius: var(--r-md);
+    padding: var(--sp-md) var(--sp-lg);
+    margin-bottom: var(--sp-md);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-md);
+  }
+
+  .review-banner .banner-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--warning-fg);
+  }
+
+  .review-banner .banner-btn {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--warning-fg);
+    background: none;
+    border: 1.5px solid var(--warning-fg);
+    border-radius: var(--r-sm);
+    padding: 4px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Celebration banner */
+  .celebration-banner {
+    background: var(--surface-success);
+    border: 1px solid var(--success-fg);
+    border-radius: var(--r-md);
+    padding: var(--sp-md) var(--sp-lg);
+    text-align: center;
+    margin: var(--sp-md) var(--sp-lg);
+  }
+
+  .celebration-banner .banner-emoji { font-size: 24px; }
+
+  .celebration-banner .banner-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--success-fg);
+  }
+
+  /* Weekly summary card */
+  .weekly-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-subtle);
+    padding: var(--sp-lg);
+    margin-bottom: var(--sp-md);
+    transition: box-shadow 0.2s, transform 0.2s;
+    text-align: center;
+  }
+
+  .weekly-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+  }
+
+  .weekly-card.active {
+    border-left: 4px solid var(--forest-green);
+  }
+
+  .weekly-dots {
+    display: flex;
+    gap: 4px;
+    margin: var(--sp-sm) 0;
+    justify-content: center;
+  }
+
+  .weekly-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .weekly-dot.filled {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+  }
+
+  .weekly-dot.empty {
+    border: 1.5px solid var(--border-default);
+    color: var(--text-disabled);
+  }
+
+  .weekly-snippet {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: var(--sp-sm);
+    padding: var(--sp-sm) 0;
+    border-top: 0.5px solid var(--border-subtle);
+    text-align: center;
+  }
+
+  .weekly-snippet .snippet-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--accent-primary);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .weekly-generate-btn {
+    margin-top: var(--sp-md);
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--accent-tint);
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-secondary);
+    border-radius: var(--r-sm);
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ───────────────────────────────────────────────
+     GLASS EFFECT SIMULATION
+     ─────────────────────────────────────────────── */
+  .glass {
+    background: rgba(255,255,255, 0.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    backdrop-filter: blur(20px) saturate(1.8);
+    border: 0.5px solid rgba(255,255,255, 0.3);
+  }
+
+  [data-theme="dark"] .glass {
+    background: rgba(60,56,48, 0.4);
+    border-color: rgba(255,255,255, 0.08);
+  }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls-bar">
+  <div>
+    <strong style="font-size: 18px; color: var(--text-primary);">forager</strong>
+    <span style="font-size: 14px; color: var(--text-tertiary); margin-left: 8px;">M15 Design System Preview</span>
+  </div>
+  <div class="theme-toggle">
+    <button class="active" onclick="setTheme('light')">Light</button>
+    <button onclick="setTheme('dark')">Dark</button>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 1: COLOR PALETTE
+     ═══════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title">Color Palette</h2>
+
+  <h3 class="section-subtitle">Brand Colors</h3>
+  <div class="color-grid">
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--forest-green);"></div>
+      <div class="swatch-info"><div class="swatch-name">Forest Green</div><div class="swatch-hex">Primary Accent</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--leaf-green);"></div>
+      <div class="swatch-info"><div class="swatch-name">Leaf Green</div><div class="swatch-hex">Secondary</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--spring-green);"></div>
+      <div class="swatch-info"><div class="swatch-name">Spring Green</div><div class="swatch-hex">Icons, Decorative</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--accent-tint);"></div>
+      <div class="swatch-info"><div class="swatch-name">Mint Tint</div><div class="swatch-hex">Accent Tint</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--bark);"></div>
+      <div class="swatch-info"><div class="swatch-name">Bark</div><div class="swatch-hex">Primary Text</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--stone);"></div>
+      <div class="swatch-info"><div class="swatch-name">Stone</div><div class="swatch-hex">Tertiary Text</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--cream);"></div>
+      <div class="swatch-info"><div class="swatch-name">Cream</div><div class="swatch-hex">Primary BG</div></div>
+    </div>
+    <div class="color-swatch">
+      <div class="swatch-preview" style="background: var(--canvas);"></div>
+      <div class="swatch-info"><div class="swatch-name">Canvas</div><div class="swatch-hex">Full-screen Base</div></div>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">Category Colors</h3>
+  <div class="color-grid">
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-produce);"></div><div class="swatch-info"><div class="swatch-name">Produce</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-dairy);"></div><div class="swatch-info"><div class="swatch-name">Dairy & Fridge</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-deli);"></div><div class="swatch-info"><div class="swatch-name">Deli & Meat</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-bread);"></div><div class="swatch-info"><div class="swatch-name">Bread & Bakery</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-pantry);"></div><div class="swatch-info"><div class="swatch-name">Pantry & Canned</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-frozen);"></div><div class="swatch-info"><div class="swatch-name">Frozen</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-beverages);"></div><div class="swatch-info"><div class="swatch-name">Beverages</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-snacks);"></div><div class="swatch-info"><div class="swatch-name">Snacks & Other</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-seafood);"></div><div class="swatch-info"><div class="swatch-name">Seafood</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-household);"></div><div class="swatch-info"><div class="swatch-name">Household</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--cat-uncategorized);"></div><div class="swatch-info"><div class="swatch-name">Uncategorized</div></div></div>
+  </div>
+
+  <h3 class="section-subtitle">Status Colors</h3>
+  <div class="color-grid">
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--success-fg);"></div><div class="swatch-info"><div class="swatch-name">Success</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--warning-fg);"></div><div class="swatch-info"><div class="swatch-name">Warning (AA fix)</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--danger-fg);"></div><div class="swatch-info"><div class="swatch-name">Danger</div></div></div>
+    <div class="color-swatch"><div class="swatch-preview" style="background: var(--info-fg);"></div><div class="swatch-info"><div class="swatch-name">Info</div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2: TYPOGRAPHY
+     ═══════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title">Typography</h2>
+  <p style="color: var(--text-secondary); margin-bottom: var(--sp-xl); font-size: 15px;">
+    One font family. SF Pro Rounded for titles and chrome, SF Pro for body text. Quantities use tabular-nums for column alignment.
+  </p>
+
+  <!-- Titles & Chrome -->
+  <h3 class="section-subtitle" style="margin-top: var(--sp-xl);">Titles &amp; Chrome &mdash; SF Pro Rounded</h3>
+  <p style="color: var(--text-tertiary); font-size: 13px; margin-bottom: var(--sp-md);">Screen titles, section headers, card titles, buttons, navigation, labels, badges</p>
+  <div class="type-sample">
+    <span class="font-rounded" style="font-size: 34px; font-weight: 700;">Grocery Lists</span>
+    <span class="label">Large Title &middot; Bold &middot; 34pt</span>
+  </div>
+  <div class="type-sample">
+    <span class="font-rounded" style="font-size: 28px; font-weight: 700;">Honey Garlic Salmon</span>
+    <span class="label">Detail Title &middot; Bold &middot; 28pt</span>
+  </div>
+  <div class="type-sample">
+    <span class="font-rounded" style="font-size: 20px; font-weight: 600;">Chicken Parmesan with Roasted Vegetables</span>
+    <span class="label">Card Title / Section &middot; Semibold &middot; 20pt</span>
+  </div>
+  <div class="type-sample">
+    <span class="font-rounded" style="font-size: 12px; font-weight: 600; color: var(--text-tertiary);">PANTRY &middot; 8 ITEMS</span>
+    <span class="label">Caption &middot; Semibold &middot; 12pt</span>
+  </div>
+
+  <!-- Body Text -->
+  <h3 class="section-subtitle" style="margin-top: var(--sp-xxl);">Body Text &mdash; SF Pro</h3>
+  <p style="color: var(--text-tertiary); font-size: 13px; margin-bottom: var(--sp-md);">Content text, list items, instructions, metadata. Inherits from system font.</p>
+  <div class="type-sample">
+    <span style="font-size: 17px;">Whole milk, 2 cups</span>
+    <span class="label">Body &middot; Regular &middot; 17pt</span>
+  </div>
+  <div class="type-sample">
+    <span style="font-size: 17px; line-height: 1.6;">Preheat oven to 400&deg;F. Season the salmon fillets with salt, pepper, and a generous drizzle of olive oil.</span>
+    <span class="label">Instructions &middot; Regular &middot; 17pt</span>
+  </div>
+  <div class="type-sample">
+    <span style="font-size: 15px; color: var(--text-secondary);">Added 3 days ago</span>
+    <span class="label">Subheadline &middot; Regular &middot; 15pt</span>
+  </div>
+
+  <!-- Tabular Digits (not a separate font — just a numeric variant) -->
+  <div class="type-sample">
+    <span style="font-size: 15px; font-variant-numeric: tabular-nums; color: var(--text-secondary);">2 &frac12; cups &bull; 14.5 oz &bull; 3 tbsp</span>
+    <span class="label">Quantities &middot; tabular-nums &middot; 15pt</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 3: BUTTONS & COMPONENTS
+     ═══════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title">Buttons & Components</h2>
+
+  <div style="display: flex; gap: var(--sp-lg); flex-wrap: wrap; margin-bottom: var(--sp-xl);">
+    <div style="width: 300px;">
+      <h3 class="section-subtitle">Primary</h3>
+      <button class="btn-primary">Add to Grocery List</button>
+    </div>
+    <div style="width: 300px;">
+      <h3 class="section-subtitle">Secondary</h3>
+      <button class="btn-secondary">Generate from Staples</button>
+    </div>
+    <div style="width: 300px;">
+      <h3 class="section-subtitle">Disabled</h3>
+      <button class="btn-primary" style="background: var(--btn-disabled-bg); cursor: not-allowed;">Save Recipe</button>
+    </div>
+  </div>
+
+  <h3 class="section-subtitle">Filter Pills</h3>
+  <div class="filter-pills" style="margin-bottom: var(--sp-xl);">
+    <div class="filter-pill active">All</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-produce);"></span>Produce</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-dairy);"></span>Dairy</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-deli);"></span>Meat</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-bread);"></span>Bakery</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-pantry);"></span>Pantry</div>
+    <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-frozen);"></span>Frozen</div>
+  </div>
+
+  <h3 class="section-subtitle">Scale Selector</h3>
+  <div class="scale-pills" style="margin-bottom: var(--sp-xl);">
+    <button class="scale-pill">½x</button>
+    <button class="scale-pill active">1x</button>
+    <button class="scale-pill">1.5x</button>
+    <button class="scale-pill">2x</button>
+    <button class="scale-pill">2.5x</button>
+    <button class="scale-pill">3x</button>
+    <button class="scale-pill custom">⚙</button>
+  </div>
+
+  <h3 class="section-subtitle">Review Banner</h3>
+  <div class="review-banner" style="max-width: 393px;">
+    <span class="banner-text">3 ingredients need review</span>
+    <button class="banner-btn">Review Now</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 4: SCREEN MOCKUPS
+     ═══════════════════════════════════════════════ -->
+<div class="section">
+  <h2 class="section-title">Screen Mockups</h2>
+
+  <!-- GROCERY LISTS OVERVIEW -->
+  <h3 class="section-subtitle" style="margin-top: 40px;">Grocery Lists — Overview</h3>
+  <div class="mockup-row">
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <h1>Lists</h1>
+            <button class="nav-add-btn">+</button>
+          </div>
+          <div class="content-area">
+            <!-- Active list card -->
+            <div class="list-card">
+              <div class="list-card-body">
+                <div class="list-info">
+                  <div class="list-name">This Week</div>
+                  <div class="list-meta">15 items &bull; 5 checked</div>
+                </div>
+                <div class="progress-zone">
+                  <div class="progress-ring-container">
+                    <svg viewBox="0 0 56 56">
+                      <circle class="progress-ring-bg" cx="28" cy="28" r="23"/>
+                      <circle class="progress-ring-fill" cx="28" cy="28" r="23" stroke-dasharray="144.51" stroke-dashoffset="84"/>
+                    </svg>
+                    <span class="progress-ring-text">42%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="list-card-divider"></div>
+              <div class="category-chips">
+                <span class="cat-chip produce">Produce 4</span>
+                <span class="cat-chip dairy">Dairy 3</span>
+                <span class="cat-chip deli">Deli 2</span>
+                <span class="cat-chip pantry">Pantry 3</span>
+                <span class="cat-chip frozen">Frozen 2</span>
+                <span class="cat-chip snacks">Snacks 1</span>
+              </div>
+            </div>
+
+            <!-- Completed list -->
+            <div class="list-card" style="opacity: 0.6;">
+              <div class="list-card-body">
+                <div class="list-info">
+                  <div class="list-name">Last Week</div>
+                  <div class="list-meta">8 items &bull; All done</div>
+                </div>
+                <div class="progress-zone">
+                  <div class="progress-ring-container">
+                    <svg viewBox="0 0 56 56">
+                      <circle class="progress-ring-bg" cx="28" cy="28" r="23"/>
+                      <circle class="progress-ring-fill" cx="28" cy="28" r="23" stroke-dasharray="144.51" stroke-dashoffset="0" style="stroke: var(--spring-green);"/>
+                    </svg>
+                    <span class="progress-ring-text" style="font-size: 12px;">✓</span>
+                  </div>
+                </div>
+              </div>
+              <div class="list-card-divider"></div>
+              <div class="category-chips">
+                <span class="cat-chip produce">Produce 3</span>
+                <span class="cat-chip dairy">Dairy 2</span>
+                <span class="cat-chip pantry">Pantry 3</span>
+              </div>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Grocery Lists Overview</div>
+      <div class="mockup-sublabel">Card layout with progress rings & category pills</div>
+    </div>
+
+    <!-- GROCERY LIST DETAIL -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">‹ Lists</span>
+            <span class="nav-title">This Week</span>
+          </div>
+          <div class="content-area">
+            <!-- Produce section -->
+            <div class="cat-section-header">
+              <span class="cat-name">Produce</span>
+              <span class="cat-right"><span class="cat-count">4</span><span class="chevron">›</span></span>
+            </div>
+            <div style="padding-left: 16px;">
+              <div class="grocery-row">
+                <div class="grocery-checkbox"></div>
+                <div class="item-info">
+                  <div class="item-name">Avocados</div>
+                  <div class="item-qty">3</div>
+                </div>
+              </div>
+              <div class="grocery-row checked">
+                <div class="grocery-checkbox checked"></div>
+                <div class="item-info">
+                  <div class="item-name">Baby Spinach</div>
+                  <div class="item-qty">1 bag</div>
+                </div>
+              </div>
+              <div class="grocery-row">
+                <div class="grocery-checkbox"></div>
+                <div class="item-info">
+                  <div class="item-name">Lemons</div>
+                  <div class="item-qty">2</div>
+                </div>
+              </div>
+              <div class="grocery-row">
+                <div class="grocery-checkbox"></div>
+                <div class="item-info">
+                  <div class="item-name">Garlic</div>
+                  <div class="item-qty">1 head</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dairy section -->
+            <div class="cat-section-header" style="margin-top: var(--sp-md);">
+              <span class="cat-name">Dairy & Fridge</span>
+              <span class="cat-right"><span class="cat-count">3</span><span class="chevron">›</span></span>
+            </div>
+            <div style="padding-left: 16px;">
+              <div class="grocery-row checked">
+                <div class="grocery-checkbox checked"></div>
+                <div class="item-info">
+                  <div class="item-name">Butter</div>
+                  <div class="item-qty">1 stick</div>
+                </div>
+              </div>
+              <div class="grocery-row">
+                <div class="grocery-checkbox"></div>
+                <div class="item-info">
+                  <div class="item-name">Heavy Cream</div>
+                  <div class="item-qty">1 cup</div>
+                </div>
+              </div>
+              <div class="grocery-row checked">
+                <div class="grocery-checkbox checked"></div>
+                <div class="item-info">
+                  <div class="item-name">Parmesan</div>
+                  <div class="item-qty">4 oz</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pantry section -->
+            <div class="cat-section-header" style="margin-top: var(--sp-md);">
+              <span class="cat-name">Pantry</span>
+              <span class="cat-right"><span class="cat-count">3</span><span class="chevron">›</span></span>
+            </div>
+            <div style="padding-left: 16px;">
+              <div class="grocery-row checked">
+                <div class="grocery-checkbox checked"></div>
+                <div class="item-info">
+                  <div class="item-name">Olive Oil</div>
+                  <div class="item-qty">1 bottle</div>
+                </div>
+              </div>
+              <div class="grocery-row checked">
+                <div class="grocery-checkbox checked"></div>
+                <div class="item-info">
+                  <div class="item-name">Pasta</div>
+                  <div class="item-qty">1 lb</div>
+                </div>
+              </div>
+              <div class="grocery-row">
+                <div class="grocery-checkbox"></div>
+                <div class="item-info">
+                  <div class="item-name">Chicken Broth</div>
+                  <div class="item-qty">32 oz</div>
+                </div>
+              </div>
+            </div>
+            <div style="height: 80px;"></div>
+          </div>
+
+          <!-- Bottom progress + quick-add -->
+          <div class="bottom-bar">
+            <div class="quick-add-bar">
+              <input type="text" placeholder="Add item..." disabled>
+              <div class="quick-add-btn">+</div>
+            </div>
+          </div>
+          <div class="progress-bar-bottom">
+            <div class="progress-bar-fill" style="width: 42%;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Grocery List Detail</div>
+      <div class="mockup-sublabel">Category sections, check-off, bottom quick-add</div>
+    </div>
+  </div>
+
+  <!-- RECIPE SCREENS -->
+  <h3 class="section-subtitle" style="margin-top: 48px;">Recipes</h3>
+  <div class="mockup-row">
+    <!-- Recipe List -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <h1>Recipes</h1>
+            <button class="nav-add-btn">+</button>
+          </div>
+          <div class="content-area">
+            <div class="filter-pills" style="margin-bottom: var(--sp-md);">
+              <div class="filter-pill active">All</div>
+              <div class="filter-pill inactive">Favorites</div>
+              <div class="filter-pill inactive">Recent</div>
+            </div>
+
+            <div class="recipe-card">
+              <div class="recipe-card-body">
+                <div class="recipe-title">Honey Garlic Salmon</div>
+                <div class="recipe-meta">4 servings &bull; 3 ingredients</div>
+                <div class="timing-pills">
+                  <span class="timing-pill">🕐 15m prep</span>
+                  <span class="timing-pill">🔥 10m cook</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="recipe-card">
+              <div class="recipe-card-body">
+                <div class="recipe-title">Chicken Parmesan</div>
+                <div class="recipe-meta">6 servings &bull; 8 ingredients</div>
+                <div class="timing-pills">
+                  <span class="timing-pill">🕐 20m prep</span>
+                  <span class="timing-pill">🔥 25m cook</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="recipe-card">
+              <div class="recipe-card-body">
+                <div class="recipe-title">Creamy Tuscan Pasta</div>
+                <div class="recipe-meta">4 servings &bull; 6 ingredients</div>
+                <div class="timing-pills">
+                  <span class="timing-pill">🕐 10m prep</span>
+                  <span class="timing-pill">🔥 15m cook</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="recipe-card">
+              <div class="recipe-card-body">
+                <div class="recipe-title">Thai Basil Stir Fry</div>
+                <div class="recipe-meta">2 servings &bull; 7 ingredients</div>
+                <div class="timing-pills">
+                  <span class="timing-pill">🕐 15m prep</span>
+                  <span class="timing-pill">🔥 8m cook</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Recipe List</div>
+      <div class="mockup-sublabel">Clean cards, left-justified, timing pills, no category bands</div>
+    </div>
+
+    <!-- Recipe Detail -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">‹ Recipes</span>
+            <div class="nav-trailing">
+              <span style="color: var(--accent-primary); font-size: 15px; font-weight: 600;">Edit</span>
+              <span style="color: var(--accent-primary); font-size: 15px;">•••</span>
+            </div>
+          </div>
+          <div class="content-area">
+            <div class="recipe-hero">
+              <div class="hero-title">Honey Garlic Salmon</div>
+              <div class="hero-timing">
+                <span>🕐 15m</span>
+                <span>🔥 10m</span>
+                <span>⏱ 25m total</span>
+              </div>
+            </div>
+
+            <div style="padding: 0 var(--sp-lg);">
+              <div style="display: flex; align-items: baseline; justify-content: space-between;">
+                <div class="recipe-section-header" style="margin-top: 0;">INGREDIENTS</div>
+                <span style="font-size: 13px; color: var(--text-secondary);">4 servings</span>
+              </div>
+              <div class="scale-pills">
+                <button class="scale-pill">½x</button>
+                <button class="scale-pill active">1x</button>
+                <button class="scale-pill">1.5x</button>
+                <button class="scale-pill">2x</button>
+                <button class="scale-pill">2.5x</button>
+                <button class="scale-pill">3x</button>
+                <button class="scale-pill custom">⚙</button>
+              </div>
+
+              <div class="ingredient-row">
+                <div class="ingredient-bullet"></div>
+                <div class="ingredient-qty">4</div>
+                <div class="ingredient-name">salmon fillets</div>
+              </div>
+              <div class="ingredient-row">
+                <div class="ingredient-bullet"></div>
+                <div class="ingredient-qty">3 tbsp</div>
+                <div class="ingredient-name">honey</div>
+              </div>
+              <div class="ingredient-row">
+                <div class="ingredient-bullet"></div>
+                <div class="ingredient-qty">4 cloves</div>
+                <div class="ingredient-name">garlic, minced</div>
+              </div>
+              <div class="ingredient-row">
+                <div class="ingredient-bullet"></div>
+                <div class="ingredient-qty">2 tbsp</div>
+                <div class="ingredient-name">soy sauce</div>
+              </div>
+              <div class="ingredient-row">
+                <div class="ingredient-bullet warning"></div>
+                <div class="ingredient-qty">1 tbsp</div>
+                <div class="ingredient-name">sesame oil</div>
+              </div>
+
+              <div class="recipe-section-header">INSTRUCTIONS</div>
+
+              <div class="instruction-step">
+                <div class="step-number">1</div>
+                <div class="step-text">Preheat oven to 400&deg;F. Pat salmon fillets dry and season with salt and pepper.</div>
+              </div>
+              <div class="instruction-step">
+                <div class="step-number">2</div>
+                <div class="step-text">Mix honey, garlic, soy sauce, and sesame oil in a small bowl.</div>
+              </div>
+              <div class="instruction-step">
+                <div class="step-number">3</div>
+                <div class="step-text">Brush the glaze over each fillet. Bake for 12-15 minutes until fish flakes easily.</div>
+              </div>
+            </div>
+
+            <div style="padding: var(--sp-lg);">
+              <button class="btn-primary">Add to Grocery List</button>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Recipe Detail</div>
+      <div class="mockup-sublabel">Left-justified hero, inline ingredients, scale pills, dynamic CTA</div>
+    </div>
+
+    <!-- CREATE RECIPE -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">&#8249; Recipes</span>
+            <span class="nav-title">New Recipe</span>
+            <div class="nav-trailing">
+              <span style="color: var(--text-disabled); font-size: 15px; font-weight: 600; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;">Save</span>
+            </div>
+          </div>
+          <div class="content-area">
+
+            <!-- Title field — error state -->
+            <div style="padding: var(--sp-lg) 0 0;">
+              <div style="border-bottom: 2px solid var(--danger-fg); padding: var(--sp-sm) 0;">
+                <span style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--text-disabled);">Recipe Name</span>
+              </div>
+              <div style="font-size: 12px; color: var(--danger-fg); margin-top: var(--sp-xs);">Recipe name is required</div>
+            </div>
+
+            <!-- Timing row -->
+            <div style="display: flex; gap: var(--sp-lg); margin-top: var(--sp-lg);">
+              <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: var(--sp-xs);">PREP</div>
+                <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-disabled);">min</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: var(--sp-xs);">COOK</div>
+                <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-disabled);">min</div>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: var(--sp-xs);">SERVINGS</div>
+                <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-disabled);">#</div>
+              </div>
+            </div>
+
+            <!-- INGREDIENTS section -->
+            <div class="recipe-section-header" style="margin-top: var(--sp-lg); color: var(--text-tertiary);">INGREDIENTS</div>
+
+            <!-- Ingredient row 1: parsed OK -->
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0;">
+              <span style="font-size: 15px; color: var(--text-primary);">2 cups all-purpose flour</span>
+              <span style="color: var(--spring-green); font-size: 15px; font-weight: 700; flex-shrink: 0; margin-left: var(--sp-sm);">&#10003;</span>
+            </div>
+
+            <!-- Ingredient row 2: low confidence -->
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0;">
+              <span style="font-size: 15px; color: var(--text-primary);">a handful of fresh herbs</span>
+              <span style="color: var(--warning-fg); font-size: 10px; flex-shrink: 0; margin-left: var(--sp-sm);">&#9679;</span>
+            </div>
+
+            <!-- Ingredient row 3: empty placeholder -->
+            <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0;">
+              <span style="font-size: 15px; color: var(--text-disabled);">Add ingredient...</span>
+            </div>
+
+            <!-- Green + button -->
+            <div style="margin-top: var(--sp-md);">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--spring-green); color: var(--btn-primary-text); font-size: 20px; font-weight: 400; display: flex; align-items: center; justify-content: center; line-height: 1;">+</div>
+            </div>
+
+            <!-- INSTRUCTIONS section -->
+            <div class="recipe-section-header" style="color: var(--text-tertiary);">INSTRUCTIONS</div>
+
+            <!-- Step 1 -->
+            <div style="display: flex; align-items: first baseline; gap: var(--sp-sm); padding: var(--sp-sm) 0; border-bottom: 1px solid var(--border-default);">
+              <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary); min-width: 20px; font-variant-numeric: tabular-nums; line-height: 1.6; flex-shrink: 0;">1</span>
+              <div style="flex: 1; font-size: 15px; line-height: 1.6; color: var(--text-primary);">Preheat oven to 350&deg;F</div>
+            </div>
+
+            <!-- Step 2: empty placeholder -->
+            <div style="display: flex; align-items: first baseline; gap: var(--sp-sm); padding: var(--sp-sm) 0; border-bottom: 1px solid var(--border-default);">
+              <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary); min-width: 20px; font-variant-numeric: tabular-nums; line-height: 1.6; flex-shrink: 0;">2</span>
+              <div style="flex: 1; font-size: 15px; line-height: 1.6; color: var(--text-disabled);">Add step...</div>
+            </div>
+
+            <!-- Green + button -->
+            <div style="margin-top: var(--sp-md);">
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--spring-green); color: var(--btn-primary-text); font-size: 20px; font-weight: 400; display: flex; align-items: center; justify-content: center; line-height: 1;">+</div>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Create Recipe</div>
+      <div class="mockup-sublabel">Inline fields, parse confidence, validation, green add buttons</div>
+    </div>
+  </div>
+
+  <!-- MEAL PLANS -->
+  <h3 class="section-subtitle" style="margin-top: 48px;">Meal Plans</h3>
+  <div class="mockup-row">
+    <!-- Meal Plans Overview -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <h1>Meal Plans</h1>
+            <button class="nav-add-btn">+</button>
+          </div>
+          <div class="content-area">
+            <div class="weekly-card active">
+              <div class="font-rounded" style="font-size: 20px; font-weight: 600; color: var(--text-primary);">Feb 10 – Feb 16</div>
+              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">This Week <span style="font-size: 10px; font-weight: 700; color: var(--accent-primary); background: var(--accent-tint); padding: 1px 6px; border-radius: 4px; margin-left: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Active</span></div>
+              <div class="weekly-dots">
+                <div class="weekly-dot filled">M</div>
+                <div class="weekly-dot filled">T</div>
+                <div class="weekly-dot filled">W</div>
+                <div class="weekly-dot empty">T</div>
+                <div class="weekly-dot filled">F</div>
+                <div class="weekly-dot empty">S</div>
+                <div class="weekly-dot filled">S</div>
+              </div>
+              <div class="weekly-snippet">
+                <span class="snippet-label">Tonight</span>
+                Honey Garlic Salmon · 4 servings
+              </div>
+              <button class="weekly-generate-btn">Generate Grocery List</button>
+            </div>
+
+            <div class="weekly-card" style="opacity: 0.6;">
+              <div class="font-rounded" style="font-size: 20px; font-weight: 600; color: var(--text-primary);">Feb 3 – Feb 9</div>
+              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">Last Week</div>
+              <div class="weekly-dots">
+                <div class="weekly-dot filled">M</div>
+                <div class="weekly-dot filled">T</div>
+                <div class="weekly-dot filled">W</div>
+                <div class="weekly-dot filled">T</div>
+                <div class="weekly-dot filled">F</div>
+                <div class="weekly-dot filled">S</div>
+                <div class="weekly-dot filled">S</div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Meal Plans Overview</div>
+      <div class="mockup-sublabel">Day initial dots, tonight snippet, generate button</div>
+    </div>
+
+    <!-- Meal Plan Detail -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">‹ Meals</span>
+            <span class="nav-title">This Week</span>
+          </div>
+          <div style="padding: 0 var(--sp-lg);">
+            <div class="day-strip">
+              <div class="day-chip">
+                <span class="day-label">Mon</span>
+                <span class="day-num">10</span>
+                <div class="day-dot filled"></div>
+              </div>
+              <div class="day-chip">
+                <span class="day-label">Tue</span>
+                <span class="day-num">11</span>
+                <div class="day-dot filled"></div>
+              </div>
+              <div class="day-chip today">
+                <span class="day-label">Wed</span>
+                <span class="day-num">12</span>
+                <div class="day-dot filled"></div>
+              </div>
+              <div class="day-chip">
+                <span class="day-label">Thu</span>
+                <span class="day-num">13</span>
+                <div class="day-dot empty"></div>
+              </div>
+              <div class="day-chip">
+                <span class="day-label">Fri</span>
+                <span class="day-num">14</span>
+                <div class="day-dot filled"></div>
+              </div>
+              <div class="day-chip">
+                <span class="day-label">Sat</span>
+                <span class="day-num">15</span>
+                <div class="day-dot empty"></div>
+              </div>
+              <div class="day-chip">
+                <span class="day-label">Sun</span>
+                <span class="day-num">16</span>
+                <div class="day-dot filled"></div>
+              </div>
+            </div>
+          </div>
+          <div class="content-area">
+            <!-- Today section -->
+            <div style="padding-top: var(--sp-sm);">
+              <div style="text-align: center; margin-bottom: var(--sp-sm);">
+                <span class="font-rounded" style="font-size: 17px; font-weight: 700; color: var(--text-primary);">Wednesday 12</span>
+                <span class="font-rounded" style="font-size: 12px; font-weight: 700; color: var(--accent-primary); background: var(--accent-tint); padding: 2px 8px; border-radius: 4px; margin-left: 6px;">TODAY</span>
+              </div>
+              <div class="meal-card">
+                <div class="meal-card-inner">
+                  <div class="meal-info">
+                    <div class="meal-name">Honey Garlic Salmon</div>
+                    <div class="meal-servings">4 servings</div>
+                    <div class="meal-actions">
+                      <button class="meal-action-btn done-toggle checked">✓ Done</button>
+                      <button class="meal-action-btn swap-btn">↻ Swap</button>
+                      <button class="meal-action-btn remove-btn">Remove</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thursday -->
+            <div style="padding-top: var(--sp-md);">
+              <div style="text-align: center; margin-bottom: var(--sp-sm);">
+                <span class="font-rounded" style="font-size: 17px; font-weight: 700; color: var(--text-primary);">Thursday 13</span>
+              </div>
+              <div class="unplanned-day-slot">
+                <div class="recipe-picker">
+                  <span>Choose Recipe</span>
+                  <span class="chevron">›</span>
+                </div>
+                <div class="quick-select-pills">
+                  <button class="quick-pill">Takeout</button>
+                  <button class="quick-pill">Dining Out</button>
+                  <button class="quick-pill">Leftovers</button>
+                  <button class="quick-pill">No Meal</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Friday -->
+            <div style="padding-top: var(--sp-md);">
+              <div style="text-align: center; margin-bottom: var(--sp-sm);">
+                <span class="font-rounded" style="font-size: 17px; font-weight: 700; color: var(--text-primary);">Friday 14</span>
+              </div>
+              <div class="meal-card">
+                <div class="meal-card-inner">
+                  <div class="meal-info">
+                    <div class="meal-name">Chicken Parmesan</div>
+                    <div class="meal-servings">6 servings</div>
+                    <div class="meal-actions">
+                      <button class="meal-action-btn done-toggle">○ Done</button>
+                      <button class="meal-action-btn swap-btn">↻ Swap</button>
+                      <button class="meal-action-btn remove-btn">Remove</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height: 80px;"></div>
+          </div>
+
+          <div class="bottom-bar">
+            <button class="btn-primary">Add to Grocery List</button>
+            <div style="height: 8px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Meal Plan Detail</div>
+      <div class="mockup-sublabel">Centered days, prominent action buttons (Done toggle, Swap, Remove), recipe picker, quick-select pills</div>
+    </div>
+  </div>
+
+  <!-- INGREDIENTS -->
+  <h3 class="section-subtitle" style="margin-top: 48px;">Ingredients Library</h3>
+  <div class="mockup-row">
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <h1>Ingredients</h1>
+            <button class="nav-add-btn">+</button>
+          </div>
+          <div class="content-area">
+            <div class="filter-pills" style="margin-bottom: var(--sp-md);">
+              <div class="filter-pill active">All</div>
+              <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-produce);"></span>Produce</div>
+              <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-dairy);"></span>Dairy</div>
+              <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-deli);"></span>Meat</div>
+              <div class="filter-pill inactive"><span class="cat-dot" style="background: var(--cat-pantry);"></span>Pantry</div>
+            </div>
+
+            <div class="review-banner">
+              <span class="banner-text">3 ingredients need review</span>
+              <button class="banner-btn">Review Now</button>
+            </div>
+
+            <!-- Produce section -->
+            <div class="cat-section-header">
+              <span class="cat-name">Produce</span>
+              <span class="cat-right"><span class="cat-count">5</span></span>
+            </div>
+
+            <div class="ingredient-lib-card cat-strip">
+              <span class="lib-name">Avocados</span>
+              <span class="usage-badge">4 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip">
+              <span class="lib-name">Baby Spinach</span>
+              <span class="usage-badge">2 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip">
+              <span class="lib-name">Garlic</span>
+              <span class="usage-badge">8 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip">
+              <span class="lib-name">Lemons</span>
+              <span class="usage-badge">3 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip">
+              <span class="lib-name">Red Onions</span>
+              <span class="usage-badge">5 uses</span>
+            </div>
+
+            <!-- Dairy section -->
+            <div class="cat-section-header" style="margin-top: var(--sp-md);">
+              <span class="cat-name">Dairy & Fridge</span>
+              <span class="cat-right"><span class="cat-count">3</span></span>
+            </div>
+
+            <div class="ingredient-lib-card cat-strip dairy">
+              <span class="lib-name">Butter</span>
+              <span class="usage-badge">6 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip dairy">
+              <span class="lib-name">Heavy Cream</span>
+              <span class="usage-badge">3 uses</span>
+            </div>
+            <div class="ingredient-lib-card cat-strip dairy">
+              <span class="lib-name">Parmesan</span>
+              <span class="usage-badge">4 uses</span>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Ingredients Library</div>
+      <div class="mockup-sublabel">Category pills, review banner, usage badges</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <h3 class="section-subtitle" style="margin-top: 48px;">Settings</h3>
+  <div class="mockup-row">
+
+    <!-- Settings Main -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <h1>Settings</h1>
+          </div>
+          <div class="content-area">
+
+            <!-- Household -->
+            <div class="settings-section-header">Household</div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row-icon" style="background: var(--accent-tint); color: var(--accent-primary);">🏠</div>
+                <div class="settings-row-label">The Hayn Family</div>
+                <div class="settings-row-value">3 members <span class="chevron">›</span></div>
+              </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="settings-section-header">Organization</div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row-icon" style="background: var(--surface-accent); color: var(--leaf-green);">🏷</div>
+                <div class="settings-row-label">Categories</div>
+                <div class="settings-row-value">7 <span class="chevron">›</span></div>
+              </div>
+            </div>
+
+            <!-- Meal Planning -->
+            <div class="settings-section-header">Meal Planning</div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row-label">Plan Duration</div>
+                <div class="settings-row-value">
+                  <div class="settings-stepper">
+                    <button class="stepper-btn">−</button>
+                    <div class="stepper-value">7</div>
+                    <button class="stepper-btn">+</button>
+                  </div>
+                  <span style="font-size: 13px; color: var(--text-tertiary);">days</span>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Start Day</div>
+                <div class="settings-row-value">Sunday <span class="chevron">›</span></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Auto-name Plans</div>
+                <div class="settings-toggle on"></div>
+              </div>
+            </div>
+
+            <!-- Display -->
+            <div class="settings-section-header">Display</div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row-label">Show Recipe Sources</div>
+                <div class="settings-toggle on"></div>
+              </div>
+            </div>
+
+            <!-- About -->
+            <div class="settings-section-header">About</div>
+            <div class="settings-group">
+              <div class="settings-row">
+                <div class="settings-row-label">Replay Onboarding</div>
+                <span class="chevron" style="color: var(--text-disabled);">›</span>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Privacy Policy</div>
+                <span style="font-size: 13px; color: var(--text-disabled);">↗</span>
+              </div>
+            </div>
+
+            <div class="settings-footer">Forager v1.0 (10)</div>
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Settings</div>
+      <div class="mockup-sublabel">Grouped form, household, categories, preferences</div>
+    </div>
+
+    <!-- Categories Management -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">‹ Settings</span>
+            <span class="nav-title">Categories</span>
+            <div class="nav-trailing">
+              <span style="color: var(--accent-primary); font-size: 20px; font-weight: 300;">+</span>
+            </div>
+          </div>
+          <div class="content-area">
+
+            <div class="settings-group" style="margin: 0 var(--sp-lg);">
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-produce);"></div>
+                <div class="category-row-name">Produce</div>
+                <span class="category-row-count">24</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-deli);"></div>
+                <div class="category-row-name">Deli & Meat</div>
+                <span class="category-row-count">18</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-dairy);"></div>
+                <div class="category-row-name">Dairy & Fridge</div>
+                <span class="category-row-count">15</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-bread);"></div>
+                <div class="category-row-name">Bread & Frozen</div>
+                <span class="category-row-count">9</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-pantry);"></div>
+                <div class="category-row-name">Boxed & Canned</div>
+                <span class="category-row-count">12</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle">≡</span>
+                <div class="category-dot" style="background: var(--cat-snacks);"></div>
+                <div class="category-row-name">Snacks, Drinks, & Other</div>
+                <span class="category-row-count">7</span>
+              </div>
+              <div class="category-row">
+                <span class="drag-handle" style="visibility: hidden;">≡</span>
+                <div class="category-dot" style="background: var(--cat-uncategorized);"></div>
+                <div class="category-row-name" style="color: var(--text-secondary);">Uncategorized</div>
+                <span class="lock-icon" style="font-size: 12px; color: var(--text-disabled);">🔒</span>
+                <span class="category-row-count">3</span>
+              </div>
+            </div>
+
+            <div style="padding: var(--sp-md) var(--sp-lg); text-align: left;">
+              <span style="font-size: 12px; color: var(--text-tertiary);">Drag to reorder. Swipe left to delete. Categories with assigned ingredients will prompt for reassignment.</span>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Categories</div>
+      <div class="mockup-sublabel">Drag reorder, color dots, add/delete, protected default</div>
+    </div>
+
+    <!-- Household Management -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span style="font-size: 12px;">●●● WiFi 🔋</span>
+          </div>
+          <div class="nav-bar">
+            <span class="nav-back">‹ Settings</span>
+            <span class="nav-title">Household</span>
+            <div class="nav-trailing">
+              <span style="color: var(--accent-primary); font-size: 15px; font-weight: 600;">Edit</span>
+            </div>
+          </div>
+          <div class="content-area">
+            <div style="padding: 0 var(--sp-lg) var(--sp-sm); text-align: left;">
+              <div style="display: flex; align-items: baseline; gap: var(--sp-sm);">
+                <h2 style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 28px; font-weight: 700; color: var(--text-primary);">The Hayn Family</h2>
+                <span style="color: var(--accent-primary); font-size: 15px; cursor: pointer;">✎</span>
+              </div>
+              <div class="sync-indicator" style="margin-top: var(--sp-xs);">
+                <span class="sync-dot"></span>
+                <span>Synced just now</span>
+              </div>
+            </div>
+
+            <!-- Members -->
+            <div class="settings-section-header">Members</div>
+            <div class="settings-group" style="margin: 0 var(--sp-lg);">
+              <div class="member-row">
+                <div class="member-avatar">RH</div>
+                <div class="member-info">
+                  <div class="member-name">Rich Hayn</div>
+                  <div class="member-role">Owner</div>
+                </div>
+                <span class="role-badge owner">Owner</span>
+              </div>
+              <div class="member-row">
+                <div class="member-avatar">MH</div>
+                <div class="member-info">
+                  <div class="member-name">Mary Hayn</div>
+                  <div class="member-role">Joined Oct 15</div>
+                </div>
+                <span class="role-badge member">Member</span>
+              </div>
+              <div class="member-row">
+                <div class="member-avatar">LH</div>
+                <div class="member-info">
+                  <div class="member-name">Layla Hayn</div>
+                  <div class="member-role">Joined Nov 2</div>
+                </div>
+                <span class="role-badge member">Member</span>
+              </div>
+            </div>
+
+            <div style="padding: var(--sp-md) var(--sp-lg);">
+              <button class="btn-outline">Invite Member</button>
+            </div>
+
+            <!-- Info -->
+            <div class="settings-section-header">Sharing</div>
+            <div class="settings-group" style="margin: 0 var(--sp-lg);">
+              <div class="settings-row">
+                <div class="settings-row-label">Shared Recipes</div>
+                <div class="settings-row-value">24</div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Shared Lists</div>
+                <div class="settings-row-value">3</div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Shared Meal Plans</div>
+                <div class="settings-row-value">2</div>
+              </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div style="padding: var(--sp-xl) var(--sp-lg) var(--sp-md);">
+              <button class="btn-danger-outline">Delete Household</button>
+            </div>
+            <div style="padding: 0 var(--sp-lg); text-align: left;">
+              <span style="font-size: 12px; color: var(--text-tertiary);">Deleting removes all members' access. Your personal data can be migrated back.</span>
+            </div>
+
+            <div style="height: 20px;"></div>
+          </div>
+          <div class="tab-bar glass">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+              <span>Lists</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+              <span>Recipes</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+              <span>Meals</span>
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+              <span>Settings</span>
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+              <span>Search</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mockup-label">Household</div>
+      <div class="mockup-sublabel">Members, sync status, invite, sharing stats, danger zone</div>
+    </div>
+  </div>
+
+</div><!-- /section -->
+
+<!-- ====================================================================== -->
+<!-- PHASE 3: STATE SCREENS                                                 -->
+<!-- ====================================================================== -->
+<div class="section">
+  <h2 class="section-title">State Screens</h2>
+
+<!-- EMPTY STATES -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Empty States</h3>
+<div class="mockup-row">
+
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <h1>Recipes</h1>
+          <button class="nav-add-btn">+</button>
+        </div>
+        <div class="content-area">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; padding-top: 40%;">
+            <div style="width: 72px; height: 72px; border-radius: 50%; background: var(--surface-accent); display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-xl);">
+              <span style="font-size: 36px; line-height: 1;">&#128214;</span>
+            </div>
+            <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--sp-sm);">No recipes yet</div>
+            <div style="font-size: 15px; color: var(--text-secondary); max-width: 280px; text-align: center; line-height: 1.4; margin-bottom: var(--sp-xl);">Create your first recipe to start building your collection</div>
+            <button class="btn-primary" style="width: auto; padding: 14px 32px;">Create Recipe</button>
+          </div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Empty State &mdash; Recipes</div>
+    <div class="mockup-sublabel">Icon, title, subtitle, primary CTA</div>
+  </div>
+
+</div>
+
+<!-- Empty State Variants Annotation Block -->
+<div style="max-width: 600px; margin: var(--sp-xl) auto; padding: var(--sp-lg); background: var(--surface-secondary); border-radius: var(--r-md); font-size: 14px; color: var(--text-secondary);">
+  <strong style="color: var(--text-primary); display: block; margin-bottom: var(--sp-md);">Empty State Variants</strong>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <thead>
+      <tr style="border-bottom: 1px solid var(--border-subtle); text-align: left;">
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Screen</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Icon</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Title</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Subtitle</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">CTA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">Grocery Lists</td>
+        <td style="padding: 8px;">&#128722; <code style="font-size: 11px; color: var(--text-tertiary);">cart</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Your list is empty</td>
+        <td style="padding: 8px;">Add items to get started</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Add Item</span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">Meal Plans</td>
+        <td style="padding: 8px;">&#128197; <code style="font-size: 11px; color: var(--text-tertiary);">calendar.badge.plus</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Plan Your Week's Meals</td>
+        <td style="padding: 8px;">Organize your recipes into a weekly meal plan</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Create Your First Plan</span></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">Ingredients</td>
+        <td style="padding: 8px;">&#127807; <code style="font-size: 11px; color: var(--text-tertiary);">leaf</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">No ingredients</td>
+        <td style="padding: 8px;">Ingredients appear here as you add recipes</td>
+        <td style="padding: 8px; color: var(--text-disabled); font-style: italic;">No CTA</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- SEARCH -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Search</h3>
+<div class="mockup-row">
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <h1>Search</h1>
+        </div>
+        <div class="content-area">
+
+          <!-- Search bar -->
+          <div style="display: flex; align-items: center; gap: var(--sp-sm); background: var(--bg-secondary); border-radius: var(--r-sm); padding: 10px var(--sp-md); margin-bottom: var(--sp-lg);">
+            <span style="font-size: 15px; color: var(--text-disabled); flex-shrink: 0;">&#128269;</span>
+            <span style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;">garlic</span>
+          </div>
+
+          <!-- Recent Searches -->
+          <div style="margin-bottom: var(--sp-lg);">
+            <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: 0 0 var(--sp-sm); text-align: left;">Recent Searches</div>
+            <div style="display: flex; gap: var(--sp-sm); flex-wrap: wrap;">
+              <span style="padding: 6px 14px; border-radius: 999px; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--bg-secondary); color: var(--text-secondary);">chicken</span>
+              <span style="padding: 6px 14px; border-radius: 999px; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--bg-secondary); color: var(--text-secondary);">pasta sauce</span>
+              <span style="padding: 6px 14px; border-radius: 999px; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--bg-secondary); color: var(--text-secondary);">avocado</span>
+              <span style="padding: 6px 14px; border-radius: 999px; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 13px; font-weight: 600; white-space: nowrap; background: var(--bg-secondary); color: var(--text-secondary);">meal prep</span>
+            </div>
+          </div>
+
+          <!-- Recipes section -->
+          <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: var(--sp-sm) 0 var(--sp-xs); text-align: left;">Recipes</div>
+          <div style="background: var(--surface-primary); border-radius: var(--r-md); border: 1px solid var(--border-subtle); margin-bottom: var(--sp-lg);">
+            <div style="display: flex; align-items: center; padding: var(--sp-md) var(--sp-lg); border-bottom: 0.5px solid var(--border-subtle);">
+              <div style="flex: 1; text-align: left;">
+                <div style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;">Honey <strong style="color: var(--accent-primary); font-weight: 600;">Garlic</strong> Salmon</div>
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-top: 2px;">25 min &middot; 4 servings</div>
+              </div>
+              <span style="color: var(--text-disabled); font-size: 17px; flex-shrink: 0; margin-left: var(--sp-sm);">&#8250;</span>
+            </div>
+            <div style="display: flex; align-items: center; padding: var(--sp-md) var(--sp-lg);">
+              <div style="flex: 1; text-align: left;">
+                <div style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;">Chicken Alfredo Pasta</div>
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-top: 2px;">35 min &middot; 6 servings</div>
+              </div>
+              <span style="color: var(--text-disabled); font-size: 17px; flex-shrink: 0; margin-left: var(--sp-sm);">&#8250;</span>
+            </div>
+          </div>
+
+          <!-- Ingredients section -->
+          <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: var(--sp-sm) 0 var(--sp-xs); text-align: left;">Ingredients</div>
+          <div style="background: var(--surface-primary); border-radius: var(--r-md); border: 1px solid var(--border-subtle); margin-bottom: var(--sp-lg);">
+            <div style="display: flex; align-items: center; padding: var(--sp-md) var(--sp-lg); border-bottom: 0.5px solid var(--border-subtle);">
+              <div style="flex: 1; text-align: left;">
+                <div style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;"><strong style="color: var(--accent-primary); font-weight: 600;">Garlic</strong></div>
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-top: 2px;">Produce &middot; 8 uses</div>
+              </div>
+              <span style="color: var(--text-disabled); font-size: 17px; flex-shrink: 0; margin-left: var(--sp-sm);">&#8250;</span>
+            </div>
+            <div style="display: flex; align-items: center; padding: var(--sp-md) var(--sp-lg);">
+              <div style="flex: 1; text-align: left;">
+                <div style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;"><strong style="color: var(--accent-primary); font-weight: 600;">Garlic</strong> Powder</div>
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-top: 2px;">Pantry &middot; 3 uses</div>
+              </div>
+              <span style="color: var(--text-disabled); font-size: 17px; flex-shrink: 0; margin-left: var(--sp-sm);">&#8250;</span>
+            </div>
+          </div>
+
+          <!-- Grocery Items section -->
+          <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: var(--sp-sm) 0 var(--sp-xs); text-align: left;">Grocery Items</div>
+          <div style="background: var(--surface-primary); border-radius: var(--r-md); border: 1px solid var(--border-subtle); margin-bottom: var(--sp-lg);">
+            <div style="display: flex; align-items: center; padding: var(--sp-md) var(--sp-lg);">
+              <div style="flex: 1; text-align: left;">
+                <div style="font-size: 17px; color: var(--text-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;"><strong style="color: var(--accent-primary); font-weight: 600;">Garlic</strong>, minced</div>
+                <div style="font-size: 13px; color: var(--text-tertiary); margin-top: 2px;">This Week &middot; Produce</div>
+              </div>
+              <span style="color: var(--text-disabled); font-size: 17px; flex-shrink: 0; margin-left: var(--sp-sm);">&#8250;</span>
+            </div>
+          </div>
+
+          <div style="height: 20px;"></div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Search</div>
+    <div class="mockup-sublabel">Search bar, recent searches, mixed results with highlighted matches</div>
+  </div>
+</div>
+
+<!-- No Results annotation -->
+<div style="max-width: 400px; margin: var(--sp-xl) auto 0; background: var(--surface-primary); border-radius: var(--r-md); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-1); overflow: hidden;">
+  <div style="padding: var(--sp-sm) var(--sp-lg); background: var(--bg-secondary); font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary);">Variant: No Results</div>
+  <div style="text-align: center; padding: 40px var(--sp-xl);">
+    <div style="font-size: 48px; margin-bottom: var(--sp-md); opacity: 0.6; color: var(--accent-tertiary);">&#128269;</div>
+    <h3 style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 600; color: var(--text-primary); margin-bottom: var(--sp-sm);">No results for &ldquo;xyz&rdquo;</h3>
+    <p style="font-size: 15px; color: var(--text-secondary); margin: 0;">Try a different search term</p>
+  </div>
+</div>
+
+
+<!-- CELEBRATION STATE -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Celebration State</h3>
+<div class="mockup-row">
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">&#8249; Lists</span>
+          <span class="nav-title">This Week</span>
+        </div>
+        <div class="content-area">
+          <!-- Progress bar at top: 100% -->
+          <div style="margin-bottom: var(--sp-sm);">
+            <div style="height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden;">
+              <div style="height: 100%; width: 100%; background: var(--spring-green); border-radius: 3px;"></div>
+            </div>
+            <div style="text-align: center; font-size: 13px; color: var(--text-tertiary); margin-top: var(--sp-xs);">12 of 12 items</div>
+          </div>
+
+          <!-- Celebration banner -->
+          <div style="background: var(--surface-success); border-radius: var(--r-md); padding: var(--sp-md) var(--sp-lg); margin-bottom: var(--sp-lg); text-align: center;">
+            <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary);">&#10004;&#65039; All done!</span>
+          </div>
+
+          <!-- Filter pills row -->
+          <div class="filter-pills" style="margin-bottom: var(--sp-md);">
+            <div class="filter-pill active">All &#10003;</div>
+            <div class="filter-pill inactive">Produce</div>
+            <div class="filter-pill inactive">Dairy</div>
+            <div class="filter-pill inactive">Pantry</div>
+          </div>
+
+          <!-- Seafood section - all checked -->
+          <div class="cat-section-header">
+            <span class="cat-name">Seafood</span>
+            <span class="cat-right"><span class="cat-count">1</span><span class="chevron">&#8250;</span></span>
+          </div>
+          <div style="padding-left: 16px;">
+            <div class="grocery-row checked">
+              <div class="grocery-checkbox checked"></div>
+              <div class="item-info">
+                <div class="item-name">Salmon fillets</div>
+                <div class="item-qty">2</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pantry section - all checked -->
+          <div class="cat-section-header" style="margin-top: var(--sp-md);">
+            <span class="cat-name">Pantry</span>
+            <span class="cat-right"><span class="cat-count">2</span><span class="chevron">&#8250;</span></span>
+          </div>
+          <div style="padding-left: 16px;">
+            <div class="grocery-row checked">
+              <div class="grocery-checkbox checked"></div>
+              <div class="item-info">
+                <div class="item-name">Honey</div>
+                <div class="item-qty">1 jar</div>
+              </div>
+            </div>
+            <div class="grocery-row checked">
+              <div class="grocery-checkbox checked"></div>
+              <div class="item-info">
+                <div class="item-name">Soy sauce</div>
+                <div class="item-qty">2 tbsp</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Produce section - all checked -->
+          <div class="cat-section-header" style="margin-top: var(--sp-md);">
+            <span class="cat-name">Produce</span>
+            <span class="cat-right"><span class="cat-count">1</span><span class="chevron">&#8250;</span></span>
+          </div>
+          <div style="padding-left: 16px;">
+            <div class="grocery-row checked">
+              <div class="grocery-checkbox checked"></div>
+              <div class="item-info">
+                <div class="item-name">Garlic</div>
+                <div class="item-qty">1 head</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height: 80px;"></div>
+        </div>
+
+        <div class="bottom-bar">
+          <div class="quick-add-bar">
+            <input type="text" placeholder="Add item..." disabled>
+            <div class="quick-add-btn">+</div>
+          </div>
+        </div>
+        <div class="progress-bar-bottom">
+          <div class="progress-bar-fill" style="width: 100%; background: var(--spring-green);"></div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Celebration State</div>
+    <div class="mockup-sublabel">100% completion with &ldquo;All done!&rdquo; banner</div>
+  </div>
+</div>
+
+
+<!-- CONFIRMATION DIALOGS -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Confirmation Dialogs</h3>
+<p style="font-size: 14px; color: var(--text-secondary); margin-bottom: var(--sp-lg); max-width: 700px; margin-left: auto; margin-right: auto; text-align: center;">iOS-style alert dialogs shown on a semi-transparent backdrop overlay. Displayed inline here for reference.</p>
+<div style="display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin: var(--sp-xl) auto; max-width: 700px;">
+  <!-- Dialog 1: Remove Meal Confirmation -->
+  <div style="background: var(--surface-primary); border-radius: var(--r-lg); box-shadow: var(--shadow-3); width: 270px; overflow: hidden; text-align: center;">
+    <div style="padding: var(--sp-lg) var(--sp-lg) var(--sp-md);">
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--sp-sm); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;">Remove Honey Garlic Salmon?</div>
+      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">3 ingredients from this recipe are on your grocery list.</div>
+    </div>
+    <div style="border-top: 1px solid var(--border-subtle); display: flex;">
+      <div style="flex: 1; padding: 11px 0; font-size: 17px; color: var(--accent-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif; cursor: pointer; border-right: 1px solid var(--border-subtle);">Cancel</div>
+      <div style="flex: 1; padding: 11px 0; font-size: 17px; color: var(--danger-fg); font-family: -apple-system, 'SF Pro', system-ui, sans-serif; cursor: pointer;">Remove</div>
+    </div>
+  </div>
+
+  <!-- Dialog 2: Delete Household Confirmation -->
+  <div style="background: var(--surface-primary); border-radius: var(--r-lg); box-shadow: var(--shadow-3); width: 270px; overflow: hidden; text-align: center;">
+    <div style="padding: var(--sp-lg) var(--sp-lg) var(--sp-md);">
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--sp-sm); font-family: -apple-system, 'SF Pro', system-ui, sans-serif;">Delete The Hayn Family?</div>
+      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">This will remove all shared data for 3 members. Your personal data can be migrated back.</div>
+    </div>
+    <div style="border-top: 1px solid var(--border-subtle); display: flex;">
+      <div style="flex: 1; padding: 11px 0; font-size: 17px; color: var(--accent-primary); font-family: -apple-system, 'SF Pro', system-ui, sans-serif; cursor: pointer; border-right: 1px solid var(--border-subtle);">Cancel</div>
+      <div style="flex: 1; padding: 11px 0; font-size: 17px; font-weight: 600; color: var(--danger-fg); font-family: -apple-system, 'SF Pro', system-ui, sans-serif; cursor: pointer;">Delete Household</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT MODE STATES -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Edit Mode States</h3>
+<div class="mockup-row">
+
+  <!-- Recipe Detail — Edit Mode -->
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">&#8249; Recipes</span>
+          <div class="nav-trailing">
+            <span style="color: var(--accent-primary); font-size: 15px; font-weight: 700;">Done</span>
+          </div>
+        </div>
+        <div class="content-area">
+          <div class="recipe-hero">
+            <div style="border: none; border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; background: transparent; width: 100%; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 28px; font-weight: 700; color: var(--text-primary); text-align: left;">Honey Garlic Salmon</div>
+            <div style="display: flex; gap: var(--sp-lg); margin-top: var(--sp-sm);">
+              <div style="display: flex; align-items: baseline; gap: 4px;">
+                <span style="font-size: 13px; color: var(--text-tertiary);">Prep:</span>
+                <span style="font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding: 2px 0; min-width: 40px; display: inline-block;">10 min</span>
+              </div>
+              <div style="display: flex; align-items: baseline; gap: 4px;">
+                <span style="font-size: 13px; color: var(--text-tertiary);">Cook:</span>
+                <span style="font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding: 2px 0; min-width: 40px; display: inline-block;">15 min</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 4px; margin-top: var(--sp-sm);">
+              <span style="font-size: 13px; color: var(--text-tertiary);">Servings:</span>
+              <span style="font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-default); padding: 2px 0; min-width: 24px; display: inline-block;">4</span>
+            </div>
+          </div>
+
+          <div style="padding: 0 var(--sp-lg);">
+            <div class="recipe-section-header" style="margin-top: 0;">INGREDIENTS</div>
+            <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-primary); text-align: left;">4 salmon fillets</div>
+            <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-primary); text-align: left;">3 tbsp honey</div>
+            <!-- Focused field -->
+            <div style="border-bottom: 1px solid var(--accent-primary); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-primary); text-align: left;">4 cloves garlic, minced<span style="color: var(--accent-primary); font-weight: 300;">|</span></div>
+            <div style="border-bottom: 1px solid var(--border-default); padding: var(--sp-sm) 0; font-size: 15px; color: var(--text-primary); text-align: left;">2 tbsp soy sauce</div>
+            <div style="padding: var(--sp-sm) 0; font-size: 15px; color: var(--accent-primary); font-weight: 500; text-align: left;">+ Add Ingredient</div>
+
+            <div class="recipe-section-header">INSTRUCTIONS</div>
+            <div style="display: flex; align-items: first baseline; gap: var(--sp-sm); padding: var(--sp-sm) 0;">
+              <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary); min-width: 20px; font-variant-numeric: tabular-nums; line-height: 1.6; flex-shrink: 0;">1.</span>
+              <div style="flex: 1; border-bottom: 1px solid var(--border-default); padding-bottom: var(--sp-sm); font-size: 17px; line-height: 1.6; color: var(--text-primary); text-align: left;">Preheat oven to 400&deg;F</div>
+            </div>
+            <div style="display: flex; align-items: first baseline; gap: var(--sp-sm); padding: var(--sp-sm) 0;">
+              <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary); min-width: 20px; font-variant-numeric: tabular-nums; line-height: 1.6; flex-shrink: 0;">2.</span>
+              <div style="flex: 1; border-bottom: 1px solid var(--border-default); padding-bottom: var(--sp-sm); font-size: 17px; line-height: 1.6; color: var(--text-primary); text-align: left;">Mix honey, garlic, and soy sauce</div>
+            </div>
+            <div style="display: flex; align-items: first baseline; gap: var(--sp-sm); padding: var(--sp-sm) 0;">
+              <span style="font-size: 17px; font-weight: 700; color: var(--accent-primary); min-width: 20px; font-variant-numeric: tabular-nums; line-height: 1.6; flex-shrink: 0;">3.</span>
+              <div style="flex: 1; border-bottom: 1px solid var(--border-default); padding-bottom: var(--sp-sm); font-size: 17px; line-height: 1.6; color: var(--text-primary); text-align: left;">Place salmon on baking sheet, pour sauce over</div>
+            </div>
+            <div style="padding: var(--sp-sm) 0; font-size: 15px; color: var(--accent-primary); font-weight: 500; text-align: left;">+ Add Step</div>
+          </div>
+
+          <div style="height: 20px;"></div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Recipe Detail &mdash; Edit Mode</div>
+    <div class="mockup-sublabel">Inline editing, no layout shift, focused field accent border</div>
+  </div>
+
+  <!-- Household — Edit Mode -->
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">&#8249; Settings</span>
+          <span class="nav-title">Household</span>
+          <div class="nav-trailing">
+            <span style="color: var(--accent-primary); font-size: 15px; font-weight: 700;">Done</span>
+          </div>
+        </div>
+        <div class="content-area">
+          <div style="padding: 0 var(--sp-lg) var(--sp-sm); text-align: left;">
+            <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--accent-primary); padding: var(--sp-sm) 0; background: transparent; width: 100%;">The Hayn Family<span style="color: var(--accent-primary); font-weight: 400; margin-left: 1px;">|</span></div>
+            <div class="sync-indicator" style="margin-top: var(--sp-xs);">
+              <span class="sync-dot"></span>
+              <span>Synced just now</span>
+            </div>
+          </div>
+
+          <div class="settings-section-header">Members</div>
+          <div class="settings-group" style="margin: 0 var(--sp-lg);">
+            <div class="member-row">
+              <div class="member-avatar">RH</div>
+              <div class="member-info">
+                <div class="member-name">Rich Hayn</div>
+                <div class="member-role">Owner</div>
+              </div>
+              <span class="role-badge owner">Owner</span>
+            </div>
+            <div class="member-row">
+              <div class="member-avatar">MH</div>
+              <div class="member-info">
+                <div class="member-name">Mary Hayn</div>
+                <div class="member-role">Joined Jan 8</div>
+              </div>
+              <span class="role-badge member">Member</span>
+            </div>
+          </div>
+
+          <div style="padding: var(--sp-md) var(--sp-lg);">
+            <button class="btn-outline">Invite Member</button>
+          </div>
+
+          <div class="settings-section-header">Sharing</div>
+          <div class="settings-group" style="margin: 0 var(--sp-lg);">
+            <div class="settings-row">
+              <div class="settings-row-label">Shared Recipes</div>
+              <div class="settings-row-value">24</div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">Shared Lists</div>
+              <div class="settings-row-value">3</div>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-label">Shared Meal Plans</div>
+              <div class="settings-row-value">2</div>
+            </div>
+          </div>
+
+          <div style="height: 20px;"></div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Household &mdash; Edit Mode</div>
+    <div class="mockup-sublabel">Inline name editing with cursor, accent border, read-only members</div>
+  </div>
+
+</div>
+
+
+<!-- LOADING & ERROR STATES -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Loading &amp; Error States</h3>
+<div class="mockup-row">
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+        <div class="nav-bar">
+          <h1>Lists</h1>
+          <button class="nav-add-btn">+</button>
+        </div>
+
+        <!-- Sync error banner -->
+        <div style="margin: 0 var(--sp-lg) var(--sp-md); background: var(--warning-bg); border-left: 3px solid var(--warning-fg); padding: var(--sp-md) var(--sp-lg); border-radius: var(--r-sm); display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; color: var(--text-primary); line-height: 1.4;">Unable to sync. Changes saved locally.</span>
+          <span style="font-size: 13px; font-weight: 700; color: var(--accent-primary); cursor: pointer; flex-shrink: 0; margin-left: var(--sp-md);">Retry</span>
+        </div>
+
+        <div class="content-area">
+          <div class="list-card">
+            <div class="list-card-body">
+              <div class="list-info">
+                <div class="list-name">This Week</div>
+                <div class="list-meta">15 items &bull; 5 checked</div>
+              </div>
+              <div class="progress-zone">
+                <div class="progress-ring-container">
+                  <svg viewBox="0 0 56 56">
+                    <circle class="progress-ring-bg" cx="28" cy="28" r="23"/>
+                    <circle class="progress-ring-fill" cx="28" cy="28" r="23" stroke-dasharray="144.51" stroke-dashoffset="84"/>
+                  </svg>
+                  <span class="progress-ring-text">33%</span>
+                </div>
+              </div>
+            </div>
+            <div class="list-card-divider"></div>
+            <div class="category-chips">
+              <span class="cat-chip produce">Produce 4</span>
+              <span class="cat-chip dairy">Dairy 3</span>
+              <span class="cat-chip deli">Deli 2</span>
+              <span class="cat-chip pantry">Pantry 3</span>
+              <span class="cat-chip frozen">Frozen 2</span>
+              <span class="cat-chip snacks">Snacks 1</span>
+            </div>
+          </div>
+
+          <div class="list-card" style="opacity: 0.6;">
+            <div class="list-card-body">
+              <div class="list-info">
+                <div class="list-name">Last Week</div>
+                <div class="list-meta">8 items &bull; All done</div>
+              </div>
+              <div class="progress-zone">
+                <div class="progress-ring-container">
+                  <svg viewBox="0 0 56 56">
+                    <circle class="progress-ring-bg" cx="28" cy="28" r="23"/>
+                    <circle class="progress-ring-fill" cx="28" cy="28" r="23" stroke-dasharray="144.51" stroke-dashoffset="0" style="stroke: var(--spring-green);"/>
+                  </svg>
+                  <span class="progress-ring-text" style="font-size: 12px;">&#10003;</span>
+                </div>
+              </div>
+            </div>
+            <div class="list-card-divider"></div>
+            <div class="category-chips">
+              <span class="cat-chip produce">Produce 3</span>
+              <span class="cat-chip dairy">Dairy 2</span>
+              <span class="cat-chip pantry">Pantry 3</span>
+            </div>
+          </div>
+
+          <div style="height: 20px;"></div>
+        </div>
+        <div class="tab-bar glass">
+          <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Lists</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm0 2v16h12V4H6zm2 2h8v2H8V6zm0 4h8v2H8v-2z"/></svg>
+            <span>Recipes</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10z"/></svg>
+            <span>Meals</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.63-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54a7.04 7.04 0 00-1.63.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.04.69 1.63.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54a7.04 7.04 0 001.63-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 00-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/></svg>
+            <span>Search</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mockup-label">Grocery Lists &mdash; Sync Error</div>
+    <div class="mockup-sublabel">Warning banner with retry action, non-blocking</div>
+  </div>
+</div>
+
+<!-- Annotation block: All 3 loading/error patterns -->
+<div style="max-width: 800px; margin: var(--sp-xl) auto; background: var(--surface-primary); border-radius: var(--r-md); box-shadow: var(--shadow-2); border: 1px solid var(--border-subtle); overflow: hidden;">
+  <div style="padding: var(--sp-lg) var(--sp-xl); background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle);">
+    <span style="font-size: 15px; font-weight: 700; color: var(--text-primary);">Loading &amp; Error Patterns</span>
+    <span style="font-size: 13px; color: var(--text-tertiary); margin-left: var(--sp-sm);">&mdash; 3 states for CloudKit sync feedback</span>
+  </div>
+
+  <div style="padding: var(--sp-lg) var(--sp-xl); border-bottom: 1px solid var(--border-subtle);">
+    <div style="display: flex; align-items: flex-start; gap: var(--sp-lg);">
+      <div style="flex-shrink: 0; width: 240px;">
+        <div style="background: var(--info-bg); border-left: 3px solid var(--info-fg); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-sm); display: flex; align-items: center; gap: var(--sp-sm);">
+          <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0; animation: spin 1.5s linear infinite;">
+            <circle cx="8" cy="8" r="6" fill="none" stroke="var(--info-fg)" stroke-width="2" stroke-dasharray="28" stroke-dashoffset="8" stroke-linecap="round"/>
+          </svg>
+          <span style="font-size: 13px; color: var(--text-primary);">Syncing...</span>
+        </div>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Sync in Progress</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          <strong>Location:</strong> Below nav bar, inline banner<br>
+          <strong>Behavior:</strong> Non-blocking &mdash; user can still interact. Auto-dismisses when sync completes.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: var(--sp-lg) var(--sp-xl); border-bottom: 1px solid var(--border-subtle);">
+    <div style="display: flex; align-items: flex-start; gap: var(--sp-lg);">
+      <div style="flex-shrink: 0; width: 240px;">
+        <div style="background: var(--warning-bg); border-left: 3px solid var(--warning-fg); padding: var(--sp-sm) var(--sp-md); border-radius: var(--r-sm); display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 12px; color: var(--text-primary);">Unable to sync.</span>
+          <span style="font-size: 12px; font-weight: 700; color: var(--accent-primary);">Retry</span>
+        </div>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">Sync Error</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          <strong>Location:</strong> Below nav bar, full-width banner<br>
+          <strong>Behavior:</strong> Persists until resolved or dismissed. &ldquo;Retry&rdquo; triggers re-sync. Changes saved locally.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: var(--sp-lg) var(--sp-xl);">
+    <div style="display: flex; align-items: flex-start; gap: var(--sp-lg);">
+      <div style="flex-shrink: 0; width: 240px;">
+        <div style="background: var(--bg-primary); border-radius: var(--r-sm); padding: var(--sp-lg) var(--sp-md); text-align: center;">
+          <div style="font-size: 28px; margin-bottom: 4px;">&#9729;</div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">iCloud Not Available</div>
+          <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 2px;">Sign in to iCloud to sync</div>
+        </div>
+      </div>
+      <div style="flex: 1;">
+        <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">No iCloud Account</div>
+        <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+          <strong>Location:</strong> Full content area (replaces all content)<br>
+          <strong>Behavior:</strong> No actionable CTA &mdash; requires system-level iCloud sign-in. App works in local-only mode.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SWIPE ACTIONS -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Swipe Actions</h3>
+
+<div style="display: flex; flex-direction: column; gap: 24px; align-items: center; margin: var(--sp-xl) auto; max-width: 400px;">
+
+  <!-- Swipe 1: Grocery Item — Swipe Right (Complete) -->
+  <div style="width: 100%;">
+    <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--sp-sm);">Grocery Item &mdash; Swipe Right (Complete)</div>
+    <div style="width: 360px; border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-2); position: relative; height: 52px;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--success-fg); display: flex; align-items: center; padding-left: 28px;">
+        <span style="color: var(--btn-primary-text); font-size: 20px; font-weight: 700;">&#10003;</span>
+      </div>
+      <div style="position: relative; background: var(--surface-primary); height: 100%; display: flex; align-items: center; padding: 0 var(--sp-lg); transform: translateX(80px); gap: var(--sp-md);">
+        <div style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--accent-secondary); flex-shrink: 0;"></div>
+        <span style="font-size: 17px; color: var(--text-primary);">Salmon fillets</span>
+        <span style="font-size: 13px; color: var(--text-tertiary); margin-left: auto;">2 lbs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swipe 2: Grocery Item — Swipe Left (Delete) -->
+  <div style="width: 100%;">
+    <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--sp-sm);">Grocery Item &mdash; Swipe Left (Delete)</div>
+    <div style="width: 360px; border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-2); position: relative; height: 52px;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--danger-fg); display: flex; align-items: center; justify-content: flex-end; padding-right: 28px;">
+        <span style="color: var(--btn-primary-text); font-size: 18px;">&#128465;</span>
+      </div>
+      <div style="position: relative; background: var(--surface-primary); height: 100%; display: flex; align-items: center; padding: 0 var(--sp-lg); transform: translateX(-80px); gap: var(--sp-md);">
+        <div style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--accent-secondary); flex-shrink: 0;"></div>
+        <span style="font-size: 17px; color: var(--text-primary);">Expired yogurt</span>
+        <span style="font-size: 13px; color: var(--text-tertiary); margin-left: auto;">1</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Swipe 3: Category Row — Swipe Left (Delete) -->
+  <div style="width: 100%;">
+    <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--sp-sm);">Category Row &mdash; Swipe Left (Delete)</div>
+    <div style="width: 360px; border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-2); position: relative; height: 52px;">
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--danger-fg); display: flex; align-items: center; justify-content: flex-end; padding-right: 24px;">
+        <span style="color: var(--btn-primary-text); font-size: 14px; font-weight: 600; letter-spacing: 0.3px;">Delete</span>
+      </div>
+      <div style="position: relative; background: var(--surface-primary); height: 100%; display: flex; align-items: center; padding: 0 var(--sp-lg); transform: translateX(-80px); gap: var(--sp-md);">
+        <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--cat-frozen); flex-shrink: 0;"></div>
+        <span style="font-size: 17px; font-weight: 500; color: var(--text-primary);">Frozen Foods</span>
+        <span style="font-size: 13px; color: var(--text-tertiary); margin-left: auto;">6 items</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ACTION SHEETS & REVIEW FLOWS -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Action Sheets & Review Flows</h3>
+<p style="font-size: 14px; color: var(--text-secondary); margin-bottom: var(--sp-lg); max-width: 700px; margin-left: auto; margin-right: auto; text-align: center;">
+  iOS action sheet for list creation and guided ingredient review sheet. Displayed inline for reference.
+</p>
+<div style="display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin: var(--sp-xl) auto; max-width: 700px;">
+
+  <!-- Grocery List Creation Action Sheet -->
+  <div style="width: 270px; background: var(--surface-primary); border-radius: var(--r-md); box-shadow: var(--shadow-2); overflow: hidden;">
+    <div style="padding: 16px 16px 12px 16px; text-align: center;">
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">New List</div>
+      <div style="font-size: 13px; color: var(--text-secondary);">Choose how to create your list</div>
+    </div>
+    <div style="height: 0.5px; background: var(--border-light);"></div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 44px; font-size: 17px; color: var(--accent-primary); cursor: pointer;">From Staples</div>
+    <div style="height: 0.5px; background: var(--border-light); margin: 0 16px;"></div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 44px; font-size: 17px; color: var(--accent-primary); cursor: pointer;">From Meal Plan</div>
+    <div style="height: 0.5px; background: var(--border-light); margin: 0 16px;"></div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 44px; font-size: 17px; color: var(--accent-primary); cursor: pointer;">Empty List</div>
+    <div style="height: 0.5px; background: var(--border-light);"></div>
+    <div style="display: flex; align-items: center; justify-content: center; height: 44px; font-size: 17px; font-weight: 700; color: var(--text-primary); cursor: pointer;">Cancel</div>
+  </div>
+
+  <!-- Ingredient Review Sheet -->
+  <div style="width: 300px; background: var(--surface-primary); border-radius: var(--r-md); box-shadow: var(--shadow-2); overflow: hidden;">
+    <!-- Header -->
+    <div style="display: flex; align-items: center; justify-content: center; position: relative; padding: 16px 16px 12px 16px;">
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-primary);">Review Ingredients</div>
+      <div style="position: absolute; right: 16px; font-size: 13px; color: var(--text-tertiary);">1 of 3</div>
+    </div>
+    <!-- Progress bar -->
+    <div style="height: 4px; background: var(--bg-tertiary); margin: 0 16px 12px 16px; border-radius: 2px; overflow: hidden;">
+      <div style="width: 33%; height: 100%; background: var(--accent-primary); border-radius: 2px;"></div>
+    </div>
+    <div style="height: 0.5px; background: var(--border-light);"></div>
+    <!-- Current ingredient card -->
+    <div style="margin: 16px; padding: 16px; background: var(--surface-secondary); border-radius: var(--r-sm);">
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-primary); text-align: center;">Unsalted Butter</div>
+      <div style="text-align: center; font-size: 15px; color: var(--text-tertiary); margin: 8px 0;">&darr;</div>
+      <div style="text-align: center;">
+        <div style="font-size: 15px; color: var(--accent-primary); font-weight: 500;">butter, unsalted</div>
+        <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">Matched to template</div>
+      </div>
+    </div>
+    <!-- Category selector row -->
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 16px;">
+      <div style="font-size: 13px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">Category</div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 15px; color: var(--text-primary); cursor: pointer;">
+        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--cat-dairy);"></span>
+        Dairy
+        <span style="font-size: 13px; color: var(--text-tertiary);">&#8250;</span>
+      </div>
+    </div>
+    <div style="height: 0.5px; background: var(--border-light); margin: 0 16px;"></div>
+    <!-- Staple toggle row -->
+    <div style="display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 16px;">
+      <div style="font-size: 15px; color: var(--text-primary);">Mark as Staple</div>
+      <div style="width: 51px; height: 31px; background: var(--bg-tertiary); border-radius: 15.5px; position: relative; cursor: pointer;">
+        <div style="width: 27px; height: 27px; background: var(--surface-primary); border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.15);"></div>
+      </div>
+    </div>
+    <div style="height: 0.5px; background: var(--border-light); margin: 0 16px;"></div>
+    <!-- Merge detection banner -->
+    <div style="margin: 12px 16px; padding: 10px 12px; background: var(--warning-bg); border-radius: var(--r-sm); font-size: 13px; color: var(--text-primary); line-height: 1.4;">
+      &#9888; Similar ingredient &lsquo;Butter&rsquo; exists. <span style="color: var(--accent-primary); cursor: pointer; text-decoration: underline;">Merge?</span>
+    </div>
+    <!-- Action buttons -->
+    <div style="display: flex; gap: 10px; padding: 12px 16px 16px 16px;">
+      <button style="flex: 1; height: 40px; font-size: 15px; font-weight: 500; color: var(--text-primary); background: transparent; border: 1px solid var(--border-default); border-radius: var(--r-sm); cursor: pointer; font-family: inherit;">Skip</button>
+      <button style="flex: 1; height: 40px; font-size: 15px; font-weight: 600; color: var(--btn-primary-text); background: var(--accent-primary); border: none; border-radius: var(--r-sm); cursor: pointer; font-family: inherit;">Save &amp; Next</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ONBOARDING -->
+<h3 class="section-subtitle" style="margin-top: 48px;">Onboarding</h3>
+<div class="mockup-row">
+  <div class="mockup-wrapper">
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">&#9679;&#9679;&#9679; WiFi &#128267;</span>
+        </div>
+
+        <!-- Nav bar with Skip -->
+        <div class="nav-bar" style="display: flex; justify-content: flex-end; align-items: center; text-align: right;">
+          <span style="font-size: 15px; color: var(--text-secondary); cursor: pointer;">Skip</span>
+        </div>
+
+        <!-- Centered content area -->
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 40%;">
+          <!-- Icon circle -->
+          <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--surface-accent); display: flex; align-items: center; justify-content: center;">
+            <span style="font-size: 48px; line-height: 1;">&#127807;</span>
+          </div>
+          <!-- Title -->
+          <div style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary); text-align: center; margin-top: 16px;">Your Kitchen, Organized</div>
+          <!-- Subtitle -->
+          <div style="font-size: 15px; color: var(--text-secondary); text-align: center; max-width: 280px; line-height: 1.4; margin-top: 8px;">Smart grocery lists, recipes, and meal planning &mdash; all in one place.</div>
+        </div>
+
+        <!-- Bottom area -->
+        <div style="flex-shrink: 0; padding: 0 16px 24px; display: flex; flex-direction: column; align-items: center;">
+          <!-- Page indicator dots -->
+          <div style="display: flex; gap: 8px; justify-content: center; align-items: center;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent-primary); display: inline-block;"></span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 1.5px solid var(--border-default); display: inline-block;"></span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 1.5px solid var(--border-default); display: inline-block;"></span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 1.5px solid var(--border-default); display: inline-block;"></span>
+          </div>
+          <!-- Next button -->
+          <button class="btn-primary" style="width: 100%; margin-top: 12px;">Next</button>
+        </div>
+
+      </div>
+    </div>
+    <div class="mockup-label">Onboarding &mdash; Welcome</div>
+    <div class="mockup-sublabel">First-run walkthrough, 4 screens with skip option</div>
+  </div>
+</div>
+
+<!-- Onboarding Screens Annotation Table -->
+<div style="max-width: 600px; margin: var(--sp-xl) auto; padding: var(--sp-lg); background: var(--surface-secondary); border-radius: var(--r-md); font-size: 14px; color: var(--text-secondary);">
+  <strong style="color: var(--text-primary); display: block; margin-bottom: var(--sp-md);">Onboarding Flow &mdash; 4 Screens</strong>
+  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+    <thead>
+      <tr style="border-bottom: 1px solid var(--border-subtle); text-align: left;">
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Screen</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Icon</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Title</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">Subtitle</th>
+        <th style="padding: 6px 8px; color: var(--text-tertiary); font-weight: 600;">CTA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">1</td>
+        <td style="padding: 8px;">&#127807; <code style="font-size: 11px; color: var(--text-tertiary);">leaf</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Your Kitchen, Organized</td>
+        <td style="padding: 8px;">Smart grocery lists, recipes, and meal planning &mdash; all in one place.</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Next</span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">2</td>
+        <td style="padding: 8px;">&#128203; <code style="font-size: 11px; color: var(--text-tertiary);">list.bullet</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Smart Grocery Lists</td>
+        <td style="padding: 8px;">Auto-categorize items, track progress, and check off as you shop.</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Next</span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">3</td>
+        <td style="padding: 8px;">&#128104;&#8205;&#128105;&#8205;&#128103; <code style="font-size: 11px; color: var(--text-tertiary);">person.3</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Cook Together</td>
+        <td style="padding: 8px;">Share lists and recipes with your household. Everyone stays in sync.</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Next</span></td>
+      </tr>
+      <tr>
+        <td style="padding: 8px; font-weight: 600; color: var(--text-primary);">4</td>
+        <td style="padding: 8px;">&#10024; <code style="font-size: 11px; color: var(--text-tertiary);">sparkles</code></td>
+        <td style="padding: 8px; color: var(--text-primary);">Ready to Start</td>
+        <td style="padding: 8px;">Add your first recipe or create a grocery list.</td>
+        <td style="padding: 8px;"><span style="background: var(--btn-primary-bg); color: var(--btn-primary-text); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Get Started</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div><!-- /section -->
+</div><!-- /page -->
+
+<script>
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-toggle button').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase() === theme);
+  });
+}
+
+// Respect system preference on load
+if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  setTheme('dark');
+}
+</script>
+
+</body>
+</html>

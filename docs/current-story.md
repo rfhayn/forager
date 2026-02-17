@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: February 15, 2026
-**Status**: M7.6 ✅ **COMPLETE** | M7.7 📋 **READY**
+**Last Updated**: February 17, 2026
+**Status**: M7.6 ✅ **COMPLETE** | M15 🚀 **ACTIVE** | M7.7 📋 **READY**
 **Total Progress**: ~190 hours | 89% planning accuracy
 **Current Branch**: `main`
-**Current Milestone**: M7.7 - App Store Submission & Public Presence
+**Current Milestone**: M15 - UX Design System & Visual Refresh
 
 ---
 
@@ -676,43 +676,29 @@
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.3.4: Error Handling | ✅ COMPLETE | - |
-| M7.4: UI Polish & Pre-Launch Fixes | ✅ COMPLETE | ~4h |
-| M8.1: Parsing Resilience & Telemetry | ✅ COMPLETE | ~3h |
-| M8.3: Hybrid NLP Parser | ✅ COMPLETE | ~11h |
-| M8.3.1: Template Hygiene & Badge Fix | ✅ COMPLETE | ~3h |
-| M8.3.2: Auto-Merge Grocery Quantities | ✅ COMPLETE | ~3h |
-| **M7.6: Pre-Launch Prep & TestFlight** | ✅ COMPLETE | ~12h |
+| M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
+| **M15: UX Design System & Visual Refresh** | 🚀 **ACTIVE** | 50-70h |
+| TestFlight push (post-M15) | 📋 PLANNED | ~1h |
 | **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
 
-**M7.6 Phases** (8 phases — PRD: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`):
+**M15 Phases** (7 phases — PRD: `docs/prds/active/m15-ux-design-system.md`):
 
 | Phase | Description | Est. |
 |-------|-------------|------|
-| M7.6.1 | App Configuration (display name, iOS 18 target, launch screen) | ✅ 0.5h |
-| M7.6.2 | Production Gating (`#if DEBUG` for developer tools) | ✅ 0.5h |
-| M7.6.3 | Onboarding Flow (loading screen ✅, coach marks ✅, sample data ✅) | ✅ ~4h |
-| M7.6.4 | Schema Cleanup P0 (remove Tag + LeaveRequest, fix plannedMeals cardinality) | ✅ ~1h |
-| M7.6.5 | Schema Cleanup P1 (rename ownerEmail, fix delete rules, code-schema mismatches) | ✅ ~1.5h |
-| M7.6.6 | Schema Cleanup P2 (remove unused fields, fix sourceURL tags hack, naming) | ✅ ~1.5h |
-| M7.6.7 | TestFlight Submission — ✅ COMPLETE (schema deployed, archive uploaded, Apple approved) | ~2h |
-| M7.6.8 | Owner Display Name Fix + TestFlight Beta Bugs — ✅ COMPLETE (PRs #32, #33) | ~3h |
+| M15.1 | Design System Foundation & Liquid Glass TabView | 8-10h |
+| M15.2 | Color & Typography Migration | 8-10h |
+| M15.3 | Grocery Lists UX Overhaul | 8-10h |
+| M15.4 | Recipes UX Overhaul | 6-8h |
+| M15.5 | Meal Plans & Ingredients UX | 6-8h |
+| M15.6 | Liquid Glass Polish & App Icon | 6-8h |
+| M15.7 | Dark Mode, Accessibility & Final QA | 6-10h |
 
-**M7.7 Phases** (4 phases — PRD: `docs/prds/active/m7.7-app-store-submission.md`):
-
-| Phase | Description | Est. |
-|-------|-------------|------|
-| M7.7.1 | Beta Landing Page (GitHub Pages) | 1-2h |
-| M7.7.2 | GitHub README Update (portfolio quality) | 0.5h |
-| M7.7.3 | App Store Listing (metadata, screenshots, copy) | 1-2h |
-| M7.7.4 | App Store Submission | 0.5h |
-
-**Key Decisions (February 8, 2026)**:
-- iOS 18 target (deliberate — avoids ~104 mechanical API changes for no market)
-- Display name: `forager - Smart Meal Planner` (lowercase 'forager')
-- Core Data schema cleanup before Production deployment (append-only once deployed)
-- LinkedIn showcase removed — user handles via newsletter
-- Onboarding: 4-page horizontal walkthrough, first-launch + Settings replay
+**Key Decisions (February 17, 2026)**:
+- M15 elevated to pre-launch — polished UI before App Store debut
+- Design phase complete: HTML mockups, PRD v1.1, 5-phase design review all done
+- TestFlight already live with external testers; LinkedIn share imminent
+- After M15: new TestFlight build → M7.7 App Store submission
+- M15 first makes M7.5 Architecture Hardening easier (navigation cleanup reduced)
 
 ### **Post-Launch Roadmap**
 
@@ -724,7 +710,6 @@
 | M9: Technical Debt | PLANNED | 135-165h |
 | M10: Analytics & Insights | PLANNED | 8-12h |
 | M11-M14: Advanced Features | FUTURE | 40-60h |
-| **M15: UX Design System & Visual Refresh** | 📋 PLANNED | 50-70h |
 
 ---
 
@@ -739,8 +724,8 @@
 
 ---
 
-**Last Session**: February 15, 2026 - M7.6 COMPLETE, TestFlight live with external testers
-**Next Action**: M7.7 - App Store Submission & Public Presence
+**Last Session**: February 17, 2026 - Roadmap updated: M15 elevated to pre-launch
+**Next Action**: M15.1 - Design System Foundation & Liquid Glass TabView
 **Branch**: `main` (all M7.6 work merged via PRs #31, #32, #33)
-**Confidence**: **GREEN** (M7.6 complete, TestFlight approved, cross-device sharing verified)
-**Version**: February 15, 2026 - M7.6 Complete, M7.7 Ready
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, ready to implement)
+**Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15
