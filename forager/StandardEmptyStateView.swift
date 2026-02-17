@@ -41,8 +41,8 @@ struct StandardEmptyStateView: View {
         VStack(spacing: 24) {
             Image(systemName: iconName)
                 .font(.system(size: 60))
-                .foregroundColor(.blue)
-            
+                .foregroundStyle(ForagerTheme.accentPrimary)
+
             VStack(spacing: 12) {
                 Text(title)
                     .font(.title2)
@@ -50,7 +50,7 @@ struct StandardEmptyStateView: View {
                 
                 Text(subtitle)
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
             }
@@ -61,11 +61,11 @@ struct StandardEmptyStateView: View {
                     Text(buttonText)
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(Color.blue)
-                .cornerRadius(12)
+                .background(ForagerTheme.accentPrimary)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .disabled(isButtonDisabled)
             

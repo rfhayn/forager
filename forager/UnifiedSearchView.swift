@@ -113,7 +113,7 @@ struct UnifiedSearchView: View {
         HStack(spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                     .font(.body)
 
                 TextField("Lists, Ingredients, Recipes, Meal Plans...", text: $searchText)
@@ -126,13 +126,13 @@ struct UnifiedSearchView: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
             .padding(10)
             .background(Color(.secondarySystemBackground))
-            .cornerRadius(10)
+            .cornerRadius(ForagerTheme.Radius.md)
 
             // Cancel button appears when search is active (Apple Music pattern)
             if isSearchFocused {
@@ -140,7 +140,7 @@ struct UnifiedSearchView: View {
                     searchText = ""
                     isSearchFocused = false
                 }
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
                 .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
@@ -155,7 +155,7 @@ struct UnifiedSearchView: View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 64))
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .padding(.top, 60)
 
             Text("Search Everything")
@@ -164,7 +164,7 @@ struct UnifiedSearchView: View {
 
             Text("Find lists, ingredients, recipes, and meal plans")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
 
@@ -178,7 +178,7 @@ struct UnifiedSearchView: View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 64))
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .padding(.top, 60)
 
             Text("No Results")
@@ -187,7 +187,7 @@ struct UnifiedSearchView: View {
 
             Text("Try a different search term")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
 
             Spacer()
         }
@@ -203,25 +203,25 @@ struct UnifiedSearchView: View {
                     resultSection(
                         title: "Lists",
                         icon: "list.clipboard",
-                        color: .green,
+                        color: ForagerTheme.statusSuccessFG,
                         count: filteredLists.count
                     ) {
                         ForEach(filteredLists.prefix(5), id: \.self) { list in
                             NavigationLink(destination: GroceryListDetailView(weeklyList: list)) {
                                 HStack {
                                     Image(systemName: "list.clipboard")
-                                        .foregroundColor(.green)
+                                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(list.name ?? "Unnamed List")
                                             .font(.body)
-                                            .foregroundColor(.primary)
+                                            .foregroundStyle(.primary)
 
                                         if let date = list.dateCreated {
                                             Text(date, style: .date)
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundStyle(ForagerTheme.textSecondary)
                                         }
                                     }
 
@@ -229,7 +229,7 @@ struct UnifiedSearchView: View {
 
                                     Image(systemName: "chevron.right")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                 }
                                 .padding(.vertical, 8)
                             }
@@ -242,24 +242,24 @@ struct UnifiedSearchView: View {
                     resultSection(
                         title: "Ingredients",
                         icon: "carrot",
-                        color: .orange,
+                        color: ForagerTheme.statusWarningFG,
                         count: filteredIngredients.count
                     ) {
                         ForEach(filteredIngredients.prefix(5), id: \.self) { ingredient in
                             HStack {
                                 Image(systemName: "carrot")
-                                    .foregroundColor(.orange)
+                                    .foregroundStyle(ForagerTheme.statusWarningFG)
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(ingredient.name ?? "Unnamed")
                                         .font(.body)
-                                        .foregroundColor(.primary)
+                                        .foregroundStyle(.primary)
 
                                     if let category = ingredient.category {
                                         Text(category)
                                             .font(.caption)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(ForagerTheme.textSecondary)
                                     }
                                 }
 
@@ -268,7 +268,7 @@ struct UnifiedSearchView: View {
                                 if ingredient.isStaple {
                                     Image(systemName: "pin.fill")
                                         .font(.caption)
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                 }
                             }
                             .padding(.vertical, 8)
@@ -281,20 +281,20 @@ struct UnifiedSearchView: View {
                     resultSection(
                         title: "Recipes",
                         icon: "book.pages",
-                        color: .blue,
+                        color: ForagerTheme.accentSecondary,
                         count: filteredRecipes.count
                     ) {
                         ForEach(filteredRecipes.prefix(5), id: \.self) { recipe in
                             NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                                 HStack {
                                     Image(systemName: "book.pages")
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(recipe.title ?? "Untitled Recipe")
                                             .font(.body)
-                                            .foregroundColor(.primary)
+                                            .foregroundStyle(.primary)
 
                                         HStack(spacing: 8) {
                                             Text("\(Int(recipe.servings)) servings")
@@ -304,14 +304,14 @@ struct UnifiedSearchView: View {
                                             }
                                         }
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                     }
 
                                     Spacer()
 
                                     Image(systemName: "chevron.right")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                 }
                                 .padding(.vertical, 8)
                             }
@@ -324,25 +324,25 @@ struct UnifiedSearchView: View {
                     resultSection(
                         title: "Meal Plans",
                         icon: "calendar",
-                        color: .purple,
+                        color: ForagerTheme.accentSecondary,
                         count: filteredMealPlans.count
                     ) {
                         ForEach(filteredMealPlans.prefix(5), id: \.self) { plan in
                             NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
                                 HStack {
                                     Image(systemName: "calendar")
-                                        .foregroundColor(.purple)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(plan.name ?? "Unnamed Plan")
                                             .font(.body)
-                                            .foregroundColor(.primary)
+                                            .foregroundStyle(.primary)
 
                                         if let startDate = plan.startDate {
                                             Text(startDate, style: .date)
                                                 .font(.caption)
-                                                .foregroundColor(.secondary)
+                                                .foregroundStyle(ForagerTheme.textSecondary)
                                         }
                                     }
 
@@ -350,7 +350,7 @@ struct UnifiedSearchView: View {
 
                                     Image(systemName: "chevron.right")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                 }
                                 .padding(.vertical, 8)
                             }
@@ -375,13 +375,13 @@ struct UnifiedSearchView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 Text(title)
                     .font(.headline)
                 Spacer()
                 Text("\(count)")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
 
             VStack(spacing: 0) {
@@ -390,7 +390,7 @@ struct UnifiedSearchView: View {
         }
         .padding()
         .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .cornerRadius(ForagerTheme.Radius.md)
     }
 
     // MARK: - Helper Methods

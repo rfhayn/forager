@@ -318,9 +318,9 @@ struct CoachMarkOverlay: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(ForagerTheme.accentPrimary)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
             }
 
             // Only show "Clear Sample Data" when sample data actually exists
