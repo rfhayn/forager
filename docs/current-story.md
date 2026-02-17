@@ -1,11 +1,63 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M7.6 ✅ **COMPLETE** | M15 🚀 **ACTIVE** (planning complete, M15.1 next) | M7.7 📋 **READY**
-**Total Progress**: ~190 hours | 89% planning accuracy
-**Current Branch**: `main` (create `feature/M15.1-design-system-foundation` for implementation)
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 🚀 **NEXT** | M7.7 📋 **READY**
+**Total Progress**: ~195 hours | 89% planning accuracy
+**Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.2: COLOR & TYPOGRAPHY MIGRATION - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Mechanical migration of ~300+ hardcoded color, typography, and radius values to ForagerTheme semantic tokens across ~25 files.
+
+**Sub-Phases Completed:**
+- **A**: categoryColor consolidation into ForagerTheme
+- **B**: Grocery item views (AddGroceryItemView, RecipeDetailView)
+- **C**: Recipe views (AddRecipeSheet, EditRecipeSheet, RecipeIngredientRow, RecipeIngredientEditRow)
+- **D+E**: Meal plan & category views (8 files)
+- **F**: Settings & household views (7 files)
+- **G**: Shared components (StandardEmptyStateView, UnifiedSearchView, OnboardingView)
+- **H**: Debug views (4 files) + straggler staple views (2 files)
+
+**Key Patterns Applied:**
+- `.foregroundColor(.blue)` → `.foregroundStyle(ForagerTheme.accentPrimary)` (CTAs) or `.accentSecondary` (decorative)
+- `.foregroundColor(.secondary)` → `.foregroundStyle(ForagerTheme.textSecondary)`
+- `.cornerRadius(12)` → `.cornerRadius(ForagerTheme.Radius.md)` (and sm/lg/xs variants)
+- Raw `Color.blue/green/red/gray` backgrounds → `ForagerTheme.*` semantic tokens
+- All `.foregroundColor()` deprecated calls → `.foregroundStyle()`
+
+**6 files explicitly skipped** (rewritten by M15.3-M15.5): RecipeListView, WeeklyListsView, GroceryListDetailView, MealPlanDetailView, MealPlanListView, IngredientsView
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build after every sub-phase |
+| Verification scan | ✅ PASSED | `.foregroundColor(` only in 6 skipped files |
+
+---
+
+## ✅ **M15.1: DESIGN SYSTEM FOUNDATION & LIQUID GLASS TABVIEW - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+- ForagerTheme.swift: 38 semantic color tokens, Radius enum, Typography helpers
+- Deployment target raised to iOS 26 for Liquid Glass support
+- Replaced CustomBottomNavigation with native Liquid Glass TabView (5 tabs)
+- SettingsView preview wraps in NavigationStack
 
 ---
 
@@ -686,8 +738,8 @@
 
 | Phase | Description | Est. |
 |-------|-------------|------|
-| M15.1 | Design System Foundation & Liquid Glass TabView | 8-10h |
-| M15.2 | Color & Typography Migration | 8-10h |
+| M15.1 | Design System Foundation & Liquid Glass TabView | ✅ COMPLETE |
+| M15.2 | Color & Typography Migration | ✅ COMPLETE |
 | M15.3 | Grocery Lists UX Overhaul | 8-10h |
 | M15.4 | Recipes UX Overhaul | 6-8h |
 | M15.5 | Meal Plans & Ingredients UX | 6-8h |
@@ -725,8 +777,8 @@
 
 ---
 
-**Last Session**: February 17, 2026 - Roadmap updated: M15 elevated to pre-launch
-**Next Action**: M15.1 - Design System Foundation & Liquid Glass TabView
-**Branch**: `main` (all M7.6 work merged via PRs #31, #32, #33)
+**Last Session**: February 17, 2026 - M15.1 + M15.2 complete
+**Next Action**: M15.3 - Grocery Lists UX Overhaul
+**Branch**: `feature/M15-ux-design-system` (local, not pushed)
 **Confidence**: **GREEN** (TestFlight live, M15 design phase complete, ready to implement)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15

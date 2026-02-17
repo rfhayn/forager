@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** | M7.7 📋 **QUEUED**
-**Next Priority**: M15.1 - Design System Foundation & Liquid Glass TabView
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.3 - Grocery Lists UX Overhaul
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 

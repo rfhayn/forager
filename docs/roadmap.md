@@ -1071,7 +1071,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🚀 M15: UX Design System & Visual Refresh - ACTIVE** 🎨
 
-**Status**: 🚀 Active (planning complete, M15.1 implementation next)
+**Status**: 🚀 Active (M15.1 + M15.2 complete, M15.3 next)
 **Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
 **Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
@@ -1082,7 +1082,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **Phase Breakdown:**
 
-**M15.1: Design System Foundation & Liquid Glass TabView (~8h)**
+**M15.1: Design System Foundation & Liquid Glass TabView** ✅ COMPLETE
 - ForagerTheme.swift with semantic color tokens (38 Asset Catalog adaptive color sets)
 - Typography system (SF Pro Rounded for chrome, system default for body — single font family)
 - Raise deployment target from iOS 18 to iOS 26
@@ -1091,7 +1091,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - Update coach marks for 5-tab navigation
 - Add Ingredients + Categories links to Settings tab
 
-**M15.2: Color & Typography Migration (~7h)**
+**M15.2: Color & Typography Migration** ✅ COMPLETE
 - Apply semantic color tokens across all views (skip 6 files rewritten by M15.3-M15.5)
 - Implement typography scale
 - Border and divider system migration
@@ -1456,9 +1456,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.1 implementation — detailed plan at `docs/prds/active/plans/m15.1-implementation-plan.md`
+**Next Action**: M15.3 implementation — detailed plan at `docs/prds/active/plans/m15.3-implementation-plan.md`
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h). Total: ~190 hours. TestFlight live, M15 design complete, ready to implement.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.2 complete (~5h). Total: ~195 hours. TestFlight live, M15 in progress.
 
 ---
 
