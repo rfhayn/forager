@@ -111,14 +111,14 @@ struct CategoryChangeModal: View {
                         .fontWeight(.semibold)
                     Text("\(ingredientTemplates.count) ingredients need categories")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 Spacer()
             }
             
             Text("Assign categories to organize ingredients.")
                 .font(.callout)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 16)
@@ -134,30 +134,30 @@ struct CategoryChangeModal: View {
             HStack {
                 Image(systemName: "plus.circle.fill")
                     .font(.title3)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Add New Category")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("Create a custom category for these ingredients")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
+                    .stroke(ForagerTheme.accentPrimary.opacity(0.3), lineWidth: 1)
             )
         }
         .padding(.top, 8)
@@ -180,9 +180,9 @@ struct CategoryChangeModal: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(properlyAssignedCount > 0 ? Color.blue : Color.blue.opacity(0.6))
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .background(properlyAssignedCount > 0 ? ForagerTheme.accentPrimary : ForagerTheme.accentPrimary.opacity(0.6))
+                .foregroundStyle(.white)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .disabled(isLoading)
             
@@ -198,8 +198,8 @@ struct CategoryChangeModal: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
                 .background(Color(.systemGray5))
-                .foregroundColor(.primary)
-                .cornerRadius(12)
+                .foregroundStyle(.primary)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .disabled(isLoading)
             
@@ -209,7 +209,7 @@ struct CategoryChangeModal: View {
                     HStack {
                         Text("\(properlyAssignedCount) of \(ingredientTemplates.count) assigned")
                             .font(.footnote)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Spacer()
                     }
                     
@@ -217,7 +217,7 @@ struct CategoryChangeModal: View {
                         HStack {
                             Text("\(ingredientTemplates.count - properlyAssignedCount) will remain uncategorized")
                                 .font(.footnote)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                             Spacer()
                         }
                     }
@@ -312,7 +312,7 @@ struct IngredientChangeRow: View {
                     Text(template.name ?? "Unknown ingredient")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
                 
                 Spacer()
@@ -338,31 +338,31 @@ struct IngredientChangeRow: View {
                                 .fill(colorFromHex(category?.color ?? "#4CAF50"))
                                 .frame(width: 16, height: 16)
                             Text(categoryName)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                         }
                     } else {
                         Text("Choose Category")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
                 .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .cornerRadius(ForagerTheme.Radius.sm)
             }
             .buttonStyle(PlainButtonStyle())
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .cornerRadius(ForagerTheme.Radius.md)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isProperlyAssigned ? Color.green.opacity(0.3) : Color(.systemGray4), lineWidth: 1)
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
+                .stroke(isProperlyAssigned ? ForagerTheme.statusSuccessFG.opacity(0.3) : Color(.systemGray4), lineWidth: 1)
         )
     }
     
@@ -383,10 +383,10 @@ struct IngredientChangeRow: View {
                     Text(categoryName)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                 }
             } else {
                 HStack(spacing: 6) {
@@ -395,10 +395,10 @@ struct IngredientChangeRow: View {
                         .frame(width: 16, height: 16)
                     Text("Needs category")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Image(systemName: "exclamationmark.circle")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
         }
@@ -431,7 +431,7 @@ struct CategorySelectionViewForChange: View {
                 onCategorySelected(nil)
                 dismiss()
             }
-            .foregroundColor(.secondary)
+            .foregroundStyle(ForagerTheme.textSecondary)
         }
         .navigationTitle("Select Category")
         .navigationBarTitleDisplayMode(.inline)
@@ -461,14 +461,14 @@ struct CategorySelectionRowForChange: View {
                 
                 Text(category.name ?? "Unknown")
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 // Selection indicator
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                         .font(.title3)
                 }
             }

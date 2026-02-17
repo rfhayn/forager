@@ -118,13 +118,13 @@ struct ManageCategoriesView: View {
         VStack(spacing: 12) {
             Text("Drag to Reorder Categories")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             HStack {
                 Text("Arrange categories to match your store layout")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -132,7 +132,7 @@ struct ManageCategoriesView: View {
                     resetToDefaultOrder()
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
             }
         }
         .padding(.horizontal)
@@ -159,9 +159,9 @@ struct ManageCategoriesView: View {
             Button(action: { showingAddCategory = true }) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("Add Custom Category")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Spacer()
                 }
                 .padding(.vertical, 12)
@@ -274,12 +274,12 @@ struct ManageCategoriesView: View {
                     VStack(spacing: 8) {
                         Text("\(assignedIngredientCount) ingredient\(assignedIngredientCount == 1 ? "" : "s") \(assignedIngredientCount == 1 ? "is" : "are") assigned to '\(category.displayName)'.")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                         
                         Text("Choose how to handle these assignments:")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -292,7 +292,7 @@ struct ManageCategoriesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "arrow.triangle.2.circlepath")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
                             Text("Reassign to Different Category")
                                 .font(.headline)
                                 .fontWeight(.medium)
@@ -313,16 +313,16 @@ struct ManageCategoriesView: View {
                                                 .font(.system(size: 10))
                                         )
                                     Text(selected.displayName)
-                                        .foregroundColor(.primary)
+                                        .foregroundStyle(.primary)
                                 } else {
                                     Text("Select Category")
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
                                 }
                                 
                                 Spacer()
                                 
                                 Image(systemName: "chevron.right")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                                     .font(.caption)
                             }
                             .padding(.vertical, 8)
@@ -331,25 +331,25 @@ struct ManageCategoriesView: View {
                     }
                     .padding(16)
                     .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                    .cornerRadius(ForagerTheme.Radius.md)
                 }
                 
                 // Option 2: Move to Uncategorized
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "folder")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(ForagerTheme.textTertiary)
                         Text("Move to \"Uncategorized\" Category")
                             .font(.headline)
                             .fontWeight(.medium)
                     }
                     Text("Ingredients will be moved to the Uncategorized category")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding(16)
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             
             // Action buttons with better layout
@@ -362,11 +362,11 @@ struct ManageCategoriesView: View {
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(selectedReassignmentCategory == nil ? .secondary : .white)
+                    .foregroundStyle(selectedReassignmentCategory == nil ? ForagerTheme.textSecondary : Color.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(selectedReassignmentCategory == nil ? Color(.systemGray4) : Color.blue)
-                    .cornerRadius(10)
+                    .background(selectedReassignmentCategory == nil ? Color(.systemGray4) : ForagerTheme.accentPrimary)
+                    .cornerRadius(ForagerTheme.Radius.md)
                     .disabled(selectedReassignmentCategory == nil)
                 }
                 
@@ -376,11 +376,11 @@ struct ManageCategoriesView: View {
                     }
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Color.gray)
-                .cornerRadius(10)
+                .background(ForagerTheme.textTertiary)
+                .cornerRadius(ForagerTheme.Radius.md)
                 
                 Button("Cancel") {
                     showingReassignmentDialog = false
@@ -388,11 +388,11 @@ struct ManageCategoriesView: View {
                     selectedReassignmentCategory = nil
                 }
                 .font(.body)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(Color(.systemGray6))
-                .cornerRadius(10)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
         }
         .padding(20)
@@ -670,7 +670,7 @@ struct CategoryRowView: View {
             Text("\(position)")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
             // Category color and icon
@@ -695,7 +695,7 @@ struct CategoryRowView: View {
             if !category.isDefault {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .foregroundColor(.red)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                         .font(.title3)
                 }
                 .buttonStyle(BorderlessButtonStyle())
@@ -707,7 +707,7 @@ struct CategoryRowView: View {
             
             // Drag handle
             Image(systemName: "line.3.horizontal")
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .font(.title2)
         }
         .padding(.vertical, 8)
@@ -786,14 +786,14 @@ struct CategorySelectionRow: View {
                 // Category name
                 Text(category.displayName)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 // Selection indicator
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                         .font(.title3)
                 }
             }

@@ -119,7 +119,7 @@ struct CreateMealPlanSheet: View {
                     Text("Start Date")
                     Spacer()
                     Text(formatDateWithDay(startDate))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .onChange(of: startDate) { oldValue, newValue in
@@ -140,7 +140,7 @@ struct CreateMealPlanSheet: View {
                     Text("End Date")
                     Spacer()
                     Text(formatDateWithDay(endDate))
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .onChange(of: endDate) { oldValue, newValue in
@@ -159,7 +159,7 @@ struct CreateMealPlanSheet: View {
         Section {
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .font(.subheadline)
-                .foregroundColor(.red)
+                .foregroundStyle(ForagerTheme.statusDangerFG)
         }
     }
     

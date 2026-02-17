@@ -76,12 +76,12 @@ struct DatePickerSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Recipe")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             HStack(spacing: 12) {
                 Image(systemName: "fork.knife.circle.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(recipe.title ?? "Untitled Recipe")
@@ -91,14 +91,14 @@ struct DatePickerSheet: View {
                     if let source = recipe.sourceURL, !source.isEmpty {
                         Text(source)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .lineLimit(1)
                     }
                 }
             }
             .padding(12)
             .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(8)
+            .cornerRadius(ForagerTheme.Radius.sm)
         }
     }
     
@@ -110,7 +110,7 @@ struct DatePickerSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Servings")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             HStack {
                 Text("\(servings) servings")
@@ -123,13 +123,13 @@ struct DatePickerSheet: View {
             }
             .padding(12)
             .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(8)
+            .cornerRadius(ForagerTheme.Radius.sm)
             
             if servings != Int(recipe.servings) {
                 let scale = Double(servings) / Double(recipe.servings)
                 Text("Recipe will be scaled \(scale, specifier: "%.1f")x")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
     }
@@ -142,7 +142,7 @@ struct DatePickerSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select Date")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             if let plan = mealPlanService.activeMealPlan {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 12) {
@@ -161,7 +161,7 @@ struct DatePickerSheet: View {
                 VStack(spacing: 12) {
                     Text("No active meal plan")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     
                     Button {
                         createMealPlanAndAdd()
@@ -174,7 +174,7 @@ struct DatePickerSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(Color(UIColor.secondarySystemGroupedBackground))
-                .cornerRadius(8)
+                .cornerRadius(ForagerTheme.Radius.sm)
             }
         }
     }
@@ -252,17 +252,17 @@ struct DateButton: View {
                 if isOccupied {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption2)
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(isOccupied ? Color.gray.opacity(0.2) : Color.blue.opacity(0.1))
-            .foregroundColor(isOccupied ? .secondary : .blue)
-            .cornerRadius(8)
+            .background(isOccupied ? ForagerTheme.textTertiary.opacity(0.2) : ForagerTheme.accentPrimary.opacity(0.1))
+            .foregroundStyle(isOccupied ? ForagerTheme.textSecondary : ForagerTheme.accentPrimary)
+            .cornerRadius(ForagerTheme.Radius.sm)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isToday ? Color.blue : Color.clear, lineWidth: 2)
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                    .stroke(isToday ? ForagerTheme.accentPrimary : Color.clear, lineWidth: 2)
             )
         }
         .disabled(isOccupied)
