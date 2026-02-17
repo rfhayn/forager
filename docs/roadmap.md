@@ -1071,61 +1071,73 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🚀 M15: UX Design System & Visual Refresh - ACTIVE** 🎨
 
-**Status**: 🚀 Active (design phase complete, implementation starting)
-**Estimated Time**: 50-70 hours total
+**Status**: 🚀 Active (planning complete, M15.1 implementation next)
+**Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
-**Design Artifacts**: PRD v1.1, 16 phone-frame mockups, 5-phase design review complete
+**Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
 **PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
+**Implementation Plans**: [docs/prds/active/plans/](prds/active/plans/) — 8 detailed plans, cross-validated against codebase APIs, reviewed by Gemini + ChatGPT
 
-**Overview**: Comprehensive visual refresh with warm color palette, custom typography, and full iOS 26 Liquid Glass adoption. Raises deployment target from iOS 18 to iOS 26. Replaces custom bottom navigation with native Liquid Glass TabView.
+**Overview**: Comprehensive visual refresh with warm earth-tone palette, SF Pro Rounded typography, and full iOS 26 Liquid Glass adoption. Raises deployment target from iOS 18 to iOS 26. Replaces custom bottom navigation with native Liquid Glass TabView. Sequential 8-phase execution: M15.1 → M15.2 → M15.3 → M15.4 → M15.5 → M15.5b → M15.6 → M15.7.
 
 **Phase Breakdown:**
 
-**M15.1: Design System Foundation & Liquid Glass TabView (8-10 hours)**
+**M15.1: Design System Foundation & Liquid Glass TabView (~8h)**
 - ForagerTheme.swift with semantic color tokens (38 Asset Catalog adaptive color sets)
-- Typography system (SF Pro Rounded UI, New York serif for recipes)
+- Typography system (SF Pro Rounded for chrome, system default for body — single font family)
 - Raise deployment target from iOS 18 to iOS 26
-- Replace CustomBottomNavigation with native Liquid Glass TabView
-- Remove HamburgerMenuModifier (Settings/Categories become standard tabs)
+- Replace CustomBottomNavigation with native Liquid Glass TabView (5 tabs)
+- Remove HamburgerMenuModifier
+- Update coach marks for 5-tab navigation
+- Add Ingredients + Categories links to Settings tab
 
-**M15.2: Color & Typography Migration (8-10 hours)**
-- Apply semantic color tokens across all views
-- Implement typography scale with dynamic type support
+**M15.2: Color & Typography Migration (~7h)**
+- Apply semantic color tokens across all views (skip 6 files rewritten by M15.3-M15.5)
+- Implement typography scale
 - Border and divider system migration
 - Category color system (11 colors with light/dark variants)
 
-**M15.3: Grocery Lists UX Overhaul (8-10 hours)**
-- Smart sorting toggle (category/priority)
-- Enhanced swipe actions with SF Symbols
-- Progress bar redesign with semantic colors
-- Quick-add field redesign
+**M15.3: Grocery Lists UX Overhaul (~10h)**
+- Shared components: ForagerCard, ProgressRing, SectionHeader, CategoryChipPills, FilterPill, ButtonStyles
+- Card-based list overview with progress rings
+- Sticky bottom progress bar + quick-add
+- Collapsible category sections with auto-collapse
+- Check-off haptics + animation
+- 100% completion celebration
 
-**M15.4: Recipes UX Overhaul (6-8 hours)**
-- Card-based recipe list with hero images
-- Structured recipe detail with tabbed sections
-- Glass-effect floating action buttons
-- Enhanced search with filter chips
+**M15.4: Recipes UX Overhaul (~8h)**
+- Card-based recipe list with timing pills and filter pills
+- Hero detail header with simplified nav
+- Inline scale pills (0.5×–3×) replacing modal scaling sheet
+- Left-justified ingredients with monospaced digits
+- Dynamic CTA and numbered instructions
 
-**M15.5: Meal Plans & Ingredients UX (6-8 hours)**
-- Horizontal day strip calendar
-- Drag-and-drop meal reordering
-- Ingredient library cards with usage indicators
-- Category management visual refresh
+**M15.5: Meal Plans & Ingredients UX (~9h)**
+- Core Data v6 migration (quickOption field on PlannedMeal)
+- Summary cards with day dots + "Tonight" snippet
+- Horizontal day strip with action buttons + quick-select pills
+- Ingredient category filter pills + sort toolbar
+- Guided ingredient review sheet
 
-**M15.6: Liquid Glass Polish & App Icon (6-8 hours)**
-- `.glassEffect()` on toolbars, sheets, and floating elements
-- `.tabBarMinimizeBehavior(.onScrollDown)` for content-first scrolling
-- `tabViewBottomAccessory` for contextual actions
-- `Tab(role: .search)` for native search integration
-- Layered app icon via Icon Composer (glass-over-sprout)
+**M15.5b: Settings, Categories & Household Visual Redesign (~3.5h)**
+- Extract HouseholdView from SettingsView with sync indicator + stats + Danger Zone
+- SettingsView restructure with NavigationLink to HouseholdView + version footer
+- ManageCategoriesView: nav bar "+", Uncategorized lock icon, footer text
 
-**M15.7: Dark Mode, Accessibility & Final QA (6-10 hours)**
-- Dark mode audit of all 38 color tokens
-- WCAG AA contrast verification (all pairings ≥ 4.5:1 text, ≥ 3:1 UI)
-- Dynamic Type audit (all text scales correctly)
-- VoiceOver audit and reduce-motion support
-- Haptic feedback integration
-- Cross-screen regression testing
+**M15.6: Liquid Glass Polish & App Icon (~8h)**
+- Glass card modifiers + shadow removal
+- Per-screen glass application (grocery, recipe, meal plan, ingredients)
+- Button glass styling evaluation
+- Tab bar refinement
+- Layered app icon via Icon Composer
+
+**M15.7: Dark Mode, Accessibility & Final QA (~10h)**
+- Dark mode walkthrough (tonal elevation, category colors, glass+dark)
+- Empty state replacement (ContentUnavailableView)
+- VoiceOver audit, Dynamic Type audit, Reduce Motion audit
+- Glass contrast WCAG verification
+- Performance profiling (60fps target)
+- Final testing matrix + all 5 core docs update
 
 **Success Criteria:**
 - [ ] All views use ForagerTheme semantic tokens (zero hard-coded colors)
@@ -1444,7 +1456,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.1 Design System Foundation & Liquid Glass TabView
+**Next Action**: M15.1 implementation — detailed plan at `docs/prds/active/plans/m15.1-implementation-plan.md`
 
 **Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h). Total: ~190 hours. TestFlight live, M15 design complete, ready to implement.
 
