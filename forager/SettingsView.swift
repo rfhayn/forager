@@ -857,8 +857,10 @@ struct SafariView: UIViewControllerRepresentable {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-            .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
+        NavigationStack {
+            SettingsView()
+        }
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
     }
 }
