@@ -174,7 +174,7 @@ Model has 5 versions (v1-v5, current is v5). Before changing schema, read `docs/
 
 **Design rules during M15:**
 - Use `ForagerTheme` semantic color tokens — never hardcode colors
-- Typography: SF Pro Rounded for UI, New York serif for recipe content
+- Typography: Single font family — SF Pro Rounded for chrome, system default for body text. No serif. See PRD §4.2.1.
 - All color pairings must meet WCAG AA (≥ 4.5:1 text, ≥ 3:1 UI elements)
 - Check mockups before implementing any screen — the design is already decided
 

@@ -903,15 +903,26 @@ See Section 4.5.3. All animations respect `accessibilityReduceMotion`.
 | Phase | Description | Est. Hours | Dependencies |
 |-------|-------------|-----------|-------------|
 | **M15.1** | Design System Foundation + Liquid Glass TabView | 8-10h | M7.7 complete |
-| **M15.2** | Color & Typography Migration | 8-10h | M15.1 |
-| **M15.3** | Grocery Lists UX | 8-10h | M15.2 |
-| **M15.4** | Recipes UX | 6-8h | M15.2 |
-| **M15.5** | Meal Plans & Ingredients UX | 6-8h | M15.2 |
-| **M15.6** | Liquid Glass Polish & App Icon | 6-8h | M15.3-M15.5 |
-| **M15.7** | Dark Mode, Accessibility & Final QA | 6-10h | M15.6 |
-| **Total** | | **48-64h** | |
+| **M15.2** | Color & Typography Migration | 7-8h | M15.1 |
+| **M15.3** | Grocery Lists UX + Shared Components | 10h | M15.2 |
+| **M15.4** | Recipes UX | 8h | M15.3 |
+| **M15.5** | Meal Plans & Ingredients UX | 9h | M15.4 |
+| **M15.5b** | Settings, Categories & Household Redesign | 3.5h | M15.5 |
+| **M15.6** | Liquid Glass Polish & App Icon | 8h | M15.5b |
+| **M15.7** | Dark Mode, Accessibility & Final QA | 10h | M15.6 |
+| **Total** | | **63-65h** | |
 
-M15.3, M15.4, and M15.5 can be worked in any order after M15.2 is complete.
+Phases are **sequential** (M15.1 → M15.2 → M15.3 → M15.4 → M15.5 → M15.5b → M15.6 → M15.7). M15.3 creates shared components (ForagerCard, FilterPill, ButtonStyles) that M15.4+ depend on. M15.5b was added during aggregate review to cover the Settings/Categories/Household redesigns from §6.5.
+
+**Implementation plan details**: See `docs/prds/active/plans/m15.*.md` for sub-phase breakdowns, code snippets, and risk analysis.
+
+**Key planning decisions (aggregate review)**:
+- M15.2 skips token migration on 6 files rewritten by M15.3-M15.5 (saves ~3h)
+- All card-based layouts use `List` + `.listRowBackground()` (not ScrollView) to preserve `.swipeActions()`
+- M15.5 adds `quickOption: String?` to PlannedMeal (Core Data v6) for Takeout/Dining Out/Leftovers/No Meal pills
+- CreateRecipeView redesign (§6.2) deferred to post-M15
+- Search view redesign (§6.6) deferred — existing UnifiedSearchView is functional
+- New 4-screen onboarding (§6.7) deferred — existing coach mark system updated in M15.1
 
 ---
 
