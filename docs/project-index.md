@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.5 - Meal Plans & Ingredients UX
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.5b - Settings, Categories & Household Visual Redesign
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,19 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15.5 Meal Plans & Ingredients UX COMPLETE ✅
+- **Completed**: M15.5 — Core Data v6 + meal plan cards + day strip + ingredients overhaul
+- **Key Deliverables**:
+  - Core Data v6 migration: `quickOption` on PlannedMeal with QuickOption enum
+  - MealPlansListView: summary cards with day dots, Tonight snippet, Generate button
+  - MealPlanDetailView: horizontal day strip, action buttons (Done/Swap/Remove), quick-select pills
+  - IngredientsView: category filter pills, sort toolbar, category-colored left-border strips
+  - IngredientReviewSheet: guided one-at-a-time triage with progress, reason badges, Save & Next / Skip
+  - Review banner + staples summary header
+- **Files**: 3 rewritten (MealPlanListView, MealPlanDetailView, IngredientsView), 4 modified
+- **Builds**: 5 clean builds (one per sub-phase)
+- **Next**: M15.5b Settings, Categories & Household Visual Redesign
 
 ### **February 17, 2026** - M15.4 Recipes UX Overhaul COMPLETE ✅
 - **Completed**: M15.4 — Card-based recipe list + full detail view rewrite

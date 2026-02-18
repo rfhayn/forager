@@ -1,11 +1,60 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 🚀 **NEXT** | M7.7 📋 **READY**
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 ✅ **COMPLETE** | M15.5b 🚀 **NEXT** | M7.7 📋 **READY**
 **Total Progress**: ~200 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.5: MEAL PLANS & INGREDIENTS UX - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Complete UX overhaul of meal plans and ingredients views — from flat lists to card-based layouts with day dots, horizontal day strip, quick-select pills, category filter pills, and guided ingredient review.
+
+**Sub-Phases Completed:**
+- **A.0**: Core Data v6 migration — added `quickOption: String?` to PlannedMeal entity with `QuickOption` enum (Takeout, Dining Out, Leftovers, No Meal)
+- **A**: MealPlansListView rewritten — summary cards with lettered day dots, Tonight snippet (recipe or quick option), Generate Grocery List button on active plans, 4px green left border on active, 60% opacity on completed, DisclosureGroup for completed plans
+- **B**: MealPlanDetailView rewritten — horizontal day strip with ScrollViewReader auto-scroll to today, centered day headers with TODAY badge, planned/unplanned day cards, action buttons (Done with haptics / Swap / Remove with confirmation), recipe picker sheet, quick-select pills (Takeout/Dining Out/Leftovers/No Meal) with dashed border, sticky bottom "Add to Grocery List" button
+- **C**: IngredientsView overhauled — individual category filter pills replacing dropdown menu, sort moved to toolbar Menu, ForagerSectionHeader replacing emoji category headers, 4px category-colored left-border strip on rows, usage badge (Nx), "Staple" label, ForagerTheme tokens throughout
+- **D**: Ingredient review banner (warning background, count, "Review Now" button), guided review sheet (one-at-a-time triage with progress bar, reason badge, editable name, category Menu picker, staple toggle, Save & Next / Skip), staples summary header with count
+
+**Additional Changes:**
+- `PlannedMeal.QuickOption` enum with SF Symbol icons (bag, fork.knife, refrigerator, moon.zzz)
+- `MealPlanService.setQuickOption(_:for:in:)` for non-recipe day planning
+- `MealPlanSummaryCard` replaces `MealPlanRowView` (now dead code)
+- `MealPlanStatus` enum with ForagerTheme colors
+- `IngredientReviewSheet` with `reviewReason(for:)` explaining why each ingredient needs review
+
+### **Files Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager 6.xcdatamodel/contents` | CREATED | Core Data v6 — quickOption on PlannedMeal |
+| `PlannedMeal+CoreDataProperties.swift` | MODIFIED | +quickOption: String? |
+| `PlannedMeal+Extensions.swift` | MODIFIED | +QuickOption enum, isQuickOption, quickOptionEnum |
+| `Services/MealPlanService.swift` | MODIFIED | +setQuickOption method |
+| `forager/MealPlanListView.swift` | REWRITTEN | Summary cards with day dots, Tonight snippet |
+| `forager/MealPlanDetailView.swift` | REWRITTEN | Day strip, action buttons, recipe picker, quick-select |
+| `forager/IngredientsView.swift` | REWRITTEN | Category pills, sort toolbar, review banner/sheet |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | 5 clean builds (one per sub-phase) |
+| Core Data v6 | ✅ COMPILED | Lightweight migration, quickOption field |
+| Summary cards | ✅ COMPILED | Day dots, Tonight snippet, Generate button |
+| Day strip | ✅ COMPILED | ScrollViewReader, action buttons, quick-select |
+| Category pills | ✅ COMPILED | FilterPill per category, sort menu |
+| Review sheet | ✅ COMPILED | Progress bar, reason badge, category picker |
 
 ---
 
@@ -839,7 +888,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M15.2 | Color & Typography Migration | ✅ COMPLETE |
 | M15.3 | Grocery Lists UX Overhaul | ✅ COMPLETE |
 | M15.4 | Recipes UX Overhaul | ✅ COMPLETE |
-| M15.5 | Meal Plans & Ingredients UX | 6-8h |
+| M15.5 | Meal Plans & Ingredients UX | ✅ COMPLETE |
 | M15.6 | Liquid Glass Polish & App Icon | 6-8h |
 | M15.7 | Dark Mode, Accessibility & Final QA | 6-10h |
 
@@ -874,8 +923,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 complete
-**Next Action**: M15.5 - Meal Plans & Ingredients UX
+**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 + M15.5 complete
+**Next Action**: M15.5b - Settings, Categories & Household Visual Redesign
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, grocery + recipes overhaul delivered)
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, grocery + recipes + meals + ingredients overhaul delivered)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15
