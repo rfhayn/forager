@@ -224,6 +224,10 @@ struct WeeklyListsView: View {
                 }
                 return
             }
+        }, onSuccess: {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
+                isGeneratingList = false
+            }
         }, onError: { error in
             DispatchQueue.main.async {
                 errorMessage = "Failed to generate list: \(error.localizedDescription)"
@@ -231,12 +235,6 @@ struct WeeklyListsView: View {
                 isGeneratingList = false
             }
         })
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
-                isGeneratingList = false
-            }
-        }
     }
 
     private func generateListFromMealPlan(_ plan: MealPlan) {
@@ -246,10 +244,9 @@ struct WeeklyListsView: View {
 
         MealPlanService.shared.generateGroceryList(from: plan)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
-                isGeneratingList = false
-            }
+        // MealPlanService.generateGroceryList uses viewContext (synchronous)
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
+            isGeneratingList = false
         }
     }
 

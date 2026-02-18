@@ -346,18 +346,22 @@ final class PersistenceController: ObservableObject {
     /// Perform write operation on background context with error handling
     func performWrite(
         _ block: @escaping (NSManagedObjectContext) -> Void,
+        onSuccess: (() -> Void)? = nil,
         onError: ((Error) -> Void)? = nil
     ) {
         container.performBackgroundTask { context in
             context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
             block(context)
-            
+
             if context.hasChanges {
                 do {
                     try context.save()
                     #if DEBUG
                     print("✅ M7.2.3: Background context saved successfully")
                     #endif
+                    DispatchQueue.main.async {
+                        onSuccess?()
+                    }
                 } catch {
                     #if DEBUG
                     print("❌ M7.2.3: Background save failed: \(error)")
@@ -365,6 +369,10 @@ final class PersistenceController: ObservableObject {
                     DispatchQueue.main.async {
                         onError?(error)
                     }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    onSuccess?()
                 }
             }
         }
