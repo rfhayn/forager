@@ -89,32 +89,17 @@ struct WeeklyListsView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: ForagerTheme.Spacing.xl) {
-            Image(systemName: "list.clipboard")
-                .font(.system(size: 60))
-                .foregroundStyle(ForagerTheme.accentPrimary)
-
-            VStack(spacing: ForagerTheme.Spacing.md) {
-                Text("No Grocery Lists")
-                    .font(ForagerTheme.cardTitle)
-
-                Text("Create your first list to start shopping!")
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
+        ContentUnavailableView {
+            Label("No Grocery Lists", systemImage: "cart")
+        } description: {
+            Text("Create your first list to start shopping")
+        } actions: {
+            Button("New List", systemImage: "plus.circle.fill") {
+                showingCreateOptions = true
             }
-
-            Button(action: { showingCreateOptions = true }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("New List")
-                }
-            }
-            .buttonStyle(ForagerPrimaryButtonStyle())
+            .buttonStyle(.borderedProminent)
+            .tint(ForagerTheme.accentPrimary)
             .disabled(isGeneratingList)
-
-            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

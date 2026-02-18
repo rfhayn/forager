@@ -76,14 +76,17 @@ struct MealPlansListView: View {
             ForagerTheme.backgroundCanvas.ignoresSafeArea()
 
             if allMealPlans.isEmpty {
-                StandardEmptyStateView(
-                    iconName: "calendar.badge.plus",
-                    title: "No Meal Plans Yet",
-                    subtitle: "Start organizing your weekly meals!",
-                    buttonIcon: "calendar.badge.plus",
-                    buttonText: "Create Meal Plan",
-                    buttonAction: { showingCreateSheet = true }
-                )
+                ContentUnavailableView {
+                    Label("Plan Your Week's Meals", systemImage: "calendar.badge.plus")
+                } description: {
+                    Text("Create a meal plan to organize your weekly cooking")
+                } actions: {
+                    Button("Create Your First Plan", systemImage: "calendar.badge.plus") {
+                        showingCreateSheet = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForagerTheme.accentPrimary)
+                }
             } else {
                 ScrollView {
                     LazyVStack(spacing: ForagerTheme.Spacing.md) {

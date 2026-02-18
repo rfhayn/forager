@@ -405,14 +405,11 @@ struct IngredientsView: View {
     
     // MARK: - Empty State View
     private var emptyStateView: some View {
-        StandardEmptyStateView(
-            iconName: "leaf.circle",
-            title: "No Ingredients Found",
-            subtitle: "Start adding ingredients to your collection!",
-            buttonIcon: "plus.circle.fill",
-            buttonText: "Add First Ingredient",
-            buttonAction: { showingAddForm = true }
-        )
+        ContentUnavailableView {
+            Label("No Ingredients", systemImage: "leaf")
+        } description: {
+            Text("Ingredients appear here as you add recipes and grocery items")
+        }
     }
     
     // MARK: - Computed Properties

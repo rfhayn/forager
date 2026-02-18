@@ -152,45 +152,17 @@ struct UnifiedSearchView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 64))
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .padding(.top, 60)
-
-            Text("Search Everything")
-                .font(.title2)
-                .fontWeight(.semibold)
-
+        ContentUnavailableView {
+            Label("Search Everything", systemImage: "magnifyingglass")
+        } description: {
             Text("Find lists, ingredients, recipes, and meal plans")
-                .font(.subheadline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-
-            Spacer()
         }
     }
 
     // MARK: - No Results
 
     private var noResultsView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 64))
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .padding(.top, 60)
-
-            Text("No Results")
-                .font(.title2)
-                .fontWeight(.semibold)
-
-            Text("Try a different search term")
-                .font(.subheadline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-
-            Spacer()
-        }
+        ContentUnavailableView.search(text: searchText)
     }
 
     // MARK: - Search Results

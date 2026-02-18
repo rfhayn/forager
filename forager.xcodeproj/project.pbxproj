@@ -25,7 +25,6 @@
 		9B05554F2EDB665C00A57B34 /* EditRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555292EDB665C00A57B34 /* EditRecipeView.swift */; };
 		9B0555502EDB665C00A57B34 /* SelectListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */; };
 		9B0555512EDB665C00A57B34 /* EmptyMealPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552B2EDB665C00A57B34 /* EmptyMealPlanView.swift */; };
-		9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */; };
 		9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552F2EDB665C00A57B34 /* foragerApp.swift */; };
 		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
 		A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */; };
@@ -182,7 +181,6 @@
 		9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectListSheet.swift; sourceTree = "<group>"; };
 		9B05553D2EDB665C00A57B34 /* SelectMealPlanSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectMealPlanSheet.swift; sourceTree = "<group>"; };
 		9B05553E2EDB665C00A57B34 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardEmptyStateView.swift; sourceTree = "<group>"; };
 		9B0555402EDB665C00A57B34 /* WeeklyListsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyListsView.swift; sourceTree = "<group>"; };
 		9B0555422EDB665C00A57B34 /* forager.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = forager.xcdatamodel; sourceTree = "<group>"; };
 		9B0555702EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITests.swift; sourceTree = "<group>"; };
@@ -356,7 +354,6 @@
 				9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */,
 				9B05553D2EDB665C00A57B34 /* SelectMealPlanSheet.swift */,
 				9B05553E2EDB665C00A57B34 /* SettingsView.swift */,
-				9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */,
 				9B0555402EDB665C00A57B34 /* WeeklyListsView.swift */,
 			);
 			path = forager;
@@ -649,7 +646,6 @@
 				9B05554F2EDB665C00A57B34 /* EditRecipeView.swift in Sources */,
 				9B0555502EDB665C00A57B34 /* SelectListSheet.swift in Sources */,
 				9B0555512EDB665C00A57B34 /* EmptyMealPlanView.swift in Sources */,
-				9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */,
 				9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */,
 				808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */,
 				A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */,

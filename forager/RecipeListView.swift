@@ -252,70 +252,39 @@ struct RecipeListView: View {
     @ViewBuilder
     private var enhancedEmptyStateView: some View {
         if searchText.isEmpty && activeFilter == .all {
-            #if DEBUG
-            StandardEmptyStateView(
-                iconName: "book.closed",
-                title: "No Recipes Yet",
-                subtitle: "Start building your recipe collection!",
-                buttonIcon: "plus.circle.fill",
-                buttonText: "Generate Test Recipes",
-                buttonAction: createSampleRecipe
-            )
-            #else
-            StandardEmptyStateView(
-                iconName: "book.closed",
-                title: "No Recipes Yet",
-                subtitle: "Start building your recipe collection!",
-                buttonIcon: "plus.circle.fill",
-                buttonText: "Add Recipe",
-                buttonAction: { showingAddRecipe = true }
-            )
-            #endif
-        } else if !searchText.isEmpty {
-            VStack(spacing: ForagerTheme.Spacing.xl) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 60))
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-
-                VStack(spacing: ForagerTheme.Spacing.sm) {
-                    Text("No Matches Found")
-                        .font(ForagerTheme.cardTitle)
-
-                    Text("No recipes found for \"\(searchText)\"")
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                        .multilineTextAlignment(.center)
-
-                    Text("Try searching for recipe names, ingredients, or cooking methods")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .multilineTextAlignment(.center)
+            ContentUnavailableView {
+                Label("No Recipes Yet", systemImage: "book.closed.fill")
+            } description: {
+                Text("Add your favorite recipes to plan meals and generate grocery lists")
+            } actions: {
+                #if DEBUG
+                Button("Generate Test Recipes", systemImage: "plus.circle.fill") {
+                    createSampleRecipe()
                 }
-
-                Button("Clear Search") { searchText = "" }
-                    .buttonStyle(ForagerSecondaryButtonStyle())
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+                #else
+                Button("Create Recipe", systemImage: "plus.circle.fill") {
+                    showingAddRecipe = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+                #endif
             }
-            .padding()
+        } else if !searchText.isEmpty {
+            ContentUnavailableView.search(text: searchText)
         } else {
             // Filter-specific empty state (e.g. no favorites)
-            VStack(spacing: ForagerTheme.Spacing.xl) {
-                Image(systemName: activeFilter == .favorites ? "heart" : "clock")
-                    .font(.system(size: 60))
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-
-                VStack(spacing: ForagerTheme.Spacing.sm) {
-                    Text(activeFilter == .favorites ? "No Favorites" : "No Recent Recipes")
-                        .font(ForagerTheme.cardTitle)
-
-                    Text(activeFilter == .favorites
-                         ? "Heart a recipe to see it here"
-                         : "Mark recipes as made to see them here")
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
+            ContentUnavailableView {
+                Label(
+                    activeFilter == .favorites ? "No Favorites" : "No Recent Recipes",
+                    systemImage: activeFilter == .favorites ? "heart" : "clock"
+                )
+            } description: {
+                Text(activeFilter == .favorites
+                     ? "Heart a recipe to see it here"
+                     : "Mark recipes as made to see them here")
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
     
