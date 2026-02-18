@@ -270,6 +270,7 @@ struct MealPlanDetailView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
             }
+            .accessibilityHint("Mark this meal as completed")
 
             // Swap
             Button {
@@ -292,6 +293,7 @@ struct MealPlanDetailView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
             }
+            .accessibilityHint("Change the recipe for this meal")
 
             // Remove
             Button {
@@ -309,6 +311,7 @@ struct MealPlanDetailView: View {
                     )
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
             }
+            .accessibilityHint("Remove this meal from the plan")
         }
     }
 
@@ -355,6 +358,8 @@ struct MealPlanDetailView: View {
                         .background(ForagerTheme.backgroundSecondary)
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                     }
+                    .accessibilityLabel(option.rawValue)
+                    .accessibilityHint("Set this day to \(option.rawValue)")
                 }
             }
         }

@@ -355,6 +355,8 @@ struct WeeklyListRowView: View {
             }
         }
         .foragerGlassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(weeklyList.name ?? "Unnamed List"), \(completedItemsCount) of \(totalItemsCount) items checked")
     }
 }
 

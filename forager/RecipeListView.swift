@@ -347,6 +347,8 @@ struct RecipeListView: View {
                             isSelected: activeFilter == filter
                         )
                     }
+                    .accessibilityLabel("\(filter.title) filter")
+                    .accessibilityValue(activeFilter == filter ? "Selected" : "Not selected")
                 }
             }
             .padding(.horizontal, ForagerTheme.Spacing.lg)
@@ -900,6 +902,9 @@ struct RecipeCardView: View {
             }
         }
         .foragerGlassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
+        .accessibilityHint("Double tap to view recipe")
     }
 
     private func timingPill(icon: String, text: String) -> some View {
@@ -1166,6 +1171,8 @@ struct RecipeDetailView: View {
                             .background(scaleFactor == scale ? ForagerTheme.accentPrimary : ForagerTheme.backgroundSecondary)
                             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                     }
+                    .accessibilityLabel("Scale recipe to \(scaleLabel(scale))")
+                    .accessibilityValue(scaleFactor == scale ? "Selected" : "Not selected")
                 }
 
                 // Custom scale button
@@ -1257,6 +1264,8 @@ struct RecipeDetailView: View {
             Spacer()
         }
         .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(scaledDisplayText(for: ingredient) ?? "") \(ingredient.name ?? "Unknown")")
     }
 
     private func scaledDisplayText(for ingredient: Ingredient) -> String? {

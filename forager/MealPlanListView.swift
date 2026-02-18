@@ -268,6 +268,9 @@ struct MealPlanSummaryCard: View {
         }
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(mealPlan.name ?? "Unnamed Plan"), \(dateRangeText), \(plannedMeals.count) of \(Int(mealPlan.duration)) days planned")
+        .accessibilityHint("Double tap to open meal plan")
     }
 
     // MARK: - Day Dots
@@ -292,6 +295,8 @@ struct MealPlanSummaryCard: View {
                     )
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Weekly schedule: \(plannedMeals.count) days planned")
     }
 
     // MARK: - Tonight Snippet

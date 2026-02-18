@@ -176,6 +176,8 @@ struct GroceryListDetailView: View {
             quickAddBar
         }
         .background(.regularMaterial)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Shopping progress and quick add")
     }
 
     private var progressBarColor: Color {
@@ -198,6 +200,8 @@ struct GroceryListDetailView: View {
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
+                    .accessibilityLabel("Quick add item")
+                    .accessibilityHint("Type an ingredient to add to the list")
                     .onChange(of: quickAddText) { _, newValue in
                         if newValue.count >= 2 {
                             autocompleteService.debouncedSearch(fullText: newValue)
@@ -351,6 +355,7 @@ struct GroceryListDetailView: View {
         .background(ForagerTheme.surfaceSuccess)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
         .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .accessibilityLabel("All done! Shopping list complete")
     }
 
     // MARK: - Toolbar
@@ -663,6 +668,10 @@ struct GroceryListItemRow: View {
         .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : .clear)
         .contentShape(Rectangle())
         .animation(.easeInOut(duration: 0.3), value: item.isCompleted)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.name ?? "Unknown Item")
+        .accessibilityValue(item.isCompleted ? "Checked" : "Unchecked")
+        .accessibilityHint("Double tap to \(item.isCompleted ? "uncheck" : "check off") this item")
     }
 
     private func sourceDisplayText(_ source: String) -> String {

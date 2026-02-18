@@ -260,6 +260,8 @@ struct IngredientsView: View {
                             size: .regular
                         )
                     }
+                    .accessibilityLabel("\(categoryName) filter")
+                    .accessibilityValue(selectedCategory == categoryName ? "Selected" : "Not selected")
                 }
 
                 // Staples filter
@@ -328,6 +330,9 @@ struct IngredientsView: View {
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
         .padding(.horizontal, ForagerTheme.Spacing.lg)
         .padding(.vertical, ForagerTheme.Spacing.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(needsReviewCount) ingredients need review")
+        .accessibilityHint("Double tap Review Now to start guided review")
     }
 
     // MARK: - M15.5: Staples Summary Header
@@ -704,6 +709,8 @@ struct IngredientRowView: View {
             }
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(ingredient.name ?? "Unknown"), \(ingredient.category ?? "Uncategorized")\(ingredient.isStaple ? ", staple" : "")")
         .alert("Error", isPresented: $showingError) {
             Button("OK") {
                 showingError = false
