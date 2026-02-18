@@ -948,135 +948,126 @@ struct RecipeCardView: View {
     }
 }
 
-// MARK: - M3 PHASE 4: RecipeDetailView with Scaling Integration - M3.5: USES COMPUTED PROPERTIES
+// MARK: - M15.4: RecipeDetailView — Hero Header, Inline Scale Pills, Flat Ingredients
 
 struct RecipeDetailView: View {
     @ObservedObject var recipe: Recipe
     @Environment(\.managedObjectContext) private var viewContext
-    
-    @FetchRequest(
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
-            NSSortDescriptor(keyPath: \Category.name, ascending: true)
-        ]
-    ) private var categories: FetchedResults<Category>
-    
+
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
     @State private var showingEditSheet = false
-    
-    // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
-    
-    // M3 PHASE 4: Recipe Scaling State
-    @State private var showingScalingSheet = false
-    private let scalingService: RecipeScalingService
+    @State private var showingDeleteConfirmation = false
 
-    // M3 PHASE 4: Initialize scaling service
+    // M15.4: Inline scaling state (replaces modal RecipeScalingView)
+    @State private var scaleFactor: Double = 1.0
+    @State private var showCustomScalePicker = false
+    @State private var customWhole = 1
+    @State private var customFraction = 0.0
+
+    private let scalingService: RecipeScalingService
+    private let presetScales: [Double] = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    private let fractionOptions: [(String, Double)] = [
+        ("—", 0), ("¼", 0.25), ("⅓", 0.33), ("½", 0.5), ("⅔", 0.67), ("¾", 0.75)
+    ]
+
     init(recipe: Recipe) {
         self.recipe = recipe
         self.scalingService = RecipeScalingService(
             context: PersistenceController.shared.container.viewContext
         )
     }
-    
-    private var groupedIngredients: [String: [Ingredient]] {
-        guard let ingredientsSet = recipe.ingredients else { return [:] }
-        let ingredientsList = Array(ingredientsSet) as! [Ingredient]
-        
-        return Dictionary(grouping: ingredientsList) { ingredient in
-            ingredient.ingredientTemplate?.category ?? "Uncategorized"
-        }
-    }
-    
-    private var sortedCategoryNames: [String] {
-        let categoryOrder = categories.compactMap { $0.name }
-        var sortedNames = groupedIngredients.keys.sorted()
-        
-        sortedNames.sort { first, second in
-            let firstIndex = categoryOrder.firstIndex(of: first) ?? Int.max
-            let secondIndex = categoryOrder.firstIndex(of: second) ?? Int.max
-            return firstIndex < secondIndex
-        }
-        
-        return sortedNames
-    }
-    
+
+    // MARK: - Computed Properties
+
     private var hasIngredients: Bool {
-        return !(groupedIngredients.isEmpty)
+        guard let set = recipe.ingredients else { return false }
+        return !set.allObjects.isEmpty
     }
-    
+
+    private var sortedIngredients: [Ingredient] {
+        guard let set = recipe.ingredients else { return [] }
+        return (Array(set) as! [Ingredient]).sorted { ($0.sortOrder) < ($1.sortOrder) }
+    }
+
+    private var scaledIngredients: [ScaledIngredient]? {
+        guard scaleFactor != 1.0 else { return nil }
+        return scalingService.scale(recipe: recipe, scaleFactor: scaleFactor).scaledIngredients
+    }
+
+    private var dynamicServings: Int {
+        Int(Double(recipe.servings) * scaleFactor)
+    }
+
+    private var ctaLabel: String {
+        if scaleFactor == 1.0 {
+            return "Add to Grocery List"
+        } else {
+            return "Add to Grocery List · \(dynamicServings) servings"
+        }
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
                 recipeHeaderSection
-                
-                if recipe.hasRecipeTiming {
-                    timingSection
-                }
-                
-                usageAnalyticsSection
-                
+
                 ingredientsSection
-                
+
                 if let instructions = recipe.instructions, !instructions.isEmpty {
                     instructionsSection(instructions)
                 }
+
+                usageFooter
             }
             .padding()
         }
+        .background(ForagerTheme.backgroundCanvas)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                // M3 PHASE 4: Scaling button
-                Button(action: {
-                    showingScalingSheet = true
-                }) {
-                    Image(systemName: "slider.horizontal.3")
-                }
-                
-                Button(action: {
-                    showingMarkUsedConfirmation = true
-                }) {
-                    Image(systemName: "checkmark.circle")
-                }
-                
-                // M4.2: Add to Meal Plan menu
-                Menu {
-                    Button {
-                        showingMealPlanSheet = true
-                    } label: {
-                        Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Button { showingEditSheet = true } label: {
+                        Text("Edit")
+                            .font(ForagerTheme.secondaryFont)
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-                
-                Button(action: {
-                    showingEditSheet = true
-                }) {
-                    Image(systemName: "pencil")
+                    Menu {
+                        Button { showingMealPlanSheet = true } label: {
+                            Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
+                        }
+                        Button { showingMarkUsedConfirmation = true } label: {
+                            Label("Mark as Made", systemImage: "checkmark.circle")
+                        }
+                        Divider()
+                        Button(role: .destructive) { showingDeleteConfirmation = true } label: {
+                            Label("Delete Recipe", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
                 }
             }
         }
         .confirmationDialog("Mark Recipe as Used?", isPresented: $showingMarkUsedConfirmation) {
             Button("Yes, Mark as Used") {
-                // M3.5: Use recordRecipeUsage() convenience method
                 recipe.recordRecipeUsage()
-                do {
-                    try viewContext.save()
-                    #if DEBUG
-                    print("Recipe marked as used successfully")
-                    #endif
-                } catch {
-                    #if DEBUG
-                    print("Error marking recipe as used: \(error)")
-                    #endif
-                }
+                try? viewContext.save()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will increment the usage count and update the last used date.")
+        }
+        .confirmationDialog("Delete Recipe?", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                viewContext.delete(recipe)
+                try? viewContext.save()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
         }
         .sheet(isPresented: $showingAddToListSheet) {
             if hasIngredients {
@@ -1086,311 +1077,306 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $showingEditSheet) {
             EditRecipeView(recipe: recipe, context: viewContext)
         }
-        .sheet(isPresented: $showingScalingSheet) {
-            RecipeScalingView(recipe: recipe, scalingService: scalingService)
-        }
-        // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
         .sheet(isPresented: $showingMealPlanSheet) {
             SelectMealPlanSheet(recipe: recipe) { plan, date in
-                // M4.2.4: Add recipe to selected plan and date
-                // Recipe tracking now happens in MealPlanService.addRecipeToMealPlan
                 if let _ = MealPlanService.shared.addRecipeToMealPlan(
                     recipe: recipe,
                     date: date,
                     mealPlan: plan
                 ) {
                     #if DEBUG
-                    print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
-                    #endif
-                } else {
-                    #if DEBUG
-                    print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
+                    print("Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
                     #endif
                 }
             }
         }
+        .sheet(isPresented: $showCustomScalePicker) {
+            customScalePickerSheet
+        }
     }
-    
-    // MARK: - View Components
-    
+
+    // MARK: - Hero Header
+
     private var recipeHeaderSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
             HStack {
-                // M3.5: Use recipeDisplayTitle
                 Text(recipe.recipeDisplayTitle)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .lineLimit(2)
-                
+                    .font(ForagerTheme.detailTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineLimit(3)
+
                 Spacer()
-                
+
                 if recipe.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                        .font(.title2)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
+                        .font(.title3)
                 }
             }
-            
-            // M3.5: Use recipeServingsDescription (no need for conditional)
-            HStack {
-                Image(systemName: "person.2")
-                    .foregroundColor(.secondary)
-                Text(recipe.recipeServingsDescription)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+
+            // Compact timing row
+            if recipe.hasRecipeTiming {
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    if recipe.prepTime > 0 {
+                        Label(recipe.recipeFormattedPrepTime, systemImage: "clock")
+                    }
+                    if recipe.cookTime > 0 {
+                        Label(recipe.recipeFormattedCookTime, systemImage: "flame")
+                    }
+                    if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
+                        Label(recipe.recipeFormattedTotalTime, systemImage: "timer")
+                    }
+                }
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
             }
+
+            Text(recipe.recipeServingsDescription)
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
-    
-    private var timingSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Timing")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            HStack(spacing: 20) {
-                if recipe.prepTime > 0 {
-                    VStack {
-                        Image(systemName: "clock")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                        Text("Prep")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedPrepTime
-                        Text(recipe.recipeFormattedPrepTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                if recipe.cookTime > 0 {
-                    VStack {
-                        Image(systemName: "flame")
-                            .font(.title2)
-                            .foregroundColor(.orange)
-                        Text("Cook")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedCookTime
-                        Text(recipe.recipeFormattedCookTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                if recipe.prepTime > 0 && recipe.cookTime > 0 {
-                    VStack {
-                        Image(systemName: "timer")
-                            .font(.title2)
-                            .foregroundColor(.green)
-                        Text("Total")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedTotalTime
-                        Text(recipe.recipeFormattedTotalTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                Spacer()
-            }
-        }
-    }
-    
-    private var usageAnalyticsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Usage")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            HStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "chart.bar")
-                            .foregroundColor(.blue)
-                        Text("Times Made")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Text("\(recipe.usageCount)")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.green)
-                        Text("Last Used")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // M3.5: Use recipeLastUsedDescription
-                    Text(recipe.recipeLastUsedDescription)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                }
-                
-                Spacer()
-            }
-        }
-    }
-    
+
+    // MARK: - Ingredients Section with Scale Pills
+
     private var ingredientsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Section header with dynamic servings
             HStack {
-                Text("Ingredients")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
+                Text("INGREDIENTS")
+                    .font(ForagerTheme.footnoteFont)
+                    .tracking(0.5)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+
                 Spacer()
-                
-                Button(action: {
-                    showingAddToListSheet = true
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "cart.badge.plus")
-                        Text("Add to List")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
+
+                if scaleFactor != 1.0 {
+                    Text("\(dynamicServings) servings")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
-                .disabled(!hasIngredients)
             }
-            
-            if groupedIngredients.isEmpty {
+
+            // Inline scale pills
+            scalePillRow
+
+            // Flat ingredient list
+            if !hasIngredients {
                 Text("No ingredients found")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
+                    .padding(.vertical, ForagerTheme.Spacing.xl)
             } else {
-                ForEach(sortedCategoryNames, id: \.self) { categoryName in
-                    let categoryIngredients = groupedIngredients[categoryName] ?? []
-                    
-                    if !categoryIngredients.isEmpty {
-                        categoryHeaderView(categoryName: categoryName, count: categoryIngredients.count)
-                        
-                        ForEach(categoryIngredients, id: \.objectID) { ingredient in
-                            ingredientRowView(ingredient: ingredient)
+                ForEach(sortedIngredients, id: \.objectID) { ingredient in
+                    ingredientRow(ingredient)
+                }
+            }
+
+            // Full-width CTA button
+            if hasIngredients {
+                addToListButton
+            }
+        }
+    }
+
+    // MARK: - Scale Pills
+
+    private var scalePillRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                ForEach(presetScales, id: \.self) { scale in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { scaleFactor = scale }
+                    } label: {
+                        Text(scaleLabel(scale))
+                            .font(ForagerTheme.footnoteFont)
+                            .foregroundStyle(scaleFactor == scale ? .white : ForagerTheme.textSecondary)
+                            .padding(.horizontal, ForagerTheme.Spacing.md)
+                            .padding(.vertical, ForagerTheme.Spacing.sm)
+                            .background(scaleFactor == scale ? ForagerTheme.accentPrimary : ForagerTheme.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                    }
+                }
+
+                // Custom scale button
+                Button { showCustomScalePicker = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(ForagerTheme.footnoteFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .padding(ForagerTheme.Spacing.sm)
+                        .background(ForagerTheme.backgroundSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                }
+            }
+        }
+    }
+
+    private func scaleLabel(_ scale: Double) -> String {
+        if scale == 0.5 { return "½×" }
+        if scale == floor(scale) { return "\(Int(scale))×" }
+        let whole = Int(scale)
+        let fraction = scale - Double(whole)
+        if abs(fraction - 0.5) < 0.01 { return "\(whole)½×" }
+        return String(format: "%.1f×", scale)
+    }
+
+    private var customScalePickerSheet: some View {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                Text("\(scaleLabel(Double(customWhole) + customFraction))")
+                    .font(ForagerTheme.detailTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+
+                HStack {
+                    Picker("Whole", selection: $customWhole) {
+                        ForEach(0...5, id: \.self) { n in Text("\(n)").tag(n) }
+                    }
+                    .pickerStyle(.wheel)
+
+                    Picker("Fraction", selection: $customFraction) {
+                        ForEach(fractionOptions, id: \.1) { label, value in
+                            Text(label).tag(value)
                         }
                     }
+                    .pickerStyle(.wheel)
                 }
             }
-        }
-    }
-    
-    private func categoryHeaderView(categoryName: String, count: Int) -> some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(ForagerTheme.categoryColor(for: categoryName))
-                .frame(width: 12, height: 12)
-                .overlay(
-                    Text(categoryEmoji(for: categoryName))
-                        .font(.system(size: 8))
-                )
-            
-            Text(categoryName.uppercased())
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text("\(count)")
-                .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color(.systemGray5))
-                .cornerRadius(4)
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
-        .background(Color(.systemGray6).opacity(0.3))
-        .cornerRadius(6)
-    }
-    
-    // M3: Updated to use displayText - M3.5: USES COMPUTED PROPERTIES
-    // M8.1: Added low-confidence badge and edit context menu
-    private func ingredientRowView(ingredient: Ingredient) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Circle()
-                .fill(Color.secondary.opacity(0.6))
-                .frame(width: 6, height: 6)
-                .padding(.top, 6)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    // M3.5: Use ingredientDisplayName (handles nil)
-                    Text(ingredient.ingredientDisplayName)
-                        .font(.body)
-                        .foregroundColor(.primary)
-
-                    // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
-                    if ingredient.parseConfidence < 0.7 {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.yellow)
-                            .font(.caption2)
-                            .help("Tap to edit - parsing confidence low")
+            .padding()
+            .navigationTitle("Custom Scale")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        let newScale = Double(customWhole) + customFraction
+                        if newScale > 0 {
+                            scaleFactor = newScale
+                        }
+                        showCustomScalePicker = false
                     }
                 }
-
-                // M4.3.1: Removed redundant displayText tag
-                // The ingredient name already includes quantity info
-                // Only show notes if they exist
-
-                if let notes = ingredient.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !notes.isEmpty {
-                    Text(notes)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .italic()
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showCustomScalePicker = false }
                 }
             }
+        }
+        .presentationDetents([.medium])
+    }
+
+    // MARK: - Ingredient Row
+
+    private func ingredientRow(_ ingredient: Ingredient) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
+            // Confidence bullet: green for high, amber for low
+            Circle()
+                .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
+                .frame(width: 4, height: 4)
+                .padding(.top, 8)
+
+            // Quantity + unit (monospaced digits, secondary color)
+            if let qtyText = scaledDisplayText(for: ingredient), !qtyText.isEmpty {
+                Text(qtyText)
+                    .font(ForagerTheme.bodyFont.monospacedDigit())
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
+
+            // Ingredient name
+            Text(ingredient.name ?? "Unknown")
+                .font(ForagerTheme.bodyFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
 
             Spacer()
         }
         .padding(.vertical, 2)
-        .padding(.leading, 8)
     }
-    
-    
-    
+
+    private func scaledDisplayText(for ingredient: Ingredient) -> String? {
+        if scaleFactor != 1.0,
+           let scaled = scaledIngredients?.first(where: { $0.name == (ingredient.name ?? "") }) {
+            return scaled.displayText
+        }
+        return ingredient.displayText
+    }
+
+    // MARK: - CTA Button
+
+    private var addToListButton: some View {
+        Button {
+            showingAddToListSheet = true
+        } label: {
+            Text(ctaLabel)
+                .font(ForagerTheme.bodyFont.bold())
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.md)
+                .background(ForagerTheme.accentPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        }
+        .padding(.top, ForagerTheme.Spacing.md)
+    }
+
+    // MARK: - Instructions
+
     private func instructionsSection(_ instructions: String) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Instructions")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            Text(instructions)
-                .font(.body)
-                .lineSpacing(4)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+            Text("INSTRUCTIONS")
+                .font(ForagerTheme.footnoteFont)
+                .tracking(0.5)
+                .foregroundStyle(ForagerTheme.textSecondary)
+
+            let steps = instructions.components(separatedBy: "\n")
+                .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.md) {
+                    Text("\(index + 1)")
+                        .font(ForagerTheme.bodyFont.bold().monospacedDigit())
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                        .frame(width: 24, alignment: .trailing)
+
+                    Text(cleanStepText(step))
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineSpacing(6)
+                }
+            }
         }
     }
 
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
+    /// Strip existing step numbers like "1.", "1)", "Step 1:" from instruction text
+    private func cleanStepText(_ step: String) -> String {
+        let trimmed = step.trimmingCharacters(in: .whitespaces)
+        let pattern = #"^(?:Step\s+)?\d+[.):]?\s*"#
+        return trimmed.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+    }
+
+    // MARK: - Usage Footer (Collapsible)
+
+    private var usageFooter: some View {
+        DisclosureGroup {
+            HStack(spacing: ForagerTheme.Spacing.xl) {
+                VStack(alignment: .leading) {
+                    Text("Times Made")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text("\(recipe.usageCount)")
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+                VStack(alignment: .leading) {
+                    Text("Last Used")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text(recipe.recipeLastUsedDescription)
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+            }
+            .padding(.top, ForagerTheme.Spacing.sm)
+        } label: {
+            Text("Usage")
+                .font(ForagerTheme.footnoteFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
 }
@@ -1420,9 +1406,9 @@ enum SearchMatchType: CaseIterable, Hashable {
     
     var color: Color {
         switch self {
-        case .title: return .blue
-        case .ingredient: return .green
-        case .instructions: return .orange
+        case .title: return ForagerTheme.accentPrimary
+        case .ingredient: return ForagerTheme.accentSecondary
+        case .instructions: return ForagerTheme.statusWarningFG
         }
     }
 }
