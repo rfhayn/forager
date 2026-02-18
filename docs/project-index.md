@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.4 - Recipes UX Overhaul
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.5 - Meal Plans & Ingredients UX
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,20 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15.4 Recipes UX Overhaul COMPLETE ✅
+- **Completed**: M15.4 — Card-based recipe list + full detail view rewrite
+- **Key Deliverables**:
+  - Card-based recipe list with timing pills, filter pills (All/Favorites/Recent), sort menu
+  - Hero detail header (28pt bold title, compact timing row, simplified nav)
+  - Inline scale pills (6 presets + custom two-component picker) replacing modal scaling sheet
+  - Flat ingredient layout with monospaced digits and confidence-colored bullets
+  - Dynamic CTA with scaled servings count, numbered instructions with accent step numbers
+  - Collapsible usage footer via DisclosureGroup
+  - RecipeFilter/RecipeSortOrder enums, RecipeCardView, SearchMatchType ForagerTheme migration
+- **Files**: 1 file rewritten (RecipeListView.swift — contains both list and detail views)
+- **Builds**: 2 clean builds (one per commit)
+- **Next**: M15.5 Meal Plans & Ingredients UX
 
 ### **February 17, 2026** - M15.3 Grocery Lists UX Overhaul COMPLETE ✅
 - **Completed**: M15.3 — 7 shared components + full grocery list UX rewrite

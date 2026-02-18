@@ -1,11 +1,55 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 🚀 **NEXT** | M7.7 📋 **READY**
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 🚀 **NEXT** | M7.7 📋 **READY**
 **Total Progress**: ~200 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.4: RECIPES UX OVERHAUL - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Complete UX overhaul of recipe browsing and detail views — from flat lists with system colors to card-based layouts with timing pills, inline scaling, and numbered instructions.
+
+**Sub-Phases Completed:**
+- **A**: Card-based recipe list with timing pills, ForagerCard rows, filter pills (All/Favorites/Recent), sort menu (Recent/A-Z/Most Used), `.searchable` modifier, ForagerTheme tokens throughout
+- **B**: Hero detail header — 28pt bold title, compact timing row (clock/flame/timer), simplified nav bar (Edit text + ellipsis menu with Add to Meal Plan, Mark as Made, Delete)
+- **C**: Inline scale pills — 6 presets (0.5×–3×) + custom two-component picker (whole + fraction), dynamic servings count next to INGREDIENTS header
+- **D**: Flat ingredient layout — monospaced digits for quantities, confidence-colored bullets (green high / amber low), no category grouping
+- **E**: Dynamic CTA ("Add to Grocery List" / "Add to Grocery List · N servings"), numbered instructions with accent step numbers, `cleanStepText()` regex, collapsible usage footer via DisclosureGroup
+
+**Additional Changes:**
+- RecipeScalingView modal replaced by inline scale pills (modal no longer presented)
+- `RecipeFilter` and `RecipeSortOrder` enums added for list filtering/sorting
+- `RecipeCardView` replaces `EnhancedRecipeRowView` with timing pills and favorite heart
+- `SearchMatchType` colors migrated to ForagerTheme tokens
+- Delete recipe added to ellipsis menu with confirmation dialog
+
+### **Files Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager/RecipeListView.swift` | REWRITTEN | Card list + detail view completely overhauled |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build after both commits |
+| Card layout | ✅ COMPILED | Timing pills, filter pills, sort menu |
+| Hero header | ✅ COMPILED | Compact timing, favorite heart, simplified nav |
+| Scale pills | ✅ COMPILED | 6 presets + custom picker, dynamic servings |
+| Ingredients | ✅ COMPILED | Monospaced digits, confidence bullets, flat layout |
+| Instructions | ✅ COMPILED | Numbered steps, accent prefix, cleanStepText regex |
+| CTA button | ✅ COMPILED | Dynamic label with scaled servings |
 
 ---
 
@@ -794,7 +838,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M15.1 | Design System Foundation & Liquid Glass TabView | ✅ COMPLETE |
 | M15.2 | Color & Typography Migration | ✅ COMPLETE |
 | M15.3 | Grocery Lists UX Overhaul | ✅ COMPLETE |
-| M15.4 | Recipes UX Overhaul | 6-8h |
+| M15.4 | Recipes UX Overhaul | ✅ COMPLETE |
 | M15.5 | Meal Plans & Ingredients UX | 6-8h |
 | M15.6 | Liquid Glass Polish & App Icon | 6-8h |
 | M15.7 | Dark Mode, Accessibility & Final QA | 6-10h |
@@ -830,8 +874,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 complete
-**Next Action**: M15.4 - Recipes UX Overhaul
+**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 complete
+**Next Action**: M15.5 - Meal Plans & Ingredients UX
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, M15.3 grocery overhaul delivered)
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, grocery + recipes overhaul delivered)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15

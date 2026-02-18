@@ -1071,7 +1071,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🚀 M15: UX Design System & Visual Refresh - ACTIVE** 🎨
 
-**Status**: 🚀 Active (M15.1 + M15.2 + M15.3 complete, M15.4 next)
+**Status**: 🚀 Active (M15.1 + M15.2 + M15.3 + M15.4 complete, M15.5 next)
 **Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
 **Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
@@ -1106,12 +1106,13 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - Check-off haptics (medium/light) + spring animations
 - 100% completion celebration with success haptic and banner
 
-**M15.4: Recipes UX Overhaul (~8h)**
-- Card-based recipe list with timing pills and filter pills
-- Hero detail header with simplified nav
-- Inline scale pills (0.5×–3×) replacing modal scaling sheet
-- Left-justified ingredients with monospaced digits
-- Dynamic CTA and numbered instructions
+**M15.4: Recipes UX Overhaul** ✅ COMPLETE
+- Card-based recipe list with timing pills and filter pills (All/Favorites/Recent + sort)
+- Hero detail header with compact timing row and simplified nav (Edit + ellipsis menu)
+- Inline scale pills (0.5×–3×) + custom two-component picker replacing modal scaling sheet
+- Left-justified ingredients with monospaced digits and confidence-colored bullets
+- Dynamic CTA ("Add to Grocery List · N servings") and numbered instructions with accent step numbers
+- Collapsible usage footer via DisclosureGroup
 
 **M15.5: Meal Plans & Ingredients UX (~9h)**
 - Core Data v6 migration (quickOption field on PlannedMeal)
@@ -1457,7 +1458,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.4 implementation — detailed plan at `docs/prds/active/plans/m15.4-implementation-plan.md`
+**Next Action**: M15.5 implementation — detailed plan at `docs/prds/active/plans/m15.5-implementation-plan.md`
 
 **Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.3 complete (~10h). Total: ~200 hours. TestFlight live, M15 in progress.
 
