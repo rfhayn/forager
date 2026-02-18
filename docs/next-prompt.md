@@ -1,66 +1,76 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 17, 2026
-**For Milestone**: M15 — UX Design System & Visual Refresh
-**Status**: M15.1 ✅ | M15.2 ✅ | M15.3 ✅ | M15.4 ✅ | M15.5 ✅ | M15.5b ✅ | M15.6 ✅ | M15.7 🚀 **NEXT** | M7.7 📋 **QUEUED**
-**Branch**: `feature/M15-ux-design-system` (local, not pushed)
+**For Milestone**: M15 ✅ COMPLETE → M7.7 App Store Submission
+**Status**: M15 ✅ **ALL PHASES COMPLETE** | M7.7 📋 **READY**
+**Branch**: `feature/M15-ux-design-system` (local, not pushed — needs PR + squash merge)
 
 ---
 
-## **M15.7: DARK MODE, ACCESSIBILITY & FINAL QA**
+## **IMMEDIATE: MERGE M15 & PUSH TESTFLIGHT**
 
-### **Context**
-- M15.1-M15.6 complete: ForagerTheme tokens, Liquid Glass TabView, color migration, all screen UX overhauls, glass effects on cards/floating elements, tab bar minimize behavior
-- iOS 26 deployment target with full Liquid Glass adoption
-- All screens rebuilt with card-based layouts and ForagerTheme semantic tokens
+### **Step 1: Merge M15 to Main**
+```bash
+# Push branch and create PR
+git push -u origin feature/M15-ux-design-system
+gh pr create --title "M15: UX Design System & Visual Refresh" --body "Complete visual refresh..."
 
-### **Implementation Plan**
-Read the detailed plan before starting: `docs/prds/active/plans/m15.7-implementation-plan.md`
+# Squash merge
+gh pr merge --squash --delete-branch
 
-### **All Reference Docs**
-```
-docs/prds/active/plans/m15.7-implementation-plan.md  # DETAILED PLAN — read this first
-docs/prds/active/m15-ux-design-system.md               # Full PRD v1.2
-docs/mockups/forager-design-system.html                 # 16 phone-frame mockups
+# Update local
+git checkout main && git pull origin main
 ```
 
-### **M15.7 Scope (from PRD)**
-- Dark mode walkthrough (tonal elevation, category colors, glass+dark)
-- Empty state replacement (ContentUnavailableView)
-- VoiceOver audit, Dynamic Type audit, Reduce Motion audit
-- Glass contrast WCAG verification
-- Performance profiling (60fps target)
-- Final testing matrix
+### **Step 2: New TestFlight Build**
+- Archive in Xcode (Product → Archive)
+- Upload to App Store Connect
+- Distribute to existing "Public Beta Testers" group
+- Build number: 11, Version: 1.2 (bump from 1.1)
 
-### **Key Areas to Audit**
-```
-ForagerTheme.swift               # Verify all 38 color tokens in dark mode
-All card views                   # Glass readability in dark mode
-ForagerProgressRing.swift        # Contrast in both modes
-ForagerSectionHeader.swift       # Contrast in both modes
-Category colors                  # All 11 category colors in dark mode
-```
-
-### **Continues on Same Branch**
-```
-# Already on feature/M15-ux-design-system
-git log --oneline  # Should show M15.1-M15.6 commits
-```
+### **Step 3: Verify on Device**
+- Install TestFlight build on physical device
+- Walk through key screens: Lists, Recipes, Meal Plans, Ingredients, Settings, Search
+- Verify: Glass effects, dark mode, tab bar minimize, haptics, celebration banner
 
 ---
 
 ## **QUEUED: M7.7 — App Store Submission & Public Presence**
 
-**Status**: 📋 READY (after M15 + TestFlight push)
+**Status**: 📋 READY (after TestFlight push)
 **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
 **Estimated**: 3-5 hours
 
-After M15 implementation:
-1. Build new archive with M15 visual refresh
-2. Push to TestFlight for final validation
-3. Execute M7.7 (landing page, README, App Store listing, submit)
+### **Phases**
+1. **M7.7.1**: Beta Landing Page (1-2h) — GitHub Pages with TestFlight link, features, screenshots
+2. **M7.7.2**: GitHub README Update (0.5h) — Portfolio-quality README with badges
+3. **M7.7.3**: App Store Listing (1-2h) — Description, keywords, screenshots, category
+4. **M7.7.4**: App Store Submission (0.5h) — Submit for App Store review
+
+### **Screenshots Needed**
+With M15 visual refresh complete, take fresh screenshots for:
+- App Store listing (6.7" and 6.5" sizes)
+- Landing page hero images
+- GitHub README badges
 
 ---
 
-**Version**: February 17, 2026 - M15.7 implementation ready
-**Dependencies**: M15.1 ✅, M15.2 ✅, M15.3 ✅, M15.4 ✅, M15.5 ✅, M15.5b ✅, M15.6 ✅, TestFlight live (build 10, v1.1)
+## **M15 Completion Summary**
+
+All 8 phases delivered on `feature/M15-ux-design-system`:
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| M15.1 | Design System Foundation & Liquid Glass TabView | ✅ COMPLETE |
+| M15.2 | Color & Typography Migration | ✅ COMPLETE |
+| M15.3 | Grocery Lists UX Overhaul | ✅ COMPLETE |
+| M15.4 | Recipes UX Overhaul | ✅ COMPLETE |
+| M15.5 | Meal Plans & Ingredients UX | ✅ COMPLETE |
+| M15.5b | Settings, Categories & Household | ✅ COMPLETE |
+| M15.6 | Liquid Glass Polish | ✅ COMPLETE |
+| M15.7 | Dark Mode, Accessibility & Final QA | ✅ COMPLETE |
+
+---
+
+**Version**: February 17, 2026 - M15 COMPLETE, merge + TestFlight push next
+**Dependencies**: M15.1-M15.7 ✅, TestFlight live (build 10, v1.1)

@@ -2,10 +2,10 @@
 
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b + M15.6 complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.7 - Dark Mode, Accessibility & Final QA
-**Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
+**Current Milestone**: M15 ✅ COMPLETE — UX Design System & Visual Refresh
+**Current Phase**: M15 ✅ **COMPLETE** (all 8 phases delivered) | M7.7 📋 **QUEUED**
+**Next Priority**: Merge M15 branch → TestFlight push → M7.7 App Store Submission
+**Execution Order (Pre-Launch)**: TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
 ---
@@ -51,6 +51,19 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15.7 Dark Mode, Accessibility & Final QA COMPLETE ✅ — M15 FULLY COMPLETE
+- **Completed**: M15.7 — Dark mode glass rim light, ContentUnavailableView migration, VoiceOver labels, Dynamic Type scaling, Reduce Motion guards
+- **Key Deliverables**:
+  - Dark mode rim light overlay on glass card modifiers
+  - StandardEmptyStateView deleted, replaced with native ContentUnavailableView on 5 views
+  - VoiceOver accessibility labels on all interactive elements (grocery items, recipe cards, filter pills, scale pills, meal plan cards, action buttons, ingredient rows)
+  - @ScaledMetric on ForagerProgressRing (56pt) and day circles (22pt)
+  - Reduce Motion guards across 10 view structs — all M15 animations guarded
+- **Files**: 1 deleted, 10 modified
+- **Builds**: 5 clean builds (one per sub-phase)
+- **M15 Status**: ALL 8 PHASES COMPLETE — ready for PR + squash merge to main
+- **Next**: Merge branch → TestFlight push → M7.7 App Store Submission
 
 ### **February 17, 2026** - M15.6 Liquid Glass Polish COMPLETE ✅
 - **Completed**: M15.6 — iOS 26 Liquid Glass effects on cards, floating elements, tab bar
