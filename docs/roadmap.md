@@ -1071,7 +1071,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🚀 M15: UX Design System & Visual Refresh - ACTIVE** 🎨
 
-**Status**: 🚀 Active (M15.1 + M15.2 complete, M15.3 next)
+**Status**: 🚀 Active (M15.1 + M15.2 + M15.3 complete, M15.4 next)
 **Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
 **Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
@@ -1097,13 +1097,14 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - Border and divider system migration
 - Category color system (11 colors with light/dark variants)
 
-**M15.3: Grocery Lists UX Overhaul (~10h)**
-- Shared components: ForagerCard, ProgressRing, SectionHeader, CategoryChipPills, FilterPill, ButtonStyles
-- Card-based list overview with progress rings
-- Sticky bottom progress bar + quick-add
-- Collapsible category sections with auto-collapse
-- Check-off haptics + animation
-- 100% completion celebration
+**M15.3: Grocery Lists UX Overhaul** ✅ COMPLETE
+- 7 shared components: ForagerCard, ProgressRing, SectionHeader, CategoryChipPills, FlowLayout, FilterPill, ButtonStyles
+- Card-based list overview with progress rings and category chip pills
+- 3-option creation dialog (From Staples / From Meal Plan / Empty List)
+- Sticky bottom progress bar + quick-add via .safeAreaInset
+- Collapsible category sections with auto-collapse after 2s
+- Check-off haptics (medium/light) + spring animations
+- 100% completion celebration with success haptic and banner
 
 **M15.4: Recipes UX Overhaul (~8h)**
 - Card-based recipe list with timing pills and filter pills
@@ -1456,9 +1457,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.3 implementation — detailed plan at `docs/prds/active/plans/m15.3-implementation-plan.md`
+**Next Action**: M15.4 implementation — detailed plan at `docs/prds/active/plans/m15.4-implementation-plan.md`
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.2 complete (~5h). Total: ~195 hours. TestFlight live, M15 in progress.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.3 complete (~10h). Total: ~200 hours. TestFlight live, M15 in progress.
 
 ---
 

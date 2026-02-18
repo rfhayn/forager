@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.3 - Grocery Lists UX Overhaul
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.4 - Recipes UX Overhaul
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,21 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15.3 Grocery Lists UX Overhaul COMPLETE ✅
+- **Completed**: M15.3 — 7 shared components + full grocery list UX rewrite
+- **Key Deliverables**:
+  - 7 shared components: ForagerCard, ProgressRing, SectionHeader, CategoryChipPills, FlowLayout, FilterPill, ButtonStyles
+  - Card-based grocery list overview with progress rings and category chip pills
+  - 3-option creation dialog (From Staples / From Meal Plan / Empty List)
+  - Sticky bottom progress bar + quick-add via .safeAreaInset(edge: .bottom)
+  - Collapsible category sections with auto-collapse after 2s
+  - Check-off haptics (medium/light impact) + spring animations
+  - 100% completion celebration banner with success haptic
+  - MealPlanService.generateGroceryList(from:) for meal plan → grocery list flow
+- **Files**: 7 new, 5 modified (WeeklyListsView + GroceryListDetailView fully rewritten)
+- **Builds**: 4 clean builds (one per sub-phase commit)
+- **Next**: M15.4 Recipes UX Overhaul
 
 ### **February 17, 2026** - M15 Elevated to Pre-Launch 🚀
 - **Decision**: M15 UX Design System elevated to pre-launch — polished UI before App Store debut

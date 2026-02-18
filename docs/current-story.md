@@ -1,11 +1,64 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 🚀 **NEXT** | M7.7 📋 **READY**
-**Total Progress**: ~195 hours | 89% planning accuracy
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 🚀 **NEXT** | M7.7 📋 **READY**
+**Total Progress**: ~200 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.3: GROCERY LISTS UX OVERHAUL - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Comprehensive UX overhaul of the grocery list experience — the primary daily workflow — from flat lists into card-based layouts with progress rings, collapsible sections, haptics, and celebration.
+
+**Sub-Phases Completed:**
+- **A**: 7 shared components created — ForagerCard, ForagerProgressRing, ForagerSectionHeader, CategoryChipPills, FlowLayout, FilterPill (shared, replaces embedded version), ForagerButtonStyles
+- **B**: WeeklyListsView rewritten — card-based layout with progress rings, category chip pills, 3-option creation dialog (From Staples / From Meal Plan / Empty List), MealPlanGrocerySheet
+- **C**: Sticky bottom progress bar — `.safeAreaInset(edge: .bottom)` with 6pt capsule bar, color shift (accentPrimary → accentSecondary → statusSuccessFG), quick-add TextField moved to bottom
+- **D**: Collapsible category sections — ForagerSectionHeader with collapse chevron, auto-collapse after 2s for completed categories
+- **E**: Check-off haptics and animation — medium/light impact feedback, spring animations, checkbox scale (1.1x), strikethrough + color shift, monospacedDigit quantities, recipe badges with ForagerTheme tokens
+- **F**: 100% completion celebration — banner with success haptic, 3s auto-dismiss, progress bar color shift at 100%
+
+**Additional Changes:**
+- `MealPlanService.generateGroceryList(from:)` added for "From Meal Plan" creation option
+- Shared `FilterPill` extracted from IngredientsView, 4 callers updated
+- All 7 new files registered in pbxproj (4 entries each)
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager/ForagerCard.swift` | NEW | `.foragerCard()` ViewModifier |
+| `forager/ForagerProgressRing.swift` | NEW | 56pt circular progress ring |
+| `forager/ForagerSectionHeader.swift` | NEW | Collapsible section header |
+| `forager/CategoryChipPills.swift` | NEW | Category composition pills |
+| `forager/FlowLayout.swift` | NEW | Custom Layout protocol |
+| `forager/FilterPill.swift` | NEW | Shared filter pill (3 sizes) |
+| `forager/ForagerButtonStyles.swift` | NEW | Primary/Secondary/Tertiary styles |
+| `forager/WeeklyListsView.swift` | REWRITTEN | Card layout, 3-option creation |
+| `forager/GroceryListDetailView.swift` | REWRITTEN | Sticky bar, collapsible, haptics, celebration |
+| `forager/IngredientsView.swift` | MODIFIED | Deleted embedded FilterPill |
+| `Services/MealPlanService.swift` | MODIFIED | +generateGroceryList(from:) |
+| `forager.xcodeproj/project.pbxproj` | MODIFIED | 7 new file registrations |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build after every sub-phase (4 builds) |
+| Shared components | ✅ COMPILED | All 7 components compile and register |
+| Card layout | ✅ COMPILED | Progress rings + category chips render |
+| Sticky bottom bar | ✅ COMPILED | .safeAreaInset participates in safe area |
+| Collapsible sections | ✅ COMPILED | Toggle + auto-collapse logic in place |
+| Haptics + celebration | ✅ COMPILED | UIImpactFeedbackGenerator + UINotificationFeedbackGenerator |
 
 ---
 
@@ -740,7 +793,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 |-------|-------------|------|
 | M15.1 | Design System Foundation & Liquid Glass TabView | ✅ COMPLETE |
 | M15.2 | Color & Typography Migration | ✅ COMPLETE |
-| M15.3 | Grocery Lists UX Overhaul | 8-10h |
+| M15.3 | Grocery Lists UX Overhaul | ✅ COMPLETE |
 | M15.4 | Recipes UX Overhaul | 6-8h |
 | M15.5 | Meal Plans & Ingredients UX | 6-8h |
 | M15.6 | Liquid Glass Polish & App Icon | 6-8h |
@@ -777,8 +830,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.1 + M15.2 complete
-**Next Action**: M15.3 - Grocery Lists UX Overhaul
+**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 complete
+**Next Action**: M15.4 - Recipes UX Overhaul
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, ready to implement)
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, M15.3 grocery overhaul delivered)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15
