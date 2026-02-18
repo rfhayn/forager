@@ -979,7 +979,6 @@ struct IngredientReviewSheet: View {
         .padding(ForagerTheme.Spacing.lg)
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
-        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
     }
 
     // MARK: - Review Reason Badge

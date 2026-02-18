@@ -446,8 +446,8 @@ struct CreateHouseholdSheet: View {
                     }
                     .padding(24)
                     .background(.regularMaterial)
-                    .cornerRadius(ForagerTheme.Radius.lg)
-                    .shadow(radius: 10)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
                 }
             }
             .alert("Error Creating Household", isPresented: $showError) {

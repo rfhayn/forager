@@ -361,8 +361,8 @@ struct CreateRecipeView: View {
                             }
                         }
                         .background(Color(.systemBackground))
-                        .cornerRadius(ForagerTheme.Radius.sm)
-                        .shadow(color: Color.black.opacity(0.15), radius: 4, x: 0, y: 2)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                         .padding(.top, 4)
                     }
                 }
