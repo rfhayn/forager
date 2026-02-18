@@ -7,7 +7,7 @@ import SwiftUI
 
 struct ForagerProgressRing: View {
     let progress: Double // 0.0–1.0
-    var size: CGFloat = 56
+    @ScaledMetric(relativeTo: .body) private var ringSize: CGFloat = 56
 
     var body: some View {
         ZStack {
@@ -27,7 +27,7 @@ struct ForagerProgressRing: View {
                 .font(ForagerTheme.captionFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
         }
-        .frame(width: size, height: size)
+        .frame(width: ringSize, height: ringSize)
         .accessibilityLabel("List progress")
         .accessibilityValue("\(Int(progress * 100)) percent complete")
     }

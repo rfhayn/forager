@@ -195,6 +195,7 @@ struct MealPlanSummaryCard: View {
     var onGenerateGroceryList: (() -> Void)? = nil
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
+    @ScaledMetric(relativeTo: .caption) private var dayCircleSize: CGFloat = 22
 
     init(mealPlan: MealPlan, status: MealPlanStatus, onGenerateGroceryList: (() -> Void)? = nil) {
         self.mealPlan = mealPlan
@@ -284,7 +285,7 @@ struct MealPlanSummaryCard: View {
                 Text(dayInitial)
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(isPlanned ? .white : ForagerTheme.textTertiary)
-                    .frame(width: 22, height: 22)
+                    .frame(width: dayCircleSize, height: dayCircleSize)
                     .background(
                         Circle()
                             .fill(isPlanned ? ForagerTheme.accentPrimary : .clear)
@@ -320,7 +321,8 @@ struct MealPlanSummaryCard: View {
                     Text("\(recipe.recipeDisplayTitle) · \(recipe.recipeServingsDescription)")
                         .font(ForagerTheme.secondaryFont.bold())
                         .foregroundStyle(ForagerTheme.textPrimary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.8)
                 }
             }
             Spacer()
