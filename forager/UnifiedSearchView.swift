@@ -156,7 +156,7 @@ struct UnifiedSearchView: View {
                 }
             }
             .padding(10)
-            .background(Color(.secondarySystemBackground))
+            .background(ForagerTheme.surfaceSecondary)
             .cornerRadius(ForagerTheme.Radius.md)
 
             // Cancel button appears when search is active (Apple Music pattern)
@@ -430,7 +430,7 @@ struct UnifiedSearchView: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(ForagerTheme.surfacePrimary)
         .cornerRadius(ForagerTheme.Radius.md)
     }
 
