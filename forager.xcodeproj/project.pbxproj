@@ -28,6 +28,13 @@
 		9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */; };
 		9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552F2EDB665C00A57B34 /* foragerApp.swift */; };
 		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
+		A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */; };
+		A1B2C3D4E5F60002AABB0002 /* ForagerProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */; };
+		A1B2C3D4E5F60002AABB0003 /* ForagerSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */; };
+		A1B2C3D4E5F60002AABB0004 /* CategoryChipPills.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */; };
+		A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */; };
+		A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */; };
+		A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */; };
 		9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555252EDB665C00A57B34 /* CreateMealPlanSheet.swift */; };
 		9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555362EDB665C00A57B34 /* MealPlanRowView.swift */; };
 		9B0555562EDB665C00A57B34 /* CreateRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555262EDB665C00A57B34 /* CreateRecipeView.swift */; };
@@ -151,6 +158,13 @@
 		9B05552D2EDB665C00A57B34 /* forager.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = forager.entitlements; sourceTree = "<group>"; };
 		9B05552F2EDB665C00A57B34 /* foragerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = foragerApp.swift; sourceTree = "<group>"; };
 		3101722433E156A2E2EF6318 /* ForagerTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerTheme.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerCard.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerProgressRing.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerSectionHeader.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryChipPills.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPill.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerButtonStyles.swift; sourceTree = "<group>"; };
 		9B0555302EDB665C00A57B34 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		9B0555312EDB665C00A57B34 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9B0555322EDB665C00A57B34 /* IngredientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientsView.swift; sourceTree = "<group>"; };
@@ -316,6 +330,13 @@
 				9B05552E2EDB665C00A57B34 /* forager.xcdatamodeld */,
 				9B05552F2EDB665C00A57B34 /* foragerApp.swift */,
 				3101722433E156A2E2EF6318 /* ForagerTheme.swift */,
+				A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */,
+				A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */,
+				A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */,
+				A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */,
+				A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */,
+				A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */,
+				A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */,
 				9B0555302EDB665C00A57B34 /* HelpView.swift */,
 				9B0555312EDB665C00A57B34 /* Info.plist */,
 				9B0555322EDB665C00A57B34 /* IngredientsView.swift */,
@@ -628,6 +649,13 @@
 				9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */,
 				9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */,
 				808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */,
+				A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */,
+				A1B2C3D4E5F60002AABB0002 /* ForagerProgressRing.swift in Sources */,
+				A1B2C3D4E5F60002AABB0003 /* ForagerSectionHeader.swift in Sources */,
+				A1B2C3D4E5F60002AABB0004 /* CategoryChipPills.swift in Sources */,
+				A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */,
+				A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */,
+				A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */,
 				9BA76C012F7D000100AABB01 /* OnboardingView.swift in Sources */,
 				9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */,
 				9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */,

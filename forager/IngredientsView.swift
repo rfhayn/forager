@@ -241,7 +241,7 @@ struct IngredientsView: View {
                     }
                 } label: {
                     FilterPill(
-                        text: selectedCategory == "All Categories" ? "All Categories" : selectedCategory,
+                        title: selectedCategory == "All Categories" ? "All Categories" : selectedCategory,
                         isSelected: selectedCategory != "All Categories",
                         systemImage: "folder",
                         size: .large
@@ -253,10 +253,9 @@ struct IngredientsView: View {
                     showStaplesOnly.toggle()
                 }) {
                     FilterPill(
-                        text: "Staples",
+                        title: "Staples",
                         isSelected: showStaplesOnly,
-                        systemImage: "pin.fill",
-                        size: .regular
+                        systemImage: "pin.fill"
                     )
                 }
 
@@ -265,10 +264,9 @@ struct IngredientsView: View {
                     showNeedsReviewOnly.toggle()
                 }) {
                     FilterPill(
-                        text: "Review\(needsReviewCount > 0 ? " (\(needsReviewCount))" : "")",
+                        title: "Review\(needsReviewCount > 0 ? " (\(needsReviewCount))" : "")",
                         isSelected: showNeedsReviewOnly,
-                        systemImage: "exclamationmark.triangle",
-                        size: .regular
+                        systemImage: "exclamationmark.triangle"
                     )
                 }
 
@@ -281,8 +279,8 @@ struct IngredientsView: View {
                     }
                 } label: {
                     FilterPill(
-                        text: sortOption.displayName,
-                        isSelected: false, // Keep sort neutral since it's always active
+                        title: sortOption.displayName,
+                        isSelected: false,
                         systemImage: "arrow.up.arrow.down",
                         size: .compact
                     )
@@ -572,67 +570,6 @@ enum SortOption: CaseIterable {
         case .usage: return "Usage"
         case .staplesFirst: return "Staples"
         }
-    }
-}
-
-// MARK: - Filter Pill Component - OPTIMIZED for single line layout
-struct FilterPill: View {
-    enum Size {
-        case compact, regular, large
-
-        var horizontalPadding: CGFloat {
-            switch self {
-            case .compact: return 8
-            case .regular: return 10
-            case .large: return 14
-            }
-        }
-
-        var verticalPadding: CGFloat {
-            switch self {
-            case .compact: return 5
-            case .regular: return 6
-            case .large: return 7
-            }
-        }
-
-        var fontSize: Font {
-            switch self {
-            case .compact: return .caption2
-            case .regular: return .caption
-            case .large: return .caption
-            }
-        }
-    }
-
-    let text: String
-    let isSelected: Bool
-    let systemImage: String
-    var size: Size = .regular
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: systemImage)
-                .font(size == .compact ? .caption2 : .caption)
-                .fontWeight(.medium)
-
-            Text(text)
-                .font(size.fontSize)
-                .fontWeight(.medium)
-                .lineLimit(1)
-                .fixedSize()
-        }
-        .padding(.horizontal, size.horizontalPadding)
-        .padding(.vertical, size.verticalPadding)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(isSelected ? Color.accentColor : Color(.secondarySystemBackground))
-        )
-        .foregroundColor(isSelected ? .white : .primary)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(.separator), lineWidth: isSelected ? 0 : 0.5)
-        )
     }
 }
 

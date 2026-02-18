@@ -1,0 +1,40 @@
+// ForagerProgressRing.swift
+// M15.3: Circular progress indicator with color shift
+//
+// PRD §5.6: 56pt ring, accentPrimary → accentSecondary → statusSuccessFG.
+
+import SwiftUI
+
+struct ForagerProgressRing: View {
+    let progress: Double // 0.0–1.0
+    var size: CGFloat = 56
+
+    var body: some View {
+        ZStack {
+            // Background track
+            Circle()
+                .stroke(ForagerTheme.backgroundTertiary, lineWidth: 4)
+
+            // Progress arc
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(progressColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.easeInOut(duration: 0.3), value: progress)
+
+            // Percentage text
+            Text("\(Int(progress * 100))%")
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+        }
+        .frame(width: size, height: size)
+        .accessibilityLabel("List progress")
+        .accessibilityValue("\(Int(progress * 100)) percent complete")
+    }
+
+    private var progressColor: Color {
+        if progress >= 1.0 { return ForagerTheme.statusSuccessFG }
+        if progress >= 0.5 { return ForagerTheme.accentSecondary }
+        return ForagerTheme.accentPrimary
+    }
+}
