@@ -3,6 +3,7 @@ import CoreData
 
 struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @Binding var popToRoot: Bool
@@ -340,7 +341,7 @@ struct RecipeListView: View {
             HStack(spacing: ForagerTheme.Spacing.sm) {
                 ForEach(RecipeFilter.allCases, id: \.self) { filter in
                     Button {
-                        withAnimation { activeFilter = filter }
+                        withAnimation(reduceMotion ? nil : .default) { activeFilter = filter }
                     } label: {
                         FilterPill(
                             title: filter.title,
@@ -927,6 +928,7 @@ struct RecipeCardView: View {
 struct RecipeDetailView: View {
     @ObservedObject var recipe: Recipe
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
@@ -1161,7 +1163,7 @@ struct RecipeDetailView: View {
             HStack(spacing: ForagerTheme.Spacing.sm) {
                 ForEach(presetScales, id: \.self) { scale in
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) { scaleFactor = scale }
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { scaleFactor = scale }
                     } label: {
                         Text(scaleLabel(scale))
                             .font(ForagerTheme.footnoteFont)

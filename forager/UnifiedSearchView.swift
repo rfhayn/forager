@@ -11,6 +11,7 @@ import CoreData
 
 struct UnifiedSearchView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @State private var searchText = ""
@@ -104,7 +105,7 @@ struct UnifiedSearchView: View {
         }
         .navigationTitle(isSearchFocused ? "" : "Search")
         .navigationBarTitleDisplayMode(isSearchFocused ? .inline : .large)
-        .animation(.default, value: isSearchFocused)
+        .animation(reduceMotion ? nil : .default, value: isSearchFocused)
     }
 
     // MARK: - Search Bar Section
@@ -146,7 +147,7 @@ struct UnifiedSearchView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .animation(.default, value: isSearchFocused)
+        .animation(reduceMotion ? nil : .default, value: isSearchFocused)
     }
 
     // MARK: - Empty State

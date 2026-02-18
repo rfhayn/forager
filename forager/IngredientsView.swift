@@ -16,6 +16,7 @@ struct CategoryChangePayload: Identifiable {
 
 struct IngredientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @Binding var popToRoot: Bool
@@ -164,7 +165,7 @@ struct IngredientsView: View {
                 HStack(spacing: 12) {
                     if isEditMode {
                         Button("Done") {
-                            withAnimation {
+                            withAnimation(reduceMotion ? nil : .default) {
                                 isEditMode = false
                                 selectedIngredients.removeAll()
                             }
@@ -237,7 +238,7 @@ struct IngredientsView: View {
             HStack(spacing: ForagerTheme.Spacing.sm) {
                 // "All" pill
                 Button {
-                    withAnimation { selectedCategory = nil }
+                    withAnimation(reduceMotion ? nil : .default) { selectedCategory = nil }
                 } label: {
                     FilterPill(
                         title: "All",
@@ -249,7 +250,7 @@ struct IngredientsView: View {
                 // Individual category pills
                 ForEach(uniqueCategoryNames, id: \.self) { categoryName in
                     Button {
-                        withAnimation {
+                        withAnimation(reduceMotion ? nil : .default) {
                             selectedCategory = selectedCategory == categoryName ? nil : categoryName
                         }
                     } label: {
@@ -824,6 +825,7 @@ struct IngredientReviewSheet: View {
     @State private var isStaple = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)],
@@ -1040,7 +1042,7 @@ struct IngredientReviewSheet: View {
 
     private func advance() {
         if currentIndex < ingredients.count - 1 {
-            withAnimation(.easeInOut(duration: 0.25)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
                 currentIndex += 1
             }
             loadCurrentIngredient()

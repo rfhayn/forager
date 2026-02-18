@@ -15,6 +15,7 @@ struct MealPlanDetailView: View {
 
     @ObservedObject var mealPlan: MealPlan
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
@@ -520,7 +521,7 @@ struct MealPlanDetailView: View {
     }
 
     private func toggleCompletion(for meal: PlannedMeal) {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
             meal.isCompleted.toggle()
             meal.completedDate = meal.isCompleted ? Date() : nil
 

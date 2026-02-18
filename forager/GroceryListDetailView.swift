@@ -11,6 +11,7 @@ import CoreData
 
 struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @ObservedObject var weeklyList: WeeklyList
@@ -115,12 +116,12 @@ struct GroceryListDetailView: View {
         .onChange(of: completedItemsCount) { oldCount, newCount in
             // M15.3: Detect 100% completion
             if newCount == totalItemsCount && totalItemsCount > 0 && oldCount < totalItemsCount {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.4, dampingFraction: 0.7)) {
                     showCelebration = true
                 }
                 UINotificationFeedbackGenerator().notificationOccurred(.success)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    withAnimation { showCelebration = false }
+                    withAnimation(reduceMotion ? nil : .default) { showCelebration = false }
                 }
             }
         }
@@ -164,7 +165,7 @@ struct GroceryListDetailView: View {
                         Capsule()
                             .fill(progressBarColor)
                             .frame(width: geo.size.width * completionPercentage)
-                            .animation(.easeInOut(duration: 0.3), value: completionPercentage)
+                            .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: completionPercentage)
                     }
                 }
                 .frame(height: 6)
@@ -381,7 +382,7 @@ struct GroceryListDetailView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
             item.isCompleted.toggle()
             item.dateCompleted = item.isCompleted ? Date() : nil
 
@@ -410,7 +411,7 @@ struct GroceryListDetailView: View {
                     .filter { $0.categoryName == category }
                     .allSatisfy { $0.isCompleted }
                 guard stillAllCompleted else { return }
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
                     collapsedCategories.insert(category)
                 }
             }
@@ -597,6 +598,7 @@ struct GroceryListDetailView: View {
 
 struct GroceryListItemRow: View {
     @ObservedObject var item: GroceryListItem
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let onToggle: () -> Void
 
     var body: some View {
@@ -606,8 +608,8 @@ struct GroceryListItemRow: View {
                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
                     .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
-                    .scaleEffect(item.isCompleted ? 1.1 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
+                    .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
+                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
             }
             .buttonStyle(.borderless)
 
@@ -667,7 +669,7 @@ struct GroceryListItemRow: View {
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : .clear)
         .contentShape(Rectangle())
-        .animation(.easeInOut(duration: 0.3), value: item.isCompleted)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.name ?? "Unknown Item")
         .accessibilityValue(item.isCompleted ? "Checked" : "Unchecked")

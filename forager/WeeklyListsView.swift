@@ -11,6 +11,7 @@ import CoreData
 
 struct WeeklyListsView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @Binding var popToRoot: Bool
@@ -178,7 +179,7 @@ struct WeeklyListsView: View {
     // MARK: - Actions
 
     private func generateListFromStaples() {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
             isGeneratingList = true
         }
 
@@ -232,21 +233,21 @@ struct WeeklyListsView: View {
         })
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
                 isGeneratingList = false
             }
         }
     }
 
     private func generateListFromMealPlan(_ plan: MealPlan) {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
             isGeneratingList = true
         }
 
         MealPlanService.shared.generateGroceryList(from: plan)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(.easeInOut(duration: 0.3)) {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
                 isGeneratingList = false
             }
         }

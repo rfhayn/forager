@@ -8,6 +8,7 @@ import SwiftUI
 struct ForagerProgressRing: View {
     let progress: Double // 0.0–1.0
     @ScaledMetric(relativeTo: .body) private var ringSize: CGFloat = 56
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -20,7 +21,7 @@ struct ForagerProgressRing: View {
                 .trim(from: 0, to: progress)
                 .stroke(progressColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.3), value: progress)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
 
             // Percentage text
             Text("\(Int(progress * 100))%")
