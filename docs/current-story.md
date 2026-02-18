@@ -1,11 +1,52 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 ✅ **COMPLETE** | M15.5b 🚀 **NEXT** | M7.7 📋 **READY**
-**Total Progress**: ~200 hours | 89% planning accuracy
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 ✅ **COMPLETE** | M15.5b ✅ **COMPLETE** | M15.6 🚀 **NEXT** | M7.7 📋 **READY**
+**Total Progress**: ~205 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.5b: SETTINGS, CATEGORIES & HOUSEHOLD VISUAL REDESIGN - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Extracted HouseholdView from SettingsView, restructured Settings with NavigationLink + version footer, and polished ManageCategoriesView with nav bar `+`, lock icon, and footer help text.
+
+**Sub-Phases Completed:**
+- **A**: HouseholdView extracted — dedicated screen with editable name, iCloud sync indicator, inline member rows with avatar circles/role badges, NavigationLink to HouseholdMembersView, invite section (ForagerPrimaryButtonStyle), sharing stats (Core Data count queries for recipes/lists/plans), Danger Zone (leave/delete with migration options), no-household CTA
+- **B**: SettingsView restructured (867 → 549 lines) — replaced ~215-line inline household section with NavigationLink to HouseholdView, removed ~15 household @State variables, removed 5 helper methods, added version footer using Bundle.main.infoDictionary
+- **C**: ManageCategoriesView polished — nav bar `+` button (alongside Reorder), removed inline "Add Custom Category" button, added footer help text ("Drag categories to reorder. Swipe left to delete…"), lock icon on Uncategorized row, hidden drag handle for default categories
+
+**Additional Changes:**
+- Async data loading via `.task` for `isOwner`, `getParticipants`, `getOwnerParticipant`
+- `ForagerPrimaryButtonStyle` for invite button
+- Core Data count queries for sharing stats (no new service methods needed)
+- Version footer: `Forager v{version} ({build})` using CFBundleShortVersionString/CFBundleVersion
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager/HouseholdView.swift` | NEW | Dedicated household management screen (~340 lines) |
+| `forager/SettingsView.swift` | MODIFIED | 867 → 549 lines, NavigationLink to HouseholdView |
+| `forager/ManageCategoriesView.swift` | MODIFIED | Nav bar +, lock icon, footer text |
+| `forager.xcodeproj/project.pbxproj` | MODIFIED | +4 entries for HouseholdView.swift |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build after all sub-phases |
+| HouseholdView | ✅ COMPILED | Async loading, member rows, sharing stats, alerts |
+| SettingsView | ✅ COMPILED | NavigationLink, version footer, reduced state |
+| ManageCategoriesView | ✅ COMPILED | Nav bar +, lock icon, footer text |
 
 ---
 
@@ -889,6 +930,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M15.3 | Grocery Lists UX Overhaul | ✅ COMPLETE |
 | M15.4 | Recipes UX Overhaul | ✅ COMPLETE |
 | M15.5 | Meal Plans & Ingredients UX | ✅ COMPLETE |
+| M15.5b | Settings, Categories & Household | ✅ COMPLETE |
 | M15.6 | Liquid Glass Polish & App Icon | 6-8h |
 | M15.7 | Dark Mode, Accessibility & Final QA | 6-10h |
 
@@ -923,8 +965,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 + M15.5 complete
-**Next Action**: M15.5b - Settings, Categories & Household Visual Redesign
+**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b complete
+**Next Action**: M15.6 - Liquid Glass Polish & App Icon
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, grocery + recipes + meals + ingredients overhaul delivered)
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, 6/8 phases delivered)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15

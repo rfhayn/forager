@@ -2,44 +2,50 @@
 
 **Last Updated**: February 17, 2026
 **For Milestone**: M15 — UX Design System & Visual Refresh
-**Status**: M15.1 ✅ | M15.2 ✅ | M15.3 ✅ | M15.4 ✅ | M15.5 ✅ | M15.5b 🚀 **NEXT** | M7.7 📋 **QUEUED**
+**Status**: M15.1 ✅ | M15.2 ✅ | M15.3 ✅ | M15.4 ✅ | M15.5 ✅ | M15.5b ✅ | M15.6 🚀 **NEXT** | M7.7 📋 **QUEUED**
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
 
 ---
 
-## **M15.5b: SETTINGS, CATEGORIES & HOUSEHOLD VISUAL REDESIGN**
+## **M15.6: LIQUID GLASS POLISH & APP ICON**
 
 ### **Context**
-- M15.1-M15.5 complete: ForagerTheme tokens, Liquid Glass TabView, color migration, grocery/recipe/meal plan/ingredients UX overhaul
-- Core Data v6 migration complete (quickOption on PlannedMeal)
-- Shared components from M15.3 available: ForagerCard, FilterPill, ForagerSectionHeader, ForagerButtonStyles, etc.
+- M15.1-M15.5b complete: ForagerTheme tokens, Liquid Glass TabView, color migration, grocery/recipe/meal plan/ingredients/settings/categories/household UX overhaul
+- All shared components available: ForagerCard, FilterPill, ForagerSectionHeader, ForagerButtonStyles, ForagerProgressRing, etc.
+- iOS 26 deployment target already set (M15.1)
 
 ### **Implementation Plan**
-Read the detailed plan before starting: `docs/prds/active/plans/m15.5b-implementation-plan.md`
+Read the detailed plan before starting: `docs/prds/active/plans/m15.6-implementation-plan.md`
 
 ### **All Reference Docs**
 ```
-docs/prds/active/plans/m15.5b-implementation-plan.md  # DETAILED PLAN — read this first
+docs/prds/active/plans/m15.6-implementation-plan.md  # DETAILED PLAN — read this first
 docs/prds/active/m15-ux-design-system.md               # Full PRD v1.2
 docs/mockups/forager-design-system.html                 # 16 phone-frame mockups
 ```
 
-### **M15.5b Scope (from PRD)**
-- Extract HouseholdView from SettingsView with sync indicator + stats + Danger Zone
-- SettingsView restructure with NavigationLink to HouseholdView + version footer
-- ManageCategoriesView: nav bar "+", Uncategorized lock icon, footer text
+### **M15.6 Scope (from PRD)**
+- Glass card modifiers + shadow removal
+- Per-screen glass application (grocery, recipe, meal plan, ingredients)
+- Button glass styling evaluation
+- Tab bar refinement
+- Layered app icon via Icon Composer
 
 ### **Key Files (will be modified)**
 ```
-forager/SettingsView.swift            # Restructure with NavigationLink to Household
-forager/HouseholdMembersView.swift    # May be folded into HouseholdView
-forager/ManageCategoriesView.swift    # Nav bar +, lock icon, footer
+forager/ForagerCard.swift             # Glass card modifier
+forager/WeeklyListsView.swift        # Glass on grocery cards
+forager/GroceryListDetailView.swift   # Glass on sticky bar
+forager/RecipeListView.swift          # Glass on recipe cards
+forager/MealPlanListView.swift        # Glass on meal plan cards
+forager/MealPlanDetailView.swift      # Glass on day cards
+forager/ForagerTheme.swift            # Glass-related tokens
 ```
 
 ### **Continues on Same Branch**
 ```
 # Already on feature/M15-ux-design-system
-git log --oneline  # Should show M15.1-M15.5 commits
+git log --oneline  # Should show M15.1-M15.5b commits
 ```
 
 ---
@@ -57,5 +63,5 @@ After M15 implementation:
 
 ---
 
-**Version**: February 17, 2026 - M15.5b implementation ready
-**Dependencies**: M15.1 ✅, M15.2 ✅, M15.3 ✅, M15.4 ✅, M15.5 ✅, TestFlight live (build 10, v1.1)
+**Version**: February 17, 2026 - M15.6 implementation ready
+**Dependencies**: M15.1 ✅, M15.2 ✅, M15.3 ✅, M15.4 ✅, M15.5 ✅, M15.5b ✅, TestFlight live (build 10, v1.1)

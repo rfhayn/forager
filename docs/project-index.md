@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.5b - Settings, Categories & Household Visual Redesign
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.6 - Liquid Glass Polish & App Icon
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -51,6 +51,16 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 17, 2026** - M15.5b Settings, Categories & Household COMPLETE ✅
+- **Completed**: M15.5b — HouseholdView extraction, SettingsView restructure, ManageCategoriesView polish
+- **Key Deliverables**:
+  - HouseholdView: dedicated screen with async member loading, sharing stats, sync indicator, Danger Zone
+  - SettingsView: 867 → 549 lines, NavigationLink to HouseholdView, version footer
+  - ManageCategoriesView: nav bar `+`, Uncategorized lock icon, footer help text
+- **Files**: 1 new (HouseholdView.swift), 3 modified
+- **Builds**: 1 clean build
+- **Next**: M15.6 Liquid Glass Polish & App Icon
 
 ### **February 17, 2026** - M15.5 Meal Plans & Ingredients UX COMPLETE ✅
 - **Completed**: M15.5 — Core Data v6 + meal plan cards + day strip + ingredients overhaul
