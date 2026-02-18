@@ -16,6 +16,21 @@ struct UnifiedSearchView: View {
 
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
+    @AppStorage("recentSearches") private var recentSearchesData: String = "[]"
+
+    private var recentSearches: [String] {
+        (try? JSONDecoder().decode([String].self, from: Data(recentSearchesData.utf8))) ?? []
+    }
+
+    private func addRecentSearch(_ query: String) {
+        var searches = recentSearches
+        searches.removeAll { $0.lowercased() == query.lowercased() }
+        searches.insert(query, at: 0)
+        if searches.count > 8 { searches = Array(searches.prefix(8)) }
+        if let data = try? JSONEncoder().encode(searches), let json = String(data: data, encoding: .utf8) {
+            recentSearchesData = json
+        }
+    }
 
     // Fetch all data types
     @FetchRequest(
@@ -96,7 +111,11 @@ struct UnifiedSearchView: View {
             if searchText.isEmpty && !isSearchFocused {
                 emptyStateView
             } else if searchText.isEmpty && isSearchFocused {
-                emptyStateView
+                if recentSearches.isEmpty {
+                    emptyStateView
+                } else {
+                    recentSearchesView
+                }
             } else if hasResults {
                 searchResultsView
             } else {
@@ -106,6 +125,11 @@ struct UnifiedSearchView: View {
         .navigationTitle(isSearchFocused ? "" : "Search")
         .navigationBarTitleDisplayMode(isSearchFocused ? .inline : .large)
         .animation(reduceMotion ? nil : .default, value: isSearchFocused)
+        .onDisappear {
+            if !searchText.isEmpty {
+                addRecentSearch(searchText)
+            }
+        }
     }
 
     // MARK: - Search Bar Section
@@ -187,9 +211,8 @@ struct UnifiedSearchView: View {
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(list.name ?? "Unnamed List")
+                                        highlightedText(list.name ?? "Unnamed List", highlight: searchText)
                                             .font(.body)
-                                            .foregroundStyle(.primary)
 
                                         if let date = list.dateCreated {
                                             Text(date, style: .date)
@@ -225,9 +248,8 @@ struct UnifiedSearchView: View {
                                     .frame(width: 24)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(ingredient.name ?? "Unnamed")
+                                    highlightedText(ingredient.name ?? "Unnamed", highlight: searchText)
                                         .font(.body)
-                                        .foregroundStyle(.primary)
 
                                     if let category = ingredient.category {
                                         Text(category)
@@ -265,9 +287,8 @@ struct UnifiedSearchView: View {
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(recipe.title ?? "Untitled Recipe")
+                                        highlightedText(recipe.title ?? "Untitled Recipe", highlight: searchText)
                                             .font(.body)
-                                            .foregroundStyle(.primary)
 
                                         HStack(spacing: 8) {
                                             Text("\(Int(recipe.servings)) servings")
@@ -308,9 +329,8 @@ struct UnifiedSearchView: View {
                                         .frame(width: 24)
 
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(plan.name ?? "Unnamed Plan")
+                                        highlightedText(plan.name ?? "Unnamed Plan", highlight: searchText)
                                             .font(.body)
-                                            .foregroundStyle(.primary)
 
                                         if let startDate = plan.startDate {
                                             Text(startDate, style: .date)
@@ -333,6 +353,54 @@ struct UnifiedSearchView: View {
             }
             .padding()
         }
+    }
+
+    // MARK: - Recent Searches
+
+    private var recentSearchesView: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+                Text("Recent Searches")
+                    .font(ForagerTheme.footnoteFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .textCase(.uppercase)
+
+                FlowLayout(spacing: ForagerTheme.Spacing.sm) {
+                    ForEach(recentSearches, id: \.self) { term in
+                        Button {
+                            searchText = term
+                        } label: {
+                            Text(term)
+                                .font(ForagerTheme.footnoteFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 6)
+                                .background(ForagerTheme.surfaceSecondary)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+
+    // MARK: - Highlighted Text Helper
+
+    private func highlightedText(_ text: String, highlight: String) -> Text {
+        guard !highlight.isEmpty else { return Text(text) }
+        let lowercasedText = text.lowercased()
+        let lowercasedHighlight = highlight.lowercased()
+
+        guard let range = lowercasedText.range(of: lowercasedHighlight) else {
+            return Text(text)
+        }
+
+        let before = String(text[text.startIndex..<range.lowerBound])
+        let match = String(text[range.lowerBound..<range.upperBound])
+        let after = String(text[range.upperBound..<text.endIndex])
+
+        return Text("\(Text(before))\(Text(match).bold().foregroundColor(ForagerTheme.accentPrimary))\(Text(after))")
     }
 
     // MARK: - Result Section Helper
