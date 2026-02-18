@@ -684,6 +684,55 @@ class MealPlanService: ObservableObject {
         }
     }
     
+    // MARK: - M15.5: Quick Option Support
+
+    // M15.5: Sets a quick option (Takeout/Dining Out/Leftovers/No Meal) for a date
+    // Creates a PlannedMeal with no recipe relationship
+    // Replaces any existing meal on that date
+    func setQuickOption(_ option: PlannedMeal.QuickOption, for date: Date, in plan: MealPlan) -> PlannedMeal? {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+
+        // Remove existing meal on this date if any
+        let fetchRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        fetchRequest.predicate = NSPredicate(
+            format: "mealPlan == %@ AND date >= %@ AND date < %@",
+            plan,
+            startOfDay as NSDate,
+            Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)! as NSDate
+        )
+
+        do {
+            let existing = try context.fetch(fetchRequest)
+            for meal in existing {
+                context.delete(meal)
+            }
+
+            let meal = PlannedMeal(context: context)
+            meal.id = UUID()
+            meal.date = startOfDay
+            meal.quickOption = option.rawValue
+            meal.recipe = nil
+            meal.mealPlan = plan
+            meal.createdDate = Date()
+            meal.isCompleted = option == .noMeal
+
+            try context.save()
+
+            if plan == activeMealPlan {
+                loadPlannedMeals(for: plan)
+            }
+
+            return meal
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error setting quick option: \(error)")
+            #endif
+            context.rollback()
+            return nil
+        }
+    }
+
     // MARK: - M15.3: Grocery List Generation
 
     // M15.3: Generates a grocery list from a meal plan's recipes.

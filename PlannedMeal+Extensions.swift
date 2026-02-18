@@ -9,6 +9,27 @@ import Foundation
 
 extension PlannedMeal {
     
+    // MARK: - M15.5: Quick Option Support
+
+    enum QuickOption: String, CaseIterable {
+        case takeout = "Takeout"
+        case diningOut = "Dining Out"
+        case leftovers = "Leftovers"
+        case noMeal = "No Meal"
+
+        var icon: String {
+            switch self {
+            case .takeout: return "bag"
+            case .diningOut: return "fork.knife"
+            case .leftovers: return "refrigerator"
+            case .noMeal: return "moon.zzz"
+            }
+        }
+    }
+
+    var isQuickOption: Bool { quickOption != nil }
+    var quickOptionEnum: QuickOption? { QuickOption(rawValue: quickOption ?? "") }
+
     // MARK: - M7.1.3 Semantic Key Helpers
     
     /// Single source of truth for meal slot keys

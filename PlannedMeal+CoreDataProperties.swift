@@ -24,6 +24,7 @@ extension PlannedMeal {
     @NSManaged public var isCompleted: Bool
     @NSManaged public var scaleFactor: Double
     @NSManaged public var servings: Int16
+    @NSManaged public var quickOption: String?
     @NSManaged public var slotKey: String?
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?
