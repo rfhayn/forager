@@ -90,7 +90,7 @@ struct IngredientsView: View {
 
     // MARK: - State Variables
     @State private var searchText = ""
-    @State private var selectedCategory = "All Categories"
+    @State private var selectedCategory: String? = nil
     @State private var showStaplesOnly = false
     @State private var showNeedsReviewOnly = false
     @State private var sortOption: SortOption = .staplesFirst
@@ -99,7 +99,7 @@ struct IngredientsView: View {
     @State private var showingAddForm = false
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
     // MARK: - FIXED: Data-driven sheet presentation (no more empty-first-render!)
     @State private var categoryChangePayload: CategoryChangePayload?
 
@@ -120,46 +120,35 @@ struct IngredientsView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                // Enhanced toolbar with bulk category assignment
                 if isEditMode && !selectedIngredients.isEmpty {
-                    // Show bulk operations menu when items are selected in edit mode
                     Menu {
                         Button("Change Category", systemImage: "folder") {
-                            // FIXED: Use data-driven payload approach
                             categoryChangePayload = CategoryChangePayload(
                                 ingredientTemplates: Array(selectedIngredients)
                             )
                         }
-                        
                         Divider()
-                        
                         Button("Mark as Staples", systemImage: "pin.fill") {
                             markSelectedAsStaples(true)
                         }
-                        
                         Button("Remove Staple Status", systemImage: "pin.slash") {
                             markSelectedAsStaples(false)
                         }
-                        
                         Divider()
-                        
                         Button("Delete Selected", systemImage: "trash", role: .destructive) {
                             bulkDeleteSelected()
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle.fill")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                 } else {
-                    Button(action: {
-                        showingAddForm = true
-                    }) {
+                    Button(action: { showingAddForm = true }) {
                         Image(systemName: "plus")
-                            .foregroundColor(.primary)
                     }
                 }
             }
-            
+
             ToolbarItem(placement: .navigationBarLeading) {
                 HStack(spacing: 12) {
                     if isEditMode {
@@ -170,18 +159,22 @@ struct IngredientsView: View {
                             }
                         }
                     } else {
-                        Button("Edit") {
-                            withAnimation {
-                                isEditMode = true
+                        // Sort menu
+                        Menu {
+                            Picker("Sort", selection: $sortOption) {
+                                ForEach(SortOption.allCases, id: \.self) { option in
+                                    Text(option.displayName).tag(option)
+                                }
                             }
+                        } label: {
+                            Image(systemName: "arrow.up.arrow.down")
                         }
-                        .disabled(ingredients.isEmpty)
                     }
-                    
+
                     if isEditMode {
                         Text("(\(ingredients.count))")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -221,37 +214,41 @@ struct IngredientsView: View {
         }
     }
     
-    // MARK: - M7.4: Filter Section (search moved to .searchable())
+    // MARK: - M15.5: Category Filter Pills
     private var filterSection: some View {
-        // M8.3.1: ScrollView prevents pill overflow on narrow screens
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Category Filter - larger button
-                Menu {
-                    Button("All Categories") {
-                        selectedCategory = "All Categories"
-                    }
-
-                    Divider()
-
-                    ForEach(Array(Set(ingredients.compactMap { $0.category ?? "Uncategorized" })).sorted(), id: \.self) { category in
-                        Button(category) {
-                            selectedCategory = category
-                        }
-                    }
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                // "All" pill
+                Button {
+                    withAnimation { selectedCategory = nil }
                 } label: {
                     FilterPill(
-                        title: selectedCategory == "All Categories" ? "All Categories" : selectedCategory,
-                        isSelected: selectedCategory != "All Categories",
-                        systemImage: "folder",
-                        size: .large
+                        title: "All",
+                        isSelected: selectedCategory == nil && !showStaplesOnly && !showNeedsReviewOnly,
+                        size: .regular
                     )
                 }
 
-                // Staples Filter
-                Button(action: {
+                // Individual category pills
+                ForEach(uniqueCategoryNames, id: \.self) { categoryName in
+                    Button {
+                        withAnimation {
+                            selectedCategory = selectedCategory == categoryName ? nil : categoryName
+                        }
+                    } label: {
+                        FilterPill(
+                            title: categoryName,
+                            isSelected: selectedCategory == categoryName,
+                            color: ForagerTheme.categoryColor(for: categoryName),
+                            size: .regular
+                        )
+                    }
+                }
+
+                // Staples filter
+                Button {
                     showStaplesOnly.toggle()
-                }) {
+                } label: {
                     FilterPill(
                         title: "Staples",
                         isSelected: showStaplesOnly,
@@ -259,37 +256,38 @@ struct IngredientsView: View {
                     )
                 }
 
-                // M8.3.1: Needs Review filter — shows templates with problematic names
-                Button(action: {
-                    showNeedsReviewOnly.toggle()
-                }) {
-                    FilterPill(
-                        title: "Review\(needsReviewCount > 0 ? " (\(needsReviewCount))" : "")",
-                        isSelected: showNeedsReviewOnly,
-                        systemImage: "exclamationmark.triangle"
-                    )
-                }
-
-                // Sort Options - compact button
-                Menu {
-                    ForEach(SortOption.allCases, id: \.self) { option in
-                        Button(option.displayName) {
-                            sortOption = option
-                        }
+                // Review filter
+                if needsReviewCount > 0 {
+                    Button {
+                        showNeedsReviewOnly.toggle()
+                    } label: {
+                        FilterPill(
+                            title: "Review (\(needsReviewCount))",
+                            isSelected: showNeedsReviewOnly,
+                            systemImage: "exclamationmark.triangle"
+                        )
                     }
-                } label: {
-                    FilterPill(
-                        title: sortOption.displayName,
-                        isSelected: false,
-                        systemImage: "arrow.up.arrow.down",
-                        size: .compact
-                    )
                 }
             }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemGroupedBackground))
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .background(ForagerTheme.backgroundCanvas)
+    }
+
+    private var uniqueCategoryNames: [String] {
+        let names = Set(ingredients.compactMap { $0.category ?? "Uncategorized" })
+        let categoryMap = Dictionary(
+            categories.map { ($0.displayName, $0.sortOrder) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        return names.sorted { c1, c2 in
+            if c1 == "Uncategorized" { return false }
+            if c2 == "Uncategorized" { return true }
+            let o1 = categoryMap[c1] ?? Int16.max
+            let o2 = categoryMap[c2] ?? Int16.max
+            return o1 == o2 ? c1 < c2 : o1 < o2
+        }
     }
     
     // MARK: - Ingredients List View
@@ -297,8 +295,8 @@ struct IngredientsView: View {
         List {
             ForEach(sortedCategoryNames, id: \.self) { categoryName in
                 let items = groupedIngredients[categoryName] ?? []
-                
-                Section(header: categoryHeader(categoryName: categoryName, count: items.count)) {
+
+                Section {
                     ForEach(items, id: \.objectID) { ingredient in
                         IngredientRowView(
                             ingredient: ingredient,
@@ -315,7 +313,6 @@ struct IngredientsView: View {
                                 toggleStapleStatus(for: ingredient)
                             },
                             onCategoryAssign: {
-                                // FIXED: Single ingredient category change with data-driven payload
                                 categoryChangePayload = CategoryChangePayload(
                                     ingredientTemplates: [ingredient]
                                 )
@@ -329,46 +326,19 @@ struct IngredientsView: View {
                     .onDelete { indexSet in
                         deleteIngredients(from: items, at: indexSet)
                     }
+                } header: {
+                    ForagerSectionHeader(
+                        title: categoryName,
+                        count: items.count
+                    )
                 }
             }
         }
-        .listStyle(InsetGroupedListStyle())
-        // M8.3.1: Add bottom padding so the custom navigation bar doesn't cover the last row
+        .listStyle(.plain)
+        .background(ForagerTheme.backgroundCanvas)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Color.clear.frame(height: 70)
         }
-    }
-    
-    // MARK: - Category Header
-    private func categoryHeader(categoryName: String, count: Int) -> some View {
-        HStack {
-            Circle()
-                .fill(ForagerTheme.categoryColor(for: categoryName))
-                .frame(width: 16, height: 16)
-                .overlay(
-                    Text(categoryEmoji(for: categoryName))
-                        .font(.system(size: 10))
-                )
-            
-            Text(categoryName.uppercased())
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text("\(count)")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(Color(.systemGray5))
-                .cornerRadius(6)
-        }
-        .padding(.vertical, 4)
-        .background(Color(.systemGroupedBackground))
-        .listRowInsets(EdgeInsets())
     }
     
     // MARK: - Empty State View
@@ -401,9 +371,9 @@ struct IngredientsView: View {
         }
 
         // Apply category filter
-        if selectedCategory != "All Categories" {
+        if let category = selectedCategory {
             filtered = filtered.filter { ingredient in
-                (ingredient.category ?? "Uncategorized") == selectedCategory
+                (ingredient.category ?? "Uncategorized") == category
             }
         }
 
@@ -545,18 +515,6 @@ struct IngredientsView: View {
         }
     }
 
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
-        }
-    }
-
 }
 
 // MARK: - Sort Options
@@ -592,20 +550,20 @@ struct IngredientRowView: View {
     @State private var errorMessage = ""
     
     var body: some View {
-        HStack {
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            // 4px category color strip
+            Rectangle()
+                .fill(ForagerTheme.categoryColor(for: ingredient.category ?? "Uncategorized"))
+                .frame(width: 4)
+
             if isEditMode {
                 Button(action: { onSelectionChanged(!isSelected) }) {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(isSelected ? .blue : .secondary)
+                        .foregroundStyle(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
-            
-            // Category indicator
-            Circle()
-                .fill(ForagerTheme.categoryColor(for: ingredient.category ?? "Uncategorized"))
-                .frame(width: 12, height: 12)
-            
+
             // INLINE EDITING: Ingredient name with tap-to-edit functionality
             if isEditingName {
                 TextField("Ingredient name", text: $editedName)
@@ -618,21 +576,25 @@ struct IngredientRowView: View {
                         editedName = ingredient.name ?? ""
                     }
             } else {
-                Text(ingredient.name ?? "Unknown ingredient")
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .onTapGesture {
-                        if !isEditMode { // Only allow name editing when not in selection mode
-                            startNameEdit()
-                        }
-                    }
+                VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                    Text(ingredient.name ?? "Unknown ingredient")
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
 
-                // M8.3.1: Yellow badge for templates that need name cleanup
+                    if ingredient.isStaple {
+                        Text("Staple")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                    }
+                }
+                .onTapGesture {
+                    if !isEditMode { startNameEdit() }
+                }
+
                 if ingredient.needsReview {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption2)
-                        .foregroundColor(.yellow)
-                        .help("Name may contain quantities or qualifiers — tap name to edit")
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
 
@@ -658,27 +620,31 @@ struct IngredientRowView: View {
                     .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             } else {
-                // Normal actions
-                HStack(spacing: 16) {
-                    // Category assignment button
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    // Usage badge
+                    if ingredient.usageCount > 0 {
+                        Text("\(ingredient.usageCount)×")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+
                     Button(action: onCategoryAssign) {
                         Image(systemName: "folder")
                             .font(.body)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                     .buttonStyle(PlainButtonStyle())
-                    
-                    // Staple toggle button - FIXED: Filled pin for staples, outline for non-staples
+
                     Button(action: onStapleToggle) {
                         Image(systemName: ingredient.isStaple ? "pin.fill" : "pin")
                             .font(.body)
-                            .foregroundColor(ingredient.isStaple ? .orange : .secondary)
+                            .foregroundStyle(ingredient.isStaple ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
         .alert("Error", isPresented: $showingError) {
             Button("OK") {
                 showingError = false
