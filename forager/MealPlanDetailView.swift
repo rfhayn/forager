@@ -517,7 +517,14 @@ struct MealPlanDetailView: View {
 
     private func removePlannedMeal(_ meal: PlannedMeal) {
         viewContext.delete(meal)
-        try? viewContext.save()
+        do {
+            try viewContext.save()
+        } catch {
+            viewContext.rollback()
+            #if DEBUG
+            print("Failed to remove planned meal: \(error)")
+            #endif
+        }
     }
 
     private func toggleCompletion(for meal: PlannedMeal) {

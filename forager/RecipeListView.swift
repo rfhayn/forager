@@ -929,12 +929,15 @@ struct RecipeDetailView: View {
     @ObservedObject var recipe: Recipe
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
 
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
     @State private var showingEditSheet = false
     @State private var showingMealPlanSheet = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
 
     // M15.4: Inline scaling state (replaces modal RecipeScalingView)
     @State private var scaleFactor: Double = 1.0
@@ -1030,7 +1033,12 @@ struct RecipeDetailView: View {
         .confirmationDialog("Mark Recipe as Used?", isPresented: $showingMarkUsedConfirmation) {
             Button("Yes, Mark as Used") {
                 recipe.recordRecipeUsage()
-                try? viewContext.save()
+                do {
+                    try viewContext.save()
+                } catch {
+                    errorMessage = "Failed to save: \(error.localizedDescription)"
+                    showingError = true
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -1038,12 +1046,26 @@ struct RecipeDetailView: View {
         }
         .confirmationDialog("Delete Recipe?", isPresented: $showingDeleteConfirmation) {
             Button("Delete", role: .destructive) {
-                viewContext.delete(recipe)
-                try? viewContext.save()
+                let recipeID = recipe.objectID
+                PersistenceController.shared.performWrite({ context in
+                    let toDelete = context.object(with: recipeID)
+                    context.delete(toDelete)
+                }, onError: { error in
+                    DispatchQueue.main.async {
+                        errorMessage = "Failed to delete recipe: \(error.localizedDescription)"
+                        showingError = true
+                    }
+                })
+                dismiss()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This action cannot be undone.")
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
         }
         .sheet(isPresented: $showingAddToListSheet) {
             if hasIngredients {
