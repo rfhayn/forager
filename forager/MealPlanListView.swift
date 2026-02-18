@@ -3,31 +3,25 @@
 //  forager
 //
 //  Created for M4.2.4: Multiple Meal Plans List View
-//  Main entry point for meal planning, displays all meal plans organized by status
-//  Follows WeeklyListsView architecture pattern from M1
+//  M15.5: Rewritten with summary cards, day dots, Tonight snippet, Generate button
 //
 
 import SwiftUI
 import CoreData
 
-// M4.2.4: Main list view for all meal plans
-// Displays plans organized into Active, Upcoming, and Completed sections
-// Pattern: Follows proven WeeklyListsView architecture
+// MARK: - Main View
+
 struct MealPlansListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var householdService: HouseholdService
 
     @Binding var popToRoot: Bool
 
-    // M4.2.4: Fetch all meal plans, sorted by start date (newest first)
-    // Uses @FetchRequest for automatic UI updates when plans change
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \MealPlan.startDate, ascending: false)],
         animation: .default
     ) private var allMealPlansFetch: FetchedResults<MealPlan>
 
-    // M7.3.2: Filter meal plans based on current household context
-    // M7.2.2 FIX: Use currentHouseholdKey which has fallback for nil household.id
     private var allMealPlans: [MealPlan] {
         let currentHouseholdKey = householdService.currentHouseholdKey
         return allMealPlansFetch.filter { plan in
@@ -39,26 +33,33 @@ struct MealPlansListView: View {
         }
     }
 
-    // M4.2.4: UI state management
     @State private var showingCreateSheet = false
-    @State private var showCompleted = false  // Completed section collapsed by default
+    @State private var showCompleted = false
     @State private var refreshID = UUID()
-    
-    // M4.2.4: Service for plan management
+    @State private var showingGroceryListAlert = false
+    @State private var groceryListMessage = ""
+
     @StateObject private var mealPlanService = MealPlanService.shared
-    
+
     var body: some View {
         contentView
             .navigationTitle("Meal Plans")
             .toolbar {
-                toolbarContent
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingCreateSheet = true }) {
+                        Image(systemName: "plus")
+                    }
+                }
             }
             .sheet(isPresented: $showingCreateSheet) {
                 CreateMealPlanSheet()
             }
+            .alert("Grocery List", isPresented: $showingGroceryListAlert) {
+                Button("OK") { }
+            } message: {
+                Text(groceryListMessage)
+            }
             .onAppear {
-                // M4.2.4: Update plan statuses on view appear
-                // Ensures active plan logic is current
                 mealPlanService.updateActivePlanStatus()
                 mealPlanService.updateCompletedStatus()
                 viewContext.refreshAllObjects()
@@ -67,148 +68,90 @@ struct MealPlansListView: View {
                 if showingCreateSheet { showingCreateSheet = false }
             }
     }
-    
-    // MARK: - Content View
-    
-    // M4.2.4: Main content - shows empty state or plan list
-    // Matches WeeklyListsView pattern for consistency
+
+    // MARK: - Content
+
     private var contentView: some View {
         ZStack {
+            ForagerTheme.backgroundCanvas.ignoresSafeArea()
+
             if allMealPlans.isEmpty {
-                emptyStateView
+                StandardEmptyStateView(
+                    iconName: "calendar.badge.plus",
+                    title: "No Meal Plans Yet",
+                    subtitle: "Start organizing your weekly meals!",
+                    buttonIcon: "calendar.badge.plus",
+                    buttonText: "Create Meal Plan",
+                    buttonAction: { showingCreateSheet = true }
+                )
             } else {
-                plansListView
-            }
-        }
-    }
-    
-    // MARK: - Empty State
-    
-    // M4.2.4: Empty state when no meal plans exist
-    // Encourages user to create first plan
-    // Pattern: Uses StandardEmptyStateView for consistency
-    private var emptyStateView: some View {
-        StandardEmptyStateView(
-            iconName: "calendar.badge.plus",
-            title: "No Meal Plans Yet",
-            subtitle: "Start organizing your weekly meals!",
-            buttonIcon: "calendar.badge.plus",
-            buttonText: "Create Meal Plan",
-            buttonAction: { showingCreateSheet = true }
-        )
-    }
-    
-    // MARK: - Plans List
-    
-    // M4.2.4: List of all meal plans organized into sections
-    // Active plans at top, then upcoming, then completed (collapsible)
-    private var plansListView: some View {
-        List {
-            // M4.2.4: Active Plans Section
-            // Shows plans containing today's date
-            // Should be 0 or 1 plan (only one active at a time)
-            if !activePlans.isEmpty {
-                Section {
-                    ForEach(activePlans, id: \.self) { plan in
-                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
-                            MealPlanRowView(mealPlan: plan, status: .active)
+                ScrollView {
+                    LazyVStack(spacing: ForagerTheme.Spacing.md) {
+                        // Active plans
+                        ForEach(activePlans, id: \.objectID) { plan in
+                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                                MealPlanSummaryCard(
+                                    mealPlan: plan,
+                                    status: .active,
+                                    onGenerateGroceryList: { generateGroceryList(from: plan) }
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
-                    }
-                } header: {
-                    HStack {
-                        Image(systemName: "calendar.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Active Plan")
-                    }
-                }
-            }
-            
-            // M4.2.4: Upcoming Plans Section
-            // Shows plans with start date in the future
-            if !upcomingPlans.isEmpty {
-                Section {
-                    ForEach(upcomingPlans, id: \.self) { plan in
-                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
-                            MealPlanRowView(mealPlan: plan, status: .upcoming)
+
+                        // Upcoming plans
+                        ForEach(upcomingPlans, id: \.objectID) { plan in
+                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                                MealPlanSummaryCard(mealPlan: plan, status: .upcoming)
+                            }
+                            .buttonStyle(.plain)
                         }
-                    }
-                    .onDelete(perform: deletePlans)
-                } header: {
-                    HStack {
-                        Image(systemName: "calendar.badge.clock")
-                            .foregroundColor(.blue)
-                        Text("Upcoming Plans")
-                    }
-                }
-            }
-            
-            // M4.2.4: Completed Plans Section (Collapsible)
-            // Shows historical plans, collapsed by default to reduce clutter
-            // Preserved for analytics and recipe usage history
-            if !completedPlans.isEmpty {
-                Section {
-                    // M4.2.4: Disclosure group for collapsible section
-                    DisclosureGroup(
-                        isExpanded: $showCompleted,
-                        content: {
-                            ForEach(completedPlans, id: \.self) { plan in
-                                NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
-                                    MealPlanRowView(mealPlan: plan, status: .completed)
+
+                        // Completed plans
+                        if !completedPlans.isEmpty {
+                            DisclosureGroup(isExpanded: $showCompleted) {
+                                ForEach(completedPlans, id: \.objectID) { plan in
+                                    NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                                        MealPlanSummaryCard(mealPlan: plan, status: .completed)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } label: {
+                                HStack(spacing: ForagerTheme.Spacing.sm) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(ForagerTheme.textTertiary)
+                                    Text("Completed (\(completedPlans.count))")
+                                        .font(ForagerTheme.secondaryFont)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
                                 }
                             }
-                            .onDelete(perform: deletePlans)
-                        },
-                        label: {
-                            HStack {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.gray)
-                                Text("Completed Plans (\(completedPlans.count))")
-                                    .font(.headline)
-                            }
+                            .padding(.horizontal, ForagerTheme.Spacing.lg)
                         }
-                    )
+                    }
+                    .padding(.vertical, ForagerTheme.Spacing.md)
+                }
+                .refreshable {
+                    mealPlanService.updateActivePlanStatus()
+                    mealPlanService.updateCompletedStatus()
+                    viewContext.refreshAllObjects()
+                    refreshID = UUID()
                 }
             }
         }
-        .listStyle(InsetGroupedListStyle())
-        .refreshable {
-            // M4.2.4: Pull-to-refresh updates plan statuses
-            mealPlanService.updateActivePlanStatus()
-            mealPlanService.updateCompletedStatus()
-            viewContext.refreshAllObjects()
-            refreshID = UUID()
-        }
     }
-    
-    // MARK: - Toolbar
 
-    // M4.2.4: Toolbar with create button
-    // M7.4: Standardized to simple "+" icon (iOS convention)
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button(action: { showingCreateSheet = true }) {
-                Image(systemName: "plus")
-            }
-        }
-    }
-    
     // MARK: - Plan Categorization
-    
-    // M4.2.4: Active plans - contains today's date and not completed
-    // Should only be 0 or 1 plan (enforced by status update logic)
+
     private var activePlans: [MealPlan] {
         let today = Calendar.current.startOfDay(for: Date())
         return allMealPlans.filter { plan in
             guard let startDate = plan.startDate else { return false }
             let startDay = Calendar.current.startOfDay(for: startDate)
             guard let endDate = Calendar.current.date(byAdding: .day, value: Int(plan.duration) - 1, to: startDay) else { return false }
-            
             return (startDay <= today) && (today <= endDate) && !plan.isCompleted
         }
     }
-    
-    // M4.2.4: Upcoming plans - start date in future and not completed
+
     private var upcomingPlans: [MealPlan] {
         let today = Calendar.current.startOfDay(for: Date())
         return allMealPlans.filter { plan in
@@ -217,79 +160,220 @@ struct MealPlansListView: View {
             return startDay > today && !plan.isCompleted
         }
     }
-    
-    // M4.2.4: Completed plans - either manually completed or end date passed
+
     private var completedPlans: [MealPlan] {
         let today = Calendar.current.startOfDay(for: Date())
         return allMealPlans.filter { plan in
-            // Manually completed
-            if plan.isCompleted {
-                return true
-            }
-            
-            // Auto-completed (end date passed)
+            if plan.isCompleted { return true }
             guard let startDate = plan.startDate else { return false }
             let startDay = Calendar.current.startOfDay(for: startDate)
             guard let endDate = Calendar.current.date(byAdding: .day, value: Int(plan.duration) - 1, to: startDay) else { return false }
-            
             return endDate < today
         }
     }
-    
+
     // MARK: - Actions
-    
-    // M4.2.4: Delete meal plans with confirmation
-    // Uses swipe-to-delete gesture on rows
-    private func deletePlans(at offsets: IndexSet) {
-        // Note: Determine which section the delete came from based on context
-        // For now, handle upcoming and completed plans
-        withAnimation {
-            for index in offsets {
-                let planToDelete: MealPlan
-                if !upcomingPlans.isEmpty && index < upcomingPlans.count {
-                    planToDelete = upcomingPlans[index]
-                } else if !completedPlans.isEmpty {
-                    planToDelete = completedPlans[index]
-                } else {
-                    continue
-                }
-                
-                mealPlanService.deleteMealPlan(planToDelete)
-            }
+
+    private func generateGroceryList(from plan: MealPlan) {
+        if let list = mealPlanService.generateGroceryList(from: plan) {
+            groceryListMessage = "Created \"\(list.name ?? "Grocery List")\" with \(list.items?.count ?? 0) items."
+        } else {
+            groceryListMessage = "No recipes found in this plan to generate a list from."
         }
+        showingGroceryListAlert = true
     }
 }
 
-// MARK: - M4.2.4: Plan Status Enum
+// MARK: - Summary Card
 
-// M4.2.4: Status categories for meal plans
-// Used by MealPlanRowView to display appropriate indicator
-enum MealPlanStatus {
-    case active    // Contains today, not completed
-    case upcoming  // Starts in future, not completed
-    case completed // Manually completed or end date passed
-    
-    // Visual indicator color for each status
-    var indicatorColor: Color {
-        switch self {
-        case .active:
-            return .green
-        case .upcoming:
-            return .blue
-        case .completed:
-            return .gray
+struct MealPlanSummaryCard: View {
+    @ObservedObject var mealPlan: MealPlan
+    let status: MealPlanStatus
+    var onGenerateGroceryList: (() -> Void)? = nil
+
+    @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
+
+    init(mealPlan: MealPlan, status: MealPlanStatus, onGenerateGroceryList: (() -> Void)? = nil) {
+        self.mealPlan = mealPlan
+        self.status = status
+        self.onGenerateGroceryList = onGenerateGroceryList
+
+        let planID = mealPlan.id ?? UUID()
+        self._plannedMeals = FetchRequest(
+            sortDescriptors: [NSSortDescriptor(keyPath: \PlannedMeal.date, ascending: true)],
+            predicate: NSPredicate(format: "mealPlan.id == %@", planID as CVarArg)
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+            // Name + status
+            HStack {
+                Text(mealPlan.name ?? "Unnamed Plan")
+                    .font(ForagerTheme.cardTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                Spacer()
+                if status == .active {
+                    Text("Active")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                        .padding(.horizontal, ForagerTheme.Spacing.sm)
+                        .padding(.vertical, 2)
+                        .background(ForagerTheme.accentTint)
+                        .clipShape(Capsule())
+                }
+            }
+
+            // Date range
+            Text(dateRangeText)
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+
+            // Day dots
+            dayDotsRow
+
+            // Tonight snippet (active only)
+            if status == .active, let todayMeal = mealForToday {
+                Divider()
+                tonightSnippet(todayMeal)
+            }
+
+            // Generate button (active only)
+            if status == .active, let action = onGenerateGroceryList {
+                Button(action: action) {
+                    HStack(spacing: ForagerTheme.Spacing.xs) {
+                        Image(systemName: "cart.badge.plus")
+                        Text("Generate Grocery List")
+                    }
+                    .font(ForagerTheme.footnoteFont)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                    .padding(.horizontal, ForagerTheme.Spacing.md)
+                    .padding(.vertical, ForagerTheme.Spacing.sm)
+                    .background(ForagerTheme.accentTint)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                }
+            }
+        }
+        .foragerCard()
+        .overlay(alignment: .leading) {
+            if status == .active {
+                Rectangle()
+                    .fill(ForagerTheme.accentPrimary)
+                    .frame(width: 4)
+                    .clipShape(RoundedRectangle(cornerRadius: 2))
+            }
+        }
+        .opacity(status == .completed ? 0.6 : 1.0)
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+    }
+
+    // MARK: - Day Dots
+
+    private var dayDotsRow: some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            ForEach(Array(daysInPlan.enumerated()), id: \.offset) { _, date in
+                let isPlanned = plannedDates.contains(where: { Calendar.current.isDate($0, inSameDayAs: date) })
+                let dayInitial = dayLetter(for: date)
+
+                Text(dayInitial)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(isPlanned ? .white : ForagerTheme.textTertiary)
+                    .frame(width: 22, height: 22)
+                    .background(
+                        Circle()
+                            .fill(isPlanned ? ForagerTheme.accentPrimary : .clear)
+                    )
+                    .overlay(
+                        Circle()
+                            .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
+                    )
+            }
         }
     }
-    
-    // Icon for each status
+
+    // MARK: - Tonight Snippet
+
+    private func tonightSnippet(_ meal: PlannedMeal) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text("TONIGHT")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .tracking(0.5)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+
+                if meal.isQuickOption, let option = meal.quickOptionEnum {
+                    HStack(spacing: ForagerTheme.Spacing.xs) {
+                        Image(systemName: option.icon)
+                        Text(option.rawValue)
+                    }
+                    .font(ForagerTheme.secondaryFont.bold())
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                } else if let recipe = meal.recipe {
+                    Text("\(recipe.recipeDisplayTitle) · \(recipe.recipeServingsDescription)")
+                        .font(ForagerTheme.secondaryFont.bold())
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineLimit(1)
+                }
+            }
+            Spacer()
+        }
+    }
+
+    // MARK: - Helpers
+
+    private var daysInPlan: [Date] {
+        guard let start = mealPlan.startDate else { return [] }
+        return (0..<Int(mealPlan.duration)).compactMap {
+            Calendar.current.date(byAdding: .day, value: $0, to: start)
+        }
+    }
+
+    private var plannedDates: [Date] {
+        plannedMeals.compactMap { $0.date }
+    }
+
+    private var mealForToday: PlannedMeal? {
+        plannedMeals.first { meal in
+            guard let mealDate = meal.date else { return false }
+            return Calendar.current.isDateInToday(mealDate)
+        }
+    }
+
+    private func dayLetter(for date: Date) -> String {
+        let weekday = Calendar.current.component(.weekday, from: date)
+        let initials = ["S", "M", "T", "W", "T", "F", "S"]
+        return initials[weekday - 1]
+    }
+
+    private var dateRangeText: String {
+        guard let startDate = mealPlan.startDate else { return "No date set" }
+        let endDate = Calendar.current.date(byAdding: .day, value: Int(mealPlan.duration) - 1, to: startDate) ?? startDate
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return "\(formatter.string(from: startDate)) – \(formatter.string(from: endDate))"
+    }
+}
+
+// MARK: - Status Enum
+
+enum MealPlanStatus {
+    case active
+    case upcoming
+    case completed
+
+    var indicatorColor: Color {
+        switch self {
+        case .active: return ForagerTheme.accentPrimary
+        case .upcoming: return ForagerTheme.accentSecondary
+        case .completed: return ForagerTheme.textTertiary
+        }
+    }
+
     var iconName: String {
         switch self {
-        case .active:
-            return "calendar.circle.fill"
-        case .upcoming:
-            return "calendar.badge.clock"
-        case .completed:
-            return "checkmark.circle.fill"
+        case .active: return "calendar.circle.fill"
+        case .upcoming: return "calendar.badge.clock"
+        case .completed: return "checkmark.circle.fill"
         }
     }
 }
