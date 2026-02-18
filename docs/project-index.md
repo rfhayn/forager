@@ -3,8 +3,8 @@
 **Last Updated**: February 17, 2026
 **Purpose**: Central navigation hub for all project documentation
 **Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b complete) | M7.7 📋 **QUEUED**
-**Next Priority**: M15.6 - Liquid Glass Polish & App Icon
+**Current Phase**: M15 🚀 **ACTIVE** (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b + M15.6 complete) | M7.7 📋 **QUEUED**
+**Next Priority**: M15.7 - Dark Mode, Accessibility & Final QA
 **Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
 **Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
 
@@ -52,6 +52,18 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
+### **February 17, 2026** - M15.6 Liquid Glass Polish COMPLETE ✅
+- **Completed**: M15.6 — iOS 26 Liquid Glass effects on cards, floating elements, tab bar
+- **Key Deliverables**:
+  - Glass card modifiers: `.foragerGlassCard()` + `.foragerProminentGlassCard()` in ForagerCard.swift
+  - Glass on 4 card views (WeeklyLists, RecipeList, MealPlanList, MealPlanDetail)
+  - Glass on 4 autocomplete dropdowns + shadows removed from 6 files
+  - Tab bar: `.tabBarMinimizeBehavior(.onScrollDown)` for content immersion
+  - Button glass evaluation: kept semantic styling (documented decision)
+- **Files**: 12 modified, 0 new
+- **Builds**: 4 clean builds
+- **Next**: M15.7 Dark Mode, Accessibility & Final QA
+
 ### **February 17, 2026** - M15.5b Settings, Categories & Household COMPLETE ✅
 - **Completed**: M15.5b — HouseholdView extraction, SettingsView restructure, ManageCategoriesView polish
 - **Key Deliverables**:
@@ -60,7 +72,7 @@
   - ManageCategoriesView: nav bar `+`, Uncategorized lock icon, footer help text
 - **Files**: 1 new (HouseholdView.swift), 3 modified
 - **Builds**: 1 clean build
-- **Next**: M15.6 Liquid Glass Polish & App Icon
+- **Next**: M15.6 Liquid Glass Polish
 
 ### **February 17, 2026** - M15.5 Meal Plans & Ingredients UX COMPLETE ✅
 - **Completed**: M15.5 — Core Data v6 + meal plan cards + day strip + ingredients overhaul

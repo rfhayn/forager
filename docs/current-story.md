@@ -1,11 +1,63 @@
 # Current Development Story
 
 **Last Updated**: February 17, 2026
-**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 ✅ **COMPLETE** | M15.5b ✅ **COMPLETE** | M15.6 🚀 **NEXT** | M7.7 📋 **READY**
-**Total Progress**: ~205 hours | 89% planning accuracy
+**Status**: M15.1 ✅ **COMPLETE** | M15.2 ✅ **COMPLETE** | M15.3 ✅ **COMPLETE** | M15.4 ✅ **COMPLETE** | M15.5 ✅ **COMPLETE** | M15.5b ✅ **COMPLETE** | M15.6 ✅ **COMPLETE** | M15.7 🚀 **NEXT** | M7.7 📋 **READY**
+**Total Progress**: ~207 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
 **Current Milestone**: M15 - UX Design System & Visual Refresh
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## ✅ **M15.6: LIQUID GLASS POLISH - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 17, 2026
+**Branch**: `feature/M15-ux-design-system` (local)
+
+### **What Was Delivered** ✅
+
+Applied iOS 26 Liquid Glass effects across the app, replacing shadow-based depth with glass refraction on cards and floating elements. Tab bar now minimizes on scroll for content immersion.
+
+**Sub-Phases Completed:**
+- **A**: Glass card helpers — `.foragerGlassCard()` (regular glass, radius.md) and `.foragerProminentGlassCard()` (larger radius.lg) added to ForagerCard.swift. API validation: `Glass` type has `.regular`/`.clear`/`.identity` (no `.prominent` — differs from WWDC docs)
+- **B**: Glass on card views — WeeklyListsView, RecipeListView, MealPlanListView, MealPlanDetailView all switched from `.foragerCard()` to `.foragerGlassCard()`. Loading/progress overlays use direct `.glassEffect()`. Shadows removed from glass-effected views
+- **C**: Glass on floating elements — autocomplete dropdowns (GroceryListDetailView, AddListItemView, EditRecipeView, CreateRecipeView) use `.glassEffect(.regular)`. Shadow removed from IngredientsView ingredient rows and SettingsView household creation overlay
+- **D**: Button glass evaluation — **Decision: Keep current styling.** `.buttonStyle(.glass)` would override semantic color states on Done/Swap/Remove action buttons. Quick-select pills use themed background fills that communicate secondary-action nature. Glass buttons lack semantic color communication
+- **E**: Tab bar — `.tabBarMinimizeBehavior(.onScrollDown)` added to TabView for content immersion
+- **Skipped**: App icon (requires Xcode Icon Composer GUI — deferred to manual session)
+
+### **Key API Discovery**
+- `Glass` type: `.regular`, `.clear`, `.identity` — no `.prominent` variant
+- `.glassEffect(.regular, in: Shape)` — standard API, shape parameter required for custom geometry
+- `.buttonStyle(.glass)` / `.buttonStyle(.glassProminent)` — available but not adopted (see decision above)
+- `.tabBarMinimizeBehavior(.onScrollDown)` — works as documented
+
+### **Files Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `forager/ForagerCard.swift` | MODIFIED | +foragerGlassCard(), +foragerProminentGlassCard() |
+| `forager/WeeklyListsView.swift` | MODIFIED | Glass card + glass loading overlay |
+| `forager/RecipeListView.swift` | MODIFIED | Glass recipe cards |
+| `forager/MealPlanListView.swift` | MODIFIED | Glass summary cards |
+| `forager/MealPlanDetailView.swift` | MODIFIED | Glass day cards + glass progress overlay |
+| `forager/GroceryListDetailView.swift` | MODIFIED | Glass autocomplete dropdown |
+| `forager/AddListItemView.swift` | MODIFIED | Glass autocomplete dropdown |
+| `forager/EditRecipeView.swift` | MODIFIED | Glass autocomplete dropdown |
+| `forager/CreateRecipeView.swift` | MODIFIED | Glass autocomplete dropdown |
+| `forager/IngredientsView.swift` | MODIFIED | Shadow removed from ingredient rows |
+| `forager/SettingsView.swift` | MODIFIED | Glass on household creation overlay |
+| `forager/foragerApp.swift` | MODIFIED | Tab bar minimize on scroll |
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | 4 clean builds (one per sub-phase) |
+| Glass API | ✅ COMPILED | .glassEffect(.regular) verified on iOS 26 |
+| Tab bar | ✅ COMPILED | .tabBarMinimizeBehavior(.onScrollDown) |
+| Shadow audit | ✅ CLEAN | Only MigrationDebugView + ForagerCard fallback retain shadows |
 
 ---
 
@@ -931,7 +983,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M15.4 | Recipes UX Overhaul | ✅ COMPLETE |
 | M15.5 | Meal Plans & Ingredients UX | ✅ COMPLETE |
 | M15.5b | Settings, Categories & Household | ✅ COMPLETE |
-| M15.6 | Liquid Glass Polish & App Icon | 6-8h |
+| M15.6 | Liquid Glass Polish | ✅ COMPLETE |
 | M15.7 | Dark Mode, Accessibility & Final QA | 6-10h |
 
 **Key Decisions (February 17, 2026)**:
@@ -965,8 +1017,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b complete
-**Next Action**: M15.6 - Liquid Glass Polish & App Icon
+**Last Session**: February 17, 2026 - M15.6 Liquid Glass Polish complete
+**Next Action**: M15.7 - Dark Mode, Accessibility & Final QA
 **Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, 6/8 phases delivered)
+**Confidence**: **GREEN** (TestFlight live, M15 design phase complete, 7/8 phases delivered)
 **Version**: February 17, 2026 - M15 Active, M7.7 Queued Post-M15

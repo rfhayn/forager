@@ -1071,7 +1071,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ### **🚀 M15: UX Design System & Visual Refresh - ACTIVE** 🎨
 
-**Status**: 🚀 Active (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b complete, M15.6 next)
+**Status**: 🚀 Active (M15.1 + M15.2 + M15.3 + M15.4 + M15.5 + M15.5b + M15.6 complete, M15.7 next)
 **Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
 **Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
@@ -1126,12 +1126,12 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - SettingsView restructured (867 → 549 lines) with NavigationLink to HouseholdView + version footer
 - ManageCategoriesView: nav bar "+", Uncategorized lock icon, footer text
 
-**M15.6: Liquid Glass Polish & App Icon (~8h)**
-- Glass card modifiers + shadow removal
-- Per-screen glass application (grocery, recipe, meal plan, ingredients)
-- Button glass styling evaluation
-- Tab bar refinement
-- Layered app icon via Icon Composer
+**M15.6: Liquid Glass Polish** ✅ COMPLETE
+- Glass card modifiers (.foragerGlassCard, .foragerProminentGlassCard) on all card views
+- Glass autocomplete dropdowns on 4 views, shadow removal across 6 files
+- Button glass evaluation: kept current semantic styling (glass lacks color communication)
+- Tab bar .tabBarMinimizeBehavior(.onScrollDown) for content immersion
+- App icon deferred to manual Icon Composer session
 
 **M15.7: Dark Mode, Accessibility & Final QA (~10h)**
 - Dark mode walkthrough (tonal elevation, category colors, glass+dark)
@@ -1458,9 +1458,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.6 implementation — detailed plan at `docs/prds/active/plans/m15.6-implementation-plan.md`
+**Next Action**: M15.7 implementation — detailed plan at `docs/prds/active/plans/m15.7-implementation-plan.md`
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.5b complete. Total: ~205+ hours. TestFlight live, M15 in progress.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.6 complete. Total: ~207+ hours. TestFlight live, M15 in progress.
 
 ---
 

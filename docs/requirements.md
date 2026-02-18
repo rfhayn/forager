@@ -720,13 +720,13 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | **FR-UX-010** | **Meal plan UX refresh** | Horizontal day strip, drag-and-drop reordering | M15.5 | 🎯 **Planning experience** |
 | **FR-UX-011** | **Ingredients UX refresh** | Library cards with usage indicators, category visual refresh | M15.5 | 🎯 **Ingredient management** |
 
-### **Functional Requirements - Liquid Glass & Polish (M15.6)**
+### **Functional Requirements - Liquid Glass & Polish (M15.6)** ✅ COMPLETE
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-UX-012** | **Liquid Glass effects** | `.glassEffect()` on toolbars, sheets, floating elements | M15.6 | 🎯 **iOS 26 native** |
-| **FR-UX-013** | **Tab bar behaviors** | `.tabBarMinimizeBehavior(.onScrollDown)`, `tabViewBottomAccessory` | M15.6 | 🎯 **Content-first** |
-| **FR-UX-014** | **Layered app icon** | Glass-over-sprout via Icon Composer | M15.6 | 🎯 **Brand refresh** |
+| **FR-UX-012** | **Liquid Glass effects** | ✅ `.glassEffect(.regular)` on cards, autocomplete dropdowns, overlays (12 files) | M15.6 | 🎯 **iOS 26 native** |
+| **FR-UX-013** | **Tab bar behaviors** | ✅ `.tabBarMinimizeBehavior(.onScrollDown)` on TabView | M15.6 | 🎯 **Content-first** |
+| **FR-UX-014** | **Layered app icon** | ⏳ Deferred to manual Icon Composer session | M15.6 | 🎯 **Brand refresh** |
 
 ### **Functional Requirements - Accessibility & QA (M15.7)**
 
