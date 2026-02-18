@@ -474,15 +474,11 @@ struct MealPlanDetailView: View {
     }
 
     private func dayAbbreviation(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: date).uppercased()
+        DateFormatter.dayAbbreviation.string(from: date).uppercased()
     }
 
     private func fullDayName(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE d"
-        return formatter.string(from: date)
+        DateFormatter.fullDayDate.string(from: date)
     }
 
     // MARK: - Actions

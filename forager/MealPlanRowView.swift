@@ -122,18 +122,13 @@ struct MealPlanRowView: View {
         guard let startDate = mealPlan.startDate else { return "No date set" }
         let endDate = Calendar.current.date(byAdding: .day, value: Int(mealPlan.duration) - 1, to: startDate) ?? startDate
         
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        
-        return "\(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
+        return "\(DateFormatter.mediumDate.string(from: startDate)) - \(DateFormatter.mediumDate.string(from: endDate))"
     }
-    
+
     // M4.2.4: Start date text for auto-generated names
     private var startDateText: String {
         guard let startDate = mealPlan.startDate else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: startDate)
+        return DateFormatter.monthDay.string(from: startDate)
     }
     
     // M4.2.4: Progress text showing meals assigned

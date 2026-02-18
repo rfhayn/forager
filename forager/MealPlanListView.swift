@@ -358,9 +358,7 @@ struct MealPlanSummaryCard: View {
     private var dateRangeText: String {
         guard let startDate = mealPlan.startDate else { return "No date set" }
         let endDate = Calendar.current.date(byAdding: .day, value: Int(mealPlan.duration) - 1, to: startDate) ?? startDate
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return "\(formatter.string(from: startDate)) – \(formatter.string(from: endDate))"
+        return "\(DateFormatter.monthDay.string(from: startDate)) – \(DateFormatter.monthDay.string(from: endDate))"
     }
 }
 
