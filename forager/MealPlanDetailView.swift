@@ -2,162 +2,99 @@
 //  MealPlanDetailView.swift
 //  forager
 //
-//  Enhanced for M4.2.1-3 Enhancement: Inline Autocomplete Meal Planning
-//  Each day has its own search field for quick recipe assignment
-//  Type-to-filter workflow similar to ingredient autocomplete
+//  Created for M4.2.1-3: Inline Autocomplete Meal Planning
+//  M15.5: Rewritten with horizontal day strip, action buttons, quick-select pills
 //
 
 import SwiftUI
 import CoreData
 
-// M4.2.1-3 Enhancement: Meal plan detail view with inline autocomplete per day
-// Clean list format where each day has its own search field
-// Type to filter recipes, tap to assign - no modals needed
+// MARK: - Main View
+
 struct MealPlanDetailView: View {
 
-    // MARK: - Properties
-
-    // M4.2.4: The meal plan to display
     @ObservedObject var mealPlan: MealPlan
-
-    // M4.2.4: Core Data context
     @Environment(\.managedObjectContext) private var viewContext
-
-    // M7.3.4: Household service for filtering by householdKey
     @EnvironmentObject private var householdService: HouseholdService
-    
-    // M4.2.4: Fetch planned meals for this meal plan
+
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
-    
-    // M4.2.1-3 Enhancement: All recipes loaded for autocomplete
+
     @State private var allRecipes: [Recipe] = []
-    
-    // M4.3.4: Force UI refresh when meals change
     @State private var refreshID = UUID()
-    
-    // M4.3.3: Bulk add to shopping list
+
+    // Bulk add state
     @State private var showingBulkAddSheet = false
     @State private var isBulkAdding = false
     @State private var bulkAddProgress: Double = 0.0
     @State private var bulkAddMessage = "Processing recipes..."
     @State private var bulkAddResults: BulkAddResults?
-    
-    // MARK: - Supporting Types
-    
-    // M4.3.3: Results from bulk add operation
+
+    // Remove confirmation
+    @State private var mealToRemove: PlannedMeal?
+    @State private var showRemoveAlert = false
+
+    // Swap
+    @State private var swapDate: Date?
+    @State private var showSwapPicker = false
+
     struct BulkAddResults {
         let totalRecipes: Int
         let totalIngredients: Int
         let listName: String
     }
-    
-    // MARK: - Initialization
-    
+
     init(mealPlan: MealPlan) {
         self.mealPlan = mealPlan
-        
-        // Configure FetchRequest for this specific meal plan
         let planID = mealPlan.id ?? UUID()
         _plannedMeals = FetchRequest<PlannedMeal>(
             sortDescriptors: [NSSortDescriptor(keyPath: \PlannedMeal.date, ascending: true)],
             predicate: NSPredicate(format: "mealPlan.id == %@", planID as CVarArg)
         )
     }
-    
-    // MARK: - Computed Properties
-    
-    // M4.2.1-3 Enhancement: Generate array of dates for the meal plan
-    private var daysInPlan: [Date] {
-        guard let startDate = mealPlan.startDate else { return [] }
-        let duration = Int(mealPlan.duration)
-        
-        return (0..<duration).compactMap { offset in
-            Calendar.current.date(byAdding: .day, value: offset, to: startDate)
-        }
-    }
-    
-    // M4.2.1-3 Enhancement: Get planned meal for a specific date
-    private func plannedMeal(for date: Date) -> PlannedMeal? {
-        plannedMeals.first { meal in
-            guard let mealDate = meal.date else { return false }
-            return Calendar.current.isDate(mealDate, inSameDayAs: date)
-        }
-    }
-    
+
     // MARK: - Body
-    
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Plan header
-                planHeaderView
-                    .padding(.bottom, 16)
-                
-                // Days list with inline autocomplete
-                VStack(spacing: 12) {
-                    ForEach(daysInPlan, id: \.self) { date in
-                        DayRowView(
-                            date: date,
-                            plannedMeal: plannedMeal(for: date),
-                            allRecipes: allRecipes,
-                            mealPlan: mealPlan,
-                            onRecipeAdded: { recipe, servings in
-                                addRecipeToDay(recipe: recipe, date: date, servings: servings)
-                            },
-                            onRecipeRemoved: { meal in
-                                removePlannedMeal(meal)
-                            },
-                            onMealToggled: { meal in
-                                toggleCompletion(for: meal)
-                            }
-                        )
+        VStack(spacing: 0) {
+            // Fixed day strip
+            dayStripView
+
+            Divider()
+
+            // Scrollable day cards
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: ForagerTheme.Spacing.lg) {
+                        ForEach(daysInPlan, id: \.self) { date in
+                            dayCard(for: date)
+                                .id(date)
+                        }
+                    }
+                    .padding(ForagerTheme.Spacing.lg)
+                }
+                .onAppear {
+                    if let today = daysInPlan.first(where: { Calendar.current.isDateInToday($0) }) {
+                        proxy.scrollTo(today, anchor: .top)
                     }
                 }
-                .padding(.horizontal)
-                .id(refreshID)  // M4.3.4: Force entire list to refresh when completion changes
+            }
+        }
+        .background(ForagerTheme.backgroundCanvas)
+        .safeAreaInset(edge: .bottom) {
+            if !plannedMeals.isEmpty {
+                addToListButton
             }
         }
         .navigationTitle(mealPlan.name ?? "Meal Plan")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            loadAllRecipes()
-        }
-        // M4.3.3: Progress overlay during bulk add
+        .onAppear { loadAllRecipes() }
         .overlay {
-            if isBulkAdding {
-                ZStack {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                    
-                    VStack(spacing: 20) {
-                        ProgressView(value: bulkAddProgress) {
-                            Text(bulkAddMessage)
-                                .font(.headline)
-                        }
-                        .progressViewStyle(.linear)
-                        .frame(width: 250)
-                        .tint(.blue)
-                        
-                        Text("\(Int(bulkAddProgress * 100))% complete")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(30)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemBackground))
-                            .shadow(radius: 20)
-                    )
-                }
-            }
+            if isBulkAdding { bulkAddOverlay }
         }
-        // M4.3.3: Bulk add to shopping list with servings adjustment
         .sheet(isPresented: $showingBulkAddSheet) {
             SelectListSheet(
                 onSelect: { selectedList, adjustedServings in
-                    Task {
-                        await performBulkAdd(to: selectedList, adjustedServings: adjustedServings)
-                    }
+                    Task { await performBulkAdd(to: selectedList, adjustedServings: adjustedServings) }
                 },
                 recipes: plannedMeals.compactMap { meal in
                     guard let recipe = meal.recipe else { return nil }
@@ -166,187 +103,467 @@ struct MealPlanDetailView: View {
             )
             .environment(\.managedObjectContext, viewContext)
         }
-        .alert("Success!", isPresented: .constant(bulkAddResults != nil)) {
-            Button("OK") {
-                bulkAddResults = nil
+        .sheet(isPresented: $showSwapPicker) {
+            recipePickerSheet
+        }
+        .alert("Remove \(mealToRemove?.recipe?.title ?? mealToRemove?.quickOption ?? "meal")?",
+               isPresented: $showRemoveAlert) {
+            Button("Cancel", role: .cancel) { mealToRemove = nil }
+            Button("Remove", role: .destructive) {
+                if let meal = mealToRemove { removePlannedMeal(meal) }
+                mealToRemove = nil
             }
+        } message: {
+            if let meal = mealToRemove, let recipe = meal.recipe {
+                Text("\(recipe.ingredients?.count ?? 0) ingredients from this recipe may be on your grocery list.")
+            }
+        }
+        .alert("Success!", isPresented: .constant(bulkAddResults != nil)) {
+            Button("OK") { bulkAddResults = nil }
         } message: {
             if let results = bulkAddResults {
                 Text("Added \(results.totalIngredients) ingredients from \(results.totalRecipes) recipes to \(results.listName)")
             }
         }
     }
-    
-    // MARK: - Plan Header
-    
-    private var planHeaderView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Date range
-            if let startDate = mealPlan.startDate {
-                Text(formatDateRange(startDate: startDate, duration: Int(mealPlan.duration)))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            
-            // Stats
-            HStack(spacing: 16) {
-                Label("\(plannedMeals.count) meals", systemImage: "fork.knife")
-                Label("\(Int(mealPlan.duration)) days", systemImage: "calendar")
-            }
-            .font(.caption)
-            .foregroundColor(.secondary)
-            
-            // M4.3.3: Add All to Shopping List button
-            if !plannedMeals.isEmpty {
-                Button {
-                    showingBulkAddSheet = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "cart.fill.badge.plus")
-                            .font(.body)
-                        Text("Add All to Shopping List")
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .fontWeight(.semibold)
+
+    // MARK: - Day Strip
+
+    private var dayStripView: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    ForEach(daysInPlan, id: \.self) { date in
+                        Button {
+                            // no-op: tapping strip circles is decorative
+                        } label: {
+                            VStack(spacing: ForagerTheme.Spacing.xs) {
+                                Text(dayAbbreviation(date))
+                                    .font(ForagerTheme.captionFont)
+                                    .foregroundStyle(ForagerTheme.textTertiary)
+                                Text("\(Calendar.current.component(.day, from: date))")
+                                    .font(ForagerTheme.bodyFont.bold())
+                                    .foregroundStyle(isToday(date) ? .white : ForagerTheme.textPrimary)
+                                    .frame(width: 36, height: 36)
+                                    .background(
+                                        Circle()
+                                            .fill(isToday(date) ? ForagerTheme.accentPrimary : .clear)
+                                    )
+                            }
+                        }
+                        .id(date)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .shadow(color: Color.green.opacity(0.3), radius: 4, y: 2)
                 }
-                .disabled(isBulkAdding)
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.vertical, ForagerTheme.Spacing.sm)
+            }
+            .background(ForagerTheme.surfacePrimary)
+            .onAppear {
+                if let today = daysInPlan.first(where: { Calendar.current.isDateInToday($0) }) {
+                    proxy.scrollTo(today, anchor: .center)
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-        .padding(.top, 8)
     }
-    
-    // MARK: - Helper Functions
 
-    // M4.2.1-3 Enhancement: Load all recipes for autocomplete
-    // M7.3.4: Filter by householdKey to prevent ghost data from other households
+    // MARK: - Day Card
+
+    @ViewBuilder
+    private func dayCard(for date: Date) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+            // Centered day header
+            dayHeader(for: date)
+
+            if let meal = plannedMeal(for: date) {
+                plannedDayContent(meal)
+            } else {
+                unplannedDayContent(for: date)
+            }
+        }
+        .foragerCard()
+    }
+
+    // MARK: - Day Header
+
+    private func dayHeader(for date: Date) -> some View {
+        HStack {
+            Spacer()
+            VStack(spacing: ForagerTheme.Spacing.xs) {
+                Text(fullDayName(date))
+                    .font(ForagerTheme.bodyFont.bold())
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                if isToday(date) {
+                    Text("TODAY")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                        .padding(.horizontal, ForagerTheme.Spacing.sm)
+                        .padding(.vertical, 2)
+                        .background(ForagerTheme.accentTint)
+                        .clipShape(Capsule())
+                }
+            }
+            Spacer()
+        }
+    }
+
+    // MARK: - Planned Day
+
+    private func plannedDayContent(_ meal: PlannedMeal) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+            if meal.isQuickOption, let option = meal.quickOptionEnum {
+                // Quick option display
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Image(systemName: option.icon)
+                        .font(.title3)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                    Text(option.rawValue)
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                    Spacer()
+                }
+                .opacity(meal.isCompleted ? 0.5 : 1.0)
+            } else if let recipe = meal.recipe {
+                // Recipe display
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Image(systemName: "fork.knife.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                    VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                        Text(recipe.recipeDisplayTitle)
+                            .font(ForagerTheme.bodyFont)
+                            .foregroundStyle(ForagerTheme.textPrimary)
+                            .strikethrough(meal.isCompleted)
+                        Text(recipe.recipeServingsDescription)
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                    Spacer()
+                }
+                .opacity(meal.isCompleted ? 0.5 : 1.0)
+            }
+
+            // Action buttons
+            mealActionButtons(for: meal)
+        }
+    }
+
+    // MARK: - Action Buttons
+
+    private func mealActionButtons(for meal: PlannedMeal) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            // Done toggle
+            Button {
+                toggleCompletion(for: meal)
+            } label: {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Image(systemName: meal.isCompleted ? "checkmark" : "circle")
+                    Text("Done")
+                }
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(meal.isCompleted ? ForagerTheme.accentPrimary : ForagerTheme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.xs)
+                .background(meal.isCompleted ? ForagerTheme.accentTint : .clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                        .strokeBorder(meal.isCompleted ? ForagerTheme.accentPrimary : ForagerTheme.borderDefault)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+            }
+
+            // Swap
+            Button {
+                if let date = meal.date {
+                    swapDate = date
+                    showSwapPicker = true
+                }
+            } label: {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("Swap")
+                }
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.xs)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                        .strokeBorder(ForagerTheme.borderDefault)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+            }
+
+            // Remove
+            Button {
+                mealToRemove = meal
+                showRemoveAlert = true
+            } label: {
+                Text("Remove")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusDangerFG)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, ForagerTheme.Spacing.xs)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                            .strokeBorder(ForagerTheme.statusDangerFG.opacity(0.5))
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+            }
+        }
+    }
+
+    // MARK: - Unplanned Day
+
+    private func unplannedDayContent(for date: Date) -> some View {
+        VStack(spacing: ForagerTheme.Spacing.md) {
+            // Recipe picker
+            Menu {
+                ForEach(allRecipes.prefix(20), id: \.objectID) { recipe in
+                    Button {
+                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
+                    } label: {
+                        Label(recipe.recipeDisplayTitle, systemImage: "fork.knife")
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Choose Recipe")
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            }
+
+            // Quick-select pills
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                ForEach(PlannedMeal.QuickOption.allCases, id: \.rawValue) { option in
+                    Button {
+                        assignQuickOption(option, to: date)
+                    } label: {
+                        HStack(spacing: ForagerTheme.Spacing.xs) {
+                            Image(systemName: option.icon)
+                                .font(.caption2)
+                            Text(option.rawValue)
+                        }
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .padding(.horizontal, ForagerTheme.Spacing.sm)
+                        .padding(.vertical, ForagerTheme.Spacing.xs)
+                        .background(ForagerTheme.backgroundSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    }
+                }
+            }
+        }
+        .padding(ForagerTheme.Spacing.lg)
+        .background(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
+                .strokeBorder(ForagerTheme.borderDefault, style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
+        )
+    }
+
+    // MARK: - Sticky Bottom Button
+
+    private var addToListButton: some View {
+        Button {
+            showingBulkAddSheet = true
+        } label: {
+            Text("Add to Grocery List")
+                .font(ForagerTheme.bodyFont.bold())
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.md)
+                .background(ForagerTheme.accentPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        }
+        .disabled(isBulkAdding)
+        .padding(ForagerTheme.Spacing.lg)
+        .background(.regularMaterial)
+    }
+
+    // MARK: - Recipe Picker Sheet
+
+    private var recipePickerSheet: some View {
+        NavigationStack {
+            List(allRecipes.prefix(30), id: \.objectID) { recipe in
+                Button {
+                    if let date = swapDate {
+                        // Remove existing meal first
+                        if let existing = plannedMeal(for: date) {
+                            removePlannedMeal(existing)
+                        }
+                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
+                    }
+                    showSwapPicker = false
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                            Text(recipe.recipeDisplayTitle)
+                                .font(ForagerTheme.bodyFont)
+                                .foregroundStyle(ForagerTheme.textPrimary)
+                            Text(recipe.recipeServingsDescription)
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                        Spacer()
+                    }
+                }
+            }
+            .navigationTitle("Choose Recipe")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showSwapPicker = false }
+                }
+            }
+        }
+    }
+
+    // MARK: - Bulk Add Overlay
+
+    private var bulkAddOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.4).ignoresSafeArea()
+            VStack(spacing: 20) {
+                ProgressView(value: bulkAddProgress) {
+                    Text(bulkAddMessage)
+                        .font(ForagerTheme.secondaryFont)
+                }
+                .progressViewStyle(.linear)
+                .frame(width: 250)
+                .tint(ForagerTheme.accentPrimary)
+
+                Text("\(Int(bulkAddProgress * 100))% complete")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
+            .padding(30)
+            .background(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
+                    .fill(ForagerTheme.surfacePrimary)
+                    .shadow(radius: 20)
+            )
+        }
+    }
+
+    // MARK: - Computed Properties
+
+    private var daysInPlan: [Date] {
+        guard let startDate = mealPlan.startDate else { return [] }
+        return (0..<Int(mealPlan.duration)).compactMap {
+            Calendar.current.date(byAdding: .day, value: $0, to: startDate)
+        }
+    }
+
+    private func plannedMeal(for date: Date) -> PlannedMeal? {
+        plannedMeals.first { meal in
+            guard let mealDate = meal.date else { return false }
+            return Calendar.current.isDate(mealDate, inSameDayAs: date)
+        }
+    }
+
+    private func isToday(_ date: Date) -> Bool {
+        Calendar.current.isDateInToday(date)
+    }
+
+    private func dayAbbreviation(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date).uppercased()
+    }
+
+    private func fullDayName(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE d"
+        return formatter.string(from: date)
+    }
+
+    // MARK: - Actions
+
     private func loadAllRecipes() {
         let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
         fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
-
-        // M7.3.4: Filter by current householdKey to prevent duplicates
         if let householdKey = householdService.currentHouseholdKey {
             fetchRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
         } else {
             fetchRequest.predicate = NSPredicate(format: "householdKey == nil")
         }
-
         do {
             allRecipes = try viewContext.fetch(fetchRequest)
         } catch {
-            #if DEBUG
-            print("Error fetching recipes: \(error)")
-            #endif
             allRecipes = []
         }
     }
-    
-    // M4.2.1-3 Enhancement: Add recipe to specific day
+
     private func addRecipeToDay(recipe: Recipe, date: Date, servings: Int) {
-        // Check if there's already a meal on this day
         if let existingMeal = plannedMeal(for: date) {
-            // Remove existing meal first
             removePlannedMeal(existingMeal)
         }
-        
-        // Add new recipe
-        if let _ = MealPlanService.shared.addRecipeToMealPlan(
-            recipe: recipe,
-            date: date,
-            mealPlan: mealPlan,
-            servings: Int16(servings)
-        ) {
-            // Success - meal added
-        } else {
-            #if DEBUG
-            print("Error adding recipe to meal plan")
-            #endif
-        }
+        _ = MealPlanService.shared.addRecipeToMealPlan(
+            recipe: recipe, date: date, mealPlan: mealPlan, servings: Int16(servings)
+        )
     }
-    
-    // M4.2.1-3: Remove planned meal
+
+    private func assignQuickOption(_ option: PlannedMeal.QuickOption, to date: Date) {
+        _ = MealPlanService.shared.setQuickOption(option, for: date, in: mealPlan)
+    }
+
     private func removePlannedMeal(_ meal: PlannedMeal) {
         viewContext.delete(meal)
-        
-        do {
-            try viewContext.save()
-        } catch {
-            #if DEBUG
-            print("Error removing planned meal: \(error)")
-            #endif
+        try? viewContext.save()
+    }
+
+    private func toggleCompletion(for meal: PlannedMeal) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            meal.isCompleted.toggle()
+            meal.completedDate = meal.isCompleted ? Date() : nil
+
+            do {
+                try viewContext.save()
+                let generator = UIImpactFeedbackGenerator(style: meal.isCompleted ? .medium : .light)
+                generator.impactOccurred()
+                refreshID = UUID()
+            } catch {
+                meal.isCompleted.toggle()
+                meal.completedDate = nil
+            }
         }
     }
-    
-    // M4.2.1-3: Format date range for display
-    private func formatDateRange(startDate: Date, duration: Int) -> String {
-        let endDate = Calendar.current.date(byAdding: .day, value: duration - 1, to: startDate) ?? startDate
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        
-        let startString = formatter.string(from: startDate)
-        let endString = formatter.string(from: endDate)
-        
-        let yearFormatter = DateFormatter()
-        yearFormatter.dateFormat = "yyyy"
-        let year = yearFormatter.string(from: startDate)
-        
-        return "\(startString) - \(endString), \(year)"
-    }
-    
-    // MARK: - M4.3.3: Bulk Add Operations
-    
-    // M4.3.3: Process all recipes in meal plan and add to shopping list
-    // M4.3.3: Perform bulk add with optional adjusted servings
+
+    // MARK: - Bulk Add
+
     private func performBulkAdd(to weeklyList: WeeklyList, adjustedServings: [UUID: Int16] = [:]) async {
-        // Count recipes that actually have ingredients
         let recipesWithIngredients = plannedMeals.filter { meal in
-            guard let recipe = meal.recipe else { return false }
-            guard let ingredients = recipe.ingredients else { return false }
+            guard let recipe = meal.recipe,
+                  let ingredients = recipe.ingredients else { return false }
             return ingredients.count > 0
         }
-        
+
         guard !recipesWithIngredients.isEmpty else {
-            // Show alert for empty meal plan
-            await MainActor.run {
-                showingBulkAddSheet = false
-            }
+            await MainActor.run { showingBulkAddSheet = false }
             return
         }
-        
+
         await MainActor.run {
             isBulkAdding = true
             bulkAddProgress = 0.0
         }
-        
-        // Services we'll need
+
         let templateService = IngredientTemplateService(context: viewContext)
-        let scalingService = RecipeScalingService(context: viewContext)
-        
         var totalIngredientsAdded = 0
         let totalMeals = recipesWithIngredients.count
-        
-        // Process each planned meal
+
         for (index, plannedMeal) in recipesWithIngredients.enumerated() {
             guard let recipe = plannedMeal.recipe else { continue }
-            
-            // Update progress
+
             await MainActor.run {
                 bulkAddProgress = Double(index) / Double(totalMeals)
                 bulkAddMessage = "Processing \(recipe.title ?? "recipe")..."
             }
-            
-            // M4.3.3: Get servings - use adjusted if available, otherwise use meal servings
+
             let targetServings: Int
             if let recipeID = recipe.id, let adjusted = adjustedServings[recipeID] {
                 targetServings = Int(adjusted)
@@ -354,29 +571,23 @@ struct MealPlanDetailView: View {
                 targetServings = Int(plannedMeal.servings)
             }
             let scaleFactor = recipe.servings > 0 ? Double(targetServings) / Double(recipe.servings) : 1.0
-            
-            // Get ingredients
+
             guard let ingredientsSet = recipe.ingredients else { continue }
             let ingredients = Array(ingredientsSet) as! [Ingredient]
-            
-            // Add each ingredient to the list
+
             for ingredient in ingredients {
-                // Skip if no name
                 guard let ingredientName = ingredient.name, !ingredientName.isEmpty else { continue }
-                
-                // Ensure template exists (for future normalization)
+
                 let cleanName = extractCleanIngredientName(from: ingredientName)
                 _ = templateService.findOrCreateTemplate(name: cleanName)
-                
-                // Create list item
+
                 let listItem = GroceryListItem(context: viewContext)
                 listItem.id = UUID()
                 listItem.name = ingredientName
                 listItem.isCompleted = false
                 listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
                 listItem.weeklyList = weeklyList
-                
-                // M4.3.2: Apply scaling to quantities
+
                 if scaleFactor != 1.0 && ingredient.isParseable && ingredient.numericValue > 0 {
                     let scaledValue = ingredient.numericValue * scaleFactor
                     listItem.displayText = formatScaledQuantity(value: scaledValue, unit: ingredient.standardUnit)
@@ -391,22 +602,16 @@ struct MealPlanDetailView: View {
                     listItem.isParseable = ingredient.isParseable
                     listItem.parseConfidence = ingredient.parseConfidence
                 }
-                
-                // M4.3.1: Establish recipe relationship
+
                 listItem.addToSourceRecipes(recipe)
-                
                 totalIngredientsAdded += 1
             }
-            
-            // Small delay to show progress
-            try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+
+            try? await Task.sleep(nanoseconds: 50_000_000)
         }
-        
-        // Save context
+
         do {
             try viewContext.save()
-            
-            // Show success
             await MainActor.run {
                 isBulkAdding = false
                 showingBulkAddSheet = false
@@ -417,322 +622,49 @@ struct MealPlanDetailView: View {
                 )
             }
         } catch {
-            #if DEBUG
-            print("Error saving bulk add: \(error)")
-            #endif
-            await MainActor.run {
-                isBulkAdding = false
-            }
+            await MainActor.run { isBulkAdding = false }
         }
     }
-    
-    // M4.3.3: Format scaled quantity for display
+
     private func formatScaledQuantity(value: Double, unit: String?) -> String {
         let fractionString = formatToFraction(value)
-        
         if let unit = unit, !unit.isEmpty {
             return "\(fractionString) \(unit)"
-        } else {
-            return fractionString
         }
+        return fractionString
     }
-    
-    // M4.3.3: Convert decimal to fraction
+
     private func formatToFraction(_ value: Double) -> String {
-        // Whole number check
         if value.truncatingRemainder(dividingBy: 1) == 0 {
             return String(Int(value))
         }
-        
-        // Common fractions
+
         let fractions: [(Double, String)] = [
             (0.125, "⅛"), (0.25, "¼"), (0.333, "⅓"), (0.375, "⅜"),
             (0.5, "½"), (0.625, "⅝"), (0.666, "⅔"), (0.75, "¾"), (0.875, "⅞")
         ]
-        
+
         let wholePart = Int(value)
         let fractionalPart = value - Double(wholePart)
-        
-        // Find closest fraction
+
         for (decimal, fraction) in fractions {
             if abs(fractionalPart - decimal) < 0.01 {
-                if wholePart > 0 {
-                    return "\(wholePart) \(fraction)"
-                } else {
-                    return fraction
-                }
+                return wholePart > 0 ? "\(wholePart) \(fraction)" : fraction
             }
         }
-        
-        // Default to decimal
+
         return String(format: "%.2f", value)
     }
-    
-    // MARK: - M4.3.4: Meal Completion
-    
-    // M4.3.4: Toggle completion status for a planned meal
-    // Updates Core Data and persists automatically via context save
-    // No date restrictions - users can mark any meal complete regardless of date
-    private func toggleCompletion(for meal: PlannedMeal) {
-        meal.isCompleted.toggle()
-        
-        // Update completed date when marking complete
-        if meal.isCompleted {
-            meal.completedDate = Date()
-        } else {
-            meal.completedDate = nil
-        }
-        
-        // Save changes to Core Data
-        do {
-            try viewContext.save()
-            #if DEBUG
-            print("M4.3.4: Meal completion toggled to: \(meal.isCompleted)")  // Debug logging
-            #endif
-            
-            // M4.3.4: Force UI refresh
-            refreshID = UUID()
-        } catch {
-            #if DEBUG
-            print("M4.3.4: Error toggling meal completion: \(error)")
-            #endif
-            // Revert the toggle on error
-            meal.isCompleted.toggle()
-            meal.completedDate = nil
-        }
-    }
-    
-    // M4.3.3: Extract clean ingredient name
+
     private func extractCleanIngredientName(from fullText: String) -> String {
         var cleaned = fullText
-        
-        // Remove quantities and measurements
         let measurementPattern = "\\b\\d+(?:\\.\\d+)?\\s*(?:cups?|tbsp|tsp|oz|lbs?|g|kg|ml|l)?\\b"
         if let regex = try? NSRegularExpression(pattern: measurementPattern, options: .caseInsensitive) {
             cleaned = regex.stringByReplacingMatches(
-                in: cleaned,
-                range: NSRange(cleaned.startIndex..., in: cleaned),
-                withTemplate: ""
+                in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned), withTemplate: ""
             )
         }
-        
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
-    }
-}
-
-// MARK: - Day Row View
-
-// M4.2.1-3 Enhancement: Individual day row with inline autocomplete
-// Each day has its own search field for quick recipe assignment
-struct DayRowView: View {
-    let date: Date
-    let plannedMeal: PlannedMeal?
-    let allRecipes: [Recipe]
-    let mealPlan: MealPlan
-    let onRecipeAdded: (Recipe, Int) -> Void
-    let onRecipeRemoved: (PlannedMeal) -> Void
-    let onMealToggled: (PlannedMeal) -> Void  // M4.3.4: Toggle completion callback
-    
-    // M4.2.1-3 Enhancement: Search text for this day's autocomplete
-    @State private var searchText = ""
-    
-    // M4.2.1-3 Enhancement: Focus state for search field
-    @FocusState private var isSearchFocused: Bool
-    
-    // M4.2.1-3 Enhancement: Servings for selected recipe
-    @State private var selectedServings: Int = 4
-    
-    // M4.2.1-3 Enhancement: Show servings adjuster
-    @State private var showServingsAdjuster = false
-    @State private var pendingRecipe: Recipe?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Day header
-            dayHeader
-            
-            // Assigned recipe (if exists)
-            if let meal = plannedMeal {
-                assignedRecipeView(meal: meal)
-            } else {
-                // Autocomplete search field
-                autocompleteSearchField
-                
-                // Filtered recipe results (when typing)
-                if !searchText.isEmpty && !filteredRecipes.isEmpty {
-                    recipeResultsList
-                }
-            }
-        }
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .cornerRadius(12)
-    }
-    
-    // MARK: - View Components
-    
-    // M4.2.1-3 Enhancement: Day header with formatted date
-    private var dayHeader: some View {
-        Text(formattedDate)
-            .font(.headline)
-            .foregroundColor(.primary)
-    }
-    
-    // M4.2.1-3 Enhancement: Autocomplete search field (like ingredient input)
-    private var autocompleteSearchField: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
-                .font(.subheadline)
-            
-            TextField("Add recipe...", text: $searchText)
-                .focused($isSearchFocused)
-                .textFieldStyle(.plain)
-                .autocorrectionDisabled()
-            
-            if !searchText.isEmpty {
-                Button {
-                    searchText = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
-                        .font(.subheadline)
-                }
-            }
-        }
-        .padding(10)
-        .background(Color(UIColor.tertiarySystemGroupedBackground))
-        .cornerRadius(8)
-    }
-    
-    // M4.2.1-3 Enhancement: Filtered recipe results list
-    private var recipeResultsList: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(filteredRecipes.prefix(5), id: \.id) { recipe in
-                Button {
-                    handleRecipeSelection(recipe)
-                } label: {
-                    HStack {
-                        Image(systemName: "fork.knife")
-                            .foregroundColor(.blue)
-                            .font(.caption)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(recipe.title ?? "Untitled")
-                                .font(.subheadline)
-                                .foregroundColor(.primary)
-                            
-                            Text("\(recipe.ingredients?.count ?? 0) ingredients • Serves \(Int(recipe.servings))")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(.blue)
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 10)
-                    .background(Color(UIColor.tertiarySystemGroupedBackground))
-                    .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-            }
-            
-            if filteredRecipes.count > 5 {
-                Text("+ \(filteredRecipes.count - 5) more...")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 10)
-            }
-        }
-    }
-    
-    // M4.2.1-3 Enhancement: Assigned recipe display
-    // M4.3.4: Added completion checkbox and visual feedback
-    private func assignedRecipeView(meal: PlannedMeal) -> some View {
-        HStack(spacing: 12) {
-            // M4.3.4: Completion checkbox - works for any date
-            Button {
-                onMealToggled(meal)
-            } label: {
-                Image(systemName: meal.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.title3)
-                    .foregroundColor(meal.isCompleted ? .green : .gray)
-                    .frame(width: 44, height: 44)  // M4.3.4: Standard tap target size
-                    .contentShape(Rectangle())  // M4.3.4: Entire frame is tappable
-            }
-            .buttonStyle(.borderless)  // M4.3.4: Prevents row tap interference
-            
-            Image(systemName: "fork.knife.circle.fill")
-                .foregroundColor(.blue)
-                .font(.title3)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(meal.recipe?.title ?? "Untitled Recipe")
-                    .font(.body)
-                    .fontWeight(.medium)
-                    .strikethrough(meal.isCompleted, color: .secondary)  // M4.3.4: Strikethrough when completed
-                
-                Text("\(Int(meal.servings)) servings")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .strikethrough(meal.isCompleted, color: .secondary)  // M4.3.4: Strikethrough when completed
-            }
-            .opacity(meal.isCompleted ? 0.5 : 1.0)  // M4.3.4: Reduced opacity when completed
-            
-            Spacer()
-            
-            // Remove button
-            Button {
-                onRecipeRemoved(meal)
-            } label: {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
-                    .font(.subheadline)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(12)
-        .background(Color.blue.opacity(0.1))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.blue, lineWidth: 1)
-        )
-    }
-    
-    // MARK: - Helper Functions
-    
-    // M4.2.1-3 Enhancement: Filter recipes based on search text
-    private var filteredRecipes: [Recipe] {
-        if searchText.isEmpty {
-            return []
-        }
-        
-        return allRecipes.filter { recipe in
-            guard let title = recipe.title else { return false }
-            return title.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
-    // M4.2.1-3 Enhancement: Handle recipe selection
-    private func handleRecipeSelection(_ recipe: Recipe) {
-        // Add with default servings
-        let servings = Int(recipe.servings)
-        onRecipeAdded(recipe, servings)
-        
-        // Clear search
-        searchText = ""
-        isSearchFocused = false
-    }
-    
-    // M4.2.1-3 Enhancement: Format date for display
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMM d"  // "Friday, Nov 7"
-        return formatter.string(from: date)
     }
 }
 
@@ -741,28 +673,13 @@ struct DayRowView: View {
 struct MealPlanDetailView_Previews: PreviewProvider {
     static var previews: some View {
         let context = PersistenceController.preview.container.viewContext
-
-        // Create sample meal plan
         let plan = MealPlan(context: context)
         plan.id = UUID()
         plan.name = "This Week"
         plan.startDate = Date()
         plan.duration = 7
-
-        // Create sample recipes
-        let recipe1 = Recipe(context: context)
-        recipe1.id = UUID()
-        recipe1.title = "Hot Dog and Tortellini"
-        recipe1.servings = 4
-
-        let recipe2 = Recipe(context: context)
-        recipe2.id = UUID()
-        recipe2.title = "Chocolate Chip Cookies"
-        recipe2.servings = 24
-
         try? context.save()
 
-        // M7.3.4: Create HouseholdService for preview
         let householdService = HouseholdService(context: context)
 
         return NavigationStack {
