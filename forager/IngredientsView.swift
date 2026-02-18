@@ -97,6 +97,7 @@ struct IngredientsView: View {
     @State private var isEditMode = false
     @State private var selectedIngredients: Set<IngredientTemplate> = []
     @State private var showingAddForm = false
+    @State private var showReviewSheet = false
     @State private var showingError = false
     @State private var errorMessage = ""
 
@@ -108,6 +109,16 @@ struct IngredientsView: View {
             // M7.4: Removed search bar, now using .searchable() for Apple Music pattern
             // Filter Section
             filterSection
+
+            // M15.5: Review banner (when items need review and not already filtering to review)
+            if needsReviewCount > 0 && !showNeedsReviewOnly {
+                reviewBanner
+            }
+
+            // M15.5: Staples summary header (when filtering to staples)
+            if showStaplesOnly {
+                staplesSummaryHeader
+            }
 
             // Main Content
             if filteredIngredients.isEmpty {
@@ -182,6 +193,11 @@ struct IngredientsView: View {
         .sheet(isPresented: $showingAddForm) {
             AddIngredientView()
         }
+        .sheet(isPresented: $showReviewSheet) {
+            IngredientReviewSheet(
+                ingredients: ingredients.filter { $0.needsReview }
+            )
+        }
         // FIXED: Data-driven sheet with CategoryChangePayload (prevents empty-first-render!)
         .sheet(item: $categoryChangePayload) { payload in
             CategoryChangeModal(
@@ -205,6 +221,7 @@ struct IngredientsView: View {
         }
         .onChange(of: popToRoot) { _, _ in
             if showingAddForm { showingAddForm = false }
+            if showReviewSheet { showReviewSheet = false }
             if categoryChangePayload != nil { categoryChangePayload = nil }
             if showingError { showingError = false }
             if isEditMode {
@@ -290,6 +307,51 @@ struct IngredientsView: View {
         }
     }
     
+    // MARK: - M15.5: Review Banner
+
+    private var reviewBanner: some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(ForagerTheme.statusWarningFG)
+            Text("\(needsReviewCount) ingredient\(needsReviewCount == 1 ? "" : "s") need\(needsReviewCount == 1 ? "s" : "") review")
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
+            Spacer()
+            Button("Review Now") {
+                showReviewSheet = true
+            }
+            .font(ForagerTheme.footnoteFont.bold())
+            .foregroundStyle(ForagerTheme.accentPrimary)
+        }
+        .padding(ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfaceWarning)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+    }
+
+    // MARK: - M15.5: Staples Summary Header
+
+    private var staplesSummaryHeader: some View {
+        HStack {
+            Image(systemName: "star.fill")
+                .foregroundStyle(ForagerTheme.accentSecondary)
+            Text("\(stapleCount) staple\(stapleCount == 1 ? "" : "s")")
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
+            Spacer()
+        }
+        .padding(ForagerTheme.Spacing.md)
+        .background(ForagerTheme.accentTint)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+    }
+
+    private var stapleCount: Int {
+        ingredients.filter { $0.isStaple }.count
+    }
+
     // MARK: - Ingredients List View
     private var ingredientsListView: some View {
         List {
@@ -747,6 +809,270 @@ struct IngredientRowView: View {
     }
     
 }
+
+// MARK: - M15.5: Ingredient Review Sheet
+
+struct IngredientReviewSheet: View {
+    let ingredients: [IngredientTemplate]
+    @State private var currentIndex = 0
+    @State private var editedName = ""
+    @State private var selectedCategory: String = ""
+    @State private var isStaple = false
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)],
+        animation: .default
+    ) private var allCategories: FetchedResults<Category>
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                // Progress bar
+                ProgressView(value: Double(currentIndex), total: Double(ingredients.count))
+                    .tint(ForagerTheme.accentPrimary)
+
+                // Progress text
+                HStack {
+                    Spacer()
+                    Text("\(currentIndex + 1) of \(ingredients.count)")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+
+                // Current ingredient card
+                if currentIndex < ingredients.count {
+                    ingredientCard(ingredients[currentIndex])
+                }
+
+                Spacer()
+
+                // Action buttons
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Button {
+                        advance()
+                    } label: {
+                        Text("Skip")
+                            .font(ForagerTheme.bodyFont)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                                    .strokeBorder(ForagerTheme.borderDefault)
+                            )
+                    }
+
+                    Button {
+                        saveAndAdvance()
+                    } label: {
+                        Text("Save & Next")
+                            .font(ForagerTheme.bodyFont.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(.white)
+                            .background(ForagerTheme.accentPrimary)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    }
+                }
+            }
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.backgroundCanvas)
+            .navigationTitle("Review Ingredients")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") { dismiss() }
+                }
+            }
+            .onAppear { loadCurrentIngredient() }
+        }
+    }
+
+    // MARK: - Ingredient Card
+
+    private func ingredientCard(_ template: IngredientTemplate) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+            // Why it needs review
+            reviewReasonBadge(template)
+
+            // Editable name
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text("Name")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                TextField("Ingredient name", text: $editedName)
+                    .font(ForagerTheme.bodyFont)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            // Category picker
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text("Category")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+
+                Menu {
+                    Button("Uncategorized") {
+                        selectedCategory = ""
+                    }
+                    ForEach(allCategories, id: \.objectID) { category in
+                        Button(category.displayName) {
+                            selectedCategory = category.displayName
+                        }
+                    }
+                } label: {
+                    HStack {
+                        if selectedCategory.isEmpty {
+                            Text("Choose Category")
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                        } else {
+                            HStack(spacing: ForagerTheme.Spacing.sm) {
+                                Circle()
+                                    .fill(ForagerTheme.categoryColor(for: selectedCategory))
+                                    .frame(width: 12, height: 12)
+                                Text(selectedCategory)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                    .font(ForagerTheme.bodyFont)
+                    .padding(ForagerTheme.Spacing.md)
+                    .background(ForagerTheme.surfacePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                            .strokeBorder(ForagerTheme.borderDefault)
+                    )
+                }
+            }
+
+            // Staple toggle
+            Toggle(isOn: $isStaple) {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    Image(systemName: "pin.fill")
+                        .foregroundStyle(isStaple ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+                    Text("Staple ingredient")
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                }
+            }
+            .tint(ForagerTheme.accentSecondary)
+
+            // Usage info
+            if template.usageCount > 0 {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Image(systemName: "chart.bar")
+                        .font(.caption)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text(template.usageDescription)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            }
+        }
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
+        .shadow(color: .black.opacity(0.05), radius: 4, y: 2)
+    }
+
+    // MARK: - Review Reason Badge
+
+    private func reviewReasonBadge(_ template: IngredientTemplate) -> some View {
+        let reason = reviewReason(for: template)
+        return HStack(spacing: ForagerTheme.Spacing.xs) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.caption)
+                .foregroundStyle(ForagerTheme.statusWarningFG)
+            Text(reason)
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+        }
+        .padding(.horizontal, ForagerTheme.Spacing.sm)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .background(ForagerTheme.surfaceWarning)
+        .clipShape(Capsule())
+    }
+
+    private func reviewReason(for template: IngredientTemplate) -> String {
+        guard let name = template.name else { return "Missing name" }
+        let lower = name.lowercased()
+
+        if name.contains("(") { return "Contains parenthetical text" }
+
+        let fractions = CharacterSet(charactersIn: "½⅓¼⅔¾⅛⅜⅝⅞")
+        if name.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) || fractions.contains($0) }) {
+            return "Contains numbers or quantities"
+        }
+
+        let qualifiers = ["to taste", "to garnish", "as needed", "for serving", "for garnish", "as desired", "to serve", "for topping"]
+        for suffix in qualifiers {
+            if lower.hasSuffix(suffix) { return "Contains qualifier phrase" }
+        }
+
+        let words = lower.components(separatedBy: .whitespaces).filter { !$0.isEmpty }
+        let unitPrefixes: Set<String> = ["loaf", "loaves", "bunch", "bunches", "head", "heads", "sprig", "sprigs", "slice", "slices", "piece", "pieces", "can", "cans", "jar", "jars", "bag", "bags", "package", "packages", "box", "boxes", "bottle", "bottles", "cup", "cups", "tablespoon", "tablespoons", "tbsp", "teaspoon", "teaspoons", "tsp", "pinch", "dash", "handful"]
+        if words.count > 1, let first = words.first, unitPrefixes.contains(first) {
+            return "Starts with a unit/measure"
+        }
+
+        return "Needs review"
+    }
+
+    // MARK: - Actions
+
+    private func loadCurrentIngredient() {
+        guard currentIndex < ingredients.count else { return }
+        let template = ingredients[currentIndex]
+        editedName = template.name ?? ""
+        selectedCategory = template.category ?? ""
+        isStaple = template.isStaple
+    }
+
+    private func advance() {
+        if currentIndex < ingredients.count - 1 {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                currentIndex += 1
+            }
+            loadCurrentIngredient()
+        } else {
+            dismiss()
+        }
+    }
+
+    private func saveAndAdvance() {
+        guard currentIndex < ingredients.count else { return }
+        let template = ingredients[currentIndex]
+
+        let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedName.isEmpty && trimmedName != template.name {
+            template.name = trimmedName
+            template.canonicalName = IngredientTemplate.canonicalName(from: trimmedName)
+        }
+
+        template.category = selectedCategory.isEmpty ? nil : selectedCategory
+        template.isStaple = isStaple
+        template.updatedAt = Date()
+
+        do {
+            try viewContext.save()
+        } catch {
+            #if DEBUG
+            print("❌ M15.5: Review save failed — \(error)")
+            #endif
+        }
+
+        advance()
+    }
+}
+
+// MARK: - Preview
 
 #Preview {
     NavigationView {
