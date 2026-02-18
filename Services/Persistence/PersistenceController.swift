@@ -343,7 +343,8 @@ final class PersistenceController: ObservableObject {
         return context
     }
     
-    /// Perform write operation on background context with error handling
+    /// Perform write operation on background context with error handling.
+    /// Both `onSuccess` and `onError` callbacks are dispatched to the main queue.
     func performWrite(
         _ block: @escaping (NSManagedObjectContext) -> Void,
         onSuccess: (() -> Void)? = nil,

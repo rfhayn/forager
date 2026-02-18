@@ -229,11 +229,9 @@ struct WeeklyListsView: View {
                 isGeneratingList = false
             }
         }, onError: { error in
-            DispatchQueue.main.async {
-                errorMessage = "Failed to generate list: \(error.localizedDescription)"
-                showingError = true
-                isGeneratingList = false
-            }
+            errorMessage = "Failed to generate list: \(error.localizedDescription)"
+            showingError = true
+            isGeneratingList = false
         })
     }
 
@@ -258,10 +256,8 @@ struct WeeklyListsView: View {
             newList.dateCreated = Date()
             newList.isCompleted = false
         }, onError: { error in
-            DispatchQueue.main.async {
-                errorMessage = "Failed to create list: \(error.localizedDescription)"
-                showingError = true
-            }
+            errorMessage = "Failed to create list: \(error.localizedDescription)"
+            showingError = true
         })
     }
 

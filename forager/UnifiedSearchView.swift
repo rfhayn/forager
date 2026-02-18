@@ -388,16 +388,13 @@ struct UnifiedSearchView: View {
     // MARK: - Highlighted Text Helper
 
     private func highlightedText(_ text: String, highlight: String) -> Text {
-        guard !highlight.isEmpty else { return Text(text) }
-        let lowercasedText = text.lowercased()
-        let lowercasedHighlight = highlight.lowercased()
-
-        guard let range = lowercasedText.range(of: lowercasedHighlight) else {
+        guard !highlight.isEmpty,
+              let range = text.range(of: highlight, options: .caseInsensitive) else {
             return Text(text)
         }
 
         let before = String(text[text.startIndex..<range.lowerBound])
-        let match = String(text[range.lowerBound..<range.upperBound])
+        let match = String(text[range])
         let after = String(text[range.upperBound..<text.endIndex])
 
         return Text("\(Text(before))\(Text(match).bold().foregroundColor(ForagerTheme.accentPrimary))\(Text(after))")

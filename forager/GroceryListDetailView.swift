@@ -391,6 +391,9 @@ struct GroceryListDetailView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
+        let originalCompleted = item.isCompleted
+        let originalDate = item.dateCompleted
+
         withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
             item.isCompleted.toggle()
             item.dateCompleted = item.isCompleted ? Date() : nil
@@ -398,8 +401,8 @@ struct GroceryListDetailView: View {
             do {
                 try viewContext.save()
             } catch {
-                item.isCompleted.toggle()
-                item.dateCompleted = nil
+                item.isCompleted = originalCompleted
+                item.dateCompleted = originalDate
                 errorMessage = "Failed to save: \(error.localizedDescription)"
                 showingError = true
             }

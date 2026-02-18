@@ -34,6 +34,10 @@ struct MealPlanDetailView: View {
     @State private var mealToRemove: PlannedMeal?
     @State private var showRemoveAlert = false
 
+    // Error feedback
+    @State private var showingError = false
+    @State private var errorMessage = ""
+
     // Swap
     @State private var swapDate: Date?
     @State private var showSwapPicker = false
@@ -125,6 +129,11 @@ struct MealPlanDetailView: View {
             if let results = bulkAddResults {
                 Text("Added \(results.totalIngredients) ingredients from \(results.totalRecipes) recipes to \(results.listName)")
             }
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
         }
     }
 
@@ -517,9 +526,8 @@ struct MealPlanDetailView: View {
             try viewContext.save()
         } catch {
             viewContext.rollback()
-            #if DEBUG
-            print("Failed to remove planned meal: \(error)")
-            #endif
+            errorMessage = "Failed to remove meal: \(error.localizedDescription)"
+            showingError = true
         }
     }
 

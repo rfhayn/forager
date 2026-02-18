@@ -1050,13 +1050,12 @@ struct RecipeDetailView: View {
                 PersistenceController.shared.performWrite({ context in
                     let toDelete = context.object(with: recipeID)
                     context.delete(toDelete)
+                }, onSuccess: {
+                    dismiss()
                 }, onError: { error in
-                    DispatchQueue.main.async {
-                        errorMessage = "Failed to delete recipe: \(error.localizedDescription)"
-                        showingError = true
-                    }
+                    errorMessage = "Failed to delete recipe: \(error.localizedDescription)"
+                    showingError = true
                 })
-                dismiss()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
