@@ -174,7 +174,7 @@ struct WeeklyListsView: View {
             .padding(ForagerTheme.Spacing.xl)
             .background(ForagerTheme.surfacePrimary)
             .cornerRadius(ForagerTheme.Radius.lg)
-            .shadow(color: Color.black.opacity(0.15), radius: 12)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
         }
     }
 
@@ -369,7 +369,7 @@ struct WeeklyListRowView: View {
                 CategoryChipPills(categories: categoryComposition)
             }
         }
-        .foragerCard()
+        .foragerGlassCard()
     }
 }
 

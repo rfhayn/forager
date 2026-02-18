@@ -930,7 +930,7 @@ struct RecipeCardView: View {
                 }
             }
         }
-        .foragerCard()
+        .foragerGlassCard()
     }
 
     private func timingPill(icon: String, text: String) -> some View {

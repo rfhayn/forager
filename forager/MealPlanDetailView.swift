@@ -180,7 +180,7 @@ struct MealPlanDetailView: View {
                 unplannedDayContent(for: date)
             }
         }
-        .foragerCard()
+        .foragerGlassCard()
     }
 
     // MARK: - Day Header
@@ -441,11 +441,9 @@ struct MealPlanDetailView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
             .padding(30)
-            .background(
-                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
-                    .fill(ForagerTheme.surfacePrimary)
-                    .shadow(radius: 20)
-            )
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
         }
     }
 

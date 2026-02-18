@@ -254,7 +254,7 @@ struct MealPlanSummaryCard: View {
                 }
             }
         }
-        .foragerCard()
+        .foragerGlassCard()
         .overlay(alignment: .leading) {
             if status == .active {
                 Rectangle()
