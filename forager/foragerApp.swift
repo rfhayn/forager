@@ -121,6 +121,7 @@ struct foragerApp: App {
                                 }
                             }
                         }
+                        .tabBarMinimizeBehavior(.onScrollDown)
 
                         if showCoachMarks {
                             CoachMarkOverlay(
