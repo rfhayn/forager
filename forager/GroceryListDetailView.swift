@@ -40,6 +40,10 @@ struct GroceryListDetailView: View {
     // M15.3: Celebration
     @State private var showCelebration = false
 
+    // Error feedback
+    @State private var showingError = false
+    @State private var errorMessage = ""
+
     // Live data
     @FetchRequest private var listItemsFetch: FetchedResults<GroceryListItem>
 
@@ -106,6 +110,11 @@ struct GroceryListDetailView: View {
         }
         .sheet(isPresented: $showingAddToTemplates) {
             addToTemplatesSheet
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
         }
         .onAppear {
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
@@ -389,9 +398,10 @@ struct GroceryListDetailView: View {
             do {
                 try viewContext.save()
             } catch {
-                #if DEBUG
-                print("Failed to toggle completion: \(error)")
-                #endif
+                item.isCompleted.toggle()
+                item.dateCompleted = nil
+                errorMessage = "Failed to save: \(error.localizedDescription)"
+                showingError = true
             }
         }
 
@@ -423,9 +433,9 @@ struct GroceryListDetailView: View {
         do {
             try viewContext.save()
         } catch {
-            #if DEBUG
-            print("Failed to delete item: \(error)")
-            #endif
+            viewContext.rollback()
+            errorMessage = "Failed to delete item: \(error.localizedDescription)"
+            showingError = true
         }
     }
 
@@ -437,9 +447,9 @@ struct GroceryListDetailView: View {
         do {
             try viewContext.save()
         } catch {
-            #if DEBUG
-            print("Failed to mark all complete: \(error)")
-            #endif
+            viewContext.rollback()
+            errorMessage = "Failed to mark all complete: \(error.localizedDescription)"
+            showingError = true
         }
     }
 
@@ -513,9 +523,9 @@ struct GroceryListDetailView: View {
             selectedTemplate = nil
             showingAutocomplete = false
         } catch {
-            #if DEBUG
-            print("Failed to quick add item: \(error)")
-            #endif
+            viewContext.rollback()
+            errorMessage = "Failed to add item: \(error.localizedDescription)"
+            showingError = true
         }
     }
 
@@ -586,9 +596,8 @@ struct GroceryListDetailView: View {
             if viewContext.hasChanges { try viewContext.save() }
             showingAddToTemplates = false
         } catch {
-            #if DEBUG
-            print("Failed to save ingredient: \(error)")
-            #endif
+            errorMessage = "Failed to save ingredient: \(error.localizedDescription)"
+            showingError = true
             showingAddToTemplates = false
         }
     }
