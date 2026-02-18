@@ -1,10 +1,15 @@
 // ForagerCard.swift
 // M15.3: Reusable card view modifier
+// M15.6: Added glass variants using iOS 26 Liquid Glass
 //
-// PRD §5.1: surfacePrimary bg, radius.md, bark-tinted shadow (light),
-// tonal elevation + rim light (dark), 16pt internal padding.
+// Three variants:
+// - .foragerCard()              Shadow-based fallback (M15.3 original)
+// - .foragerGlassCard()         Regular glass for standard cards
+// - .foragerProminentGlassCard() Prominent glass for hero/active elements
 
 import SwiftUI
+
+// MARK: - Shadow-Based Card (M15.3 original)
 
 struct ForagerCardModifier: ViewModifier {
     @Environment(\.colorScheme) private var colorScheme
@@ -28,8 +33,41 @@ struct ForagerCardModifier: ViewModifier {
     }
 }
 
+// MARK: - Regular Glass Card (M15.6)
+
+struct ForagerGlassCardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+    }
+}
+
+// MARK: - Prominent Glass Card (M15.6)
+// Uses larger radius for visual emphasis; no .prominent Glass variant exists
+
+struct ForagerProminentGlassCardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
+    }
+}
+
 extension View {
     func foragerCard() -> some View {
         modifier(ForagerCardModifier())
+    }
+
+    func foragerGlassCard() -> some View {
+        modifier(ForagerGlassCardModifier())
+    }
+
+    func foragerProminentGlassCard() -> some View {
+        modifier(ForagerProminentGlassCardModifier())
     }
 }
