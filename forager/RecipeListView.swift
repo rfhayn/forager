@@ -63,23 +63,71 @@ struct RecipeListView: View {
         }
     }
 
+    // M15.4: Filter and sort state
+    @State private var activeFilter: RecipeFilter = .all
+    @State private var sortOrder: RecipeSortOrder = .recent
+
+    enum RecipeFilter: String, CaseIterable {
+        case all, favorites, recent
+
+        var title: String {
+            switch self {
+            case .all: return "All"
+            case .favorites: return "Favorites"
+            case .recent: return "Recent"
+            }
+        }
+    }
+
+    enum RecipeSortOrder {
+        case recent, alphabetical, mostUsed
+    }
+
     // M3.5: Simplified search using computed property
     private var filteredRecipes: [Recipe] {
+        var result: [Recipe]
+
         if searchText.isEmpty {
-            return recipes
+            result = recipes
+        } else {
+            result = recipes.filter { recipe in
+                recipe.matchesRecipeSearchQuery(searchText)
+            }
         }
 
-        // M3.5: Use computed property for search
-        return recipes.filter { recipe in
-            recipe.matchesRecipeSearchQuery(searchText)
-        }.sorted { first, second in
-            // Sort by usage count (higher first)
-            if first.usageCount != second.usageCount {
-                return first.usageCount > second.usageCount
-            }
-            // Then alphabetical by title
-            return first.recipeDisplayTitle < second.recipeDisplayTitle
+        // M15.4: Apply filter
+        switch activeFilter {
+        case .all:
+            break
+        case .favorites:
+            result = result.filter { $0.isFavorite }
+        case .recent:
+            result = result
+                .filter { $0.lastUsed != nil }
+                .sorted { ($0.lastUsed ?? .distantPast) > ($1.lastUsed ?? .distantPast) }
+            if result.count > 20 { result = Array(result.prefix(20)) }
         }
+
+        // M15.4: Apply sort (unless searching, which sorts by relevance)
+        if searchText.isEmpty {
+            switch sortOrder {
+            case .recent:
+                result.sort { ($0.lastUsed ?? $0.dateCreated ?? .distantPast) > ($1.lastUsed ?? $1.dateCreated ?? .distantPast) }
+            case .alphabetical:
+                result.sort { $0.recipeDisplayTitle < $1.recipeDisplayTitle }
+            case .mostUsed:
+                result.sort { $0.usageCount > $1.usageCount }
+            }
+        } else {
+            result.sort { first, second in
+                if first.usageCount != second.usageCount {
+                    return first.usageCount > second.usageCount
+                }
+                return first.recipeDisplayTitle < second.recipeDisplayTitle
+            }
+        }
+
+        return result
     }
     
     // ENHANCED: Search result analysis for UI indicators
@@ -133,37 +181,47 @@ struct RecipeListView: View {
     }
 
     var body: some View {
-            Group {
-                if filteredRecipes.isEmpty {
-                    enhancedEmptyStateView
-                } else {
-                    recipeListContent
-                }
+        ZStack {
+            ForagerTheme.backgroundCanvas
+                .ignoresSafeArea()
+
+            if filteredRecipes.isEmpty {
+                enhancedEmptyStateView
+            } else {
+                recipeListContent
             }
-            .navigationTitle("Recipes")
-            .searchSuggestions {
-                if !searchText.isEmpty && !searchHistory.isEmpty {
-                    searchSuggestionsView
-                }
+        }
+        .navigationTitle("Recipes")
+        .searchable(text: $searchText)
+        .searchSuggestions {
+            if !searchText.isEmpty && !searchHistory.isEmpty {
+                searchSuggestionsView
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddRecipe = true
-                    }) {
-                        Image(systemName: "plus")
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Menu {
+                    Picker("Sort", selection: $sortOrder) {
+                        Text("Recent").tag(RecipeSortOrder.recent)
+                        Text("A-Z").tag(RecipeSortOrder.alphabetical)
+                        Text("Most Used").tag(RecipeSortOrder.mostUsed)
                     }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingAddRecipe = true } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .sheet(isPresented: $showingAddRecipe) {
             CreateRecipeView(context: viewContext)
         }
-        // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
         .sheet(isPresented: $showingMealPlanSheet) {
             if let recipe = selectedRecipeForMealPlan {
                 SelectMealPlanSheet(recipe: recipe) { plan, date in
-                    // M4.2.4: Add recipe to selected plan and date
-                    // Recipe tracking now happens in MealPlanService.addRecipeToMealPlan
                     if let _ = MealPlanService.shared.addRecipeToMealPlan(
                         recipe: recipe,
                         date: date,
@@ -171,10 +229,6 @@ struct RecipeListView: View {
                     ) {
                         #if DEBUG
                         print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
-                        #endif
-                    } else {
-                        #if DEBUG
-                        print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
                         #endif
                     }
                 }
@@ -195,18 +249,16 @@ struct RecipeListView: View {
         }
     }
     
-    // ENHANCED: Improved empty state with search awareness
     @ViewBuilder
     private var enhancedEmptyStateView: some View {
-        if searchText.isEmpty {
-            // Standard empty state when no search
+        if searchText.isEmpty && activeFilter == .all {
             #if DEBUG
             StandardEmptyStateView(
                 iconName: "book.closed",
                 title: "No Recipes Yet",
                 subtitle: "Start building your recipe collection!",
                 buttonIcon: "plus.circle.fill",
-                buttonText: "Generate 11 Test Recipes",
+                buttonText: "Generate Test Recipes",
                 buttonAction: createSampleRecipe
             )
             #else
@@ -219,56 +271,76 @@ struct RecipeListView: View {
                 buttonAction: { showingAddRecipe = true }
             )
             #endif
-        } else {
-            // Search-specific empty state
-            VStack(spacing: 20) {
+        } else if !searchText.isEmpty {
+            VStack(spacing: ForagerTheme.Spacing.xl) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                
-                VStack(spacing: 8) {
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+
+                VStack(spacing: ForagerTheme.Spacing.sm) {
                     Text("No Matches Found")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    VStack(spacing: 4) {
-                        Text("No recipes found for \"\(searchText)\"")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("Try searching for recipe names, ingredients, or cooking methods")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+                        .font(ForagerTheme.cardTitle)
+
+                    Text("No recipes found for \"\(searchText)\"")
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+
+                    Text("Try searching for recipe names, ingredients, or cooking methods")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .multilineTextAlignment(.center)
                 }
-                
-                Button("Clear Search") {
-                    searchText = ""
-                }
-                .buttonStyle(.bordered)
+
+                Button("Clear Search") { searchText = "" }
+                    .buttonStyle(ForagerSecondaryButtonStyle())
             }
             .padding()
+        } else {
+            // Filter-specific empty state (e.g. no favorites)
+            VStack(spacing: ForagerTheme.Spacing.xl) {
+                Image(systemName: activeFilter == .favorites ? "heart" : "clock")
+                    .font(.system(size: 60))
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+
+                VStack(spacing: ForagerTheme.Spacing.sm) {
+                    Text(activeFilter == .favorites ? "No Favorites" : "No Recent Recipes")
+                        .font(ForagerTheme.cardTitle)
+
+                    Text(activeFilter == .favorites
+                         ? "Heart a recipe to see it here"
+                         : "Mark recipes as made to see them here")
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
     
     private var recipeListContent: some View {
         VStack(spacing: 0) {
+            // M15.4: Filter pills
+            filterPillRow
+
             if !searchText.isEmpty {
                 searchResultHeader
             }
-            
+
             List {
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                        EnhancedRecipeRowView(
-                            recipe: recipe,
-                            searchText: searchText,
-                            matchIndicators: getMatchIndicators(for: recipe)
-                        )
+                        RecipeCardView(recipe: recipe)
                     }
-                    // M4.2: Swipe action to add recipe to meal plan
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(
+                        top: ForagerTheme.Spacing.xs,
+                        leading: ForagerTheme.Spacing.lg,
+                        bottom: ForagerTheme.Spacing.xs,
+                        trailing: ForagerTheme.Spacing.lg
+                    ))
                     .swipeActions(edge: .leading) {
                         Button {
                             selectedRecipeForMealPlan = recipe
@@ -276,49 +348,72 @@ struct RecipeListView: View {
                         } label: {
                             Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
                         }
-                        .tint(.blue)
+                        .tint(ForagerTheme.accentPrimary)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            deleteRecipe(recipe)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 }
-                .onDelete(perform: deleteRecipes)
             }
-            .listStyle(InsetGroupedListStyle())
+            .listStyle(.plain)
+            .background(ForagerTheme.backgroundCanvas)
+            .scrollContentBackground(.hidden)
         }
     }
-    
-    // ENHANCED: Search result header with count
+
+    // M15.4: Filter pill row
+    private var filterPillRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                ForEach(RecipeFilter.allCases, id: \.self) { filter in
+                    Button {
+                        withAnimation { activeFilter = filter }
+                    } label: {
+                        FilterPill(
+                            title: filter.title,
+                            isSelected: activeFilter == filter
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.vertical, ForagerTheme.Spacing.sm)
+        }
+    }
+
     private var searchResultHeader: some View {
         HStack {
             Text("\(filteredRecipes.count) recipe\(filteredRecipes.count == 1 ? "" : "s") found")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+
             Spacer()
-            
+
             if !filteredRecipes.isEmpty {
                 Text("Sorted by relevance")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color(.systemGray6))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
     }
     
-    // ENHANCED: Search suggestions
     private var searchSuggestionsView: some View {
         ForEach(searchHistory.prefix(5), id: \.self) { historyItem in
-            Button(action: {
+            Button {
                 searchText = historyItem
-            }) {
+            } label: {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                    
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .font(ForagerTheme.captionFont)
                     Text(historyItem)
-                        .foregroundColor(.primary)
-                    
+                        .foregroundStyle(ForagerTheme.textPrimary)
                     Spacer()
                 }
             }
@@ -779,111 +874,77 @@ struct RecipeListView: View {
         }
     }
     
-    private func deleteRecipes(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { filteredRecipes[$0] }.forEach(viewContext.delete)
-            
-            do {
-                try viewContext.save()
-                #if DEBUG
-                print("Recipe(s) deleted successfully")
-                #endif
-            } catch {
-                #if DEBUG
-                print("Error deleting recipes: \(error)")
-                #endif
-            }
-        }
+    private func deleteRecipe(_ recipe: Recipe) {
+        let recipeID = recipe.objectID
+        PersistenceController.shared.performWrite({ context in
+            let toDelete = context.object(with: recipeID)
+            context.delete(toDelete)
+        }, onError: { error in
+            #if DEBUG
+            print("Error deleting recipe: \(error)")
+            #endif
+        })
     }
 }
 
-// ENHANCED: Recipe Row with search indicators - M3.5: USES COMPUTED PROPERTIES
-struct EnhancedRecipeRowView: View {
-    let recipe: Recipe
-    var searchText: String = ""
-    let matchIndicators: [SearchMatchType]
-    
+// MARK: - M15.4: Card-Based Recipe Row
+
+struct RecipeCardView: View {
+    @ObservedObject var recipe: Recipe
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    // M3.5: Use recipeDisplayTitle (handles nil)
-                    Text(recipe.recipeDisplayTitle)
-                        .font(.headline)
-                        .lineLimit(1)
-                    
-                    // M3.5: Use recipeServingsDescription (always shows, handles 0)
-                    Text(recipe.recipeServingsDescription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Title
+            Text(recipe.recipeDisplayTitle)
+                .font(ForagerTheme.cardTitle)
+                .foregroundStyle(ForagerTheme.textPrimary)
+                .lineLimit(2)
+
+            // Timing pills row
+            if recipe.hasRecipeTiming {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    if recipe.prepTime > 0 {
+                        timingPill(icon: "clock", text: recipe.recipeFormattedPrepTime)
+                    }
+                    if recipe.cookTime > 0 {
+                        timingPill(icon: "flame", text: recipe.recipeFormattedCookTime)
+                    }
+                    if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
+                        timingPill(icon: "timer", text: recipe.recipeFormattedTotalTime)
+                    }
                 }
-                
+            }
+
+            // Metadata row
+            HStack {
+                Text(recipe.recipeServingsDescription)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+
                 Spacer()
-                
+
                 if recipe.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                        .font(.caption)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                 }
-            }
-            
-            HStack {
-                // M3.5: Use recipeUsageDescription (replaces custom logic)
-                Text(recipe.recipeUsageDescription)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                if recipe.usageCount > 0 {
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    // M3.5: Use recipeLastUsedDescription (replaces formatted date logic)
-                    Text(recipe.recipeLastUsedDescription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // M3.5: Use hasRecipeTiming check
-                if recipe.hasRecipeTiming {
-                    // M3.5: Use recipeFormattedPrepTime
-                    Label(recipe.recipeFormattedPrepTime, systemImage: "clock")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            if !matchIndicators.isEmpty && !searchText.isEmpty {
-                searchMatchIndicators
             }
         }
-        .padding(.vertical, 4)
+        .foragerCard()
     }
-    
-    private var searchMatchIndicators: some View {
-        HStack(spacing: 8) {
-            Text("Matches:")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            
-            ForEach(matchIndicators, id: \.self) { indicator in
-                HStack(spacing: 4) {
-                    Image(systemName: indicator.iconName)
-                        .font(.caption2)
-                    Text(indicator.displayName)
-                        .font(.caption2)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(indicator.color.opacity(0.15))
-                .foregroundColor(indicator.color)
-                .cornerRadius(4)
-            }
-            
-            Spacer()
+
+    private func timingPill(icon: String, text: String) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(ForagerTheme.captionFont)
+            Text(text)
+                .font(ForagerTheme.captionFont)
         }
+        .foregroundStyle(ForagerTheme.accentSecondary)
+        .padding(.horizontal, ForagerTheme.Spacing.sm)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .background(ForagerTheme.accentTint)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
     }
 }
 
