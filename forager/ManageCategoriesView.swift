@@ -154,17 +154,12 @@ struct ManageCategoriesView: View {
             }
             .onMove(perform: moveCategories)
             .onDelete(perform: deleteCategories)
-            
-            // Add new category row
-            Button(action: { showingAddCategory = true }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                    Text("Add Custom Category")
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                    Spacer()
-                }
-                .padding(.vertical, 12)
+
+            // Footer help text
+            Section { } footer: {
+                Text("Drag categories to reorder. Swipe left to delete — its ingredients will be reassigned.")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
         .listStyle(InsetGroupedListStyle())
@@ -174,9 +169,15 @@ struct ManageCategoriesView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button(isReordering ? "Done" : "Reorder") {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isReordering.toggle()
+            HStack(spacing: ForagerTheme.Spacing.md) {
+                Button { showingAddCategory = true } label: {
+                    Image(systemName: "plus")
+                }
+
+                Button(isReordering ? "Done" : "Reorder") {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isReordering.toggle()
+                    }
                 }
             }
         }
@@ -684,14 +685,22 @@ struct CategoryRowView: View {
             
             // Category info
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.displayName)
-                    .font(.headline)
-                    .fontWeight(.medium)
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(category.displayName)
+                        .font(.headline)
+                        .fontWeight(.medium)
+
+                    if category.isDefault {
+                        Image(systemName: "lock.fill")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                }
             }
-            
+
             Spacer()
-            
-            // M7.2.3 Phase 3.7.2: Delete button - HIDE for protected categories (isDefault = true)
+
+            // Delete button — hidden for protected categories (isDefault = true)
             if !category.isDefault {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
@@ -700,14 +709,13 @@ struct CategoryRowView: View {
                 }
                 .buttonStyle(BorderlessButtonStyle())
             } else {
-                // Add spacing equivalent to the delete button to maintain alignment
                 Spacer()
-                    .frame(width: 24) // Approximate width of trash icon
+                    .frame(width: 24)
             }
-            
-            // Drag handle
+
+            // Drag handle — hidden for Uncategorized
             Image(systemName: "line.3.horizontal")
-                .foregroundStyle(ForagerTheme.textSecondary)
+                .foregroundStyle(category.isDefault ? .clear : ForagerTheme.textSecondary)
                 .font(.title2)
         }
         .padding(.vertical, 8)

@@ -35,6 +35,7 @@
 		A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */; };
 		A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */; };
 		A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */; };
+		A1B2C3D4E5F60002AABB0008 /* HouseholdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */; };
 		9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555252EDB665C00A57B34 /* CreateMealPlanSheet.swift */; };
 		9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555362EDB665C00A57B34 /* MealPlanRowView.swift */; };
 		9B0555562EDB665C00A57B34 /* CreateRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555262EDB665C00A57B34 /* CreateRecipeView.swift */; };
@@ -165,6 +166,7 @@
 		A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPill.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerButtonStyles.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdView.swift; sourceTree = "<group>"; };
 		9B0555302EDB665C00A57B34 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		9B0555312EDB665C00A57B34 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9B0555322EDB665C00A57B34 /* IngredientsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientsView.swift; sourceTree = "<group>"; };
@@ -337,6 +339,7 @@
 				A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */,
 				A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */,
 				A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */,
+				A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */,
 				9B0555302EDB665C00A57B34 /* HelpView.swift */,
 				9B0555312EDB665C00A57B34 /* Info.plist */,
 				9B0555322EDB665C00A57B34 /* IngredientsView.swift */,
@@ -656,6 +659,7 @@
 				A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */,
 				A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */,
 				A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */,
+				A1B2C3D4E5F60002AABB0008 /* HouseholdView.swift in Sources */,
 				9BA76C012F7D000100AABB01 /* OnboardingView.swift in Sources */,
 				9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */,
 				9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */,

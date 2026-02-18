@@ -1,0 +1,439 @@
+//
+//  HouseholdView.swift
+//  forager
+//
+//  M15.5b: Dedicated household management screen extracted from SettingsView
+//  Provides household info, member management, sharing stats, and danger zone
+//
+
+import SwiftUI
+import CoreData
+
+struct HouseholdView: View {
+    @EnvironmentObject private var householdService: HouseholdService
+    @Environment(\.managedObjectContext) private var viewContext
+
+    // Async-loaded state
+    @State private var isOwner = false
+    @State private var participants: [ShareParticipant] = []
+    @State private var ownerDisplayName = "Unknown"
+    @State private var isLoadingParticipants = true
+
+    // Editing state
+    @State private var isEditingName = false
+    @State private var editedName = ""
+    @State private var renameError: String?
+
+    // Sheet state
+    @State private var showCreateSheet = false
+    @State private var showInviteSheet = false
+
+    // Danger zone state
+    @State private var showLeaveConfirmation = false
+    @State private var shouldMigrateData = false
+    @State private var showDeleteConfirmation = false
+
+    // Sharing stats
+    @State private var sharedRecipeCount = 0
+    @State private var sharedListCount = 0
+    @State private var sharedPlanCount = 0
+
+    var body: some View {
+        Form {
+            if let household = householdService.currentHousehold {
+                householdHeader(household)
+                membersSection(household)
+                inviteSection
+                sharingStatsSection
+                dangerZoneSection
+            } else {
+                noHouseholdSection
+            }
+        }
+        .navigationTitle("Household")
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            await loadHouseholdData()
+        }
+        .sheet(isPresented: $showCreateSheet) {
+            CreateHouseholdSheet(householdService: householdService)
+        }
+        .sheet(isPresented: $showInviteSheet) {
+            if let household = householdService.currentHousehold {
+                InviteMemberSheet(service: householdService, household: household)
+            }
+        }
+        .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
+            Button("Migrate & Leave", role: .destructive) {
+                shouldMigrateData = true
+                if let household = householdService.currentHousehold {
+                    leaveHousehold(household)
+                }
+            }
+            Button("Clean App & Leave", role: .destructive) {
+                shouldMigrateData = false
+                if let household = householdService.currentHousehold {
+                    leaveHousehold(household)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh.")
+        }
+        .alert("Delete Household?", isPresented: $showDeleteConfirmation) {
+            Button("Migrate & Delete", role: .destructive) {
+                if let household = householdService.currentHousehold {
+                    deleteHousehold(household, migrateData: true)
+                }
+            }
+            Button("Clean Delete", role: .destructive) {
+                if let household = householdService.currentHousehold {
+                    deleteHousehold(household, migrateData: false)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This permanently deletes the household and removes all members' access. Choose 'Migrate & Delete' to keep a personal copy, or 'Clean Delete' to remove everything.")
+        }
+    }
+
+    // MARK: - Household Header
+
+    private func householdHeader(_ household: Household) -> some View {
+        Section {
+            // Editable name row
+            HStack {
+                if isEditingName {
+                    TextField("Household Name", text: $editedName)
+                        .font(ForagerTheme.cardTitle)
+                        .onSubmit { saveHouseholdName(household) }
+                } else {
+                    Text(household.name ?? "My Household")
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                }
+
+                Spacer()
+
+                if isOwner {
+                    Button {
+                        if isEditingName {
+                            saveHouseholdName(household)
+                        } else {
+                            editedName = household.name ?? ""
+                            isEditingName = true
+                        }
+                    } label: {
+                        Image(systemName: isEditingName ? "checkmark" : "pencil")
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+                    }
+                }
+            }
+
+            if let error = renameError {
+                Text(error)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusDangerFG)
+            }
+
+            // Sync status indicator
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                Circle()
+                    .fill(ForagerTheme.statusSuccessFG)
+                    .frame(width: 8, height: 8)
+                Text("iCloud sync active")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
+        }
+    }
+
+    // MARK: - Members Section
+
+    private func membersSection(_ household: Household) -> some View {
+        Section {
+            if isLoadingParticipants {
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Loading members...")
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+            } else {
+                ForEach(participants) { participant in
+                    memberRow(participant)
+                }
+            }
+
+            NavigationLink {
+                HouseholdMembersView(household: household, service: householdService)
+            } label: {
+                HStack {
+                    Text("Manage Members")
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                    Spacer()
+                    Text("\(participants.count)")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            }
+        } header: {
+            Text("Members")
+        }
+    }
+
+    private func memberRow(_ participant: ShareParticipant) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            // Avatar: initials or icon
+            ZStack {
+                Circle()
+                    .fill(participant.isOwner ? ForagerTheme.accentSecondary.opacity(0.2) : ForagerTheme.textTertiary.opacity(0.15))
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: participant.isOwner ? "crown.fill" : "person.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    Text(participant.displayName)
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+
+                    if participant.isCurrentUser {
+                        Text("You")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                }
+
+                // Role badge
+                Text(participant.isOwner ? "Owner" : "Member")
+                    .font(ForagerTheme.captionFont)
+                    .padding(.horizontal, ForagerTheme.Spacing.sm)
+                    .padding(.vertical, 2)
+                    .background(participant.isOwner ? ForagerTheme.accentTint : ForagerTheme.backgroundSecondary)
+                    .foregroundStyle(participant.isOwner ? ForagerTheme.accentPrimary : ForagerTheme.textSecondary)
+                    .clipShape(Capsule())
+            }
+
+            Spacer()
+
+            // Status indicator
+            if participant.acceptanceStatus.isPending {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock.fill")
+                        .font(.caption2)
+                    Text("Pending")
+                        .font(ForagerTheme.captionFont)
+                }
+                .foregroundStyle(ForagerTheme.statusWarningFG)
+            }
+        }
+    }
+
+    // MARK: - Invite Section
+
+    private var inviteSection: some View {
+        Section {
+            Button {
+                showInviteSheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "paperplane")
+                    Text("Invite Member")
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.sm)
+            }
+            .buttonStyle(ForagerPrimaryButtonStyle())
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+        }
+    }
+
+    // MARK: - Sharing Stats
+
+    private var sharingStatsSection: some View {
+        Section {
+            HStack {
+                statItem("Recipes", count: sharedRecipeCount, icon: "book")
+                Spacer()
+                statItem("Lists", count: sharedListCount, icon: "cart")
+                Spacer()
+                statItem("Plans", count: sharedPlanCount, icon: "calendar")
+            }
+            .padding(.vertical, ForagerTheme.Spacing.sm)
+        } header: {
+            Text("Shared Data")
+        }
+    }
+
+    private func statItem(_ label: String, count: Int, icon: String) -> some View {
+        VStack(spacing: ForagerTheme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(ForagerTheme.accentSecondary)
+            Text("\(count)")
+                .font(ForagerTheme.cardTitle)
+                .foregroundStyle(ForagerTheme.textPrimary)
+            Text(label)
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Danger Zone
+
+    private var dangerZoneSection: some View {
+        Section {
+            if isOwner {
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Label("Delete Household", systemImage: "trash")
+                }
+            } else {
+                Button(role: .destructive) {
+                    showLeaveConfirmation = true
+                } label: {
+                    Label("Leave Household", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+            }
+        } header: {
+            Text("Danger Zone")
+        } footer: {
+            Text(isOwner
+                ? "Deleting removes all shared data for all members."
+                : "Leaving removes your access to shared recipes, lists, and meal plans.")
+                .font(ForagerTheme.captionFont)
+        }
+    }
+
+    // MARK: - No Household State
+
+    private var noHouseholdSection: some View {
+        Section {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                Image(systemName: "person.3")
+                    .font(.system(size: 40))
+                    .foregroundStyle(ForagerTheme.accentSecondary)
+                Text("Share recipes, lists, and meal plans with family")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .multilineTextAlignment(.center)
+                Button("Create Household") {
+                    showCreateSheet = true
+                }
+                .buttonStyle(ForagerPrimaryButtonStyle())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, ForagerTheme.Spacing.xl)
+        } footer: {
+            Text("All household members will automatically share grocery lists, recipes, and meal plans via iCloud.")
+                .font(ForagerTheme.captionFont)
+        }
+    }
+
+    // MARK: - Data Loading
+
+    private func loadHouseholdData() async {
+        guard let household = householdService.currentHousehold else { return }
+
+        isOwner = await householdService.isOwner(household: household)
+
+        if let owner = await householdService.getOwnerParticipant(for: household) {
+            ownerDisplayName = owner.displayName
+        }
+
+        do {
+            participants = try await householdService.getParticipants(for: household)
+        } catch {
+            #if DEBUG
+            print("HouseholdView: Failed to load participants: \(error)")
+            #endif
+        }
+        isLoadingParticipants = false
+
+        loadSharingStats(household)
+    }
+
+    private func loadSharingStats(_ household: Household) {
+        guard let householdKey = household.id?.uuidString else { return }
+
+        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+
+        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+
+        let planRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        planRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+
+        do {
+            sharedRecipeCount = try viewContext.count(for: recipeRequest)
+            sharedListCount = try viewContext.count(for: listRequest)
+            sharedPlanCount = try viewContext.count(for: planRequest)
+        } catch {
+            #if DEBUG
+            print("HouseholdView: Failed to load sharing stats: \(error)")
+            #endif
+        }
+    }
+
+    // MARK: - Actions
+
+    private func saveHouseholdName(_ household: Household) {
+        Task {
+            do {
+                try await householdService.renameHousehold(household, to: editedName)
+                isEditingName = false
+                renameError = nil
+                await householdService.loadCurrentHousehold()
+            } catch {
+                renameError = error.localizedDescription
+            }
+        }
+    }
+
+    private func leaveHousehold(_ household: Household) {
+        Task {
+            do {
+                try await householdService.leaveHousehold(household, migrateData: shouldMigrateData)
+                await householdService.loadCurrentHousehold()
+            } catch {
+                #if DEBUG
+                print("Error leaving household: \(error)")
+                #endif
+            }
+        }
+    }
+
+    private func deleteHousehold(_ household: Household, migrateData: Bool) {
+        Task {
+            do {
+                try await householdService.deleteHousehold(household, migrateData: migrateData)
+                await householdService.loadCurrentHousehold()
+            } catch {
+                #if DEBUG
+                print("Error deleting household: \(error)")
+                #endif
+            }
+        }
+    }
+}
+
+// MARK: - Preview
+
+struct HouseholdView_Previews: PreviewProvider {
+    static var previews: some View {
+        NavigationStack {
+            HouseholdView()
+        }
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
+    }
+}
