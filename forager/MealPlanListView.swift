@@ -38,6 +38,8 @@ struct MealPlansListView: View {
     @State private var refreshID = UUID()
     @State private var showingGroceryListAlert = false
     @State private var groceryListMessage = ""
+    @State private var showingError = false
+    @State private var errorMessage = ""
 
     @StateObject private var mealPlanService = MealPlanService.shared
 
@@ -58,6 +60,11 @@ struct MealPlansListView: View {
                 Button("OK") { }
             } message: {
                 Text(groceryListMessage)
+            }
+            .alert("Error", isPresented: $showingError) {
+                Button("OK") { }
+            } message: {
+                Text(errorMessage)
             }
             .onAppear {
                 mealPlanService.updateActivePlanStatus()
@@ -88,37 +95,83 @@ struct MealPlansListView: View {
                     .tint(ForagerTheme.accentPrimary)
                 }
             } else {
-                ScrollView {
-                    LazyVStack(spacing: ForagerTheme.Spacing.md) {
-                        // Active plans
-                        ForEach(activePlans, id: \.objectID) { plan in
-                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
-                                MealPlanSummaryCard(
-                                    mealPlan: plan,
-                                    status: .active,
-                                    onGenerateGroceryList: { generateGroceryList(from: plan) }
-                                )
-                            }
-                            .buttonStyle(.plain)
+                List {
+                    // Active plans
+                    ForEach(activePlans, id: \.objectID) { plan in
+                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                            MealPlanSummaryCard(
+                                mealPlan: plan,
+                                status: .active,
+                                onGenerateGroceryList: { generateGroceryList(from: plan) }
+                            )
                         }
-
-                        // Upcoming plans
-                        ForEach(upcomingPlans, id: \.objectID) { plan in
-                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
-                                MealPlanSummaryCard(mealPlan: plan, status: .upcoming)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(
+                            top: ForagerTheme.Spacing.xs,
+                            leading: ForagerTheme.Spacing.lg,
+                            bottom: ForagerTheme.Spacing.xs,
+                            trailing: ForagerTheme.Spacing.lg
+                        ))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                deleteMealPlan(plan)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
                             }
-                            .buttonStyle(.plain)
                         }
+                    }
 
-                        // Completed plans
-                        if !completedPlans.isEmpty {
-                            DisclosureGroup(isExpanded: $showCompleted) {
+                    // Upcoming plans
+                    ForEach(upcomingPlans, id: \.objectID) { plan in
+                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                            MealPlanSummaryCard(mealPlan: plan, status: .upcoming)
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(
+                            top: ForagerTheme.Spacing.xs,
+                            leading: ForagerTheme.Spacing.lg,
+                            bottom: ForagerTheme.Spacing.xs,
+                            trailing: ForagerTheme.Spacing.lg
+                        ))
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                deleteMealPlan(plan)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+
+                    // Completed plans
+                    if !completedPlans.isEmpty {
+                        Section {
+                            if showCompleted {
                                 ForEach(completedPlans, id: \.objectID) { plan in
                                     NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
                                         MealPlanSummaryCard(mealPlan: plan, status: .completed)
                                     }
-                                    .buttonStyle(.plain)
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .listRowInsets(EdgeInsets(
+                                        top: ForagerTheme.Spacing.xs,
+                                        leading: ForagerTheme.Spacing.lg,
+                                        bottom: ForagerTheme.Spacing.xs,
+                                        trailing: ForagerTheme.Spacing.lg
+                                    ))
+                                    .swipeActions(edge: .trailing) {
+                                        Button(role: .destructive) {
+                                            deleteMealPlan(plan)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                                 }
+                            }
+                        } header: {
+                            Button {
+                                withAnimation { showCompleted.toggle() }
                             } label: {
                                 HStack(spacing: ForagerTheme.Spacing.sm) {
                                     Image(systemName: "checkmark.circle.fill")
@@ -126,13 +179,18 @@ struct MealPlansListView: View {
                                     Text("Completed (\(completedPlans.count))")
                                         .font(ForagerTheme.secondaryFont)
                                         .foregroundStyle(ForagerTheme.textSecondary)
+                                    Spacer()
+                                    Image(systemName: showCompleted ? "chevron.up" : "chevron.down")
+                                        .font(.caption)
+                                        .foregroundStyle(ForagerTheme.textTertiary)
                                 }
                             }
-                            .padding(.horizontal, ForagerTheme.Spacing.lg)
                         }
                     }
-                    .padding(.vertical, ForagerTheme.Spacing.md)
                 }
+                .listStyle(.plain)
+                .background(ForagerTheme.backgroundCanvas)
+                .scrollContentBackground(.hidden)
                 .refreshable {
                     mealPlanService.updateActivePlanStatus()
                     mealPlanService.updateCompletedStatus()
@@ -176,6 +234,14 @@ struct MealPlansListView: View {
     }
 
     // MARK: - Actions
+
+    private func deleteMealPlan(_ plan: MealPlan) {
+        mealPlanService.deleteMealPlan(plan)
+        if let error = mealPlanService.lastError {
+            errorMessage = "Failed to delete meal plan: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
 
     private func generateGroceryList(from plan: MealPlan) {
         if let list = mealPlanService.generateGroceryList(from: plan) {
