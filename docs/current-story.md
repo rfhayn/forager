@@ -1008,6 +1008,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 2. **Migration**: PlannedMeals not migrated (require recipe mapping)
    - User can recreate meal assignments manually
 3. **CKShare caching**: `getShare(for:)` hits CloudKit on every call; could cache per operation
+4. **Household Recovery**: No recovery mechanism if owner reinstalls app before CloudKit syncs household data. Creating a new household before old one syncs could cause duplicate households. Tracked in roadmap under Future Considerations.
 
 ---
 

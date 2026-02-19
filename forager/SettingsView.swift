@@ -319,7 +319,7 @@ struct SettingsView: View {
             Text("About")
         } footer: {
             VStack(spacing: ForagerTheme.Spacing.sm) {
-                Text("forager stores all data locally on your device. We do not collect, transmit, or share any personal information.")
+                Text("Your data is stored on your device and synced privately through your iCloud account. Household data is shared only with household members. We never collect or share your information with third parties.")
                     .font(ForagerTheme.captionFont)
                 Text("Forager v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"))")
                     .font(ForagerTheme.captionFont)

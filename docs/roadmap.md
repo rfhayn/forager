@@ -1329,6 +1329,15 @@ All identified risks from M1-M3 have been successfully mitigated through:
 
 ### **Future Considerations:**
 
+**Household Recovery (Post-Launch Feature)**
+- **Problem**: If a household owner gets a new phone, reinstalls the app, or loses data, they may not see their existing household after CloudKit finishes syncing. If they create a new household before the old one syncs down, they end up with duplicate households.
+- **Potential Solutions**:
+  - Sync-wait on first launch: show "Syncing with iCloud..." before allowing household creation (timeout ~10s)
+  - "Recover Household" button that queries CloudKit directly for existing CKShare zones owned by the current iCloud account
+  - Duplicate detection: if old household syncs down after new one created, prompt user to choose
+- **Scope**: Likely 4-6 hours, should be planned as its own milestone or folded into M7.5 Architecture Hardening
+- **Risk Level**: Medium — without this, power users who reinstall could lose household access
+
 **M4.3: Recipe Source Tracking**
 - **Risk**: Core Data migration with many-to-many relationships
 - **Mitigation**: Lightweight automatic migration, proper delete rules, comprehensive testing
