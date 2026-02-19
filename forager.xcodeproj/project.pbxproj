@@ -228,6 +228,7 @@
 		9BA76C102F7D100100AABB01 /* forager 3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 3.xcdatamodel"; sourceTree = "<group>"; };
 		9BA76C112F7D100100AABB01 /* forager 4.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 4.xcdatamodel"; sourceTree = "<group>"; };
 		9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 5.xcdatamodel"; sourceTree = "<group>"; };
+		9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 6.xcdatamodel"; sourceTree = "<group>"; };
 		9BC115A12EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryItem+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC115A32EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncTestView.swift; sourceTree = "<group>"; };
@@ -1064,13 +1065,14 @@
 		9B05552E2EDB665C00A57B34 /* forager.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */,
 				9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */,
 				9BA76C112F7D100100AABB01 /* forager 4.xcdatamodel */,
 				9BA76C102F7D100100AABB01 /* forager 3.xcdatamodel */,
 				9B1B39632EF2FFD8001E1876 /* forager 2.xcdatamodel */,
 				9B0555422EDB665C00A57B34 /* forager.xcdatamodel */,
 			);
-			currentVersion = 9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */;
+			currentVersion = 9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */;
 			path = forager.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

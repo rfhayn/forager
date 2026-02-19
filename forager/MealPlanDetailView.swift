@@ -350,34 +350,46 @@ struct MealPlanDetailView: View {
                 }
             }
 
-            // Quick-select pills
-            HStack(spacing: ForagerTheme.Spacing.sm) {
-                ForEach(PlannedMeal.QuickOption.allCases, id: \.rawValue) { option in
-                    Button {
-                        assignQuickOption(option, to: date)
-                    } label: {
-                        HStack(spacing: ForagerTheme.Spacing.xs) {
-                            Image(systemName: option.icon)
-                                .font(.caption2)
-                            Text(option.rawValue)
-                        }
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                        .padding(.horizontal, ForagerTheme.Spacing.sm)
-                        .padding(.vertical, ForagerTheme.Spacing.xs)
-                        .background(ForagerTheme.backgroundSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+            // Quick-select pills — 2x2 grid
+            let options = PlannedMeal.QuickOption.allCases
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    ForEach(options.prefix(2), id: \.rawValue) { option in
+                        quickOptionPill(option, date: date)
                     }
-                    .accessibilityLabel(option.rawValue)
-                    .accessibilityHint("Set this day to \(option.rawValue)")
+                }
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    ForEach(options.suffix(2), id: \.rawValue) { option in
+                        quickOptionPill(option, date: date)
+                    }
                 }
             }
         }
         .padding(ForagerTheme.Spacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
-                .strokeBorder(ForagerTheme.borderDefault, style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
-        )
+        .background(ForagerTheme.surfaceSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+    }
+
+    // MARK: - Quick Option Pill
+
+    private func quickOptionPill(_ option: PlannedMeal.QuickOption, date: Date) -> some View {
+        Button {
+            assignQuickOption(option, to: date)
+        } label: {
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                Image(systemName: option.icon)
+                    .font(.caption2)
+                Text(option.rawValue)
+            }
+            .font(ForagerTheme.captionFont)
+            .foregroundStyle(ForagerTheme.textSecondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, ForagerTheme.Spacing.sm)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        }
+        .accessibilityLabel(option.rawValue)
+        .accessibilityHint("Set this day to \(option.rawValue)")
     }
 
     // MARK: - Sticky Bottom Button
