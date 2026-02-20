@@ -732,32 +732,32 @@ struct AddIngredientsToListView: View {
                     .font(.body)
                     .foregroundStyle(.primary)
                 
-                // M4.3.2 Phase 2: Show scaled quantities with original for reference
                 HStack(spacing: 4) {
-                    // Show scaled displayText
-                    let scaled = scaledDisplayText(for: ingredient)
-                    if !scaled.isEmpty {
-                        Text(scaled)
-                            .font(.caption)
-                            .foregroundStyle(scaleFactor != 1.0 ? .blue : .secondary)
-                        
-                        // Show original quantity for reference when scaled
-                        if scaleFactor != 1.0, let originalId = ingredient.id,
-                           let original = originalDisplayTexts[originalId],
-                           !original.isEmpty && original != scaled {
-                            Text("•")
-                                .font(.caption2)
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                            Text("(was: \(original))")
-                                .font(.caption2)
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                                .italic()
+                    // Only show scaled quantity caption when servings are adjusted
+                    if scaleFactor != 1.0 {
+                        let scaled = scaledDisplayText(for: ingredient)
+                        if !scaled.isEmpty {
+                            Text(scaled)
+                                .font(.caption)
+                                .foregroundStyle(.blue)
+
+                            if let originalId = ingredient.id,
+                               let original = originalDisplayTexts[originalId],
+                               !original.isEmpty && original != scaled {
+                                Text("•")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                Text("(was: \(original))")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                    .italic()
+                            }
                         }
                     }
-                    
+
                     Spacer()
-                    
-                    // IMPROVED: Show actual category status
+
+                    // Show actual category status
                     ingredientStatusView(for: ingredient)
                 }
             }
