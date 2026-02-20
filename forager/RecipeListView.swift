@@ -13,6 +13,8 @@ struct RecipeListView: View {
     @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var searchHistory: [String] = []
+    @State private var showingDeleteError = false
+    @State private var deleteErrorMessage = ""
 
     // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
@@ -235,6 +237,11 @@ struct RecipeListView: View {
                 }
             }
         }
+        .alert("Error", isPresented: $showingDeleteError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(deleteErrorMessage)
+        }
         .onAppear {
             loadSearchHistory()
         }
@@ -392,7 +399,7 @@ struct RecipeListView: View {
         }
     }
     
-    // M4.3.1: Updated to create 6 test recipes with overlapping ingredients
+    // M4.3.1: Updated to create 15 test recipes with overlapping ingredients
     private func createSampleRecipe() {
         createAllTestRecipes()
     }
@@ -852,9 +859,8 @@ struct RecipeListView: View {
             let toDelete = context.object(with: recipeID)
             context.delete(toDelete)
         }, onError: { error in
-            #if DEBUG
-            print("Error deleting recipe: \(error)")
-            #endif
+            deleteErrorMessage = "Failed to delete recipe: \(error.localizedDescription)"
+            showingDeleteError = true
         })
     }
 }

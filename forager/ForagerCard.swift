@@ -22,7 +22,7 @@ struct ForagerCardModifier: ViewModifier {
             .shadow(
                 color: colorScheme == .dark
                     ? .clear
-                    : Color(red: 44/255, green: 36/255, blue: 24/255).opacity(0.12),
+                    : ForagerTheme.textPrimary.opacity(0.12),
                 radius: 8, x: 0, y: 2
             )
             .overlay(
