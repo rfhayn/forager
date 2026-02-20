@@ -613,11 +613,19 @@ struct EditRecipeView: View {
                 ingredient.sortOrder = Int16(index)
                 ingredient.recipe = recipe
                 
+                // M15 fix: Populate structured quantity fields (matches CreateRecipeView pattern)
+                let parsed = parsingService.parseToStructured(text: trimmed)
+                ingredient.displayText = parsed.displayText
+                ingredient.numericValue = parsed.numericValue ?? 0.0
+                ingredient.standardUnit = parsed.standardUnit
+                ingredient.isParseable = parsed.isParseable
+                ingredient.parseConfidence = parsed.parseConfidence
+
                 if let template = ingredientInput.template {
                     ingredient.ingredientTemplate = template
                 }
             }
-            
+
             try viewContext.save()
             
             hasUnsavedChanges = false
