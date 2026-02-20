@@ -66,6 +66,28 @@ class IngredientTemplateService: ObservableObject {
             }
         }
         
+        // Items where the plural form is the natural grocery name.
+        // Maps both singular and plural inputs to the preferred plural form.
+        // "grape" → "grapes", "strawberries" → "strawberries"
+        let preferPlural: [String: String] = [
+            "grape": "grapes", "grapes": "grapes",
+            "strawberry": "strawberries", "strawberries": "strawberries",
+            "blueberry": "blueberries", "blueberries": "blueberries",
+            "raspberry": "raspberries", "raspberries": "raspberries",
+            "blackberry": "blackberries", "blackberries": "blackberries",
+            "cranberry": "cranberries", "cranberries": "cranberries",
+            "cherry": "cherries", "cherries": "cherries",
+            "olive": "olives", "olives": "olives",
+            "cracker": "crackers", "crackers": "crackers",
+            "pretzel": "pretzels", "pretzels": "pretzels",
+            "marshmallow": "marshmallows", "marshmallows": "marshmallows",
+            "raisin": "raisins", "raisins": "raisins",
+            "mushroom": "mushrooms", "mushrooms": "mushrooms",
+        ]
+        if let preferred = preferPlural[checkName] {
+            return preferred
+        }
+
         // Check if this ingredient (after stripping qualifiers) should stay plural
         if alwaysPlural.contains(checkName) {
             return checkName  // Return the stripped version in plural form
@@ -81,12 +103,26 @@ class IngredientTemplateService: ObservableObject {
         let alwaysPluralSuffixes: Set<String> = [
             "beans", "chickpeas", "chips", "croutons", "crumbs",
             "flakes", "greens", "lentils", "noodles", "oats",
-            "peas", "seeds", "sprinkles", "strips"
+            "peas", "seeds", "sprinkles", "strips",
+            "snacks", "berries", "grapes", "crackers"
         ]
         let words = checkName.split(separator: " ").map(String.init)
         if words.count > 1, let lastWord = words.last,
            alwaysPluralSuffixes.contains(lastWord) {
             return checkName
+        }
+
+        // Compound items where the singular suffix should become plural
+        // "fruit snack" → "fruit snacks"
+        let singularSuffixToPlural: [String: String] = [
+            "snack": "snacks", "berry": "berries",
+            "grape": "grapes", "cracker": "crackers",
+        ]
+        if words.count > 1, let lastWord = words.last,
+           let pluralLast = singularSuffixToPlural[lastWord] {
+            var pluralized = words
+            pluralized[pluralized.count - 1] = pluralLast
+            return pluralized.joined(separator: " ")
         }
         
         // Irregular plurals mapping (check these next)

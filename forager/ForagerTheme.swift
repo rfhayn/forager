@@ -231,21 +231,23 @@ enum ForagerTheme {
             return adaptiveColor(lightHex: "#3A7CA5", darkHex: "#5AADCF")
         case "deli & meat", "meat", "deli":
             return adaptiveColor(lightHex: "#A8382E", darkHex: "#D4605A")
-        case "bread & bakery", "bakery", "bread":
+        case "bread & frozen", "bread & bakery", "bakery", "bread":
             return adaptiveColor(lightHex: "#B07828", darkHex: "#D4A04A")
-        case "pantry & canned", "pantry", "canned":
+        case "boxed & canned", "pantry & canned", "pantry", "canned":
             return adaptiveColor(lightHex: "#7A5D3F", darkHex: "#B09070")
         case "frozen":
             return adaptiveColor(lightHex: "#4A7D95", darkHex: "#6AADC0")
         case "beverages":
             return adaptiveColor(lightHex: "#6D5098", darkHex: "#9A7DC8")
-        case "snacks & other", "snacks":
+        case "snacks, drinks, & other", "snacks & other", "snacks":
             return adaptiveColor(lightHex: "#C06A2F", darkHex: "#E08A50")
         case "seafood":
             return adaptiveColor(lightHex: "#267080", darkHex: "#45A0B0")
         case "household":
             return adaptiveColor(lightHex: "#5E6E60", darkHex: "#8DA890")
-        default: // Uncategorized and unknown
+        case "uncategorized":
+            return adaptiveColor(lightHex: "#7A7067", darkHex: "#938D83")
+        default:
             return adaptiveColor(lightHex: "#7A7067", darkHex: "#938D83")
         }
     }
