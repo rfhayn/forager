@@ -225,13 +225,13 @@ struct MealPlanDetailView: View {
                 HStack(spacing: ForagerTheme.Spacing.md) {
                     Image(systemName: option.icon)
                         .font(.title3)
-                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .foregroundStyle(meal.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textSecondary)
                     Text(option.rawValue)
                         .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .foregroundStyle(meal.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary)
+                        .strikethrough(meal.isCompleted)
                     Spacer()
                 }
-                .opacity(meal.isCompleted ? 0.5 : 1.0)
             } else if let recipe = meal.recipe {
                 // Recipe display
                 HStack(spacing: ForagerTheme.Spacing.md) {

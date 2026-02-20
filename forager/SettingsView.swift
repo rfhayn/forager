@@ -51,6 +51,8 @@ struct SettingsView: View {
             aboutSection
         }
         .navigationTitle("Settings")
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
         .sheet(isPresented: $showingPrivacyPolicy) {
             SafariView(url: URL(string: "https://rfhayn.github.io/forager/privacy.html")!)
                 .ignoresSafeArea()
