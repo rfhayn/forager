@@ -498,7 +498,7 @@ struct GroceryListDetailView: View {
 
         let listItem = GroceryListItem(context: viewContext)
         listItem.id = UUID()
-        listItem.name = parsed.name
+        listItem.name = trimmedText
         listItem.displayText = structured.displayText
         listItem.numericValue = structured.numericValue ?? 0.0
         listItem.standardUnit = structured.standardUnit
@@ -636,8 +636,9 @@ struct GroceryListItemRow: View {
                             .foregroundStyle(item.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary)
                             .lineLimit(2)
 
-                        // Low-confidence indicator
-                        if !item.isCompleted && item.parseConfidence < 0.7 {
+                        // Low-confidence indicator — only when parser attempted
+                        // a quantity parse but wasn't confident (not for name-only items)
+                        if !item.isCompleted && item.parseConfidence > 0 && item.parseConfidence < 0.7 {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption2)
                                 .foregroundStyle(ForagerTheme.statusWarningFG)
