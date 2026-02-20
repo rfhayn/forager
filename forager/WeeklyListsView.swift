@@ -277,6 +277,8 @@ struct WeeklyListsView: View {
 
 struct WeeklyListRowView: View {
     @ObservedObject var weeklyList: WeeklyList
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var refreshID = UUID()
 
     @FetchRequest private var itemsFetch: FetchedResults<GroceryListItem>
 
@@ -351,6 +353,13 @@ struct WeeklyListRowView: View {
         .foragerGlassCard()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(weeklyList.name ?? "Unnamed List"), \(completedItemsCount) of \(totalItemsCount) items checked")
+        .onAppear {
+            // Force Core Data to re-fault objects so relationship-derived
+            // properties (like categoryName via ingredientTemplate) refresh
+            viewContext.refreshAllObjects()
+            refreshID = UUID()
+        }
+        .id(refreshID)
     }
 }
 

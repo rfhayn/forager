@@ -1,11 +1,34 @@
 # Current Development Story
 
-**Last Updated**: February 17, 2026
-**Status**: M15 ✅ **COMPLETE** | M7.7 📋 **READY**
+**Last Updated**: February 20, 2026
+**Status**: M15 ✅ **COMPLETE** (bug fixes in progress) | M7.7 📋 **READY**
 **Total Progress**: ~215 hours | 89% planning accuracy
-**Current Branch**: `feature/M15-ux-design-system` (local only, not pushed)
-**Current Milestone**: M15 - UX Design System & Visual Refresh — **ALL PHASES COMPLETE**
+**Current Branch**: `feature/M15-ux-design-system`
+**Current Milestone**: M15 - UX Design System & Visual Refresh — **ALL PHASES COMPLETE + BUG FIXES**
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+
+---
+
+## 🔧 **M15 TESTING BUG FIXES - IN PROGRESS**
+
+**Status**: 🔧 **IN PROGRESS**
+**Session**: February 20, 2026
+**Branch**: `feature/M15-ux-design-system`
+**PRD**: `docs/prds/active/m15-testing-bug-fixes.md`
+
+### **Context**
+User testing on M15.5b build revealed 12 issues across parsing, display, data propagation, and styling.
+
+### **Commits**
+1. ✅ **Fix EditRecipeView structured quantity loss (P0)** — Added `parseToStructured()` in completeSave()
+2. ✅ **Remove redundant quantity displays (P1)** — Removed right-aligned displayText in grocery list, fixed recipe ingredient rows
+3. ✅ **Fix takeout strikethrough + SettingsView dark mode (P1)** — Added strikethrough to quick options, warm background for Settings
+4. ✅ **Template name sanitization (P1)** — Phase 0 sanitization in normalize(), fixed extractCleanIngredientName() regexes, wired up re-normalization
+5. ✅ **Fix category chip refresh (P1)** — refreshAllObjects() on appear to force relationship-derived data refresh
+
+### **Not Changing (Documented Decisions)**
+- Title centering: iOS platform convention (left-aligned large titles)
+- Template → grocery item name propagation: Point-in-time snapshot by design
 
 ---
 
