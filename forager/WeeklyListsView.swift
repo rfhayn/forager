@@ -278,7 +278,6 @@ struct WeeklyListsView: View {
 struct WeeklyListRowView: View {
     @ObservedObject var weeklyList: WeeklyList
     @Environment(\.managedObjectContext) private var viewContext
-    @State private var refreshID = UUID()
 
     @FetchRequest private var itemsFetch: FetchedResults<GroceryListItem>
 
@@ -357,9 +356,7 @@ struct WeeklyListRowView: View {
             // Force Core Data to re-fault objects so relationship-derived
             // properties (like categoryName via ingredientTemplate) refresh
             viewContext.refreshAllObjects()
-            refreshID = UUID()
         }
-        .id(refreshID)
     }
 }
 
