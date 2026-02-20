@@ -28,6 +28,13 @@
 | 8 | Template name "pound chicken breast" | Same issue — "pound" not in measurement pattern | Covered by same regex fix |
 | 9 | Category chips stale after recategorization | `@FetchRequest` observes direct attribute changes on `GroceryListItem`, not relationship changes through `ingredientTemplate?.category` | Force refresh on appear |
 
+### P1 — Data Integrity
+
+| # | Issue | Root Cause | Fix |
+|---|-------|-----------|-----|
+| 13 | Duplicate ingredient templates created (e.g., two "carrot" entries) | `migrateExistingTemplates()` normalizes names but doesn't deduplicate collisions; `findOrCreateTemplate()` error fallback creates templates without checking pending context objects | Three-layer fix: (1) migration now groups by canonical name and merges collisions, (2) fallback path checks context pending objects, (3) new UI duplicate detection banner + guided merge sheet on Ingredients tab |
+| 14 | Grocery items show warning badges and no quantities after adding from recipe | `GroceryListItem.name` stored template name ("garlic") not full text ("2 cloves garlic"); structured fields copied as zero when ingredient lacked them | Re-parse via `IngredientParsingService` when structured data missing; store full ingredient text in `listItem.name` |
+
 ### P2 — Not Changing (Documented Decisions)
 
 | # | Issue | Decision |
@@ -64,6 +71,15 @@
 - **File**: `forager/WeeklyListsView.swift` — force `viewContext.refreshAllObjects()` on appear
 - Documentation updates to current-story.md, insights-log.md
 
+### Commit 6: Fix grocery items missing quantities and warnings (P1)
+- **File**: `forager/AddIngredientsToListView.swift` — re-parse ingredients lacking structured data; store full text in `listItem.name`
+
+### Commit 7: Fix duplicate template creation + add deduplication (P1)
+- **File**: `Services/IngredientTemplateService.swift` — `migrateExistingTemplates()` now deduplicates; fallback path checks pending context objects; added `findDuplicateTemplates()` method
+
+### Commit 8: Duplicate detection UI on Ingredients tab (P1)
+- **File**: `forager/IngredientsView.swift` — duplicate banner matching review banner pattern, "Dupes (N)" filter pill, guided `DuplicateReviewSheet` with merge flow
+
 ---
 
 ## Acceptance Criteria
@@ -76,6 +92,10 @@
 6. Adding "3 cloves garlic" → template name is "garlic"
 7. Adding "1/4 tsp black pepper" via meal plan → template name is "black pepper"
 8. Recategorize items → return to list overview → category chips update
+9. Add ingredients from recipe to grocery list → items show full text with quantities (not just template names)
+10. If duplicate templates exist → yellow "Duplicates" banner appears on Ingredients tab
+11. Tap "Review Now" on duplicate banner → guided merge sheet shows each group with keeper recommendation
+12. Tap "Merge" → duplicates consolidated (relationships transferred, usage count summed, duplicate deleted)
 
 ---
 

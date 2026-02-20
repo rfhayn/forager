@@ -99,6 +99,8 @@ struct IngredientsView: View {
     @State private var selectedIngredients: Set<IngredientTemplate> = []
     @State private var showingAddForm = false
     @State private var showReviewSheet = false
+    @State private var showDuplicatesOnly = false
+    @State private var showDuplicateReviewSheet = false
     @State private var showingError = false
     @State private var errorMessage = ""
 
@@ -114,6 +116,11 @@ struct IngredientsView: View {
             // M15.5: Review banner (when items need review and not already filtering to review)
             if needsReviewCount > 0 && !showNeedsReviewOnly {
                 reviewBanner
+            }
+
+            // M15: Duplicate banner (when duplicates exist and not already filtering)
+            if duplicateGroupCount > 0 && !showDuplicatesOnly {
+                duplicateBanner
             }
 
             // M15.5: Staples summary header (when filtering to staples)
@@ -199,6 +206,9 @@ struct IngredientsView: View {
                 ingredients: ingredients.filter { $0.needsReview }
             )
         }
+        .sheet(isPresented: $showDuplicateReviewSheet) {
+            DuplicateReviewSheet(duplicateGroups: duplicateGroups)
+        }
         // FIXED: Data-driven sheet with CategoryChangePayload (prevents empty-first-render!)
         .sheet(item: $categoryChangePayload) { payload in
             CategoryChangeModal(
@@ -223,6 +233,7 @@ struct IngredientsView: View {
         .onChange(of: popToRoot) { _, _ in
             if showingAddForm { showingAddForm = false }
             if showReviewSheet { showReviewSheet = false }
+            if showDuplicateReviewSheet { showDuplicateReviewSheet = false }
             if categoryChangePayload != nil { categoryChangePayload = nil }
             if showingError { showingError = false }
             if isEditMode {
@@ -288,6 +299,19 @@ struct IngredientsView: View {
                         )
                     }
                 }
+
+                // Duplicate filter
+                if duplicateGroupCount > 0 {
+                    Button {
+                        showDuplicatesOnly.toggle()
+                    } label: {
+                        FilterPill(
+                            title: "Dupes (\(duplicateGroupCount))",
+                            isSelected: showDuplicatesOnly,
+                            systemImage: "doc.on.doc"
+                        )
+                    }
+                }
             }
             .padding(.horizontal, ForagerTheme.Spacing.lg)
         }
@@ -334,6 +358,32 @@ struct IngredientsView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(needsReviewCount) ingredients need review")
         .accessibilityHint("Double tap Review Now to start guided review")
+    }
+
+    // MARK: - M15: Duplicate Banner
+
+    private var duplicateBanner: some View {
+        HStack {
+            Image(systemName: "doc.on.doc.fill")
+                .foregroundStyle(ForagerTheme.statusWarningFG)
+            Text("\(duplicateGroupCount) duplicate\(duplicateGroupCount == 1 ? "" : "s") found")
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
+            Spacer()
+            Button("Review Now") {
+                showDuplicateReviewSheet = true
+            }
+            .font(ForagerTheme.footnoteFont.bold())
+            .foregroundStyle(ForagerTheme.accentPrimary)
+        }
+        .padding(ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfaceWarning)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(duplicateGroupCount) duplicate ingredients found")
+        .accessibilityHint("Double tap Review Now to merge duplicates")
     }
 
     // MARK: - M15.5: Staples Summary Header
@@ -425,6 +475,26 @@ struct IngredientsView: View {
         ingredients.filter { $0.needsReview }.count
     }
 
+    // M15: Duplicate detection — group by canonical name, find collisions
+    private var duplicateGroups: [(name: String, templates: [IngredientTemplate])] {
+        let grouped = Dictionary(grouping: ingredients) {
+            ($0.canonicalName ?? $0.name?.lowercased() ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return grouped
+            .filter { $0.value.count > 1 }
+            .map { (name: $0.key, templates: $0.value) }
+            .sorted { $0.name < $1.name }
+    }
+
+    private var duplicateGroupCount: Int {
+        duplicateGroups.count
+    }
+
+    private var duplicateTemplateIDs: Set<NSManagedObjectID> {
+        Set(duplicateGroups.flatMap { $0.templates.map { $0.objectID } })
+    }
+
     private var filteredIngredients: [IngredientTemplate] {
         var filtered = Array(ingredients)
 
@@ -450,6 +520,12 @@ struct IngredientsView: View {
         // M8.3.1: Apply needs-review filter
         if showNeedsReviewOnly {
             filtered = filtered.filter { $0.needsReview }
+        }
+
+        // M15: Apply duplicates filter
+        if showDuplicatesOnly {
+            let dupeIDs = duplicateTemplateIDs
+            filtered = filtered.filter { dupeIDs.contains($0.objectID) }
         }
 
         // Apply sorting
@@ -1070,6 +1146,257 @@ struct IngredientReviewSheet: View {
         } catch {
             #if DEBUG
             print("❌ M15.5: Review save failed — \(error)")
+            #endif
+        }
+
+        advance()
+    }
+}
+
+// MARK: - M15: Duplicate Review Sheet
+
+struct DuplicateReviewSheet: View {
+    let duplicateGroups: [(name: String, templates: [IngredientTemplate])]
+    @State private var currentIndex = 0
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                // Progress bar
+                ProgressView(value: Double(currentIndex), total: Double(duplicateGroups.count))
+                    .tint(ForagerTheme.accentPrimary)
+
+                HStack {
+                    Spacer()
+                    Text("\(currentIndex + 1) of \(duplicateGroups.count)")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+
+                if currentIndex < duplicateGroups.count {
+                    duplicateGroupCard(duplicateGroups[currentIndex])
+                }
+
+                Spacer()
+
+                // Action buttons
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Button {
+                        advance()
+                    } label: {
+                        Text("Skip")
+                            .font(ForagerTheme.bodyFont)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                                    .strokeBorder(ForagerTheme.borderDefault)
+                            )
+                    }
+
+                    Button {
+                        mergeAndAdvance()
+                    } label: {
+                        Text("Merge")
+                            .font(ForagerTheme.bodyFont.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(.white)
+                            .background(ForagerTheme.accentPrimary)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    }
+                }
+            }
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.backgroundCanvas)
+            .navigationTitle("Merge Duplicates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+
+    // MARK: - Duplicate Group Card
+
+    private func duplicateGroupCard(_ group: (name: String, templates: [IngredientTemplate])) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+            // Header badge
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                Image(systemName: "doc.on.doc.fill")
+                    .font(.caption)
+                    .foregroundStyle(ForagerTheme.statusWarningFG)
+                Text("\(group.templates.count) templates with the same name")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.sm)
+            .padding(.vertical, ForagerTheme.Spacing.xs)
+            .background(ForagerTheme.surfaceWarning)
+            .clipShape(Capsule())
+
+            // Canonical name
+            Text("\"\(group.name)\"")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ForagerTheme.textPrimary)
+
+            // Each template in the group
+            ForEach(group.templates, id: \.objectID) { template in
+                templateRow(template, isKeeper: template == bestTemplate(in: group.templates))
+            }
+
+            // Merge explanation
+            if let keeper = bestTemplate(in: group.templates) {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text("Merge will keep \"\(keeper.name ?? group.name)\" (\(keeper.usageCount)×) and transfer all relationships from the others.")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            }
+        }
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
+    }
+
+    private func templateRow(_ template: IngredientTemplate, isKeeper: Bool) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            // Keeper indicator
+            Image(systemName: isKeeper ? "checkmark.circle.fill" : "minus.circle")
+                .foregroundStyle(isKeeper ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                .font(.title3)
+
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    Text(template.name ?? "Unknown")
+                        .font(ForagerTheme.bodyFont)
+                        .fontWeight(isKeeper ? .semibold : .regular)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+
+                    if isKeeper {
+                        Text("Keep")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(ForagerTheme.statusSuccessFG.opacity(0.15))
+                            .clipShape(Capsule())
+                    }
+                }
+
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    if let category = template.category, !category.isEmpty {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(ForagerTheme.categoryColor(for: category))
+                                .frame(width: 8, height: 8)
+                            Text(category)
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                        }
+                    } else {
+                        Text("Uncategorized")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+
+                    Text("\(template.usageCount)× used")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+
+                    if template.isStaple {
+                        HStack(spacing: 2) {
+                            Image(systemName: "pin.fill")
+                                .font(.caption2)
+                            Text("Staple")
+                                .font(ForagerTheme.captionFont)
+                        }
+                        .foregroundStyle(ForagerTheme.accentSecondary)
+                    }
+                }
+            }
+
+            Spacer()
+        }
+        .padding(ForagerTheme.Spacing.sm)
+        .background(isKeeper ? ForagerTheme.statusSuccessFG.opacity(0.05) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+    }
+
+    // MARK: - Helpers
+
+    private func bestTemplate(in templates: [IngredientTemplate]) -> IngredientTemplate? {
+        templates.sorted {
+            if $0.usageCount != $1.usageCount { return $0.usageCount > $1.usageCount }
+            return ($0.dateCreated ?? .distantPast) < ($1.dateCreated ?? .distantPast)
+        }.first
+    }
+
+    private func advance() {
+        if currentIndex < duplicateGroups.count - 1 {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                currentIndex += 1
+            }
+        } else {
+            dismiss()
+        }
+    }
+
+    private func mergeAndAdvance() {
+        guard currentIndex < duplicateGroups.count else { return }
+        let group = duplicateGroups[currentIndex]
+        guard let keeper = bestTemplate(in: group.templates) else {
+            advance()
+            return
+        }
+
+        let duplicates = group.templates.filter { $0 != keeper }
+
+        for duplicate in duplicates {
+            // Transfer ingredient relationships
+            if let ingredients = duplicate.ingredients as? Set<Ingredient> {
+                for ingredient in ingredients {
+                    ingredient.ingredientTemplate = keeper
+                }
+            }
+
+            // Consolidate usage count
+            keeper.usageCount += duplicate.usageCount
+
+            // Preserve category if keeper lacks one
+            if (keeper.category == nil || keeper.category?.isEmpty == true),
+               let dupCategory = duplicate.category, !dupCategory.isEmpty {
+                keeper.category = dupCategory
+            }
+
+            // Preserve staple status
+            if duplicate.isStaple && !keeper.isStaple {
+                keeper.isStaple = true
+            }
+
+            keeper.updatedAt = Date()
+            viewContext.delete(duplicate)
+        }
+
+        do {
+            try viewContext.save()
+            #if DEBUG
+            print("M15: Merged \(duplicates.count) duplicate(s) for '\(group.name)' into keeper (usage: \(keeper.usageCount))")
+            #endif
+        } catch {
+            #if DEBUG
+            print("M15: Merge save failed — \(error)")
             #endif
         }
 
