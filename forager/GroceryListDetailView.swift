@@ -321,8 +321,8 @@ struct GroceryListDetailView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
+        .listStyle(.plain)
+        .background(ForagerTheme.backgroundCanvas)
     }
 
     // MARK: - Empty State
