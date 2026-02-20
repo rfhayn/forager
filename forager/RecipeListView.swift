@@ -1265,22 +1265,15 @@ struct RecipeDetailView: View {
     // MARK: - Ingredient Row
 
     private func ingredientRow(_ ingredient: Ingredient) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
+        let displayName = ingredientDisplayName(for: ingredient)
+        return HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
             // Confidence bullet: green for high, amber for low
             Circle()
                 .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
                 .frame(width: 4, height: 4)
                 .padding(.top, 8)
 
-            // Quantity + unit (monospaced digits, secondary color)
-            if let qtyText = scaledDisplayText(for: ingredient), !qtyText.isEmpty {
-                Text(qtyText)
-                    .font(ForagerTheme.bodyFont.monospacedDigit())
-                    .foregroundStyle(ForagerTheme.textSecondary)
-            }
-
-            // Ingredient name
-            Text(ingredient.name ?? "Unknown")
+            Text(displayName)
                 .font(ForagerTheme.bodyFont)
                 .foregroundStyle(ForagerTheme.textPrimary)
 
@@ -1288,15 +1281,21 @@ struct RecipeDetailView: View {
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(scaledDisplayText(for: ingredient) ?? "") \(ingredient.name ?? "Unknown")")
+        .accessibilityLabel(displayName)
     }
 
-    private func scaledDisplayText(for ingredient: Ingredient) -> String? {
-        if scaleFactor != 1.0,
-           let scaled = scaledIngredients?.first(where: { $0.name == (ingredient.name ?? "") }) {
-            return scaled.displayText
+    private func ingredientDisplayName(for ingredient: Ingredient) -> String {
+        // At 1x scale, ingredient.name already contains full text like "2 cups flour"
+        guard scaleFactor != 1.0,
+              let scaled = scaledIngredients?.first(where: { $0.name == (ingredient.name ?? "") }) else {
+            return ingredient.name ?? "Unknown"
         }
-        return ingredient.displayText
+        // At other scales, construct from scaled quantity + template name
+        let templateName = ingredient.ingredientTemplate?.name ?? ingredient.name ?? "Unknown"
+        if scaled.displayText.isEmpty {
+            return templateName
+        }
+        return "\(scaled.displayText) \(templateName)"
     }
 
     // MARK: - CTA Button

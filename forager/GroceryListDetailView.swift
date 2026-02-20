@@ -644,15 +644,6 @@ struct GroceryListItemRow: View {
                         }
                     }
 
-                    Spacer()
-
-                    // Quantity — right-aligned, no parentheses
-                    if let displayText = item.displayText, !displayText.isEmpty, displayText != "1" {
-                        Text(displayText)
-                            .font(ForagerTheme.secondaryFont.monospacedDigit())
-                            .foregroundStyle(ForagerTheme.textTertiary)
-                            .strikethrough(item.isCompleted)
-                    }
                 }
 
                 // Recipe source badges
