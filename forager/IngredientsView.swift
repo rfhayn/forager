@@ -762,13 +762,6 @@ struct IngredientRowView: View {
                 }
             } else {
                 HStack(spacing: ForagerTheme.Spacing.md) {
-                    // Usage badge
-                    if ingredient.usageCount > 0 {
-                        Text("\(ingredient.usageCount)×")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.textTertiary)
-                    }
-
                     Button(action: onCategoryAssign) {
                         Image(systemName: "folder")
                             .font(.body)
