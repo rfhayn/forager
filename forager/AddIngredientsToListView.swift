@@ -12,6 +12,7 @@ struct AddIngredientsToListView: View {
     private let scalingService: RecipeScalingService
     private let templateService: IngredientTemplateService
     private let mergeService: GroceryMergeService
+    private let parsingService: IngredientParsingService
     
     @State private var selectedIngredients: Set<UUID> = []
     @State private var isProcessing = false
@@ -43,6 +44,7 @@ struct AddIngredientsToListView: View {
         self.scalingService = RecipeScalingService(context: context)
         self.templateService = IngredientTemplateService(context: context)
         self.mergeService = GroceryMergeService()
+        self.parsingService = IngredientParsingService(context: context, templateService: self.templateService)
     }
     
     // M4.3.2: Computed property for scale factor
@@ -410,21 +412,42 @@ struct AddIngredientsToListView: View {
         var mergeCount = 0
         
         for ingredient in selectedIngredientsToAdd {
-            // M4.3.2 Phase 2: Use SCALED displayText from our scaling function
-            let fullIngredientText = scaledDisplayText(for: ingredient)
-            
-            // But use clean name for template operations and duplicate detection
+            let originalText = ingredient.name ?? ""
+
+            // Re-parse if ingredient lacks structured data (e.g., from old builds or edited recipes)
+            let structured: StructuredQuantity
+            if ingredient.isParseable && ingredient.parseConfidence > 0 {
+                // Use existing structured data
+                structured = StructuredQuantity(
+                    numericValue: Double(ingredient.numericValue),
+                    standardUnit: ingredient.standardUnit,
+                    displayText: ingredient.displayText ?? "",
+                    isParseable: ingredient.isParseable,
+                    parseConfidence: ingredient.parseConfidence,
+                    parserUsed: "cached"
+                )
+            } else {
+                // Re-parse from original text
+                structured = parsingService.parseToStructured(text: originalText)
+            }
+
+            // Template name for matching/merging
             let cleanName: String
             if let ingredientTemplate = ingredient.ingredientTemplate {
-                cleanName = ingredientTemplate.name ?? extractCleanIngredientName(from: fullIngredientText)
+                cleanName = ingredientTemplate.name ?? extractCleanIngredientName(from: originalText)
             } else {
-                cleanName = extractCleanIngredientName(from: fullIngredientText)
+                cleanName = extractCleanIngredientName(from: originalText)
             }
-            
-            #if DEBUG
-            print("DEBUG: Processing ingredient '\(fullIngredientText)' -> clean: '\(cleanName)' (scale: \(scaleFactor)x)")
-            #endif
-            
+
+            // Full display name: at 1x use original text, at other scales construct from scaled qty
+            let itemDisplayName: String
+            if scaleFactor != 1.0 {
+                let scaledQty = scaledDisplayText(for: ingredient)
+                itemDisplayName = scaledQty.isEmpty ? originalText : "\(scaledQty) \(cleanName)"
+            } else {
+                itemDisplayName = originalText
+            }
+
             // Check for existing items by clean name
             if let existingItem = findExistingItem(named: cleanName, in: existingItems) {
                 // M8.3.2: Numeric merge via GroceryMergeService
@@ -435,10 +458,10 @@ struct AddIngredientsToListView: View {
                     parseConfidence: Double(existingItem.parseConfidence)
                 )
                 let incoming = GroceryMergeInput(
-                    numericValue: ingredient.isParseable ? ingredient.numericValue * scaleFactor : 0,
-                    standardUnit: ingredient.standardUnit,
-                    isParseable: ingredient.isParseable,
-                    parseConfidence: Double(ingredient.parseConfidence)
+                    numericValue: structured.isParseable ? (structured.numericValue ?? 0) * scaleFactor : 0,
+                    standardUnit: structured.standardUnit,
+                    isParseable: structured.isParseable,
+                    parseConfidence: Double(structured.parseConfidence)
                 )
                 let result = mergeService.merge(existing: existing, incoming: incoming)
 
@@ -447,33 +470,30 @@ struct AddIngredientsToListView: View {
                 if result.didMergeQuantity {
                     existingItem.displayText = result.displayText
                     existingItem.standardUnit = result.standardUnit
+                    existingItem.name = "\(result.displayText) \(cleanName)"
                 }
 
                 existingItem.addToSourceRecipes(recipe)
 
                 mergeCount += 1
-                #if DEBUG
-                print("Merged quantities for '\(cleanName)': \(result.displayText) (didMerge: \(result.didMergeQuantity))")
-                #endif
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)
                 listItem.id = UUID()
-                listItem.name = cleanName
-                
-                // M4.3.2 Phase 2: Copy SCALED quantity fields
-                listItem.displayText = fullIngredientText  // Already scaled from scaledDisplayText()
-                
-                // Scale the numeric value if parseable
-                if ingredient.isParseable && ingredient.numericValue > 0 {
-                    listItem.numericValue = ingredient.numericValue * scaleFactor
+                listItem.name = itemDisplayName
+
+                // Structured quantity fields
+                listItem.displayText = structured.displayText
+
+                if structured.isParseable && (structured.numericValue ?? 0) > 0 {
+                    listItem.numericValue = (structured.numericValue ?? 0) * scaleFactor
                 } else {
-                    listItem.numericValue = ingredient.numericValue
+                    listItem.numericValue = structured.numericValue ?? 0
                 }
-                
-                listItem.standardUnit = ingredient.standardUnit
-                listItem.isParseable = ingredient.isParseable
-                listItem.parseConfidence = ingredient.parseConfidence
+
+                listItem.standardUnit = structured.standardUnit
+                listItem.isParseable = structured.isParseable
+                listItem.parseConfidence = structured.parseConfidence
                 
                 listItem.isCompleted = false
                 listItem.source = "Recipe: \(recipe.title ?? "Unknown Recipe")"
@@ -498,7 +518,7 @@ struct AddIngredientsToListView: View {
                 
                 targetList.addToItems(listItem)
                 #if DEBUG
-                print("Created new item: \(fullIngredientText)")
+                print("Created new item: \(itemDisplayName)")
                 #endif
             }
         }
