@@ -230,7 +230,7 @@ struct RecipeScalingView: View {
     
     private func sortedCategoryNames(for scaled: ScaledRecipe) -> [String] {
         let grouped = Dictionary(grouping: scaled.scaledIngredients) { $0.category }
-        let categoryMap = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0.sortOrder) })
+        let categoryMap = Dictionary(categories.map { ($0.displayName, $0.sortOrder) }, uniquingKeysWith: { first, _ in first })
         
         return grouped.keys.sorted { category1, category2 in
             if category1 == "Uncategorized" && category2 != "Uncategorized" { return false }

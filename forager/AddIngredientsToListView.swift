@@ -165,7 +165,7 @@ struct AddIngredientsToListView: View {
 
     private var sortedCategoryNames: [String] {
         let grouped = groupedIngredients
-        let categoryMap = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0.sortOrder) })
+        let categoryMap = Dictionary(categories.map { ($0.displayName, $0.sortOrder) }, uniquingKeysWith: { first, _ in first })
         
         return grouped.keys.sorted { category1, category2 in
             // Handle "Uncategorized" - put it at the end
