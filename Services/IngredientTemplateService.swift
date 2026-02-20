@@ -83,6 +83,7 @@ class IngredientTemplateService: ObservableObject {
             "marshmallow": "marshmallows", "marshmallows": "marshmallows",
             "raisin": "raisins", "raisins": "raisins",
             "mushroom": "mushrooms", "mushrooms": "mushrooms",
+            "pepper": "peppers", "peppers": "peppers",
         ]
         if let preferred = preferPlural[checkName] {
             return preferred
