@@ -410,6 +410,9 @@ final class PersistenceController: ObservableObject {
                 // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
                 Self.migrateSourceURLTagsIfNeeded(in: context)
 
+                // M15: Re-normalize template names (cleans up "/ black pepper", "cloves garlic", etc.)
+                IngredientTemplateService(context: context).migrateExistingTemplates()
+
                 // Save if any changes were made
                 if context.hasChanges {
                     try context.save()

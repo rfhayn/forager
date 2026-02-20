@@ -255,7 +255,29 @@ class IngredientTemplateService: ObservableObject {
     // M8.3.1: Changed from private to internal for unit test access via @testable import
     func normalize(name: String) -> String {
         var normalized = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
+        // Phase 0: Sanitize — strip leading punctuation and residual unit words
+        // Handles artifacts like "/ black pepper" (from fraction stripping) and
+        // "cloves garlic" (unit word leaked into template name)
+        normalized = normalized.replacingOccurrences(
+            of: #"^[/\-–—.,:;]+\s*"#, with: "", options: .regularExpression
+        )
+        let unitPrefixes = [
+            "cloves ", "clove ", "pounds ", "pound ", "cans ", "can ",
+            "slices ", "slice ", "heads ", "head ", "bunches ", "bunch ",
+            "pieces ", "piece ", "sprigs ", "sprig ", "sticks ", "stick ",
+            "bags ", "bag ", "bottles ", "bottle ", "boxes ", "box ",
+            "jars ", "jar ", "stalks ", "stalk ", "ears ", "ear "
+        ]
+        let lowerNormalized = normalized.lowercased()
+        for prefix in unitPrefixes {
+            if lowerNormalized.hasPrefix(prefix) {
+                normalized = String(normalized.dropFirst(prefix.count))
+                break
+            }
+        }
+        normalized = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Phase 1: Case normalization
         normalized = normalizeCase(normalized)
         

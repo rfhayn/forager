@@ -550,11 +550,11 @@ struct AddIngredientsToListView: View {
     
     private func extractCleanIngredientName(from fullText: String) -> String {
         let text = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         var cleaned = text
-        
-        // Remove measurements with units (comprehensive pattern)
-        let measurementPattern = #"^[\d/.\s-]*(cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|grams?|g|kilograms?|kg|liters?|l|milliliters?|ml|eggs?|egg)\s+"#
+
+        // Remove measurements with units (comprehensive pattern — includes count units)
+        let measurementPattern = #"^[\d/.\s-]*(cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|cloves?|slices?|cans?|heads?|bunches?|pieces?|sprigs?|sticks?|grams?|g|kilograms?|kg|liters?|l|milliliters?|ml|eggs?|egg)\s+"#
         if let regex = try? NSRegularExpression(pattern: measurementPattern, options: .caseInsensitive) {
             cleaned = regex.stringByReplacingMatches(
                 in: cleaned,
@@ -562,7 +562,17 @@ struct AddIngredientsToListView: View {
                 withTemplate: ""
             )
         }
-        
+
+        // Strip any remaining leading numbers/fractions (e.g., "3 garlic")
+        let leadingNumberPattern = #"^[\d/.\s-]+(?=\S)"#
+        if let regex = try? NSRegularExpression(pattern: leadingNumberPattern, options: []) {
+            cleaned = regex.stringByReplacingMatches(
+                in: cleaned,
+                range: NSRange(cleaned.startIndex..., in: cleaned),
+                withTemplate: ""
+            )
+        }
+
         // Remove common quantity words
         let quantityWords = ["large", "medium", "small", "whole", "half", "fresh", "dried", "frozen", "canned", "chopped", "diced", "sliced", "minced"]
         for word in quantityWords {
@@ -575,7 +585,7 @@ struct AddIngredientsToListView: View {
                 )
             }
         }
-        
+
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
     }
     
