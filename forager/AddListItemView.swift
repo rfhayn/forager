@@ -156,7 +156,7 @@ struct AddListItemView: View {
                     if !categories.isEmpty {
                         Picker("Category", selection: $selectedCategory) {
                             ForEach(categories, id: \.displayName) { category in
-                                Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                                Text(category.displayName)
                                     .tag(category.displayName)
                             }
                         }
@@ -226,7 +226,7 @@ struct AddListItemView: View {
                     
                     Picker("Category", selection: $newIngredientCategory) {
                         ForEach(categories, id: \.displayName) { category in
-                            Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                            Text(category.displayName)
                                 .tag(category.displayName)
                         }
                     }
@@ -293,17 +293,6 @@ struct AddListItemView: View {
     
     // MARK: - Helper Functions
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
-        }
-    }
     
     private func addItemToList() {
         let trimmedText = ingredientText.trimmingCharacters(in: .whitespacesAndNewlines)

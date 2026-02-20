@@ -548,7 +548,7 @@ struct GroceryListDetailView: View {
 
                     Picker("Category", selection: $newIngredientCategory) {
                         ForEach(categories, id: \.displayName) { category in
-                            Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                            Text(category.displayName)
                                 .tag(category.displayName)
                         }
                     }
@@ -579,17 +579,6 @@ struct GroceryListDetailView: View {
         }
     }
 
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
-        }
-    }
 
     private func saveToTemplates() {
         let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)

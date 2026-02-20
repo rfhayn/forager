@@ -307,12 +307,8 @@ struct ManageCategoriesView: View {
                             HStack {
                                 if let selected = selectedReassignmentCategory {
                                     Circle()
-                                        .fill(Color(hex: selected.displayColor))
+                                        .fill(ForagerTheme.categoryColor(for: selected.displayName))
                                         .frame(width: 16, height: 16)
-                                        .overlay(
-                                            Text(categoryEmoji(for: selected.displayName))
-                                                .font(.system(size: 10))
-                                        )
                                     Text(selected.displayName)
                                         .foregroundStyle(.primary)
                                 } else {
@@ -397,20 +393,6 @@ struct ManageCategoriesView: View {
             }
         }
         .padding(20)
-    }
-    
-    // Helper function for category emojis
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
     }
     
     // MARK: - Reassignment Implementation
@@ -674,15 +656,11 @@ struct CategoryRowView: View {
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
-            // Category color and icon
+            // Category color indicator
             Circle()
-                .fill(Color(hex: category.displayColor))
+                .fill(ForagerTheme.categoryColor(for: category.displayName))
                 .frame(width: 32, height: 32)
-                .overlay(
-                    Text(categoryEmoji(for: category.displayName))
-                        .font(.system(size: 16))
-                )
-            
+
             // Category info
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -722,18 +700,6 @@ struct CategoryRowView: View {
         .contentShape(Rectangle())
     }
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
-    }
 }
 
 #Preview {
@@ -782,14 +748,10 @@ struct CategorySelectionRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 16) {
-                // Category color and icon
+                // Category color indicator
                 Circle()
-                    .fill(Color(hex: category.displayColor))
+                    .fill(ForagerTheme.categoryColor(for: category.displayName))
                     .frame(width: 32, height: 32)
-                    .overlay(
-                        Text(categoryEmoji(for: category.displayName))
-                            .font(.system(size: 16))
-                    )
                 
                 // Category name
                 Text(category.displayName)
@@ -811,18 +773,6 @@ struct CategorySelectionRow: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
-    }
 }
 #Preview {
     NavigationView {
