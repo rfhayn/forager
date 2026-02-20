@@ -50,6 +50,7 @@ struct AddListItemView: View {
     @State private var newIngredientName = ""
     @State private var newIngredientCategory = ""
     @State private var markAsStaple = false
+    @State private var lastAddedItem: GroceryListItem?
     
     private var isFormValid: Bool {
         !ingredientText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -314,30 +315,34 @@ struct AddListItemView: View {
         listItem.numericValue = structured.numericValue ?? 0.0
         listItem.standardUnit = structured.standardUnit
         listItem.isParseable = structured.isParseable
-        listItem.parseConfidence = structured.parseConfidence
+        // Autocomplete-selected items are user-validated — floor confidence
+        listItem.parseConfidence = selectedTemplate != nil
+            ? max(structured.parseConfidence, 0.8)
+            : structured.parseConfidence
         listItem.categoryName = selectedCategory
         listItem.source = "manual"
         listItem.isCompleted = false
         listItem.weeklyList = weeklyList
         listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
-        
+
         do {
             try viewContext.save()
             #if DEBUG
             print("✅ Added item to list: \(parsed.displayName)")
             #endif
-            
+
             // PHASE 3: Check if this is a new ingredient
             if selectedTemplate == nil {
                 #if DEBUG
                 print("   ℹ️ New ingredient detected: \(parsed.name)")
                 #endif
-                
-                // Prepare data for template creation prompt
+
+                // Track item so saveToTemplates can update its category
+                lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = selectedCategory
                 markAsStaple = false
-                
+
                 // Show the add to templates sheet
                 showingAddToTemplates = true
             } else {
@@ -358,6 +363,12 @@ struct AddListItemView: View {
     private func saveToTemplates() {
         let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
+
+        // Propagate the user's category choice to the grocery list item
+        if let item = lastAddedItem {
+            item.categoryName = newIngredientCategory
+            lastAddedItem = nil
+        }
 
         do {
             if viewContext.hasChanges {

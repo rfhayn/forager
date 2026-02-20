@@ -40,6 +40,9 @@ struct GroceryListDetailView: View {
     // M15.3: Celebration
     @State private var showCelebration = false
 
+    // Track last-added item so saveToTemplates can update its category
+    @State private var lastAddedItem: GroceryListItem?
+
     // Error feedback
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -503,7 +506,10 @@ struct GroceryListDetailView: View {
         listItem.numericValue = structured.numericValue ?? 0.0
         listItem.standardUnit = structured.standardUnit
         listItem.isParseable = structured.isParseable
-        listItem.parseConfidence = structured.parseConfidence
+        // Autocomplete-selected items are user-validated — floor confidence
+        listItem.parseConfidence = selectedTemplate != nil
+            ? max(structured.parseConfidence, 0.8)
+            : structured.parseConfidence
         listItem.categoryName = categoryToUse
         listItem.source = "manual"
         listItem.isCompleted = false
@@ -514,6 +520,8 @@ struct GroceryListDetailView: View {
             try viewContext.save()
 
             if selectedTemplate == nil {
+                // Track item so saveToTemplates can update its category
+                lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = categoryToUse
                 markAsStaple = false
@@ -583,6 +591,12 @@ struct GroceryListDetailView: View {
     private func saveToTemplates() {
         let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
+
+        // Propagate the user's category choice to the grocery list item
+        if let item = lastAddedItem {
+            item.categoryName = newIngredientCategory
+            lastAddedItem = nil
+        }
 
         do {
             if viewContext.hasChanges { try viewContext.save() }
