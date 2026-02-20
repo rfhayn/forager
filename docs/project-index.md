@@ -732,8 +732,8 @@ _[Previous entries remain the same through December 23...]_
 
 ### **Internal Knowledge**
 - [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
-- [learning-notes/](learning-notes/) - 31 implementation journey notes
-- [architecture/](architecture/) - 10 architecture decision records
+- [learning-notes/](learning-notes/) - 37 implementation journey notes
+- [architecture/](architecture/) - 12 architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
 - [git-workflow-for-milestones.md](git-workflow-for-milestones.md) - Complete git workflow guide
 
