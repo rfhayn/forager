@@ -385,11 +385,22 @@ class IngredientTemplateService: ObservableObject {
             #if DEBUG
             print("❌ M7.2.3 Phase 3.3: Error creating template: \(error)")
             #endif
-            // Fallback: create directly (shouldn't happen but safety net)
+            // Fallback: check context's pending objects before creating
+            let canonical = IngredientTemplate.canonicalName(from: normalizedName)
+            let pending = (context.insertedObjects.union(context.updatedObjects))
+                .compactMap { $0 as? IngredientTemplate }
+                .first { $0.canonicalName == canonical }
+
+            if let existing = pending {
+                existing.usageCount += 1
+                existing.updatedAt = Date()
+                return existing
+            }
+
             let template = IngredientTemplate(context: context)
             template.id = UUID()
             template.name = normalizedName
-            template.canonicalName = IngredientTemplate.canonicalName(from: normalizedName)
+            template.canonicalName = canonical
             template.category = category
             template.usageCount = 1
             template.dateCreated = Date()
@@ -416,28 +427,77 @@ class IngredientTemplateService: ObservableObject {
     }
     
     // MARK: - M4.3.5: Data Migration
-    
-    // Migrates existing templates to normalized names
-    // Should be called once after Phase 4 deployment
+
+    // Migrates existing templates to normalized names and deduplicates collisions.
+    // When two templates normalize to the same name (e.g., "Carrots" and "carrot"),
+    // keeps the one with higher usage count and re-points all relationships.
     func migrateExistingTemplates() {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        
+
         do {
             let templates = try context.fetch(request)
             var migratedCount = 0
-            
+
+            // Phase 1: Normalize all names and update canonicalName
             for template in templates {
                 let normalizedName = normalize(name: template.name ?? "")
                 if template.name != normalizedName {
                     template.name = normalizedName
                     migratedCount += 1
                 }
+                // Always sync canonicalName with normalized name
+                let expectedCanonical = IngredientTemplate.canonicalName(from: normalizedName)
+                if template.canonicalName != expectedCanonical {
+                    template.canonicalName = expectedCanonical
+                }
             }
-            
-            if migratedCount > 0 {
+
+            // Phase 2: Deduplicate — group by canonicalName, merge collisions
+            let grouped = Dictionary(grouping: templates) {
+                IngredientTemplate.canonicalName(from: $0.name ?? "")
+            }
+
+            var mergedCount = 0
+            for (_, group) in grouped where group.count > 1 {
+                // Keep the template with highest usage count (stable sort by dateCreated)
+                let sorted = group.sorted {
+                    if $0.usageCount != $1.usageCount { return $0.usageCount > $1.usageCount }
+                    return ($0.dateCreated ?? .distantPast) < ($1.dateCreated ?? .distantPast)
+                }
+                let keeper = sorted[0]
+                let duplicates = sorted.dropFirst()
+
+                for duplicate in duplicates {
+                    // Consolidate usage count
+                    keeper.usageCount += duplicate.usageCount
+
+                    // Re-point ingredient relationships from duplicate to keeper
+                    if let ingredients = duplicate.ingredients as? Set<Ingredient> {
+                        for ingredient in ingredients {
+                            ingredient.ingredientTemplate = keeper
+                        }
+                    }
+
+                    // Preserve category if keeper lacks one
+                    if (keeper.category == nil || keeper.category?.isEmpty == true),
+                       let dupCategory = duplicate.category, !dupCategory.isEmpty {
+                        keeper.category = dupCategory
+                    }
+
+                    // Preserve staple status
+                    if duplicate.isStaple && !keeper.isStaple {
+                        keeper.isStaple = true
+                    }
+
+                    context.delete(duplicate)
+                    mergedCount += 1
+                }
+            }
+
+            if migratedCount > 0 || mergedCount > 0 {
                 try context.save()
                 #if DEBUG
-                print("M4.3.5: Migrated \(migratedCount) templates to normalized names")
+                print("M4.3.5: Migrated \(migratedCount) templates, merged \(mergedCount) duplicates")
                 #endif
             } else {
                 #if DEBUG
@@ -448,6 +508,26 @@ class IngredientTemplateService: ObservableObject {
             #if DEBUG
             print("Error migrating templates: \(error)")
             #endif
+        }
+    }
+
+    /// Finds duplicate templates (same canonicalName) for user review.
+    /// Returns pairs of (keeper, duplicates) grouped by normalized name.
+    func findDuplicateTemplates() -> [(name: String, templates: [IngredientTemplate])] {
+        let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+
+        do {
+            let templates = try context.fetch(request)
+            let grouped = Dictionary(grouping: templates) {
+                IngredientTemplate.canonicalName(from: self.normalize(name: $0.name ?? ""))
+            }
+
+            return grouped
+                .filter { $0.value.count > 1 }
+                .map { (name: $0.key, templates: $0.value) }
+                .sorted { $0.name < $1.name }
+        } catch {
+            return []
         }
     }
 }
