@@ -466,7 +466,7 @@ struct AddIngredientsToListView: View {
                 let result = mergeService.merge(existing: existing, incoming: incoming)
 
                 existingItem.numericValue = result.numericValue
-                existingItem.parseConfidence = Float(result.parseConfidence)
+                existingItem.parseConfidence = max(Float(result.parseConfidence), 0.8)
                 if result.didMergeQuantity {
                     existingItem.displayText = result.displayText
                     existingItem.standardUnit = result.standardUnit
@@ -493,8 +493,10 @@ struct AddIngredientsToListView: View {
 
                 listItem.standardUnit = structured.standardUnit
                 listItem.isParseable = structured.isParseable
-                listItem.parseConfidence = structured.parseConfidence
-                
+                // Recipe-sourced items are user-validated — floor confidence above
+                // the 0.7 warning threshold so they don't show false warnings
+                listItem.parseConfidence = max(structured.parseConfidence, 0.8)
+
                 listItem.isCompleted = false
                 listItem.source = "Recipe: \(recipe.title ?? "Unknown Recipe")"
                 
