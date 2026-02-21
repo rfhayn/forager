@@ -22,19 +22,49 @@ struct CreateRecipeView: View {
     @StateObject private var autocompleteService: IngredientAutocompleteService
     @StateObject private var templateService: IngredientTemplateService
     
+    // MARK: - Enum-Based Sheet/Alert Routing (M7.5 Phase 2)
+    private enum ActiveSheet: Identifiable {
+        case categoryModal
+        case prepTimePicker
+        case cookTimePicker
+
+        var id: String {
+            switch self {
+            case .categoryModal: return "categoryModal"
+            case .prepTimePicker: return "prepTimePicker"
+            case .cookTimePicker: return "cookTimePicker"
+            }
+        }
+    }
+
+    private enum ActiveAlert: Identifiable {
+        case discard
+        case validation([ValidationError])
+
+        var id: String {
+            switch self {
+            case .discard: return "discard"
+            case .validation: return "validation"
+            }
+        }
+
+        var title: String {
+            switch self {
+            case .discard: return "Discard Changes?"
+            case .validation: return "Validation Errors"
+            }
+        }
+    }
+
     // Form data
     @State private var formData = RecipeFormData()
     @State private var currentIngredientText = ""
     @State private var showingAutocomplete = false
-    @State private var showingPrepTimePicker = false
-    @State private var showingCookTimePicker = false
-    
+    @State private var activeSheet: ActiveSheet?
+    @State private var activeAlert: ActiveAlert?
+
     // UI state
     @State private var hasUnsavedChanges = false
-    @State private var showingDiscardAlert = false
-    @State private var showingCategoryModal = false
-    @State private var showingValidationErrors = false
-    @State private var validationErrors: [ValidationError] = []
     @State private var isSaving = false
     
     init(context: NSManagedObjectContext) {
@@ -86,64 +116,76 @@ struct CreateRecipeView: View {
                     .disabled(isSaving)
                 }
             }
-            .alert("Discard Changes?", isPresented: $showingDiscardAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Discard", role: .destructive) {
-                    hasUnsavedChanges = false
-                    dismiss()
+            .alert(
+                activeAlert?.title ?? "",
+                isPresented: Binding(
+                    get: { activeAlert != nil },
+                    set: { if !$0 { activeAlert = nil } }
+                ),
+                presenting: activeAlert
+            ) { alert in
+                switch alert {
+                case .discard:
+                    Button("Cancel", role: .cancel) { }
+                    Button("Discard", role: .destructive) {
+                        hasUnsavedChanges = false
+                        dismiss()
+                    }
+                case .validation:
+                    Button("OK", role: .cancel) { }
                 }
-            } message: {
-                Text("You have unsaved changes. Are you sure you want to discard them?")
+            } message: { alert in
+                switch alert {
+                case .discard:
+                    Text("You have unsaved changes. Are you sure you want to discard them?")
+                case .validation(let errors):
+                    Text(errors.map { $0.localizedDescription }.joined(separator: "\n"))
+                }
             }
-            .alert("Validation Errors", isPresented: $showingValidationErrors) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(validationErrors.map { $0.localizedDescription }.joined(separator: "\n"))
-            }
-            .sheet(isPresented: $showingCategoryModal) {
-                if !formData.uncategorizedTemplates.isEmpty {
-                    CategoryAssignmentModal(
-                        uncategorizedTemplates: formData.uncategorizedTemplates,
-                        onAssignmentsComplete: {
-                            showingCategoryModal = false
-                            // After category assignment, complete the save
-                            completeSave()
-                        }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .categoryModal:
+                    if !formData.uncategorizedTemplates.isEmpty {
+                        CategoryAssignmentModal(
+                            uncategorizedTemplates: formData.uncategorizedTemplates,
+                            onAssignmentsComplete: {
+                                activeSheet = nil
+                                completeSave()
+                            }
+                        )
+                        .environment(\.managedObjectContext, viewContext)
+                    }
+                case .prepTimePicker:
+                    TimePickerSheet(
+                        title: "Prep Time",
+                        hours: Binding(
+                            get: { formData.prepTime / 60 },
+                            set: { formData.prepTime = $0 * 60 + (formData.prepTime % 60) }
+                        ),
+                        minutes: Binding(
+                            get: { formData.prepTime % 60 },
+                            set: { formData.prepTime = (formData.prepTime / 60) * 60 + $0 }
+                        ),
+                        onDismiss: { activeSheet = nil }
                     )
-                    .environment(\.managedObjectContext, viewContext)
+                    .presentationDetents([.height(300)])
+                    .presentationDragIndicator(.visible)
+                case .cookTimePicker:
+                    TimePickerSheet(
+                        title: "Cook Time",
+                        hours: Binding(
+                            get: { formData.cookTime / 60 },
+                            set: { formData.cookTime = $0 * 60 + (formData.cookTime % 60) }
+                        ),
+                        minutes: Binding(
+                            get: { formData.cookTime % 60 },
+                            set: { formData.cookTime = (formData.cookTime / 60) * 60 + $0 }
+                        ),
+                        onDismiss: { activeSheet = nil }
+                    )
+                    .presentationDetents([.height(300)])
+                    .presentationDragIndicator(.visible)
                 }
-            }
-            .sheet(isPresented: $showingPrepTimePicker) {
-                TimePickerSheet(
-                    title: "Prep Time",
-                    hours: Binding(
-                        get: { formData.prepTime / 60 },
-                        set: { formData.prepTime = $0 * 60 + (formData.prepTime % 60) }
-                    ),
-                    minutes: Binding(
-                        get: { formData.prepTime % 60 },
-                        set: { formData.prepTime = (formData.prepTime / 60) * 60 + $0 }
-                    ),
-                    onDismiss: { showingPrepTimePicker = false }
-                )
-                .presentationDetents([.height(300)])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $showingCookTimePicker) {
-                TimePickerSheet(
-                    title: "Cook Time",
-                    hours: Binding(
-                        get: { formData.cookTime / 60 },
-                        set: { formData.cookTime = $0 * 60 + (formData.cookTime % 60) }
-                    ),
-                    minutes: Binding(
-                        get: { formData.cookTime % 60 },
-                        set: { formData.cookTime = (formData.cookTime / 60) * 60 + $0 }
-                    ),
-                    onDismiss: { showingCookTimePicker = false }
-                )
-                .presentationDetents([.height(300)])
-                .presentationDragIndicator(.visible)
             }
             // M7.3.4: Configure autocomplete service with current householdKey
             .onAppear {
@@ -204,7 +246,7 @@ struct CreateRecipeView: View {
             
             VStack(spacing: 12) {
                 // Prep Time Button
-                Button(action: { showingPrepTimePicker = true }) {
+                Button(action: { activeSheet = .prepTimePicker }) {
                     HStack {
                         Image(systemName: "clock")
                             .foregroundStyle(ForagerTheme.accentPrimary)
@@ -224,7 +266,7 @@ struct CreateRecipeView: View {
                 Divider()
                 
                 // Cook Time Button
-                Button(action: { showingCookTimePicker = true }) {
+                Button(action: { activeSheet = .cookTimePicker }) {
                     HStack {
                         Image(systemName: "flame")
                             .foregroundStyle(ForagerTheme.statusWarningFG)
@@ -504,7 +546,7 @@ struct CreateRecipeView: View {
     
     private func handleCancel() {
         if hasUnsavedChanges {
-            showingDiscardAlert = true
+            activeAlert = .discard
         } else {
             dismiss()
         }
@@ -566,8 +608,7 @@ struct CreateRecipeView: View {
         // Validate
         let errors = formData.validate()
         if !errors.isEmpty {
-            validationErrors = errors
-            showingValidationErrors = true
+            activeAlert = .validation(errors)
             return
         }
         
@@ -588,7 +629,7 @@ struct CreateRecipeView: View {
         if !uncategorized.isEmpty {
             // Show category assignment modal
             isSaving = false
-            showingCategoryModal = true
+            activeSheet = .categoryModal
             return
         }
         
@@ -651,8 +692,7 @@ struct CreateRecipeView: View {
 
             if let error = recipeService.errorMessage {
                 isSaving = false
-                validationErrors = [ValidationError.noInstructions]
-                showingValidationErrors = true
+                activeAlert = .validation([ValidationError.noInstructions])
                 #if DEBUG
                 print("Error saving recipe: \(error)")
                 #endif

@@ -1,18 +1,8 @@
 // IngredientsView.swift
-// CRITICAL FIX: Use data-driven .sheet(item:) to prevent empty-first-render bug
+// M7.5 Phase 2: Enum-based sheet routing replaces boolean flags
 
 import SwiftUI
 import CoreData
-
-// MARK: - CategoryChangePayload for Data-Driven Sheet
-struct CategoryChangePayload: Identifiable {
-    let id = UUID()
-    let ingredientTemplates: [IngredientTemplate]
-    
-    init(ingredientTemplates: [IngredientTemplate]) {
-        self.ingredientTemplates = ingredientTemplates
-    }
-}
 
 struct IngredientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -90,6 +80,23 @@ struct IngredientsView: View {
         }
     }
 
+    // MARK: - Enum-Based Sheet Routing (M7.5 Phase 2)
+    private enum ActiveSheet: Identifiable {
+        case addForm
+        case review
+        case duplicateReview
+        case categoryChange([IngredientTemplate])
+
+        var id: String {
+            switch self {
+            case .addForm: return "addForm"
+            case .review: return "review"
+            case .duplicateReview: return "duplicateReview"
+            case .categoryChange: return "categoryChange"
+            }
+        }
+    }
+
     // MARK: - State Variables
     @State private var searchText = ""
     @State private var selectedCategory: String? = nil
@@ -98,15 +105,9 @@ struct IngredientsView: View {
     @State private var sortOption: SortOption = .staplesFirst
     @State private var isEditMode = false
     @State private var selectedIngredients: Set<IngredientTemplate> = []
-    @State private var showingAddForm = false
-    @State private var showReviewSheet = false
     @State private var showDuplicatesOnly = false
-    @State private var showDuplicateReviewSheet = false
-    @State private var showingError = false
-    @State private var errorMessage = ""
-
-    // MARK: - FIXED: Data-driven sheet presentation (no more empty-first-render!)
-    @State private var categoryChangePayload: CategoryChangePayload?
+    @State private var activeSheet: ActiveSheet?
+    @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -143,9 +144,7 @@ struct IngredientsView: View {
                 if isEditMode && !selectedIngredients.isEmpty {
                     Menu {
                         Button("Change Category", systemImage: "folder") {
-                            categoryChangePayload = CategoryChangePayload(
-                                ingredientTemplates: Array(selectedIngredients)
-                            )
+                            activeSheet = .categoryChange(Array(selectedIngredients))
                         }
                         Divider()
                         Button("Mark as Staples", systemImage: "pin.fill") {
@@ -163,7 +162,7 @@ struct IngredientsView: View {
                             .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                 } else {
-                    Button(action: { showingAddForm = true }) {
+                    Button(action: { activeSheet = .addForm }) {
                         Image(systemName: "plus")
                     }
                 }
@@ -199,44 +198,38 @@ struct IngredientsView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingAddForm) {
-            AddIngredientView()
-        }
-        .sheet(isPresented: $showReviewSheet) {
-            IngredientReviewSheet(
-                ingredients: ingredients.filter { $0.needsReview }
-            )
-        }
-        .sheet(isPresented: $showDuplicateReviewSheet) {
-            DuplicateReviewSheet(duplicateGroups: duplicateGroups)
-        }
-        // FIXED: Data-driven sheet with CategoryChangePayload (prevents empty-first-render!)
-        .sheet(item: $categoryChangePayload) { payload in
-            CategoryChangeModal(
-                ingredientTemplates: payload.ingredientTemplates,
-                onAssignmentsComplete: {
-                    // Clear selections and exit edit mode after change
-                    selectedIngredients.removeAll()
-                    isEditMode = false
-                    // Clear the payload to close the sheet
-                    categoryChangePayload = nil
-                }
-            )
-        }
-        .alert("Error", isPresented: $showingError) {
-            Button("OK") {
-                showingError = false
-                errorMessage = ""
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .addForm:
+                AddIngredientView()
+            case .review:
+                IngredientReviewSheet(
+                    ingredients: ingredients.filter { $0.needsReview }
+                )
+            case .duplicateReview:
+                DuplicateReviewSheet(duplicateGroups: duplicateGroups)
+            case .categoryChange(let templates):
+                CategoryChangeModal(
+                    ingredientTemplates: templates,
+                    onAssignmentsComplete: {
+                        selectedIngredients.removeAll()
+                        isEditMode = false
+                        activeSheet = nil
+                    }
+                )
             }
+        }
+        .alert("Error", isPresented: Binding(
+            get: { errorMessage != nil },
+            set: { if !$0 { errorMessage = nil } }
+        )) {
+            Button("OK") { errorMessage = nil }
         } message: {
-            Text(errorMessage)
+            Text(errorMessage ?? "")
         }
         .onChange(of: popToRoot) { _, _ in
-            if showingAddForm { showingAddForm = false }
-            if showReviewSheet { showReviewSheet = false }
-            if showDuplicateReviewSheet { showDuplicateReviewSheet = false }
-            if categoryChangePayload != nil { categoryChangePayload = nil }
-            if showingError { showingError = false }
+            activeSheet = nil
+            errorMessage = nil
             if isEditMode {
                 isEditMode = false
                 selectedIngredients.removeAll()
@@ -346,7 +339,7 @@ struct IngredientsView: View {
                 .foregroundStyle(ForagerTheme.textPrimary)
             Spacer()
             Button("Review Now") {
-                showReviewSheet = true
+                activeSheet = .review
             }
             .font(ForagerTheme.footnoteFont.bold())
             .foregroundStyle(ForagerTheme.accentPrimary)
@@ -372,7 +365,7 @@ struct IngredientsView: View {
                 .foregroundStyle(ForagerTheme.textPrimary)
             Spacer()
             Button("Review Now") {
-                showDuplicateReviewSheet = true
+                activeSheet = .duplicateReview
             }
             .font(ForagerTheme.footnoteFont.bold())
             .foregroundStyle(ForagerTheme.accentPrimary)
@@ -432,13 +425,10 @@ struct IngredientsView: View {
                                 toggleStapleStatus(for: ingredient)
                             },
                             onCategoryAssign: {
-                                categoryChangePayload = CategoryChangePayload(
-                                    ingredientTemplates: [ingredient]
-                                )
+                                activeSheet = .categoryChange([ingredient])
                             },
                             onError: { message in
                                 errorMessage = message
-                                showingError = true
                             }
                         )
                     }
@@ -571,10 +561,9 @@ struct IngredientsView: View {
         ingredientTemplateService.updateStaple(ingredient, isStaple: !ingredient.isStaple)
         if let error = ingredientTemplateService.errorMessage {
             errorMessage = error
-            showingError = true
         }
     }
-    
+
     private func markSelectedAsStaples(_ isStaple: Bool) {
         for ingredient in selectedIngredients {
             ingredient.isStaple = isStaple
@@ -585,20 +574,18 @@ struct IngredientsView: View {
                 ingredient.isStaple = !isStaple
             }
             errorMessage = error
-            showingError = true
         } else {
             selectedIngredients.removeAll()
             isEditMode = false
         }
     }
-    
+
     private func bulkDeleteSelected() {
         for ingredient in selectedIngredients {
             ingredientTemplateService.deleteTemplate(ingredient)
         }
         if let error = ingredientTemplateService.errorMessage {
             errorMessage = error
-            showingError = true
         } else {
             selectedIngredients.removeAll()
             isEditMode = false
@@ -611,7 +598,6 @@ struct IngredientsView: View {
         }
         if let error = ingredientTemplateService.errorMessage {
             errorMessage = error
-            showingError = true
         }
     }
     
