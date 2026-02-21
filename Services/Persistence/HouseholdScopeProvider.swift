@@ -166,7 +166,7 @@ extension HouseholdScopeProvider {
         print("\n📍 [\(label)] Current Scope:")
         print("   \(scope)")
         
-        if case .household(let id, let storeID) = scope {
+        if case .household(let id, _) = scope {
             if let household = try? persistence.container.viewContext.existingObject(with: id) as? Household {
                 print("   Household Name: \(household.name ?? "Unnamed")")
                 print("   Household ID: \(household.id?.uuidString ?? "nil")")

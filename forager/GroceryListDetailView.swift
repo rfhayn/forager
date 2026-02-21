@@ -384,9 +384,6 @@ struct GroceryListDetailView: View {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         }
 
-        let originalCompleted = item.isCompleted
-        let originalDate = item.dateCompleted
-
         withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
             weeklyListService.toggleItemChecked(item)
             if let error = weeklyListService.errorMessage {
@@ -411,7 +408,7 @@ struct GroceryListDetailView: View {
                     .filter { $0.categoryName == category }
                     .allSatisfy { $0.isCompleted }
                 guard stillAllCompleted else { return }
-                withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
+                _ = withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
                     collapsedCategories.insert(category)
                 }
             }
