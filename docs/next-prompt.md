@@ -1,79 +1,74 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 21, 2026
-**For Milestone**: M9.5-partial ✅ COMPLETE → M8.4 → M7.7 → M6 → M9 → M10+
-**Status**: M9.5-partial ✅ **COMPLETE** | M8.4 📋 **NEXT** | All M8.4 prerequisites done
-**Branch**: `main` (after M9.5 PR merges)
+**For Milestone**: M8.4 ML-Powered Parsing (18-24h across 4 sessions)
+**Status**: M9.5-partial ✅ **COMPLETE** | M8.4 📋 **NEXT** | All prerequisites done
+**Branch**: `main` → create `feature/M8.4-ml-parsing` when starting
 
 ---
 
-## ✅ **M9.5-partial — Parser Dependency Injection — COMPLETE**
+## **NEXT: M8.4 ML-Powered Parsing**
 
-**Status**: ✅ COMPLETE (February 21, 2026, ~3h)
-**Branch**: `feature/M9.5-parser-di` (PR pending)
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (updated Feb 21 with research findings)
 
-All M8.4 prerequisites are now complete. Parser construction is injectable with backward-compatible defaults.
+### Key Architecture Decision (from research)
+- **CRF cannot convert to CoreML** — split into 3 components:
+  1. BiLSTM emission scorer → CoreML `.mlpackage`
+  2. CRF transition matrix → `transitions.json` (7×7 float array)
+  3. Viterbi decoder → Pure Swift (~30 lines)
+- **strangetom dataset is SQLite** (not CSV) — 81k rows, 12 token-level labels → map to 7 Forager labels
+- **strangetom includes NYT data** — dedup required, expect ~120-150k unique sentences
 
-### **M9 Prerequisites Summary**
-
-| Prereq | Status | Actual |
-|--------|--------|--------|
-| M9.0: Warning Resolution | ✅ COMPLETE | <1h |
-| M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
-| M9.5-partial: Parser DI | ✅ COMPLETE | ~3h |
-
----
-
-## **NEXT: M8.4 ML-Powered Parsing (18-24h)**
-
-**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
-
-### **Phases 1+2 — Dataset Prep + Model Training (4h)**
+### Session 4: Phases 1+2 — Dataset Prep + Model Training (4h)
 ```
 Branch: feature/M8.4-ml-parsing
 ```
-- NYT (180k) + strangetom (81k) → unified BIO-tagged format → BiLSTM-CRF training
+1. Set up `tools/ml-training/` directory structure
+2. Download strangetom SQLite + NYT CSV
+3. Write `prepare_dataset.py`:
+   - Load strangetom SQLite table `en` (columns: id, source, sentence, tokens, labels)
+   - Decode fraction notation (`1#1$2` = 1.5, `3$4` = 0.75)
+   - Map 12 strangetom labels → 7 Forager labels (QTY/UNIT/NAME/MODIFIER/PREP/COMMENT/OTHER)
+   - Dedup NYT overlap (strangetom source="nyt")
+   - 80/10/10 split → JSONL output
+4. Write `train_model.py`: BiLSTM-CRF, export checkpoint + transitions.json + vocabulary.json
+5. Train and evaluate
 
-### **Phases 3+4 — CoreML Conversion + MLIngredientParser (3h)**
-- PyTorch → .mlpackage, implement `MLIngredientParser.swift`
+### Session 5: Phases 3+4 — CoreML Export + Swift Implementation (4h)
+- Extract BiLSTM emission scorer → `.mlpackage` via coremltools
+- Export transition matrix as JSON
+- Implement `ViterbiDecoder.swift` (~30 lines)
+- Implement `MLIngredientParser.swift` (CoreML emissions → Viterbi → ParserResult)
+- Cross-validate tokenizer (Python ↔ Swift must match exactly)
 
-### **Phases 5+6 — Integration + Test Suite (4h)**
-- Add `mlParser:` to HybridIngredientParser init (slot prepared by M9.5-partial)
-- Update routing (regex → ML → NLP), 20+ test cases
+### Session 6: Phases 5+6 — Integration + Test Suite (4h)
+- Add `mlParser: IngredientParser?` to HybridIngredientParser init (slot prepared by M9.5-partial)
+- Update routing: regex ≥0.9 → ML ≥0.8 → NLP fallback
+- 20+ test cases covering known failures, regression, routing, performance
 
-### **Phases 7+8 — Continuous Learning + Documentation (3h)**
-- BIO export for retraining, integration testing, core doc updates
+### Session 7: Phases 7+8 — Continuous Learning + Documentation (3h)
+- BIO export method on ParsingTelemetryService
+- Retraining script
+- Integration testing (8 end-to-end scenarios)
+- Core doc updates
 
 ---
 
 ## **AFTER M8.4: M7.7 → M6 → M9 → M10+**
 
-### **M7.7: App Store Submission (3-5h)**
-```
-Branch: feature/M7.7-app-store-submission
-```
+### M7.7: App Store Submission (3-5h)
 - Beta landing page, README update, App Store listing, submission
-- Launches with ML parser in place for best first impression
 - **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
 
-### **M6: Testing Foundation (20-30h)**
+### M6: Testing Foundation (20-30h)
 - 50%+ test coverage on critical services
-- AI test reviewer on every PR
-- CI/CD pipeline
-- Protects quality before the big M9 refactor
+- Known test infrastructure issues documented in M6 PRD (Issues 1-4)
+- **PRD**: `docs/prds/active/milestone-6-testing-foundation-ai-augmentation.md`
 
-### **M9 Remaining (~120h)**
-- Phase 1 remaining: String utilities, performance, thread safety
-- Phase 2: Service consistency, full DI, view decomposition (RecipeListView 1,204→400)
-- Phase 3: Query optimization, batch ops, Category→Relationship migration
-- Phase 4: Code standards, test coverage, logging
+### M9 Remaining (~120h)
 - **PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md`
-
-### **M10+: Analytics, Advanced Features**
-- Usage statistics, recommendations, data export
-- Recipe import, barcode scanning, store layouts, budgets
 
 ---
 
-**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT
-**Dependencies**: M9.0 ✅, M9.1.2 ✅, M9.5-partial ✅, M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md
+**Dependencies**: M9.0 ✅, M9.1.2 ✅, M9.5-partial ✅, M7.5 ✅, TestFlight live (build 10, v1.1)
+**M8.4 PRD**: Updated Feb 21 with concrete dataset schemas, split CRF architecture, and label mapping

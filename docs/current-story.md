@@ -3,8 +3,8 @@
 **Last Updated**: February 21, 2026
 **Status**: M9.5-partial ✅ **COMPLETE** | M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **NEXT**
 **Total Progress**: ~226 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.5-parser-di`
-**Current Milestone**: M9.5-partial - Parser Dependency Injection — **COMPLETE**
+**Current Branch**: `main`
+**Current Milestone**: M9.5-partial ✅ COMPLETE | M8.4 ML-Powered Parsing — **NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M8.4 → M7.7 → M6 → M9 remaining → M10+
 
@@ -1296,8 +1296,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M9.5-partial COMPLETE, all M8.4 prereqs done
-**Next Action**: M8.4 (ML-Powered Parsing, 18-24h) → M7.7
-**Branch**: `feature/M9.5-parser-di` (PR pending)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 ready)
+**Last Session**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 PRD updated with research, PR #44 merged
+**Next Action**: M8.4 Phase 1+2 (dataset prep + model training, ~4h) → Phase 3+4 → Phase 5+6 → Phase 7+8
+**Branch**: `main` (create `feature/M8.4-ml-parsing` when starting)
+**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 PRD execution-ready)
 **Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT
