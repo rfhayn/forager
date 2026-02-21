@@ -1,0 +1,203 @@
+import XCTest
+import CoreData
+@testable import forager
+
+/// M7.5 Chunk 1.2b: RecipeService unit tests
+/// Validates recipe/ingredient CRUD operations in isolation using in-memory Core Data.
+final class RecipeServiceTests: XCTestCase {
+
+    private var persistence: PersistenceController!
+    private var context: NSManagedObjectContext!
+    private var templateService: IngredientTemplateService!
+    private var parsingService: IngredientParsingService!
+    private var service: RecipeService!
+
+    @MainActor
+    override func setUp() {
+        super.setUp()
+        persistence = PersistenceController(inMemory: true)
+        context = persistence.container.viewContext
+        templateService = IngredientTemplateService(context: context)
+        parsingService = IngredientParsingService(context: context, templateService: templateService)
+        service = RecipeService(context: context, parsingService: parsingService)
+    }
+
+    override func tearDown() {
+        service = nil
+        parsingService = nil
+        templateService = nil
+        context = nil
+        persistence = nil
+        super.tearDown()
+    }
+
+    // MARK: - Recipe CRUD
+
+    @MainActor
+    func testCreateRecipe() {
+        let recipe = service.createRecipe(title: "Pasta Carbonara", servings: 4, prepTime: 15, cookTime: 20)
+
+        XCTAssertNotNil(recipe)
+        XCTAssertEqual(recipe?.title, "Pasta Carbonara")
+        XCTAssertEqual(recipe?.servings, 4)
+        XCTAssertEqual(recipe?.prepTime, 15)
+        XCTAssertEqual(recipe?.cookTime, 20)
+        XCTAssertNotNil(recipe?.id)
+        XCTAssertNotNil(recipe?.dateCreated)
+        XCTAssertFalse(recipe?.isFavorite ?? true)
+        XCTAssertEqual(recipe?.usageCount, 0)
+        XCTAssertNil(service.errorMessage)
+    }
+
+    @MainActor
+    func testUpdateRecipe() {
+        let recipe = service.createRecipe(title: "Original", servings: 2)
+        XCTAssertNotNil(recipe)
+
+        service.updateRecipe(recipe!, title: "Updated Title", servings: 6)
+
+        XCTAssertEqual(recipe?.title, "Updated Title")
+        XCTAssertEqual(recipe?.servings, 6)
+        XCTAssertNil(service.errorMessage)
+    }
+
+    @MainActor
+    func testDeleteRecipe() throws {
+        let recipe = service.createRecipe(title: "To Delete", servings: 1)
+        XCTAssertNotNil(recipe)
+
+        let recipeID = recipe!.objectID
+        service.deleteRecipe(recipe!)
+
+        // Verify recipe is gone
+        let deleted = try? context.existingObject(with: recipeID)
+        XCTAssertTrue(deleted == nil || deleted!.isDeleted)
+        XCTAssertNil(service.errorMessage)
+    }
+
+    @MainActor
+    func testToggleFavorite() {
+        let recipe = service.createRecipe(title: "Favorite Test", servings: 1)
+        XCTAssertNotNil(recipe)
+        XCTAssertFalse(recipe!.isFavorite)
+
+        service.toggleFavorite(recipe!)
+        XCTAssertTrue(recipe!.isFavorite)
+
+        service.toggleFavorite(recipe!)
+        XCTAssertFalse(recipe!.isFavorite)
+    }
+
+    // MARK: - Duplicate
+
+    @MainActor
+    func testDuplicateRecipe() {
+        let original = service.createRecipe(title: "Original Recipe", servings: 4, prepTime: 10, cookTime: 30)
+        XCTAssertNotNil(original)
+
+        // Add an ingredient to the original
+        let ingredient = service.addIngredient(
+            to: original!, name: "flour",
+            numericValue: 2.0, standardUnit: "cups",
+            displayText: "2 cups", isParseable: true, parseConfidence: 1.0
+        )
+        XCTAssertNotNil(ingredient)
+
+        let copy = service.duplicateRecipe(original!)
+        XCTAssertNotNil(copy)
+        XCTAssertEqual(copy?.title, "Original Recipe (Copy)")
+        XCTAssertEqual(copy?.servings, 4)
+        XCTAssertEqual(copy?.prepTime, 10)
+        XCTAssertEqual(copy?.cookTime, 30)
+        XCTAssertNotEqual(copy?.id, original?.id)
+
+        // Verify ingredients were copied with structured data
+        let copiedIngredients = copy?.ingredients as? Set<Ingredient>
+        XCTAssertEqual(copiedIngredients?.count, 1)
+
+        if let copiedIngredient = copiedIngredients?.first {
+            XCTAssertEqual(copiedIngredient.name, "flour")
+            XCTAssertEqual(copiedIngredient.numericValue, 2.0, accuracy: 0.01)
+            XCTAssertEqual(copiedIngredient.standardUnit, "cups")
+            XCTAssertEqual(copiedIngredient.displayText, "2 cups")
+            XCTAssertTrue(copiedIngredient.isParseable)
+            XCTAssertEqual(copiedIngredient.parseConfidence, 1.0, accuracy: 0.01)
+            XCTAssertNotEqual(copiedIngredient.id, ingredient?.id)
+        }
+    }
+
+    // MARK: - Ingredient Operations
+
+    @MainActor
+    func testAddIngredientWithStructuredData() {
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        XCTAssertNotNil(recipe)
+
+        let ingredient = service.addIngredient(
+            to: recipe!, name: "butter",
+            numericValue: 3.0, standardUnit: "tbsp",
+            displayText: "3 tbsp", isParseable: true, parseConfidence: 0.95
+        )
+
+        XCTAssertNotNil(ingredient)
+        XCTAssertEqual(ingredient?.name, "butter")
+        XCTAssertEqual(ingredient?.numericValue ?? 0, 3.0, accuracy: 0.01)
+        XCTAssertEqual(ingredient?.standardUnit, "tbsp")
+        XCTAssertEqual(ingredient?.displayText, "3 tbsp")
+        XCTAssertTrue(ingredient?.isParseable ?? false)
+        XCTAssertEqual(ingredient?.parseConfidence ?? 0, 0.95, accuracy: 0.01)
+        XCTAssertEqual(ingredient?.recipe, recipe)
+    }
+
+    @MainActor
+    func testAddIngredientFromParsedStructuredQuantity() {
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        XCTAssertNotNil(recipe)
+
+        let parsed = StructuredQuantity(
+            numericValue: 2.0,
+            standardUnit: "cups",
+            displayText: "2 cups",
+            isParseable: true,
+            parseConfidence: 1.0,
+            parserUsed: "regex"
+        )
+
+        let ingredient = service.addIngredient(to: recipe!, parsed: parsed, name: "flour")
+
+        XCTAssertNotNil(ingredient)
+        XCTAssertEqual(ingredient?.name, "flour")
+        XCTAssertEqual(ingredient?.numericValue ?? 0, 2.0, accuracy: 0.01)
+        XCTAssertEqual(ingredient?.standardUnit, "cups")
+        XCTAssertEqual(ingredient?.displayText, "2 cups")
+        XCTAssertTrue(ingredient?.isParseable ?? false)
+    }
+
+    @MainActor
+    func testRemoveIngredient() throws {
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        XCTAssertNotNil(recipe)
+
+        let ingredient = service.addIngredient(to: recipe!, name: "salt")
+        XCTAssertNotNil(ingredient)
+
+        let ingredientID = ingredient!.objectID
+        service.removeIngredient(ingredient!)
+
+        let deleted = try? context.existingObject(with: ingredientID)
+        XCTAssertTrue(deleted == nil || deleted!.isDeleted)
+    }
+
+    // MARK: - Error Handling
+
+    @MainActor
+    func testErrorMessageClearsOnSuccess() {
+        // Force an error by setting one manually
+        service.errorMessage = "Previous error"
+
+        // A successful operation should clear it
+        let recipe = service.createRecipe(title: "Test", servings: 1)
+        XCTAssertNotNil(recipe)
+        XCTAssertNil(service.errorMessage, "errorMessage should clear on successful operation")
+    }
+}
