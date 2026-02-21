@@ -221,7 +221,7 @@ class IngredientTemplateService: ObservableObject {
             "env": "envelope"
         ]
         
-        var result = name
+        let result = name
         
         // Split into words for word-boundary matching
         let words = result.split(separator: " ").map(String.init)

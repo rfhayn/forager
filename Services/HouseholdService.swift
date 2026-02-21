@@ -364,7 +364,6 @@ class HouseholdService: ObservableObject {
             throw HouseholdError.ownerCannotLeave
         }
 
-        let householdName = household.name ?? "Unknown"
         let householdID = household.id?.uuidString ?? "unknown"
         CloudKitLogger.leaveAttemptStarted(householdID: householdID)
 
@@ -484,7 +483,6 @@ class HouseholdService: ObservableObject {
             throw HouseholdError.notOwner
         }
 
-        let householdName = household.name ?? "Unknown"
         let householdKey = household.id?.uuidString ?? "unknown"
         CloudKitLogger.deleteAttemptStarted(householdID: householdKey)
 
@@ -1176,6 +1174,7 @@ class HouseholdService: ObservableObject {
         guard accountStatus == .available else {
             let statusName: String
             switch accountStatus {
+            case .available: statusName = "iCloud available" // Unreachable due to guard, but required for exhaustiveness
             case .noAccount: statusName = "No iCloud account signed in"
             case .restricted: statusName = "iCloud access is restricted"
             case .couldNotDetermine: statusName = "Could not determine iCloud status"
@@ -1555,12 +1554,12 @@ class HouseholdService: ObservableObject {
 
                 if attempt < maxAttempts {
                     let delaySeconds = Int(pow(2.0, Double(attempt))) // 2s, 4s
-                    await onStatus("Waiting for CloudKit sync… (retry \(attempt) of \(maxAttempts - 1))")
+                    onStatus("Waiting for CloudKit sync… (retry \(attempt) of \(maxAttempts - 1))")
                     #if DEBUG
                     print("   Retrying in \(delaySeconds)s...")
                     #endif
                     try await Task.sleep(nanoseconds: UInt64(delaySeconds) * 1_000_000_000)
-                    await onStatus("Retrying CloudKit share…")
+                    onStatus("Retrying CloudKit share…")
                 }
             }
         }
@@ -1578,64 +1577,16 @@ class HouseholdService: ObservableObject {
     }
 
     /// Gets the current user's information from CloudKit
-    /// Returns email and display name (or fallback values)
+    /// Returns recordName as identifier and "Me" as display name.
+    /// M9.0: Removed deprecated discoverUserIdentity (iOS 17, no replacement API).
+    /// The app prompts for display name during household creation — the deprecated
+    /// API was just a pre-fill that usually returned nil nameComponents anyway.
     private func getCurrentUserInfo() async throws -> (email: String, displayName: String) {
-        return try await withCheckedThrowingContinuation { continuation in
-            // TODO: M7.2.2 - Update to modern CloudKit API (iOS 17+)
-            container.fetchUserRecordID { recordID, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-
-                guard let recordID = recordID else {
-                    continuation.resume(throwing: HouseholdError.emailNotFound)
-                    return
-                }
-
-                self.container.discoverUserIdentity(withUserRecordID: recordID) { identity, error in
-                    if let error = error {
-                        #if DEBUG
-                        print("⚠️ Failed to discover identity: \(error)")
-                        #endif
-                        // Fallback to userRecordID as identifier
-                        continuation.resume(returning: (recordID.recordName, "Me"))
-                        return
-                    }
-
-                    guard let identity = identity else {
-                        #if DEBUG
-                        print("⚠️ No identity found, using fallback")
-                        #endif
-                        continuation.resume(returning: (recordID.recordName, "Me"))
-                        return
-                    }
-
-                    // Get email (or fallback to recordName)
-                    let email = identity.lookupInfo?.emailAddress ?? recordID.recordName
-
-                    // Get display name from nameComponents
-                    var displayName = "Me"
-                    if let nameComponents = identity.nameComponents {
-                        let formatter = PersonNameComponentsFormatter()
-                        formatter.style = .medium
-                        displayName = formatter.string(from: nameComponents)
-                        #if DEBUG
-                        print("✅ Retrieved display name: \(displayName)")
-                        #endif
-                    } else {
-                        #if DEBUG
-                        print("⚠️ Name components not available, using 'Me' as fallback")
-                        #endif
-                    }
-
-                    #if DEBUG
-                    print("✅ Retrieved email: \(email)")
-                    #endif
-                    continuation.resume(returning: (email, displayName))
-                }
-            }
-        }
+        let recordID = try await container.userRecordID()
+        #if DEBUG
+        print("✅ Retrieved user record: \(recordID.recordName)")
+        #endif
+        return (recordID.recordName, "Me")
     }
     
     // MARK: - Member Management
@@ -2063,28 +2014,12 @@ class HouseholdService: ObservableObject {
             print("🔄 Refreshing display name for: \(oldName)")
             #endif
 
-            // Attempt to get latest display name from CloudKit
+            // Attempt to get latest display name
+            // M9.0: Removed deprecated userIdentity(forUserRecordID:) (iOS 17, no replacement).
+            // Device name extraction is now the primary strategy.
             var newDisplayName: String?
 
-            // Try 1: Get from CloudKit user identity
-            do {
-                let userRecordID = try await container.userRecordID()
-                if let identity = try await container.userIdentity(forUserRecordID: userRecordID),
-                   let nameComponents = identity.nameComponents {
-                    let formatter = PersonNameComponentsFormatter()
-                    formatter.style = .medium
-                    newDisplayName = formatter.string(from: nameComponents)
-                    #if DEBUG
-                    print("   ✅ Got display name from CloudKit identity: \(newDisplayName!)")
-                    #endif
-                }
-            } catch {
-                #if DEBUG
-                print("   ℹ️ CloudKit identity lookup failed: \(error.localizedDescription)")
-                #endif
-            }
-
-            // Try 2: Device name extraction
+            // Try 1: Device name extraction
             if newDisplayName == nil {
                 let deviceName = UIDevice.current.name
 
@@ -2107,7 +2042,7 @@ class HouseholdService: ObservableObject {
                 }
             }
 
-            // Try 3: Extract from email (if not a CloudKit user record ID)
+            // Try 2: Extract from email (if not a CloudKit user record ID)
             if newDisplayName == nil {
                 if !currentEmail.hasPrefix("_") || currentEmail.count <= 20 {
                     newDisplayName = extractDisplayName(from: currentEmail)
@@ -2117,7 +2052,7 @@ class HouseholdService: ObservableObject {
                 }
             }
 
-            // Try 4: UserDefaults cache (set during household creation)
+            // Try 3: UserDefaults cache (set during household creation)
             if newDisplayName == nil,
                let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
                !cached.isEmpty, cached != "Me" {
@@ -2169,7 +2104,7 @@ class HouseholdService: ObservableObject {
 
         // Fetch shares for this household
         do {
-            let shares = try await persistenceController.container.fetchShares(matching: [household.objectID])
+            let shares = try persistenceController.container.fetchShares(matching: [household.objectID])
 
             guard let share = shares.first?.1 else {
                 throw HouseholdError.noShareRecord

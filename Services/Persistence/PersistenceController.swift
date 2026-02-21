@@ -105,7 +105,7 @@ final class PersistenceController: ObservableObject {
         print("☁️ M7.2.3: Using NSPersistentCloudKitContainer (CloudKit ENABLED)")
         #endif
         #else
-        container = NSPersistentCloudKitContainer(name: "forager") as! NSPersistentCloudKitContainer
+        container = NSPersistentCloudKitContainer(name: "forager")
         // Note: In pure Debug mode without flag, consider using:
         // let regularContainer = NSPersistentContainer(name: "forager")
         // For now, keeping CloudKit enabled to maintain type compatibility

@@ -86,6 +86,8 @@ struct ShareParticipant: Identifiable {
             self.acceptanceStatus = .pending
         case .removed:
             self.acceptanceStatus = .removed
+        case .unknown:
+            self.acceptanceStatus = .unknown
         @unknown default:
             self.acceptanceStatus = .unknown
         }

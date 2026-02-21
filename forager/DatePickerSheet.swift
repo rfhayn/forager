@@ -144,7 +144,7 @@ struct DatePickerSheet: View {
                 .font(.headline)
                 .foregroundStyle(ForagerTheme.textSecondary)
             
-            if let plan = mealPlanService.activeMealPlan {
+            if mealPlanService.activeMealPlan != nil {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 12) {
                     ForEach(mealPlanService.getDatesInMealPlan(), id: \.self) { date in
                         DateButton(
@@ -195,12 +195,12 @@ struct DatePickerSheet: View {
         
         // Add recipe to meal plan with selected servings
         // M4.2.4: Now passes mealPlan parameter
-        if let meal = mealPlanService.addRecipeToMealPlan(
+        if mealPlanService.addRecipeToMealPlan(
             recipe: recipe,
             date: date,
             mealPlan: activePlan,
             servings: Int16(servings)
-        ) {
+        ) != nil {
             onDateSelected(date)
             dismiss()
         }

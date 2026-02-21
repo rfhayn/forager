@@ -399,7 +399,6 @@ struct ManageCategoriesView: View {
     // M7.3.4: Filter by householdKey to only reassign templates in current scope
     private func reassignIngredientTemplates(from sourceCategory: Category, to targetCategory: Category) {
         let sourceCategoryID = sourceCategory.objectID
-        let targetCategoryID = targetCategory.objectID
         let sourceCategoryName = sourceCategory.displayName
         let targetCategoryName = targetCategory.displayName
         let currentHouseholdKey = householdService.currentHouseholdKey
