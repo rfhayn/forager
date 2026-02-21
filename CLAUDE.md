@@ -348,6 +348,7 @@ docs/
 ├── roadmap.md                      # Milestone tracking
 ├── project-index.md                # Central navigation hub
 ├── insights-log.md                 # Technical insights triage inbox
+├── development-journal.md          # Narrative development chronicle
 ├── prds/                           # Product Requirements Documents
 │   ├── active/                     # Current milestone PRDs
 │   └── complete/                   # Completed feature PRDs

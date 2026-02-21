@@ -749,6 +749,7 @@ _[Previous entries remain the same through December 23...]_
 
 ### **Internal Knowledge**
 - [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
+- [development-journal.md](development-journal.md) - Narrative chronicle of building Forager (decisions, learning, AI tooling evolution)
 - [learning-notes/](learning-notes/) - 37 implementation journey notes
 - [architecture/](architecture/) - 12 architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
