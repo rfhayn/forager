@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 20, 2026
-**Current Phase**: **M15 ✅ COMPLETE** (bug fixes done) | **M7.7 📋 QUEUED**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE
-**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Phase**: **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M9-prereqs 📋 NEXT**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE
+**Execution Order**: M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -766,19 +766,16 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **Note**: Original M7.4 (Sync Status UI) was SKIPPED - dual-store architecture makes it unnecessary
 - PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
-**M7.5: Architecture Hardening - UX/Service Cleanup (14-19 hours) - 📋 READY**
-- **Phase 1**: Service Ownership of Saves (8-10h)
-  - Eliminate 35 production view save() calls across 15 files
-  - Create RecipeService, WeeklyListService; extend IngredientTemplateService
-  - Services accept IngredientParsingService via init (M8.4 forward-compat)
-  - 14-17 service unit tests + 5 integration tests
-- **Phase 2**: SwiftUI Navigation Cleanup (4-6h)
+**M7.5: Architecture Hardening - UX/Service Cleanup (~5 hours) - ✅ COMPLETE**
+- **Phase 1**: Service Ownership of Saves ✅
+  - Created RecipeService, WeeklyListService; extended IngredientTemplateService
+  - 24 unit tests across 3 test files + integration tests
+  - 35 direct `context.save()` calls eliminated from 13 production views
+- **Phase 2**: SwiftUI Navigation Cleanup ✅
   - Enum routing for 3 highest-complexity views (IngredientsView, CreateRecipeView, EditRecipeView)
-- **Phase 3**: Tests & Polish (2-3h)
+- **Phase 3**: Tests & Polish ✅
   - 2 ad-hoc empty states → ContentUnavailableView
-  - 4-5 Core Data invariant tests with correct entity references
-
-**Why Deferred?** M7.5 is developer-facing code quality. Users won't notice the difference. Prioritizing user-visible polish (M7.4) and parsing fixes (M8) before launch.
+  - 5 Core Data invariant tests
 
 **PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
 
@@ -813,9 +810,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [ ] Household collaboration working (M7.2.2)
 - [ ] Conflict resolution reliable (M7.3)
 - [ ] Sync status UI informative (M7.4)
-- [ ] Service layer cleanup complete (M7.5)
-- [ ] Navigation patterns standardized (M7.5)
-- [ ] Empty states consistent (M7.5)
+- [✅] Service layer cleanup complete (M7.5)
+- [✅] Navigation patterns standardized (M7.5)
+- [✅] Empty states consistent (M7.5)
 - [ ] External TestFlight approved (M7.6)
 - [ ] Public beta launched (M7.7)
 - [ ] 10+ external beta testers active
@@ -1219,7 +1216,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M8.3.2**: Auto-Merge Grocery Quantities (~3h)
 - **M7.6**: Pre-Launch Prep (M7.6.1-M7.6.6) (~9h)
 - **M7.6.7**: Version bump & code prep (~0.5h)
-- **Total Completed**: ~188 hours
+- **M15**: UX Design System & Visual Refresh (~50-65h)
+- **M7.5**: Architecture Hardening (~5h)
+- **Total Completed**: ~220 hours
 
 ### **Planned Core Platform:**
 - **M7**: 27-37 hours base, 32-42 hours with buffer (CloudKit sync + external TestFlight)
@@ -1473,9 +1472,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M15.7 implementation — detailed plan at `docs/prds/active/plans/m15.7-implementation-plan.md`
+**Next Action**: Merge M7.5 PR → M9-prereqs (warning resolution, centralize extractCleanIngredientName, parser DI)
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15.1-M15.6 complete. Total: ~207+ hours. TestFlight live, M15 in progress.
+**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15 complete (~50-65h), M7.5 complete (~5h). Total: ~220 hours. TestFlight live.
 
 ---
 
@@ -1493,8 +1492,8 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| **M7.5: Architecture Hardening** | **📋 NEXT** | **14-19h** |
-| M9-prereqs (M9.0, M9.1.2, M9.5-partial) | 📋 READY | 9h |
+| M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
+| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
 | M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |

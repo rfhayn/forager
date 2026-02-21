@@ -2,10 +2,10 @@
 
 **Last Updated**: February 20, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M15 ✅ COMPLETE (bug fixes done) | M7.7 📋 **QUEUED** | M8.4 📋 **READY**
-**Current Phase**: M15 ✅ **COMPLETE** (all 8 phases + 7 bug fix commits) | M7.7 📋 **QUEUED**
-**Next Priority**: Merge M15 → M7.5 → M9-prereqs → M8.4 → M7.7 App Store
-**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9-prereqs 📋 **NEXT** | M8.4 📋 **READY**
+**Current Phase**: M7.5 ✅ **COMPLETE** (all 3 phases, 6 commits) | M9-prereqs 📋 **NEXT**
+**Next Priority**: Merge M7.5 → M9-prereqs → M8.4 → M7.7 App Store
+**Execution Order**: M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -50,6 +50,18 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 20, 2026** - M7.5 Architecture Hardening COMPLETE ✅
+- **Completed**: All 3 phases — service ownership, navigation cleanup, tests & polish
+- **Key Deliverables**:
+  - Created RecipeService, WeeklyListService; extended IngredientTemplateService
+  - 24 unit tests + integration tests for parse → service → persist pipeline
+  - 35 direct `context.save()` calls eliminated from 13 production views
+  - 3 views converted to enum-based sheet/alert routing (IngredientsView, CreateRecipeView, EditRecipeView)
+  - 2 empty states → ContentUnavailableView + 5 Core Data invariant tests
+- **Commits**: 6 on `feature/M7.5-service-ownership`
+- **Branch**: Ready for PR + squash merge
+- **Next**: M9-prereqs (warning resolution, centralize extractCleanIngredientName, parser DI)
 
 ### **February 20, 2026** - M15 Bug Fixes COMPLETE ✅, M8.4 PRD Written 📋
 - **Completed**: 7 bug fix commits on M15 branch — structured qty loss, redundant displays, strikethrough, dark mode settings, template sanitization, category refresh, code review fixes, pluralization/product variant fixes
@@ -409,7 +421,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~190 hours
+- **Total Development Time**: ~220 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -488,19 +500,19 @@ _[Previous entries remain the same through December 23...]_
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
-| **M15: UX Design System & Visual Refresh** | 🚀 **ACTIVE** | 50-70h |
+| **M15: UX Design System & Visual Refresh** | ✅ **COMPLETE** | 50-70h |
 | TestFlight push (post-M15) | 📋 PLANNED | ~1h |
 | **M7.7: App Store Submission & Public Presence** | 📋 QUEUED | 3-5h |
-| **Pre-Launch Total** | | **~54-76h remaining** |
 
 ### **Post-Launch Roadmap**
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.5: Architecture Hardening | 📋 READY | 14-19h |
-| M6: Testing Foundation | PLANNED | 12-18h |
-| M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
-| M9: Technical Debt | PLANNED | 135-165h |
+| M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
+| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
+| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M6: Testing Foundation | PLANNED | 20-30h |
+| M9: Remaining Technical Debt | PLANNED | ~120h |
 | M10+: Future Features | FUTURE | 48-72h |
 
 ### **Key Decisions (February 17, 2026)**
