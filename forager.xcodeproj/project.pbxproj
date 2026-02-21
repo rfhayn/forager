@@ -74,6 +74,7 @@
 		9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */; };
 		9B78C7312F35342D00B24679 /* UnifiedSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */; };
 		9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */; };
+		9B75A0080004000400B24679 /* ParsingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0070004000400B24679 /* ParsingIntegrationTests.swift */; };
 		9B75A0020001000100B24679 /* RecipeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0010001000100B24679 /* RecipeServiceTests.swift */; };
 		9B75A0040002000200B24679 /* WeeklyListServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0030002000200B24679 /* WeeklyListServiceTests.swift */; };
 		9B75A0060003000300B24679 /* IngredientTemplateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0050003000300B24679 /* IngredientTemplateServiceTests.swift */; };
@@ -209,6 +210,7 @@
 		9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedSearchView.swift; sourceTree = "<group>"; };
 		9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingTelemetryServiceTests.swift; sourceTree = "<group>"; };
+		9B75A0070004000400B24679 /* ParsingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingIntegrationTests.swift; sourceTree = "<group>"; };
 		9B75A0010001000100B24679 /* RecipeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeServiceTests.swift; sourceTree = "<group>"; };
 		9B75A0030002000200B24679 /* WeeklyListServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyListServiceTests.swift; sourceTree = "<group>"; };
 		9B75A0050003000300B24679 /* IngredientTemplateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateServiceTests.swift; sourceTree = "<group>"; };
@@ -468,6 +470,7 @@
 				9B75A0050003000300B24679 /* IngredientTemplateServiceTests.swift */,
 				9B78C7C02F36350000B24679 /* IngredientTemplateValidationTests.swift */,
 				9B78C7C22F36350100B24679 /* IngredientTemplateNormalizationTests.swift */,
+				9B75A0070004000400B24679 /* ParsingIntegrationTests.swift */,
 				9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */,
 				9B75A0010001000100B24679 /* RecipeServiceTests.swift */,
 				9B75A0030002000200B24679 /* WeeklyListServiceTests.swift */,
@@ -722,6 +725,7 @@
 				9B78C7C12F36350000B24679 /* IngredientTemplateValidationTests.swift in Sources */,
 				9B78C7C32F36350100B24679 /* IngredientTemplateNormalizationTests.swift in Sources */,
 				9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */,
+				9B75A0080004000400B24679 /* ParsingIntegrationTests.swift in Sources */,
 				9B75A0020001000100B24679 /* RecipeServiceTests.swift in Sources */,
 				9B75A0040002000200B24679 /* WeeklyListServiceTests.swift in Sources */,
 				E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */,
