@@ -6,6 +6,48 @@
 
 ---
 
+## Session 20 — February 21, 2026
+**Milestone**: M9.0.1 Recipe Picker Scalability Fix — IN PROGRESS
+**Branch**: `feature/M9.0.1-recipe-picker-fix`
+
+### What Happened
+
+Started with manual testing after M9.0 and spotted the first real UX regression from M15: the recipe picker on the meal plan detail view was a tiny `Menu` popover capped at 20 recipes with no search. This worked fine with 2 test recipes but would be unusable with a real recipe collection. Created M9.0.1 as a bug fix milestone.
+
+First attempt went wrong. I wired up the existing `RecipePickerSheet` (built in M4.2, never connected after M15) as a modal sheet — tap "Choose Recipe" → full sheet slides up with search. Technically correct but missed the user's actual intent: they wanted an **inline text box directly in the day card** where you type and results appear below, no modal at all. The pre-M15 design had exactly this pattern and M15 lost it.
+
+Second attempt got it right: each unplanned day card now has a TextField with magnifying glass icon and "Search recipes…" placeholder. As you type, up to 5 matching recipes appear directly below with name, ingredient count, and servings. Tap a result to add it — search clears, keyboard dismisses, day card shows the recipe. Quick-select pills (Eating Out, Leftovers, etc.) remain below the search field. The Swap flow on already-planned days still uses RecipePickerSheet as a modal since there's no search field visible on planned cards.
+
+Also did a documentation cleanup pass — ChatGPT Codex had flagged stale content across README.md, roadmap.md, and project-index.md (M7 still showing "IN PROGRESS", M15 still "ACTIVE", unchecked success criteria, stale PRD paths). All three files updated and committed.
+
+### Decisions Made
+
+1. **Inline search over modal sheet**: The user was very clear — "I wanted a text box inline in the day" not "a popup for the user to interact with." This is the right call for a quick-access pattern: choosing a recipe for a day should be as fast as typing 2-3 characters and tapping a result. A modal adds two extra taps (open sheet, close sheet) for something that should be friction-free.
+
+2. **`@FocusState<Date?>` for multi-field tracking**: With 7 day cards potentially visible, each with its own TextField, I needed to track which field is active. Using `@FocusState private var focusedSearchDate: Date?` with `.focused($focusedSearchDate, equals: date)` was the clean solution — SwiftUI handles the mutual exclusion automatically. No manual state synchronization needed.
+
+3. **Keep RecipePickerSheet for Swap**: The swap flow is fundamentally different — you're on an already-planned day card that shows the recipe, not a search field. A modal sheet makes sense here because you're explicitly choosing to change something, not doing the initial quick-add.
+
+4. **Default servings on inline add**: The inline picker adds recipes with their default serving count. No per-recipe servings adjuster inline — that would bloat the card. The full RecipePickerSheet (used for swap) still has the servings adjuster for when you want precision.
+
+### AI Tooling Learnings
+
+This session had a clear "wrong first attempt" that illustrates a persistent failure mode: **Claude defaults to the technically clean solution (reuse existing component) over the UX-correct solution (match the user's mental model)**. The RecipePickerSheet was *right there*, already built, with full search and servings adjustment. Wiring it up was elegant engineering. But it wasn't what the user wanted — they wanted something simpler and more integrated.
+
+The correction took one message from the user and about 15 minutes to implement. The lesson: when the user describes an interaction ("type in the inline box"), implement that interaction literally. Don't optimize for code reuse at the expense of the described UX.
+
+Also: ChatGPT Codex's doc review was genuinely useful. It caught 4 real staleness issues that I should have caught during M15/M9.0 milestone completion. The "update all core docs after milestone" rule works, but the update quality depends on actually checking cross-references, not just updating the most obvious sections.
+
+### Where This Leaves The Project
+
+M9.0.1 is on a feature branch with 4 commits, build succeeds, ready for manual testing. The inline search needs real-device testing to verify:
+- TextField focus behavior across multiple visible day cards
+- Keyboard interaction (dismiss on selection, auto-focus on tap)
+- Search result layout when cards have varying content heights
+- Performance with 50+ recipes in the filter
+
+---
+
 ## Session 19 — February 21, 2026
 **Milestone**: M9.0 Warning Resolution → COMPLETE
 **Branches**: `chore/prd-folder-cleanup` → merged (PR #40), `feature/M9.0-warning-resolution` → open (PR #41)
