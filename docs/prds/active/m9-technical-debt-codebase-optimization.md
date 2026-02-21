@@ -79,114 +79,104 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 
 ## 🏗️ **PHASED IMPLEMENTATION PLAN**
 
-### **PHASE 0: Warning Resolution** (2-3 hours, 1 session)
+### **PHASE 0: Warning Resolution** (45-60 min, 1 session)
 
 **Objective**: Achieve zero-warning build as clean baseline before refactoring
 
 **Why First?**
 - Establishes professional code quality baseline
 - Prevents warnings from masking new issues during refactoring
-- Addresses 2 critical issues (deprecations, missing switch case)
+- Addresses 2 deprecated API calls and 1 non-exhaustive switch
 - Quick win with immediate visibility
 
----
-
-**M9.0.1: Critical Fixes** (1-1.5 hours)
-
-**Tasks:**
-
-1. **Fix Deprecated CloudKit APIs** (45-60 min) - **P0**
-   - **File**: `HouseholdService.swift`
-   - **Problem**: `discoverUserIdentity(withUserRecordID:completionHandler:)` and `userIdentity(forUserRecordID:)` deprecated in iOS 17.0
-   - **Solution**: Migrate to `CKContainer.userIdentity(forUserRecordID:)` async/await API
-
-   ```swift
-   // Before (deprecated)
-   container.discoverUserIdentity(withUserRecordID: recordID) { identity, error in
-       // completion handler pattern
-   }
-
-   // After (modern)
-   let identity = try await container.userIdentity(forUserRecordID: recordID)
-   ```
-
-   - **Risk**: Medium - CloudKit API behavior may differ slightly
-   - **Testing**: Verify user identity resolution still works for household members
-
-2. **Fix Missing Switch Case** (15 min) - **P0**
-   - **File**: `ShareParticipant.swift`
-   - **Problem**: Switch must be exhaustive - missing case: `unknown`
-   - **Solution**: Add `unknown` case with appropriate handling
-
-   ```swift
-   // Add to switch statement
-   case .unknown:
-       // Handle unknown participant type gracefully
-       return .pending  // Or appropriate default
-   @unknown default:
-       return .pending  // Future-proof for new cases
-   ```
-
-   - **Risk**: Low - defensive programming
-   - **Testing**: Verify share participant display still works
+> **PRD Staleness Audit (February 21, 2026)**: Original Phase 0 was written January 4, 2026
+> and listed warnings for MealPlanDetailView and IngredientTemplateValidationTests — neither
+> produces warnings in the current build. The original PRD also missed 3 GroceryListDetailView
+> warnings and a non-exhaustive switch in HouseholdService:1178. The warning list below is from
+> a fresh `xcodebuild build` on February 21, 2026 and supersedes the original.
+>
+> **Revised time estimate**: 45-60 min (down from 2-3h). The original PRD allocated 45-60 min
+> for researching CloudKit deprecation replacements. Per insights-log entry #57, Apple deprecated
+> `discoverUserIdentity` in iOS 17 with **no replacement API**, and `nameComponents` already
+> returns nil for the current user on iOS 16+. The fix is simply to remove the deprecated calls
+> and rely on existing fallback paths.
 
 ---
 
-**M9.0.2: Unused Variable Cleanup** (30-45 min)
+**All 18 Warnings (grouped by fix type)**
 
-**Tasks:**
+#### Group A: Deprecated CloudKit APIs (2 warnings, ~20 min)
 
-1. **DatePickerSheet.swift** (5 min)
-   - Replace `plan` and `meal` bindings with boolean tests or `_`
+| # | File | Line | Warning |
+|---|------|------|---------|
+| 1 | `Services/HouseholdService.swift` | 1596 | `discoverUserIdentity(withUserRecordID:completionHandler:)` deprecated |
+| 2 | `Services/HouseholdService.swift` | 2072 | `userIdentity(forUserRecordID:)` deprecated |
 
-   ```swift
-   // Before
-   if let plan = mealPlan { ... }
+**Key finding**: Apple deprecated `discoverUserIdentity` in iOS 17 with **NO replacement API**.
+Both the completion-handler (line 1596) and async (line 2072) versions are deprecated. The
+`nameComponents` property already returns nil for the current user on iOS 16+, so these APIs
+are both deprecated AND unreliable.
 
-   // After (if only checking existence)
-   if mealPlan != nil { ... }
-   ```
+**Fix**:
+- `getCurrentUserInfo()` (line 1582-1638): Replace entire `withCheckedThrowingContinuation`
+  block with async `container.userRecordID()`. Use `recordName` as identifier, "Me" as display
+  name. The app already prompts users for their display name during household creation — the
+  deprecated API was just a pre-fill that usually returned nil anyway.
+- `refreshDisplayName()` (line 2067-2085): Remove the Try 1 block that calls
+  `userIdentity(forUserRecordID:)`. The existing Try 2 (device name extraction at line 2088)
+  becomes the primary path.
 
-2. **ManageCategoriesView.swift** (5 min)
-   - Remove or use `targetCategoryID` initialization
+**Risk**: Low — both deprecated calls have existing fallback paths that already handle the
+common case (nil nameComponents). Removing the deprecated calls just makes the fallback the
+primary path.
 
-3. **MealPlanDetailView.swift** (5 min)
-   - Remove unused `scalingService` initialization or integrate into view
+#### Group B: Unused Variables (8 warnings, ~10 min)
 
-4. **HouseholdScopeProvider.swift** (5 min)
-   - Replace `storeID` with `_` if value not needed
+| # | File | Line | Warning | Fix |
+|---|------|------|---------|-----|
+| 3 | `Services/HouseholdService.swift` | 367 | `householdName` unused in `leaveHousehold()` | Remove assignment |
+| 4 | `Services/HouseholdService.swift` | 487 | `householdName` unused in `deleteHousehold()` | Remove assignment |
+| 5 | `forager/GroceryListDetailView.swift` | 387 | `originalCompleted` unused | Remove (was planned undo feature) |
+| 6 | `forager/GroceryListDetailView.swift` | 388 | `originalDate` unused | Remove (was planned undo feature) |
+| 7 | `forager/DatePickerSheet.swift` | 147 | `plan` binding unused | Change to `if mealPlanService.activeMealPlan != nil` |
+| 8 | `forager/DatePickerSheet.swift` | 198 | `meal` binding unused | Change to `if mealPlanService.addRecipeToMealPlan(...) != nil` |
+| 9 | `forager/ManageCategoriesView.swift` | 402 | `targetCategoryID` unused | Remove assignment |
+| 10 | `Services/Persistence/HouseholdScopeProvider.swift` | 169 | `storeID` unused in pattern | Change to `if case .household(let id, _) = scope` |
 
-5. **HouseholdService.swift** (10 min)
-   - Fix 2-3 unused `householdName` initializations
-   - Either use the values or remove the assignments
+#### Group C: Unnecessary `await` (3 warnings, ~5 min)
 
-6. **IngredientTemplateValidationTests.swift** (5 min)
-   - Remove unused `report` variable or add assertion
+| # | File | Line | Fix |
+|---|------|------|-----|
+| 11 | `Services/HouseholdService.swift` | 1558 | Remove `await` — `onStatus` closure is not async |
+| 12 | `Services/HouseholdService.swift` | 1563 | Same |
+| 13 | `Services/HouseholdService.swift` | 2172 | Remove `await` — non-async expression |
+
+#### Group D: Non-exhaustive Switch (2 warnings, ~5 min)
+
+| # | File | Line | Fix |
+|---|------|------|-----|
+| 14 | `Services/HouseholdService.swift` | 1178 | Add `case .available:` before guard (the guard on line 1176 already handles this case, but the switch inside the guard body doesn't list it — add it for exhaustiveness) |
+| 15 | `Services/ShareParticipant.swift` | 82 | Already has `@unknown default` — check if compiler needs explicit `.unknown` case added before the `@unknown default` |
+
+#### Group E: Code Quality (3 warnings, ~5 min)
+
+| # | File | Line | Fix |
+|---|------|------|-----|
+| 16 | `forager/GroceryListDetailView.swift` | 414 | Assign `withAnimation` result to `_` or restructure |
+| 17 | `Services/IngredientTemplateService.swift` | 224 | Change `var result` to `let result` (verify: is it mutated later?) |
+| 18 | `Services/Persistence/PersistenceController.swift` | 108 | Remove `as! NSPersistentCloudKitContainer` — casting to same type |
 
 ---
 
-**M9.0.3: Code Quality Fixes** (30-45 min)
-
-**Tasks:**
-
-1. **`var` → `let` Mutations** (15 min)
-   - **NSValidationTests.swift**: Change `var allPassed` to `let allPassed` (×2)
-   - **IngredientTemplateService.swift**: Change `var result` to `let result`
-
-2. **Unnecessary Cast Removal** (5 min)
-   - **PersistenceController.swift**: Remove redundant `as! NSPersistentCloudKitContainer` cast
-
-3. **Unnecessary Nil Coalescing** (10 min)
-   - **IngredientTemplateValidationTests.swift**: Remove `??` operators on non-optional `String` values (×2)
-
-4. **Unnecessary `await`** (5 min)
-   - **ShareParticipant.swift**: Remove `await` from non-async expression
-
----
+**Execution Order:**
+1. **Group A first** (deprecated APIs) — highest risk, needs testing
+2. **Groups B-E** (mechanical fixes) — low risk, fast
+3. **Build verification** — confirm zero warnings
+4. **Commit & PR**
 
 **Deliverables:**
 - ✅ Zero compiler warnings (down from 18)
-- ✅ Deprecated CloudKit APIs migrated to modern equivalents
+- ✅ Deprecated CloudKit APIs removed (no replacement exists)
 - ✅ All switch statements exhaustive
 - ✅ Clean build baseline established
 
@@ -195,18 +185,21 @@ M9 addresses accumulated technical debt in the Forager iOS codebase through syst
 |--------|--------|-------|
 | Compiler warnings | 18 | 0 |
 | Deprecation warnings | 2 | 0 |
-| Missing case warnings | 1 | 0 |
+| Non-exhaustive switch warnings | 2 | 0 |
 | Unused variable warnings | 8 | 0 |
+| Code quality warnings | 3 | 0 |
+| Unnecessary await warnings | 3 | 0 |
 
 **Risk Assessment:**
-- **High**: Deprecated CloudKit API migration (test thoroughly)
-- **Low**: All other fixes are mechanical cleanup
+- **Low**: Deprecated CloudKit calls already have fallback paths that handle the common case.
+  Removing the deprecated calls just promotes the fallback to primary.
+- **Low**: All other fixes are mechanical cleanup.
 
 **Testing Checklist:**
-- [ ] Build succeeds with zero warnings
-- [ ] Household member invitation still works (CloudKit identity)
-- [ ] Share participant display works correctly
-- [ ] All existing functionality unchanged
+- [ ] `xcodebuild build` produces zero warnings
+- [ ] App launches and household features still work (creation, member display, leave/delete)
+- [ ] Share participant display shows correct acceptance status
+- [ ] Grocery list toggle/check still works
 
 ---
 

@@ -128,6 +128,6 @@ Partially accepted. The current flat-string architecture is correct for grocery 
 
 ## References
 
-- M9 PRD: `docs/prds/m9-technical-debt-codebase-optimization.md` — M9.12 (lines 693-735)
+- M9 PRD: `docs/prds/active/m9-technical-debt-codebase-optimization.md` — M9.12 (lines 693-735)
 - Insights Log: UX/TwoStepCreation, Parsing/ConfidenceSemantics, CoreData/GroceryItemName
 - Bug fix commits: `a516a24` (category propagation), `c79a8fb` (plural normalization)

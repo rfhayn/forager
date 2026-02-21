@@ -292,7 +292,7 @@ This document defines all functional and non-functional requirements for the For
 **Estimated**: 20-30 hours
 **Reason**: Prioritized CloudKit sync and external beta over testing infrastructure
 **Execution Plan**: M7 (CloudKit + External Beta) → M6 (Testing Foundation) → M8 (Parsing)
-**PRD**: [M6 Testing Foundation PRD](prds/milestone-6-testing-foundation-ai-augmentation.md)
+**PRD**: [M6 Testing Foundation PRD](prds/active/milestone-6-testing-foundation-ai-augmentation.md)
 
 ### **Strategic Context**
 
@@ -560,7 +560,7 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 **Estimated**: 135-173 hours (17-22 weeks part-time)
 **Dependencies**: M7 complete, M8 complete
 **Summary**: Systematic refactoring, architectural improvements, and performance optimizations to reduce code size ~25%, eliminate performance bottlenecks, and establish sustainable patterns
-**PRD**: [M9 Technical Debt PRD](prds/m9-technical-debt-codebase-optimization.md)
+**PRD**: [M9 Technical Debt PRD](prds/active/m9-technical-debt-codebase-optimization.md)
 
 ### **Summary of M9 Phases**
 
@@ -691,7 +691,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 **Estimated**: 50-70 hours (7 phases)
 **Dependencies**: iOS 26 SDK
 **Summary**: Comprehensive visual refresh with warm color palette, custom typography, Liquid Glass adoption, and iOS 26 deployment target
-**PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
+**PRD**: [M15 UX Design System PRD](prds/complete/m15-ux-design-system.md)
 
 ### **Functional Requirements - Design System Foundation (M15.1)**
 

@@ -677,7 +677,7 @@ _[Previous entries remain the same through December 23...]_
 - Phase 3: Performance & Data Model (60-70h) - Query optimization, batch operations, migrations
 - Phase 4: Quality & Standards (15-20h) - Code standards, test coverage, logging
 - **Impact**: ~2,000 lines removed, 50-80% performance improvement, RecipeListView 1,204→400 lines
-- **PRD**: [m9-technical-debt-codebase-optimization.md](prds/m9-technical-debt-codebase-optimization.md)
+- **PRD**: [m9-technical-debt-codebase-optimization.md](prds/active/m9-technical-debt-codebase-optimization.md)
 
 **M10: Analytics & Insights** (8-12 hours)
 - Phase 1: Analytics Infrastructure (2-3h)
@@ -724,7 +724,7 @@ _[Previous entries remain the same through December 23...]_
 - Layered app icon via Icon Composer
 - WCAG AA compliance, dark mode, Dynamic Type, haptics
 - **Design phase complete**: HTML mockups, PRD v1.1, 5-phase design review
-- **PRD**: `docs/prds/active/m15-ux-design-system.md`
+- **PRD**: `docs/prds/complete/m15-ux-design-system.md`
 
 ---
 

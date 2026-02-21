@@ -5,7 +5,7 @@
 **Total Progress**: ~220 hours | 89% planning accuracy
 **Current Branch**: `feature/M7.5-service-ownership` (ready for PR)
 **Current Milestone**: M7.5 - Architecture Hardening — **ALL 3 PHASES COMPLETE**
-**Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+**Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: Merge M7.5 → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 → M9 remaining → M10+
 
 ---
@@ -15,7 +15,7 @@
 **Status**: ✅ **COMPLETE**
 **Session**: February 20, 2026
 **Branch**: `feature/M7.5-service-ownership`
-**PRD**: `docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md`
+**PRD**: `docs/prds/complete/m7.5-architecture-hardening-ux-service-cleanup.md`
 
 ### **What Was Delivered** ✅
 
@@ -59,7 +59,7 @@ Complete architecture hardening across 3 phases — service layer ownership, nav
 **Status**: ✅ **COMPLETE**
 **Session**: February 20, 2026
 **Branch**: `feature/M15-ux-design-system`
-**PRD**: `docs/prds/active/m15-testing-bug-fixes.md`
+**PRD**: `docs/prds/complete/m15-testing-bug-fixes.md`
 
 ### **Context**
 User testing on M15.5b build revealed 12 issues across parsing, display, data propagation, and styling.
@@ -1113,7 +1113,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | TestFlight push (post-M15) | 📋 PLANNED | ~1h |
 | **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
 
-**M15 Phases** (7 phases — PRD: `docs/prds/active/m15-ux-design-system.md`):
+**M15 Phases** (7 phases — PRD: `docs/prds/complete/m15-ux-design-system.md`):
 
 | Phase | Description | Est. |
 |-------|-------------|------|

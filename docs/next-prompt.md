@@ -86,7 +86,7 @@ Branch: feature/M7.7-app-store-submission
 - Phase 2: Service consistency, full DI, view decomposition (RecipeListView 1,204→400)
 - Phase 3: Query optimization, batch ops, Category→Relationship migration
 - Phase 4: Code standards, test coverage, logging
-- **PRD**: `docs/prds/m9-technical-debt-codebase-optimization.md`
+- **PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md`
 
 ### **M10+: Analytics, Advanced Features**
 - Usage statistics, recommendations, data export

@@ -107,6 +107,6 @@ Considered. Would work as sub-navigation within Recipes, but Ingredients and Cat
 
 ## References
 
-- PRD: `docs/prds/active/m15-ux-design-system.md` §6 "Tab Architecture Change"
+- PRD: `docs/prds/complete/m15-ux-design-system.md` §6 "Tab Architecture Change"
 - Mockup: `docs/mockups/forager-design-system.html` (all 18 phone frames use 5-tab bar)
 - Insights Log: PRD/TabArchitectureReduction
