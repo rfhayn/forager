@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager — Recipe Picker Options</title>
+<style>
+  /* ─── FORAGER DESIGN TOKENS (Dark Mode) ─── */
+  :root {
+    --forest-green: #7BC08A;
+    --leaf-green: #5AAD5A;
+    --spring-green: #3D8B37;
+    --bark: #F0EBE3;
+    --stone: #938D83;
+    --pebble: #5A5650;
+    --sand: #443F38;
+    --cream: #221E16;
+    --canvas: #1C1A14;
+
+    --bg-canvas: #1C1A14;
+    --bg-primary: #221E16;
+    --bg-secondary: #2A251C;
+    --bg-tertiary: #332E24;
+
+    --surface-primary: #2E2A1F;
+    --surface-secondary: #363127;
+    --surface-accent: #2A3520;
+    --surface-warning: #332B18;
+    --surface-danger: #331E1A;
+    --surface-success: #1E3020;
+
+    --text-primary: #F0EBE3;
+    --text-secondary: #C4BDB2;
+    --text-tertiary: #A09A90;
+    --text-disabled: #5A5650;
+
+    --accent-primary: #7BC08A;
+    --accent-secondary: #5AAD5A;
+    --accent-tertiary: #3D8B37;
+    --accent-tint: #2A3520;
+
+    --danger-fg: #E06050;
+    --danger-bg: #331E1A;
+
+    --border-default: #443F38;
+    --border-subtle: #3A3630;
+    --border-strong: #4E4840;
+    --border-accent: #5AAD5A;
+
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 12px;
+    --sp-lg: 16px;
+    --sp-xl: 24px;
+    --sp-xxl: 32px;
+
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+
+    --font-2xs: 10px;
+    --font-xs: 12px;
+    --font-sm: 13px;
+    --font-base: 15px;
+    --font-md: 17px;
+    --font-lg: 20px;
+    --font-xl: 28px;
+    --font-2xl: 34px;
+
+    --btn-primary-bg: #7BC08A;
+    --btn-primary-text: #1C1A14;
+    --btn-primary-pressed: #5AAD5A;
+    --btn-disabled-bg: #3A3630;
+  }
+
+  /* ─── PAGE LAYOUT ─── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'SF Pro', system-ui, sans-serif;
+    background: #0E0D0A;
+    color: #C4BDB2;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 48px 24px 80px;
+  }
+
+  h1 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .page-subtitle {
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-tertiary);
+    margin-bottom: 48px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .options-grid {
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .option-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 393px;
+  }
+
+  .option-badge {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+
+  .option-badge.a { background: var(--accent-tint); color: var(--accent-primary); }
+  .option-badge.b { background: #1A2830; color: #5A9BBD; }
+  .option-badge.c { background: #2D2420; color: #D4A04A; }
+
+  .option-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .option-desc {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    text-align: center;
+    margin-bottom: 20px;
+    max-width: 340px;
+    line-height: 1.6;
+  }
+
+  .pros-cons {
+    width: 100%;
+    margin-top: 20px;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .pros-cons dt {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-top: 12px;
+    margin-bottom: 2px;
+  }
+
+  .pros-cons dt.pro { color: var(--accent-primary); }
+  .pros-cons dt.con { color: var(--danger-fg); }
+  .pros-cons dt.note { color: #D4A04A; }
+
+  .pros-cons dd {
+    color: var(--text-secondary);
+    padding-left: 0;
+    margin-bottom: 2px;
+  }
+
+  /* ─── PHONE FRAME ─── */
+  .phone-frame {
+    width: 393px;
+    height: 852px;
+    background: var(--bg-canvas);
+    border-radius: 47px;
+    border: 8px solid #333;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.05),
+      0 25px 80px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dynamic-island {
+    width: 126px;
+    height: 37px;
+    background: #000;
+    border-radius: 20px;
+    margin: 10px auto 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 24px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px var(--sp-lg) 8px;
+    min-height: 44px;
+  }
+
+  .nav-back {
+    font-size: 17px;
+    color: var(--accent-primary);
+    font-weight: 400;
+  }
+
+  .nav-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .nav-bar { position: relative; }
+
+  .content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--sp-lg);
+    padding-bottom: var(--sp-xxl);
+  }
+
+  .content-area::-webkit-scrollbar { display: none; }
+
+  .font-rounded {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+  }
+
+  /* ─── DAY STRIP ─── */
+  .day-strip {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 4px 10px;
+    gap: 2px;
+  }
+
+  .day-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border-radius: var(--r-sm);
+    min-width: 44px;
+    cursor: pointer;
+  }
+
+  .day-chip.today {
+    background: var(--accent-tint);
+  }
+
+  .day-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .day-chip.today .day-label { color: var(--accent-primary); }
+
+  .day-num {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .day-chip.today .day-num { color: var(--accent-primary); }
+
+  .day-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    margin-top: 1px;
+  }
+  .day-dot.filled { background: var(--accent-primary); }
+  .day-dot.empty { background: var(--border-default); }
+
+  /* ─── DAY SECTIONS ─── */
+  .day-section {
+    padding-top: var(--sp-md);
+  }
+
+  .day-heading {
+    text-align: center;
+    margin-bottom: var(--sp-sm);
+  }
+
+  .day-heading-text {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .today-badge {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    background: var(--accent-tint);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  /* ─── MEAL CARD ─── */
+  .meal-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .meal-card-inner {
+    padding: var(--sp-md);
+  }
+
+  .meal-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+  }
+
+  .meal-servings {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    text-align: left;
+  }
+
+  .meal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: var(--sp-md);
+  }
+
+  .meal-action-btn {
+    flex: 1;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 0;
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .meal-action-btn.done-toggle {
+    background: transparent;
+    border: 1.5px solid var(--border-default);
+    color: var(--text-secondary);
+  }
+  .meal-action-btn.done-toggle.checked {
+    background: var(--accent-tint);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .meal-action-btn.swap-btn {
+    background: transparent;
+    border: 1.5px solid var(--border-default);
+    color: var(--text-secondary);
+  }
+
+  .meal-action-btn.remove-btn {
+    background: transparent;
+    border: 1.5px solid var(--danger-fg);
+    color: var(--danger-fg);
+  }
+
+  /* ─── UNPLANNED DAY ─── */
+  .unplanned-day-slot {
+    padding: var(--sp-md);
+    border: 1.5px dashed var(--border-default);
+    border-radius: var(--r-md);
+    background: transparent;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .recipe-picker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px var(--sp-md);
+    background: var(--surface-primary);
+    border: 1.5px solid var(--border-default);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+    margin-bottom: var(--sp-sm);
+  }
+
+  .recipe-picker span {
+    font-size: 15px;
+    color: var(--accent-primary);
+    font-weight: 500;
+  }
+
+  .recipe-picker .chevron {
+    color: var(--text-disabled);
+    font-size: 13px;
+  }
+
+  .quick-select-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .quick-pill {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  /* ─── TAB BAR ─── */
+  .tab-bar {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 28px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-disabled);
+    cursor: pointer;
+  }
+
+  .tab-item.active { color: var(--accent-primary); }
+  .tab-icon { font-size: 22px; }
+
+  /* ═══════════════════════════════════════
+     OPTION A: Full Sheet Overlay
+     ═══════════════════════════════════════ */
+
+  .sheet-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .sheet-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+
+  .sheet-panel {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-primary);
+    border-radius: 20px 20px 0 0;
+    max-height: 72%;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .sheet-handle {
+    width: 36px;
+    height: 5px;
+    background: var(--pebble);
+    border-radius: 3px;
+    margin: 8px auto 0;
+  }
+
+  .sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px var(--sp-lg) 4px;
+  }
+
+  .sheet-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .sheet-cancel {
+    font-size: 15px;
+    color: var(--accent-primary);
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .sheet-date-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px var(--sp-lg) 4px;
+  }
+
+  .sheet-date-icon {
+    font-size: 16px;
+    color: var(--accent-primary);
+  }
+
+  .sheet-date-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent-primary);
+  }
+
+  .sheet-search {
+    margin: 8px var(--sp-lg);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    border: 1.5px solid var(--border-default);
+  }
+
+  .sheet-search:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(123,192,138,0.15);
+  }
+
+  .search-icon {
+    color: var(--text-tertiary);
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 15px;
+    flex: 1;
+    font-family: inherit;
+  }
+
+  .search-input::placeholder { color: var(--text-disabled); }
+
+  .sheet-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  .sheet-results::-webkit-scrollbar { display: none; }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    padding: 12px var(--sp-lg);
+    cursor: pointer;
+    transition: background 0.15s;
+    gap: 12px;
+  }
+
+  .result-row:hover { background: var(--surface-secondary); }
+
+  .result-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-sm);
+    background: var(--accent-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+  }
+
+  .result-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .result-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  .result-add {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .search-caret {
+    display: inline-block;
+    width: 2px;
+    height: 16px;
+    background: var(--accent-primary);
+    margin-left: -1px;
+    animation: blink 1s infinite;
+    vertical-align: middle;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION B: Inline Expansion
+     ═══════════════════════════════════════ */
+
+  .inline-expanded {
+    padding: var(--sp-md);
+    border: 1.5px solid var(--accent-primary);
+    border-radius: var(--r-md);
+    background: var(--surface-primary);
+  }
+
+  .inline-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--r-sm);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .inline-search .search-icon {
+    color: var(--text-tertiary);
+    font-size: 13px;
+  }
+
+  .inline-search-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 14px;
+    flex: 1;
+    font-family: inherit;
+  }
+
+  .inline-search-input::placeholder { color: var(--text-disabled); }
+
+  .inline-results {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: var(--sp-sm);
+  }
+
+  .inline-results::-webkit-scrollbar { display: none; }
+
+  .inline-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+  }
+
+  .inline-row:last-child { border-bottom: none; }
+
+  .inline-row-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .inline-row-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  .inline-row-add {
+    font-size: 18px;
+    color: var(--accent-primary);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  .inline-pills-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    padding-top: var(--sp-sm);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* ═══════════════════════════════════════
+     OPTION C: Hybrid — Compact half-sheet
+     ═══════════════════════════════════════ */
+
+  .hybrid-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    top: 0;
+  }
+
+  .hybrid-scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+  }
+
+  .hybrid-panel {
+    position: relative;
+    z-index: 1;
+    background: var(--bg-primary);
+    border-radius: 20px 20px 0 0;
+    max-height: 50%;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .hybrid-top {
+    padding: 12px var(--sp-lg) 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hybrid-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--surface-primary);
+    border-radius: var(--r-md);
+    border: 1.5px solid var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(123,192,138,0.12);
+  }
+
+  .hybrid-cancel {
+    font-size: 15px;
+    color: var(--accent-primary);
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .hybrid-quick-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px var(--sp-lg) 6px;
+    overflow-x: auto;
+  }
+
+  .hybrid-quick-row::-webkit-scrollbar { display: none; }
+
+  .hybrid-quick-pill {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .hybrid-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 0 var(--sp-lg);
+  }
+
+  .hybrid-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  .hybrid-results::-webkit-scrollbar { display: none; }
+
+  .hybrid-row {
+    display: flex;
+    align-items: center;
+    padding: 10px var(--sp-lg);
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .hybrid-row:hover { background: var(--surface-secondary); }
+
+  .hybrid-row-icon {
+    font-size: 20px;
+    color: var(--accent-primary);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .hybrid-row-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hybrid-row-name {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hybrid-row-meta {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 1px;
+  }
+
+  .hybrid-row-servings {
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  /* ─── ANNOTATIONS ─── */
+  .annotation {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .annotation::before {
+    content: '';
+    position: absolute;
+    width: 1px;
+    background: var(--accent-primary);
+    opacity: 0.4;
+  }
+
+  /* ─── RECOMMENDATION BANNER ─── */
+  .recommendation {
+    max-width: 900px;
+    margin: 48px auto 0;
+    padding: 24px 32px;
+    background: var(--surface-accent);
+    border: 1.5px solid var(--accent-secondary);
+    border-radius: var(--r-md);
+    text-align: center;
+  }
+
+  .recommendation h2 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+  }
+
+  .recommendation p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .recommendation strong { color: var(--text-primary); }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1300px) {
+    .options-grid { gap: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Recipe Picker — 3 Options</h1>
+<p class="page-subtitle">
+  Replacing the current <code style="background: var(--surface-primary); padding: 2px 6px; border-radius: 4px; font-size: 13px;">Menu</code> dropdown (capped at 20 recipes, no search) with a scalable recipe selection pattern.
+  Quick-select pills stay as-is in all options.
+</p>
+
+<div class="options-grid">
+
+  <!-- ════════════════════════════════════════
+       OPTION A: Full Sheet (RecipePickerSheet)
+       ════════════════════════════════════════ -->
+  <div class="option-column">
+    <span class="option-badge a">Option A</span>
+    <div class="option-title">Full Search Sheet</div>
+    <p class="option-desc">Tap "Choose Recipe" → half-sheet slides up with search field, full recipe list, and per-recipe "Add" buttons. Reuses existing RecipePickerSheet pattern.</p>
+
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">●●● WiFi 🔋</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">‹ Meals</span>
+          <span class="nav-title">This Week</span>
+          <span style="width: 60px;"></span>
+        </div>
+        <div style="padding: 0 var(--sp-lg);">
+          <div class="day-strip">
+            <div class="day-chip">
+              <span class="day-label">Mon</span>
+              <span class="day-num">10</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Tue</span>
+              <span class="day-num">11</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip today">
+              <span class="day-label">Wed</span>
+              <span class="day-num">12</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Thu</span>
+              <span class="day-num">13</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Fri</span>
+              <span class="day-num">14</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sat</span>
+              <span class="day-num">15</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sun</span>
+              <span class="day-num">16</span>
+              <div class="day-dot filled"></div>
+            </div>
+          </div>
+        </div>
+        <div class="content-area" style="opacity: 0.35; pointer-events: none;">
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Wednesday 12</span>
+              <span class="today-badge">TODAY</span>
+            </div>
+            <div class="meal-card">
+              <div class="meal-card-inner">
+                <div class="meal-name">Honey Garlic Salmon</div>
+                <div class="meal-servings">4 servings</div>
+              </div>
+            </div>
+          </div>
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Thursday 13</span>
+            </div>
+            <div class="unplanned-day-slot">
+              <div class="recipe-picker">
+                <span>Choose Recipe</span>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sheet overlay -->
+        <div class="sheet-overlay">
+          <div class="sheet-scrim"></div>
+          <div class="sheet-panel">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+              <span class="sheet-title">Add Recipe</span>
+              <button class="sheet-cancel">Cancel</button>
+            </div>
+            <div class="sheet-date-banner">
+              <span class="sheet-date-icon">📅</span>
+              <span class="sheet-date-text">Adding to Thu, Feb 13</span>
+            </div>
+            <div class="sheet-search">
+              <span class="search-icon">🔍</span>
+              <span style="color: var(--text-primary); font-size: 15px;">hon</span><span class="search-caret"></span>
+            </div>
+            <div class="sheet-results">
+              <div class="result-row" style="background: var(--surface-secondary);">
+                <div class="result-icon">🍯</div>
+                <div class="result-info">
+                  <div class="result-name">Honey Garlic Chicken</div>
+                  <div class="result-meta">8 ingredients · 4 servings</div>
+                </div>
+                <button class="result-add">Add</button>
+              </div>
+              <div class="result-row">
+                <div class="result-icon">🥩</div>
+                <div class="result-info">
+                  <div class="result-name">Honey Mustard Pork</div>
+                  <div class="result-meta">6 ingredients · 4 servings</div>
+                </div>
+                <button class="result-add">Add</button>
+              </div>
+              <div class="result-row">
+                <div class="result-icon">🥗</div>
+                <div class="result-info">
+                  <div class="result-name">Honey Lime Shrimp Bowls</div>
+                  <div class="result-meta">11 ingredients · 2 servings</div>
+                </div>
+                <button class="result-add">Add</button>
+              </div>
+              <div class="result-row">
+                <div class="result-icon">🐝</div>
+                <div class="result-info">
+                  <div class="result-name">Honey Soy Glazed Salmon</div>
+                  <div class="result-meta">5 ingredients · 4 servings</div>
+                </div>
+                <button class="result-add">Add</button>
+              </div>
+              <div class="result-row">
+                <div class="result-icon">🍖</div>
+                <div class="result-info">
+                  <div class="result-name">Honey BBQ Ribs</div>
+                  <div class="result-meta">9 ingredients · 6 servings</div>
+                </div>
+                <button class="result-add">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar" style="position: relative; z-index: 25;">
+          <div class="tab-item"><span class="tab-icon">📋</span><span>Lists</span></div>
+          <div class="tab-item"><span class="tab-icon">📖</span><span>Recipes</span></div>
+          <div class="tab-item active"><span class="tab-icon">🗓</span><span>Meals</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙</span><span>Settings</span></div>
+          <div class="tab-item"><span class="tab-icon">🔍</span><span>Search</span></div>
+        </div>
+      </div>
+    </div>
+
+    <dl class="pros-cons">
+      <dt class="pro">Strengths</dt>
+      <dd>· Already built — RecipePickerSheet.swift exists with full search</dd>
+      <dd>· Scales to 200+ recipes with instant filtering</dd>
+      <dd>· Keyboard auto-focused for immediate typing</dd>
+      <dd>· Enough vertical space for servings adjuster per row</dd>
+      <dd>· Consistent with iOS sheet pattern users know</dd>
+      <dt class="con">Trade-offs</dt>
+      <dd>· Full-screen context switch — loses sight of calendar</dd>
+      <dd>· Slightly heavier interaction for quick selections</dd>
+    </dl>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       OPTION B: Inline Expansion
+       ════════════════════════════════════════ -->
+  <div class="option-column">
+    <span class="option-badge b">Option B</span>
+    <div class="option-title">Inline Expansion</div>
+    <p class="option-desc">The day card itself expands to reveal a search field + compact results. No sheet, no context switch. Everything stays in the calendar flow.</p>
+
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">●●● WiFi 🔋</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">‹ Meals</span>
+          <span class="nav-title">This Week</span>
+          <span style="width: 60px;"></span>
+        </div>
+        <div style="padding: 0 var(--sp-lg);">
+          <div class="day-strip">
+            <div class="day-chip">
+              <span class="day-label">Mon</span>
+              <span class="day-num">10</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Tue</span>
+              <span class="day-num">11</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip today">
+              <span class="day-label">Wed</span>
+              <span class="day-num">12</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Thu</span>
+              <span class="day-num">13</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Fri</span>
+              <span class="day-num">14</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sat</span>
+              <span class="day-num">15</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sun</span>
+              <span class="day-num">16</span>
+              <div class="day-dot filled"></div>
+            </div>
+          </div>
+        </div>
+        <div class="content-area">
+          <!-- Wednesday — planned -->
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Wednesday 12</span>
+              <span class="today-badge">TODAY</span>
+            </div>
+            <div class="meal-card">
+              <div class="meal-card-inner">
+                <div class="meal-name">Honey Garlic Salmon</div>
+                <div class="meal-servings">4 servings</div>
+                <div class="meal-actions">
+                  <button class="meal-action-btn done-toggle checked">✓ Done</button>
+                  <button class="meal-action-btn swap-btn">↻ Swap</button>
+                  <button class="meal-action-btn remove-btn">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thursday — EXPANDED INLINE SEARCH -->
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Thursday 13</span>
+            </div>
+            <div class="inline-expanded">
+              <div class="inline-search">
+                <span class="search-icon">🔍</span>
+                <span style="color: var(--text-primary); font-size: 14px;">pas</span><span class="search-caret"></span>
+              </div>
+              <div class="inline-results">
+                <div class="inline-row">
+                  <div>
+                    <div class="inline-row-name">Pasta Carbonara</div>
+                    <div class="inline-row-meta">6 ingredients · 4 servings</div>
+                  </div>
+                  <button class="inline-row-add">＋</button>
+                </div>
+                <div class="inline-row">
+                  <div>
+                    <div class="inline-row-name">Pasta Bolognese</div>
+                    <div class="inline-row-meta">10 ingredients · 6 servings</div>
+                  </div>
+                  <button class="inline-row-add">＋</button>
+                </div>
+                <div class="inline-row">
+                  <div>
+                    <div class="inline-row-name">Pasta Primavera</div>
+                    <div class="inline-row-meta">8 ingredients · 4 servings</div>
+                  </div>
+                  <button class="inline-row-add">＋</button>
+                </div>
+              </div>
+              <div class="inline-pills-row">
+                <button class="quick-pill">Takeout</button>
+                <button class="quick-pill">Dining Out</button>
+                <button class="quick-pill">Leftovers</button>
+                <button class="quick-pill">No Meal</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Friday — planned -->
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Friday 14</span>
+            </div>
+            <div class="meal-card">
+              <div class="meal-card-inner">
+                <div class="meal-name">Tacos al Pastor</div>
+                <div class="meal-servings">4 servings</div>
+                <div class="meal-actions">
+                  <button class="meal-action-btn done-toggle">✓ Done</button>
+                  <button class="meal-action-btn swap-btn">↻ Swap</button>
+                  <button class="meal-action-btn remove-btn">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Saturday — unplanned (collapsed) -->
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Saturday 15</span>
+            </div>
+            <div class="unplanned-day-slot">
+              <div class="recipe-picker">
+                <span>Choose Recipe</span>
+                <span class="chevron">›</span>
+              </div>
+              <div class="quick-select-pills">
+                <button class="quick-pill">Takeout</button>
+                <button class="quick-pill">Dining Out</button>
+                <button class="quick-pill">Leftovers</button>
+                <button class="quick-pill">No Meal</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar">
+          <div class="tab-item"><span class="tab-icon">📋</span><span>Lists</span></div>
+          <div class="tab-item"><span class="tab-icon">📖</span><span>Recipes</span></div>
+          <div class="tab-item active"><span class="tab-icon">🗓</span><span>Meals</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙</span><span>Settings</span></div>
+          <div class="tab-item"><span class="tab-icon">🔍</span><span>Search</span></div>
+        </div>
+      </div>
+    </div>
+
+    <dl class="pros-cons">
+      <dt class="pro">Strengths</dt>
+      <dd>· No context switch — stays in calendar flow</dd>
+      <dd>· Visible alongside other days for planning context</dd>
+      <dd>· Fast for small recipe collections (5-30)</dd>
+      <dt class="con">Trade-offs</dt>
+      <dd>· Cramped for 200+ recipes — limited vertical space</dd>
+      <dd>· Keyboard pushes content up, may lose calendar context anyway</dd>
+      <dd>· No room for servings adjuster (selects recipe at default servings)</dd>
+      <dd>· Custom implementation — no reuse of RecipePickerSheet</dd>
+    </dl>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       OPTION C: Hybrid — Quick Sheet
+       ════════════════════════════════════════ -->
+  <div class="option-column">
+    <span class="option-badge c">Option C</span>
+    <div class="option-title">Quick Search Sheet</div>
+    <p class="option-desc">Compact half-sheet that opens search-first. Quick-option pills sit at the top of the sheet for one-tap alternatives. Combines the speed of inline with the space of a sheet.</p>
+
+    <div class="phone-frame">
+      <div class="dynamic-island"></div>
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span style="font-size: 12px;">●●● WiFi 🔋</span>
+        </div>
+        <div class="nav-bar">
+          <span class="nav-back">‹ Meals</span>
+          <span class="nav-title">This Week</span>
+          <span style="width: 60px;"></span>
+        </div>
+        <div style="padding: 0 var(--sp-lg);">
+          <div class="day-strip">
+            <div class="day-chip">
+              <span class="day-label">Mon</span>
+              <span class="day-num">10</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Tue</span>
+              <span class="day-num">11</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip today">
+              <span class="day-label">Wed</span>
+              <span class="day-num">12</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Thu</span>
+              <span class="day-num">13</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Fri</span>
+              <span class="day-num">14</span>
+              <div class="day-dot filled"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sat</span>
+              <span class="day-num">15</span>
+              <div class="day-dot empty"></div>
+            </div>
+            <div class="day-chip">
+              <span class="day-label">Sun</span>
+              <span class="day-num">16</span>
+              <div class="day-dot filled"></div>
+            </div>
+          </div>
+        </div>
+        <div class="content-area" style="opacity: 0.35; pointer-events: none;">
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Wednesday 12</span>
+              <span class="today-badge">TODAY</span>
+            </div>
+            <div class="meal-card">
+              <div class="meal-card-inner">
+                <div class="meal-name">Honey Garlic Salmon</div>
+                <div class="meal-servings">4 servings</div>
+              </div>
+            </div>
+          </div>
+          <div class="day-section">
+            <div class="day-heading">
+              <span class="day-heading-text">Thursday 13</span>
+            </div>
+            <div class="unplanned-day-slot">
+              <div class="recipe-picker">
+                <span>Choose Recipe</span>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hybrid half-sheet -->
+        <div class="hybrid-sheet">
+          <div class="hybrid-scrim"></div>
+          <div class="hybrid-panel">
+            <div class="sheet-handle"></div>
+            <div class="hybrid-top">
+              <div class="hybrid-search">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Search recipes..." disabled style="color: var(--text-disabled);">
+              </div>
+              <button class="hybrid-cancel">Cancel</button>
+            </div>
+            <div class="hybrid-quick-row">
+              <button class="hybrid-quick-pill">🍕 Takeout</button>
+              <button class="hybrid-quick-pill">🍽 Dining Out</button>
+              <button class="hybrid-quick-pill">♻ Leftovers</button>
+              <button class="hybrid-quick-pill">⊘ No Meal</button>
+            </div>
+            <div class="hybrid-divider"></div>
+            <div class="hybrid-results">
+              <div class="hybrid-row" style="background: var(--surface-secondary);">
+                <span class="hybrid-row-icon">⭐</span>
+                <div class="hybrid-row-info">
+                  <div class="hybrid-row-name">Honey Garlic Chicken</div>
+                  <div class="hybrid-row-meta">8 ingredients</div>
+                </div>
+                <span class="hybrid-row-servings">4 srv</span>
+              </div>
+              <div class="hybrid-row">
+                <span class="hybrid-row-icon">🍝</span>
+                <div class="hybrid-row-info">
+                  <div class="hybrid-row-name">Pasta Carbonara</div>
+                  <div class="hybrid-row-meta">6 ingredients</div>
+                </div>
+                <span class="hybrid-row-servings">4 srv</span>
+              </div>
+              <div class="hybrid-row">
+                <span class="hybrid-row-icon">🌮</span>
+                <div class="hybrid-row-info">
+                  <div class="hybrid-row-name">Tacos al Pastor</div>
+                  <div class="hybrid-row-meta">12 ingredients</div>
+                </div>
+                <span class="hybrid-row-servings">4 srv</span>
+              </div>
+              <div class="hybrid-row">
+                <span class="hybrid-row-icon">🥗</span>
+                <div class="hybrid-row-info">
+                  <div class="hybrid-row-name">Thai Peanut Salad</div>
+                  <div class="hybrid-row-meta">9 ingredients</div>
+                </div>
+                <span class="hybrid-row-servings">2 srv</span>
+              </div>
+              <div class="hybrid-row">
+                <span class="hybrid-row-icon">🍛</span>
+                <div class="hybrid-row-info">
+                  <div class="hybrid-row-name">Chicken Tikka Masala</div>
+                  <div class="hybrid-row-meta">14 ingredients</div>
+                </div>
+                <span class="hybrid-row-servings">6 srv</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-bar" style="position: relative; z-index: 25;">
+          <div class="tab-item"><span class="tab-icon">📋</span><span>Lists</span></div>
+          <div class="tab-item"><span class="tab-icon">📖</span><span>Recipes</span></div>
+          <div class="tab-item active"><span class="tab-icon">🗓</span><span>Meals</span></div>
+          <div class="tab-item"><span class="tab-icon">⚙</span><span>Settings</span></div>
+          <div class="tab-item"><span class="tab-icon">🔍</span><span>Search</span></div>
+        </div>
+      </div>
+    </div>
+
+    <dl class="pros-cons">
+      <dt class="pro">Strengths</dt>
+      <dd>· Compact — only covers ~50% of screen</dd>
+      <dd>· Quick-option pills are one tap (no second step)</dd>
+      <dd>· Search auto-focused, scales to 200+ recipes</dd>
+      <dd>· Tap any recipe row to add instantly (default servings)</dd>
+      <dd>· Day strip still visible behind the sheet</dd>
+      <dt class="con">Trade-offs</dt>
+      <dd>· No per-recipe servings adjuster (uses recipe default)</dd>
+      <dd>· New pattern — doesn't fully reuse RecipePickerSheet</dd>
+      <dt class="note">Variant</dt>
+      <dd>· Could add servings stepper per row if needed later</dd>
+    </dl>
+  </div>
+
+</div>
+
+<!-- ─── RECOMMENDATION ─── -->
+<div class="recommendation">
+  <h2>Recommendation: Option A</h2>
+  <p>
+    <strong>Option A (Full Search Sheet)</strong> is the strongest choice because it <strong>already exists</strong> as <code style="background: var(--surface-primary); padding: 2px 6px; border-radius: 4px; font-size: 13px;">RecipePickerSheet.swift</code> with search, servings adjusters, household scope filtering, and empty states all built. The implementation is a one-line change — swap the <code style="background: var(--surface-primary); padding: 2px 6px; border-radius: 4px; font-size: 13px;">Menu</code> for a <code style="background: var(--surface-primary); padding: 2px 6px; border-radius: 4px; font-size: 13px;">.sheet</code> that presents <code style="background: var(--surface-primary); padding: 2px 6px; border-radius: 4px; font-size: 13px;">RecipePickerSheet</code>. It's also the pattern you already know works well — you described it as "a text box that would search recipes to quickly reduce the list" which is exactly what RecipePickerSheet does. If Option C's compactness appeals, it could be a future enhancement, but Option A delivers the fix with zero new code.
+  </p>
+</div>
+
+</body>
+</html>
