@@ -3,10 +3,11 @@ import CoreData
 
 class IngredientTemplateService: ObservableObject {
     private let context: NSManagedObjectContext
-    
+
     @Published var lastSearchDuration: TimeInterval = 0
     @Published var popularIngredients: [IngredientTemplate] = []
-    
+    @Published var errorMessage: String?
+
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -575,6 +576,75 @@ class IngredientTemplateService: ObservableObject {
                 .sorted { $0.name < $1.name }
         } catch {
             return []
+        }
+    }
+
+    // MARK: - M7.5: Public CRUD Methods
+
+    /// Updates a template's name, category, and staple status.
+    /// Name is normalized through the standard pipeline (preserves sanitization chokepoint).
+    func updateTemplate(_ template: IngredientTemplate, name: String, category: String?, isStaple: Bool) {
+        clearError()
+
+        let normalizedName = normalize(name: name)
+        template.name = normalizedName
+        template.canonicalName = IngredientTemplate.canonicalName(from: normalizedName)
+        template.category = category
+        template.isStaple = isStaple
+        template.updatedAt = Date()
+
+        save("update template")
+    }
+
+    /// Updates just the category assignment on a template
+    func updateCategory(_ template: IngredientTemplate, category: String?) {
+        clearError()
+        template.category = category
+        template.updatedAt = Date()
+        save("update template category")
+    }
+
+    /// Updates just the staple status on a template
+    func updateStaple(_ template: IngredientTemplate, isStaple: Bool) {
+        clearError()
+        template.isStaple = isStaple
+        template.updatedAt = Date()
+        save("update template staple")
+    }
+
+    /// Deletes a template. Ingredient relationships use READ-ONLY rules (no cascade).
+    func deleteTemplate(_ template: IngredientTemplate) {
+        clearError()
+        context.delete(template)
+        save("delete template")
+    }
+
+    /// Saves the current context for multi-step operations
+    func saveContext() {
+        clearError()
+        save("batch save")
+    }
+
+    // MARK: - Error Handling
+
+    private func clearError() {
+        errorMessage = nil
+    }
+
+    @discardableResult
+    private func save(_ operation: String) -> Bool {
+        guard context.hasChanges else { return true }
+
+        do {
+            try context.save()
+            return true
+        } catch {
+            errorMessage = "Failed to \(operation)"
+            #if DEBUG
+            print("❌ IngredientTemplateService: Failed to \(operation): \(error)")
+            #endif
+            context.rollback()
+            return false
         }
     }
 }

@@ -14,6 +14,7 @@ struct AddListItemView: View {
 
     // M7.3.4: Household service for filtering autocomplete by householdKey
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var weeklyListService: WeeklyListService
 
     let weeklyList: WeeklyList
     
@@ -308,52 +309,42 @@ struct AddListItemView: View {
                 .first(where: { $0.name?.lowercased() == parsed.name.lowercased() })
         }
         
-        let listItem = GroceryListItem(context: viewContext)
-        listItem.id = UUID()
-        listItem.name = parsed.displayName
-        listItem.displayText = structured.displayText
-        listItem.numericValue = structured.numericValue ?? 0.0
-        listItem.standardUnit = structured.standardUnit
-        listItem.isParseable = structured.isParseable
-        // Autocomplete-selected items are user-validated — floor confidence
-        listItem.parseConfidence = selectedTemplate != nil
+        let confidence = selectedTemplate != nil
             ? max(structured.parseConfidence, 0.8)
             : structured.parseConfidence
-        listItem.categoryName = selectedCategory
-        listItem.source = "manual"
-        listItem.isCompleted = false
-        listItem.weeklyList = weeklyList
-        listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
 
-        do {
-            try viewContext.save()
+        let listItem = weeklyListService.addItem(
+            to: weeklyList, name: parsed.displayName,
+            categoryName: selectedCategory,
+            numericValue: structured.numericValue ?? 0.0,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: confidence, source: "manual"
+        )
+
+        if let listItem = listItem {
             #if DEBUG
             print("✅ Added item to list: \(parsed.displayName)")
             #endif
 
-            // PHASE 3: Check if this is a new ingredient
             if selectedTemplate == nil {
                 #if DEBUG
                 print("   ℹ️ New ingredient detected: \(parsed.name)")
                 #endif
-
-                // Track item so saveToTemplates can update its category
                 lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = selectedCategory
                 markAsStaple = false
-
-                // Show the add to templates sheet
                 showingAddToTemplates = true
             } else {
                 #if DEBUG
                 print("   ✓ Matched to existing template: \(selectedTemplate?.name ?? "unknown")")
                 #endif
-                dismiss() // Close immediately if template exists
+                dismiss()
             }
-            
-        } catch {
-            errorMessage = "Failed to add item: \(error.localizedDescription)"
+        } else {
+            errorMessage = weeklyListService.errorMessage ?? "Failed to add item"
             showingError = true
         }
     }
@@ -370,22 +361,17 @@ struct AddListItemView: View {
             lastAddedItem = nil
         }
 
-        do {
-            if viewContext.hasChanges {
-                try viewContext.save()
-            }
-            #if DEBUG
-            print("✅ Created new ingredient template: \(newIngredientName)")
-            #endif
+        weeklyListService.saveContext()
+        #if DEBUG
+        print("✅ Created new ingredient template: \(newIngredientName)")
+        #endif
 
-            showingAddToTemplates = false
-            dismiss()
-
-        } catch {
-            errorMessage = "Failed to save ingredient: \(error.localizedDescription)"
+        if let error = weeklyListService.errorMessage {
+            errorMessage = error
             showingError = true
-            showingAddToTemplates = false
         }
+        showingAddToTemplates = false
+        dismiss()
     }
 }
 

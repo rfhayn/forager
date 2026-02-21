@@ -1,12 +1,56 @@
 # Current Development Story
 
 **Last Updated**: February 20, 2026
-**Status**: M15 ✅ **COMPLETE** (bug fixes done) | M7.7 📋 **READY** | M8.4 📋 **READY** (PRD written)
-**Total Progress**: ~215 hours | 89% planning accuracy
-**Current Branch**: `feature/M15-ux-design-system`
-**Current Milestone**: M15 - UX Design System & Visual Refresh — **ALL PHASES COMPLETE + BUG FIXES DONE**
+**Status**: M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY** (PRD written)
+**Total Progress**: ~220 hours | 89% planning accuracy
+**Current Branch**: `feature/M7.5-service-ownership` (ready for PR)
+**Current Milestone**: M7.5 - Architecture Hardening — **ALL 3 PHASES COMPLETE**
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: Merge M15 → M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 → M9 remaining → M10+
+**Next Priority**: Merge M7.5 → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M7.5: ARCHITECTURE HARDENING - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 20, 2026
+**Branch**: `feature/M7.5-service-ownership`
+**PRD**: `docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md`
+
+### **What Was Delivered** ✅
+
+Complete architecture hardening across 3 phases — service layer ownership, navigation cleanup, and test/polish.
+
+**Phase 1: Service Ownership of Saves**
+- Created `RecipeService` and `WeeklyListService`; extended `IngredientTemplateService`
+- 24 unit tests across 3 test files
+- Integration tests for parse → service → persist pipeline
+- 35 direct `context.save()` calls eliminated from 13 production views
+
+**Phase 2: Navigation Cleanup**
+- 3 highest-complexity views converted to enum-based sheet/alert routing
+- IngredientsView, CreateRecipeView, EditRecipeView
+
+**Phase 3: Tests & Polish**
+- 2 remaining ad-hoc empty states → `ContentUnavailableView`
+- 5 Core Data invariant tests
+
+### **Commits**
+1. `f1b96aa` — M7.5: Create RecipeService, WeeklyListService, extend IngredientTemplateService
+2. `a227b4c` — M7.5: Add service unit tests — 24 tests across 3 test files
+3. `24595a8` — M7.5: Add integration tests for parse → service → persist pipeline
+4. `cf81f65` — M7.5: Wire 13 production views to service layer, eliminate 35 direct saves
+5. `ea75dcf` — M7.5: Convert 3 views to enum-based sheet/alert routing
+6. `b913fe3` — M7.5: Add empty state cleanup and Core Data invariant tests
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean builds across all phases |
+| Unit tests | ✅ 24 PASSING | Service unit tests |
+| Integration | ✅ PASSING | Parse → service → persist pipeline |
+| Invariant tests | ✅ 5 PASSING | Core Data relationship integrity |
 
 ---
 
@@ -1093,10 +1137,12 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.5: Architecture Hardening | 📋 READY | 14-19h |
-| M6: Testing Foundation | PLANNED | 12-18h |
-| M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
-| M9: Technical Debt | PLANNED | 135-165h |
+| M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
+| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
+| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M7.7: App Store Submission | 📋 QUEUED | 3-5h |
+| M6: Testing Foundation | PLANNED | 20-30h |
+| M9: Remaining Technical Debt | PLANNED | ~120h |
 | M10: Analytics & Insights | PLANNED | 8-12h |
 | M11-M14: Advanced Features | FUTURE | 40-60h |
 
@@ -1113,8 +1159,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 17, 2026 - M15.7 Dark Mode, Accessibility & Final QA complete
-**Next Action**: Push branch, create PR, squash merge M15 to main. Then TestFlight push → M7.7 App Store Submission
-**Branch**: `feature/M15-ux-design-system` (local, not pushed)
-**Confidence**: **GREEN** (TestFlight live, M15 ALL 8 PHASES COMPLETE, ready for merge)
-**Version**: February 17, 2026 - M15 COMPLETE, M7.7 Queued Post-M15
+**Last Session**: February 20, 2026 - M7.5 Architecture Hardening complete (all 3 phases)
+**Next Action**: Create PR for M7.5, squash merge to main. Then M9-prereqs → M8.4 → M7.7
+**Branch**: `feature/M7.5-service-ownership` (pushed, ready for PR)
+**Confidence**: **GREEN** (M7.5 ALL 3 PHASES COMPLETE, 6 commits, clean build)
+**Version**: February 20, 2026 - M7.5 COMPLETE, M9-prereqs Next

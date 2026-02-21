@@ -8,6 +8,7 @@ struct AddIngredientView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     @State private var name = ""
     @State private var selectedCategory = "Uncategorized"
@@ -66,24 +67,14 @@ struct AddIngredientView: View {
             displayName: trimmedName,
             in: viewContext
         )
-        
+
         // Update properties (repository handles displayName and canonicalName)
-        ingredient.category = selectedCategory == "Uncategorized" ? nil : selectedCategory
-        ingredient.isStaple = isStaple
-        
-        // If this was an existing template, update its metadata
-        if ingredient.dateCreated == nil {
-            ingredient.dateCreated = Date()
-        }
-        ingredient.updatedAt = Date()
-        
-        do {
-            try viewContext.save()
+        let category = selectedCategory == "Uncategorized" ? nil : selectedCategory
+        ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
+            category: category, isStaple: isStaple)
+
+        if ingredientTemplateService.errorMessage == nil {
             dismiss()
-        } catch {
-            #if DEBUG
-            print("Error saving ingredient: \(error)")
-            #endif
         }
     }
 }

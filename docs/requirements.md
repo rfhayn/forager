@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
 **Last Updated**: February 20, 2026
-**Version**: 6.5
-**Current Milestone**: M15 ✅ COMPLETE | M7.7 📋 QUEUED | M8.4 📋 READY
-**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Version**: 6.6
+**Current Milestone**: M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9-prereqs 📋 NEXT | M8.4 📋 READY
+**Execution Order**: M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -452,10 +452,10 @@ _Moved from M7.5 to M8.1. Completed February 7, 2026. See M8 section for full de
 | **NFR-PR-002** | **Telemetry write < 0.1s** | Non-blocking telemetry logging | M7.5.3 | 🎯 **No UX impact** |
 
 **M7 Summary**: 52 total requirements
-- **Complete (38)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Error handling & stability (5 from M7.3.4), UI polish (2 from M7.4), Pre-launch prep (6 from M7.6.1-M7.6.6), TestFlight & beta (4 from M7.6.7-M7.6.8)
-- **In Progress (14)**: Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), App Store submission (4 from M7.7)
-- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅, M7.3.4 ✅, M7.4 ✅, M7.6 ✅
-- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working. TestFlight live with external testers. Cross-device owner display name verified.
+- **Complete (41)**: App Store prerequisites (4), CloudKit sync foundation (9), Household foundation (3 from M7.2.1), Shared data architecture (6 from M7.2.3), Member invitation & leave flow (3 from M7.2.2), Household rename (1 from M7.3.1), Remove member & delete household (1 from M7.3.3), Error handling & stability (5 from M7.3.4), UI polish (2 from M7.4), Pre-launch prep (6 from M7.6.1-M7.6.6), TestFlight & beta (4 from M7.6.7-M7.6.8), Architecture hardening (3 from M7.5)
+- **In Progress (11)**: Repository hardening (4 from M7.2.3 remaining), Conflict resolution (5), Sync UI polish (5), App Store submission (4 from M7.7) minus 7 completed in M7.5
+- **Progress**: M7.0 ✅, M7.1 ✅, M7.2.1 ✅, CloudKit Debugging ✅, M7.2.3 ✅, M7.2.2 ✅, M7.3.1 ✅, M7.3.3 ✅, M7.3.4 ✅, M7.4 ✅, M7.5 ✅, M7.6 ✅
+- **Achievement**: Full household collaboration operational — create, invite, join, leave, rejoin, remove member, delete household all working. TestFlight live with external testers. Service layer ownership enforced, navigation patterns standardized.
 - **Next**: M7.7 App Store Submission & Public Presence
 
 ---

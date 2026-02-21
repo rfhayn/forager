@@ -8,6 +8,7 @@ struct CategoryChangeModal: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     // Data
     let ingredientTemplates: [IngredientTemplate]
@@ -274,19 +275,14 @@ struct CategoryChangeModal: View {
         }
         
         // Save changes
-        do {
-            try viewContext.save()
-            DispatchQueue.main.async {
-                self.isLoading = false
+        ingredientTemplateService.saveContext()
+        DispatchQueue.main.async {
+            self.isLoading = false
+            if let error = self.ingredientTemplateService.errorMessage {
+                self.errorMessage = error
+            } else {
                 self.onAssignmentsComplete()
                 self.dismiss()
-            }
-        } catch {
-            // Roll back changes on error
-            viewContext.rollback()
-            DispatchQueue.main.async {
-                self.isLoading = false
-                self.errorMessage = "Failed to assign categories: \(error.localizedDescription)"
             }
         }
     }

@@ -5,6 +5,7 @@ struct CategoryAssignmentModal: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     // Data
     let uncategorizedTemplates: [IngredientTemplate]
@@ -257,34 +258,28 @@ struct CategoryAssignmentModal: View {
         }
         
         // Save changes
-        do {
-            try viewContext.save()
-            DispatchQueue.main.async {
-                self.isLoading = false
+        ingredientTemplateService.saveContext()
+        DispatchQueue.main.async {
+            self.isLoading = false
+            if let error = self.ingredientTemplateService.errorMessage {
+                self.errorMessage = error
+            } else {
                 self.onAssignmentsComplete()
                 self.dismiss()
             }
-        } catch {
-            DispatchQueue.main.async {
-                self.isLoading = false
-                self.errorMessage = "Failed to assign categories: \(error.localizedDescription)"
-            }
         }
     }
-    
+
     private func skipAssignment() {
-        // Keep all templates as "Uncategorized" - don't change their category
         for template in uncategorizedTemplates {
             template.category = "Uncategorized"
         }
-        
-        // Save changes
-        do {
-            try viewContext.save()
+        ingredientTemplateService.saveContext()
+        if let error = ingredientTemplateService.errorMessage {
+            errorMessage = error
+        } else {
             onAssignmentsComplete()
             dismiss()
-        } catch {
-            errorMessage = "Failed to save changes: \(error.localizedDescription)"
         }
     }
 }

@@ -5,6 +5,7 @@ struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var recipeServiceM75: RecipeService
 
     @Binding var popToRoot: Bool
 
@@ -780,39 +781,22 @@ struct RecipeListView: View {
     
     // Helper function to create a recipe with ingredients
     private func createRecipe(title: String, instructions: String, servings: Int16, prepTime: Int16, cookTime: Int16, ingredients: [String]) {
-        let newRecipe = Recipe(context: viewContext)
-        newRecipe.id = UUID()
-        newRecipe.title = title
-        newRecipe.instructions = instructions
-        newRecipe.servings = servings
-        newRecipe.prepTime = prepTime
-        newRecipe.cookTime = cookTime
-        newRecipe.usageCount = 0
-        newRecipe.dateCreated = Date()
-        newRecipe.isFavorite = false
-        
-        do {
-            try viewContext.save()
+        guard let newRecipe = recipeServiceM75.createRecipe(
+            title: title, servings: servings, prepTime: prepTime, cookTime: cookTime,
+            instructions: instructions
+        ) else {
             #if DEBUG
-            print("✅ Saved recipe: '\(title)'")
+            print("❌ Error creating recipe '\(title)'")
             #endif
-            
-            addIngredientsWithParsing(to: newRecipe, ingredients: ingredients, in: viewContext)
-            #if DEBUG
-            print("   - Created \(ingredients.count) ingredients for '\(title)'")
-            #endif
-            
-            try viewContext.save()
-            #if DEBUG
-            print("✅ Saved ingredients for: '\(title)'")
-            #endif
-        } catch {
-            #if DEBUG
-            print("❌ Error creating recipe '\(title)': \(error)")
-            print("   Error details: \(error.localizedDescription)")
-            #endif
-            viewContext.rollback()
+            return
         }
+
+        addIngredientsWithParsing(to: newRecipe, ingredients: ingredients, in: viewContext)
+        recipeServiceM75.saveContext()
+
+        #if DEBUG
+        print("✅ Saved recipe with \(ingredients.count) ingredients: '\(title)'")
+        #endif
     }
     
     private func addIngredientsWithParsing(to recipe: Recipe, ingredients: [String], in context: NSManagedObjectContext) {
@@ -936,6 +920,7 @@ struct RecipeDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var recipeServiceM75: RecipeService
 
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
@@ -1038,13 +1023,7 @@ struct RecipeDetailView: View {
         }
         .confirmationDialog("Mark Recipe as Used?", isPresented: $showingMarkUsedConfirmation) {
             Button("Yes, Mark as Used") {
-                recipe.recordRecipeUsage()
-                do {
-                    try viewContext.save()
-                } catch {
-                    errorMessage = "Failed to save: \(error.localizedDescription)"
-                    showingError = true
-                }
+                recipeServiceM75.markAsUsed(recipe)
             }
             Button("Cancel", role: .cancel) {}
         } message: {

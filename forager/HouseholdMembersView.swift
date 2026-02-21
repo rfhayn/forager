@@ -43,12 +43,10 @@ struct HouseholdMembersView: View {
                 }
                 .padding()
             } else if participants.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "person.slash")
-                        .font(.largeTitle)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                    Text("No members found")
-                        .font(.headline)
+                ContentUnavailableView {
+                    Label("No Members Found", systemImage: "person.slash")
+                } description: {
+                    Text("Members will appear here once they join your household")
                 }
             } else {
                 List {

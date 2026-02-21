@@ -13,6 +13,7 @@ import CoreData
 // Allows user to adjust recipe servings before adding to list
 struct SelectListSheet: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var weeklyListService: WeeklyListService
     @Environment(\.dismiss) private var dismiss
     
     // M4.3.3: Callback when user selects a list with adjusted servings
@@ -279,20 +280,9 @@ struct SelectListSheet: View {
     }
     
     private func createNewList() {
-        let newList = WeeklyList(context: viewContext)
-        newList.id = UUID()
-        newList.name = "Shopping List - \(formatDate(Date()))"
-        newList.dateCreated = Date()
-        newList.isCompleted = false
-        
-        do {
-            try viewContext.save()
+        if let newList = weeklyListService.createList(name: "Shopping List - \(formatDate(Date()))") {
             onSelect(newList, adjustedServings)
             dismiss()
-        } catch {
-            #if DEBUG
-            print("Error creating new list: \(error)")
-            #endif
         }
     }
     

@@ -13,6 +13,7 @@ struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var weeklyListService: WeeklyListService
 
     @ObservedObject var weeklyList: WeeklyList
 
@@ -331,26 +332,15 @@ struct GroceryListDetailView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: ForagerTheme.Spacing.xl) {
-            Image(systemName: "cart")
-                .font(.system(size: 60))
-                .foregroundStyle(ForagerTheme.accentPrimary)
-
-            VStack(spacing: ForagerTheme.Spacing.md) {
-                Text("Empty List")
-                    .font(ForagerTheme.cardTitle)
-                Text("Add some items to get started shopping!")
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                    .multilineTextAlignment(.center)
-            }
-
+        ContentUnavailableView {
+            Label("Empty List", systemImage: "cart")
+        } description: {
+            Text("Add some items to get started shopping!")
+        } actions: {
             Button(action: { showingAddItem = true }) {
-                Label("Add Item", systemImage: "plus.circle.fill")
+                Text("Add Item")
             }
-            .buttonStyle(ForagerPrimaryButtonStyle())
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Celebration Banner
@@ -398,15 +388,9 @@ struct GroceryListDetailView: View {
         let originalDate = item.dateCompleted
 
         withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
-            item.isCompleted.toggle()
-            item.dateCompleted = item.isCompleted ? Date() : nil
-
-            do {
-                try viewContext.save()
-            } catch {
-                item.isCompleted = originalCompleted
-                item.dateCompleted = originalDate
-                errorMessage = "Failed to save: \(error.localizedDescription)"
+            weeklyListService.toggleItemChecked(item)
+            if let error = weeklyListService.errorMessage {
+                errorMessage = error
                 showingError = true
             }
         }
@@ -435,26 +419,17 @@ struct GroceryListDetailView: View {
     }
 
     private func deleteItem(_ item: GroceryListItem) {
-        viewContext.delete(item)
-        do {
-            try viewContext.save()
-        } catch {
-            viewContext.rollback()
-            errorMessage = "Failed to delete item: \(error.localizedDescription)"
+        weeklyListService.removeItem(item)
+        if let error = weeklyListService.errorMessage {
+            errorMessage = error
             showingError = true
         }
     }
 
     private func markAllItemsComplete() {
-        for item in listItems where !item.isCompleted {
-            item.isCompleted = true
-            item.dateCompleted = Date()
-        }
-        do {
-            try viewContext.save()
-        } catch {
-            viewContext.rollback()
-            errorMessage = "Failed to mark all complete: \(error.localizedDescription)"
+        weeklyListService.markAllItemsComplete(in: weeklyList)
+        if let error = weeklyListService.errorMessage {
+            errorMessage = error
             showingError = true
         }
     }
@@ -499,28 +474,21 @@ struct GroceryListDetailView: View {
             categoryToUse = defaultCategory
         }
 
-        let listItem = GroceryListItem(context: viewContext)
-        listItem.id = UUID()
-        listItem.name = trimmedText
-        listItem.displayText = structured.displayText
-        listItem.numericValue = structured.numericValue ?? 0.0
-        listItem.standardUnit = structured.standardUnit
-        listItem.isParseable = structured.isParseable
-        // Autocomplete-selected items are user-validated — floor confidence
-        listItem.parseConfidence = selectedTemplate != nil
+        let confidence = selectedTemplate != nil
             ? max(structured.parseConfidence, 0.8)
             : structured.parseConfidence
-        listItem.categoryName = categoryToUse
-        listItem.source = "manual"
-        listItem.isCompleted = false
-        listItem.weeklyList = weeklyList
-        listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
 
-        do {
-            try viewContext.save()
+        let listItem = weeklyListService.addItem(
+            to: weeklyList, name: trimmedText, categoryName: categoryToUse,
+            numericValue: structured.numericValue ?? 0.0,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: confidence, source: "manual"
+        )
 
+        if let listItem = listItem {
             if selectedTemplate == nil {
-                // Track item so saveToTemplates can update its category
                 lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = categoryToUse
@@ -529,13 +497,11 @@ struct GroceryListDetailView: View {
                     self.showingAddToTemplates = true
                 }
             }
-
             quickAddText = ""
             selectedTemplate = nil
             showingAutocomplete = false
-        } catch {
-            viewContext.rollback()
-            errorMessage = "Failed to add item: \(error.localizedDescription)"
+        } else {
+            errorMessage = weeklyListService.errorMessage ?? "Failed to add item"
             showingError = true
         }
     }
@@ -598,14 +564,12 @@ struct GroceryListDetailView: View {
             lastAddedItem = nil
         }
 
-        do {
-            if viewContext.hasChanges { try viewContext.save() }
-            showingAddToTemplates = false
-        } catch {
-            errorMessage = "Failed to save ingredient: \(error.localizedDescription)"
+        weeklyListService.saveContext()
+        if let error = weeklyListService.errorMessage {
+            errorMessage = error
             showingError = true
-            showingAddToTemplates = false
         }
+        showingAddToTemplates = false
     }
 }
 
