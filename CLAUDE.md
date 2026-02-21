@@ -169,7 +169,7 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 ### Design System (ForagerTheme) — Established M15
 
 **All visual changes must follow the design system.** Before making visual changes, consult:
-- `docs/prds/active/m15-ux-design-system.md` — Color tokens, typography, component specs
+- `docs/prds/complete/m15-ux-design-system.md` — Color tokens, typography, component specs
 - `docs/mockups/forager-design-system.html` — 16 phone-frame HTML mockups (open in browser)
 
 **Design rules:**

@@ -656,7 +656,7 @@ With M5.0 completion, Forager is now:
 **Status**: 🔜 Deferred (executing after M7)
 **Estimated Time**: 20-30 hours
 **Execution Plan**: M7 (CloudKit + External Beta) → M6 (Testing Foundation) → M8 (Parsing)
-**PRD**: docs/prds/milestone-6-testing-foundation-ai-augmentation.md
+**PRD**: docs/prds/active/milestone-6-testing-foundation-ai-augmentation.md
 
 **Why Deferred?**
 Originally planned after M5, M6 was strategically deferred to execute after M7 completes:
@@ -777,7 +777,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
   - 2 ad-hoc empty states → ContentUnavailableView
   - 5 Core Data invariant tests
 
-**PRD**: [docs/prds/m7.5-architecture-hardening-ux-service-cleanup.md](prds/m7.5-architecture-hardening-ux-service-cleanup.md)
+**PRD**: [docs/prds/complete/m7.5-architecture-hardening-ux-service-cleanup.md](prds/complete/m7.5-architecture-hardening-ux-service-cleanup.md)
 
 **M7.6: Pre-Launch Prep & TestFlight Submission (~12 hours) — ✅ COMPLETE**
 - **M7.6.1**: App Configuration (0.5h) — ✅ COMPLETE (iOS 18.0 target, branded launch screen with light/dark)
@@ -983,7 +983,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 **Status**: ⏳ Planned
 **Estimated Time**: 135-165 hours total
 **Dependencies**: M7 complete (external beta launched)
-**PRD**: [M9 Technical Debt PRD](prds/m9-technical-debt-codebase-optimization.md)
+**PRD**: [M9 Technical Debt PRD](prds/active/m9-technical-debt-codebase-optimization.md)
 
 **Overview**: Comprehensive technical debt remediation and codebase optimization before scaling to advanced features. Reduces codebase by ~2,000 lines, improves performance 50-80%, and establishes architectural patterns for long-term maintainability.
 
@@ -1078,8 +1078,8 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 **Estimated Time**: 63-65 hours total
 **Dependencies**: iOS 26 SDK available
 **Design Artifacts**: PRD v1.2, 16 phone-frame mockups, 5-phase design review complete
-**PRD**: [M15 UX Design System PRD](prds/active/m15-ux-design-system.md)
-**Implementation Plans**: [docs/prds/active/plans/](prds/active/plans/) — 8 detailed plans, cross-validated against codebase APIs, reviewed by Gemini + ChatGPT
+**PRD**: [M15 UX Design System PRD](prds/complete/m15-ux-design-system.md)
+**Implementation Plans**: [docs/prds/complete/plans/](prds/complete/plans/) — 8 detailed plans, cross-validated against codebase APIs, reviewed by Gemini + ChatGPT
 
 **Overview**: Comprehensive visual refresh with warm earth-tone palette, SF Pro Rounded typography, and full iOS 26 Liquid Glass adoption. Raises deployment target from iOS 18 to iOS 26. Replaces custom bottom navigation with native Liquid Glass TabView. Sequential 8-phase execution: M15.1 → M15.2 → M15.3 → M15.4 → M15.5 → M15.5b → M15.6 → M15.7.
 
@@ -1377,7 +1377,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 - [Current Story](current-story.md) - M5.0 complete, M7 in progress
 - [Requirements Document](requirements.md) - All M1-M14 requirements documented
 - [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md) - Ingredient parsing intelligence (4 phases)
-- [M9 PRD](prds/m9-technical-debt-codebase-optimization.md) - Technical debt & codebase optimization
+- [M9 PRD](prds/active/m9-technical-debt-codebase-optimization.md) - Technical debt & codebase optimization
 
 ### **Completed Milestones:**
 - [M1 Learning Notes](learning-notes/01-10-milestone-1-phases.md)

@@ -516,7 +516,7 @@ When implementing M7.5 Phase 1, use this checklist for each service:
 
 ## 🔗 Related Documents
 
-- [M7.5 PRD](../prds/m7.5-architecture-hardening-ux-service-cleanup.md) - Full implementation plan
+- [M7.5 PRD](../prds/complete/m7.5-architecture-hardening-ux-service-cleanup.md) - Full implementation plan
 - [ADR 008: Shared Zone Architecture](008-shared-zone-architecture.md) - Dual-store context
 - [session-startup-checklist.md](../session-startup-checklist.md) - Reference during sessions
 
