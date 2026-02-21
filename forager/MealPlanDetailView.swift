@@ -20,7 +20,6 @@ struct MealPlanDetailView: View {
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
 
-    @State private var allRecipes: [Recipe] = []
     @State private var refreshID = UUID()
 
     // Bulk add state
@@ -38,9 +37,8 @@ struct MealPlanDetailView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
 
-    // Swap
-    @State private var swapDate: Date?
-    @State private var showSwapPicker = false
+    // M9.0.1: Recipe picker (replaces Menu popover + inline swap picker)
+    @State private var recipePickerPayload: RecipePickerPayload?
 
     struct BulkAddResults {
         let totalRecipes: Int
@@ -92,7 +90,6 @@ struct MealPlanDetailView: View {
         }
         .navigationTitle(mealPlan.name ?? "Meal Plan")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { loadAllRecipes() }
         .overlay {
             if isBulkAdding { bulkAddOverlay }
         }
@@ -108,8 +105,23 @@ struct MealPlanDetailView: View {
             )
             .environment(\.managedObjectContext, viewContext)
         }
-        .sheet(isPresented: $showSwapPicker) {
-            recipePickerSheet
+        .sheet(item: $recipePickerPayload) { payload in
+            RecipePickerSheet(
+                date: payload.date,
+                mealPlan: payload.mealPlan,
+                onRecipeSelected: { recipe, servings in
+                    // M9.0.1: Remove existing meal first (swap case), then add new
+                    if let existingMeal = plannedMeal(for: payload.date) {
+                        removePlannedMeal(existingMeal)
+                    }
+                    _ = MealPlanService.shared.addRecipeToMealPlan(
+                        recipe: recipe, date: payload.date,
+                        mealPlan: mealPlan, servings: Int16(servings)
+                    )
+                }
+            )
+            .environment(\.managedObjectContext, viewContext)
+            .environmentObject(householdService)
         }
         .alert("Remove \(mealToRemove?.recipe?.title ?? mealToRemove?.quickOption ?? "meal")?",
                isPresented: $showRemoveAlert) {
@@ -285,8 +297,7 @@ struct MealPlanDetailView: View {
             // Swap
             Button {
                 if let date = meal.date {
-                    swapDate = date
-                    showSwapPicker = true
+                    recipePickerPayload = RecipePickerPayload(date: date, mealPlan: mealPlan)
                 }
             } label: {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -329,15 +340,9 @@ struct MealPlanDetailView: View {
 
     private func unplannedDayContent(for date: Date) -> some View {
         VStack(spacing: ForagerTheme.Spacing.md) {
-            // Recipe picker
-            Menu {
-                ForEach(allRecipes.prefix(20), id: \.objectID) { recipe in
-                    Button {
-                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
-                    } label: {
-                        Label(recipe.recipeDisplayTitle, systemImage: "fork.knife")
-                    }
-                }
+            // M9.0.1: Recipe picker — presents searchable sheet instead of Menu popover
+            Button {
+                recipePickerPayload = RecipePickerPayload(date: date, mealPlan: mealPlan)
             } label: {
                 HStack {
                     Text("Choose Recipe")
@@ -411,44 +416,6 @@ struct MealPlanDetailView: View {
         .background(.regularMaterial)
     }
 
-    // MARK: - Recipe Picker Sheet
-
-    private var recipePickerSheet: some View {
-        NavigationStack {
-            List(allRecipes.prefix(30), id: \.objectID) { recipe in
-                Button {
-                    if let date = swapDate {
-                        // Remove existing meal first
-                        if let existing = plannedMeal(for: date) {
-                            removePlannedMeal(existing)
-                        }
-                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
-                    }
-                    showSwapPicker = false
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                            Text(recipe.recipeDisplayTitle)
-                                .font(ForagerTheme.bodyFont)
-                                .foregroundStyle(ForagerTheme.textPrimary)
-                            Text(recipe.recipeServingsDescription)
-                                .font(ForagerTheme.captionFont)
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                        }
-                        Spacer()
-                    }
-                }
-            }
-            .navigationTitle("Choose Recipe")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showSwapPicker = false }
-                }
-            }
-        }
-    }
-
     // MARK: - Bulk Add Overlay
 
     private var bulkAddOverlay: some View {
@@ -503,30 +470,6 @@ struct MealPlanDetailView: View {
     }
 
     // MARK: - Actions
-
-    private func loadAllRecipes() {
-        let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
-        if let householdKey = householdService.currentHouseholdKey {
-            fetchRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        } else {
-            fetchRequest.predicate = NSPredicate(format: "householdKey == nil")
-        }
-        do {
-            allRecipes = try viewContext.fetch(fetchRequest)
-        } catch {
-            allRecipes = []
-        }
-    }
-
-    private func addRecipeToDay(recipe: Recipe, date: Date, servings: Int) {
-        if let existingMeal = plannedMeal(for: date) {
-            removePlannedMeal(existingMeal)
-        }
-        _ = MealPlanService.shared.addRecipeToMealPlan(
-            recipe: recipe, date: date, mealPlan: mealPlan, servings: Int16(servings)
-        )
-    }
 
     private func assignQuickOption(_ option: PlannedMeal.QuickOption, to date: Date) {
         _ = MealPlanService.shared.setQuickOption(option, for: date, in: mealPlan)

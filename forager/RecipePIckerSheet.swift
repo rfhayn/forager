@@ -30,8 +30,9 @@ struct RecipePickerSheet: View {
     // M4.2.1-3: Meal plan to add recipe to
     var mealPlan: MealPlan
     
-    // M4.2.1-3: Closure called when recipe is selected
-    var onRecipeSelected: (Recipe) -> Void
+    // M9.0.1: Closure called when recipe is selected (recipe + servings)
+    // Parent handles mutation (save, swap removal) — this is a pure picker
+    var onRecipeSelected: (Recipe, Int) -> Void
     
     // M4.2.1-3: Controls sheet dismissal
     @Environment(\.dismiss) private var dismiss
@@ -235,27 +236,11 @@ struct RecipePickerSheet: View {
         selectedServings[recipeID] = servings
     }
     
-    // M4.2.1-3: Handle recipe selection
-    // Adds recipe to meal plan and dismisses sheet
+    // M9.0.1: Handle recipe selection — pure picker, parent handles mutation
     private func handleRecipeSelection(_ recipe: Recipe) {
         let servings = getServings(for: recipe)
-        
-        // Add recipe to meal plan via service
-        if let _ = MealPlanService.shared.addRecipeToMealPlan(
-            recipe: recipe,
-            date: date,
-            mealPlan: mealPlan,
-            servings: Int16(servings)
-        ) {
-            // Success - notify parent and dismiss
-            onRecipeSelected(recipe)
-            dismiss()
-        } else {
-            // Error adding recipe
-            #if DEBUG
-            print("Error adding recipe to meal plan")
-            #endif
-        }
+        onRecipeSelected(recipe, servings)
+        dismiss()
     }
 }
 
@@ -376,7 +361,7 @@ struct RecipePickerSheet_Previews: PreviewProvider {
         return RecipePickerSheet(
             date: Date(),
             mealPlan: mealPlan,
-            onRecipeSelected: { _ in }
+            onRecipeSelected: { _, _ in }
         )
         .environment(\.managedObjectContext, context)
     }
