@@ -175,4 +175,40 @@ final class ParsingIntegrationTests: XCTestCase {
         XCTAssertNotNil(ingredient, "Service should work with injected parsing service")
         XCTAssertTrue(ingredient?.isParseable ?? false)
     }
+
+    // MARK: - M9.5: Mock Parser Injection Demo
+
+    /// Test 6: Mock parser can be injected through the full chain
+    /// Demonstrates that M9.5 DI infrastructure works end-to-end:
+    /// MockIngredientParser → IngredientParsingService → RecipeService
+    @MainActor
+    func testMockParserInjectionThroughFullChain() {
+        // Create a mock parser that returns predictable results
+        let mockParser = MockIngredientParser(name: "test-mock")
+        mockParser.setResult(for: "test ingredient",
+                             name: "mock ingredient",
+                             quantity: 99.0, unit: "mock-units",
+                             confidence: 0.42)
+
+        // Inject mock through the full chain
+        let mockParsingService = IngredientParsingService(
+            context: context,
+            templateService: templateService,
+            parser: mockParser
+        )
+
+        // Parse through the service — should use our mock
+        let parsed = mockParsingService.parseToStructured(text: "test ingredient")
+
+        XCTAssertEqual(parsed.numericValue ?? 0, 99.0, accuracy: 0.01,
+                       "Mock parser's quantity should flow through")
+        XCTAssertEqual(parsed.standardUnit, "mock-units",
+                       "Mock parser's unit should flow through")
+        XCTAssertEqual(parsed.parseConfidence, 0.42, accuracy: 0.01,
+                       "Mock parser's confidence should flow through")
+        XCTAssertEqual(mockParser.parseCalls.count, 1,
+                       "Mock should have been called exactly once")
+        XCTAssertEqual(mockParser.parseCalls.first, "test ingredient",
+                       "Mock should have received the original input")
+    }
 }

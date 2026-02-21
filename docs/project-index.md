@@ -2,10 +2,10 @@
 
 **Last Updated**: February 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M9.1.2 ✅ COMPLETE | M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9.5-partial 📋 **NEXT** | M8.4 📋 **READY**
-**Current Phase**: M9.1.2 ✅ **COMPLETE** (centralized parser name extraction) | M9.5-partial 📋 **NEXT**
-**Next Priority**: M9.5-partial → M8.4 → M7.7 App Store
-**Execution Order**: M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M9.5-partial ✅ COMPLETE | M9.1.2 ✅ COMPLETE | M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M8.4 📋 **NEXT**
+**Current Phase**: M9.5-partial ✅ **COMPLETE** (parser dependency injection) | M8.4 📋 **NEXT**
+**Next Priority**: M8.4 → M7.7 App Store
+**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -51,10 +51,9 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
-### **February 21, 2026** - M9.1.2 COMPLETE ✅ + M9.5-partial Planned
-- **Completed**: Centralized `extractCleanIngredientName` — two diverging view-layer regex implementations (40 + 18 lines) replaced by single static method delegating to HybridIngredientParser. Fixed merge normalization bug. 12 unit tests.
-- **Planned**: M9.5-partial (Parser DI) — detailed 6-phase execution plan in M9 PRD, cross-validated against M8.4 expectations
-- **Previous**: M9.0 Warning Resolution — 18 compiler warnings resolved, zero-warning baseline
+### **February 21, 2026** - M9.5-partial COMPLETE ✅ — All M8.4 Prerequisites Done
+- **Completed**: Parser Dependency Injection — HybridIngredientParser and IngredientParsingService now have injectable constructors with backward-compatible defaults. MockIngredientParser + 9 routing tests. PRDs corrected for both M9 and M8.4.
+- **Previous**: M9.1.2 — centralized extractCleanIngredientName (12 unit tests), M9.0 — zero-warning baseline (18 warnings resolved)
   - 3 code quality fixes (redundant cast, immutable var, unused result)
 - **PRD Folder Cleanup**: 15 files moved — completed M7.5/M15 PRDs to `complete/`, upcoming M9/M6/M7.x to `active/`, 19 path references updated across 10 docs
 - **PRs**: #40 (PRD cleanup, merged), #41 (M9.0 warnings, merged)
@@ -432,7 +431,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~221 hours
+- **Total Development Time**: ~227 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)
@@ -465,8 +464,9 @@ _[Previous entries remain the same through December 23...]_
   - **M8.3**: Hybrid NLP parser with 7 pattern categories (~11h)
   - **M8.3.1**: Template hygiene, review badges, merge-on-rename (~3h)
   - **M8.3.2**: Auto-merge grocery quantities (~3h)
-  - **M8.4**: ML-powered parsing — 📋 READY (after M9.1.2 + M9.5-partial prerequisites)
-- **Total tests**: 146 unit tests across 7 test files
+  - **M9.5-partial**: ✅ COMPLETE (Feb 21, 2026) — Parser DI, mock parser, 9 routing tests
+- **M8.4**: ML-powered parsing — 📋 READY (all prerequisites complete)
+- **Total tests**: 155 unit tests across 8 test files
 
 ### **Technology Stack**
 - **Language**: Swift 6+
@@ -522,7 +522,7 @@ _[Previous entries remain the same through December 23...]_
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
-| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
+| M9-prereqs (M9.0, M9.1.2, M9.5-partial) | ✅ COMPLETE | ~6h |
 | M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
@@ -733,8 +733,8 @@ _[Previous entries remain the same through December 23...]_
 ### **Milestone Timeline Summary**
 
 **Core Platform (M1-M10)**:
-- **Completed (M1-M9.0, M15, M7.5)**: ~221 hours ✅
-- **Remaining**: M9.1.2, M9.5-partial, M8.4, M7.7, M6, M9 (remaining)
+- **Completed (M1-M9.5-partial, M15, M7.5)**: ~227 hours ✅
+- **Remaining**: M8.4, M7.7, M6, M9 (remaining)
 
 **Advanced Intelligence Platform (M11-M14)**: 40-60 hours total
 - Dependencies: M1-M10 complete
@@ -769,7 +769,8 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Documentation Update**: February 21, 2026 - Post-M15/M9.0 cleanup
-- ✅ M15, M7.5, M9.0 complete on main
-- ✅ All core docs synchronized (README, roadmap, project-index, current-story)
-- ✅ Next: M9.1.2 → M9.5-partial → M8.4 → M7.7
+**Documentation Update**: February 21, 2026 - Post-M9.5-partial
+- ✅ M15, M7.5, M9.0, M9.1.2, M9.5-partial complete on main
+- ✅ All M8.4 prerequisites complete — parser DI, mock infrastructure, routing tests
+- ✅ All core docs synchronized
+- ✅ Next: M8.4 → M7.7

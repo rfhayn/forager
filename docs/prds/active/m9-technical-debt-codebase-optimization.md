@@ -470,6 +470,7 @@ class HybridIngredientParser: IngredientParser {
 - All existing callers (`HybridIngredientParser()`) continue to work unchanged
 - Tests can inject mock parsers to verify routing behavior
 - M8.4 will add optional `mlParser: IngredientParser?` parameter and update `parse()` routing
+- Init should include breadcrumb comment: `// M8.4 will extend with: mlParser: IngredientParser? = nil`
 
 **Phase B: IngredientParsingService DI (30 min)**
 
@@ -500,7 +501,10 @@ class IngredientParsingService: ObservableObject {
 - All 11 existing instantiation sites continue to work (default parameter)
 - Tests can inject `MockIngredientParser` to isolate service logic from parsing
 
-**Phase C: MockIngredientParser + Routing Tests (1h)**
+**Phase C: MockIngredientParser + Routing Tests (1h 10 min)**
+
+Create `foragerTests/Mocks/` directory (does not exist yet). Must create a new `PBXGroup` entry
+in pbxproj and add it as child of foragerTests root group (`9B0555692EDB69CD00A57B34`).
 
 Create test infrastructure:
 
@@ -530,9 +534,11 @@ New test file: `foragerTests/Services/Parsing/HybridParserRoutingTests.swift`
 - Test: NLP ties with regex → hybrid tag applied
 - Test: zero-confidence both → NLP result returned
 
-**Phase D: Update Existing Test Files (45 min)**
+**Phase D: Verify Existing Tests (15 min)**
 
-Update test `setUp()` methods to pass through new init signatures:
+Run full test suite — all 146+ tests must pass with zero changes (defaults handle backward compat).
+Add one mock-injection demo test in `ParsingIntegrationTests.swift` showing a mock parser can be
+injected through the full chain. No changes to existing test setUp methods:
 
 | Test File | Change |
 |-----------|--------|
@@ -544,7 +550,11 @@ Update test `setUp()` methods to pass through new init signatures:
 
 Add to project file: MockIngredientParser.swift, HybridParserRoutingTests.swift
 
-**Phase E: QuantityMigrationService Update (15 min)**
+**Phase E: QuantityMigrationService Update (15 min) — OPTIONAL**
+
+> **Optional** — code cleanliness, not M8.4-blocking. `QuantityMigrationService` is a legacy M3
+> migration debug tool only instantiated in `MigrationDebugView.swift:22`. Skip if running short
+> on time.
 
 Accept `IngredientParsingService` via init instead of creating own:
 
@@ -554,13 +564,13 @@ init(context: NSManagedObjectContext) {
     self.parsingService = IngredientParsingService(context: context, templateService: ...)
 }
 
-// After (accepts via init)
-init(context: NSManagedObjectContext, parsingService: IngredientParsingService) {
-    self.parsingService = parsingService
+// After (accepts via init, backward-compatible default)
+init(context: NSManagedObjectContext, parsingService: IngredientParsingService? = nil) {
+    self.parsingService = parsingService ?? IngredientParsingService(context: context, templateService: ...)
 }
 ```
 
-Update `foragerApp.swift` to pass shared instance.
+Update `MigrationDebugView.swift:22` to pass shared instance (or use default).
 
 **Phase F: Build Verification + Documentation (30 min)**
 
@@ -591,6 +601,12 @@ Update `foragerApp.swift` to pass shared instance.
 - M8.4 Phase 5 passes `regexConfidenceThreshold: 0.9` (raised from 0.8)
 - M8.4 Phase 5 updates `parse()` routing: regex → ML → NLP (3-tier)
 - M8.4 Phase 6 uses `MockIngredientParser` for router testing
+
+**Post-M9.5 Action Item:**
+- M8.4 PRD Phase 5 should use `IngredientParser?` (protocol type) for `mlParser`, not
+  `MLIngredientParser?` (concrete type). This enables mock injection in M8.4 Phase 6 routing tests.
+
+**Revised Time Estimate**: ~3h 15min (Phase D reduced 45→15 min, Phase C +10 min for pbxproj Mocks group)
 
 **What's NOT in M9.5-partial (Deferred to M9.5-full):**
 - View-level injection (views still create their own IngredientParsingService)

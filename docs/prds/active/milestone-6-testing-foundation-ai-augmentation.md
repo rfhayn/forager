@@ -186,3 +186,50 @@ This milestone implements **Phase 1-2** of the [Agentic Test Strategy PRD](miles
 
 ---
 
+## Known Test Infrastructure Issues (Pre-M6 Audit, February 2026)
+
+These issues were discovered during M9.5-partial and must be resolved as part of M6.1 before writing new tests. They affect test reliability and process stability.
+
+### Issue 1: NSManagedObjectModel Accumulation (Process Crash)
+
+**Symptom**: After several tests run, Core Data warnings escalate:
+```
+Multiple NSEntityDescriptions claim the NSManagedObject subclass 'Recipe' so +entity is unable to disambiguate.
+```
+Eventually a `@FetchRequest` in a view (e.g., `WeeklyListsView`) fires during a `measureBlock:` run loop pump, can't resolve the ambiguous entity, and crashes the entire test process with `NSInvalidArgumentException: A fetch request must have an entity`.
+
+**Root Cause**: Each test's `setUp()` creates a new `PersistenceController(inMemory: true)`, which loads a fresh `NSManagedObjectModel`. These models accumulate in the process — by the 6th test, 6+ models all claim the same entity subclasses. Core Data can't disambiguate.
+
+**Fix**: Load the `NSManagedObjectModel` once as a static/shared instance and reuse it across all test `PersistenceController` instances. Standard pattern:
+```swift
+static let testModel: NSManagedObjectModel = {
+    NSManagedObjectModel.mergedModel(from: [Bundle.main])!
+}()
+```
+
+### Issue 2: CloudKit Container Unnecessary for Unit Tests
+
+**Symptom**: Noisy CloudKit errors in test output (`CKAccountStatusNoAccount`, `BUG IN CLIENT OF CLOUDKIT: Registering a handler for a CKScheduler activity identifier that has already been registered`).
+
+**Root Cause**: `PersistenceController(inMemory: true)` uses `NSPersistentCloudKitContainer` which attempts CloudKit setup even for in-memory stores. Multiple test instances fight over the same CKScheduler activity identifiers.
+
+**Fix**: Use plain `NSPersistentContainer` for test stores. CloudKit sync is irrelevant for unit tests. Consider a `PersistenceController` init parameter like `useCloudKit: Bool = true` or a dedicated test helper.
+
+### Issue 3: Stale Test Assertions (3 Failures)
+
+**Symptom**: `CoreDataInvariantsTests` has 3 failures:
+- `testDefaultSeedingIdempotency` — UserDefaults seeding flag persists across tests, finds 0 categories
+- `testIngredientStructuredFieldsPersist` — Recipe validation now requires non-empty instructions
+- `testRecipeDeleteCascadesToIngredients` — Same recipe validation issue
+- `testIngredientTemplateUsesNameProperty` — Template validation now requires `dateCreated`
+
+**Root Cause**: Tests were written before M15/M7.5 added stricter validation. Test setup code doesn't satisfy current model requirements.
+
+**Fix**: Update test helper factories to create valid objects matching current schema requirements. Create shared test data factories (aligns with M6.3 success criteria: "Test data factories created").
+
+### Issue 4: In-Memory Dual-Store URL Collision (FIXED in M9.5)
+
+**Status**: ✅ **RESOLVED** — Both in-memory stores used `/dev/null`, causing "Can't add the same store twice". Fixed by using `/dev/null-shared` for the shared store.
+
+---
+

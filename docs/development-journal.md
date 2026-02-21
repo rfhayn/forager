@@ -6,6 +6,48 @@
 
 ---
 
+## Session 23 — February 21, 2026
+**Milestone**: M9.5-partial: Parser Dependency Injection
+**Branch**: `feature/M9.5-parser-di`
+
+### What Happened
+
+Executed the M9.5-partial plan from the previous session — the last prerequisite before M8.4 ML-Powered Parsing. The plan was detailed enough that execution was largely mechanical: 6 phases (A–F) across 3 implementation steps plus PRD corrections.
+
+**Step 1–2: PRD Corrections.** Audited both the M9 and M8.4 PRDs before touching code. Found 7 corrections needed: wrong caller reference (foragerApp.swift should be MigrationDebugView.swift), Phase D overestimated (45→15 min), missing Mocks/ directory creation, and — most importantly — the M8.4 PRD hardcoded `MLIngredientParser` as a concrete type where it should use the `IngredientParser` protocol for testability. All fixed before any implementation work.
+
+**Phases A–B: Core DI.** Converted `HybridIngredientParser` from hardcoded sub-parser construction to injectable init parameters (`regexParser: IngredientParser = RegexIngredientParser()`, `nlpParser: IngredientParser = NLPIngredientParser()`, `regexConfidenceThreshold: Float = 0.8`). Same pattern for `IngredientParsingService` — added `parser: IngredientParser = HybridIngredientParser()` parameter. Zero call sites changed. The static `extractCleanIngredientName()` keeps its own `sharedParser` — it's a pure text utility that doesn't need DI.
+
+**Phase C: Mock + Tests.** Created `MockIngredientParser` with call tracking (`parseCalls: [String]`) and preset result injection. Wrote 8 routing tests that exercise the confidence-based routing logic with mock sub-parsers — verifying that high-confidence regex (≥0.8) skips NLP, low-confidence falls back, custom thresholds change the boundary, etc. Also created the `foragerTests/Mocks/` directory with manual pbxproj registration.
+
+**Phase D–E: Verification.** Full test suite: 127 passing (unchanged from before), 8 new routing tests passing, plus 1 new integration test showing mock injection through the full DI chain. 5 pre-existing failures unchanged (4 normalization + 1 migration — these predate M9.5). Phase E added optional DI to `QuantityMigrationService` — backward compatible, not M8.4-blocking.
+
+**Phase F: Build + Docs.** Clean build verified (zero warnings). All 7 core documentation files updated.
+
+### Decisions Made
+
+1. **Protocol-typed stored properties**: `private let regexParser: IngredientParser` (not `RegexIngredientParser`). This is what enables mock injection — you can't pass a `MockIngredientParser` to a stored property typed as `RegexIngredientParser`. The default parameter handles the production case.
+
+2. **Static-to-instance for threshold**: `regexConfidenceThreshold` was `private static let`. Making it an instance property means M8.4 can raise it from 0.8 → 0.9 at construction time rather than editing a source constant. Small change, big flexibility.
+
+3. **Call tracking over protocol spy**: The mock records `parseCalls: [String]` for verification. This enables negative assertions ("NLP should NOT be called when regex is confident") which are the most valuable routing tests. A simple pattern that covers the important cases.
+
+4. **Phase E kept optional**: `QuantityMigrationService` is a legacy M3 migration debug tool. The DI addition is clean code but not M8.4-blocking. Included it since it was 15 minutes of work.
+
+### AI Tooling Learnings
+
+The previous session's deep planning paid off dramatically. The 6-phase plan mapped every file, every line number, every call site — so this session was pure execution with no research. The context window was spent on code, not exploration. This validates the "plan in one session, execute in the next" pattern for milestones that touch many files.
+
+The pbxproj manual registration (creating PBXGroup entries, PBXFileReference, PBXBuildFile, and build phase entries) is still the trickiest part of adding test files. Having the group IDs and build phase IDs cached in MEMORY.md made it reliable.
+
+### What It Means
+
+All three M8.4 prerequisites are complete: zero-warning build (M9.0), centralized parser name extraction (M9.1.2), and injectable parser construction (M9.5-partial). M8.4 can now add the ML parser as a simple `mlParser: IngredientParser? = nil` parameter to `HybridIngredientParser.init()` — no architectural restructuring needed. The routing tests established in M9.5 will serve as a template for M8.4's own routing tests (regex → ML → NLP fallback chain).
+
+Test count: 155 across 8 test files (was 146 across 7).
+
+---
+
 ## Session 22 — February 21, 2026
 **Milestone**: M9.1.2 wrap-up + M9.5-partial planning
 **Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending)

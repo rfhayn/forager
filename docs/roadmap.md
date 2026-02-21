@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 21, 2026
-**Current Phase**: **M9.1.2 ✅ COMPLETE** | **M9.0 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M9.5-partial 📋 NEXT**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9.0 COMPLETE, M9.1.2 COMPLETE
-**Execution Order**: M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Phase**: **M9.5-partial ✅ COMPLETE** | **M9.1.2 ✅ COMPLETE** | **M9.0 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M8.4 📋 NEXT**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9.0 COMPLETE, M9.1.2 COMPLETE, M9.5-partial COMPLETE
+**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -128,7 +128,7 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **Clean**: Zero-warning build baseline established (M9.0)
 - **Live**: TestFlight build 10 (v1.1), external testers active
 
-**Next**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store)
+**Next**: M8.4 (ML parsing) → M7.7 (App Store)
 
 ### **M4 Component Summary:**
 
@@ -1456,9 +1456,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store)
+**Next Action**: M8.4 (ML parsing) → M7.7 (App Store)
 
-**Status**: M1-M5.0 (~92.5h), M7.0-M7.6 (~81h), M8 (~17h), M15 (~50-65h), M7.5 (~5h), M9.0 (<1h). Total: ~221 hours. TestFlight live. Zero warnings.
+**Status**: M1-M5.0 (~92.5h), M7.0-M7.6 (~81h), M8 (~17h), M15 (~50-65h), M7.5 (~5h), M9-prereqs (~6h). Total: ~226 hours. TestFlight live. Zero warnings. Parser DI complete.
 
 ---
 
@@ -1477,8 +1477,8 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
-| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
-| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M9-prereqs (M9.0, M9.1.2, M9.5-partial) | ✅ COMPLETE | ~6h actual |
+| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **18-24h** |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |

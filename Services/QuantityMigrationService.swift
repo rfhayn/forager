@@ -68,15 +68,18 @@ class QuantityMigrationService: ObservableObject {
     @Published var currentStatus: String = "Ready to migrate"
     @Published var isComplete: Bool = false
     
-    init(context: NSManagedObjectContext) {
+    // M9.5: Accept parsing service via init for testability
+    init(context: NSManagedObjectContext, parsingService: IngredientParsingService? = nil) {
         self.context = context
-        
-        // Create parsing service with template service
-        let templateService = IngredientTemplateService(context: context)
-        self.parsingService = IngredientParsingService(
-            context: context,
-            templateService: templateService
-        )
+        if let parsingService {
+            self.parsingService = parsingService
+        } else {
+            let templateService = IngredientTemplateService(context: context)
+            self.parsingService = IngredientParsingService(
+                context: context,
+                templateService: templateService
+            )
+        }
     }
     
     // MARK: - Helper Methods

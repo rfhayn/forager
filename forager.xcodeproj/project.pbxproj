@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */; };
+		D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */; };
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
 		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
 		85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */; };
@@ -261,6 +263,8 @@
 		A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdView.swift; sourceTree = "<group>"; };
 		A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIngredientParserTests.swift; sourceTree = "<group>"; };
 		C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridIngredientParserTests.swift; sourceTree = "<group>"; };
+		D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridParserRoutingTests.swift; sourceTree = "<group>"; };
+		F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockIngredientParser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -302,8 +306,17 @@
 				A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */,
 				25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */,
 				C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */,
+				D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */,
 			);
 			path = Parsing;
+			sourceTree = "<group>";
+		};
+		7E60FCA3AFE7F773C70C926E /* Mocks */ = {
+			isa = PBXGroup;
+			children = (
+				F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */,
+			);
+			path = Mocks;
 			sourceTree = "<group>";
 		};
 		9B0555412EDB665C00A57B34 /* forager */ = {
@@ -376,6 +389,7 @@
 			isa = PBXGroup;
 			children = (
 				9B75A00A0005000500B24679 /* CoreDataInvariantsTests.swift */,
+				7E60FCA3AFE7F773C70C926E /* Mocks */,
 				9B78C7B52F36335900B24679 /* Services */,
 				9B56ECA82F08293B00877716 /* PersistenceTests */,
 			);
@@ -725,6 +739,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */,
+				D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */,
 				9B56ECA92F08293B00877716 /* MigrationValidationTests.swift in Sources */,
 				9B78C7B82F36340000B24679 /* GroceryMergeServiceTests.swift in Sources */,
 				9B78C7D12F36360000B24679 /* IngredientParsingServiceCleanNameTests.swift in Sources */,
