@@ -147,6 +147,8 @@
 | Feb 20 | M7.5 | PRD/StaleAudit | PRD audits should verify entity names against actual Core Data model files, not trust the PRD's own code samples. The original M7.5 PRD referenced `RecipeIngredient` (doesn't exist), `displayName` on IngredientTemplate (correct is `name`), `cloudKitUserID` on HouseholdMember (doesn't exist), and `quantity`/`unit` on Ingredient (correct is `numericValue`/`standardUnit`). All 5 were wrong | `grep -r "RecipeIngredient\|\.displayName\|cloudKitUserID\|\.quantity\|\.unit" docs/prds/m7.5*.md` — should return 0 matches in corrected PRD | Raw |
 | Feb 20 | M7.5 | Architecture/DescopeReasoning | Enum routing for views with 1-4 booleans adds pure ceremony (enum definition, Identifiable conformance, id computation) with no practical benefit. The threshold for enum routing is 6+ booleans, where the combinatorial explosion of boolean states makes reasoning about which sheets can co-present difficult. Below that threshold, booleans are fine — SwiftUI's `.sheet(isPresented:)` is simpler and more readable | Count booleans per view — views with 6+ get enum routing, views with 1-5 keep booleans | Raw |
 
+| Feb 20 | M7.5 | Architecture/EstimateAccuracy | M7.5 estimated 14-19h but completed in ~5h. M15's visual refresh had already simplified navigation patterns (enum routing partially done) and eliminated many direct saves (views were rewritten cleaner), making the architecture hardening significantly cheaper. Lesson: doing a visual refresh first made the structural cleanup trivial — validates the decision to reorder M15 before M7.5 | Compare PRD estimates with actual hours in roadmap.md; check git diff stats for reduced scope vs original PRD expectations | Raw |
+
 ---
 
-**Last Updated**: February 20, 2026 (session 17 — M7.5 PRD v2.0 rewrite, 3 architecture insights)
+**Last Updated**: February 20, 2026 (session 18 — M7.5 completion, 1 estimate accuracy insight)
