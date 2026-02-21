@@ -120,32 +120,15 @@
 
 ## 🚀 **IMMEDIATE NEXT STEPS**
 
-### **M5.0 COMPLETE - M7 Ready to Start** ✅
+### **M9.0 COMPLETE — M9 Prerequisites Continue** ✅
 
-With M5.0 completion, Forager is now:
-- **Branded**: Professional "Forager: Smart Meal Planner" identity established
-- **Deployed**: Internal TestFlight operational with multi-tester beta program
-- **Validated**: Running successfully on real devices
-- **Ready**: CloudKit-enabled and prepared for family collaboration
+With M15, M7.5, and M9.0 all complete and merged to main:
+- **Polished**: Full UX design system with Liquid Glass, dark mode, accessibility (M15)
+- **Hardened**: Service layer owns all saves, enum-based navigation, 146+ unit tests (M7.5)
+- **Clean**: Zero-warning build baseline established (M9.0)
+- **Live**: TestFlight build 10 (v1.1), external testers active
 
-**Next Milestone: M7 - CloudKit Sync & External TestFlight**
-- **M7.0: App Store Prerequisites (MANDATORY)** - 2-3 hours
-  - Privacy policy creation and hosting
-  - In-app privacy link implementation
-  - App Privacy questionnaire completion
-  - Display name disambiguation
-- **M7.1-7.4: CloudKit Implementation** - 25-30 hours
-  - CloudKit schema and sync foundation
-  - Multi-user collaboration with CKShare
-  - Conflict resolution and sync UI
-- **M7.5-7.6: External TestFlight & Public Beta** - 5-9 hours
-  - App Review submission
-  - Public beta landing page
-  - LinkedIn showcase
-
-**Timeline**: 27-37 hours base, 32-42 hours with buffer (3-4 weeks including Apple Review)
-
-**⚠️ CRITICAL**: M7.0 App Store Prerequisites are MANDATORY before external TestFlight submission
+**Next**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store)
 
 ### **M4 Component Summary:**
 
@@ -681,12 +664,12 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
-### **🔄 M7: CloudKit Sync, Household Sharing & External TestFlight - IN PROGRESS** 🚀
+### **✅ M7: CloudKit Sync, Household Sharing & External TestFlight - M7.0–M7.6 COMPLETE**
 
-**Status**: 🔄 In Progress - M7.0-M7.4 Complete ✅, **M7.6 External TestFlight 🚀 Next**
+**Status**: ✅ M7.0–M7.6 Complete | M7.7 📋 QUEUED (after M8.4)
 **Estimated Time**: 52-60 hours total
-**Actual Progress**: ~37 hours (M7.0: 3h, M7.1: 6.5h, M7.2: 15h, M7.2.3: 12.25h)
-**Remaining**: 15-23 hours (M7.3, M7.5, M7.6, M7.7)
+**Actual Time**: ~81 hours (M7.0: 3h, M7.1: 10.5h, M7.2: ~25h, M7.3: ~6h, M7.4: ~4h, M7.5: ~5h, M7.6: ~12h)
+**Remaining**: M7.7 only (3-5h)
 **Dependencies**: M5.0 complete ✅
 **PRD**: docs/prds/milestone-7-cloudkit-sync-external-testflight.md (v2.2 - Shared Zone Architecture)
 
@@ -764,7 +747,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - Keyboard search bar fix
 - Filter pill sizing improvements
 - **Note**: Original M7.4 (Sync Status UI) was SKIPPED - dual-store architecture makes it unnecessary
-- PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
+- PRD: `docs/prds/complete/m7.4-ui-polish-pre-launch.md`
 
 **M7.5: Architecture Hardening - UX/Service Cleanup (~5 hours) - ✅ COMPLETE**
 - **Phase 1**: Service Ownership of Saves ✅
@@ -788,7 +771,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M7.6.6**: Schema Cleanup P2 (~1.5h) — ✅ COMPLETE (removed unused fields, fixed sourceURL tags hack, naming)
 - **M7.6.7**: TestFlight Submission (~2h) — ✅ COMPLETE (schema deployed to Production, archive uploaded, Apple approved, external testers active)
 - **M7.6.8**: Owner Display Name Fix + Beta Bugs (~3h) — ✅ COMPLETE (PRs #32, #33 — repurposed ownerEmail for display name, fixed empty nameComponents detection, cross-device verified)
-- **PRD**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`, `docs/prds/complete/m7.6.8-owner-display-name-fix.md`
+- **PRD**: `docs/prds/complete/m7.6-pre-launch-prep-testflight.md`, `docs/prds/complete/m7.6.8-owner-display-name-fix.md`
 
 **M7.7: App Store Submission & Public Presence (3-5 hours) — 📋 QUEUED (after M15)**
 - **M7.7.1**: Beta Landing Page (1-2h) — GitHub Pages with TestFlight link, features, screenshots
@@ -807,19 +790,19 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [✅] CloudKit hardening complete (M7.2.3 all phases)
 - [✅] Attach-then-share migration validated (M7.2.3 Phase 4)
 - [✅] 61 items migrated to CloudKit shared zone (M7.2.3 Phase 4)
-- [ ] Household collaboration working (M7.2.2)
-- [ ] Conflict resolution reliable (M7.3)
-- [ ] Sync status UI informative (M7.4)
+- [✅] Household collaboration working (M7.2.2)
+- [✅] Household management complete (M7.3.1, M7.3.3, M7.3.4)
+- [✅] Sync status UI: SKIPPED — dual-store architecture makes it unnecessary; M7.4 repurposed for UI polish
 - [✅] Service layer cleanup complete (M7.5)
 - [✅] Navigation patterns standardized (M7.5)
 - [✅] Empty states consistent (M7.5)
-- [ ] External TestFlight approved (M7.6)
+- [✅] External TestFlight approved (M7.6)
 - [ ] Public beta launched (M7.7)
 - [ ] 10+ external beta testers active
 
 **Requirements**: 39 total
-- ✅ **Complete (27)**: 4 App Store prerequisites + 5 CloudKit sync + 4 debugging fixes + 2 household setup + 3 household management + 4 error handling + 5 UI polish
-- ⏳ **Remaining (12)**: 5 external TestFlight (M7.6) + 3 public beta (M7.7) + 4 architecture hardening (M7.5 — deferred post-launch)
+- ✅ **Complete (35)**: 4 App Store prerequisites + 5 CloudKit sync + 4 debugging fixes + 2 household setup + 3 household management + 4 error handling + 5 UI polish + 4 architecture hardening (M7.5) + 4 external TestFlight (M7.6)
+- ⏳ **Remaining (4)**: 3 public beta (M7.7) + 1 App Store submission (M7.7)
 
 ---
 
@@ -1374,8 +1357,8 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 ## 📚 **RELATED DOCUMENTATION**
 
 ### **Current Milestone:**
-- [M7 PRD](prds/milestone-7-cloudkit-sync-external-testflight.md) - CloudKit sync & external TestFlight
-- [Current Story](current-story.md) - M5.0 complete, M7 in progress
+- [M9 PRD](prds/active/m9-technical-debt-codebase-optimization.md) - Technical debt & codebase optimization
+- [Current Story](current-story.md) - M9.0 complete, M9.1.2 next
 - [Requirements Document](requirements.md) - All M1-M14 requirements documented
 - [M8 Meta-PRD](prds/m8-ingredient-parsing-intelligence-meta-prd.md) - Ingredient parsing intelligence (4 phases)
 - [M9 PRD](prds/active/m9-technical-debt-codebase-optimization.md) - Technical debt & codebase optimization
@@ -1473,9 +1456,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: Merge M7.5 PR → M9-prereqs (warning resolution, centralize extractCleanIngredientName, parser DI)
+**Next Action**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store)
 
-**Status**: M1-M5.0 complete (~92.5h), M7.0-M7.6 complete (~81h), M8 complete (~17h), M15 complete (~50-65h), M7.5 complete (~5h). Total: ~220 hours. TestFlight live.
+**Status**: M1-M5.0 (~92.5h), M7.0-M7.6 (~81h), M8 (~17h), M15 (~50-65h), M7.5 (~5h), M9.0 (<1h). Total: ~221 hours. TestFlight live. Zero warnings.
 
 ---
 

@@ -460,20 +460,22 @@ _[Previous entries remain the same through December 23...]_
 - **M7.2.3**: CloudKit Hardening & Shared Data Architecture (12.25 hours)
 
 ### **Current Work** 🔄
+- **M9.0**: ✅ COMPLETE (Feb 21, 2026) — Zero-warning build baseline (18 warnings resolved)
+- **M7.5**: ✅ COMPLETE (Feb 20, 2026) — Service layer ownership, enum navigation, invariant tests
 - **M8**: ✅ COMPLETE (Feb 7-8, 2026) — All core phases delivered
   - **M8.1**: Parsing telemetry + yellow badges (~3h)
   - **M8.2**: Skipped (PRD analysis sufficient)
   - **M8.3**: Hybrid NLP parser with 7 pattern categories (~11h)
   - **M8.3.1**: Template hygiene, review badges, merge-on-rename (~3h)
   - **M8.3.2**: Auto-merge grocery quantities (~3h)
-  - **M8.4**: ML-powered parsing — deferred post-launch
-- **Total M8 tests**: 102 unit tests across 7 test files
+  - **M8.4**: ML-powered parsing — 📋 READY (after M9.1.2 + M9.5-partial prerequisites)
+- **Total tests**: 146 unit tests across 7 test files
 
 ### **Technology Stack**
-- **Language**: Swift 5.9+
-- **UI Framework**: SwiftUI (iOS 18.0+)
-- **Persistence**: Core Data → CloudKit (M7.1)
-- **Cloud Backend**: CloudKit (NSPersistentCloudKitContainer)
+- **Language**: Swift 6+
+- **UI Framework**: SwiftUI (iOS 26+)
+- **Persistence**: Core Data → CloudKit (NSPersistentCloudKitContainer)
+- **Cloud Backend**: CloudKit (dual-store: private + shared)
 - **Testing**: XCTest framework + TestFlight
 - **Version Control**: Git + GitHub (feature branch workflow)
 
@@ -651,14 +653,12 @@ _[Previous entries remain the same through December 23...]_
 
 ### **⏳ Planned Milestones** (M6-M14: ~335-465 hours)
 
-**M7 Remaining: CloudKit Sync & External TestFlight** (8-15 hours remaining)
-- M7.2.4: Household Management (1-2h)
-- M7.3: Conflict Resolution & Error Handling (4-6h)
-- M7.4: Sync UI & Polish (3-4h)
-- M7.5: Architecture Hardening - UX/Service Cleanup (8-12h)
-- M7.6: External TestFlight Deployment (2-3h)
-- M7.7: Public Beta Program (2-3h)
-- **PRD**: [milestone-7-cloudkit-sync-external-testflight.md](prds/milestone-7-cloudkit-sync-external-testflight.md)
+**M7.7: App Store Submission & Public Presence** (3-5 hours) — 📋 QUEUED after M8.4
+- M7.7.1: Beta Landing Page (GitHub Pages)
+- M7.7.2: GitHub README Update
+- M7.7.3: App Store Listing
+- M7.7.4: App Store Submission
+- **PRD**: [m7.7-app-store-submission.md](prds/active/m7.7-app-store-submission.md)
 
 **M6: Testing Foundation & AI Augmentation** (12-18 hours)
 - Phase 1: Human Test Baseline (5-7h)
@@ -667,21 +667,13 @@ _[Previous entries remain the same through December 23...]_
 - Phase 4: Phase 3 Prep - Optional (2-4h)
 - **Target**: 50%+ coverage, AI reviewer operational
 
-**M8: Ingredient Parsing Intelligence** (13-16 hours core, +15-20h optional ML) 🧠
-- **M8.1**: Parsing Resilience & Telemetry (~3h) - ✅ COMPLETE
-  - Yellow badge for low confidence, ParsingTelemetryService, telemetry integration
-  - EditIngredientSheet removed (scope reduction — redundant with inline editing)
-  - **Source**: [M7.5 Parsing Resilience PRD](prds/parsing/M7.5-parsing-resilience-polish-prd.md)
-- **M8.2**: Telemetry Analysis & Strategy (2h) - 🚀 NEXT
-  - Analyze real telemetry, prioritize improvements, ROI analysis
-  - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phase 1)
-- **M8.3**: Hybrid NLP Parser (8-10h) - Implementation
-  - Protocol abstraction, Regex + NLP paths, pattern handlers
-  - **Target**: 95% → 98%+ accuracy, 5% → 2% low-confidence rate
-  - **Source**: [M8.0 Parsing Improvements PRD](prds/parsing/M8.0-parsing-improvements-foundation-prd.md) (Phases 2-4)
-- **M8.4**: ML-Powered Parsing (15-20h) - OPTIONAL Excellence
-  - CoreML model, on-device inference, continuous learning
-  - **Target**: 98% → 99.5%+ accuracy (only if 100+ corrections available)
+**M8: Ingredient Parsing Intelligence** — ✅ M8.1–M8.3 COMPLETE, M8.4 QUEUED
+- **M8.1**: Parsing Resilience & Telemetry — ✅ COMPLETE
+- **M8.2**: Telemetry Analysis & Strategy — ✅ COMPLETE
+- **M8.3**: Hybrid NLP Parser — ✅ COMPLETE (98%+ accuracy, 7 regex categories)
+- **M8.4**: ML-Powered Parsing (18-24h) — QUEUED
+  - CoreML BiLSTM-CRF model, on-device inference
+  - **Target**: 98% → 99.5%+ accuracy
   - **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)
 - **PRD**: [m8-ingredient-parsing-intelligence-meta-prd.md](prds/m8-ingredient-parsing-intelligence-meta-prd.md)
 
@@ -728,34 +720,29 @@ _[Previous entries remain the same through December 23...]_
 - Family preference learning
 - Advanced sharing controls
 
-**M15: UX Design System & Visual Refresh** (50-70 hours) 🎨 — 🚀 ACTIVE
+**M15: UX Design System & Visual Refresh** (~50 hours) 🎨 — ✅ COMPLETE
 - ForagerTheme design system with semantic color tokens
 - Warm color palette (forest green, bark, cream, canvas)
-- Typography system (SF Pro Rounded + New York serif)
+- Typography system (SF Pro Rounded for chrome, system default for body)
 - iOS 26 deployment target with full Liquid Glass adoption
 - Liquid Glass TabView replacing custom bottom navigation
 - Screen-by-screen UX overhauls (grocery, recipes, meal plans, ingredients)
 - Layered app icon via Icon Composer
 - WCAG AA compliance, dark mode, Dynamic Type, haptics
-- **Design phase complete**: HTML mockups, PRD v1.1, 5-phase design review
-- **PRD**: `docs/prds/complete/m15-ux-design-system.md`
+- **PRD**: [m15-ux-design-system.md](prds/complete/m15-ux-design-system.md)
 
 ---
 
 ### **Milestone Timeline Summary**
 
-**Core Platform (M1-M10)**: ~220-270 hours estimated (core) or ~235-290 hours (with M8.4 ML)
-- **Completed (M1-M8)**: ~190 hours ✅
-- **Remaining (M6-M10)**: ~200-253 hours (core) or ~215-273 hours (with M8.4 ML)
+**Core Platform (M1-M10)**:
+- **Completed (M1-M9.0, M15, M7.5)**: ~221 hours ✅
+- **Remaining**: M9.1.2, M9.5-partial, M8.4, M7.7, M6, M9 (remaining)
 
 **Advanced Intelligence Platform (M11-M14)**: 40-60 hours total
 - Dependencies: M1-M10 complete
 
-**UX Design System (M15)**: 50-70 hours total
-- Dependencies: App Store launch, iOS 26 SDK
-- 7 phases with full Liquid Glass adoption
-
-**Total Project Estimate**: ~310-400 hours (core) or ~325-420 hours (with M8.4 ML + M15)
+**Total Project Estimate**: ~350-450 hours (core + M8.4 ML)
 
 ---
 
@@ -777,17 +764,15 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Version**: 9.4
-**Last Updated**: February 17, 2026
+**Version**: 9.5
+**Last Updated**: February 21, 2026
 **Maintained By**: Rich Hayn
 **Project**: forager - Smart Meal Planning
 **Repository**: https://github.com/rfhayn/forager.git
 
 ---
 
-**Documentation Update**: January 4, 2026 - Milestone restructuring complete
-- ✅ M8: Ingredient Parsing Intelligence (4 phases, was M7.5/M8.0/M9.5)
-- ✅ M9: Technical Debt & Codebase Optimization (new comprehensive PRD)
-- ✅ M10: Analytics & Insights (was M8)
-- ✅ M11-M14: Advanced Intelligence Platform (was M9-M12)
-- ✅ All PRDs, requirements.md, roadmap.md, and project-index.md updated
+**Documentation Update**: February 21, 2026 - Post-M15/M9.0 cleanup
+- ✅ M15, M7.5, M9.0 complete on main
+- ✅ All core docs synchronized (README, roadmap, project-index, current-story)
+- ✅ Next: M9.1.2 → M9.5-partial → M8.4 → M7.7

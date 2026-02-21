@@ -20,7 +20,6 @@ struct MealPlanDetailView: View {
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
 
-    @State private var allRecipes: [Recipe] = []
     @State private var refreshID = UUID()
 
     // Bulk add state
@@ -38,9 +37,13 @@ struct MealPlanDetailView: View {
     @State private var showingError = false
     @State private var errorMessage = ""
 
-    // Swap
-    @State private var swapDate: Date?
-    @State private var showSwapPicker = false
+    // M9.0.1: Inline recipe search (autocomplete in day card)
+    @State private var recipeSearchText = ""
+    @State private var allRecipes: [Recipe] = []
+    @FocusState private var focusedSearchDate: Date?
+
+    // M9.0.1: Sheet picker for swap flow only
+    @State private var recipePickerPayload: RecipePickerPayload?
 
     struct BulkAddResults {
         let totalRecipes: Int
@@ -81,6 +84,7 @@ struct MealPlanDetailView: View {
                     if let today = daysInPlan.first(where: { Calendar.current.isDateInToday($0) }) {
                         proxy.scrollTo(today, anchor: .top)
                     }
+                    loadRecipes()
                 }
             }
         }
@@ -92,7 +96,6 @@ struct MealPlanDetailView: View {
         }
         .navigationTitle(mealPlan.name ?? "Meal Plan")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear { loadAllRecipes() }
         .overlay {
             if isBulkAdding { bulkAddOverlay }
         }
@@ -108,8 +111,23 @@ struct MealPlanDetailView: View {
             )
             .environment(\.managedObjectContext, viewContext)
         }
-        .sheet(isPresented: $showSwapPicker) {
-            recipePickerSheet
+        .sheet(item: $recipePickerPayload) { payload in
+            RecipePickerSheet(
+                date: payload.date,
+                mealPlan: payload.mealPlan,
+                onRecipeSelected: { recipe, servings in
+                    // M9.0.1: Remove existing meal first (swap case), then add new
+                    if let existingMeal = plannedMeal(for: payload.date) {
+                        removePlannedMeal(existingMeal)
+                    }
+                    _ = MealPlanService.shared.addRecipeToMealPlan(
+                        recipe: recipe, date: payload.date,
+                        mealPlan: mealPlan, servings: Int16(servings)
+                    )
+                }
+            )
+            .environment(\.managedObjectContext, viewContext)
+            .environmentObject(householdService)
         }
         .alert("Remove \(mealToRemove?.recipe?.title ?? mealToRemove?.quickOption ?? "meal")?",
                isPresented: $showRemoveAlert) {
@@ -285,8 +303,7 @@ struct MealPlanDetailView: View {
             // Swap
             Button {
                 if let date = meal.date {
-                    swapDate = date
-                    showSwapPicker = true
+                    recipePickerPayload = RecipePickerPayload(date: date, mealPlan: mealPlan)
                 }
             } label: {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -328,25 +345,78 @@ struct MealPlanDetailView: View {
     // MARK: - Unplanned Day
 
     private func unplannedDayContent(for date: Date) -> some View {
-        VStack(spacing: ForagerTheme.Spacing.md) {
-            // Recipe picker
-            Menu {
-                ForEach(allRecipes.prefix(20), id: \.objectID) { recipe in
+        let isActive = focusedSearchDate.map { Calendar.current.isDate($0, inSameDayAs: date) } ?? false
+
+        return VStack(spacing: ForagerTheme.Spacing.md) {
+            // M9.0.1: Inline recipe search field
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .font(ForagerTheme.captionFont)
+
+                TextField("Search recipes…", text: $recipeSearchText)
+                    .font(ForagerTheme.bodyFont)
+                    .textFieldStyle(.plain)
+                    .autocorrectionDisabled()
+                    .focused($focusedSearchDate, equals: date)
+                    .onChange(of: focusedSearchDate) {
+                        // Clear search text when switching between day fields
+                        recipeSearchText = ""
+                    }
+
+                if isActive && !recipeSearchText.isEmpty {
                     Button {
-                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
+                        recipeSearchText = ""
                     } label: {
-                        Label(recipe.recipeDisplayTitle, systemImage: "fork.knife")
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(ForagerTheme.textTertiary)
                     }
                 }
-            } label: {
-                HStack {
-                    Text("Choose Recipe")
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
+            }
+            .padding(ForagerTheme.Spacing.sm)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+
+            // M9.0.1: Inline search results
+            if isActive && !recipeSearchText.isEmpty {
+                if filteredRecipes.isEmpty {
+                    Text("No matching recipes")
                         .font(ForagerTheme.captionFont)
                         .foregroundStyle(ForagerTheme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(filteredRecipes.prefix(5), id: \.id) { recipe in
+                            Button {
+                                addRecipeToDate(recipe, date: date)
+                            } label: {
+                                HStack(spacing: ForagerTheme.Spacing.sm) {
+                                    Image(systemName: "fork.knife")
+                                        .font(ForagerTheme.captionFont)
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(recipe.title ?? "Untitled")
+                                            .font(ForagerTheme.bodyFont)
+                                            .foregroundStyle(ForagerTheme.textPrimary)
+                                        Text("\(recipe.ingredients?.count ?? 0) ingredients · Serves \(Int(recipe.servings))")
+                                            .font(ForagerTheme.captionFont)
+                                            .foregroundStyle(ForagerTheme.textSecondary)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
+                                }
+                                .padding(.vertical, ForagerTheme.Spacing.sm)
+                                .padding(.horizontal, ForagerTheme.Spacing.xs)
+                            }
+
+                            if recipe.id != filteredRecipes.prefix(5).last?.id {
+                                Divider()
+                            }
+                        }
+                    }
+                    .background(ForagerTheme.surfacePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                 }
             }
 
@@ -411,44 +481,6 @@ struct MealPlanDetailView: View {
         .background(.regularMaterial)
     }
 
-    // MARK: - Recipe Picker Sheet
-
-    private var recipePickerSheet: some View {
-        NavigationStack {
-            List(allRecipes.prefix(30), id: \.objectID) { recipe in
-                Button {
-                    if let date = swapDate {
-                        // Remove existing meal first
-                        if let existing = plannedMeal(for: date) {
-                            removePlannedMeal(existing)
-                        }
-                        addRecipeToDay(recipe: recipe, date: date, servings: Int(recipe.servings))
-                    }
-                    showSwapPicker = false
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                            Text(recipe.recipeDisplayTitle)
-                                .font(ForagerTheme.bodyFont)
-                                .foregroundStyle(ForagerTheme.textPrimary)
-                            Text(recipe.recipeServingsDescription)
-                                .font(ForagerTheme.captionFont)
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                        }
-                        Spacer()
-                    }
-                }
-            }
-            .navigationTitle("Choose Recipe")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showSwapPicker = false }
-                }
-            }
-        }
-    }
-
     // MARK: - Bulk Add Overlay
 
     private var bulkAddOverlay: some View {
@@ -483,6 +515,26 @@ struct MealPlanDetailView: View {
         }
     }
 
+    // M9.0.1: Filtered recipes for inline search
+    private var filteredRecipes: [Recipe] {
+        guard !recipeSearchText.isEmpty else { return [] }
+        return allRecipes.filter { recipe in
+            guard let title = recipe.title else { return false }
+            return title.localizedCaseInsensitiveContains(recipeSearchText)
+        }
+    }
+
+    private func loadRecipes() {
+        let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
+        if let key = householdService.currentHouseholdKey {
+            request.predicate = NSPredicate(format: "householdKey == %@", key)
+        } else {
+            request.predicate = NSPredicate(format: "householdKey == nil")
+        }
+        allRecipes = (try? viewContext.fetch(request)) ?? []
+    }
+
     private func plannedMeal(for date: Date) -> PlannedMeal? {
         plannedMeals.first { meal in
             guard let mealDate = meal.date else { return false }
@@ -504,28 +556,14 @@ struct MealPlanDetailView: View {
 
     // MARK: - Actions
 
-    private func loadAllRecipes() {
-        let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
-        fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \Recipe.title, ascending: true)]
-        if let householdKey = householdService.currentHouseholdKey {
-            fetchRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
-        } else {
-            fetchRequest.predicate = NSPredicate(format: "householdKey == nil")
-        }
-        do {
-            allRecipes = try viewContext.fetch(fetchRequest)
-        } catch {
-            allRecipes = []
-        }
-    }
-
-    private func addRecipeToDay(recipe: Recipe, date: Date, servings: Int) {
-        if let existingMeal = plannedMeal(for: date) {
-            removePlannedMeal(existingMeal)
-        }
+    // M9.0.1: Add recipe from inline search results
+    private func addRecipeToDate(_ recipe: Recipe, date: Date) {
         _ = MealPlanService.shared.addRecipeToMealPlan(
-            recipe: recipe, date: date, mealPlan: mealPlan, servings: Int16(servings)
+            recipe: recipe, date: date,
+            mealPlan: mealPlan, servings: Int16(recipe.servings)
         )
+        recipeSearchText = ""
+        focusedSearchDate = nil
     }
 
     private func assignQuickOption(_ option: PlannedMeal.QuickOption, to date: Date) {
