@@ -1,17 +1,18 @@
 # Current Development Story
 
 **Last Updated**: February 20, 2026
-**Status**: M15 ✅ **COMPLETE** (bug fixes in progress) | M7.7 📋 **READY**
+**Status**: M15 ✅ **COMPLETE** (bug fixes done) | M7.7 📋 **READY** | M8.4 📋 **READY** (PRD written)
 **Total Progress**: ~215 hours | 89% planning accuracy
 **Current Branch**: `feature/M15-ux-design-system`
-**Current Milestone**: M15 - UX Design System & Visual Refresh — **ALL PHASES COMPLETE + BUG FIXES**
+**Current Milestone**: M15 - UX Design System & Visual Refresh — **ALL PHASES COMPLETE + BUG FIXES DONE**
 **Implementation Plans**: `docs/prds/active/plans/` — 8 detailed plans, cross-validated and externally reviewed
+**Next Priority**: Merge M15 → M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 → M9 remaining → M10+
 
 ---
 
-## 🔧 **M15 TESTING BUG FIXES - IN PROGRESS**
+## ✅ **M15 TESTING BUG FIXES - COMPLETE**
 
-**Status**: 🔧 **IN PROGRESS**
+**Status**: ✅ **COMPLETE**
 **Session**: February 20, 2026
 **Branch**: `feature/M15-ux-design-system`
 **PRD**: `docs/prds/active/m15-testing-bug-fixes.md`
@@ -25,10 +26,32 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 3. ✅ **Fix takeout strikethrough + SettingsView dark mode (P1)** — Added strikethrough to quick options, warm background for Settings
 4. ✅ **Template name sanitization (P1)** — Phase 0 sanitization in normalize(), fixed extractCleanIngredientName() regexes, wired up re-normalization
 5. ✅ **Fix category chip refresh (P1)** — refreshAllObjects() on appear to force relationship-derived data refresh
+6. ✅ **Fix code review findings** — Hardcoded shadow color → ForagerTheme token, silent delete error → user-facing alert, stale "6 test recipes" comment
+7. ✅ **Fix bananas pluralization and milk 2% false review flag** — Added 10 entries to preferPlural, product variant exception in needsReview
 
 ### **Not Changing (Documented Decisions)**
 - Title centering: iOS platform convention (left-aligned large titles)
 - Template → grocery item name propagation: Point-in-time snapshot by design
+
+---
+
+## 📋 **M8.4: ML-POWERED PARSING - READY**
+
+**Status**: 📋 **READY** (PRD complete, prerequisites identified)
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
+**Estimated**: 18-24 hours (8 phases) + 9 hours M9 prerequisites
+**Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler
+
+### **Key Change from Original Plan**
+Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences. Model ready from day one.
+
+### **Prerequisites (M9 subset, ~9h)**
+1. M9.0: Warning resolution (2-3h) — zero-warning baseline
+2. M9.1.2: Centralize `extractCleanIngredientName()` (2-3h) — exists in 3 files with diverging regexes
+3. M9.5-partial: Parser dependency injection (4h) — testable, swappable parsers
+
+### **Execution Order**
+M7.5 first (clean service layer) → Sessions 1-3: M9 Prerequisites → Sessions 4-7: M8.4 Phases 1-8 → M7.7 App Store
 
 ---
 
@@ -1070,7 +1093,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.5: Architecture Hardening | DEFERRED | 18.5-24.5h |
+| M7.5: Architecture Hardening | 📋 READY | 14-19h |
 | M6: Testing Foundation | PLANNED | 12-18h |
 | M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
 | M9: Technical Debt | PLANNED | 135-165h |

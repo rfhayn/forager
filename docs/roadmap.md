@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 17, 2026
-**Current Phase**: **M15 ✅ COMPLETE** | **M7.7 📋 QUEUED**
+**Last Updated**: February 20, 2026
+**Current Phase**: **M15 ✅ COMPLETE** (bug fixes done) | **M7.7 📋 QUEUED**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE
-**Execution Order**: TestFlight push → M7.7 (App Store) → M7.5 → M6 → M8.4 → M9 → M10+
+**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -766,17 +766,17 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **Note**: Original M7.4 (Sync Status UI) was SKIPPED - dual-store architecture makes it unnecessary
 - PRD: `docs/prds/active/m7.4-ui-polish-pre-launch.md`
 
-**M7.5: Architecture Hardening - UX/Service Cleanup (18.5-24.5 hours) - ⏸️ DEFERRED POST-LAUNCH**
-- **Phase 1**: Service Ownership of Saves (4-6h)
-  - Eliminate 39 scattered save() calls across 18 views
-  - Create RecipeService, WeeklyListService
-  - Intent-style service methods
-- **Phase 2**: SwiftUI Navigation Cleanup (11.5-14.5h)
-  - Replace 60+ boolean states with enum routing
-  - Fix member count CloudKit refresh bug
-- **Phase 3**: UX Polish & Invariant Tests (3-4h)
-  - EmptyStateView standardization
-  - 7 Core Data invariant tests
+**M7.5: Architecture Hardening - UX/Service Cleanup (14-19 hours) - 📋 READY**
+- **Phase 1**: Service Ownership of Saves (8-10h)
+  - Eliminate 35 production view save() calls across 15 files
+  - Create RecipeService, WeeklyListService; extend IngredientTemplateService
+  - Services accept IngredientParsingService via init (M8.4 forward-compat)
+  - 14-17 service unit tests + 5 integration tests
+- **Phase 2**: SwiftUI Navigation Cleanup (4-6h)
+  - Enum routing for 3 highest-complexity views (IngredientsView, CreateRecipeView, EditRecipeView)
+- **Phase 3**: Tests & Polish (2-3h)
+  - 2 ad-hoc empty states → ContentUnavailableView
+  - 4-5 Core Data invariant tests with correct entity references
 
 **Why Deferred?** M7.5 is developer-facing code quality. Users won't notice the difference. Prioritizing user-visible polish (M7.4) and parsing fixes (M8) before launch.
 
@@ -958,10 +958,13 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - 19 new unit tests covering all merge scenarios
 - **Source**: [M8.3.2 PRD](prds/complete/m8.3.2-auto-merge-grocery-quantities.md)
 
-**M8.4: ML-Powered Parsing (15-20 hours) - DEFERRED** 🎓
-- Custom CoreML model trained on user corrections
-- **Deferred to post-launch**: M8.3 achieves 98%+ accuracy (professional-grade)
-- **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)
+**M8.4: ML-Powered Parsing (18-24 hours) - READY** 🎓🚀
+- **Approach changed**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (BIO tagging)
+- **Training data**: NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences
+- **No cold start**: Model ready from day one — no need for 100+ user corrections first
+- **Moved to pre-launch**: Resolves class-level parsing failures (cloves, fractions, product variants)
+- **Prerequisites**: M9.0 (warnings), M9.1.2 (centralize extractCleanIngredientName), M9.5-partial (parser DI) — ~9h total
+- **Source**: [M8.4 ML-Powered Parsing PRD](prds/active/m8.4-ml-powered-parsing.md)
 
 **Success Criteria:**
 - [x] Professional UX for parsing failures (M8.1)
@@ -971,7 +974,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [x] Zero regressions on existing patterns (M8.3)
 - [x] Clean ingredient template names (M8.3.1)
 - [x] Automatic quantity merging on grocery lists (M8.3.2)
-- [ ] (Optional) ML accuracy: 98% → 99.5%+ (M8.4 — deferred)
+- [ ] ML accuracy: 98% → 96%+ token / 92%+ sentence (M8.4)
+- [ ] On-device CoreML inference < 5ms (M8.4)
+- [ ] "3 cloves garlic" → template="garlic" (M8.4)
+- [ ] "milk 2%" → no false review warning (M8.4)
 
 ---
 
@@ -1478,7 +1484,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
-| **M15: UX Design System & Visual Refresh** | 🚀 **ACTIVE** | 50-70h |
+| **M15: UX Design System & Visual Refresh** | ✅ **COMPLETE** | 50-70h |
 | TestFlight push (post-M15) | 📋 PLANNED | ~1h |
 | M7.7: App Store Submission & Public Presence | 📋 QUEUED | 3-5h |
 | **Pre-Launch Total** | | **~54-76h remaining** |
@@ -1487,10 +1493,12 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.5: Architecture Hardening | DEFERRED | 18.5-24.5h |
-| M6: Testing Foundation | PLANNED | 12-18h |
-| M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
-| M9: Technical Debt | PLANNED | 135-165h |
+| **M7.5: Architecture Hardening** | **📋 NEXT** | **14-19h** |
+| M9-prereqs (M9.0, M9.1.2, M9.5-partial) | 📋 READY | 9h |
+| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M7.7: App Store Submission | 📋 QUEUED | 3-5h |
+| M6: Testing Foundation | PLANNED | 20-30h |
+| M9: Remaining Technical Debt | PLANNED | ~120h |
 | M10: Analytics & Insights | PLANNED | 8-12h |
 | M11-M14: Advanced Features | FUTURE | 40-60h |
 
@@ -1513,4 +1521,13 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 2. **M7.4 repurposed** for UI Polish & Pre-Launch Fixes
 3. **M8.1-M8.3 before launch** - Fix "3 avocados" parsing issue (95% → 98% accuracy)
 4. **M7.5 deferred post-launch** - Developer-facing code quality, users won't notice
-5. **M8.4 optional post-launch** - ML requires 100+ user corrections from M8.1 telemetry
+5. ~~**M8.4 optional post-launch**~~ → **Revised Feb 20**: M8.4 moved to pre-launch with NYT/strangetom dataset bootstrapping (no cold start)
+
+### **Key Decisions (February 20, 2026)**
+
+18. **M8.4 elevated to pre-App Store** — Dataset bootstrapping from NYT (180k) + strangetom (81k) eliminates cold-start problem. Launch with ML parser.
+19. **M7.5 before M9-prereqs** — Clean service layer first, then parser DI and ML work build on solid foundation
+20. **M7.7 after M8.4** — App Store submission delayed until ML parser is in, so we launch with the best parsing
+21. **M6 before M9 remaining** — Testing foundation protects quality during the big ~120h tech debt refactor
+22. **BiLSTM-CRF over Transformer** — 2-5 MB model size, <5ms inference, 260k training sentences. Slots into existing HybridIngredientParser as third tier.
+23. **M15 testing bug fixes** — 7 commits on branch: EditRecipeView structured qty loss, redundant displays, strikethrough, dark mode settings, template sanitization, category refresh, code review fixes, pluralization fixes

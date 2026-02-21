@@ -20,8 +20,8 @@ open forager.xcodeproj
 # Press Cmd+R in Xcode to build and run
 ```
 
-- **Current**: iOS 18.0+ (M15.1 will raise to iOS 26 for Liquid Glass)
-- Xcode 15.0+, macOS Sonoma 14.0+
+- **Current**: iOS 26+ (Liquid Glass, raised in M15.1)
+- Xcode 26.0+, macOS 26.0+
 - No external dependencies (pure Swift/iOS frameworks)
 - 146 unit tests across 7 test files (M8 parsing, telemetry, merge, validation, normalization). Formal test infrastructure planned for M6.
 - Debug builds: CloudKit DISABLED (faster local development)
@@ -135,7 +135,7 @@ Repositories provide **read-only** data access (not writes):
 - **Household**: Household, HouseholdMember
 - **Settings**: UserPreferences
 
-Model has 5 versions (v1-v5, current is v5). Before changing schema, read `docs/architecture/007-core-data-change-process.md` and document impact. CloudKit Production schema is append-only — no destructive changes.
+Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/architecture/007-core-data-change-process.md` and document impact. CloudKit Production schema is append-only — no destructive changes.
 
 **Codegen approach:**
 - `IngredientTemplate` uses **Class Definition** (auto-generated code)
@@ -161,22 +161,23 @@ Model has 5 versions (v1-v5, current is v5). Before changing schema, read `docs/
 
 - SwiftUI with `@FetchRequest` for live Core Data updates
 - `NavigationStack` with sheet-based modals
-- **Current (pre-M15)**: Custom bottom navigation (`CustomBottomNavigation.swift`) with 4 tabs + hamburger menu
-- **M15 target**: Native Liquid Glass TabView with 5 tabs: Lists, Recipes, Meals, Settings, Search (see ADR 011)
+- Native Liquid Glass TabView with 5 tabs: Lists, Recipes, Meals, Settings, Search (ADR 011)
+- `ForagerTheme` semantic color tokens — never hardcode colors
+- `ContentUnavailableView` for all empty states (not custom empty state views)
 - App entry: `foragerApp.swift`, CloudKit share handling: `SceneDelegate.swift`
 
-### M15 Design System (ACTIVE)
+### Design System (ForagerTheme) — Established M15
 
-**All M15 UI implementation must follow the design spec.** Before making visual changes, consult:
-- `docs/prds/active/m15-ux-design-system.md` — Full PRD with color tokens, typography, component specs
+**All visual changes must follow the design system.** Before making visual changes, consult:
+- `docs/prds/active/m15-ux-design-system.md` — Color tokens, typography, component specs
 - `docs/mockups/forager-design-system.html` — 16 phone-frame HTML mockups (open in browser)
-- `docs/prds/active/m15-design-review-action-plan.md` — Completed design review with decisions
 
-**Design rules during M15:**
+**Design rules:**
 - Use `ForagerTheme` semantic color tokens — never hardcode colors
-- Typography: Single font family — SF Pro Rounded for chrome, system default for body text. No serif. See PRD §4.2.1.
+- Typography: SF Pro Rounded for chrome, system default for body text. No serif. See PRD §4.2.1.
 - All color pairings must meet WCAG AA (≥ 4.5:1 text, ≥ 3:1 UI elements)
-- Check mockups before implementing any screen — the design is already decided
+- Empty states: Use native `ContentUnavailableView`
+- Check mockups before implementing any screen
 
 ## Pre-Development Analysis
 
@@ -206,6 +207,11 @@ Search: "architecture decision [feature area]"
 Search: "service-layer-pattern"
 ```
 Follow established patterns and ADR decisions.
+
+**5. PRD freshness check (if PRD exists for the feature):**
+- If PRD is >2 weeks old, audit against current codebase before implementation
+- Verify entity names match `+CoreDataProperties.swift` files
+- Confirm save counts, view structures, and API signatures are current
 
 ## Git Workflow
 
@@ -345,7 +351,7 @@ docs/
 ├── prds/                           # Product Requirements Documents
 │   ├── active/                     # Current milestone PRDs
 │   └── complete/                   # Completed feature PRDs
-├── learning-notes/                 # Implementation journey (33 notes)
+├── learning-notes/                 # Implementation journey (37 notes)
 │   ├── 01-09: M1 phases
 │   ├── 10-13: M2 (recipes)
 │   ├── 14-15: M3 (quantities)
@@ -353,22 +359,23 @@ docs/
 │   ├── 20-21: M5 (app renaming)
 │   ├── 22-29: M7 (CloudKit sync)
 │   ├── 30-31: M8 (parsing intelligence)
-│   └── 32-33: M15 (UX design system)
+│   └── 32-37: M15 (UX design system)
 ├── mockups/                        # Visual design references
 │   └── forager-design-system.html  # 16 phone-frame mockups (M15)
 └── architecture/                   # Architecture Decision Records
-    ├── 001-011: ADRs
+    ├── 001-012: ADRs
     └── service-layer-pattern.md    # M7.5+ standard
 ```
 
 ## Architecture Decision Records
 
-11 ADRs in `docs/architecture/`:
+12 ADRs in `docs/architecture/`:
 - **ADR 007**: Core Data change process (read before any schema changes)
 - **ADR 008**: Shared zone architecture (dual-store foundation)
 - **ADR 009**: Public link sharing (bypasses broken UICloudSharingController on iOS 18.x)
 - **ADR 010**: Hybrid parser confidence routing (regex fast path + NLP fallback)
 - **ADR 011**: Tab architecture reduction (6→5 tabs for M15, read before navigation changes)
+- **ADR 012**: GroceryListItem flat string snapshots (snapshot-only, not relationships)
 - **Service Layer Pattern**: M7.5+ standard for all Core Data writes
 
 ## Code Standards

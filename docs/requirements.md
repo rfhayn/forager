@@ -1,10 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 17, 2026
-**Version**: 6.4
-**Current Milestone**: M15 🚀 ACTIVE | M7.7 📋 QUEUED
-**Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
+**Last Updated**: February 20, 2026
+**Version**: 6.5
+**Current Milestone**: M15 ✅ COMPLETE | M7.7 📋 QUEUED | M8.4 📋 READY
+**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -523,18 +522,18 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 | **FR-GM-004** | **Confidence preservation** | ✅ min(existing, incoming) — never hides uncertainty | M8.3.2 | 🎯 **Data integrity** |
 | **FR-GM-005** | **Consolidation button removed** | ✅ Manual merge button removed from grocery list toolbar | M8.3.2 | 🎯 **Simplified UX** |
 
-### **Functional Requirements - ML Enhancement (M8.4 - OPTIONAL)** 💡
+### **Functional Requirements - ML Enhancement (M8.4 - PRE-LAUNCH)** 🚀
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-ML-001** | **Training dataset creation** | Extract 100+ labeled examples from M7-M8 telemetry | M8.4 | 🎯 **Quality data** |
-| **FR-ML-002** | **Data validation** | Validate and clean training data (spot-check 20%) | M8.4 | 🎯 **Model accuracy** |
-| **FR-ML-003** | **Create ML training** | Train custom text classifier (99%+ test accuracy) | M8.4 | 🎯 **Custom intelligence** |
-| **FR-ML-004** | **Hyperparameter tuning** | Optimize model iterations, algorithm selection | M8.4 | 🎯 **Best accuracy** |
-| **FR-ML-005** | **On-device inference** | CoreML integration for local prediction (< 0.2s) | M8.4 | 🎯 **Privacy + speed** |
-| **FR-ML-006** | **Hybrid system integration** | MLIngredientParser as third tier after regex/NLP | M8.4 | 🎯 **Progressive enhancement** |
-| **FR-ML-007** | **Continuous learning pipeline** | Retraining workflow from ongoing telemetry | M8.4 | 🎯 **Self-improving** |
-| **FR-ML-008** | **Retraining triggers** | Retrain at 50+ corrections or 30 days | M8.4 | 🎯 **Fresh model** |
+| **FR-ML-001** | **Dataset preparation** | Merge NYT (180k) + strangetom (81k) into unified BIO-tagged format | M8.4 Phase 1 | 🎯 **Quality data from day one** |
+| **FR-ML-002** | **Data validation** | Validate BIO labels, stratified 80/10/10 split, spot-check 100 samples | M8.4 Phase 1 | 🎯 **Model accuracy** |
+| **FR-ML-003** | **Model training** | BiLSTM-CRF sequence labeler, ≥96% token accuracy on test set | M8.4 Phase 2 | 🎯 **Custom intelligence** |
+| **FR-ML-004** | **CoreML conversion** | PyTorch → coremltools → .mlpackage, predictions match within 0.01% | M8.4 Phase 3 | 🎯 **On-device deployment** |
+| **FR-ML-005** | **On-device inference** | MLIngredientParser with CoreML, < 5ms per parse | M8.4 Phase 4 | 🎯 **Privacy + speed** |
+| **FR-ML-006** | **Hybrid system integration** | MLIngredientParser as third tier in HybridIngredientParser routing | M8.4 Phase 5 | 🎯 **Progressive enhancement** |
+| **FR-ML-007** | **Test suite** | 20+ test cases covering known failures, regressions, performance | M8.4 Phase 6 | 🎯 **Quality assurance** |
+| **FR-ML-008** | **Continuous learning pipeline** | Export user corrections as BIO-tagged retraining data | M8.4 Phase 7 | 🎯 **Self-improving** |
 
 ### **Non-Functional Requirements - M8**
 
@@ -545,13 +544,13 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 | **NFR-PI-003** | **Fast path performance** | 80% of inputs < 0.05s (regex unchanged) | M8.3 | 🎯 **Speed preserved** |
 | **NFR-PI-004** | **Smart path performance** | 15% of inputs < 0.2s (NLP acceptable latency) | M8.3 | 🎯 **Responsive** |
 | **NFR-PI-005** | **Hybrid routing overhead** | Decision cost < 0.01s (minimal) | M8.3 | 🎯 **Efficient** |
-| **NFR-ML-001** | **ML parsing accuracy (M8.4)** | ≥99.5% (up from 98% baseline) | M8.4 | 🎯 **Industry-leading** |
-| **NFR-ML-002** | **ML inference latency** | < 0.2s on-device CoreML | M8.4 | 🎯 **Real-time** |
+| **NFR-ML-001** | **ML token accuracy (M8.4)** | ≥96% on test set | M8.4 | 🎯 **High accuracy** |
+| **NFR-ML-002** | **ML inference latency** | < 5ms per parse on-device | M8.4 | 🎯 **Real-time** |
 | **NFR-ML-003** | **Model size** | ≤5MB CoreML model file | M8.4 | 🎯 **Download efficiency** |
 | **NFR-ML-004** | **Privacy compliance** | 100% on-device, no cloud calls | M8.4 | 🎯 **User trust** |
 | **NFR-ML-005** | **Zero regressions** | Existing patterns maintain/improve accuracy | M8 All | 🎯 **Quality** |
 
-**M8 Summary (Complete)**: 43 requirements across 5 phases: resilience & telemetry (6 ✅), hybrid NLP parser (10 ✅), template hygiene (6 ✅), auto-merge grocery (5 ✅), ML enhancement (8 deferred), and non-functional requirements (10). Professional-grade 98%+ accuracy achieved. M8.2 skipped (PRD analysis sufficient). M8.4 ML deferred post-launch. Total: ~17 hours, 102 unit tests.
+**M8 Summary**: 43 requirements across 5 phases: resilience & telemetry (6 ✅), hybrid NLP parser (10 ✅), template hygiene (6 ✅), auto-merge grocery (5 ✅), ML enhancement (8 📋 READY), and non-functional requirements (10). Professional-grade 98%+ accuracy achieved. M8.2 skipped (PRD analysis sufficient). **M8.4 moved to pre-launch** — dataset-bootstrapped CoreML (no cold start). Total done: ~17h, 102 unit tests. M8.4 remaining: 18-24h + 9h prerequisites.
 
 ---
 
