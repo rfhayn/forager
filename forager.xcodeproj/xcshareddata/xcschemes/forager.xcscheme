@@ -30,34 +30,10 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <TestPlans>
          <TestPlanReference
-            reference = "container:foragerTests/PersistenceTests/forager.xctestplan"
+            reference = "container:foragerTests/forager.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
-      <Testables>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9B731C3C2E535C3300CE26F0"
-               BuildableName = "foragerTests.xctest"
-               BlueprintName = "foragerTests"
-               ReferencedContainer = "container:forager.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9B731C462E535C3300CE26F0"
-               BuildableName = "foragerUITests.xctest"
-               BlueprintName = "foragerUITests"
-               ReferencedContainer = "container:forager.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"

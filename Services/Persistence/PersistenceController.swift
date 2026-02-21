@@ -147,9 +147,10 @@ final class PersistenceController: ObservableObject {
         try? FileManager.default.createDirectory(at: appSupportURL, withIntermediateDirectories: true)
 
         if inMemory {
-            // In-memory testing: use /dev/null for both stores
+            // In-memory testing: each store needs a unique URL so Core Data
+            // doesn't reject the second as "Can't add the same store twice"
             let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .private, inMemory: true)
-            let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .shared, inMemory: true)
+            let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null-shared"), scope: .shared, inMemory: true)
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
             #if DEBUG
             print("🧪 M7.2.2: Dual in-memory stores configured")
