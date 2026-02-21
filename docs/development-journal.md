@@ -6,6 +6,38 @@
 
 ---
 
+## Session 21 — February 21, 2026
+**Milestone**: M9.1.2 Centralize `extractCleanIngredientName`
+**Branch**: `feature/M9.1.2-centralize-extract-clean-name`
+
+### What Happened
+
+Executed a clean refactoring milestone: two diverging private `extractCleanIngredientName(from:)` implementations in view files (AddIngredientsToListView with 40 lines and 5 call sites, MealPlanDetailView with 18 lines and 1 call site) were replaced by a single `static` method on `IngredientParsingService` that delegates to the `HybridIngredientParser`.
+
+The key insight from the planning phase was that these view-layer functions were manually reimplementing what the parser already does — and doing it worse. The MealPlanDetailView version was notably weaker: no qualifier stripping ("salt to taste" → "Salt To Taste" instead of "Salt"), fewer unit patterns (missing unicode fractions, descriptive amounts). Meanwhile, `HybridIngredientParser.parse()` already handles 7 regex pattern categories + NLP fallback.
+
+The implementation was straightforward: add a `static let sharedParser = HybridIngredientParser()` on `IngredientParsingService`, write a 10-line static method that delegates to it, update 6 call sites across two views, delete ~58 lines of hand-rolled regex. Added 12 unit tests covering standard measurements, fractions, unicode, count units, parentheticals, qualifiers, edge cases. All pass.
+
+### Decisions Made
+
+1. **Static method over instance method**: The call sites in views don't hold an `IngredientParsingService` instance (it requires Core Data context). A `static` method avoids requiring DI injection for what's a pure text-to-text utility.
+
+2. **Shared parser as `static let`**: Swift guarantees `static let` is initialized lazily and atomically. `HybridIngredientParser` holds only `let` properties and `parse()` creates no shared mutable state — thread-safe by construction.
+
+3. **Capitalized fallback for empty names**: If the parser returns an empty name (very short unrecognizable input), we fall back to `trimmed.capitalized` rather than empty string. This preserves the convention all call sites expect.
+
+4. **No qualifier stripping concern**: The old AddIngredientsToListView stripped 13 qualifier words inline (large, fresh, chopped, etc.). The parser doesn't strip leading adjectives, but `findOrCreateTemplate(name:)` runs `normalize()` Phase 4 which handles these. The stripping still happens, just in the right layer.
+
+### AI Tooling Learnings
+
+The planning phase (done in a prior session) was thorough — line numbers, call site inventory, thread safety verification, behavioral change analysis. This made implementation mechanical: follow the plan, verify each step. Total implementation time was well under the 1.5h estimate. The plan's explicit note about `normalize()` handling qualifier stripping prevented me from trying to add that logic to the new static method.
+
+### What It Means
+
+This is the kind of cleanup that prevents silent divergence: two implementations that started the same but drifted apart over time, producing different results for the same input. The MealPlanDetailView bulk-add was creating junk templates that would accumulate in the database. Now all name extraction goes through one path, and any future parser improvements (M8.4 ML parser) automatically propagate to all call sites.
+
+---
+
 ## Session 20 — February 21, 2026
 **Milestone**: M9.0.1 Recipe Picker Scalability Fix — IN PROGRESS
 **Branch**: `feature/M9.0.1-recipe-picker-fix`
