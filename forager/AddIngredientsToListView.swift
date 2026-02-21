@@ -283,7 +283,7 @@ struct AddIngredientsToListView: View {
             guard let fullName = ingredient.name?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !fullName.isEmpty else { continue }
 
-            let cleanName = extractCleanIngredientName(from: fullName)
+            let cleanName = IngredientParsingService.extractCleanIngredientName(from: fullName)
             let template = templateService.findOrCreateTemplate(name: cleanName)
             ingredient.ingredientTemplate = template
         }
@@ -428,9 +428,9 @@ struct AddIngredientsToListView: View {
             // Template name for matching/merging
             let cleanName: String
             if let ingredientTemplate = ingredient.ingredientTemplate {
-                cleanName = ingredientTemplate.name ?? extractCleanIngredientName(from: originalText)
+                cleanName = ingredientTemplate.name ?? IngredientParsingService.extractCleanIngredientName(from: originalText)
             } else {
-                cleanName = extractCleanIngredientName(from: originalText)
+                cleanName = IngredientParsingService.extractCleanIngredientName(from: originalText)
             }
 
             // Full display name: at 1x use original text, at other scales construct from scaled qty
@@ -551,58 +551,19 @@ struct AddIngredientsToListView: View {
     }
     
     private func findExistingItem(named targetName: String, in items: [GroceryListItem]) -> GroceryListItem? {
+        let normalizedTarget = templateService.normalize(name: targetName)
         return items.first { item in
             guard let itemName = item.name else { return false }
-            let cleanItemName = extractCleanIngredientName(from: itemName)
-            return cleanItemName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                   targetName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            let cleanItemName = IngredientParsingService.extractCleanIngredientName(from: itemName)
+            let normalizedItem = templateService.normalize(name: cleanItemName)
+            return normalizedItem == normalizedTarget
         }
-    }
-    
-    private func extractCleanIngredientName(from fullText: String) -> String {
-        let text = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        var cleaned = text
-
-        // Remove measurements with units (comprehensive pattern — includes count units)
-        let measurementPattern = #"^[\d/.\s-]*(cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|cloves?|slices?|cans?|heads?|bunches?|pieces?|sprigs?|sticks?|grams?|g|kilograms?|kg|liters?|l|milliliters?|ml|eggs?|egg)\s+"#
-        if let regex = try? NSRegularExpression(pattern: measurementPattern, options: .caseInsensitive) {
-            cleaned = regex.stringByReplacingMatches(
-                in: cleaned,
-                range: NSRange(cleaned.startIndex..., in: cleaned),
-                withTemplate: ""
-            )
-        }
-
-        // Strip any remaining leading numbers/fractions (e.g., "3 garlic")
-        let leadingNumberPattern = #"^[\d/.\s-]+(?=\S)"#
-        if let regex = try? NSRegularExpression(pattern: leadingNumberPattern, options: []) {
-            cleaned = regex.stringByReplacingMatches(
-                in: cleaned,
-                range: NSRange(cleaned.startIndex..., in: cleaned),
-                withTemplate: ""
-            )
-        }
-
-        // Remove common quantity words
-        let quantityWords = ["large", "medium", "small", "whole", "half", "fresh", "dried", "frozen", "canned", "chopped", "diced", "sliced", "minced"]
-        for word in quantityWords {
-            let pattern = "\\b\(word)\\b\\s*"
-            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                cleaned = regex.stringByReplacingMatches(
-                    in: cleaned,
-                    range: NSRange(cleaned.startIndex..., in: cleaned),
-                    withTemplate: ""
-                )
-            }
-        }
-
-        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
     }
     
     private func findExistingTemplate(cleanName: String) -> IngredientTemplate? {
+        let normalizedName = templateService.normalize(name: cleanName)
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
+        request.predicate = NSPredicate(format: "name ==[cd] %@", normalizedName)
         
         do {
             return try viewContext.fetch(request).first
@@ -812,7 +773,7 @@ struct AddIngredientsToListView: View {
             }
         } else {
             // No template exists yet - check if one exists in database
-            let cleanName = extractCleanIngredientName(from: ingredient.name ?? "")
+            let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredient.name ?? "")
             let existingTemplate = findExistingTemplate(cleanName: cleanName)
             
             if let template = existingTemplate {

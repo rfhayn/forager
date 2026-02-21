@@ -632,7 +632,7 @@ struct MealPlanDetailView: View {
             for ingredient in ingredients {
                 guard let ingredientName = ingredient.name, !ingredientName.isEmpty else { continue }
 
-                let cleanName = extractCleanIngredientName(from: ingredientName)
+                let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
                 _ = templateService.findOrCreateTemplate(name: cleanName)
 
                 let listItem = GroceryListItem(context: viewContext)
@@ -706,24 +706,6 @@ struct MealPlanDetailView: View {
         return String(format: "%.2f", value)
     }
 
-    private func extractCleanIngredientName(from fullText: String) -> String {
-        var cleaned = fullText
-        // Handle fractions (1/4, 1/2) and decimals, then optional unit words
-        let measurementPattern = #"[\d]+[/.]?[\d]*\s*(?:cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|cloves?|slices?|cans?|heads?|bunches?|pieces?|sprigs?|sticks?|grams?|g|kg|ml|l)\s+"#
-        if let regex = try? NSRegularExpression(pattern: measurementPattern, options: .caseInsensitive) {
-            cleaned = regex.stringByReplacingMatches(
-                in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned), withTemplate: ""
-            )
-        }
-        // Strip any remaining leading numbers/fractions (e.g., "3 garlic")
-        let leadingNumberPattern = #"^[\d/.\s-]+(?=\S)"#
-        if let regex = try? NSRegularExpression(pattern: leadingNumberPattern, options: []) {
-            cleaned = regex.stringByReplacingMatches(
-                in: cleaned, range: NSRange(cleaned.startIndex..., in: cleaned), withTemplate: ""
-            )
-        }
-        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
-    }
 }
 
 // MARK: - Preview

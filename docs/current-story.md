@@ -1,12 +1,48 @@
 # Current Development Story
 
 **Last Updated**: February 21, 2026
-**Status**: M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY**
-**Total Progress**: ~221 hours | 89% planning accuracy
-**Current Branch**: `main` (M9.0 merged via PR #41)
-**Current Milestone**: M9.0 - Warning Resolution — **COMPLETE** (zero-warning baseline)
+**Status**: M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY**
+**Total Progress**: ~223 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending)
+**Current Milestone**: M9.1.2 - Centralize extractCleanIngredientName — **COMPLETE**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M9.5-partial (parser DI) → M8.4 → M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M9.1.2: CENTRALIZE extractCleanIngredientName - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Sessions**: February 21, 2026 (sessions 21-22)
+**Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending)
+**PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md` (Phase 1, M9.1 task 3)
+
+### **What Was Delivered** ✅
+
+Centralized two diverging `extractCleanIngredientName(from:)` implementations into a single static method on `IngredientParsingService` that delegates to the `HybridIngredientParser`.
+
+**Core Change:**
+- Added `static func extractCleanIngredientName(from:)` to `IngredientParsingService` (10 lines)
+- Uses `static let sharedParser = HybridIngredientParser()` (thread-safe, lazy atomic)
+- Replaced 40-line regex in AddIngredientsToListView (7 pattern groups, qualifier stripping)
+- Replaced 18-line regex in MealPlanDetailView (2 pattern groups, no qualifier stripping)
+- ~58 lines of hand-rolled regex deleted
+- Fixed merge comparison in `findExistingItem()` to normalize both sides (was normalizing target but not existing item names)
+
+**Unit Tests:** 12 tests in `IngredientParsingServiceCleanNameTests.swift` — standard measurements, fractions, unicode, count units, parentheticals, qualifiers, edge cases.
+
+### **Commits**
+1. `91f8fde` — M9.1.2: Centralize extractCleanIngredientName via parser delegation
+2. `d9f7002` — M9.1.2: Update insights log and development journal
+3. `f4c56ed` — M9.1.2: Fix merge comparison to normalize both sides
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ ZERO WARNINGS | Clean build, BUILD SUCCEEDED |
+| Unit tests | ✅ 12 PASSING | Clean name extraction tests |
+| Existing tests | ✅ ALL PASSING | No regressions |
 
 ---
 
@@ -1153,7 +1189,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
-| **M15: UX Design System & Visual Refresh** | 🚀 **ACTIVE** | 50-70h |
+| M15: UX Design System & Visual Refresh | ✅ COMPLETE | ~50h |
 | TestFlight push (post-M15) | 📋 PLANNED | ~1h |
 | **M7.7: App Store Submission & Public Presence** | 📋 READY | 3-5h |
 
@@ -1182,7 +1218,9 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | Task | Status | Est. Hours |
 |------|--------|------------|
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
-| **M9-prereqs (M9.0, M9.1.2, M9.5-partial)** | **📋 NEXT** | **9h** |
+| M9.0: Warning Resolution | ✅ COMPLETE | <1h |
+| M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
+| **M9.5-partial: Parser Dependency Injection** | **📋 NEXT** | **4h** |
 | M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
@@ -1203,8 +1241,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M9.0 Warning Resolution complete + PRD folder cleanup
-**Next Action**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial → M8.4 → M7.7
-**Branch**: `main` (M9.0 merged, clean)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass)
-**Version**: February 21, 2026 - M9.0 COMPLETE, M9.1.2 Next
+**Last Session**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial planned
+**Next Action**: M9.5-partial (parser DI, 4h) → M8.4 → M7.7
+**Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending → merge → start M9.5)
+**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, M9.5 plan detailed)
+**Version**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial NEXT

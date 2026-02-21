@@ -1,33 +1,64 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 21, 2026
-**For Milestone**: M9.0 ✅ COMPLETE → M9.1.2 → M9.5-partial → M8.4 → M7.7 → M6 → M9 → M10+
-**Status**: M9.0 ✅ **COMPLETE** | M9.1.2 📋 **NEXT** | M8.4 📋 **READY**
-**Branch**: `main` (M9.0 merged via PR #41)
+**For Milestone**: M9.1.2 ✅ COMPLETE → M9.5-partial → M8.4 → M7.7 → M6 → M9 → M10+
+**Status**: M9.1.2 ✅ **COMPLETE** | M9.5-partial 📋 **NEXT** | M8.4 📋 **READY**
+**Branch**: `main` (after M9.1.2 PR merges)
 
 ---
 
-## **NEXT: M9-prereqs — Extract Clean, Parser DI (~8h remaining)**
+## **NEXT: M9.5-partial — Parser Dependency Injection (~4h)**
 
-**Status**: 📋 NEXT (M9.0 done, 2 of 3 prereqs remaining)
-**Why first**: Centralized parsing utilities before adding CoreML model
+**Status**: 📋 NEXT (M9.0 + M9.1.2 done, last prereq before M8.4)
+**Why first**: Testable, swappable parsers before adding CoreML model
+**PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md` (M9.5-partial section)
 
-### ~~**M9.0 — Warning Resolution**~~ ✅ COMPLETE (Feb 21, <1h)
-- Zero-warning baseline achieved — 18 warnings resolved across 7 files
-- PR #41 merged to main
-
-### **M9.1.2 — Centralize extractCleanIngredientName (2-3h)**
-```
-Branch: feature/M9.1.2-centralize-extract-clean
-```
-- Exists in 3 files with diverging regex patterns → single utility function
-
-### **M9.5-partial — Parser Dependency Injection (4h)**
 ```
 Branch: feature/M9.5-parser-di
 ```
-- `IngredientParsingService` hardcodes `HybridIngredientParser()` → injectable via init
-- Enables mock parsers in tests + ML parser A/B testing
+
+### **Phase A: HybridIngredientParser DI (45 min)**
+- Add init parameters: `regexParser: IngredientParser`, `nlpParser: IngredientParser`, `regexConfidenceThreshold: Float`
+- All with defaults (backward compatible, zero call site changes)
+- Change `private static let regexConfidenceThreshold` → instance property from init
+
+### **Phase B: IngredientParsingService DI (30 min)**
+- Add `parser: IngredientParser` parameter to init with default `HybridIngredientParser()`
+- Static `extractCleanIngredientName()` unchanged (keeps own sharedParser)
+
+### **Phase C: MockIngredientParser + Routing Tests (1h)**
+- Create `foragerTests/Mocks/MockIngredientParser.swift` — configurable results, call counting
+- Create `foragerTests/Services/Parsing/HybridParserRoutingTests.swift` — 5+ routing tests
+- Tests: high-confidence short-circuit, low-confidence fallback, threshold config, tie handling
+- Must add both files to pbxproj (manual PBXGroup for test target)
+
+### **Phase D: Update Existing Test Files (45 min)**
+- Existing tests should compile unchanged (defaults). Verify all 146+ pass.
+- Add mock-based test in RecipeServiceTests showing parser injection works
+
+### **Phase E: QuantityMigrationService Update (15 min)**
+- Accept `IngredientParsingService` via init (currently creates own)
+- Update `foragerApp.swift` to pass shared instance
+
+### **Phase F: Build Verification + Documentation (30 min)**
+- Zero-warning build, all tests pass
+- Update insights log, development journal, core docs
+- Commit and PR
+
+### **Key Cross-Reference: M8.4 Impact**
+After M9.5-partial, M8.4 Phase 5 will:
+- Add optional `mlParser: IngredientParser?` parameter to `HybridIngredientParser.init`
+- Pass `regexConfidenceThreshold: 0.9` (raised from default 0.8)
+- Update `parse()` routing: regex → ML → NLP (3-tier)
+- Use `MockIngredientParser` from Phase C for router testing
+
+### **M9 Prerequisites Summary**
+
+| Prereq | Status | Actual |
+|--------|--------|--------|
+| M9.0: Warning Resolution | ✅ COMPLETE | <1h |
+| M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
+| **M9.5-partial: Parser DI** | **📋 NEXT** | **~4h est** |
 
 ---
 
@@ -45,7 +76,8 @@ Branch: feature/M8.4-ml-parsing
 - PyTorch → .mlpackage, implement `MLIngredientParser.swift`
 
 ### **Phases 5+6 — Integration + Test Suite (4h)**
-- Update `HybridIngredientParser` routing (regex → ML → NLP), 20+ test cases
+- Add `mlParser:` to HybridIngredientParser init (slot prepared by M9.5-partial)
+- Update routing (regex → ML → NLP), 20+ test cases
 
 ### **Phases 7+8 — Continuous Learning + Documentation (3h)**
 - BIO export for retraining, integration testing, core doc updates
@@ -81,19 +113,5 @@ Branch: feature/M7.7-app-store-submission
 
 ---
 
-## **M7.5 Completion Summary**
-
-All 3 phases delivered on `feature/M7.5-service-ownership`:
-
-| Phase | Description | Commits | Key Changes |
-|-------|-------------|---------|-------------|
-| Phase 1: Service Ownership | f1b96aa, a227b4c, 24595a8, cf81f65 | 4 | 3 new services + 24 unit tests + integration tests + 35 direct saves eliminated from 13 views |
-| Phase 2: Navigation Cleanup | ea75dcf | 1 | 3 views converted to enum-based sheet/alert routing |
-| Phase 3: Tests & Polish | b913fe3 | 1 | 2 empty states → ContentUnavailableView + 5 Core Data invariant tests |
-
-Total commits on branch: 6
-
----
-
-**Version**: February 21, 2026 - M9.0 COMPLETE, M9.1.2 next
-**Dependencies**: M9.0 ✅ (zero warnings), M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md
+**Version**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial NEXT
+**Dependencies**: M9.0 ✅, M9.1.2 ✅, M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md
