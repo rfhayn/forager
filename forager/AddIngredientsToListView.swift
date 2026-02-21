@@ -551,17 +551,19 @@ struct AddIngredientsToListView: View {
     }
     
     private func findExistingItem(named targetName: String, in items: [GroceryListItem]) -> GroceryListItem? {
+        let normalizedTarget = templateService.normalize(name: targetName)
         return items.first { item in
             guard let itemName = item.name else { return false }
             let cleanItemName = IngredientParsingService.extractCleanIngredientName(from: itemName)
-            return cleanItemName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) ==
-                   targetName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedItem = templateService.normalize(name: cleanItemName)
+            return normalizedItem == normalizedTarget
         }
     }
     
     private func findExistingTemplate(cleanName: String) -> IngredientTemplate? {
+        let normalizedName = templateService.normalize(name: cleanName)
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name ==[cd] %@", cleanName)
+        request.predicate = NSPredicate(format: "name ==[cd] %@", normalizedName)
         
         do {
             return try viewContext.fetch(request).first
