@@ -18,6 +18,7 @@ struct IngredientsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     @Binding var popToRoot: Bool
 
@@ -567,14 +568,9 @@ struct IngredientsView: View {
     
     // MARK: - Actions
     private func toggleStapleStatus(for ingredient: IngredientTemplate) {
-        ingredient.isStaple.toggle()
-        
-        do {
-            try viewContext.save()
-        } catch {
-            // Revert on error
-            ingredient.isStaple.toggle()
-            errorMessage = "Failed to update staple status: \(error.localizedDescription)"
+        ingredientTemplateService.updateStaple(ingredient, isStaple: !ingredient.isStaple)
+        if let error = ingredientTemplateService.errorMessage {
+            errorMessage = error
             showingError = true
         }
     }
@@ -583,46 +579,38 @@ struct IngredientsView: View {
         for ingredient in selectedIngredients {
             ingredient.isStaple = isStaple
         }
-        
-        do {
-            try viewContext.save()
-            selectedIngredients.removeAll()
-            isEditMode = false
-        } catch {
-            // Revert changes on error
+        ingredientTemplateService.saveContext()
+        if let error = ingredientTemplateService.errorMessage {
             for ingredient in selectedIngredients {
                 ingredient.isStaple = !isStaple
             }
-            errorMessage = "Failed to update staple status: \(error.localizedDescription)"
+            errorMessage = error
             showingError = true
+        } else {
+            selectedIngredients.removeAll()
+            isEditMode = false
         }
     }
     
     private func bulkDeleteSelected() {
         for ingredient in selectedIngredients {
-            viewContext.delete(ingredient)
+            ingredientTemplateService.deleteTemplate(ingredient)
         }
-        
-        do {
-            try viewContext.save()
+        if let error = ingredientTemplateService.errorMessage {
+            errorMessage = error
+            showingError = true
+        } else {
             selectedIngredients.removeAll()
             isEditMode = false
-        } catch {
-            errorMessage = "Failed to delete ingredients: \(error.localizedDescription)"
-            showingError = true
         }
     }
-    
+
     private func deleteIngredients(from items: [IngredientTemplate], at indexSet: IndexSet) {
         for index in indexSet {
-            let ingredient = items[index]
-            viewContext.delete(ingredient)
+            ingredientTemplateService.deleteTemplate(items[index])
         }
-        
-        do {
-            try viewContext.save()
-        } catch {
-            errorMessage = "Failed to delete ingredient: \(error.localizedDescription)"
+        if let error = ingredientTemplateService.errorMessage {
+            errorMessage = error
             showingError = true
         }
     }
@@ -685,11 +673,12 @@ struct IngredientRowView: View {
     @Environment(\.managedObjectContext) private var viewContext
     // M7.3.4: Household service for filtering duplicate checks by householdKey
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
     @State private var isEditingName = false
     @State private var editedName = ""
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
     var body: some View {
         HStack(spacing: ForagerTheme.Spacing.md) {
             // 4px category color strip
@@ -844,30 +833,35 @@ struct IngredientRowView: View {
                 existingTemplate.updatedAt = Date()
 
                 // Delete the old (now-empty) template
-                viewContext.delete(ingredient)
-                try viewContext.save()
+                ingredientTemplateService.deleteTemplate(ingredient)
 
                 #if DEBUG
                 print("✅ M8.3.1: Merge complete — deleted old template")
                 #endif
 
-                isEditingName = false
+                if let error = ingredientTemplateService.errorMessage {
+                    reportError(error)
+                } else {
+                    isEditingName = false
+                }
             } else {
                 // No duplicate — just rename
-                ingredient.name = trimmedName
-                ingredient.canonicalName = IngredientTemplate.canonicalName(from: trimmedName)
-                ingredient.updatedAt = Date()
-                try viewContext.save()
+                ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
+                    category: ingredient.category, isStaple: ingredient.isStaple)
 
                 #if DEBUG
                 print("✅ M8.3.1: Renamed to '\(trimmedName)'")
                 #endif
 
-                isEditingName = false
+                if let error = ingredientTemplateService.errorMessage {
+                    reportError(error)
+                } else {
+                    isEditingName = false
+                }
             }
         } catch {
             #if DEBUG
-            print("❌ M8.3.1: Save failed — \(error)")
+            print("❌ M8.3.1: Fetch failed — \(error)")
             #endif
             reportError("Failed to save: \(error.localizedDescription)")
         }
@@ -895,6 +889,7 @@ struct IngredientReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)],
@@ -1125,22 +1120,11 @@ struct IngredientReviewSheet: View {
         let template = ingredients[currentIndex]
 
         let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmedName.isEmpty && trimmedName != template.name {
-            template.name = trimmedName
-            template.canonicalName = IngredientTemplate.canonicalName(from: trimmedName)
-        }
+        let nameToUse = (!trimmedName.isEmpty && trimmedName != template.name) ? trimmedName : (template.name ?? "")
+        let categoryToUse = selectedCategory.isEmpty ? nil : selectedCategory
 
-        template.category = selectedCategory.isEmpty ? nil : selectedCategory
-        template.isStaple = isStaple
-        template.updatedAt = Date()
-
-        do {
-            try viewContext.save()
-        } catch {
-            #if DEBUG
-            print("❌ M15.5: Review save failed — \(error)")
-            #endif
-        }
+        ingredientTemplateService.updateTemplate(template, name: nameToUse,
+            category: categoryToUse, isStaple: isStaple)
 
         advance()
     }
@@ -1154,6 +1138,7 @@ struct DuplicateReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
     var body: some View {
         NavigationStack {
@@ -1379,19 +1364,13 @@ struct DuplicateReviewSheet: View {
             }
 
             keeper.updatedAt = Date()
-            viewContext.delete(duplicate)
+            ingredientTemplateService.deleteTemplate(duplicate)
         }
+        ingredientTemplateService.saveContext()
 
-        do {
-            try viewContext.save()
-            #if DEBUG
-            print("M15: Merged \(duplicates.count) duplicate(s) for '\(group.name)' into keeper (usage: \(keeper.usageCount))")
-            #endif
-        } catch {
-            #if DEBUG
-            print("M15: Merge save failed — \(error)")
-            #endif
-        }
+        #if DEBUG
+        print("M15: Merged \(duplicates.count) duplicate(s) for '\(group.name)' into keeper (usage: \(keeper.usageCount))")
+        #endif
 
         advance()
     }

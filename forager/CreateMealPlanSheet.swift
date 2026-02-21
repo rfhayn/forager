@@ -281,24 +281,19 @@ struct CreateMealPlanSheet: View {
         plan.createdDate = Date()
         plan.isActive = false  // Will be set by updateActivePlanStatus
         plan.isCompleted = false
-        
-        do {
-            try viewContext.save()
-            
-            // Update active status
+
+        MealPlanService.shared.saveContext()
+
+        if MealPlanService.shared.lastError != nil {
+            validationError = "Failed to create meal plan. Please try again."
+        } else {
             MealPlanService.shared.updateActivePlanStatus()
-            
-            // Handle callbacks based on mode
+
             if isInline, let callback = onCreated {
                 callback(plan)
             } else {
                 dismiss()
             }
-        } catch {
-            #if DEBUG
-            print("Error creating meal plan: \(error)")
-            #endif
-            validationError = "Failed to create meal plan. Please try again."
         }
     }
 }

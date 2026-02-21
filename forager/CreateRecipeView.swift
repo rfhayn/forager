@@ -12,6 +12,7 @@ import CoreData
 struct CreateRecipeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var recipeService: RecipeService
 
     // M7.3.4: Household service for filtering autocomplete by householdKey
     @EnvironmentObject private var householdService: HouseholdService
@@ -596,11 +597,10 @@ struct CreateRecipeView: View {
     }
     
     private func completeSave() {
-        do {
-            // CRITICAL: Transaction order - Templates already created, now create Ingredients and Recipe
-            
-            // Step 1: Create Recipe
-            let recipe = Recipe(context: viewContext)
+        // CRITICAL: Transaction order - Templates already created, now create Ingredients and Recipe
+
+        // Step 1: Create Recipe
+        let recipe = Recipe(context: viewContext)
             recipe.id = UUID()
             recipe.title = formData.name.trimmingCharacters(in: .whitespacesAndNewlines)
             recipe.prepTime = Int16(formData.prepTime)
@@ -647,27 +647,25 @@ struct CreateRecipeView: View {
             }
             
             // Single save for entire transaction
-            try viewContext.save()
-            
-            // M7.2.3 Phase 4.3: Verify household auto-assignment
-            #if DEBUG
-            print("✅ M7.2.3 Phase 4.3: Recipe saved - '\(recipe.title ?? "")'")
-            print("   Household: \(recipe.household?.name ?? "nil")")
-            print("   Household Key: \(recipe.householdKey ?? "nil")")
-            #endif
-            
-            hasUnsavedChanges = false
-            isSaving = false
-            dismiss()
-            
-        } catch {
-            isSaving = false
-            validationErrors = [ValidationError.noInstructions] // Reuse for generic error
-            showingValidationErrors = true
-            #if DEBUG
-            print("Error saving recipe: \(error)")
-            #endif
-        }
+            recipeService.saveContext()
+
+            if let error = recipeService.errorMessage {
+                isSaving = false
+                validationErrors = [ValidationError.noInstructions]
+                showingValidationErrors = true
+                #if DEBUG
+                print("Error saving recipe: \(error)")
+                #endif
+            } else {
+                #if DEBUG
+                print("✅ M7.2.3 Phase 4.3: Recipe saved - '\(recipe.title ?? "")'")
+                print("   Household: \(recipe.household?.name ?? "nil")")
+                print("   Household Key: \(recipe.householdKey ?? "nil")")
+                #endif
+                hasUnsavedChanges = false
+                isSaving = false
+                dismiss()
+            }
     }
 }
 

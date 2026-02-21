@@ -4,7 +4,8 @@ import CoreData
 struct AddIngredientsToListView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) private var viewContext
-    
+    @EnvironmentObject private var weeklyListService: WeeklyListService
+
     let recipe: Recipe
     
     // M4.3.2: Servings state for scaled recipe addition
@@ -287,16 +288,11 @@ struct AddIngredientsToListView: View {
             ingredient.ingredientTemplate = template
         }
 
-        do {
-            if viewContext.hasChanges {
-                try viewContext.save()
-            }
-            completion(true)
-        } catch {
-            #if DEBUG
-            print("Error saving templates: \(error)")
-            #endif
+        weeklyListService.saveContext()
+        if weeklyListService.errorMessage != nil {
             completion(false)
+        } else {
+            completion(true)
         }
     }
     
@@ -369,19 +365,17 @@ struct AddIngredientsToListView: View {
                 targetWeeklyList = weeklyList
                 addToShoppingList(targetList: weeklyList)
             } else {
-                // Create a new list if none exist
-                let newList = WeeklyList(context: viewContext)
-                newList.id = UUID()
-                newList.name = "Shopping List"
-                newList.dateCreated = Date()
-                
-                try viewContext.save()
-                targetWeeklyList = newList
-                addToShoppingList(targetList: newList)
+                if let newList = weeklyListService.createList(name: "Shopping List") {
+                    targetWeeklyList = newList
+                    addToShoppingList(targetList: newList)
+                } else {
+                    processingMessage = "Error creating shopping list"
+                    isProcessing = false
+                }
             }
         } catch {
             #if DEBUG
-            print("Error fetching/creating weekly list: \(error)")
+            print("Error fetching weekly list: \(error)")
             #endif
             processingMessage = "Error accessing shopping lists"
             isProcessing = false
@@ -525,31 +519,26 @@ struct AddIngredientsToListView: View {
             }
         }
         
-        do {
-            try viewContext.save()
-            
-            // M4.3.2 Phase 2: Enhanced success message with scale info
-            let scaleInfo = scaleFactor != 1.0 ? " (scaled \(String(format: "%.1f", scaleFactor))x)" : ""
-            #if DEBUG
-            print("Successfully added \(selectedIngredientsToAdd.count) ingredients\(scaleInfo)")
-            #endif
-            if mergeCount > 0 {
-                #if DEBUG
-                print("Merged quantities for \(mergeCount) existing items")
-                #endif
-            }
-            
-            DispatchQueue.main.async {
-                self.isProcessing = false
-                self.presentationMode.wrappedValue.dismiss()
-            }
-        } catch {
-            #if DEBUG
-            print("Error saving grocery list items: \(error)")
-            #endif
+        weeklyListService.saveContext()
+
+        // M4.3.2 Phase 2: Enhanced success message with scale info
+        let scaleInfo = scaleFactor != 1.0 ? " (scaled \(String(format: "%.1f", scaleFactor))x)" : ""
+        #if DEBUG
+        print("Successfully added \(selectedIngredientsToAdd.count) ingredients\(scaleInfo)")
+        if mergeCount > 0 {
+            print("Merged quantities for \(mergeCount) existing items")
+        }
+        #endif
+
+        if weeklyListService.errorMessage != nil {
             DispatchQueue.main.async {
                 self.processingMessage = "Error saving items"
                 self.isProcessing = false
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.isProcessing = false
+                self.presentationMode.wrappedValue.dismiss()
             }
         }
     }

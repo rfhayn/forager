@@ -129,6 +129,17 @@ class WeeklyListService: ObservableObject {
 
     // MARK: - Batch Operations
 
+    /// Marks all uncompleted items in a list as complete
+    func markAllItemsComplete(in list: WeeklyList) {
+        clearError()
+        guard let items = list.items as? Set<GroceryListItem> else { return }
+        for item in items where !item.isCompleted {
+            item.isCompleted = true
+            item.dateCompleted = Date()
+        }
+        save("mark all items complete")
+    }
+
     /// Removes all completed items from a list
     func removeCompletedItems(from list: WeeklyList) {
         clearError()

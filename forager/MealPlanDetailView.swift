@@ -533,11 +533,8 @@ struct MealPlanDetailView: View {
     }
 
     private func removePlannedMeal(_ meal: PlannedMeal) {
-        viewContext.delete(meal)
-        do {
-            try viewContext.save()
-        } catch {
-            viewContext.rollback()
+        MealPlanService.shared.deletePlannedMeal(meal)
+        if let error = MealPlanService.shared.lastError {
             errorMessage = "Failed to remove meal: \(error.localizedDescription)"
             showingError = true
         }
@@ -545,18 +542,10 @@ struct MealPlanDetailView: View {
 
     private func toggleCompletion(for meal: PlannedMeal) {
         withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
-            meal.isCompleted.toggle()
-            meal.completedDate = meal.isCompleted ? Date() : nil
-
-            do {
-                try viewContext.save()
-                let generator = UIImpactFeedbackGenerator(style: meal.isCompleted ? .medium : .light)
-                generator.impactOccurred()
-                refreshID = UUID()
-            } catch {
-                meal.isCompleted.toggle()
-                meal.completedDate = nil
-            }
+            MealPlanService.shared.toggleMealCompletion(meal)
+            let generator = UIImpactFeedbackGenerator(style: meal.isCompleted ? .medium : .light)
+            generator.impactOccurred()
+            refreshID = UUID()
         }
     }
 
@@ -637,19 +626,15 @@ struct MealPlanDetailView: View {
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
 
-        do {
-            try viewContext.save()
-            await MainActor.run {
-                isBulkAdding = false
-                showingBulkAddSheet = false
-                bulkAddResults = BulkAddResults(
-                    totalRecipes: totalMeals,
-                    totalIngredients: totalIngredientsAdded,
-                    listName: weeklyList.name ?? "shopping list"
-                )
-            }
-        } catch {
-            await MainActor.run { isBulkAdding = false }
+        MealPlanService.shared.saveContext()
+        await MainActor.run {
+            isBulkAdding = false
+            showingBulkAddSheet = false
+            bulkAddResults = BulkAddResults(
+                totalRecipes: totalMeals,
+                totalIngredients: totalIngredientsAdded,
+                listName: weeklyList.name ?? "shopping list"
+            )
         }
     }
 

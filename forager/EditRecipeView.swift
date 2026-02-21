@@ -12,6 +12,7 @@ import CoreData
 struct EditRecipeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var recipeService: RecipeService
 
     // M7.3.4: Household service for filtering autocomplete by householdKey
     @EnvironmentObject private var householdService: HouseholdService
@@ -582,63 +583,62 @@ struct EditRecipeView: View {
     }
     
     private func completeSave() {
-        do {
-            recipe.title = formData.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            recipe.prepTime = Int16(formData.prepTime)
-            recipe.cookTime = Int16(formData.cookTime)
-            recipe.servings = Int16(formData.servings)
-            recipe.instructions = formData.instructions.trimmingCharacters(in: .whitespacesAndNewlines)
-            recipe.isFavorite = formData.isFavorite
-            
-            let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !tagsString.isEmpty {
-                recipe.tags = tagsString
-            } else {
-                recipe.tags = nil
-            }
-            
-            if let existingIngredients = recipe.ingredients as? Set<Ingredient> {
-                for ingredient in existingIngredients {
-                    viewContext.delete(ingredient)
-                }
-            }
-            
-            for (index, ingredientInput) in formData.ingredients.enumerated() {
-                let trimmed = ingredientInput.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !trimmed.isEmpty else { continue }
-                
-                let ingredient = Ingredient(context: viewContext)
-                ingredient.id = UUID()
-                ingredient.name = trimmed
-                ingredient.sortOrder = Int16(index)
-                ingredient.recipe = recipe
-                
-                // M15 fix: Populate structured quantity fields (matches CreateRecipeView pattern)
-                let parsed = parsingService.parseToStructured(text: trimmed)
-                ingredient.displayText = parsed.displayText
-                ingredient.numericValue = parsed.numericValue ?? 0.0
-                ingredient.standardUnit = parsed.standardUnit
-                ingredient.isParseable = parsed.isParseable
-                ingredient.parseConfidence = parsed.parseConfidence
+        recipe.title = formData.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        recipe.prepTime = Int16(formData.prepTime)
+        recipe.cookTime = Int16(formData.cookTime)
+        recipe.servings = Int16(formData.servings)
+        recipe.instructions = formData.instructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        recipe.isFavorite = formData.isFavorite
 
-                if let template = ingredientInput.template {
-                    ingredient.ingredientTemplate = template
-                }
-            }
+        let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !tagsString.isEmpty {
+            recipe.tags = tagsString
+        } else {
+            recipe.tags = nil
+        }
 
-            try viewContext.save()
-            
-            hasUnsavedChanges = false
-            isSaving = false
-            dismiss()
-            
-        } catch {
+        if let existingIngredients = recipe.ingredients as? Set<Ingredient> {
+            for ingredient in existingIngredients {
+                viewContext.delete(ingredient)
+            }
+        }
+
+        for (index, ingredientInput) in formData.ingredients.enumerated() {
+            let trimmed = ingredientInput.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+
+            let ingredient = Ingredient(context: viewContext)
+            ingredient.id = UUID()
+            ingredient.name = trimmed
+            ingredient.sortOrder = Int16(index)
+            ingredient.recipe = recipe
+
+            // M15 fix: Populate structured quantity fields (matches CreateRecipeView pattern)
+            let parsed = parsingService.parseToStructured(text: trimmed)
+            ingredient.displayText = parsed.displayText
+            ingredient.numericValue = parsed.numericValue ?? 0.0
+            ingredient.standardUnit = parsed.standardUnit
+            ingredient.isParseable = parsed.isParseable
+            ingredient.parseConfidence = parsed.parseConfidence
+
+            if let template = ingredientInput.template {
+                ingredient.ingredientTemplate = template
+            }
+        }
+
+        recipeService.saveContext()
+
+        if let error = recipeService.errorMessage {
             isSaving = false
             validationErrors = [ValidationError.noInstructions]
             showingValidationErrors = true
             #if DEBUG
             print("Error updating recipe: \(error)")
             #endif
+        } else {
+            hasUnsavedChanges = false
+            isSaving = false
+            dismiss()
         }
     }
 }

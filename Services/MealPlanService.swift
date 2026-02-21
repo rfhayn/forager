@@ -545,7 +545,7 @@ class MealPlanService: ObservableObject {
     func markMealAsCompleted(_ meal: PlannedMeal) {
         meal.isCompleted = true
         meal.completedDate = Date()
-        
+
         do {
             try context.save()
         } catch {
@@ -556,7 +556,55 @@ class MealPlanService: ObservableObject {
             context.rollback()
         }
     }
-    
+
+    // M7.5: Toggles completion state of a planned meal
+    func toggleMealCompletion(_ meal: PlannedMeal) {
+        meal.isCompleted.toggle()
+        meal.completedDate = meal.isCompleted ? Date() : nil
+
+        do {
+            try context.save()
+        } catch {
+            lastError = error
+            meal.isCompleted.toggle()
+            meal.completedDate = nil
+            #if DEBUG
+            print("Error toggling meal completion: \(error)")
+            #endif
+            context.rollback()
+        }
+    }
+
+    // M7.5: Deletes a planned meal from any meal plan (no activeMealPlan guard)
+    func deletePlannedMeal(_ meal: PlannedMeal) {
+        context.delete(meal)
+
+        do {
+            try context.save()
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error deleting planned meal: \(error)")
+            #endif
+            context.rollback()
+        }
+    }
+
+    // M7.5: Saves the current context for multi-step operations
+    func saveContext() {
+        guard context.hasChanges else { return }
+
+        do {
+            try context.save()
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error in batch save: \(error)")
+            #endif
+            context.rollback()
+        }
+    }
+
     // M4.2: Updates the servings for a planned meal
     // Recalculates scale factor based on original recipe servings
     func updateServings(for meal: PlannedMeal, servings: Int16) {
