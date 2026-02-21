@@ -135,7 +135,7 @@ forager/
 
 ## Performance
 
-All targets met or exceeded across ~190 hours of development:
+All targets met or exceeded across ~221 hours of development:
 
 | Metric | Target | Achieved |
 |--------|--------|----------|
@@ -152,7 +152,7 @@ All targets met or exceeded across ~190 hours of development:
 
 ## Development Journey
 
-forager has been built incrementally across ~190 hours with 89% planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
+forager has been built incrementally across ~221 hours with 89% planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
 
 ### Completed Milestones
 
@@ -172,21 +172,23 @@ forager has been built incrementally across ~190 hours with 89% planning accurac
 | **M8** | Hybrid NLP Parser & Parsing Intelligence | ~17h | Feb 2026 |
 | **M7.6** | Pre-Launch Prep & Schema Cleanup | ~9.5h | Feb 2026 |
 | **M15** | UX Design System & Visual Refresh | ~50h | Feb 2026 |
+| **M7.5** | Architecture Hardening | ~5h | Feb 2026 |
+| **M9.0** | Warning Resolution (zero-warning baseline) | <1h | Feb 2026 |
 
 ### Current
 
-M15 complete on `feature/M15-ux-design-system` — pending merge to main, then TestFlight build 11 (v1.2).
+M15, M7.5, M9.0 all complete on `main`. Next: M9.1.2 (centralize parsing utilities) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store).
 
 ### Planned
 
 | Milestone | Description | Est. Hours |
 |-----------|-------------|------------|
-| **M7.5** | Architecture Hardening | 14-19h |
-| **M9-prereqs** | Warning Resolution, Centralize Extract, Parser DI | 9h |
+| **M9.1.2** | Centralize extractCleanIngredientName | 2-3h |
+| **M9.5-partial** | Parser Dependency Injection | 4h |
 | **M8.4** | ML-Powered Parsing (CoreML BiLSTM-CRF) | 18-24h |
 | **M7.7** | App Store Submission & Landing Page | 3-5h |
 | **M6** | Testing Foundation & CI/CD | 20-30h |
-| **M9** | Technical Debt & Optimization | ~120h |
+| **M9** | Remaining Technical Debt | ~120h |
 | **M10+** | Analytics, Health, Budget, AI, Collaboration | 48-72h |
 
 ---
@@ -214,4 +216,4 @@ This project is available under the MIT License.
 
 ---
 
-**~190 hours** of development | **89%** planning accuracy | **146+** unit tests | **234** tracked requirements | **37** learning notes | **12** ADRs | **Zero** technical debt
+**~221 hours** of development | **89%** planning accuracy | **146+** unit tests | **234** tracked requirements | **37** learning notes | **12** ADRs | **Zero** technical debt
