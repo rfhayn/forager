@@ -42,16 +42,19 @@ class IngredientParsingService: ObservableObject {
     private let context: NSManagedObjectContext
     private let templateService: IngredientTemplateService
 
-    // M8.3: Hybrid parser routes between regex (fast) and NLP (fallback)
-    private let parser: IngredientParser = HybridIngredientParser()
+    // M9.5: Injectable parser with backward-compatible default
+    private let parser: IngredientParser
 
     // Performance tracking
     @Published var lastParsingDuration: TimeInterval = 0
     @Published var parseSuccessRate: Double = 0.0
 
-    init(context: NSManagedObjectContext, templateService: IngredientTemplateService) {
+    init(context: NSManagedObjectContext,
+         templateService: IngredientTemplateService,
+         parser: IngredientParser = HybridIngredientParser()) {
         self.context = context
         self.templateService = templateService
+        self.parser = parser
     }
 
     // MARK: - Smart Ingredient Parsing (Legacy)

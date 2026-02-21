@@ -16,11 +16,19 @@ class HybridIngredientParser: IngredientParser {
 
     let parserName = "hybrid"
 
-    /// Regex confidence must meet this threshold to skip NLP entirely
-    private static let regexConfidenceThreshold: Float = 0.8
+    private let regexConfidenceThreshold: Float
+    private let regexParser: IngredientParser
+    private let nlpParser: IngredientParser
 
-    private let regexParser = RegexIngredientParser()
-    private let nlpParser = NLPIngredientParser()
+    // M9.5: Injectable sub-parsers with backward-compatible defaults
+    // M8.4 will extend with: mlParser: IngredientParser? = nil
+    init(regexParser: IngredientParser = RegexIngredientParser(),
+         nlpParser: IngredientParser = NLPIngredientParser(),
+         regexConfidenceThreshold: Float = 0.8) {
+        self.regexParser = regexParser
+        self.nlpParser = nlpParser
+        self.regexConfidenceThreshold = regexConfidenceThreshold
+    }
 
     // MARK: - IngredientParser Protocol
 
@@ -29,7 +37,7 @@ class HybridIngredientParser: IngredientParser {
         let regexResult = regexParser.parse(input)
 
         // Step 2: If regex is confident enough, return immediately
-        if regexResult.confidence >= Self.regexConfidenceThreshold {
+        if regexResult.confidence >= regexConfidenceThreshold {
             return regexResult
         }
 
