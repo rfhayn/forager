@@ -332,26 +332,15 @@ struct GroceryListDetailView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: ForagerTheme.Spacing.xl) {
-            Image(systemName: "cart")
-                .font(.system(size: 60))
-                .foregroundStyle(ForagerTheme.accentPrimary)
-
-            VStack(spacing: ForagerTheme.Spacing.md) {
-                Text("Empty List")
-                    .font(ForagerTheme.cardTitle)
-                Text("Add some items to get started shopping!")
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                    .multilineTextAlignment(.center)
-            }
-
+        ContentUnavailableView {
+            Label("Empty List", systemImage: "cart")
+        } description: {
+            Text("Add some items to get started shopping!")
+        } actions: {
             Button(action: { showingAddItem = true }) {
-                Label("Add Item", systemImage: "plus.circle.fill")
+                Text("Add Item")
             }
-            .buttonStyle(ForagerPrimaryButtonStyle())
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Celebration Banner
