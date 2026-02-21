@@ -169,6 +169,20 @@ class IngredientParsingService: ObservableObject {
         return createdIngredients
     }
 
+    // MARK: - M9.1.2: Centralized Clean Name Extraction
+
+    private static let sharedParser = HybridIngredientParser()
+
+    /// Extract a clean ingredient name from raw text (e.g., "2 cups flour" → "Flour").
+    /// Delegates to the hybrid parser for consistent behavior across the app.
+    static func extractCleanIngredientName(from text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        let result = sharedParser.parse(trimmed)
+        let name = result.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? trimmed.capitalized : name.capitalized
+    }
+
     // MARK: - Category Inference
 
     private func categorizeIngredient(_ name: String) -> String? {
