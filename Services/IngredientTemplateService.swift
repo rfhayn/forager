@@ -84,6 +84,16 @@ class IngredientTemplateService: ObservableObject {
             "raisin": "raisins", "raisins": "raisins",
             "mushroom": "mushrooms", "mushrooms": "mushrooms",
             "pepper": "peppers", "peppers": "peppers",
+            "banana": "bananas", "bananas": "bananas",
+            "avocado": "avocados", "avocados": "avocados",
+            "tomato": "tomatoes", "tomatoes": "tomatoes",
+            "potato": "potatoes", "potatoes": "potatoes",
+            "onion": "onions", "onions": "onions",
+            "carrot": "carrots", "carrots": "carrots",
+            "noodle": "noodles", "noodles": "noodles",
+            "egg": "eggs", "eggs": "eggs",
+            "shrimp": "shrimp", // uncountable
+            "scallop": "scallops", "scallops": "scallops",
         ]
         if let preferred = preferPlural[checkName] {
             return preferred

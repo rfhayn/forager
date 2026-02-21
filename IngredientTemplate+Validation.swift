@@ -131,9 +131,15 @@ extension IngredientTemplate {
         if name.contains("(") { return true }
 
         // 2. Contains digits or Unicode fraction characters
+        // Exception: product variants where % follows a digit (e.g. "2% milk", "1% milk")
         let fractions = CharacterSet(charactersIn: "½⅓¼⅔¾⅛⅜⅝⅞")
-        if name.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) || fractions.contains($0) }) {
-            return true
+        let hasDigit = name.unicodeScalars.contains(where: { CharacterSet.decimalDigits.contains($0) || fractions.contains($0) })
+        if hasDigit {
+            let isProductVariant = lower.range(of: #"^\d+%\s+\w+"#, options: .regularExpression) != nil
+                || lower.range(of: #"\w+\s+\d+%$"#, options: .regularExpression) != nil
+            if !isProductVariant {
+                return true
+            }
         }
 
         // 3. Ends with qualifier phrases — e.g. "herbs to garnish", "salt to taste"
