@@ -60,6 +60,12 @@ struct foragerApp: App {
     @StateObject private var syncMonitor = CloudKitSyncMonitor()
     @StateObject private var householdService: HouseholdService
 
+    // M7.5: Service layer — all Core Data writes go through services
+    @StateObject private var recipeService: RecipeService
+    @StateObject private var weeklyListService: WeeklyListService
+    @StateObject private var ingredientTemplateService: IngredientTemplateService
+    @StateObject private var ingredientParsingService: IngredientParsingService
+
     // Coach mark onboarding
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showCoachMarks = false
@@ -74,8 +80,21 @@ struct foragerApp: App {
     @State private var mealPlansPopToRoot = false
 
     init() {
-        let service = HouseholdService(context: PersistenceController.shared.container.viewContext)
-        _householdService = StateObject(wrappedValue: service)
+        let context = PersistenceController.shared.container.viewContext
+
+        let household = HouseholdService(context: context)
+        _householdService = StateObject(wrappedValue: household)
+
+        // M7.5: Build service dependency chain
+        let templateService = IngredientTemplateService(context: context)
+        let parsingService = IngredientParsingService(context: context, templateService: templateService)
+        let recipe = RecipeService(context: context, parsingService: parsingService)
+        let weeklyList = WeeklyListService(context: context, parsingService: parsingService)
+
+        _ingredientTemplateService = StateObject(wrappedValue: templateService)
+        _ingredientParsingService = StateObject(wrappedValue: parsingService)
+        _recipeService = StateObject(wrappedValue: recipe)
+        _weeklyListService = StateObject(wrappedValue: weeklyList)
     }
 
     var body: some Scene {
@@ -134,6 +153,11 @@ struct foragerApp: App {
                     .environment(\.managedObjectFactory, objectFactory)
                     .environmentObject(householdService)
                     .environmentObject(syncMonitor)
+                    // M7.5: Service layer environment objects
+                    .environmentObject(recipeService)
+                    .environmentObject(weeklyListService)
+                    .environmentObject(ingredientTemplateService)
+                    .environmentObject(ingredientParsingService)
                     .task {
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         if householdService.currentHousehold == nil {
