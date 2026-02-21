@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 20, 2026
+**Last Updated**: February 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9-prereqs 📋 **NEXT** | M8.4 📋 **READY**
-**Current Phase**: M7.5 ✅ **COMPLETE** (all 3 phases, 6 commits) | M9-prereqs 📋 **NEXT**
-**Next Priority**: Merge M7.5 → M9-prereqs → M8.4 → M7.7 App Store
-**Execution Order**: M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9.1.2 📋 **NEXT** | M8.4 📋 **READY**
+**Current Phase**: M9.0 ✅ **COMPLETE** (zero-warning baseline, PR #41 merged) | M9.1.2 📋 **NEXT**
+**Next Priority**: M9.1.2 → M9.5-partial → M8.4 → M7.7 App Store
+**Execution Order**: M9.1.2 (2-3h) → M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -50,6 +50,20 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 21, 2026** - M9.0 Warning Resolution COMPLETE ✅ + PRD Folder Cleanup
+- **Completed**: Zero-warning build baseline — 18 compiler warnings resolved across 7 source files
+- **Key Fixes**:
+  - Removed deprecated CloudKit `discoverUserIdentity` (no replacement API — just delete)
+  - 8 unused variables removed/prefixed
+  - 3 unnecessary `await` removed from `@MainActor` class
+  - 2 non-exhaustive switch cases added
+  - 3 code quality fixes (redundant cast, immutable var, unused result)
+- **PRD Folder Cleanup**: 15 files moved — completed M7.5/M15 PRDs to `complete/`, upcoming M9/M6/M7.x to `active/`, 19 path references updated across 10 docs
+- **PRs**: #40 (PRD cleanup, merged), #41 (M9.0 warnings, merged)
+- **M9 PRD Updated**: Phase 0 rewritten with actual build findings (staleness audit)
+- **Insights**: 3 new — CloudKit deprecation, MainActor await, PRD staleness pattern
+- **Next**: M9.1.2 (centralize extractCleanIngredientName)
 
 ### **February 20, 2026** - M7.5 Architecture Hardening COMPLETE ✅
 - **Completed**: All 3 phases — service ownership, navigation cleanup, tests & polish
@@ -421,7 +435,7 @@ _[Previous entries remain the same through December 23...]_
 ## 📊 **CURRENT STATE**
 
 ### **Project Metrics**
-- **Total Development Time**: ~220 hours
+- **Total Development Time**: ~221 hours
 - **Planning Accuracy**: 89% overall (consistently within estimates)
 - **Build Success**: 100% (zero breaking changes)
 - **Performance**: 100% (all operations <0.5s target maintained)

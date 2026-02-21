@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 20, 2026
-**Current Phase**: **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M9-prereqs 📋 NEXT**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE
-**Execution Order**: M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Last Updated**: February 21, 2026
+**Current Phase**: **M9.0 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M9.1.2 📋 NEXT**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9.0 COMPLETE
+**Execution Order**: M9.1.2 (2-3h) → M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -1218,7 +1218,8 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M7.6.7**: Version bump & code prep (~0.5h)
 - **M15**: UX Design System & Visual Refresh (~50-65h)
 - **M7.5**: Architecture Hardening (~5h)
-- **Total Completed**: ~220 hours
+- **M9.0**: Warning Resolution (<1h)
+- **Total Completed**: ~221 hours
 
 ### **Planned Core Platform:**
 - **M7**: 27-37 hours base, 32-42 hours with buffer (CloudKit sync + external TestFlight)

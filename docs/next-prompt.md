@@ -1,33 +1,20 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 20, 2026
-**For Milestone**: M7.5 ✅ COMPLETE → M9-prereqs → M8.4 → M7.7 → M6 → M9 → M10+
-**Status**: M7.5 ✅ **COMPLETE** | M9-prereqs 📋 **NEXT** | M8.4 📋 **READY**
-**Branch**: `feature/M7.5-service-ownership` (ready for PR + squash merge)
+**Last Updated**: February 21, 2026
+**For Milestone**: M9.0 ✅ COMPLETE → M9.1.2 → M9.5-partial → M8.4 → M7.7 → M6 → M9 → M10+
+**Status**: M9.0 ✅ **COMPLETE** | M9.1.2 📋 **NEXT** | M8.4 📋 **READY**
+**Branch**: `main` (M9.0 merged via PR #41)
 
 ---
 
-## **STEP 0: MERGE M7.5**
+## **NEXT: M9-prereqs — Extract Clean, Parser DI (~8h remaining)**
 
-### **Create PR & Merge**
-```bash
-gh pr create --title "M7.5: Architecture Hardening - Service Ownership & Navigation Cleanup" --body "..."
-gh pr merge --squash --delete-branch
-git checkout main && git pull origin main
-```
+**Status**: 📋 NEXT (M9.0 done, 2 of 3 prereqs remaining)
+**Why first**: Centralized parsing utilities before adding CoreML model
 
----
-
-## **NEXT: M9-prereqs — Warning Resolution, Extract Clean, Parser DI (9h)**
-
-**Status**: 📋 NEXT
-**Why first**: Clean warnings and centralized parsing utilities before adding CoreML model
-
-### **M9.0 — Warning Resolution (2-3h)**
-```
-Branch: feature/M9.0-warning-resolution
-```
-- Resolve all Xcode warnings — zero-warning baseline before adding CoreML
+### ~~**M9.0 — Warning Resolution**~~ ✅ COMPLETE (Feb 21, <1h)
+- Zero-warning baseline achieved — 18 warnings resolved across 7 files
+- PR #41 merged to main
 
 ### **M9.1.2 — Centralize extractCleanIngredientName (2-3h)**
 ```
@@ -108,5 +95,5 @@ Total commits on branch: 6
 
 ---
 
-**Version**: February 20, 2026 - M7.5 COMPLETE, M9-prereqs next
-**Dependencies**: M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md
+**Version**: February 21, 2026 - M9.0 COMPLETE, M9.1.2 next
+**Dependencies**: M9.0 ✅ (zero warnings), M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md

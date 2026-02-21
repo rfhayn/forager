@@ -1,12 +1,56 @@
 # Current Development Story
 
-**Last Updated**: February 20, 2026
-**Status**: M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY** (PRD written)
-**Total Progress**: ~220 hours | 89% planning accuracy
-**Current Branch**: `feature/M7.5-service-ownership` (ready for PR)
-**Current Milestone**: M7.5 - Architecture Hardening — **ALL 3 PHASES COMPLETE**
+**Last Updated**: February 21, 2026
+**Status**: M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY**
+**Total Progress**: ~221 hours | 89% planning accuracy
+**Current Branch**: `main` (M9.0 merged via PR #41)
+**Current Milestone**: M9.0 - Warning Resolution — **COMPLETE** (zero-warning baseline)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: Merge M7.5 → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 → M9 remaining → M10+
+**Next Priority**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial (parser DI) → M8.4 → M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M9.0: WARNING RESOLUTION - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 21, 2026
+**Branch**: `feature/M9.0-warning-resolution` → merged to main (PR #41)
+**PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md` (Phase 0)
+
+### **What Was Delivered** ✅
+
+Zero-warning build baseline established. All 18 compiler warnings resolved across 7 source files.
+
+**Group A: Deprecated CloudKit APIs (2 warnings)**
+- Removed `discoverUserIdentity` and `userIdentity(forUserRecordID:)` — deprecated in iOS 17 with no replacement
+- Simplified `getCurrentUserInfo()` from 57-line continuation to 2-line async call
+- Removed "Try 1" block from `refreshDisplayName()`, renumbered remaining tries
+
+**Group B: Unused Variables (8 warnings)**
+- Removed unused `householdName` in `leaveHousehold()` and `deleteHousehold()`
+- Removed unused `originalCompleted`/`originalDate` in GroceryListDetailView
+- Changed `if let` to `if != nil` for 2 unused bindings in DatePickerSheet
+- Removed unused `targetCategoryID` in ManageCategoriesView
+- Changed unused `storeID` to `_` in HouseholdScopeProvider debug util
+
+**Group C: Unnecessary `await` (3 warnings)**
+- Removed `await` from `onStatus()` calls and `fetchShares(matching:)` in `@MainActor` class
+
+**Group D: Non-exhaustive Switch (2 warnings)**
+- Added `case .available:` to CKAccountStatus switch
+- Added `case .unknown:` to CKShare.ParticipantAcceptanceStatus switch
+
+**Group E: Code Quality (3 warnings)**
+- Changed `var result` to `let result` in IngredientTemplateService
+- Removed redundant `as! NSPersistentCloudKitContainer` cast
+- Added `_ =` to `withAnimation` result in auto-collapse
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ ZERO WARNINGS | Clean build, BUILD SUCCEEDED |
+| App launch | ✅ | Household features still work |
 
 ---
 
@@ -14,7 +58,7 @@
 
 **Status**: ✅ **COMPLETE**
 **Session**: February 20, 2026
-**Branch**: `feature/M7.5-service-ownership`
+**Branch**: `feature/M7.5-service-ownership` → merged to main (PR #39)
 **PRD**: `docs/prds/complete/m7.5-architecture-hardening-ux-service-cleanup.md`
 
 ### **What Was Delivered** ✅
@@ -89,8 +133,8 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 ### **Key Change from Original Plan**
 Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences. Model ready from day one.
 
-### **Prerequisites (M9 subset, ~9h)**
-1. M9.0: Warning resolution (2-3h) — zero-warning baseline
+### **Prerequisites (M9 subset, ~9h → ~8h remaining)**
+1. ~~M9.0: Warning resolution (2-3h)~~ — ✅ COMPLETE (<1h actual, Feb 21)
 2. M9.1.2: Centralize `extractCleanIngredientName()` (2-3h) — exists in 3 files with diverging regexes
 3. M9.5-partial: Parser dependency injection (4h) — testable, swappable parsers
 
@@ -1159,8 +1203,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 20, 2026 - M7.5 Architecture Hardening complete (all 3 phases)
-**Next Action**: Create PR for M7.5, squash merge to main. Then M9-prereqs → M8.4 → M7.7
-**Branch**: `feature/M7.5-service-ownership` (pushed, ready for PR)
-**Confidence**: **GREEN** (M7.5 ALL 3 PHASES COMPLETE, 6 commits, clean build)
-**Version**: February 20, 2026 - M7.5 COMPLETE, M9-prereqs Next
+**Last Session**: February 21, 2026 - M9.0 Warning Resolution complete + PRD folder cleanup
+**Next Action**: M9.1.2 (centralize extractCleanIngredientName) → M9.5-partial → M8.4 → M7.7
+**Branch**: `main` (M9.0 merged, clean)
+**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass)
+**Version**: February 21, 2026 - M9.0 COMPLETE, M9.1.2 Next
