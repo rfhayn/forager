@@ -24,6 +24,30 @@ extension DateFormatter {
         formatter.dateStyle = .short
         return formatter
     }()
+
+    static let dayAbbreviation: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter
+    }()
+
+    static let fullDayDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE d"
+        return formatter
+    }()
+
+    static let monthDay: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter
+    }()
+
+    static let mediumDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter
+    }()
 }
 
 // MARK: - IngredientTemplate Migration Support (Legacy - May be removed in future)

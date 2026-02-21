@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
+		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
 		85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */; };
 		85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */; };
 		85ADBDBF2EA91EB800E3B1B5 /* Ingredient+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBE2EA91EB600E3B1B5 /* Ingredient+ComputedProperties.swift */; };
@@ -25,7 +26,6 @@
 		9B05554F2EDB665C00A57B34 /* EditRecipeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555292EDB665C00A57B34 /* EditRecipeView.swift */; };
 		9B0555502EDB665C00A57B34 /* SelectListSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */; };
 		9B0555512EDB665C00A57B34 /* EmptyMealPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552B2EDB665C00A57B34 /* EmptyMealPlanView.swift */; };
-		9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */; };
 		9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B05552F2EDB665C00A57B34 /* foragerApp.swift */; };
 		9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555252EDB665C00A57B34 /* CreateMealPlanSheet.swift */; };
 		9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555362EDB665C00A57B34 /* MealPlanRowView.swift */; };
@@ -73,8 +73,6 @@
 		9B731C872E5364A300CE26F0 /* Ingredient+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C772E5364A300CE26F0 /* Ingredient+CoreDataClass.swift */; };
 		9B731C8A2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */; };
 		9B78C7312F35342D00B24679 /* UnifiedSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */; };
-		9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */; };
-		9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */; };
 		9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */; };
 		9B78C7B82F36340000B24679 /* GroceryMergeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B72F36340000B24679 /* GroceryMergeServiceTests.swift */; };
 		9B78C7C12F36350000B24679 /* IngredientTemplateValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7C02F36350000B24679 /* IngredientTemplateValidationTests.swift */; };
@@ -105,6 +103,14 @@
 		9BF1F8CA2E566BCC00E79B3F /* Category+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */; };
 		9BF1F8CC2E566BFF00E79B3F /* Category+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */; };
 		9BFA76022F5A000000A76001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9BFA76012F5A000000A76001 /* LaunchScreen.storyboard */; };
+		A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */; };
+		A1B2C3D4E5F60002AABB0002 /* ForagerProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */; };
+		A1B2C3D4E5F60002AABB0003 /* ForagerSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */; };
+		A1B2C3D4E5F60002AABB0004 /* CategoryChipPills.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */; };
+		A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */; };
+		A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */; };
+		A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */; };
+		A1B2C3D4E5F60002AABB0008 /* HouseholdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */; };
 		C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */; };
 		E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
@@ -128,6 +134,7 @@
 
 /* Begin PBXFileReference section */
 		25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLPIngredientParserTests.swift; sourceTree = "<group>"; };
+		3101722433E156A2E2EF6318 /* ForagerTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerTheme.swift; sourceTree = "<group>"; };
 		85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IngredientTemplate+Validation.swift"; sourceTree = "<group>"; };
 		85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+ComputedProperties.swift"; sourceTree = "<group>"; };
 		85ADBDBE2EA91EB600E3B1B5 /* Ingredient+ComputedProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Ingredient+ComputedProperties.swift"; sourceTree = "<group>"; };
@@ -166,7 +173,6 @@
 		9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectListSheet.swift; sourceTree = "<group>"; };
 		9B05553D2EDB665C00A57B34 /* SelectMealPlanSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectMealPlanSheet.swift; sourceTree = "<group>"; };
 		9B05553E2EDB665C00A57B34 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardEmptyStateView.swift; sourceTree = "<group>"; };
 		9B0555402EDB665C00A57B34 /* WeeklyListsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyListsView.swift; sourceTree = "<group>"; };
 		9B0555422EDB665C00A57B34 /* forager.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = forager.xcdatamodel; sourceTree = "<group>"; };
 		9B0555702EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITests.swift; sourceTree = "<group>"; };
@@ -199,8 +205,6 @@
 		9B731C7D2E5364A300CE26F0 /* WeeklyList+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9B731C7E2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WeeklyList+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedSearchView.swift; sourceTree = "<group>"; };
-		9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBottomNavigation.swift; sourceTree = "<group>"; };
-		9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HamburgerMenuView.swift; sourceTree = "<group>"; };
 		9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingTelemetryServiceTests.swift; sourceTree = "<group>"; };
 		9B78C7B72F36340000B24679 /* GroceryMergeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryMergeServiceTests.swift; sourceTree = "<group>"; };
 		9B78C7C02F36350000B24679 /* IngredientTemplateValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateValidationTests.swift; sourceTree = "<group>"; };
@@ -216,6 +220,7 @@
 		9BA76C102F7D100100AABB01 /* forager 3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 3.xcdatamodel"; sourceTree = "<group>"; };
 		9BA76C112F7D100100AABB01 /* forager 4.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 4.xcdatamodel"; sourceTree = "<group>"; };
 		9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 5.xcdatamodel"; sourceTree = "<group>"; };
+		9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "forager 6.xcdatamodel"; sourceTree = "<group>"; };
 		9BC115A12EC6166E00A3DCA7 /* GroceryItem+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GroceryItem+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC115A32EC6166E00A3DCA7 /* Recipe+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BC663452EE25D92006836A5 /* CloudKitSyncTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncTestView.swift; sourceTree = "<group>"; };
@@ -234,6 +239,14 @@
 		9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Category+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Category+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BFA76012F5A000000A76001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerCard.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerProgressRing.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerSectionHeader.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryChipPills.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterPill.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerButtonStyles.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdView.swift; sourceTree = "<group>"; };
 		A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexIngredientParserTests.swift; sourceTree = "<group>"; };
 		C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -284,8 +297,6 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXGroup;
 			children = (
-				9B78C7342F353B7900B24679 /* HamburgerMenuView.swift */,
-				9B78C7322F3538F600B24679 /* CustomBottomNavigation.swift */,
 				9B78C7302F35342D00B24679 /* UnifiedSearchView.swift */,
 				9B2735D42F1526A60068C5FE /* SceneDelegate.swift */,
 				9B8CC1CD2F12818600E7D0A3 /* PasteInvitationSheet.swift */,
@@ -319,6 +330,15 @@
 				9B05552D2EDB665C00A57B34 /* forager.entitlements */,
 				9B05552E2EDB665C00A57B34 /* forager.xcdatamodeld */,
 				9B05552F2EDB665C00A57B34 /* foragerApp.swift */,
+				3101722433E156A2E2EF6318 /* ForagerTheme.swift */,
+				A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */,
+				A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */,
+				A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */,
+				A1B2C3D4E5F60001AABB0004 /* CategoryChipPills.swift */,
+				A1B2C3D4E5F60001AABB0005 /* FlowLayout.swift */,
+				A1B2C3D4E5F60001AABB0006 /* FilterPill.swift */,
+				A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */,
+				A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */,
 				9B0555302EDB665C00A57B34 /* HelpView.swift */,
 				9B0555312EDB665C00A57B34 /* Info.plist */,
 				9B0555322EDB665C00A57B34 /* IngredientsView.swift */,
@@ -335,7 +355,6 @@
 				9B05553C2EDB665C00A57B34 /* SelectListSheet.swift */,
 				9B05553D2EDB665C00A57B34 /* SelectMealPlanSheet.swift */,
 				9B05553E2EDB665C00A57B34 /* SettingsView.swift */,
-				9B05553F2EDB665C00A57B34 /* StandardEmptyStateView.swift */,
 				9B0555402EDB665C00A57B34 /* WeeklyListsView.swift */,
 			);
 			path = forager;
@@ -587,9 +606,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B78C7332F3538F600B24679 /* CustomBottomNavigation.swift in Sources */,
 				9B1B396D2EF4E48C001E1876 /* MigrationTestHelper.swift in Sources */,
-				9B78C7352F353B7900B24679 /* HamburgerMenuView.swift in Sources */,
 				9B731C7F2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift in Sources */,
 				85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */,
 				9BF1F8CC2E566BFF00E79B3F /* Category+CoreDataProperties.swift in Sources */,
@@ -630,8 +647,16 @@
 				9B05554F2EDB665C00A57B34 /* EditRecipeView.swift in Sources */,
 				9B0555502EDB665C00A57B34 /* SelectListSheet.swift in Sources */,
 				9B0555512EDB665C00A57B34 /* EmptyMealPlanView.swift in Sources */,
-				9B0555522EDB665C00A57B34 /* StandardEmptyStateView.swift in Sources */,
 				9B0555532EDB665C00A57B34 /* foragerApp.swift in Sources */,
+				808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */,
+				A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */,
+				A1B2C3D4E5F60002AABB0002 /* ForagerProgressRing.swift in Sources */,
+				A1B2C3D4E5F60002AABB0003 /* ForagerSectionHeader.swift in Sources */,
+				A1B2C3D4E5F60002AABB0004 /* CategoryChipPills.swift in Sources */,
+				A1B2C3D4E5F60002AABB0005 /* FlowLayout.swift in Sources */,
+				A1B2C3D4E5F60002AABB0006 /* FilterPill.swift in Sources */,
+				A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */,
+				A1B2C3D4E5F60002AABB0008 /* HouseholdView.swift in Sources */,
 				9BA76C012F7D000100AABB01 /* OnboardingView.swift in Sources */,
 				9B0555542EDB665C00A57B34 /* CreateMealPlanSheet.swift in Sources */,
 				9B0555552EDB665C00A57B34 /* MealPlanRowView.swift in Sources */,
@@ -726,7 +751,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -765,7 +790,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 26;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -849,7 +874,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -908,7 +933,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -928,7 +953,7 @@
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = foragerTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.richhayn.GroceryforagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -948,7 +973,7 @@
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = foragerTests/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.richhayn.GroceryforagerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1040,13 +1065,14 @@
 		9B05552E2EDB665C00A57B34 /* forager.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */,
 				9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */,
 				9BA76C112F7D100100AABB01 /* forager 4.xcdatamodel */,
 				9BA76C102F7D100100AABB01 /* forager 3.xcdatamodel */,
 				9B1B39632EF2FFD8001E1876 /* forager 2.xcdatamodel */,
 				9B0555422EDB665C00A57B34 /* forager.xcdatamodel */,
 			);
-			currentVersion = 9BA76C122F7D100100AABB01 /* forager 5.xcdatamodel */;
+			currentVersion = 9BA76C132F7D100100AABB01 /* forager 6.xcdatamodel */;
 			path = forager.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

@@ -684,8 +684,123 @@ class MealPlanService: ObservableObject {
         }
     }
     
+    // MARK: - M15.5: Quick Option Support
+
+    // M15.5: Sets a quick option (Takeout/Dining Out/Leftovers/No Meal) for a date
+    // Creates a PlannedMeal with no recipe relationship
+    // Replaces any existing meal on that date
+    func setQuickOption(_ option: PlannedMeal.QuickOption, for date: Date, in plan: MealPlan) -> PlannedMeal? {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+
+        // Remove existing meal on this date if any
+        let fetchRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        fetchRequest.predicate = NSPredicate(
+            format: "mealPlan == %@ AND date >= %@ AND date < %@",
+            plan,
+            startOfDay as NSDate,
+            Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)! as NSDate
+        )
+
+        do {
+            let existing = try context.fetch(fetchRequest)
+            for meal in existing {
+                context.delete(meal)
+            }
+
+            let meal = PlannedMeal(context: context)
+            meal.id = UUID()
+            meal.date = startOfDay
+            meal.quickOption = option.rawValue
+            meal.recipe = nil
+            meal.mealPlan = plan
+            meal.createdDate = Date()
+            meal.isCompleted = option == .noMeal
+
+            try context.save()
+
+            if plan == activeMealPlan {
+                loadPlannedMeals(for: plan)
+            }
+
+            return meal
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error setting quick option: \(error)")
+            #endif
+            context.rollback()
+            return nil
+        }
+    }
+
+    // MARK: - M15.3: Grocery List Generation
+
+    // M15.3: Generates a grocery list from a meal plan's recipes.
+    // Fetches all planned meals' recipes, extracts ingredients,
+    // and creates a WeeklyList + GroceryListItems grouped by category.
+    @discardableResult
+    func generateGroceryList(from plan: MealPlan) -> WeeklyList? {
+        let fetchRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        fetchRequest.predicate = NSPredicate(format: "mealPlan == %@", plan)
+        fetchRequest.relationshipKeyPathsForPrefetching = ["recipe", "recipe.ingredients"]
+
+        do {
+            let meals = try context.fetch(fetchRequest)
+
+            let newList = WeeklyList(context: context)
+            newList.id = UUID()
+            newList.name = "From Plan - \(plan.name ?? DateFormatter.shortDate.string(from: Date()))"
+            newList.dateCreated = Date()
+            newList.isCompleted = false
+            newList.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
+
+            var sortIndex: Int16 = 0
+
+            for meal in meals {
+                guard let recipe = meal.recipe,
+                      let ingredients = recipe.ingredients?.allObjects as? [Ingredient] else { continue }
+
+                for ingredient in ingredients {
+                    let listItem = GroceryListItem(context: context)
+                    listItem.id = UUID()
+                    listItem.name = ingredient.name
+                    listItem.displayText = ingredient.displayText ?? "1"
+                    listItem.numericValue = ingredient.numericValue
+                    listItem.standardUnit = ingredient.standardUnit
+                    listItem.isParseable = ingredient.isParseable
+                    listItem.parseConfidence = ingredient.parseConfidence
+                    listItem.isCompleted = false
+                    listItem.source = "recipe"
+                    listItem.addToSourceRecipes(recipe)
+                    listItem.sortOrder = sortIndex
+                    sortIndex += 1
+
+                    // Category from ingredient template or default
+                    if let template = ingredient.ingredientTemplate,
+                       let category = template.category, !category.isEmpty {
+                        listItem.categoryName = category
+                    } else {
+                        listItem.categoryName = "Uncategorized"
+                    }
+
+                    newList.addToItems(listItem)
+                }
+            }
+
+            try context.save()
+            return newList
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error generating grocery list from meal plan: \(error)")
+            #endif
+            context.rollback()
+            return nil
+        }
+    }
+
     // MARK: - Performance Validation
-    
+
     // M4.2: Validates service performance meets targets
     // Target: < 0.1s for all operations
     func validatePerformance() -> Bool {

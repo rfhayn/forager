@@ -26,7 +26,7 @@ struct ConsolidationPreviewView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "arrow.triangle.merge")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(ForagerTheme.accentSecondary)
                                 .font(.title2)
                             
                             VStack(alignment: .leading, spacing: 4) {
@@ -35,7 +35,7 @@ struct ConsolidationPreviewView: View {
                                 
                                 Text("Review changes below before applying")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
                         }
                     }
@@ -95,7 +95,7 @@ struct ConsolidationPreviewView: View {
             
             Text("\(group.originalCount) → \(group.resultCount) items")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     
@@ -103,7 +103,7 @@ struct ConsolidationPreviewView: View {
         HStack(alignment: .top, spacing: 12) {
             // Icon
             Image(systemName: item.isMerged ? "arrow.triangle.merge" : "minus.circle")
-                .foregroundColor(item.isMerged ? .green : .gray)
+                .foregroundStyle(item.isMerged ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
                 .font(.title3)
                 .frame(width: 24)
             
@@ -118,17 +118,17 @@ struct ConsolidationPreviewView: View {
                 if item.isMerged && item.sourceCount > 1 {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
                             .font(.caption)
                         
                         if item.isConverted {
                             Text("Merged from \(item.sourceCount) items (with unit conversion)")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         } else {
                             Text("Merged from \(item.sourceCount) items")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         }
                     }
                 }
@@ -137,11 +137,11 @@ struct ConsolidationPreviewView: View {
                 if item.isMerged && item.isConverted {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.statusInfoFG)
                             .font(.caption)
                         Text("Units converted for combination")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.statusInfoFG)
                     }
                 }
                 
@@ -149,11 +149,11 @@ struct ConsolidationPreviewView: View {
                 if !item.sources.isEmpty {
                     HStack(spacing: 4) {
                         Image(systemName: "tag.fill")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentSecondary)
                             .font(.caption2)
                         Text("Sources: \(formatSources(item.sources))")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .lineLimit(2)
                     }
                 }

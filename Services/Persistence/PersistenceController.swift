@@ -343,21 +343,26 @@ final class PersistenceController: ObservableObject {
         return context
     }
     
-    /// Perform write operation on background context with error handling
+    /// Perform write operation on background context with error handling.
+    /// Both `onSuccess` and `onError` callbacks are dispatched to the main queue.
     func performWrite(
         _ block: @escaping (NSManagedObjectContext) -> Void,
+        onSuccess: (() -> Void)? = nil,
         onError: ((Error) -> Void)? = nil
     ) {
         container.performBackgroundTask { context in
             context.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
             block(context)
-            
+
             if context.hasChanges {
                 do {
                     try context.save()
                     #if DEBUG
                     print("✅ M7.2.3: Background context saved successfully")
                     #endif
+                    DispatchQueue.main.async {
+                        onSuccess?()
+                    }
                 } catch {
                     #if DEBUG
                     print("❌ M7.2.3: Background save failed: \(error)")
@@ -365,6 +370,10 @@ final class PersistenceController: ObservableObject {
                     DispatchQueue.main.async {
                         onError?(error)
                     }
+                }
+            } else {
+                DispatchQueue.main.async {
+                    onSuccess?()
                 }
             }
         }
@@ -400,6 +409,9 @@ final class PersistenceController: ObservableObject {
 
                 // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
                 Self.migrateSourceURLTagsIfNeeded(in: context)
+
+                // M15: Re-normalize template names (cleans up "/ black pepper", "cloves garlic", etc.)
+                IngredientTemplateService(context: context).migrateExistingTemplates()
 
                 // Save if any changes were made
                 if context.hasChanges {

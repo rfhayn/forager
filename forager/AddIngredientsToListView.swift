@@ -12,6 +12,7 @@ struct AddIngredientsToListView: View {
     private let scalingService: RecipeScalingService
     private let templateService: IngredientTemplateService
     private let mergeService: GroceryMergeService
+    private let parsingService: IngredientParsingService
     
     @State private var selectedIngredients: Set<UUID> = []
     @State private var isProcessing = false
@@ -43,6 +44,7 @@ struct AddIngredientsToListView: View {
         self.scalingService = RecipeScalingService(context: context)
         self.templateService = IngredientTemplateService(context: context)
         self.mergeService = GroceryMergeService()
+        self.parsingService = IngredientParsingService(context: context, templateService: self.templateService)
     }
     
     // M4.3.2: Computed property for scale factor
@@ -165,7 +167,7 @@ struct AddIngredientsToListView: View {
 
     private var sortedCategoryNames: [String] {
         let grouped = groupedIngredients
-        let categoryMap = Dictionary(uniqueKeysWithValues: categories.map { ($0.displayName, $0.sortOrder) })
+        let categoryMap = Dictionary(categories.map { ($0.displayName, $0.sortOrder) }, uniquingKeysWith: { first, _ in first })
         
         return grouped.keys.sorted { category1, category2 in
             // Handle "Uncategorized" - put it at the end
@@ -410,21 +412,42 @@ struct AddIngredientsToListView: View {
         var mergeCount = 0
         
         for ingredient in selectedIngredientsToAdd {
-            // M4.3.2 Phase 2: Use SCALED displayText from our scaling function
-            let fullIngredientText = scaledDisplayText(for: ingredient)
-            
-            // But use clean name for template operations and duplicate detection
+            let originalText = ingredient.name ?? ""
+
+            // Re-parse if ingredient lacks structured data (e.g., from old builds or edited recipes)
+            let structured: StructuredQuantity
+            if ingredient.isParseable && ingredient.parseConfidence > 0 {
+                // Use existing structured data
+                structured = StructuredQuantity(
+                    numericValue: Double(ingredient.numericValue),
+                    standardUnit: ingredient.standardUnit,
+                    displayText: ingredient.displayText ?? "",
+                    isParseable: ingredient.isParseable,
+                    parseConfidence: ingredient.parseConfidence,
+                    parserUsed: "cached"
+                )
+            } else {
+                // Re-parse from original text
+                structured = parsingService.parseToStructured(text: originalText)
+            }
+
+            // Template name for matching/merging
             let cleanName: String
             if let ingredientTemplate = ingredient.ingredientTemplate {
-                cleanName = ingredientTemplate.name ?? extractCleanIngredientName(from: fullIngredientText)
+                cleanName = ingredientTemplate.name ?? extractCleanIngredientName(from: originalText)
             } else {
-                cleanName = extractCleanIngredientName(from: fullIngredientText)
+                cleanName = extractCleanIngredientName(from: originalText)
             }
-            
-            #if DEBUG
-            print("DEBUG: Processing ingredient '\(fullIngredientText)' -> clean: '\(cleanName)' (scale: \(scaleFactor)x)")
-            #endif
-            
+
+            // Full display name: at 1x use original text, at other scales construct from scaled qty
+            let itemDisplayName: String
+            if scaleFactor != 1.0 {
+                let scaledQty = scaledDisplayText(for: ingredient)
+                itemDisplayName = scaledQty.isEmpty ? originalText : "\(scaledQty) \(cleanName)"
+            } else {
+                itemDisplayName = originalText
+            }
+
             // Check for existing items by clean name
             if let existingItem = findExistingItem(named: cleanName, in: existingItems) {
                 // M8.3.2: Numeric merge via GroceryMergeService
@@ -435,46 +458,45 @@ struct AddIngredientsToListView: View {
                     parseConfidence: Double(existingItem.parseConfidence)
                 )
                 let incoming = GroceryMergeInput(
-                    numericValue: ingredient.isParseable ? ingredient.numericValue * scaleFactor : 0,
-                    standardUnit: ingredient.standardUnit,
-                    isParseable: ingredient.isParseable,
-                    parseConfidence: Double(ingredient.parseConfidence)
+                    numericValue: structured.isParseable ? (structured.numericValue ?? 0) * scaleFactor : 0,
+                    standardUnit: structured.standardUnit,
+                    isParseable: structured.isParseable,
+                    parseConfidence: Double(structured.parseConfidence)
                 )
                 let result = mergeService.merge(existing: existing, incoming: incoming)
 
                 existingItem.numericValue = result.numericValue
-                existingItem.parseConfidence = Float(result.parseConfidence)
+                existingItem.parseConfidence = max(Float(result.parseConfidence), 0.8)
                 if result.didMergeQuantity {
                     existingItem.displayText = result.displayText
                     existingItem.standardUnit = result.standardUnit
+                    existingItem.name = "\(result.displayText) \(cleanName)"
                 }
 
                 existingItem.addToSourceRecipes(recipe)
 
                 mergeCount += 1
-                #if DEBUG
-                print("Merged quantities for '\(cleanName)': \(result.displayText) (didMerge: \(result.didMergeQuantity))")
-                #endif
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)
                 listItem.id = UUID()
-                listItem.name = cleanName
-                
-                // M4.3.2 Phase 2: Copy SCALED quantity fields
-                listItem.displayText = fullIngredientText  // Already scaled from scaledDisplayText()
-                
-                // Scale the numeric value if parseable
-                if ingredient.isParseable && ingredient.numericValue > 0 {
-                    listItem.numericValue = ingredient.numericValue * scaleFactor
+                listItem.name = itemDisplayName
+
+                // Structured quantity fields
+                listItem.displayText = structured.displayText
+
+                if structured.isParseable && (structured.numericValue ?? 0) > 0 {
+                    listItem.numericValue = (structured.numericValue ?? 0) * scaleFactor
                 } else {
-                    listItem.numericValue = ingredient.numericValue
+                    listItem.numericValue = structured.numericValue ?? 0
                 }
-                
-                listItem.standardUnit = ingredient.standardUnit
-                listItem.isParseable = ingredient.isParseable
-                listItem.parseConfidence = ingredient.parseConfidence
-                
+
+                listItem.standardUnit = structured.standardUnit
+                listItem.isParseable = structured.isParseable
+                // Recipe-sourced items are user-validated — floor confidence above
+                // the 0.7 warning threshold so they don't show false warnings
+                listItem.parseConfidence = max(structured.parseConfidence, 0.8)
+
                 listItem.isCompleted = false
                 listItem.source = "Recipe: \(recipe.title ?? "Unknown Recipe")"
                 
@@ -498,7 +520,7 @@ struct AddIngredientsToListView: View {
                 
                 targetList.addToItems(listItem)
                 #if DEBUG
-                print("Created new item: \(fullIngredientText)")
+                print("Created new item: \(itemDisplayName)")
                 #endif
             }
         }
@@ -550,11 +572,11 @@ struct AddIngredientsToListView: View {
     
     private func extractCleanIngredientName(from fullText: String) -> String {
         let text = fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         var cleaned = text
-        
-        // Remove measurements with units (comprehensive pattern)
-        let measurementPattern = #"^[\d/.\s-]*(cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|grams?|g|kilograms?|kg|liters?|l|milliliters?|ml|eggs?|egg)\s+"#
+
+        // Remove measurements with units (comprehensive pattern — includes count units)
+        let measurementPattern = #"^[\d/.\s-]*(cups?|tbsp?|tsp?|tablespoons?|teaspoons?|pounds?|lbs?|ounces?|oz|cloves?|slices?|cans?|heads?|bunches?|pieces?|sprigs?|sticks?|grams?|g|kilograms?|kg|liters?|l|milliliters?|ml|eggs?|egg)\s+"#
         if let regex = try? NSRegularExpression(pattern: measurementPattern, options: .caseInsensitive) {
             cleaned = regex.stringByReplacingMatches(
                 in: cleaned,
@@ -562,7 +584,17 @@ struct AddIngredientsToListView: View {
                 withTemplate: ""
             )
         }
-        
+
+        // Strip any remaining leading numbers/fractions (e.g., "3 garlic")
+        let leadingNumberPattern = #"^[\d/.\s-]+(?=\S)"#
+        if let regex = try? NSRegularExpression(pattern: leadingNumberPattern, options: []) {
+            cleaned = regex.stringByReplacingMatches(
+                in: cleaned,
+                range: NSRange(cleaned.startIndex..., in: cleaned),
+                withTemplate: ""
+            )
+        }
+
         // Remove common quantity words
         let quantityWords = ["large", "medium", "small", "whole", "half", "fresh", "dried", "frozen", "canned", "chopped", "diced", "sliced", "minced"]
         for word in quantityWords {
@@ -575,7 +607,7 @@ struct AddIngredientsToListView: View {
                 )
             }
         }
-        
+
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines).capitalized
     }
     
@@ -599,7 +631,7 @@ struct AddIngredientsToListView: View {
         VStack(spacing: 20) {
             ProgressView()
             Text(processingMessage)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     
@@ -613,7 +645,7 @@ struct AddIngredientsToListView: View {
             List {
                 if groupedIngredients.isEmpty {
                     Text("No ingredients available")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .listRowBackground(Color.clear)
                 } else {
                     ForEach(sortedCategoryNames, id: \.self) { categoryName in
@@ -643,7 +675,7 @@ struct AddIngredientsToListView: View {
                 HStack {
                     Text("Recipe makes:")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     Text("\(recipe.servings) servings")
                         .font(.subheadline)
@@ -654,14 +686,14 @@ struct AddIngredientsToListView: View {
                 HStack {
                     Text("Adding for:")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Spacer()
                     
                     Stepper(value: $selectedServings, in: 1...100) {
                         Text("\(selectedServings) servings")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(selectedServings != recipe.servings ? .blue : .primary)
+                            .foregroundStyle(selectedServings != recipe.servings ? .blue : .primary)
                     }
                 }
                 
@@ -670,10 +702,10 @@ struct AddIngredientsToListView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "scalemass")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Text("Quantities will be scaled \(scaleFactor, specifier: "%.1f")×")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Spacer()
                     }
                 }
@@ -698,7 +730,7 @@ struct AddIngredientsToListView: View {
             if let ingredientsSet = recipe.ingredients {
                 Text("\(ingredientsSet.count) ingredients available")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
         .padding(.horizontal)
@@ -713,41 +745,41 @@ struct AddIngredientsToListView: View {
                 toggleIngredientSelection(ingredient)
             }) {
                 Image(systemName: isSelected(ingredient) ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected(ingredient) ? .green : .gray)
+                    .foregroundStyle(isSelected(ingredient) ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
                     .font(.title3)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(ingredient.name ?? "Unknown ingredient")
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
-                // M4.3.2 Phase 2: Show scaled quantities with original for reference
                 HStack(spacing: 4) {
-                    // Show scaled displayText
-                    let scaled = scaledDisplayText(for: ingredient)
-                    if !scaled.isEmpty {
-                        Text(scaled)
-                            .font(.caption)
-                            .foregroundColor(scaleFactor != 1.0 ? .blue : .secondary)
-                        
-                        // Show original quantity for reference when scaled
-                        if scaleFactor != 1.0, let originalId = ingredient.id,
-                           let original = originalDisplayTexts[originalId],
-                           !original.isEmpty && original != scaled {
-                            Text("•")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text("(was: \(original))")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .italic()
+                    // Only show scaled quantity caption when servings are adjusted
+                    if scaleFactor != 1.0 {
+                        let scaled = scaledDisplayText(for: ingredient)
+                        if !scaled.isEmpty {
+                            Text(scaled)
+                                .font(.caption)
+                                .foregroundStyle(.blue)
+
+                            if let originalId = ingredient.id,
+                               let original = originalDisplayTexts[originalId],
+                               !original.isEmpty && original != scaled {
+                                Text("•")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                Text("(was: \(original))")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                    .italic()
+                            }
                         }
                     }
-                    
+
                     Spacer()
-                    
-                    // IMPROVED: Show actual category status
+
+                    // Show actual category status
                     ingredientStatusView(for: ingredient)
                 }
             }
@@ -772,21 +804,21 @@ struct AddIngredientsToListView: View {
                 // Has category - show it with color dot
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(categoryColor(for: category))
+                        .fill(ForagerTheme.categoryColor(for: category))
                         .frame(width: 8, height: 8)
                     Text(category)
                         .font(.caption2)
-                        .foregroundColor(categoryColor(for: category))
+                        .foregroundStyle(ForagerTheme.categoryColor(for: category))
                 }
             } else {
                 // Template exists but needs category - orange warning
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     Text("Needs Category")
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
         } else {
@@ -802,21 +834,21 @@ struct AddIngredientsToListView: View {
                     // Has category
                     HStack(spacing: 4) {
                         Circle()
-                            .fill(categoryColor(for: category))
+                            .fill(ForagerTheme.categoryColor(for: category))
                             .frame(width: 8, height: 8)
                         Text(category)
                             .font(.caption2)
-                            .foregroundColor(categoryColor(for: category))
+                            .foregroundStyle(ForagerTheme.categoryColor(for: category))
                     }
                 } else {
                     // Template exists but needs category
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.caption2)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                         Text("Needs Category")
                             .font(.caption2)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
                     }
                 }
             } else {
@@ -824,10 +856,10 @@ struct AddIngredientsToListView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "plus.circle")
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("New Template")
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
             }
         }
@@ -838,7 +870,7 @@ struct AddIngredientsToListView: View {
             HStack {
                 Text("\(selectedIngredients.count) ingredients selected")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -847,7 +879,7 @@ struct AddIngredientsToListView: View {
                         preselectAllIngredients()
                     }
                     .font(.subheadline)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                 }
             }
             .padding(.horizontal)
@@ -861,28 +893,16 @@ struct AddIngredientsToListView: View {
             Text(categoryName.uppercased())
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             Spacer()
             
             Text("\(count)")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
     }
     
-    private func categoryColor(for categoryName: String) -> Color {
-        // Map category names to colors (you can customize this)
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "meat": return .red
-        case "dairy": return .blue
-        case "pantry": return .orange
-        case "frozen": return .cyan
-        case "bakery": return .brown
-        default: return .gray
-        }
-    }
     
     private func isSelected(_ ingredient: Ingredient) -> Bool {
         guard let id = ingredient.id else { return false }

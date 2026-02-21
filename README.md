@@ -44,9 +44,9 @@ A smart iOS grocery and meal planning app that turns shopping from a chore into 
 ## Getting Started
 
 ### Requirements
-- iOS 18.0+
-- Xcode 15.0+
-- macOS Sonoma 14.0+
+- iOS 26+
+- Xcode 26.0+
+- macOS 26.0+
 
 ### Installation
 
@@ -66,10 +66,10 @@ Press **Cmd+R** in Xcode to build and run. No package managers, no dependency in
 | Layer | Technology |
 |-------|-----------|
 | UI | SwiftUI with `@FetchRequest` for live updates |
-| Persistence | Core Data (12 entities, 5 model versions) |
+| Persistence | Core Data (10 entities, 6 model versions) |
 | Cloud | CloudKit via `NSPersistentCloudKitContainer` |
 | Parsing | Regex + Apple NaturalLanguage (NLTagger) |
-| Testing | XCTest (102+ unit tests) |
+| Testing | XCTest (146+ unit tests) |
 | Distribution | TestFlight + App Store Connect |
 
 ### Key Patterns
@@ -91,7 +91,7 @@ forager/
 │   ├── foragerApp.swift         # App entry point + loading screen
 │   ├── SceneDelegate.swift      # CloudKit share handling
 │   ├── Assets.xcassets/         # App icon, launch assets
-│   └── forager.xcdatamodeld/    # Core Data model (v1-v5)
+│   └── forager.xcdatamodeld/    # Core Data model (v1-v6)
 ├── Services/                    # Service layer
 │   ├── Persistence/             # Core Data + CloudKit infrastructure
 │   │   ├── PersistenceController.swift
@@ -110,18 +110,18 @@ forager/
 │   ├── UnitConversionService.swift
 │   ├── RecipeScalingService.swift
 │   └── ...
-├── foragerTests/                # Unit tests (102+)
+├── foragerTests/                # Unit tests (146+)
 ├── docs/                        # Project documentation
 │   ├── current-story.md         # Active development status
 │   ├── roadmap.md               # Milestone tracking
-│   ├── requirements.md          # 213 functional requirements
-│   ├── learning-notes/          # 31 implementation journey notes
-│   ├── architecture/            # 10 Architecture Decision Records
+│   ├── requirements.md          # 234 functional requirements
+│   ├── learning-notes/          # 37 implementation journey notes
+│   ├── architecture/            # 12 Architecture Decision Records
 │   └── prds/                    # Product Requirements Documents
 └── CLAUDE.md                    # AI assistant instructions
 ```
 
-### Core Data Model (12 Entities)
+### Core Data Model (10 Entities)
 
 | Domain | Entities |
 |--------|----------|
@@ -135,7 +135,7 @@ forager/
 
 ## Performance
 
-All targets met or exceeded across ~188 hours of development:
+All targets met or exceeded across ~190 hours of development:
 
 | Metric | Target | Achieved |
 |--------|--------|----------|
@@ -152,7 +152,7 @@ All targets met or exceeded across ~188 hours of development:
 
 ## Development Journey
 
-forager has been built incrementally across ~188 hours with 89% planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
+forager has been built incrementally across ~190 hours with 89% planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
 
 ### Completed Milestones
 
@@ -171,21 +171,23 @@ forager has been built incrementally across ~188 hours with 89% planning accurac
 | **M7.4** | UI Polish (Apple Music-style nav) | ~4h | Feb 2026 |
 | **M8** | Hybrid NLP Parser & Parsing Intelligence | ~17h | Feb 2026 |
 | **M7.6** | Pre-Launch Prep & Schema Cleanup | ~9.5h | Feb 2026 |
+| **M15** | UX Design System & Visual Refresh | ~50h | Feb 2026 |
 
-### In Progress
+### Current
 
-**M7.6.7**: TestFlight submission — code prep complete (version 1.1), manual Apple portal steps remaining (CloudKit Production deploy, archive, upload, submit for review).
+M15 complete on `feature/M15-ux-design-system` — pending merge to main, then TestFlight build 11 (v1.2).
 
 ### Planned
 
 | Milestone | Description | Est. Hours |
 |-----------|-------------|------------|
+| **M7.5** | Architecture Hardening | 14-19h |
+| **M9-prereqs** | Warning Resolution, Centralize Extract, Parser DI | 9h |
+| **M8.4** | ML-Powered Parsing (CoreML BiLSTM-CRF) | 18-24h |
 | **M7.7** | App Store Submission & Landing Page | 3-5h |
-| **M7.5** | Architecture Hardening (deferred post-launch) | 18.5-24.5h |
-| **M6** | Testing Foundation & CI/CD | 12-18h |
-| **M9** | Technical Debt & Optimization | 135-165h |
-| **M10** | Analytics & Insights | 8-12h |
-| **M11-M14** | Health, Budget, AI, Collaboration | 40-60h |
+| **M6** | Testing Foundation & CI/CD | 20-30h |
+| **M9** | Technical Debt & Optimization | ~120h |
+| **M10+** | Analytics, Health, Budget, AI, Collaboration | 48-72h |
 
 ---
 
@@ -197,10 +199,10 @@ This project maintains comprehensive documentation tracking the full development
 |----------|-------------|
 | [current-story.md](docs/current-story.md) | Active development status |
 | [roadmap.md](docs/roadmap.md) | Milestone tracking and execution order |
-| [requirements.md](docs/requirements.md) | 213 functional requirements with traceability |
+| [requirements.md](docs/requirements.md) | 234 functional requirements with traceability |
 | [project-index.md](docs/project-index.md) | Central navigation hub |
-| [learning-notes/](docs/learning-notes/) | 31 implementation journey notes |
-| [architecture/](docs/architecture/) | 10 Architecture Decision Records |
+| [learning-notes/](docs/learning-notes/) | 37 implementation journey notes |
+| [architecture/](docs/architecture/) | 12 Architecture Decision Records |
 | [prds/](docs/prds/) | Product Requirements Documents |
 | [insights-log.md](docs/insights-log.md) | Technical insights triage inbox |
 
@@ -212,4 +214,4 @@ This project is available under the MIT License.
 
 ---
 
-**~188 hours** of development | **89%** planning accuracy | **102+** unit tests | **213** tracked requirements | **31** learning notes | **10** ADRs | **Zero** technical debt
+**~190 hours** of development | **89%** planning accuracy | **146+** unit tests | **234** tracked requirements | **37** learning notes | **12** ADRs | **Zero** technical debt

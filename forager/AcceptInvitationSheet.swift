@@ -26,7 +26,7 @@ struct AcceptInvitationSheet: View {
                 // Icon
                 Image(systemName: "house.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                     .padding(.top, 40)
                 
                 // Title
@@ -38,7 +38,7 @@ struct AcceptInvitationSheet: View {
                     // Display household invitation
                     Text("Household Invitation")
                         .font(.title2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 // Description
@@ -47,12 +47,12 @@ struct AcceptInvitationSheet: View {
                         Text("You've been invited to join this household")
                     } icon: {
                         Image(systemName: "person.2.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
                     }
                     
                     Text("You'll have full access to all grocery lists, recipes, and meal plans. Any changes you make will be visible to all household members.")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -73,9 +73,9 @@ struct AcceptInvitationSheet: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .background(ForagerTheme.accentPrimary)
+                        .foregroundStyle(.white)
+                        .cornerRadius(ForagerTheme.Radius.md)
                     }
                     .disabled(isAccepting)
                     
@@ -85,7 +85,7 @@ struct AcceptInvitationSheet: View {
                         Text("Not Now")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                     .disabled(isAccepting)
                 }

@@ -66,6 +66,39 @@ class IngredientTemplateService: ObservableObject {
             }
         }
         
+        // Items where the plural form is the natural grocery name.
+        // Maps both singular and plural inputs to the preferred plural form.
+        // "grape" → "grapes", "strawberries" → "strawberries"
+        let preferPlural: [String: String] = [
+            "grape": "grapes", "grapes": "grapes",
+            "strawberry": "strawberries", "strawberries": "strawberries",
+            "blueberry": "blueberries", "blueberries": "blueberries",
+            "raspberry": "raspberries", "raspberries": "raspberries",
+            "blackberry": "blackberries", "blackberries": "blackberries",
+            "cranberry": "cranberries", "cranberries": "cranberries",
+            "cherry": "cherries", "cherries": "cherries",
+            "olive": "olives", "olives": "olives",
+            "cracker": "crackers", "crackers": "crackers",
+            "pretzel": "pretzels", "pretzels": "pretzels",
+            "marshmallow": "marshmallows", "marshmallows": "marshmallows",
+            "raisin": "raisins", "raisins": "raisins",
+            "mushroom": "mushrooms", "mushrooms": "mushrooms",
+            "pepper": "peppers", "peppers": "peppers",
+            "banana": "bananas", "bananas": "bananas",
+            "avocado": "avocados", "avocados": "avocados",
+            "tomato": "tomatoes", "tomatoes": "tomatoes",
+            "potato": "potatoes", "potatoes": "potatoes",
+            "onion": "onions", "onions": "onions",
+            "carrot": "carrots", "carrots": "carrots",
+            "noodle": "noodles", "noodles": "noodles",
+            "egg": "eggs", "eggs": "eggs",
+            "shrimp": "shrimp", // uncountable
+            "scallop": "scallops", "scallops": "scallops",
+        ]
+        if let preferred = preferPlural[checkName] {
+            return preferred
+        }
+
         // Check if this ingredient (after stripping qualifiers) should stay plural
         if alwaysPlural.contains(checkName) {
             return checkName  // Return the stripped version in plural form
@@ -81,12 +114,26 @@ class IngredientTemplateService: ObservableObject {
         let alwaysPluralSuffixes: Set<String> = [
             "beans", "chickpeas", "chips", "croutons", "crumbs",
             "flakes", "greens", "lentils", "noodles", "oats",
-            "peas", "seeds", "sprinkles", "strips"
+            "peas", "seeds", "sprinkles", "strips",
+            "snacks", "berries", "grapes", "crackers"
         ]
         let words = checkName.split(separator: " ").map(String.init)
         if words.count > 1, let lastWord = words.last,
            alwaysPluralSuffixes.contains(lastWord) {
             return checkName
+        }
+
+        // Compound items where the singular suffix should become plural
+        // "fruit snack" → "fruit snacks"
+        let singularSuffixToPlural: [String: String] = [
+            "snack": "snacks", "berry": "berries",
+            "grape": "grapes", "cracker": "crackers",
+        ]
+        if words.count > 1, let lastWord = words.last,
+           let pluralLast = singularSuffixToPlural[lastWord] {
+            var pluralized = words
+            pluralized[pluralized.count - 1] = pluralLast
+            return pluralized.joined(separator: " ")
         }
         
         // Irregular plurals mapping (check these next)
@@ -255,7 +302,29 @@ class IngredientTemplateService: ObservableObject {
     // M8.3.1: Changed from private to internal for unit test access via @testable import
     func normalize(name: String) -> String {
         var normalized = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
+        // Phase 0: Sanitize — strip leading punctuation and residual unit words
+        // Handles artifacts like "/ black pepper" (from fraction stripping) and
+        // "cloves garlic" (unit word leaked into template name)
+        normalized = normalized.replacingOccurrences(
+            of: #"^[/\-–—.,:;]+\s*"#, with: "", options: .regularExpression
+        )
+        let unitPrefixes = [
+            "cloves ", "clove ", "pounds ", "pound ", "cans ", "can ",
+            "slices ", "slice ", "heads ", "head ", "bunches ", "bunch ",
+            "pieces ", "piece ", "sprigs ", "sprig ", "sticks ", "stick ",
+            "bags ", "bag ", "bottles ", "bottle ", "boxes ", "box ",
+            "jars ", "jar ", "stalks ", "stalk ", "ears ", "ear "
+        ]
+        let lowerNormalized = normalized.lowercased()
+        for prefix in unitPrefixes {
+            if lowerNormalized.hasPrefix(prefix) {
+                normalized = String(normalized.dropFirst(prefix.count))
+                break
+            }
+        }
+        normalized = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Phase 1: Case normalization
         normalized = normalizeCase(normalized)
         
@@ -363,11 +432,22 @@ class IngredientTemplateService: ObservableObject {
             #if DEBUG
             print("❌ M7.2.3 Phase 3.3: Error creating template: \(error)")
             #endif
-            // Fallback: create directly (shouldn't happen but safety net)
+            // Fallback: check context's pending objects before creating
+            let canonical = IngredientTemplate.canonicalName(from: normalizedName)
+            let pending = (context.insertedObjects.union(context.updatedObjects))
+                .compactMap { $0 as? IngredientTemplate }
+                .first { $0.canonicalName == canonical }
+
+            if let existing = pending {
+                existing.usageCount += 1
+                existing.updatedAt = Date()
+                return existing
+            }
+
             let template = IngredientTemplate(context: context)
             template.id = UUID()
             template.name = normalizedName
-            template.canonicalName = IngredientTemplate.canonicalName(from: normalizedName)
+            template.canonicalName = canonical
             template.category = category
             template.usageCount = 1
             template.dateCreated = Date()
@@ -394,28 +474,77 @@ class IngredientTemplateService: ObservableObject {
     }
     
     // MARK: - M4.3.5: Data Migration
-    
-    // Migrates existing templates to normalized names
-    // Should be called once after Phase 4 deployment
+
+    // Migrates existing templates to normalized names and deduplicates collisions.
+    // When two templates normalize to the same name (e.g., "Carrots" and "carrot"),
+    // keeps the one with higher usage count and re-points all relationships.
     func migrateExistingTemplates() {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        
+
         do {
             let templates = try context.fetch(request)
             var migratedCount = 0
-            
+
+            // Phase 1: Normalize all names and update canonicalName
             for template in templates {
                 let normalizedName = normalize(name: template.name ?? "")
                 if template.name != normalizedName {
                     template.name = normalizedName
                     migratedCount += 1
                 }
+                // Always sync canonicalName with normalized name
+                let expectedCanonical = IngredientTemplate.canonicalName(from: normalizedName)
+                if template.canonicalName != expectedCanonical {
+                    template.canonicalName = expectedCanonical
+                }
             }
-            
-            if migratedCount > 0 {
+
+            // Phase 2: Deduplicate — group by canonicalName, merge collisions
+            let grouped = Dictionary(grouping: templates) {
+                IngredientTemplate.canonicalName(from: $0.name ?? "")
+            }
+
+            var mergedCount = 0
+            for (_, group) in grouped where group.count > 1 {
+                // Keep the template with highest usage count (stable sort by dateCreated)
+                let sorted = group.sorted {
+                    if $0.usageCount != $1.usageCount { return $0.usageCount > $1.usageCount }
+                    return ($0.dateCreated ?? .distantPast) < ($1.dateCreated ?? .distantPast)
+                }
+                let keeper = sorted[0]
+                let duplicates = sorted.dropFirst()
+
+                for duplicate in duplicates {
+                    // Consolidate usage count
+                    keeper.usageCount += duplicate.usageCount
+
+                    // Re-point ingredient relationships from duplicate to keeper
+                    if let ingredients = duplicate.ingredients as? Set<Ingredient> {
+                        for ingredient in ingredients {
+                            ingredient.ingredientTemplate = keeper
+                        }
+                    }
+
+                    // Preserve category if keeper lacks one
+                    if (keeper.category == nil || keeper.category?.isEmpty == true),
+                       let dupCategory = duplicate.category, !dupCategory.isEmpty {
+                        keeper.category = dupCategory
+                    }
+
+                    // Preserve staple status
+                    if duplicate.isStaple && !keeper.isStaple {
+                        keeper.isStaple = true
+                    }
+
+                    context.delete(duplicate)
+                    mergedCount += 1
+                }
+            }
+
+            if migratedCount > 0 || mergedCount > 0 {
                 try context.save()
                 #if DEBUG
-                print("M4.3.5: Migrated \(migratedCount) templates to normalized names")
+                print("M4.3.5: Migrated \(migratedCount) templates, merged \(mergedCount) duplicates")
                 #endif
             } else {
                 #if DEBUG
@@ -426,6 +555,26 @@ class IngredientTemplateService: ObservableObject {
             #if DEBUG
             print("Error migrating templates: \(error)")
             #endif
+        }
+    }
+
+    /// Finds duplicate templates (same canonicalName) for user review.
+    /// Returns pairs of (keeper, duplicates) grouped by normalized name.
+    func findDuplicateTemplates() -> [(name: String, templates: [IngredientTemplate])] {
+        let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+
+        do {
+            let templates = try context.fetch(request)
+            let grouped = Dictionary(grouping: templates) {
+                IngredientTemplate.canonicalName(from: self.normalize(name: $0.name ?? ""))
+            }
+
+            return grouped
+                .filter { $0.value.count > 1 }
+                .map { (name: $0.key, templates: $0.value) }
+                .sorted { $0.name < $1.name }
+        } catch {
+            return []
         }
     }
 }

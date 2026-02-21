@@ -94,7 +94,7 @@ struct SelectMealPlanSheet: View {
             HStack(spacing: 12) {
                 Image(systemName: "book.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentSecondary)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(recipe.title ?? "Unnamed Recipe")
@@ -103,7 +103,7 @@ struct SelectMealPlanSheet: View {
                     if recipe.servings > 0 {
                         Text("\(recipe.servings) servings")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -120,14 +120,14 @@ struct SelectMealPlanSheet: View {
             VStack(spacing: 12) {
                 Image(systemName: "calendar.badge.plus")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Text("No Meal Plans Available")
                     .font(.headline)
                 
                 Text("Create your first meal plan to start organizing your recipes")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                     .multilineTextAlignment(.center)
                 
                 Button(action: { showingCreatePlan = true }) {
@@ -136,11 +136,11 @@ struct SelectMealPlanSheet: View {
                         Text("Create Meal Plan")
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.blue)
-                    .cornerRadius(8)
+                    .background(ForagerTheme.accentPrimary)
+                    .cornerRadius(ForagerTheme.Radius.sm)
                 }
                 .padding(.top, 4)
             }
@@ -163,7 +163,7 @@ struct SelectMealPlanSheet: View {
                             if plan.isActive {
                                 Text("(Active)")
                                     .font(.caption)
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(ForagerTheme.statusSuccessFG)
                             }
                         }
                         .tag(plan as MealPlan?)
@@ -221,7 +221,7 @@ struct SelectMealPlanSheet: View {
                 if dateHasRecipe {
                     Label("This date already has a recipe assigned", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
         } header: {
@@ -238,7 +238,7 @@ struct SelectMealPlanSheet: View {
         Section {
             Label(message, systemImage: "exclamationmark.triangle.fill")
                 .font(.subheadline)
-                .foregroundColor(.red)
+                .foregroundStyle(ForagerTheme.statusDangerFG)
         }
     }
     

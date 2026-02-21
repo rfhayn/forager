@@ -25,7 +25,7 @@ struct InviteMemberSheet: View {
                 // Icon
                 Image(systemName: "person.badge.plus")
                     .font(.system(size: 60))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                     .padding(.top, 40)
 
                 // Title
@@ -36,7 +36,7 @@ struct InviteMemberSheet: View {
 
                     Text("Add people to your household")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
                 // Description
@@ -45,12 +45,12 @@ struct InviteMemberSheet: View {
                         Text("Share with family & friends")
                     } icon: {
                         Image(systemName: "house.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
                     }
 
                     Text("New members will have full access to all grocery lists, recipes, and meal plans. They'll receive a notification to join.")
                         .font(.callout)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -71,9 +71,9 @@ struct InviteMemberSheet: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .background(ForagerTheme.accentPrimary)
+                        .foregroundStyle(.white)
+                        .cornerRadius(ForagerTheme.Radius.md)
                     }
                     .disabled(isLoading)
 
@@ -83,7 +83,7 @@ struct InviteMemberSheet: View {
                         Text("Cancel")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                     .disabled(isLoading)
                 }
@@ -95,7 +95,7 @@ struct InviteMemberSheet: View {
                     ProgressView("Creating invitation...")
                         .padding()
                         .background(.regularMaterial)
-                        .cornerRadius(10)
+                        .cornerRadius(ForagerTheme.Radius.md)
                 }
             }
             .sheet(isPresented: $showingShareSheet) {

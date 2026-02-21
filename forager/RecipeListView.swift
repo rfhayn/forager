@@ -3,6 +3,7 @@ import CoreData
 
 struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @Binding var popToRoot: Bool
@@ -12,6 +13,8 @@ struct RecipeListView: View {
     @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var searchHistory: [String] = []
+    @State private var showingDeleteError = false
+    @State private var deleteErrorMessage = ""
 
     // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
@@ -63,23 +66,71 @@ struct RecipeListView: View {
         }
     }
 
+    // M15.4: Filter and sort state
+    @State private var activeFilter: RecipeFilter = .all
+    @State private var sortOrder: RecipeSortOrder = .recent
+
+    enum RecipeFilter: String, CaseIterable {
+        case all, favorites, recent
+
+        var title: String {
+            switch self {
+            case .all: return "All"
+            case .favorites: return "Favorites"
+            case .recent: return "Recent"
+            }
+        }
+    }
+
+    enum RecipeSortOrder {
+        case recent, alphabetical, mostUsed
+    }
+
     // M3.5: Simplified search using computed property
     private var filteredRecipes: [Recipe] {
+        var result: [Recipe]
+
         if searchText.isEmpty {
-            return recipes
+            result = recipes
+        } else {
+            result = recipes.filter { recipe in
+                recipe.matchesRecipeSearchQuery(searchText)
+            }
         }
 
-        // M3.5: Use computed property for search
-        return recipes.filter { recipe in
-            recipe.matchesRecipeSearchQuery(searchText)
-        }.sorted { first, second in
-            // Sort by usage count (higher first)
-            if first.usageCount != second.usageCount {
-                return first.usageCount > second.usageCount
-            }
-            // Then alphabetical by title
-            return first.recipeDisplayTitle < second.recipeDisplayTitle
+        // M15.4: Apply filter
+        switch activeFilter {
+        case .all:
+            break
+        case .favorites:
+            result = result.filter { $0.isFavorite }
+        case .recent:
+            result = result
+                .filter { $0.lastUsed != nil }
+                .sorted { ($0.lastUsed ?? .distantPast) > ($1.lastUsed ?? .distantPast) }
+            if result.count > 20 { result = Array(result.prefix(20)) }
         }
+
+        // M15.4: Apply sort (unless searching, which sorts by relevance)
+        if searchText.isEmpty {
+            switch sortOrder {
+            case .recent:
+                result.sort { ($0.lastUsed ?? $0.dateCreated ?? .distantPast) > ($1.lastUsed ?? $1.dateCreated ?? .distantPast) }
+            case .alphabetical:
+                result.sort { $0.recipeDisplayTitle < $1.recipeDisplayTitle }
+            case .mostUsed:
+                result.sort { $0.usageCount > $1.usageCount }
+            }
+        } else {
+            result.sort { first, second in
+                if first.usageCount != second.usageCount {
+                    return first.usageCount > second.usageCount
+                }
+                return first.recipeDisplayTitle < second.recipeDisplayTitle
+            }
+        }
+
+        return result
     }
     
     // ENHANCED: Search result analysis for UI indicators
@@ -133,37 +184,47 @@ struct RecipeListView: View {
     }
 
     var body: some View {
-            Group {
-                if filteredRecipes.isEmpty {
-                    enhancedEmptyStateView
-                } else {
-                    recipeListContent
-                }
+        ZStack {
+            ForagerTheme.backgroundCanvas
+                .ignoresSafeArea()
+
+            if filteredRecipes.isEmpty {
+                enhancedEmptyStateView
+            } else {
+                recipeListContent
             }
-            .navigationTitle("Recipes")
-            .searchSuggestions {
-                if !searchText.isEmpty && !searchHistory.isEmpty {
-                    searchSuggestionsView
-                }
+        }
+        .navigationTitle("Recipes")
+        .searchable(text: $searchText)
+        .searchSuggestions {
+            if !searchText.isEmpty && !searchHistory.isEmpty {
+                searchSuggestionsView
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddRecipe = true
-                    }) {
-                        Image(systemName: "plus")
+        }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Menu {
+                    Picker("Sort", selection: $sortOrder) {
+                        Text("Recent").tag(RecipeSortOrder.recent)
+                        Text("A-Z").tag(RecipeSortOrder.alphabetical)
+                        Text("Most Used").tag(RecipeSortOrder.mostUsed)
                     }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button { showingAddRecipe = true } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .sheet(isPresented: $showingAddRecipe) {
             CreateRecipeView(context: viewContext)
         }
-        // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
         .sheet(isPresented: $showingMealPlanSheet) {
             if let recipe = selectedRecipeForMealPlan {
                 SelectMealPlanSheet(recipe: recipe) { plan, date in
-                    // M4.2.4: Add recipe to selected plan and date
-                    // Recipe tracking now happens in MealPlanService.addRecipeToMealPlan
                     if let _ = MealPlanService.shared.addRecipeToMealPlan(
                         recipe: recipe,
                         date: date,
@@ -172,13 +233,14 @@ struct RecipeListView: View {
                         #if DEBUG
                         print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
                         #endif
-                    } else {
-                        #if DEBUG
-                        print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
-                        #endif
                     }
                 }
             }
+        }
+        .alert("Error", isPresented: $showingDeleteError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(deleteErrorMessage)
         }
         .onAppear {
             loadSearchHistory()
@@ -195,80 +257,67 @@ struct RecipeListView: View {
         }
     }
     
-    // ENHANCED: Improved empty state with search awareness
     @ViewBuilder
     private var enhancedEmptyStateView: some View {
-        if searchText.isEmpty {
-            // Standard empty state when no search
-            #if DEBUG
-            StandardEmptyStateView(
-                iconName: "book.closed",
-                title: "No Recipes Yet",
-                subtitle: "Start building your recipe collection!",
-                buttonIcon: "plus.circle.fill",
-                buttonText: "Generate 11 Test Recipes",
-                buttonAction: createSampleRecipe
-            )
-            #else
-            StandardEmptyStateView(
-                iconName: "book.closed",
-                title: "No Recipes Yet",
-                subtitle: "Start building your recipe collection!",
-                buttonIcon: "plus.circle.fill",
-                buttonText: "Add Recipe",
-                buttonAction: { showingAddRecipe = true }
-            )
-            #endif
-        } else {
-            // Search-specific empty state
-            VStack(spacing: 20) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 60))
-                    .foregroundColor(.blue)
-                
-                VStack(spacing: 8) {
-                    Text("No Matches Found")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    
-                    VStack(spacing: 4) {
-                        Text("No recipes found for \"\(searchText)\"")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("Try searching for recipe names, ingredients, or cooking methods")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+        if searchText.isEmpty && activeFilter == .all {
+            ContentUnavailableView {
+                Label("No Recipes Yet", systemImage: "book.closed.fill")
+            } description: {
+                Text("Add your favorite recipes to plan meals and generate grocery lists")
+            } actions: {
+                #if DEBUG
+                Button("Generate Test Recipes", systemImage: "plus.circle.fill") {
+                    createSampleRecipe()
                 }
-                
-                Button("Clear Search") {
-                    searchText = ""
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+                #else
+                Button("Create Recipe", systemImage: "plus.circle.fill") {
+                    showingAddRecipe = true
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+                #endif
             }
-            .padding()
+        } else if !searchText.isEmpty {
+            ContentUnavailableView.search(text: searchText)
+        } else {
+            // Filter-specific empty state (e.g. no favorites)
+            ContentUnavailableView {
+                Label(
+                    activeFilter == .favorites ? "No Favorites" : "No Recent Recipes",
+                    systemImage: activeFilter == .favorites ? "heart" : "clock"
+                )
+            } description: {
+                Text(activeFilter == .favorites
+                     ? "Heart a recipe to see it here"
+                     : "Mark recipes as made to see them here")
+            }
         }
     }
     
     private var recipeListContent: some View {
         VStack(spacing: 0) {
+            // M15.4: Filter pills
+            filterPillRow
+
             if !searchText.isEmpty {
                 searchResultHeader
             }
-            
+
             List {
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                        EnhancedRecipeRowView(
-                            recipe: recipe,
-                            searchText: searchText,
-                            matchIndicators: getMatchIndicators(for: recipe)
-                        )
+                        RecipeCardView(recipe: recipe)
                     }
-                    // M4.2: Swipe action to add recipe to meal plan
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(
+                        top: ForagerTheme.Spacing.xs,
+                        leading: ForagerTheme.Spacing.lg,
+                        bottom: ForagerTheme.Spacing.xs,
+                        trailing: ForagerTheme.Spacing.lg
+                    ))
                     .swipeActions(edge: .leading) {
                         Button {
                             selectedRecipeForMealPlan = recipe
@@ -276,56 +325,81 @@ struct RecipeListView: View {
                         } label: {
                             Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
                         }
-                        .tint(.blue)
+                        .tint(ForagerTheme.accentPrimary)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            deleteRecipe(recipe)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
                 }
-                .onDelete(perform: deleteRecipes)
             }
-            .listStyle(InsetGroupedListStyle())
+            .listStyle(.plain)
+            .background(ForagerTheme.backgroundCanvas)
+            .scrollContentBackground(.hidden)
         }
     }
-    
-    // ENHANCED: Search result header with count
+
+    // M15.4: Filter pill row
+    private var filterPillRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                ForEach(RecipeFilter.allCases, id: \.self) { filter in
+                    Button {
+                        withAnimation(reduceMotion ? nil : .default) { activeFilter = filter }
+                    } label: {
+                        FilterPill(
+                            title: filter.title,
+                            isSelected: activeFilter == filter
+                        )
+                    }
+                    .accessibilityLabel("\(filter.title) filter")
+                    .accessibilityValue(activeFilter == filter ? "Selected" : "Not selected")
+                }
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.vertical, ForagerTheme.Spacing.sm)
+        }
+    }
+
     private var searchResultHeader: some View {
         HStack {
             Text("\(filteredRecipes.count) recipe\(filteredRecipes.count == 1 ? "" : "s") found")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+
             Spacer()
-            
+
             if !filteredRecipes.isEmpty {
                 Text("Sorted by relevance")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(Color(.systemGray6))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
     }
     
-    // ENHANCED: Search suggestions
     private var searchSuggestionsView: some View {
         ForEach(searchHistory.prefix(5), id: \.self) { historyItem in
-            Button(action: {
+            Button {
                 searchText = historyItem
-            }) {
+            } label: {
                 HStack {
                     Image(systemName: "clock.arrow.circlepath")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                    
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .font(ForagerTheme.captionFont)
                     Text(historyItem)
-                        .foregroundColor(.primary)
-                    
+                        .foregroundStyle(ForagerTheme.textPrimary)
                     Spacer()
                 }
             }
         }
     }
     
-    // M4.3.1: Updated to create 6 test recipes with overlapping ingredients
+    // M4.3.1: Updated to create 15 test recipes with overlapping ingredients
     private func createSampleRecipe() {
         createAllTestRecipes()
     }
@@ -779,243 +853,224 @@ struct RecipeListView: View {
         }
     }
     
-    private func deleteRecipes(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { filteredRecipes[$0] }.forEach(viewContext.delete)
-            
-            do {
-                try viewContext.save()
-                #if DEBUG
-                print("Recipe(s) deleted successfully")
-                #endif
-            } catch {
-                #if DEBUG
-                print("Error deleting recipes: \(error)")
-                #endif
-            }
-        }
+    private func deleteRecipe(_ recipe: Recipe) {
+        let recipeID = recipe.objectID
+        PersistenceController.shared.performWrite({ context in
+            let toDelete = context.object(with: recipeID)
+            context.delete(toDelete)
+        }, onError: { error in
+            deleteErrorMessage = "Failed to delete recipe: \(error.localizedDescription)"
+            showingDeleteError = true
+        })
     }
 }
 
-// ENHANCED: Recipe Row with search indicators - M3.5: USES COMPUTED PROPERTIES
-struct EnhancedRecipeRowView: View {
-    let recipe: Recipe
-    var searchText: String = ""
-    let matchIndicators: [SearchMatchType]
-    
+// MARK: - M15.4: Card-Based Recipe Row
+
+struct RecipeCardView: View {
+    @ObservedObject var recipe: Recipe
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    // M3.5: Use recipeDisplayTitle (handles nil)
-                    Text(recipe.recipeDisplayTitle)
-                        .font(.headline)
-                        .lineLimit(1)
-                    
-                    // M3.5: Use recipeServingsDescription (always shows, handles 0)
-                    Text(recipe.recipeServingsDescription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Title
+            Text(recipe.recipeDisplayTitle)
+                .font(ForagerTheme.cardTitle)
+                .foregroundStyle(ForagerTheme.textPrimary)
+                .lineLimit(2)
+
+            // Timing pills row
+            if recipe.hasRecipeTiming {
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    if recipe.prepTime > 0 {
+                        timingPill(icon: "clock", text: recipe.recipeFormattedPrepTime)
+                    }
+                    if recipe.cookTime > 0 {
+                        timingPill(icon: "flame", text: recipe.recipeFormattedCookTime)
+                    }
+                    if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
+                        timingPill(icon: "timer", text: recipe.recipeFormattedTotalTime)
+                    }
                 }
-                
+            }
+
+            // Metadata row
+            HStack {
+                Text(recipe.recipeServingsDescription)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+
                 Spacer()
-                
+
                 if recipe.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                        .font(.caption)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                 }
-            }
-            
-            HStack {
-                // M3.5: Use recipeUsageDescription (replaces custom logic)
-                Text(recipe.recipeUsageDescription)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                if recipe.usageCount > 0 {
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    // M3.5: Use recipeLastUsedDescription (replaces formatted date logic)
-                    Text(recipe.recipeLastUsedDescription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // M3.5: Use hasRecipeTiming check
-                if recipe.hasRecipeTiming {
-                    // M3.5: Use recipeFormattedPrepTime
-                    Label(recipe.recipeFormattedPrepTime, systemImage: "clock")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            
-            if !matchIndicators.isEmpty && !searchText.isEmpty {
-                searchMatchIndicators
             }
         }
-        .padding(.vertical, 4)
+        .foragerGlassCard()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
+        .accessibilityHint("Double tap to view recipe")
     }
-    
-    private var searchMatchIndicators: some View {
-        HStack(spacing: 8) {
-            Text("Matches:")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            
-            ForEach(matchIndicators, id: \.self) { indicator in
-                HStack(spacing: 4) {
-                    Image(systemName: indicator.iconName)
-                        .font(.caption2)
-                    Text(indicator.displayName)
-                        .font(.caption2)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 2)
-                .background(indicator.color.opacity(0.15))
-                .foregroundColor(indicator.color)
-                .cornerRadius(4)
-            }
-            
-            Spacer()
+
+    private func timingPill(icon: String, text: String) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.xs) {
+            Image(systemName: icon)
+                .font(ForagerTheme.captionFont)
+            Text(text)
+                .font(ForagerTheme.captionFont)
         }
+        .foregroundStyle(ForagerTheme.accentSecondary)
+        .padding(.horizontal, ForagerTheme.Spacing.sm)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .background(ForagerTheme.accentTint)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
     }
 }
 
-// MARK: - M3 PHASE 4: RecipeDetailView with Scaling Integration - M3.5: USES COMPUTED PROPERTIES
+// MARK: - M15.4: RecipeDetailView — Hero Header, Inline Scale Pills, Flat Ingredients
 
 struct RecipeDetailView: View {
     @ObservedObject var recipe: Recipe
     @Environment(\.managedObjectContext) private var viewContext
-    
-    @FetchRequest(
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
-            NSSortDescriptor(keyPath: \Category.name, ascending: true)
-        ]
-    ) private var categories: FetchedResults<Category>
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
+
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
     @State private var showingEditSheet = false
-    
-    // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
-    
-    // M3 PHASE 4: Recipe Scaling State
-    @State private var showingScalingSheet = false
-    private let scalingService: RecipeScalingService
+    @State private var showingDeleteConfirmation = false
+    @State private var showingError = false
+    @State private var errorMessage = ""
 
-    // M3 PHASE 4: Initialize scaling service
+    // M15.4: Inline scaling state (replaces modal RecipeScalingView)
+    @State private var scaleFactor: Double = 1.0
+    @State private var showCustomScalePicker = false
+    @State private var customWhole = 1
+    @State private var customFraction = 0.0
+
+    private let scalingService: RecipeScalingService
+    private let presetScales: [Double] = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    private let fractionOptions: [(String, Double)] = [
+        ("—", 0), ("¼", 0.25), ("⅓", 0.33), ("½", 0.5), ("⅔", 0.67), ("¾", 0.75)
+    ]
+
     init(recipe: Recipe) {
         self.recipe = recipe
         self.scalingService = RecipeScalingService(
             context: PersistenceController.shared.container.viewContext
         )
     }
-    
-    private var groupedIngredients: [String: [Ingredient]] {
-        guard let ingredientsSet = recipe.ingredients else { return [:] }
-        let ingredientsList = Array(ingredientsSet) as! [Ingredient]
-        
-        return Dictionary(grouping: ingredientsList) { ingredient in
-            ingredient.ingredientTemplate?.category ?? "Uncategorized"
-        }
-    }
-    
-    private var sortedCategoryNames: [String] {
-        let categoryOrder = categories.compactMap { $0.name }
-        var sortedNames = groupedIngredients.keys.sorted()
-        
-        sortedNames.sort { first, second in
-            let firstIndex = categoryOrder.firstIndex(of: first) ?? Int.max
-            let secondIndex = categoryOrder.firstIndex(of: second) ?? Int.max
-            return firstIndex < secondIndex
-        }
-        
-        return sortedNames
-    }
-    
+
+    // MARK: - Computed Properties
+
     private var hasIngredients: Bool {
-        return !(groupedIngredients.isEmpty)
+        guard let set = recipe.ingredients else { return false }
+        return !set.allObjects.isEmpty
     }
-    
+
+    private var sortedIngredients: [Ingredient] {
+        guard let set = recipe.ingredients else { return [] }
+        return (Array(set) as! [Ingredient]).sorted { ($0.sortOrder) < ($1.sortOrder) }
+    }
+
+    private var scaledIngredients: [ScaledIngredient]? {
+        guard scaleFactor != 1.0 else { return nil }
+        return scalingService.scale(recipe: recipe, scaleFactor: scaleFactor).scaledIngredients
+    }
+
+    private var dynamicServings: Int {
+        Int(Double(recipe.servings) * scaleFactor)
+    }
+
+    private var ctaLabel: String {
+        if scaleFactor == 1.0 {
+            return "Add to Grocery List"
+        } else {
+            return "Add to Grocery List · \(dynamicServings) servings"
+        }
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
                 recipeHeaderSection
-                
-                if recipe.hasRecipeTiming {
-                    timingSection
-                }
-                
-                usageAnalyticsSection
-                
+
                 ingredientsSection
-                
+
                 if let instructions = recipe.instructions, !instructions.isEmpty {
                     instructionsSection(instructions)
                 }
+
+                usageFooter
             }
             .padding()
         }
+        .background(ForagerTheme.backgroundCanvas)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-                // M3 PHASE 4: Scaling button
-                Button(action: {
-                    showingScalingSheet = true
-                }) {
-                    Image(systemName: "slider.horizontal.3")
-                }
-                
-                Button(action: {
-                    showingMarkUsedConfirmation = true
-                }) {
-                    Image(systemName: "checkmark.circle")
-                }
-                
-                // M4.2: Add to Meal Plan menu
-                Menu {
-                    Button {
-                        showingMealPlanSheet = true
-                    } label: {
-                        Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Button { showingEditSheet = true } label: {
+                        Text("Edit")
+                            .font(ForagerTheme.secondaryFont)
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
-                }
-                
-                Button(action: {
-                    showingEditSheet = true
-                }) {
-                    Image(systemName: "pencil")
+                    Menu {
+                        Button { showingMealPlanSheet = true } label: {
+                            Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
+                        }
+                        Button { showingMarkUsedConfirmation = true } label: {
+                            Label("Mark as Made", systemImage: "checkmark.circle")
+                        }
+                        Divider()
+                        Button(role: .destructive) { showingDeleteConfirmation = true } label: {
+                            Label("Delete Recipe", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
                 }
             }
         }
         .confirmationDialog("Mark Recipe as Used?", isPresented: $showingMarkUsedConfirmation) {
             Button("Yes, Mark as Used") {
-                // M3.5: Use recordRecipeUsage() convenience method
                 recipe.recordRecipeUsage()
                 do {
                     try viewContext.save()
-                    #if DEBUG
-                    print("Recipe marked as used successfully")
-                    #endif
                 } catch {
-                    #if DEBUG
-                    print("Error marking recipe as used: \(error)")
-                    #endif
+                    errorMessage = "Failed to save: \(error.localizedDescription)"
+                    showingError = true
                 }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will increment the usage count and update the last used date.")
+        }
+        .confirmationDialog("Delete Recipe?", isPresented: $showingDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                let recipeID = recipe.objectID
+                PersistenceController.shared.performWrite({ context in
+                    let toDelete = context.object(with: recipeID)
+                    context.delete(toDelete)
+                }, onSuccess: {
+                    dismiss()
+                }, onError: { error in
+                    errorMessage = "Failed to delete recipe: \(error.localizedDescription)"
+                    showingError = true
+                })
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone.")
+        }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
         }
         .sheet(isPresented: $showingAddToListSheet) {
             if hasIngredients {
@@ -1025,321 +1080,309 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $showingEditSheet) {
             EditRecipeView(recipe: recipe, context: viewContext)
         }
-        .sheet(isPresented: $showingScalingSheet) {
-            RecipeScalingView(recipe: recipe, scalingService: scalingService)
-        }
-        // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
         .sheet(isPresented: $showingMealPlanSheet) {
             SelectMealPlanSheet(recipe: recipe) { plan, date in
-                // M4.2.4: Add recipe to selected plan and date
-                // Recipe tracking now happens in MealPlanService.addRecipeToMealPlan
                 if let _ = MealPlanService.shared.addRecipeToMealPlan(
                     recipe: recipe,
                     date: date,
                     mealPlan: plan
                 ) {
                     #if DEBUG
-                    print("✅ M4.2.4: Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
-                    #endif
-                } else {
-                    #if DEBUG
-                    print("❌ M4.2.4: Failed to add recipe (date may already be occupied)")
+                    print("Added \(recipe.title ?? "recipe") to \(plan.name ?? "plan") on \(date)")
                     #endif
                 }
             }
         }
+        .sheet(isPresented: $showCustomScalePicker) {
+            customScalePickerSheet
+        }
     }
-    
-    // MARK: - View Components
-    
+
+    // MARK: - Hero Header
+
     private var recipeHeaderSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
             HStack {
-                // M3.5: Use recipeDisplayTitle
                 Text(recipe.recipeDisplayTitle)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .lineLimit(2)
-                
+                    .font(ForagerTheme.detailTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineLimit(3)
+
                 Spacer()
-                
+
                 if recipe.isFavorite {
                     Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                        .font(.title2)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
+                        .font(.title3)
                 }
             }
-            
-            // M3.5: Use recipeServingsDescription (no need for conditional)
-            HStack {
-                Image(systemName: "person.2")
-                    .foregroundColor(.secondary)
-                Text(recipe.recipeServingsDescription)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+
+            // Compact timing row
+            if recipe.hasRecipeTiming {
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    if recipe.prepTime > 0 {
+                        Label(recipe.recipeFormattedPrepTime, systemImage: "clock")
+                    }
+                    if recipe.cookTime > 0 {
+                        Label(recipe.recipeFormattedCookTime, systemImage: "flame")
+                    }
+                    if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
+                        Label(recipe.recipeFormattedTotalTime, systemImage: "timer")
+                    }
+                }
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
             }
+
+            Text(recipe.recipeServingsDescription)
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
-    
-    private var timingSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Timing")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            HStack(spacing: 20) {
-                if recipe.prepTime > 0 {
-                    VStack {
-                        Image(systemName: "clock")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                        Text("Prep")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedPrepTime
-                        Text(recipe.recipeFormattedPrepTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                if recipe.cookTime > 0 {
-                    VStack {
-                        Image(systemName: "flame")
-                            .font(.title2)
-                            .foregroundColor(.orange)
-                        Text("Cook")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedCookTime
-                        Text(recipe.recipeFormattedCookTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                if recipe.prepTime > 0 && recipe.cookTime > 0 {
-                    VStack {
-                        Image(systemName: "timer")
-                            .font(.title2)
-                            .foregroundColor(.green)
-                        Text("Total")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        // M3.5: Use recipeFormattedTotalTime
-                        Text(recipe.recipeFormattedTotalTime)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                }
-                
-                Spacer()
-            }
-        }
-    }
-    
-    private var usageAnalyticsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Usage")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            HStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "chart.bar")
-                            .foregroundColor(.blue)
-                        Text("Times Made")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Text("\(recipe.usageCount)")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.green)
-                        Text("Last Used")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // M3.5: Use recipeLastUsedDescription
-                    Text(recipe.recipeLastUsedDescription)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                }
-                
-                Spacer()
-            }
-        }
-    }
-    
+
+    // MARK: - Ingredients Section with Scale Pills
+
     private var ingredientsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Section header with dynamic servings
             HStack {
-                Text("Ingredients")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                
+                Text("INGREDIENTS")
+                    .font(ForagerTheme.footnoteFont)
+                    .tracking(0.5)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+
                 Spacer()
-                
-                Button(action: {
-                    showingAddToListSheet = true
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "cart.badge.plus")
-                        Text("Add to List")
-                    }
-                    .font(.caption)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
+
+                if scaleFactor != 1.0 {
+                    Text("\(dynamicServings) servings")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
-                .disabled(!hasIngredients)
             }
-            
-            if groupedIngredients.isEmpty {
+
+            // Inline scale pills
+            scalePillRow
+
+            // Flat ingredient list
+            if !hasIngredients {
                 Text("No ingredients found")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 20)
+                    .padding(.vertical, ForagerTheme.Spacing.xl)
             } else {
-                ForEach(sortedCategoryNames, id: \.self) { categoryName in
-                    let categoryIngredients = groupedIngredients[categoryName] ?? []
-                    
-                    if !categoryIngredients.isEmpty {
-                        categoryHeaderView(categoryName: categoryName, count: categoryIngredients.count)
-                        
-                        ForEach(categoryIngredients, id: \.objectID) { ingredient in
-                            ingredientRowView(ingredient: ingredient)
+                ForEach(sortedIngredients, id: \.objectID) { ingredient in
+                    ingredientRow(ingredient)
+                }
+            }
+
+            // Full-width CTA button
+            if hasIngredients {
+                addToListButton
+            }
+        }
+    }
+
+    // MARK: - Scale Pills
+
+    private var scalePillRow: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                ForEach(presetScales, id: \.self) { scale in
+                    Button {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) { scaleFactor = scale }
+                    } label: {
+                        Text(scaleLabel(scale))
+                            .font(ForagerTheme.footnoteFont)
+                            .foregroundStyle(scaleFactor == scale ? .white : ForagerTheme.textSecondary)
+                            .padding(.horizontal, ForagerTheme.Spacing.md)
+                            .padding(.vertical, ForagerTheme.Spacing.sm)
+                            .background(scaleFactor == scale ? ForagerTheme.accentPrimary : ForagerTheme.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                    }
+                    .accessibilityLabel("Scale recipe to \(scaleLabel(scale))")
+                    .accessibilityValue(scaleFactor == scale ? "Selected" : "Not selected")
+                }
+
+                // Custom scale button
+                Button { showCustomScalePicker = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(ForagerTheme.footnoteFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .padding(ForagerTheme.Spacing.sm)
+                        .background(ForagerTheme.backgroundSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                }
+            }
+        }
+    }
+
+    private func scaleLabel(_ scale: Double) -> String {
+        if scale == 0.5 { return "½×" }
+        if scale == floor(scale) { return "\(Int(scale))×" }
+        let whole = Int(scale)
+        let fraction = scale - Double(whole)
+        if abs(fraction - 0.5) < 0.01 { return "\(whole)½×" }
+        return String(format: "%.1f×", scale)
+    }
+
+    private var customScalePickerSheet: some View {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                Text("\(scaleLabel(Double(customWhole) + customFraction))")
+                    .font(ForagerTheme.detailTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+
+                HStack {
+                    Picker("Whole", selection: $customWhole) {
+                        ForEach(0...5, id: \.self) { n in Text("\(n)").tag(n) }
+                    }
+                    .pickerStyle(.wheel)
+
+                    Picker("Fraction", selection: $customFraction) {
+                        ForEach(fractionOptions, id: \.1) { label, value in
+                            Text(label).tag(value)
                         }
                     }
+                    .pickerStyle(.wheel)
                 }
             }
-        }
-    }
-    
-    private func categoryHeaderView(categoryName: String, count: Int) -> some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(categoryColor(for: categoryName))
-                .frame(width: 12, height: 12)
-                .overlay(
-                    Text(categoryEmoji(for: categoryName))
-                        .font(.system(size: 8))
-                )
-            
-            Text(categoryName.uppercased())
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text("\(count)")
-                .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color(.systemGray5))
-                .cornerRadius(4)
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 4)
-        .background(Color(.systemGray6).opacity(0.3))
-        .cornerRadius(6)
-    }
-    
-    // M3: Updated to use displayText - M3.5: USES COMPUTED PROPERTIES
-    // M8.1: Added low-confidence badge and edit context menu
-    private func ingredientRowView(ingredient: Ingredient) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Circle()
-                .fill(Color.secondary.opacity(0.6))
-                .frame(width: 6, height: 6)
-                .padding(.top, 6)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    // M3.5: Use ingredientDisplayName (handles nil)
-                    Text(ingredient.ingredientDisplayName)
-                        .font(.body)
-                        .foregroundColor(.primary)
-
-                    // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
-                    if ingredient.parseConfidence < 0.7 {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.yellow)
-                            .font(.caption2)
-                            .help("Tap to edit - parsing confidence low")
+            .padding()
+            .navigationTitle("Custom Scale")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Apply") {
+                        let newScale = Double(customWhole) + customFraction
+                        if newScale > 0 {
+                            scaleFactor = newScale
+                        }
+                        showCustomScalePicker = false
                     }
                 }
-
-                // M4.3.1: Removed redundant displayText tag
-                // The ingredient name already includes quantity info
-                // Only show notes if they exist
-
-                if let notes = ingredient.notes?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !notes.isEmpty {
-                    Text(notes)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .italic()
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showCustomScalePicker = false }
                 }
             }
+        }
+        .presentationDetents([.medium])
+    }
+
+    // MARK: - Ingredient Row
+
+    private func ingredientRow(_ ingredient: Ingredient) -> some View {
+        let displayName = ingredientDisplayName(for: ingredient)
+        return HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
+            // Confidence bullet: green for high, amber for low
+            Circle()
+                .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
+                .frame(width: 4, height: 4)
+                .padding(.top, 8)
+
+            Text(displayName)
+                .font(ForagerTheme.bodyFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
 
             Spacer()
         }
         .padding(.vertical, 2)
-        .padding(.leading, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(displayName)
     }
-    
-    private func categoryColor(for categoryName: String) -> Color {
-        switch categoryName.lowercased() {
-        case "produce": return .green
-        case "deli & meat": return .red
-        case "dairy & fridge": return .blue
-        case "bread & frozen": return .orange
-        case "boxed & canned": return .brown
-        case "snacks, drinks, & other": return .purple
-        default: return .gray
+
+    private func ingredientDisplayName(for ingredient: Ingredient) -> String {
+        // At 1x scale, ingredient.name already contains full text like "2 cups flour"
+        guard scaleFactor != 1.0,
+              let scaled = scaledIngredients?.first(where: { $0.name == (ingredient.name ?? "") }) else {
+            return ingredient.name ?? "Unknown"
         }
-    }
-    
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName.lowercased() {
-        case "produce": return "🥬"
-        case "deli & meat": return "🥩"
-        case "dairy & fridge": return "🥛"
-        case "bread & frozen": return "🍞"
-        case "boxed & canned": return "📦"
-        case "snacks, drinks, & other": return "🥤"
-        default: return "📦"
+        // At other scales, construct from scaled quantity + template name
+        let templateName = ingredient.ingredientTemplate?.name ?? ingredient.name ?? "Unknown"
+        if scaled.displayText.isEmpty {
+            return templateName
         }
+        return "\(scaled.displayText) \(templateName)"
     }
-    
+
+    // MARK: - CTA Button
+
+    private var addToListButton: some View {
+        Button {
+            showingAddToListSheet = true
+        } label: {
+            Text(ctaLabel)
+                .font(ForagerTheme.bodyFont.bold())
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, ForagerTheme.Spacing.md)
+                .background(ForagerTheme.accentPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        }
+        .padding(.top, ForagerTheme.Spacing.md)
+    }
+
+    // MARK: - Instructions
+
     private func instructionsSection(_ instructions: String) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Instructions")
-                .font(.headline)
-                .fontWeight(.semibold)
-            
-            Text(instructions)
-                .font(.body)
-                .lineSpacing(4)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+            Text("INSTRUCTIONS")
+                .font(ForagerTheme.footnoteFont)
+                .tracking(0.5)
+                .foregroundStyle(ForagerTheme.textSecondary)
+
+            let steps = instructions.components(separatedBy: "\n")
+                .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+
+            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.md) {
+                    Text("\(index + 1)")
+                        .font(ForagerTheme.bodyFont.bold().monospacedDigit())
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                        .frame(width: 24, alignment: .trailing)
+
+                    Text(cleanStepText(step))
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineSpacing(6)
+                }
+            }
+        }
+    }
+
+    /// Strip existing step numbers like "1.", "1)", "Step 1:" from instruction text
+    private func cleanStepText(_ step: String) -> String {
+        let trimmed = step.trimmingCharacters(in: .whitespaces)
+        let pattern = #"^(?:Step\s+)?\d+[.):]?\s*"#
+        return trimmed.replacingOccurrences(of: pattern, with: "", options: .regularExpression)
+    }
+
+    // MARK: - Usage Footer (Collapsible)
+
+    private var usageFooter: some View {
+        DisclosureGroup {
+            HStack(spacing: ForagerTheme.Spacing.xl) {
+                VStack(alignment: .leading) {
+                    Text("Times Made")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text("\(recipe.usageCount)")
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+                VStack(alignment: .leading) {
+                    Text("Last Used")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text(recipe.recipeLastUsedDescription)
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+            }
+            .padding(.top, ForagerTheme.Spacing.sm)
+        } label: {
+            Text("Usage")
+                .font(ForagerTheme.footnoteFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
 }
@@ -1369,9 +1412,9 @@ enum SearchMatchType: CaseIterable, Hashable {
     
     var color: Color {
         switch self {
-        case .title: return .blue
-        case .ingredient: return .green
-        case .instructions: return .orange
+        case .title: return ForagerTheme.accentPrimary
+        case .ingredient: return ForagerTheme.accentSecondary
+        case .instructions: return ForagerTheme.statusWarningFG
         }
     }
 }

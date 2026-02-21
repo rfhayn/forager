@@ -24,7 +24,7 @@ struct PasteInvitationSheet: View {
                 // Icon
                 Image(systemName: "link.circle.fill")
                     .font(.system(size: 60))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
                     .padding(.top, 40)
 
                 // Title
@@ -35,7 +35,7 @@ struct PasteInvitationSheet: View {
 
                     Text("Paste your invitation link")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
                 // Instructions
@@ -45,7 +45,7 @@ struct PasteInvitationSheet: View {
                     Text("3. Paste it below")
                 }
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
 
@@ -72,9 +72,9 @@ struct PasteInvitationSheet: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(invitationURL.isEmpty ? Color.gray : Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .background(invitationURL.isEmpty ? ForagerTheme.textTertiary : ForagerTheme.accentPrimary)
+                        .foregroundStyle(.white)
+                        .cornerRadius(ForagerTheme.Radius.md)
                     }
                     .disabled(invitationURL.isEmpty || isAccepting)
 
@@ -84,7 +84,7 @@ struct PasteInvitationSheet: View {
                         Text("Cancel")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .foregroundColor(.blue)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                     .disabled(isAccepting)
                 }

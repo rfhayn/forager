@@ -81,6 +81,7 @@ struct CoachMarkOverlay: View {
     @State private var cardVisible = false
     @State private var screenHeight: CGFloat = 0
 
+    // M15.1: Updated for 5-tab navigation (removed Ingredients tab and hamburger menu steps)
     private var steps: [CoachMarkStep] {
         let hasSampleData = SampleDataSeeder.hasSampleData
         return [
@@ -91,34 +92,24 @@ struct CoachMarkOverlay: View {
                     : "Let's take a quick tour of each feature.\nTap anywhere to continue."
             ),
             CoachMarkStep(
-                target: "tabBar",
                 tab: .lists,
                 title: "Grocery Lists",
                 description: "Your shopping lists, organized by store section. Check off items as you shop."
             ),
             CoachMarkStep(
-                target: "tabBar",
-                tab: .ingredients,
-                title: "Ingredients & Staples",
-                description: "Your ingredient library. Mark frequent items as staples — always one tap away."
-            ),
-            CoachMarkStep(
-                target: "tabBar",
                 tab: .recipes,
                 title: "Recipes",
                 description: "Add recipes — forager parses ingredients automatically. Add to your grocery list with one tap."
             ),
             CoachMarkStep(
-                target: "tabBar",
                 tab: .mealPlans,
                 title: "Meal Plans",
                 description: "Plan your week with recipes, then generate your grocery list from the plan."
             ),
             CoachMarkStep(
-                target: "hamburger",
-                tab: .lists,
-                title: "Menu & Settings",
-                description: "Tap the menu for Categories and Settings. Set up a household here to share with family."
+                tab: .settings,
+                title: "Settings",
+                description: "App settings, ingredient library, and categories. Set up a household to share with family."
             ),
             CoachMarkStep(
                 title: "You're Ready",
@@ -327,9 +318,9 @@ struct CoachMarkOverlay: View {
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(ForagerTheme.accentPrimary)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
             }
 
             // Only show "Clear Sample Data" when sample data actually exists

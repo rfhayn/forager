@@ -118,7 +118,7 @@ struct CloudKitSyncTestView: View {
             
             Text("\(syncMonitor.syncEventCount)")
                 .font(.headline)
-                .foregroundStyle(.blue)
+                .foregroundStyle(ForagerTheme.accentSecondary)
         }
     }
     
@@ -197,13 +197,13 @@ struct CloudKitSyncTestView: View {
     private var syncStateColor: Color {
         switch syncMonitor.syncState {
         case .idle:
-            return .gray
+            return ForagerTheme.textTertiary
         case .syncing:
-            return .blue
+            return ForagerTheme.accentSecondary
         case .synced:
-            return .green
+            return ForagerTheme.statusSuccessFG
         case .error:
-            return .red
+            return ForagerTheme.statusDangerFG
         }
     }
     

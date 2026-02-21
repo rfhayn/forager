@@ -27,328 +27,96 @@ struct SettingsView: View {
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
 
-    // M7.6.3: Onboarding replay (signals parent via NotificationCenter)
-    
-    // M7.2.1: Household creation sheet state
-    @State private var showCreateHouseholdSheet = false
-    
-    // M7.2.2: Invitation sheet state
-    @State private var showInviteMemberSheet = false
-
-    // M7.3.1: Rename household state
-    @State private var isEditingName = false
-    @State private var editedName = ""
-    @State private var renameError: String?
-    @State private var isCurrentUserOwner = false
-
-    // M7.3.2: Leave household state
-    @State private var showLeaveConfirmation = false
-    @State private var shouldMigrateData = false
-
-    // M7.3.3: Delete household state (owner-only)
-    @State private var showDeleteConfirmation = false
-
-    // M7.3.2: Member sync state (Issue #3)
-    @State private var isSyncingMembers = false
-
-    // M7.2.2 Refactor: CKShare-based participant info
-    @State private var participantCount: Int = 0
-    @State private var ownerDisplayName: String = "Unknown"
-
     var body: some View {
-        NavigationView {
-            Form {
-                // M7.2.1: Household Management
-                householdSection
-                
-                // M4.1: Meal Planning Preferences
-                mealPlanningSection
-                
-                // M4.3.1: Display Options
-                displayOptionsSection
-                
-                // M7.1.2: Developer Tools (hidden in production)
-                #if DEBUG
-                developerToolsSection
-                #endif
+        // M15.1: NavigationView removed — SettingsView is inside NavigationStack from TabView
+        Form {
+            // M7.2.1: Household Management
+            householdSection
 
-                // M7.0.2: About & Privacy
-                aboutSection
-                
-                // M3: Data Management with Migration - Hidden after migration complete
-                // migrationSection
-            }
-            .navigationTitle("Settings")
-            .sheet(isPresented: $showingPrivacyPolicy) {
-                SafariView(url: URL(string: "https://rfhayn.github.io/forager/privacy.html")!)
-                    .ignoresSafeArea()
-            }
-            .sheet(isPresented: $showCreateHouseholdSheet) {
-                CreateHouseholdSheet(householdService: householdService)
-            }
-            .sheet(isPresented: $showInviteMemberSheet) {
-                if let household = householdService.currentHousehold {
-                    InviteMemberSheet(service: householdService, household: household)
-                }
-            }
-            .alert("Leave Household?", isPresented: $showLeaveConfirmation) {
-                Button("Migrate & Leave", role: .destructive) {
-                    shouldMigrateData = true
-                    if let household = householdService.currentHousehold {
-                        leaveHousehold(household)
-                    }
-                }
-                Button("Clean App & Leave", role: .destructive) {
-                    shouldMigrateData = false
-                    if let household = householdService.currentHousehold {
-                        leaveHousehold(household)
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("Choose 'Migrate & Leave' to keep a personal copy of all data, or 'Clean App & Leave' to start fresh with a clean app.")
-            }
-            .alert("Delete Household?", isPresented: $showDeleteConfirmation) {
-                Button("Migrate & Delete", role: .destructive) {
-                    if let household = householdService.currentHousehold {
-                        deleteHousehold(household, migrateData: true)
-                    }
-                }
-                Button("Clean Delete", role: .destructive) {
-                    if let household = householdService.currentHousehold {
-                        deleteHousehold(household, migrateData: false)
-                    }
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This permanently deletes the household and removes all members' access. Choose 'Migrate & Delete' to keep a personal copy, or 'Clean Delete' to remove everything.")
-            }
+            // M15.1: Data Management (Ingredients & Categories relocated from tabs)
+            dataManagementSection
+
+            // M4.1: Meal Planning Preferences
+            mealPlanningSection
+
+            // M4.3.1: Display Options
+            displayOptionsSection
+
+            // M7.1.2: Developer Tools (hidden in production)
+            #if DEBUG
+            developerToolsSection
+            #endif
+
+            // M7.0.2: About & Privacy
+            aboutSection
+        }
+        .navigationTitle("Settings")
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            SafariView(url: URL(string: "https://rfhayn.github.io/forager/privacy.html")!)
+                .ignoresSafeArea()
         }
     }
     
-    // MARK: - M7.2.1: Household Section
-    // M7.4: Restructured for better visual hierarchy and cleaner UX
+    // MARK: - M15.5b: Household Section (simplified — detail in HouseholdView)
 
-    // Household management section for creating and viewing household details
-    // Enables users to share grocery lists, recipes, and meal plans with family
     private var householdSection: some View {
-        Group {
-            if let household = householdService.currentHousehold {
-                // M7.4: HOUSEHOLD INFORMATION section
-                Section {
-                    // M7.3.1: Editable household name (owner only)
+        Section {
+            NavigationLink {
+                HouseholdView()
+            } label: {
+                if let household = householdService.currentHousehold {
                     HStack {
-                        if isEditingName {
-                            // Edit mode - text field
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("Household Name", text: $editedName)
-                                    .textFieldStyle(.roundedBorder)
-                                    .onSubmit {
-                                        saveHouseholdName(household)
-                                    }
-
-                                HStack {
-                                    Button("Cancel") {
-                                        isEditingName = false
-                                        renameError = nil
-                                    }
-                                    .foregroundColor(.gray)
-                                    .font(.caption)
-
-                                    Spacer()
-
-                                    Button("Save") {
-                                        saveHouseholdName(household)
-                                    }
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                }
-
-                                if let error = renameError {
-                                    Text(error)
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        } else {
-                            // M7.4: Removed "Tap to rename" instruction - pencil icon is sufficient
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack {
-                                    Text("Household Name")
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    if isCurrentUserOwner {
-                                        Image(systemName: "pencil")
-                                            .foregroundColor(.blue)
-                                            .font(.caption)
-                                    }
-                                }
-                                Text(household.name ?? "Unnamed Household")
-                                    .fontWeight(.medium)
-                            }
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if isCurrentUserOwner {
-                                    editedName = household.name ?? ""
-                                    isEditingName = true
-                                }
-                            }
+                        Image(systemName: "person.3")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(household.name ?? "My Household")
+                                .font(ForagerTheme.bodyFont)
+                            Text("Manage members, invitations, and sharing")
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         }
                     }
-
-                    // Owner information
+                } else {
                     HStack {
-                        Text("Owner")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(ownerDisplayName)
-                            .fontWeight(.medium)
-                    }
-                } header: {
-                    Text("Household Information")
-                }
-                .task {
-                    // M7.3.1: Check if current user is owner
-                    isCurrentUserOwner = await householdService.isOwner(household: household)
-
-                    // M7.2.2 Refactor: Load participant info from CKShare
-                    participantCount = await householdService.getParticipantCount(for: household)
-                    if let owner = await householdService.getOwnerParticipant(for: household) {
-                        ownerDisplayName = owner.displayName
-                    }
-                }
-
-                // M7.4: MEMBERS section
-                Section {
-                    // M7.2.2 Task 4: Link to members list
-                    NavigationLink {
-                        HouseholdMembersView(household: household, service: householdService)
-                    } label: {
-                        HStack {
-                            Image(systemName: "person.2")
-                                .foregroundColor(.blue)
-                            Text("Members")
-                            Spacer()
-                            if isSyncingMembers {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                    .padding(.trailing, 4)
-                                Text("Syncing...")
-                                    .foregroundColor(.secondary)
-                            } else {
-                                Text("\(participantCount)")
-                                    .foregroundColor(.secondary)
-                            }
+                        Image(systemName: "person.3")
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Create Household")
+                                .font(ForagerTheme.bodyFont)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
+                            Text("Share lists, recipes, and meal plans with family")
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                         }
                     }
-
-                    #if DEBUG
-                    // M7.4: Moved Refresh Members to DEBUG-only
-                    // M7.3.2: Refresh members button (Issue #3)
-                    if isCurrentUserOwner && !isSyncingMembers {
-                        Button(action: {
-                            refreshMembers()
-                        }) {
-                            HStack {
-                                Image(systemName: "arrow.clockwise")
-                                Text("Refresh Members")
-                            }
-                            .foregroundColor(.blue)
-                        }
-                    }
-                    #endif
-                } header: {
-                    Text("Members")
-                }
-
-                // M7.4: ACTIONS section
-                Section {
-                    // M7.2.2: Invite Member button
-                    Button(action: {
-                        showInviteMemberSheet = true
-                    }) {
-                        HStack {
-                            Image(systemName: "paperplane")
-                            Text("Invite Member")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-
-                    // M7.3.2: Leave Household button (non-owners only)
-                    if !isCurrentUserOwner {
-                        Button(action: {
-                            showLeaveConfirmation = true
-                        }) {
-                            HStack {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                Text("Leave Household")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .cornerRadius(10)
-                        }
-                    }
-
-                    // M7.4: Moved Delete to bottom of actions section (iOS convention)
-                    // M7.3.3: Delete Household button (owner-only)
-                    if isCurrentUserOwner {
-                        Button(role: .destructive, action: {
-                            showDeleteConfirmation = true
-                        }) {
-                            HStack {
-                                Image(systemName: "trash")
-                                Text("Delete Household")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.1))
-                            .foregroundColor(.red)
-                            .cornerRadius(10)
-                        }
-                    }
-                } header: {
-                    Text("Actions")
-                }
-
-            } else {
-                // No household - show create button
-                Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Create or join a household to share grocery lists, recipes, and meal plans with family or roommates.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Button(action: {
-                            showCreateHouseholdSheet = true
-                        }) {
-                            HStack {
-                                Image(systemName: "house.fill")
-                                Text("Create Household")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                    }
-                } header: {
-                    Text("Household")
-                } footer: {
-                    Text("All household members will automatically see and share all grocery lists, recipes, and meal plans.")
-                        .font(.caption)
                 }
             }
+        } header: {
+            Text("Household")
         }
     }
     
+    // MARK: - M15.1: Data Management Section (relocated from tabs — ADR 011)
+
+    private var dataManagementSection: some View {
+        Section {
+            NavigationLink {
+                IngredientsView(popToRoot: .constant(false))
+            } label: {
+                Label("Ingredients", systemImage: "leaf.circle")
+            }
+            NavigationLink {
+                ManageCategoriesView(popToRoot: .constant(false))
+            } label: {
+                Label("Categories", systemImage: "folder.badge.gearshape")
+            }
+        } header: {
+            Text("Data")
+        }
+    }
+
     // MARK: - M4.1: Meal Planning Section
     
     // Meal planning preferences for user configuration
@@ -415,13 +183,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "icloud.and.arrow.up")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("CloudKit Sync Status")
                             .font(.headline)
                         Text("Monitor sync events and test CloudKit")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -434,13 +202,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "wrench.and.screwdriver")
-                        .foregroundColor(.purple)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("CloudKit Test Harness")
                             .font(.headline)
                         Text("Test duplicate prevention and repository patterns")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -455,13 +223,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "house.circle")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     VStack(alignment: .leading) {
                         Text("Household Debug")
                             .font(.headline)
                         Text("View all households in database")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -476,13 +244,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "arrow.counterclockwise")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     VStack(alignment: .leading) {
                         Text("Reset Migration")
                             .font(.headline)
                         Text("Re-run Stage A migration for testing")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -495,13 +263,13 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "stethoscope")
-                        .foregroundColor(.teal)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("Category Sync Diagnostic")
                             .font(.headline)
                         Text("Dump category store & householdKey info")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -527,35 +295,39 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Image(systemName: "hand.wave")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     Text("Replay Onboarding")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Spacer()
                 }
             }
 
             // Privacy Policy link
-            // Opens privacy policy in in-app Safari browser
             Button {
                 showingPrivacyPolicy = true
             } label: {
                 HStack {
                     Image(systemName: "hand.raised")
-                        .foregroundColor(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                     Text("Privacy Policy")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Spacer()
                     Image(systemName: "arrow.up.right.square")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .font(.caption)
                 }
             }
-            
         } header: {
             Text("About")
         } footer: {
-            Text("forager stores all data locally on your device. We do not collect, transmit, or share any personal information.")
-                .font(.caption)
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                Text("Your data is stored on your device and synced privately through your iCloud account. Household data is shared only with household members. We never collect or share your information with third parties.")
+                    .font(ForagerTheme.captionFont)
+                Text("Forager v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?") (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"))")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textDisabled)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
     }
     
@@ -569,13 +341,13 @@ struct SettingsView: View {
             NavigationLink(destination: MigrationDebugView(context: viewContext)) {
                 HStack {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("Quantity Migration")
                             .font(.headline)
                         Text("Convert ingredients to structured format")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
             }
@@ -587,77 +359,7 @@ struct SettingsView: View {
     
     // MARK: - Helper Methods
 
-    // M7.3.1: Saves household name after validation
-    // Owner-only operation with automatic CloudKit sync
-    private func saveHouseholdName(_ household: Household) {
-        Task {
-            do {
-                try await householdService.renameHousehold(household, to: editedName)
-                isEditingName = false
-                renameError = nil
-
-                // Trigger view refresh
-                await householdService.loadCurrentHousehold()
-            } catch {
-                renameError = error.localizedDescription
-            }
-        }
-    }
-
-    // M7.3.2: Leaves household with optional data migration
-    private func leaveHousehold(_ household: Household) {
-        Task {
-            do {
-                try await householdService.leaveHousehold(
-                    household,
-                    migrateData: shouldMigrateData
-                )
-
-                // Refresh household to trigger UI update
-                await householdService.loadCurrentHousehold()
-
-            } catch {
-                // Show error in console (could add alert UI here)
-                #if DEBUG
-                print("❌ Error leaving household: \(error)")
-                #endif
-            }
-        }
-    }
-
-    // M7.3.3: Deletes household with optional data migration (owner-only)
-    private func deleteHousehold(_ household: Household, migrateData: Bool) {
-        Task {
-            do {
-                try await householdService.deleteHousehold(
-                    household,
-                    migrateData: migrateData
-                )
-                await householdService.loadCurrentHousehold()
-            } catch {
-                #if DEBUG
-                print("❌ Error deleting household: \(error)")
-                #endif
-            }
-        }
-    }
-
-    // M7.3.2: Refreshes member list with sync polling (Issue #3)
-    private func refreshMembers() {
-        guard let household = householdService.currentHousehold else { return }
-        Task {
-            isSyncingMembers = true
-            // M7.2.2 Refactor: Refresh participant count from CKShare
-            participantCount = await householdService.getParticipantCount(for: household)
-            if let owner = await householdService.getOwnerParticipant(for: household) {
-                ownerDisplayName = owner.displayName
-            }
-            isSyncingMembers = false
-        }
-    }
-
     // M4.1: Converts day number (0-6) to weekday name
-    // Used by Picker to display "Sunday", "Monday", etc.
     private func dayName(for day: Int) -> String {
         let formatter = DateFormatter()
         return formatter.weekdaySymbols[day]
@@ -704,7 +406,7 @@ struct CreateHouseholdSheet: View {
                 Section {
                     Text("A household allows you to share all your grocery lists, recipes, and meal plans with family members or roommates.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .task {
@@ -740,14 +442,14 @@ struct CreateHouseholdSheet: View {
                         ProgressView()
                         Text(householdService.creationStatus ?? "Creating household…")
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                             .animation(.easeInOut(duration: 0.2), value: householdService.creationStatus)
                     }
                     .padding(24)
                     .background(.regularMaterial)
-                    .cornerRadius(16)
-                    .shadow(radius: 10)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
                 }
             }
             .alert("Error Creating Household", isPresented: $showError) {
@@ -839,8 +541,10 @@ struct SafariView: UIViewControllerRepresentable {
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
-        SettingsView()
-            .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
-            .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
+        NavigationStack {
+            SettingsView()
+        }
+        .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
     }
 }

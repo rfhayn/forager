@@ -33,7 +33,7 @@ struct EmptyMealPlanView: View {
             // Icon
             Image(systemName: "calendar.badge.plus")
                 .font(.system(size: 60))
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
             
             // Title and description
             VStack(spacing: 8) {
@@ -43,7 +43,7 @@ struct EmptyMealPlanView: View {
                 
                 Text("Create your first meal plan to start organizing your weekly meals")
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
             }
@@ -73,18 +73,18 @@ struct EmptyMealPlanView: View {
             }
             .padding(16)
             .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(12)
+            .cornerRadius(ForagerTheme.Radius.md)
             .padding(.horizontal, 32)
             
             // Create button
             Button(action: onCreatePlan) {
                 Label("Create Meal Plan", systemImage: "plus.circle.fill")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
+                    .background(ForagerTheme.accentPrimary)
+                    .cornerRadius(ForagerTheme.Radius.md)
             }
             .padding(.horizontal, 32)
             
@@ -92,7 +92,7 @@ struct EmptyMealPlanView: View {
             NavigationLink(destination: SettingsView()) {
                 Text("Change meal plan settings")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
             }
             
             Spacer()
@@ -107,12 +107,12 @@ struct EmptyMealPlanView: View {
     private func settingRow(icon: String, text: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(width: 20)
             
             Text(text)
                 .font(.subheadline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
     

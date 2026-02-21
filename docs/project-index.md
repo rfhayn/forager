@@ -1,12 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 17, 2026
+**Last Updated**: February 20, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M15 🚀 ACTIVE — UX Design System & Visual Refresh
-**Current Phase**: M15 🚀 **ACTIVE** | M7.7 📋 **QUEUED**
-**Next Priority**: M15.1 - Design System Foundation & Liquid Glass TabView
-**Execution Order (Pre-Launch)**: M15 (UX Design System) → TestFlight push → M7.7 (App Store)
-**Execution Order (Post-Launch)**: M7.5 → M6 → M8.4 → M9 → M10+
+**Current Milestone**: M15 ✅ COMPLETE (bug fixes done) | M7.7 📋 **QUEUED** | M8.4 📋 **READY**
+**Current Phase**: M15 ✅ **COMPLETE** (all 8 phases + 7 bug fix commits) | M7.7 📋 **QUEUED**
+**Next Priority**: Merge M15 → M7.5 → M9-prereqs → M8.4 → M7.7 App Store
+**Execution Order**: M7.5 (14-19h) → M9-prereqs (9h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -51,6 +50,89 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 20, 2026** - M15 Bug Fixes COMPLETE ✅, M8.4 PRD Written 📋
+- **Completed**: 7 bug fix commits on M15 branch — structured qty loss, redundant displays, strikethrough, dark mode settings, template sanitization, category refresh, code review fixes, pluralization/product variant fixes
+- **New PRD**: M8.4 ML-Powered Parsing — dataset-bootstrapped CoreML BiLSTM-CRF, moved to pre-launch
+- **M9 prerequisites identified**: M9.0 (warnings), M9.1.2 (centralize extractCleanIngredientName), M9.5-partial (parser DI)
+- **Execution order updated**: M8.4 moved ahead of M7.5/M6/M9
+
+### **February 17, 2026** - M15.7 Dark Mode, Accessibility & Final QA COMPLETE ✅ — M15 FULLY COMPLETE
+- **Completed**: M15.7 — Dark mode glass rim light, ContentUnavailableView migration, VoiceOver labels, Dynamic Type scaling, Reduce Motion guards
+- **Key Deliverables**:
+  - Dark mode rim light overlay on glass card modifiers
+  - StandardEmptyStateView deleted, replaced with native ContentUnavailableView on 5 views
+  - VoiceOver accessibility labels on all interactive elements (grocery items, recipe cards, filter pills, scale pills, meal plan cards, action buttons, ingredient rows)
+  - @ScaledMetric on ForagerProgressRing (56pt) and day circles (22pt)
+  - Reduce Motion guards across 10 view structs — all M15 animations guarded
+- **Files**: 1 deleted, 10 modified
+- **Builds**: 5 clean builds (one per sub-phase)
+- **M15 Status**: ALL 8 PHASES COMPLETE — ready for PR + squash merge to main
+- **Next**: Merge branch → TestFlight push → M7.7 App Store Submission
+
+### **February 17, 2026** - M15.6 Liquid Glass Polish COMPLETE ✅
+- **Completed**: M15.6 — iOS 26 Liquid Glass effects on cards, floating elements, tab bar
+- **Key Deliverables**:
+  - Glass card modifiers: `.foragerGlassCard()` + `.foragerProminentGlassCard()` in ForagerCard.swift
+  - Glass on 4 card views (WeeklyLists, RecipeList, MealPlanList, MealPlanDetail)
+  - Glass on 4 autocomplete dropdowns + shadows removed from 6 files
+  - Tab bar: `.tabBarMinimizeBehavior(.onScrollDown)` for content immersion
+  - Button glass evaluation: kept semantic styling (documented decision)
+- **Files**: 12 modified, 0 new
+- **Builds**: 4 clean builds
+- **Next**: M15.7 Dark Mode, Accessibility & Final QA
+
+### **February 17, 2026** - M15.5b Settings, Categories & Household COMPLETE ✅
+- **Completed**: M15.5b — HouseholdView extraction, SettingsView restructure, ManageCategoriesView polish
+- **Key Deliverables**:
+  - HouseholdView: dedicated screen with async member loading, sharing stats, sync indicator, Danger Zone
+  - SettingsView: 867 → 549 lines, NavigationLink to HouseholdView, version footer
+  - ManageCategoriesView: nav bar `+`, Uncategorized lock icon, footer help text
+- **Files**: 1 new (HouseholdView.swift), 3 modified
+- **Builds**: 1 clean build
+- **Next**: M15.6 Liquid Glass Polish
+
+### **February 17, 2026** - M15.5 Meal Plans & Ingredients UX COMPLETE ✅
+- **Completed**: M15.5 — Core Data v6 + meal plan cards + day strip + ingredients overhaul
+- **Key Deliverables**:
+  - Core Data v6 migration: `quickOption` on PlannedMeal with QuickOption enum
+  - MealPlansListView: summary cards with day dots, Tonight snippet, Generate button
+  - MealPlanDetailView: horizontal day strip, action buttons (Done/Swap/Remove), quick-select pills
+  - IngredientsView: category filter pills, sort toolbar, category-colored left-border strips
+  - IngredientReviewSheet: guided one-at-a-time triage with progress, reason badges, Save & Next / Skip
+  - Review banner + staples summary header
+- **Files**: 3 rewritten (MealPlanListView, MealPlanDetailView, IngredientsView), 4 modified
+- **Builds**: 5 clean builds (one per sub-phase)
+- **Next**: M15.5b Settings, Categories & Household Visual Redesign
+
+### **February 17, 2026** - M15.4 Recipes UX Overhaul COMPLETE ✅
+- **Completed**: M15.4 — Card-based recipe list + full detail view rewrite
+- **Key Deliverables**:
+  - Card-based recipe list with timing pills, filter pills (All/Favorites/Recent), sort menu
+  - Hero detail header (28pt bold title, compact timing row, simplified nav)
+  - Inline scale pills (6 presets + custom two-component picker) replacing modal scaling sheet
+  - Flat ingredient layout with monospaced digits and confidence-colored bullets
+  - Dynamic CTA with scaled servings count, numbered instructions with accent step numbers
+  - Collapsible usage footer via DisclosureGroup
+  - RecipeFilter/RecipeSortOrder enums, RecipeCardView, SearchMatchType ForagerTheme migration
+- **Files**: 1 file rewritten (RecipeListView.swift — contains both list and detail views)
+- **Builds**: 2 clean builds (one per commit)
+- **Next**: M15.5 Meal Plans & Ingredients UX
+
+### **February 17, 2026** - M15.3 Grocery Lists UX Overhaul COMPLETE ✅
+- **Completed**: M15.3 — 7 shared components + full grocery list UX rewrite
+- **Key Deliverables**:
+  - 7 shared components: ForagerCard, ProgressRing, SectionHeader, CategoryChipPills, FlowLayout, FilterPill, ButtonStyles
+  - Card-based grocery list overview with progress rings and category chip pills
+  - 3-option creation dialog (From Staples / From Meal Plan / Empty List)
+  - Sticky bottom progress bar + quick-add via .safeAreaInset(edge: .bottom)
+  - Collapsible category sections with auto-collapse after 2s
+  - Check-off haptics (medium/light impact) + spring animations
+  - 100% completion celebration banner with success haptic
+  - MealPlanService.generateGroceryList(from:) for meal plan → grocery list flow
+- **Files**: 7 new, 5 modified (WeeklyListsView + GroceryListDetailView fully rewritten)
+- **Builds**: 4 clean builds (one per sub-phase commit)
+- **Next**: M15.4 Recipes UX Overhaul
 
 ### **February 17, 2026** - M15 Elevated to Pre-Launch 🚀
 - **Decision**: M15 UX Design System elevated to pre-launch — polished UI before App Store debut
@@ -415,7 +497,7 @@ _[Previous entries remain the same through December 23...]_
 
 | Task | Status | Est. Hours |
 |------|--------|------------|
-| M7.5: Architecture Hardening | DEFERRED | 18.5-24.5h |
+| M7.5: Architecture Hardening | 📋 READY | 14-19h |
 | M6: Testing Foundation | PLANNED | 12-18h |
 | M8.4: ML-Powered Parsing | OPTIONAL | 15-20h |
 | M9: Technical Debt | PLANNED | 135-165h |
@@ -655,8 +737,8 @@ _[Previous entries remain the same through December 23...]_
 
 ### **Internal Knowledge**
 - [insights-log.md](insights-log.md) - Technical insights triage inbox (promotes to LNs/ADRs)
-- [learning-notes/](learning-notes/) - 31 implementation journey notes
-- [architecture/](architecture/) - 10 architecture decision records
+- [learning-notes/](learning-notes/) - 37 implementation journey notes
+- [architecture/](architecture/) - 12 architecture decision records
 - [prds/](prds/) - 10+ product requirement documents
 - [git-workflow-for-milestones.md](git-workflow-for-milestones.md) - Complete git workflow guide
 

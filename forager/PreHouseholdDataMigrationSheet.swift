@@ -49,7 +49,7 @@ struct PreHouseholdDataMigrationSheet: View {
                     // Icon
                     Image(systemName: "square.and.arrow.up.on.square")
                         .font(.system(size: 50))
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                         .padding(.top, 16)
 
                     // Title
@@ -63,7 +63,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             if recipeCount > 0 {
                                 HStack {
                                     Image(systemName: "book.pages")
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                         .frame(width: 22)
                                     Text("\(recipeCount) recipe\(recipeCount == 1 ? "" : "s")")
                                 }
@@ -73,7 +73,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             if listCount > 0 {
                                 HStack {
                                     Image(systemName: "list.clipboard")
-                                        .foregroundColor(.green)
+                                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                                         .frame(width: 22)
                                     Text("\(listCount) grocery list\(listCount == 1 ? "" : "s")")
                                 }
@@ -83,7 +83,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             if mealPlanCount > 0 {
                                 HStack {
                                     Image(systemName: "calendar")
-                                        .foregroundColor(.orange)
+                                        .foregroundStyle(ForagerTheme.statusWarningFG)
                                         .frame(width: 22)
                                     Text("\(mealPlanCount) meal plan\(mealPlanCount == 1 ? "" : "s")")
                                 }
@@ -93,7 +93,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             if categoryCount > 0 {
                                 HStack {
                                     Image(systemName: "folder")
-                                        .foregroundColor(.purple)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                         .frame(width: 22)
                                     Text("\(categoryCount) categor\(categoryCount == 1 ? "y" : "ies")")
                                 }
@@ -103,7 +103,7 @@ struct PreHouseholdDataMigrationSheet: View {
                             if templateCount > 0 {
                                 HStack {
                                     Image(systemName: "text.badge.checkmark")
-                                        .foregroundColor(.indigo)
+                                        .foregroundStyle(ForagerTheme.accentSecondary)
                                         .frame(width: 22)
                                     Text("\(templateCount) ingredient template\(templateCount == 1 ? "" : "s")")
                                 }
@@ -115,7 +115,7 @@ struct PreHouseholdDataMigrationSheet: View {
                         // Explanation
                         Text("Moving data to the household makes it visible to all members. You can keep it personal if you prefer.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 24)
                             .padding(.bottom, 8)

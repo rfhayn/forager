@@ -22,7 +22,7 @@ import Foundation
 /// Called from PersistenceController.performOneTimeSetup() after DefaultSeeder.
 final class SampleDataSeeder {
 
-    private static let hasSeededKey = "hasSeededSampleData"
+    private static let hasSeededKey = "hasSeededSampleData_v2"
     private static let hasClearedKey = "hasClearedSampleData"
 
     // MARK: - Public API
@@ -224,6 +224,277 @@ final class SampleDataSeeder {
         )
         recipes.append(salad)
 
+        // Recipe 4: Honey Garlic Salmon
+        let salmon = createRecipe(
+            in: context,
+            title: "Honey Garlic Salmon",
+            prepTime: 10,
+            cookTime: 15,
+            servings: 4,
+            instructions: """
+            1. Pat salmon fillets dry and season with salt and pepper.
+            2. Whisk together honey, soy sauce, and minced garlic in a small bowl.
+            3. Heat olive oil in an oven-safe skillet over medium-high heat.
+            4. Sear salmon skin-side up for 3 minutes until golden.
+            5. Flip, pour honey garlic sauce over the top.
+            6. Transfer skillet to 400°F oven for 8-10 minutes until flaky.
+            7. Garnish with sesame seeds and sliced green onions.
+            """,
+            ingredients: [
+                ("4 salmon fillets", 4.0, nil, "salmon fillets", "Deli & Meat"),
+                ("3 tbsp honey", 3.0, "tbsp", "honey", "Boxed & Canned"),
+                ("2 tbsp soy sauce", 2.0, "tbsp", "soy sauce", "Boxed & Canned"),
+                ("4 cloves garlic", 4.0, nil, "garlic", "Produce"),
+                ("1 tbsp sesame seeds", 1.0, "tbsp", "sesame seeds", "Boxed & Canned"),
+                ("2 green onions", 2.0, nil, "green onions", "Produce")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(salmon)
+
+        // Recipe 5: Chocolate Chip Cookies
+        let cookies = createRecipe(
+            in: context,
+            title: "Chocolate Chip Cookies",
+            prepTime: 15,
+            cookTime: 12,
+            servings: 24,
+            instructions: """
+            1. Preheat oven to 375°F. Line baking sheets with parchment paper.
+            2. Cream together butter and both sugars until light and fluffy.
+            3. Beat in eggs one at a time, then add vanilla extract.
+            4. Whisk flour, baking soda, and salt in a separate bowl.
+            5. Gradually mix dry ingredients into wet until just combined.
+            6. Fold in chocolate chips.
+            7. Drop rounded tablespoons onto prepared sheets, spacing 2 inches apart.
+            8. Bake 10-12 minutes until edges are golden but centers look soft.
+            9. Cool on pan 5 minutes, then transfer to wire rack.
+            """,
+            ingredients: [
+                ("2 1/4 cups all-purpose flour", 2.25, "cup", "all-purpose flour", "Boxed & Canned"),
+                ("1 cup butter", 1.0, "cup", "butter", "Dairy & Fridge"),
+                ("3/4 cup granulated sugar", 0.75, "cup", "granulated sugar", "Boxed & Canned"),
+                ("3/4 cup brown sugar", 0.75, "cup", "brown sugar", "Boxed & Canned"),
+                ("2 eggs", 2.0, nil, "eggs", "Dairy & Fridge"),
+                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Boxed & Canned"),
+                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Boxed & Canned"),
+                ("2 cups chocolate chips", 2.0, "cup", "chocolate chips", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(cookies)
+
+        // Recipe 6: Beef Tacos
+        let tacos = createRecipe(
+            in: context,
+            title: "Beef Tacos",
+            prepTime: 10,
+            cookTime: 15,
+            servings: 4,
+            instructions: """
+            1. Heat olive oil in a skillet over medium-high heat.
+            2. Cook ground beef, breaking it up, until browned. Drain excess fat.
+            3. Add taco seasoning and water per packet directions. Simmer 5 minutes.
+            4. Warm tortillas in a dry skillet or microwave.
+            5. Assemble tacos with beef, shredded cheese, lettuce, and salsa.
+            6. Squeeze fresh lime over the top and serve.
+            """,
+            ingredients: [
+                ("1 lb ground beef", 1.0, "lb", "ground beef", "Deli & Meat"),
+                ("1 packet taco seasoning", 1.0, nil, "taco seasoning", "Boxed & Canned"),
+                ("8 small flour tortillas", 8.0, nil, "flour tortillas", "Bakery & Bread"),
+                ("1 cup shredded cheddar", 1.0, "cup", "shredded cheddar", "Dairy & Fridge"),
+                ("2 cups shredded lettuce", 2.0, "cup", "shredded lettuce", "Produce"),
+                ("1/2 cup salsa", 0.5, "cup", "salsa", "Boxed & Canned"),
+                ("2 limes", 2.0, nil, "limes", "Produce")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(tacos)
+
+        // Recipe 7: Tomato Basil Soup
+        let soup = createRecipe(
+            in: context,
+            title: "Tomato Basil Soup",
+            prepTime: 10,
+            cookTime: 30,
+            servings: 6,
+            instructions: """
+            1. Heat olive oil in a large pot over medium heat.
+            2. Sauté diced onion until softened, about 5 minutes.
+            3. Add minced garlic and cook 1 minute more.
+            4. Pour in crushed tomatoes and vegetable broth. Bring to a simmer.
+            5. Cook 20 minutes, stirring occasionally.
+            6. Stir in heavy cream and fresh basil leaves.
+            7. Blend with an immersion blender until smooth. Season with salt and pepper.
+            """,
+            ingredients: [
+                ("2 cans crushed tomatoes", 2.0, nil, "crushed tomatoes", "Boxed & Canned"),
+                ("2 cups vegetable broth", 2.0, "cup", "vegetable broth", "Boxed & Canned"),
+                ("1 medium onion", 1.0, nil, "onion", "Produce"),
+                ("3 cloves garlic", 3.0, nil, "garlic", "Produce"),
+                ("1/2 cup heavy cream", 0.5, "cup", "heavy cream", "Dairy & Fridge"),
+                ("1/4 cup fresh basil", 0.25, "cup", "fresh basil", "Produce"),
+                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(soup)
+
+        // Recipe 8: Sheet Pan Lemon Chicken
+        let lemonChicken = createRecipe(
+            in: context,
+            title: "Sheet Pan Lemon Chicken",
+            prepTime: 15,
+            cookTime: 35,
+            servings: 4,
+            instructions: """
+            1. Preheat oven to 425°F. Line a sheet pan with foil.
+            2. Toss chicken thighs with olive oil, lemon juice, oregano, salt, and pepper.
+            3. Cut potatoes into 1-inch chunks. Trim green beans.
+            4. Arrange chicken, potatoes, and green beans on the pan in a single layer.
+            5. Scatter lemon slices and whole garlic cloves over everything.
+            6. Roast 30-35 minutes until chicken reaches 165°F and potatoes are golden.
+            """,
+            ingredients: [
+                ("2 lbs chicken thighs", 2.0, "lb", "chicken thighs", "Deli & Meat"),
+                ("1 lb baby potatoes", 1.0, "lb", "baby potatoes", "Produce"),
+                ("8 oz green beans", 8.0, "oz", "green beans", "Produce"),
+                ("2 lemons", 2.0, nil, "lemons", "Produce"),
+                ("6 cloves garlic", 6.0, nil, "garlic", "Produce"),
+                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Boxed & Canned"),
+                ("3 tbsp olive oil", 3.0, "tbsp", "olive oil", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(lemonChicken)
+
+        // Recipe 9: Black Bean Quesadillas
+        let quesadillas = createRecipe(
+            in: context,
+            title: "Black Bean Quesadillas",
+            prepTime: 10,
+            cookTime: 10,
+            servings: 4,
+            instructions: """
+            1. Drain and rinse black beans. Mash half roughly with a fork.
+            2. Mix beans with cumin, chili powder, and a pinch of salt.
+            3. Spread bean mixture on one half of each tortilla.
+            4. Top with shredded cheese and diced jalapeño.
+            5. Fold tortillas in half.
+            6. Cook in a dry skillet over medium heat, 3 minutes per side until crispy and cheese melts.
+            7. Cut into wedges. Serve with sour cream and salsa.
+            """,
+            ingredients: [
+                ("1 can black beans", 1.0, nil, "black beans", "Boxed & Canned"),
+                ("4 large flour tortillas", 4.0, nil, "flour tortillas", "Bakery & Bread"),
+                ("2 cups shredded Mexican cheese", 2.0, "cup", "shredded Mexican cheese", "Dairy & Fridge"),
+                ("1 jalapeño", 1.0, nil, "jalapeño", "Produce"),
+                ("1 tsp cumin", 1.0, "tsp", "cumin", "Boxed & Canned"),
+                ("1/2 tsp chili powder", 0.5, "tsp", "chili powder", "Boxed & Canned"),
+                ("1/2 cup sour cream", 0.5, "cup", "sour cream", "Dairy & Fridge"),
+                ("1/2 cup salsa", 0.5, "cup", "salsa", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(quesadillas)
+
+        // Recipe 10: Banana Bread
+        let bananaBread = createRecipe(
+            in: context,
+            title: "Banana Bread",
+            prepTime: 15,
+            cookTime: 55,
+            servings: 10,
+            instructions: """
+            1. Preheat oven to 350°F. Grease a 9x5-inch loaf pan.
+            2. Mash ripe bananas in a large bowl.
+            3. Stir in melted butter, sugar, egg, and vanilla.
+            4. Mix in flour, baking soda, and a pinch of salt until just combined.
+            5. Fold in walnuts if using.
+            6. Pour batter into prepared pan.
+            7. Bake 50-55 minutes until a toothpick comes out clean.
+            8. Cool in pan 10 minutes, then turn out onto a wire rack.
+            """,
+            ingredients: [
+                ("3 ripe bananas", 3.0, nil, "bananas", "Produce"),
+                ("1/3 cup melted butter", 0.33, "cup", "butter", "Dairy & Fridge"),
+                ("3/4 cup sugar", 0.75, "cup", "granulated sugar", "Boxed & Canned"),
+                ("1 egg", 1.0, nil, "eggs", "Dairy & Fridge"),
+                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Boxed & Canned"),
+                ("1 1/2 cups all-purpose flour", 1.5, "cup", "all-purpose flour", "Boxed & Canned"),
+                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Boxed & Canned"),
+                ("1/2 cup chopped walnuts", 0.5, "cup", "walnuts", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(bananaBread)
+
+        // Recipe 11: Greek Chicken Bowl
+        let greekBowl = createRecipe(
+            in: context,
+            title: "Greek Chicken Bowl",
+            prepTime: 20,
+            cookTime: 15,
+            servings: 4,
+            instructions: """
+            1. Season chicken breast with oregano, garlic powder, salt, and pepper.
+            2. Grill or pan-sear chicken over medium-high heat, 6-7 minutes per side.
+            3. Let rest 5 minutes, then slice.
+            4. Cook rice or warm pita bread.
+            5. Dice cucumber, halve cherry tomatoes, slice red onion, and crumble feta.
+            6. Assemble bowls: rice base, sliced chicken, vegetables, feta, and olives.
+            7. Drizzle with tzatziki or plain yogurt mixed with lemon juice.
+            """,
+            ingredients: [
+                ("1.5 lbs chicken breast", 1.5, "lb", "chicken breast", "Deli & Meat"),
+                ("1 cup rice", 1.0, "cup", "rice", "Boxed & Canned"),
+                ("1 cucumber", 1.0, nil, "cucumber", "Produce"),
+                ("1 cup cherry tomatoes", 1.0, "cup", "cherry tomatoes", "Produce"),
+                ("1/4 red onion", 0.25, nil, "red onion", "Produce"),
+                ("1/2 cup crumbled feta", 0.5, "cup", "feta cheese", "Dairy & Fridge"),
+                ("1/4 cup kalamata olives", 0.25, "cup", "kalamata olives", "Boxed & Canned"),
+                ("1/2 cup tzatziki", 0.5, "cup", "tzatziki", "Dairy & Fridge"),
+                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(greekBowl)
+
+        // Recipe 12: One-Pot Chili
+        let chili = createRecipe(
+            in: context,
+            title: "One-Pot Chili",
+            prepTime: 15,
+            cookTime: 45,
+            servings: 8,
+            instructions: """
+            1. Heat olive oil in a large Dutch oven over medium-high heat.
+            2. Cook ground beef and diced onion until beef is browned. Drain fat.
+            3. Add minced garlic, chili powder, cumin, and paprika. Stir 1 minute.
+            4. Pour in diced tomatoes, tomato paste, and beef broth.
+            5. Add drained kidney beans and black beans.
+            6. Bring to a boil, then reduce heat and simmer 40 minutes, stirring occasionally.
+            7. Season with salt and pepper.
+            8. Serve topped with shredded cheese and sour cream.
+            """,
+            ingredients: [
+                ("2 lbs ground beef", 2.0, "lb", "ground beef", "Deli & Meat"),
+                ("1 large onion", 1.0, nil, "onion", "Produce"),
+                ("4 cloves garlic", 4.0, nil, "garlic", "Produce"),
+                ("1 can diced tomatoes", 1.0, nil, "diced tomatoes", "Boxed & Canned"),
+                ("2 tbsp tomato paste", 2.0, "tbsp", "tomato paste", "Boxed & Canned"),
+                ("1 cup beef broth", 1.0, "cup", "beef broth", "Boxed & Canned"),
+                ("1 can kidney beans", 1.0, nil, "kidney beans", "Boxed & Canned"),
+                ("1 can black beans", 1.0, nil, "black beans", "Boxed & Canned"),
+                ("2 tbsp chili powder", 2.0, "tbsp", "chili powder", "Boxed & Canned"),
+                ("1 tsp cumin", 1.0, "tsp", "cumin", "Boxed & Canned"),
+                ("1 tsp paprika", 1.0, "tsp", "paprika", "Boxed & Canned")
+            ],
+            stapleTemplates: stapleTemplates
+        )
+        recipes.append(chili)
+
         return recipes
     }
 
@@ -319,14 +590,23 @@ final class SampleDataSeeder {
         list.dateCreated = Date()
 
         let items: [(name: String, displayText: String, numericValue: Double, unit: String?, category: String, isCompleted: Bool)] = [
-            ("chicken breast",   "1 lb chicken breast",    1.0, "lb",  "Deli & Meat",         false),
-            ("broccoli",         "2 cups broccoli",        2.0, "cup", "Produce",              false),
-            ("garlic",           "1 head garlic",          1.0, nil,   "Produce",              false),
-            ("penne pasta",      "8 oz penne pasta",       8.0, "oz",  "Boxed & Canned",      false),
-            ("cherry tomatoes",  "1 pint cherry tomatoes",  1.0, "pint","Produce",              false),
-            ("parmesan",         "1/4 cup parmesan",        0.25,"cup", "Dairy & Fridge",       false),
-            ("milk",             "1 gal milk",              1.0, "gal", "Dairy & Fridge",       true),
-            ("eggs",             "1 dozen eggs",            12.0, nil,  "Dairy & Fridge",       true)
+            ("chicken breast",    "2 lbs chicken breast",     2.0, "lb",   "Deli & Meat",     false),
+            ("salmon fillets",    "4 salmon fillets",         4.0, nil,    "Deli & Meat",     false),
+            ("ground beef",       "2 lbs ground beef",        2.0, "lb",   "Deli & Meat",     false),
+            ("broccoli",          "2 cups broccoli",          2.0, "cup",  "Produce",         false),
+            ("garlic",            "1 head garlic",            1.0, nil,    "Produce",         false),
+            ("baby potatoes",     "1 lb baby potatoes",       1.0, "lb",   "Produce",         false),
+            ("bananas",           "3 ripe bananas",           3.0, nil,    "Produce",         false),
+            ("lemons",            "2 lemons",                 2.0, nil,    "Produce",         false),
+            ("penne pasta",       "8 oz penne pasta",         8.0, "oz",   "Boxed & Canned",  false),
+            ("crushed tomatoes",  "2 cans crushed tomatoes",  2.0, nil,    "Boxed & Canned",  false),
+            ("chocolate chips",   "2 cups chocolate chips",   2.0, "cup",  "Boxed & Canned",  false),
+            ("shredded cheddar",  "1 cup shredded cheddar",   1.0, "cup",  "Dairy & Fridge",  false),
+            ("heavy cream",       "1/2 cup heavy cream",      0.5, "cup",  "Dairy & Fridge",  false),
+            ("flour tortillas",   "8 flour tortillas",        8.0, nil,    "Bakery & Bread",  false),
+            ("milk",              "1 gal milk",               1.0, "gal",  "Dairy & Fridge",  true),
+            ("eggs",              "1 dozen eggs",             12.0, nil,    "Dairy & Fridge",  true),
+            ("parmesan",          "1/4 cup parmesan",          0.25, "cup", "Dairy & Fridge",  true)
         ]
 
         for (index, item) in items.enumerated() {
@@ -351,7 +631,7 @@ final class SampleDataSeeder {
     // MARK: - Sample Meal Plan
 
     private static func createSampleMealPlan(in context: NSManagedObjectContext, recipes: [Recipe]) {
-        guard recipes.count >= 3 else { return }
+        guard recipes.count >= 8 else { return }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -370,35 +650,27 @@ final class SampleDataSeeder {
         mealPlan.isCompleted = false
         mealPlan.createdDate = Date()
 
-        // Monday dinner: Chicken Stir Fry
-        let monday = createPlannedMeal(
-            in: context,
-            date: startDate,
-            mealType: "dinner",
-            recipe: recipes[0],
-            mealPlan: mealPlan
-        )
-        _ = monday
-
-        // Wednesday dinner: Pasta Primavera
-        let wednesday = createPlannedMeal(
-            in: context,
-            date: calendar.date(byAdding: .day, value: 2, to: startDate)!,
-            mealType: "dinner",
-            recipe: recipes[1],
-            mealPlan: mealPlan
-        )
-        _ = wednesday
-
-        // Friday dinner: Simple Green Salad
-        let friday = createPlannedMeal(
-            in: context,
-            date: calendar.date(byAdding: .day, value: 4, to: startDate)!,
-            mealType: "dinner",
-            recipe: recipes[2],
-            mealPlan: mealPlan
-        )
-        _ = friday
+        // Monday: Chicken Stir Fry
+        _ = createPlannedMeal(in: context, date: startDate, mealType: "dinner",
+                              recipe: recipes[0], mealPlan: mealPlan)
+        // Tuesday: Beef Tacos
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 1, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[5], mealPlan: mealPlan)
+        // Wednesday: Pasta Primavera
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 2, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[1], mealPlan: mealPlan)
+        // Thursday: Honey Garlic Salmon
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 3, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[3], mealPlan: mealPlan)
+        // Friday: Sheet Pan Lemon Chicken
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 4, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[7], mealPlan: mealPlan)
+        // Saturday: One-Pot Chili
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 5, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[11], mealPlan: mealPlan)
+        // Sunday: Greek Chicken Bowl
+        _ = createPlannedMeal(in: context, date: calendar.date(byAdding: .day, value: 6, to: startDate)!,
+                              mealType: "dinner", recipe: recipes[10], mealPlan: mealPlan)
     }
 
     private static func createPlannedMeal(

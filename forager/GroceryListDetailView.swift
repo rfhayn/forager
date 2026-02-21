@@ -1,11 +1,9 @@
 //
-//  GroceryListDetailView.swift - INLINE ADD (SIMPLIFIED) + PROGRESS BAR FIX + M3 PHASE 6
+//  GroceryListDetailView.swift
 //  forager
 //
-//  Added inline TextField for quick item entry without modal
-//  PHASE 3: New ingredient tracking with template creation
-//  FIX: Added @FetchRequest for live progress bar updates
-//  M3 PHASE 6: Consolidation button with badge + visual indicators
+//  M15.3: Sticky bottom progress bar, collapsible sections, check-off
+//  haptics/animations, and 100% completion celebration.
 //
 
 import SwiftUI
@@ -13,61 +11,66 @@ import CoreData
 
 struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
-
-    // M7.3.4: Household service for filtering autocomplete by householdKey
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
 
     @ObservedObject var weeklyList: WeeklyList
-    
-    // INLINE ADD: Services
+
+    // Services
     @StateObject private var templateService: IngredientTemplateService
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
-    
-    // INLINE ADD: State
+
+    // Quick-add state
     @State private var quickAddText = ""
     @State private var showingAutocomplete = false
     @State private var selectedTemplate: IngredientTemplate? = nil
     @State private var defaultCategory = "Uncategorized"
-    
+
     // Modal state
     @State private var showingAddItem = false
-    
-    // PHASE 3: New ingredient tracking
     @State private var showingAddToTemplates = false
     @State private var newIngredientName = ""
     @State private var newIngredientCategory = ""
     @State private var markAsStaple = false
-    
-    // FIX: Use @FetchRequest instead of relationship for live progress updates
+
+    // M15.3: Collapsible sections
+    @State private var collapsedCategories: Set<String> = []
+
+    // M15.3: Celebration
+    @State private var showCelebration = false
+
+    // Track last-added item so saveToTemplates can update its category
+    @State private var lastAddedItem: GroceryListItem?
+
+    // Error feedback
+    @State private var showingError = false
+    @State private var errorMessage = ""
+
+    // Live data
     @FetchRequest private var listItemsFetch: FetchedResults<GroceryListItem>
-    
+
     @FetchRequest(
-        sortDescriptors: [
-            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)
-        ]
+        sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)]
     ) private var allCategories: FetchedResults<Category>
 
-    // M7.6.8: Filter categories by household scope to prevent duplicates
     private var categories: [Category] {
         let key = householdService.currentHouseholdKey
         return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
     }
-    
-    // INLINE ADD: Initialize services AND configure FetchRequest for live updates
+
     init(weeklyList: WeeklyList) {
         self.weeklyList = weeklyList
-        
+
         let context = PersistenceController.shared.container.viewContext
         let templateSvc = IngredientTemplateService(context: context)
         let parsingSvc = IngredientParsingService(context: context, templateService: templateSvc)
         let autocompleteSvc = IngredientAutocompleteService(context: context, parsingService: parsingSvc)
-        
+
         _templateService = StateObject(wrappedValue: templateSvc)
         _parsingService = StateObject(wrappedValue: parsingSvc)
         _autocompleteService = StateObject(wrappedValue: autocompleteSvc)
-        
-        // FIX: Configure FetchRequest for this specific list's items
+
         let listID = weeklyList.id ?? UUID()
         _listItemsFetch = FetchRequest<GroceryListItem>(
             sortDescriptors: [NSSortDescriptor(keyPath: \GroceryListItem.sortOrder, ascending: true)],
@@ -75,27 +78,35 @@ struct GroceryListDetailView: View {
             animation: .default
         )
     }
-    
+
+    // MARK: - Body
+
     var body: some View {
         ZStack {
+            ForagerTheme.backgroundCanvas.ignoresSafeArea()
+
             if listItems.isEmpty {
                 emptyStateView
             } else {
-                VStack(spacing: 0) {
-                    progressHeader
-                    
-                    // INLINE ADD: Quick add section at top
-                    quickAddSection
-                    
-                    shoppingListView
+                shoppingListView
+            }
+
+            // M15.3: Celebration banner
+            if showCelebration {
+                VStack {
+                    celebrationBanner
+                        .padding(.top, ForagerTheme.Spacing.sm)
+                    Spacer()
                 }
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .navigationTitle(weeklyList.name ?? "Grocery List")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            toolbarContent
+        .safeAreaInset(edge: .bottom) {
+            stickyBottomBar
         }
+        .toolbar { toolbarContent }
         .sheet(isPresented: $showingAddItem) {
             AddListItemView(weeklyList: weeklyList)
                 .environment(\.managedObjectContext, viewContext)
@@ -103,26 +114,108 @@ struct GroceryListDetailView: View {
         .sheet(isPresented: $showingAddToTemplates) {
             addToTemplatesSheet
         }
+        .alert("Error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
         .onAppear {
-            // M7.3.4: Configure autocomplete service with current householdKey
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
-
             if let firstCategory = categories.first {
                 defaultCategory = firstCategory.displayName
             }
         }
+        .onChange(of: completedItemsCount) { oldCount, newCount in
+            // M15.3: Detect 100% completion
+            if newCount == totalItemsCount && totalItemsCount > 0 && oldCount < totalItemsCount {
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.4, dampingFraction: 0.7)) {
+                    showCelebration = true
+                }
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    withAnimation(reduceMotion ? nil : .default) { showCelebration = false }
+                }
+            }
+        }
     }
-    
-    // MARK: - INLINE ADD: Quick Add Section
-    
-    private var quickAddSection: some View {
+
+    // MARK: - Computed Properties
+
+    private var listItems: [GroceryListItem] {
+        Array(listItemsFetch)
+    }
+
+    private var groupedItems: [(key: String, value: [GroceryListItem])] {
+        let grouped = Dictionary(grouping: listItems) { $0.categoryName ?? "Uncategorized" }
+        return grouped.sorted { lhs, rhs in
+            if let lhsCategory = categories.first(where: { $0.displayName == lhs.key }),
+               let rhsCategory = categories.first(where: { $0.displayName == rhs.key }) {
+                return lhsCategory.sortOrder < rhsCategory.sortOrder
+            }
+            return lhs.key < rhs.key
+        }
+    }
+
+    private var totalItemsCount: Int { listItems.count }
+    private var completedItemsCount: Int { listItems.filter { $0.isCompleted }.count }
+
+    private var completionPercentage: Double {
+        guard totalItemsCount > 0 else { return 0 }
+        return Double(completedItemsCount) / Double(totalItemsCount)
+    }
+
+    // MARK: - Sticky Bottom Bar (Progress + Quick-Add)
+
+    private var stickyBottomBar: some View {
+        VStack(spacing: 0) {
+            // Thin progress bar (6pt)
+            if totalItemsCount > 0 {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(ForagerTheme.backgroundTertiary)
+                        Capsule()
+                            .fill(progressBarColor)
+                            .frame(width: geo.size.width * completionPercentage)
+                            .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: completionPercentage)
+                    }
+                }
+                .frame(height: 6)
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.top, ForagerTheme.Spacing.sm)
+            }
+
+            // Quick-add bar
+            quickAddBar
+        }
+        .background(.regularMaterial)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Shopping progress and quick add")
+    }
+
+    private var progressBarColor: Color {
+        if completionPercentage >= 1.0 { return ForagerTheme.statusSuccessFG }
+        if completionPercentage >= 0.5 { return ForagerTheme.accentSecondary }
+        return ForagerTheme.accentPrimary
+    }
+
+    // MARK: - Quick Add Bar
+
+    private var quickAddBar: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 8) {
+            // Autocomplete (above the text field)
+            if showingAutocomplete && !autocompleteService.suggestions.isEmpty {
+                autocompleteDropdown
+            }
+
+            HStack(spacing: ForagerTheme.Spacing.sm) {
                 TextField("Quick add (e.g., \"2 cups flour\")", text: $quickAddText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
-                    .onChange(of: quickAddText) { oldValue, newValue in
+                    .accessibilityLabel("Quick add item")
+                    .accessibilityHint("Type an ingredient to add to the list")
+                    .onChange(of: quickAddText) { _, newValue in
                         if newValue.count >= 2 {
                             autocompleteService.debouncedSearch(fullText: newValue)
                             showingAutocomplete = true
@@ -131,213 +224,352 @@ struct GroceryListDetailView: View {
                             selectedTemplate = nil
                         }
                     }
-                    .onSubmit {
-                        quickAddItem()
-                    }
-                
+                    .onSubmit { quickAddItem() }
+
                 Button(action: quickAddItem) {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
                 .disabled(quickAddText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .padding(.horizontal)
-            .padding(.top, 12)
-            
-            // Autocomplete dropdown
-            if showingAutocomplete && !autocompleteService.suggestions.isEmpty {
-                VStack(spacing: 0) {
-                    ForEach(autocompleteService.suggestions.prefix(5), id: \.objectID) { template in
-                        Button(action: {
-                            selectAutocompleteTemplate(template)
-                        }) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(template.name ?? "")
-                                        .font(.body)
-                                        .foregroundColor(.primary)
-                                    
-                                    if let category = template.category, !category.isEmpty {
-                                        Text(category)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                                
-                                Spacer()
-                                
-                                if template.isStaple {
-                                    Image(systemName: "star.fill")
-                                        .font(.caption)
-                                        .foregroundColor(.orange)
-                                }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.vertical, ForagerTheme.Spacing.md)
+        }
+    }
+
+    private var autocompleteDropdown: some View {
+        VStack(spacing: 0) {
+            ForEach(autocompleteService.suggestions.prefix(5), id: \.objectID) { template in
+                Button {
+                    selectAutocompleteTemplate(template)
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(template.name ?? "")
+                                .font(ForagerTheme.bodyFont)
+                                .foregroundStyle(ForagerTheme.textPrimary)
+                            if let category = template.category, !category.isEmpty {
+                                Text(category)
+                                    .font(ForagerTheme.captionFont)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 16)
-                            .contentShape(Rectangle())
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        if template != autocompleteService.suggestions.prefix(5).last {
-                            Divider()
+                        Spacer()
+                        if template.isStaple {
+                            Image(systemName: "star.fill")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.statusWarningFG)
                         }
                     }
+                    .padding(.vertical, ForagerTheme.Spacing.sm)
+                    .padding(.horizontal, ForagerTheme.Spacing.lg)
+                    .contentShape(Rectangle())
                 }
-                .background(Color(.systemBackground))
-                .cornerRadius(8)
-                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-                .padding(.horizontal)
-                .padding(.top, 4)
+                .buttonStyle(.plain)
+
+                if template != autocompleteService.suggestions.prefix(5).last {
+                    Divider().padding(.leading, ForagerTheme.Spacing.lg)
+                }
+            }
+        }
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+    }
+
+    // MARK: - Shopping List with Collapsible Sections
+
+    private var shoppingListView: some View {
+        List {
+            ForEach(groupedItems, id: \.key) { categoryName, items in
+                let isExpanded = Binding(
+                    get: { !collapsedCategories.contains(categoryName) },
+                    set: { if !$0 { collapsedCategories.insert(categoryName) } else { collapsedCategories.remove(categoryName) } }
+                )
+
+                Section {
+                    if !collapsedCategories.contains(categoryName) {
+                        ForEach(items, id: \.self) { item in
+                            GroceryListItemRow(item: item) {
+                                toggleItemCompletion(item)
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    toggleItemCompletion(item)
+                                } label: {
+                                    Label(item.isCompleted ? "Undo" : "Complete",
+                                          systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
+                                }
+                                .tint(item.isCompleted ? .orange : .green)
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    deleteItem(item)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    let completedCount = items.filter { $0.isCompleted }.count
+                    ForagerSectionHeader(
+                        title: categoryName,
+                        count: completedCount,
+                        totalCount: items.count,
+                        isExpanded: isExpanded
+                    )
+                }
+            }
+        }
+        .listStyle(.plain)
+        .background(ForagerTheme.backgroundCanvas)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyStateView: some View {
+        VStack(spacing: ForagerTheme.Spacing.xl) {
+            Image(systemName: "cart")
+                .font(.system(size: 60))
+                .foregroundStyle(ForagerTheme.accentPrimary)
+
+            VStack(spacing: ForagerTheme.Spacing.md) {
+                Text("Empty List")
+                    .font(ForagerTheme.cardTitle)
+                Text("Add some items to get started shopping!")
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .multilineTextAlignment(.center)
             }
 
-            Divider()
-                .padding(.top, 12)
+            Button(action: { showingAddItem = true }) {
+                Label("Add Item", systemImage: "plus.circle.fill")
+            }
+            .buttonStyle(ForagerPrimaryButtonStyle())
         }
-        .background(Color(.systemGroupedBackground))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
-    // MARK: - INLINE ADD: Template Selection
-    
+
+    // MARK: - Celebration Banner
+
+    private var celebrationBanner: some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(ForagerTheme.statusSuccessFG)
+            Text("All done!")
+                .font(ForagerTheme.bodyFont.bold())
+                .foregroundStyle(ForagerTheme.accentPrimary)
+        }
+        .padding(ForagerTheme.Spacing.md)
+        .frame(maxWidth: .infinity)
+        .background(ForagerTheme.surfaceSuccess)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .accessibilityLabel("All done! Shopping list complete")
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button(action: { showingAddItem = true }) {
+                Label("Add with Options", systemImage: "plus.square")
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private func toggleItemCompletion(_ item: GroceryListItem) {
+        let wasCompleted = item.isCompleted
+
+        // M15.3: Haptic feedback
+        if wasCompleted {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        } else {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+
+        let originalCompleted = item.isCompleted
+        let originalDate = item.dateCompleted
+
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.7)) {
+            item.isCompleted.toggle()
+            item.dateCompleted = item.isCompleted ? Date() : nil
+
+            do {
+                try viewContext.save()
+            } catch {
+                item.isCompleted = originalCompleted
+                item.dateCompleted = originalDate
+                errorMessage = "Failed to save: \(error.localizedDescription)"
+                showingError = true
+            }
+        }
+
+        // M15.3: Auto-collapse fully completed categories after 2s
+        if let categoryName = item.categoryName {
+            checkAutoCollapse(category: categoryName)
+        }
+    }
+
+    private func checkAutoCollapse(category: String) {
+        let categoryItems = listItems.filter { $0.categoryName == category }
+        let allCompleted = categoryItems.allSatisfy { $0.isCompleted }
+        if allCompleted && !categoryItems.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                // Re-check: user may have unchecked during delay
+                let stillAllCompleted = listItems
+                    .filter { $0.categoryName == category }
+                    .allSatisfy { $0.isCompleted }
+                guard stillAllCompleted else { return }
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
+                    collapsedCategories.insert(category)
+                }
+            }
+        }
+    }
+
+    private func deleteItem(_ item: GroceryListItem) {
+        viewContext.delete(item)
+        do {
+            try viewContext.save()
+        } catch {
+            viewContext.rollback()
+            errorMessage = "Failed to delete item: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
+
+    private func markAllItemsComplete() {
+        for item in listItems where !item.isCompleted {
+            item.isCompleted = true
+            item.dateCompleted = Date()
+        }
+        do {
+            try viewContext.save()
+        } catch {
+            viewContext.rollback()
+            errorMessage = "Failed to mark all complete: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
+
+    // MARK: - Quick Add Logic
+
     private func selectAutocompleteTemplate(_ template: IngredientTemplate) {
         selectedTemplate = template
-        
         let parsed = parsingService.parseIngredient(text: quickAddText)
-        
         let quantityPart = parsed.quantity ?? ""
         let unitPart = parsed.unit ?? ""
-        
+
         var rebuiltText = ""
-        if !quantityPart.isEmpty {
-            rebuiltText += quantityPart + " "
-        }
-        if !unitPart.isEmpty {
-            rebuiltText += unitPart + " "
-        }
+        if !quantityPart.isEmpty { rebuiltText += quantityPart + " " }
+        if !unitPart.isEmpty { rebuiltText += unitPart + " " }
         rebuiltText += template.name ?? ""
-        
+
         quickAddText = rebuiltText
         showingAutocomplete = false
-        
-        // Update default category from template
+
         if let category = template.category, !category.isEmpty {
             defaultCategory = category
         }
     }
-    
-    // MARK: - INLINE ADD: Quick Add Item
-    
+
     private func quickAddItem() {
         let trimmedText = quickAddText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
-        
+
         let parsed = parsingService.parseIngredient(text: trimmedText)
         let structured = parsingService.parseToStructured(text: trimmedText)
-        
-        // Try to find template if not already selected
+
         if selectedTemplate == nil {
             selectedTemplate = templateService.searchTemplates(query: parsed.name, limit: 1)
                 .first(where: { $0.name?.lowercased() == parsed.name.lowercased() })
         }
-        
-        // Determine category
+
         let categoryToUse: String
         if let template = selectedTemplate, let category = template.category, !category.isEmpty {
             categoryToUse = category
         } else {
             categoryToUse = defaultCategory
         }
-        
-        // Create list item
+
         let listItem = GroceryListItem(context: viewContext)
         listItem.id = UUID()
-        listItem.name = parsed.name
+        listItem.name = trimmedText
         listItem.displayText = structured.displayText
         listItem.numericValue = structured.numericValue ?? 0.0
         listItem.standardUnit = structured.standardUnit
         listItem.isParseable = structured.isParseable
-        listItem.parseConfidence = structured.parseConfidence
+        // Autocomplete-selected items are user-validated — floor confidence
+        listItem.parseConfidence = selectedTemplate != nil
+            ? max(structured.parseConfidence, 0.8)
+            : structured.parseConfidence
         listItem.categoryName = categoryToUse
         listItem.source = "manual"
         listItem.isCompleted = false
         listItem.weeklyList = weeklyList
         listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
-        
+
         do {
             try viewContext.save()
-            #if DEBUG
-            print("✅ Quick added: \(parsed.name) to \(categoryToUse)")
-            print("   🔍 Template search result: \(selectedTemplate?.name ?? "nil")")
-            #endif
-            
-            // PHASE 3: Check if this is a new ingredient
+
             if selectedTemplate == nil {
-                #if DEBUG
-                print("   ⚠️ NEW INGREDIENT DETECTED - Should show modal")
-                print("   📝 Ingredient name: \(parsed.name)")
-                #endif
-                
-                // Prepare data for template creation prompt
+                // Track item so saveToTemplates can update its category
+                lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = categoryToUse
                 markAsStaple = false
-                
-                // Show the add to templates sheet
                 DispatchQueue.main.async {
                     self.showingAddToTemplates = true
-                    #if DEBUG
-                    print("   📲 Modal trigger set to true")
-                    #endif
                 }
-            } else {
-                #if DEBUG
-                print("   ✓ Matched to existing template: \(selectedTemplate?.name ?? "unknown")")
-                #endif
             }
-            
-            // Clear the field
+
             quickAddText = ""
             selectedTemplate = nil
             showingAutocomplete = false
-            
         } catch {
-            #if DEBUG
-            print("❌ Failed to quick add item: \(error)")
-            #endif
+            viewContext.rollback()
+            errorMessage = "Failed to add item: \(error.localizedDescription)"
+            showingError = true
         }
     }
-    
-    // MARK: - PHASE 3: Add to Templates Sheet
-    
+
+    // MARK: - Add to Templates Sheet
+
     private var addToTemplatesSheet: some View {
         NavigationView {
             Form {
                 Section(header: Text("New Ingredient")) {
                     HStack {
                         Text("Name:")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Spacer()
                         Text(newIngredientName)
                             .fontWeight(.medium)
                     }
-                    
+
                     Picker("Category", selection: $newIngredientCategory) {
                         ForEach(categories, id: \.displayName) { category in
-                            Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                            Text(category.displayName)
                                 .tag(category.displayName)
                         }
                     }
                     .pickerStyle(.menu)
                 }
-                
+
                 Section {
                     Toggle("Mark as Staple", isOn: $markAsStaple)
-                    
                     Text("Staple items automatically appear when generating new grocery lists.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
-                
+
                 Section {
                     Button("Add to Ingredient List") {
                         saveToTemplates()
@@ -349,357 +581,118 @@ struct GroceryListDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Skip") {
-                        showingAddToTemplates = false
-                    }
+                    Button("Skip") { showingAddToTemplates = false }
                 }
             }
         }
     }
-    
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
-        }
-    }
-    
-    // PHASE 3: Save new ingredient to templates
-    // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
+
+
     private func saveToTemplates() {
         let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
 
+        // Propagate the user's category choice to the grocery list item
+        if let item = lastAddedItem {
+            item.categoryName = newIngredientCategory
+            lastAddedItem = nil
+        }
+
         do {
-            if viewContext.hasChanges {
-                try viewContext.save()
-            }
-            #if DEBUG
-            print("✅ Created new ingredient template: \(newIngredientName)")
-            #endif
-
+            if viewContext.hasChanges { try viewContext.save() }
             showingAddToTemplates = false
-
         } catch {
-            #if DEBUG
-            print("❌ Failed to save ingredient: \(error)")
-            #endif
+            errorMessage = "Failed to save ingredient: \(error.localizedDescription)"
+            showingError = true
             showingAddToTemplates = false
         }
     }
-    
-    // MARK: - Computed Properties
-    
-    // FIX: Use FetchRequest results instead of relationship access
-    private var listItems: [GroceryListItem] {
-        Array(listItemsFetch)
-    }
-    
-    private var groupedItems: [(key: String, value: [GroceryListItem])] {
-        let grouped = Dictionary(grouping: listItems) { item in
-            item.categoryName ?? "Uncategorized"
-        }
-        return grouped.sorted { lhs, rhs in
-            if let lhsCategory = categories.first(where: { $0.displayName == lhs.key }),
-               let rhsCategory = categories.first(where: { $0.displayName == rhs.key }) {
-                return lhsCategory.sortOrder < rhsCategory.sortOrder
-            }
-            return lhs.key < rhs.key
-        }
-    }
-    
-    private var totalItemsCount: Int {
-        listItems.count
-    }
-    
-    private var completedItemsCount: Int {
-        listItems.filter { $0.isCompleted }.count
-    }
-    
-    private var completionPercentage: Double {
-        guard totalItemsCount > 0 else { return 0 }
-        return Double(completedItemsCount) / Double(totalItemsCount)
-    }
-    
-    // MARK: - Empty State
-    
-    private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "cart")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 12) {
-                Text("Empty List")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
-                Text("Add some items to get started shopping!")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button(action: { showingAddItem = true }) {
-                Label("Add Item", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.blue)
-                    .cornerRadius(12)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    // MARK: - Shopping List View
-    
-    private var shoppingListView: some View {
-        List {
-            ForEach(groupedItems, id: \.key) { categoryName, items in
-                Section(header: categoryHeader(for: categoryName, items: items)) {
-                    ForEach(items, id: \.self) { item in
-                        GroceryListItemRow(item: item) {
-                            toggleItemCompletion(item)
-                        }
-                        .swipeActions(edge: .leading) {
-                            Button {
-                                toggleItemCompletion(item)
-                            } label: {
-                                Label(item.isCompleted ? "Undo" : "Complete",
-                                      systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
-                            }
-                            .tint(item.isCompleted ? .orange : .green)
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                deleteItem(item)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .listStyle(InsetGroupedListStyle())
-    }
-    
-    // MARK: - Toolbar
-    
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button(action: { showingAddItem = true }) {
-                Label("Add with Options", systemImage: "plus.square")
-            }
-        }
-    }
-    
-    // MARK: - Helper Views
-    
-    @ViewBuilder
-    private func categoryHeader(for categoryName: String, items: [GroceryListItem]) -> some View {
-        HStack {
-            Text(categoryName)
-                .font(.headline)
-                .textCase(nil)
-            
-            Spacer()
-            
-            let completedCount = items.filter { $0.isCompleted }.count
-            Text("\(completedCount)/\(items.count)")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-    
-    private var progressHeader: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(completedItemsCount) of \(totalItemsCount) items")
-                        .font(.headline)
-                        .fontWeight(.medium)
-                    
-                    Text("\(Int(completionPercentage * 100))% complete")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                if !listItems.isEmpty && completedItemsCount < totalItemsCount {
-                    Button("Complete All") {
-                        markAllItemsComplete()
-                    }
-                    .font(.caption)
-                    .foregroundColor(.blue)
-                }
-            }
-            
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .frame(height: 8)
-                        .foregroundColor(.gray.opacity(0.3))
-                        .cornerRadius(4)
-                    
-                    Rectangle()
-                        .frame(width: geometry.size.width * completionPercentage, height: 8)
-                        .foregroundColor(completionPercentage >= 1.0 ? .green : .blue)
-                        .cornerRadius(4)
-                        .animation(.easeInOut(duration: 0.3), value: completionPercentage)
-                }
-            }
-            .frame(height: 8)
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 16)
-        .background(Color(.systemGroupedBackground))
-    }
-    
-    // MARK: - Actions
-    
-    private func toggleItemCompletion(_ item: GroceryListItem) {
-        item.isCompleted.toggle()
-        item.dateCompleted = item.isCompleted ? Date() : nil
-        
-        do {
-            try viewContext.save()
-        } catch {
-            #if DEBUG
-            print("❌ Failed to toggle completion: \(error)")
-            #endif
-        }
-    }
-    
-    private func deleteItem(_ item: GroceryListItem) {
-        viewContext.delete(item)
-        
-        do {
-            try viewContext.save()
-        } catch {
-            #if DEBUG
-            print("❌ Failed to delete item: \(error)")
-            #endif
-        }
-    }
-    
-    private func markAllItemsComplete() {
-        for item in listItems where !item.isCompleted {
-            item.isCompleted = true
-            item.dateCompleted = Date()
-        }
-        
-        do {
-            try viewContext.save()
-        } catch {
-            #if DEBUG
-            print("❌ Failed to mark all complete: \(error)")
-            #endif
-        }
-    }
-    
 }
 
 // MARK: - List Item Row Component
 
 struct GroceryListItemRow: View {
     @ObservedObject var item: GroceryListItem
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let onToggle: () -> Void
-    
+
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            // Checkbox
             Button(action: onToggle) {
                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundColor(item.isCompleted ? .green : .gray)
+                    .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
+                    .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
+                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
             }
-            .buttonStyle(BorderlessButtonStyle())
-            
-            VStack(alignment: .leading, spacing: 4) {
-                // M3 PHASE 6: Enhanced with visual indicators
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+            .buttonStyle(.borderless)
+
+            // Item content
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
                     HStack(spacing: 6) {
-                        // M4.3.1: Show item name without recipe tags
                         Text(item.name ?? "Unknown Item")
-                            .font(.body)
+                            .font(ForagerTheme.bodyFont)
                             .fontWeight(.medium)
                             .strikethrough(item.isCompleted)
-                            .foregroundColor(item.isCompleted ? .secondary : (item.isParseable ? .primary : .primary.opacity(0.85)))
+                            .foregroundStyle(item.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary)
                             .lineLimit(2)
-                        
-                        // M8.3.1: Raised threshold from 0.5 to 0.7 for medium-confidence visibility
-                        if !item.isCompleted && item.parseConfidence < 0.7 {
+
+                        // Low-confidence indicator — only when parser attempted
+                        // a quantity parse but wasn't confident (not for name-only items)
+                        if !item.isCompleted && item.parseConfidence > 0 && item.parseConfidence < 0.7 {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.caption2)
-                                .foregroundColor(.yellow)
-                                .help("Low parsing confidence - tap to review")
+                                .foregroundStyle(ForagerTheme.statusWarningFG)
                         }
                     }
-                    
-                    if let displayText = item.displayText, !displayText.isEmpty, displayText != "1" {
-                        Text("(\(displayText))")
-                            .font(.caption)
-                            .fontWeight(.regular)
-                            .foregroundColor(.secondary)
-                            .strikethrough(item.isCompleted)
-                    }
-                    
-                    Spacer()
+
                 }
-                
-                // M4.3.1: Recipe source badges
+
+                // Recipe source badges
                 if !item.sourceRecipeNames.isEmpty {
-                    HStack(spacing: 4) {
+                    HStack(spacing: ForagerTheme.Spacing.xs) {
                         ForEach(item.sourceRecipeNames, id: \.self) { recipeName in
                             Text(recipeName)
-                                .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
-                                .padding(.horizontal, 6)
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
+                                .padding(.horizontal, ForagerTheme.Spacing.sm)
                                 .padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(4)
+                                .background(ForagerTheme.accentTint)
+                                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
                         }
                     }
                 }
-                
-                // M4.3.1 FIX: Only show source text for MERGED items, not regular recipes
-                // Recipe items now show badges above, so don't duplicate with text
+
+                // Merged source display
                 if let source = item.source, source.hasPrefix("merged") {
                     Text(sourceDisplayText(source))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : .clear)
+        .contentShape(Rectangle())
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.name ?? "Unknown Item")
+        .accessibilityValue(item.isCompleted ? "Checked" : "Unchecked")
+        .accessibilityHint("Double tap to \(item.isCompleted ? "uncheck" : "check off") this item")
     }
-    
-    // M3 PHASE 6: Enhanced source display with merge info
+
     private func sourceDisplayText(_ source: String) -> String {
         if source.hasPrefix("merged") {
             if source.contains("converted") {
-                if let countStr = extractCount(from: source) {
-                    return "Merged from \(countStr) items (converted)"
-                }
+                if let count = extractCount(from: source) { return "Merged from \(count) items (converted)" }
                 return "Merged (converted)"
             } else {
-                if let countStr = extractCount(from: source) {
-                    return "Merged from \(countStr) items"
-                }
+                if let count = extractCount(from: source) { return "Merged from \(count) items" }
                 return "Merged"
             }
         }
-        
         switch source {
         case "staples": return "From Staples"
         case "manual": return "Added"
@@ -707,12 +700,10 @@ struct GroceryListItemRow: View {
         default: return source.capitalized
         }
     }
-    
+
     private func extractCount(from source: String) -> String? {
-        if let startIdx = source.firstIndex(of: "("),
-           let endIdx = source.firstIndex(of: ")") {
-            return String(source[source.index(after: startIdx)..<endIdx])
-        }
-        return nil
+        guard let start = source.firstIndex(of: "("),
+              let end = source.firstIndex(of: ")") else { return nil }
+        return String(source[source.index(after: start)..<end])
     }
 }

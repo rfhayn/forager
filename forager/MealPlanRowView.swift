@@ -59,9 +59,9 @@ struct MealPlanRowView: View {
                         .fontWeight(.semibold)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(.green)
-                        .cornerRadius(6)
+                        .background(ForagerTheme.statusSuccessFG.opacity(0.2))
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        .cornerRadius(ForagerTheme.Radius.sm)
                 }
             }
             
@@ -69,11 +69,11 @@ struct MealPlanRowView: View {
             HStack(spacing: 4) {
                 Image(systemName: "calendar")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Text(dateRangeText)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
             
             // M4.2.4: Progress indicator
@@ -83,12 +83,12 @@ struct MealPlanRowView: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         // Background
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
                             .fill(Color(.systemGray5))
                             .frame(height: 8)
                         
                         // Progress fill
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
                             .fill(progressColor)
                             .frame(width: geometry.size.width * CGFloat(progressPercentage), height: 8)
                             .animation(.easeInOut(duration: 0.3), value: progressPercentage)
@@ -99,7 +99,7 @@ struct MealPlanRowView: View {
                 // Progress text
                 Text(progressText)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                     .frame(width: 70, alignment: .trailing)
             }
         }
@@ -122,18 +122,13 @@ struct MealPlanRowView: View {
         guard let startDate = mealPlan.startDate else { return "No date set" }
         let endDate = Calendar.current.date(byAdding: .day, value: Int(mealPlan.duration) - 1, to: startDate) ?? startDate
         
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        
-        return "\(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
+        return "\(DateFormatter.mediumDate.string(from: startDate)) - \(DateFormatter.mediumDate.string(from: endDate))"
     }
-    
+
     // M4.2.4: Start date text for auto-generated names
     private var startDateText: String {
         guard let startDate = mealPlan.startDate else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: startDate)
+        return DateFormatter.monthDay.string(from: startDate)
     }
     
     // M4.2.4: Progress text showing meals assigned
@@ -156,9 +151,9 @@ struct MealPlanRowView: View {
     // Gray for completed plans
     private var progressColor: Color {
         if status == .completed {
-            return .gray
+            return ForagerTheme.textTertiary
         }
-        return progressPercentage >= 1.0 ? .green : .blue
+        return progressPercentage >= 1.0 ? ForagerTheme.statusSuccessFG : ForagerTheme.accentPrimary
     }
 }
 

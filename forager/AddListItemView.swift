@@ -50,6 +50,7 @@ struct AddListItemView: View {
     @State private var newIngredientName = ""
     @State private var newIngredientCategory = ""
     @State private var markAsStaple = false
+    @State private var lastAddedItem: GroceryListItem?
     
     private var isFormValid: Bool {
         !ingredientText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -97,12 +98,12 @@ struct AddListItemView: View {
                                             VStack(alignment: .leading, spacing: 2) {
                                                 Text(template.name ?? "")
                                                     .font(.body)
-                                                    .foregroundColor(.primary)
+                                                    .foregroundStyle(.primary)
                                                 
                                                 if let category = template.category, !category.isEmpty {
                                                     Text(category)
                                                         .font(.caption)
-                                                        .foregroundColor(.secondary)
+                                                        .foregroundStyle(ForagerTheme.textSecondary)
                                                 }
                                             }
                                             
@@ -111,7 +112,7 @@ struct AddListItemView: View {
                                             if template.isStaple {
                                                 Image(systemName: "star.fill")
                                                     .font(.caption)
-                                                    .foregroundColor(.orange)
+                                                    .foregroundStyle(ForagerTheme.statusWarningFG)
                                             }
                                         }
                                         .padding(.vertical, 8)
@@ -126,25 +127,25 @@ struct AddListItemView: View {
                                 }
                             }
                             .background(Color(.systemBackground))
-                            .cornerRadius(8)
-                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                             .padding(.top, 4)
                         }
                     }
                     
                     Text("Enter with quantity (e.g., \"2 cups flour\") or just the item name")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     
                     if let template = selectedTemplate {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
+                                .foregroundStyle(ForagerTheme.statusSuccessFG)
                                 .font(.caption)
                             
                             Text("Using ingredient: \(template.name ?? "")")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(ForagerTheme.textSecondary)
                             
                             Spacer()
                         }
@@ -156,14 +157,14 @@ struct AddListItemView: View {
                     if !categories.isEmpty {
                         Picker("Category", selection: $selectedCategory) {
                             ForEach(categories, id: \.displayName) { category in
-                                Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                                Text(category.displayName)
                                     .tag(category.displayName)
                             }
                         }
                         .pickerStyle(.menu)
                     } else {
                         Text("Loading categories...")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
                 
@@ -178,7 +179,7 @@ struct AddListItemView: View {
                 Section {
                     Text("Items added manually will be marked as 'Added' items.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
             .navigationTitle("Add Item")
@@ -218,7 +219,7 @@ struct AddListItemView: View {
                 Section(header: Text("New Ingredient")) {
                     HStack {
                         Text("Name:")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                         Spacer()
                         Text(newIngredientName)
                             .fontWeight(.medium)
@@ -226,7 +227,7 @@ struct AddListItemView: View {
                     
                     Picker("Category", selection: $newIngredientCategory) {
                         ForEach(categories, id: \.displayName) { category in
-                            Text("\(categoryEmoji(for: category.displayName)) \(category.displayName)")
+                            Text(category.displayName)
                                 .tag(category.displayName)
                         }
                     }
@@ -238,7 +239,7 @@ struct AddListItemView: View {
                     
                     Text("Staple items automatically appear when generating new grocery lists.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
                 Section {
@@ -293,17 +294,6 @@ struct AddListItemView: View {
     
     // MARK: - Helper Functions
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        default: return "📋"
-        }
-    }
     
     private func addItemToList() {
         let trimmedText = ingredientText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -325,30 +315,34 @@ struct AddListItemView: View {
         listItem.numericValue = structured.numericValue ?? 0.0
         listItem.standardUnit = structured.standardUnit
         listItem.isParseable = structured.isParseable
-        listItem.parseConfidence = structured.parseConfidence
+        // Autocomplete-selected items are user-validated — floor confidence
+        listItem.parseConfidence = selectedTemplate != nil
+            ? max(structured.parseConfidence, 0.8)
+            : structured.parseConfidence
         listItem.categoryName = selectedCategory
         listItem.source = "manual"
         listItem.isCompleted = false
         listItem.weeklyList = weeklyList
         listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
-        
+
         do {
             try viewContext.save()
             #if DEBUG
             print("✅ Added item to list: \(parsed.displayName)")
             #endif
-            
+
             // PHASE 3: Check if this is a new ingredient
             if selectedTemplate == nil {
                 #if DEBUG
                 print("   ℹ️ New ingredient detected: \(parsed.name)")
                 #endif
-                
-                // Prepare data for template creation prompt
+
+                // Track item so saveToTemplates can update its category
+                lastAddedItem = listItem
                 newIngredientName = parsed.name
                 newIngredientCategory = selectedCategory
                 markAsStaple = false
-                
+
                 // Show the add to templates sheet
                 showingAddToTemplates = true
             } else {
@@ -369,6 +363,12 @@ struct AddListItemView: View {
     private func saveToTemplates() {
         let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
         newTemplate.isStaple = markAsStaple
+
+        // Propagate the user's category choice to the grocery list item
+        if let item = lastAddedItem {
+            item.categoryName = newIngredientCategory
+            lastAddedItem = nil
+        }
 
         do {
             if viewContext.hasChanges {

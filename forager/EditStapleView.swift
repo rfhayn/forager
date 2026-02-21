@@ -105,7 +105,7 @@ struct EditStapleView: View {
                 if !hasChanges {
                     Section {
                         Text("No changes to save")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }

@@ -30,12 +30,12 @@ struct HouseholdMembersView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.largeTitle)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
                     Text("Could not load members")
                         .font(.headline)
                     Text(error)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .multilineTextAlignment(.center)
                     Button("Retry") {
                         loadParticipants()
@@ -46,7 +46,7 @@ struct HouseholdMembersView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "person.slash")
                         .font(.largeTitle)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                     Text("No members found")
                         .font(.headline)
                 }
@@ -148,11 +148,11 @@ struct ShareParticipantRow: View {
             // Avatar
             ZStack {
                 Circle()
-                    .fill(participant.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                    .fill(participant.isOwner ? ForagerTheme.accentSecondary.opacity(0.2) : ForagerTheme.textTertiary.opacity(0.2))
                     .frame(width: 44, height: 44)
 
                 Image(systemName: participant.isOwner ? "crown.fill" : "person.fill")
-                    .foregroundStyle(participant.isOwner ? .blue : .gray)
+                    .foregroundStyle(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
                     .font(.title3)
             }
 
@@ -165,7 +165,7 @@ struct ShareParticipantRow: View {
                     if participant.isCurrentUser {
                         Text("(You)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
 
                     // Role badge
@@ -173,16 +173,16 @@ struct ShareParticipantRow: View {
                         .font(.caption)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(participant.isOwner ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                        .foregroundStyle(participant.isOwner ? .blue : .gray)
-                        .cornerRadius(4)
+                        .background(participant.isOwner ? ForagerTheme.accentSecondary.opacity(0.2) : ForagerTheme.textTertiary.opacity(0.2))
+                        .foregroundStyle(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+                        .cornerRadius(ForagerTheme.Radius.xs)
                 }
 
                 // Email (if available and not a CloudKit ID)
                 if let email = participant.email, !isCloudKitUserRecordID(email) {
                     Text(email)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -197,10 +197,10 @@ struct ShareParticipantRow: View {
                     Text("Pending")
                         .font(.caption)
                 }
-                .foregroundStyle(.orange)
+                .foregroundStyle(ForagerTheme.statusWarningFG)
             } else if participant.acceptanceStatus.isActive {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(ForagerTheme.statusSuccessFG)
             }
         }
         .padding(.vertical, 4)

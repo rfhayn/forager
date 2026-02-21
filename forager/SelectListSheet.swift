@@ -85,18 +85,18 @@ struct SelectListSheet: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Recipes to Add")
                             .font(.headline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text("\(recipes.count) recipes")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                     
                     Spacer()
                     
                     Image(systemName: showingRecipes ? "chevron.up" : "chevron.down")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding()
                 .background(Color(.systemGray6))
@@ -134,7 +134,7 @@ struct SelectListSheet: View {
             HStack {
                 Text("Servings:")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -144,7 +144,7 @@ struct SelectListSheet: View {
                 } label: {
                     Image(systemName: "minus.circle.fill")
                         .font(.title3)
-                        .foregroundColor(currentServings(for: recipe) > 1 ? .blue : .gray)
+                        .foregroundStyle(currentServings(for: recipe) > 1 ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .disabled(currentServings(for: recipe) <= 1)
@@ -161,7 +161,7 @@ struct SelectListSheet: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
-                        .foregroundColor(currentServings(for: recipe) < 99 ? .blue : .gray)
+                        .foregroundStyle(currentServings(for: recipe) < 99 ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 .buttonStyle(.plain)
                 .disabled(currentServings(for: recipe) >= 99)
@@ -176,12 +176,12 @@ struct SelectListSheet: View {
                     Text(String(format: "%.1fx scale", scaleFactor))
                         .font(.caption)
                 }
-                .foregroundColor(.orange)
+                .foregroundStyle(ForagerTheme.statusWarningFG)
             }
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(8)
+        .cornerRadius(ForagerTheme.Radius.sm)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color(.systemGray4), lineWidth: 1)
@@ -194,7 +194,7 @@ struct SelectListSheet: View {
         VStack(spacing: 20) {
             Image(systemName: "cart")
                 .font(.system(size: 50))
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
             
             Text("No Shopping Lists")
                 .font(.title3)
@@ -202,7 +202,7 @@ struct SelectListSheet: View {
             
             Text("Create your first list to get started")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
         }
         .frame(maxHeight: .infinity)
     }
@@ -218,18 +218,18 @@ struct SelectListSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(list.name ?? "Unnamed List")
                                 .font(.body)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             
                             if let dateCreated = list.dateCreated {
                                 Text(formatDate(dateCreated))
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
                             
                             if let itemCount = list.items?.count, itemCount > 0 {
                                 Text("\(itemCount) items")
                                     .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                             }
                         }
                         
@@ -237,7 +237,7 @@ struct SelectListSheet: View {
                         
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                     .padding(.vertical, 4)
                 }
@@ -261,9 +261,9 @@ struct SelectListSheet: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .background(ForagerTheme.accentPrimary)
+                .foregroundStyle(.white)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             .padding()
         }

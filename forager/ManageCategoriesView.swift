@@ -118,13 +118,13 @@ struct ManageCategoriesView: View {
         VStack(spacing: 12) {
             Text("Drag to Reorder Categories")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             HStack {
                 Text("Arrange categories to match your store layout")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
                 
@@ -132,7 +132,7 @@ struct ManageCategoriesView: View {
                     resetToDefaultOrder()
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
             }
         }
         .padding(.horizontal)
@@ -154,17 +154,12 @@ struct ManageCategoriesView: View {
             }
             .onMove(perform: moveCategories)
             .onDelete(perform: deleteCategories)
-            
-            // Add new category row
-            Button(action: { showingAddCategory = true }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.blue)
-                    Text("Add Custom Category")
-                        .foregroundColor(.blue)
-                    Spacer()
-                }
-                .padding(.vertical, 12)
+
+            // Footer help text
+            Section { } footer: {
+                Text("Drag categories to reorder. Swipe left to delete — its ingredients will be reassigned.")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
         .listStyle(InsetGroupedListStyle())
@@ -174,9 +169,15 @@ struct ManageCategoriesView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button(isReordering ? "Done" : "Reorder") {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isReordering.toggle()
+            HStack(spacing: ForagerTheme.Spacing.md) {
+                Button { showingAddCategory = true } label: {
+                    Image(systemName: "plus")
+                }
+
+                Button(isReordering ? "Done" : "Reorder") {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isReordering.toggle()
+                    }
                 }
             }
         }
@@ -274,12 +275,12 @@ struct ManageCategoriesView: View {
                     VStack(spacing: 8) {
                         Text("\(assignedIngredientCount) ingredient\(assignedIngredientCount == 1 ? "" : "s") \(assignedIngredientCount == 1 ? "is" : "are") assigned to '\(category.displayName)'.")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                         
                         Text("Choose how to handle these assignments:")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                     }
                 }
@@ -292,7 +293,7 @@ struct ManageCategoriesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "arrow.triangle.2.circlepath")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
                             Text("Reassign to Different Category")
                                 .font(.headline)
                                 .fontWeight(.medium)
@@ -306,23 +307,19 @@ struct ManageCategoriesView: View {
                             HStack {
                                 if let selected = selectedReassignmentCategory {
                                     Circle()
-                                        .fill(Color(hex: selected.displayColor))
+                                        .fill(ForagerTheme.categoryColor(for: selected.displayName))
                                         .frame(width: 16, height: 16)
-                                        .overlay(
-                                            Text(categoryEmoji(for: selected.displayName))
-                                                .font(.system(size: 10))
-                                        )
                                     Text(selected.displayName)
-                                        .foregroundColor(.primary)
+                                        .foregroundStyle(.primary)
                                 } else {
                                     Text("Select Category")
-                                        .foregroundColor(.blue)
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
                                 }
                                 
                                 Spacer()
                                 
                                 Image(systemName: "chevron.right")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
                                     .font(.caption)
                             }
                             .padding(.vertical, 8)
@@ -331,25 +328,25 @@ struct ManageCategoriesView: View {
                     }
                     .padding(16)
                     .background(Color(.systemGray6))
-                    .cornerRadius(12)
+                    .cornerRadius(ForagerTheme.Radius.md)
                 }
                 
                 // Option 2: Move to Uncategorized
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "folder")
-                            .foregroundColor(.gray)
+                            .foregroundStyle(ForagerTheme.textTertiary)
                         Text("Move to \"Uncategorized\" Category")
                             .font(.headline)
                             .fontWeight(.medium)
                     }
                     Text("Ingredients will be moved to the Uncategorized category")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding(16)
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
             
             // Action buttons with better layout
@@ -362,11 +359,11 @@ struct ManageCategoriesView: View {
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(selectedReassignmentCategory == nil ? .secondary : .white)
+                    .foregroundStyle(selectedReassignmentCategory == nil ? ForagerTheme.textSecondary : Color.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(selectedReassignmentCategory == nil ? Color(.systemGray4) : Color.blue)
-                    .cornerRadius(10)
+                    .background(selectedReassignmentCategory == nil ? Color(.systemGray4) : ForagerTheme.accentPrimary)
+                    .cornerRadius(ForagerTheme.Radius.md)
                     .disabled(selectedReassignmentCategory == nil)
                 }
                 
@@ -376,11 +373,11 @@ struct ManageCategoriesView: View {
                     }
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Color.gray)
-                .cornerRadius(10)
+                .background(ForagerTheme.textTertiary)
+                .cornerRadius(ForagerTheme.Radius.md)
                 
                 Button("Cancel") {
                     showingReassignmentDialog = false
@@ -388,28 +385,14 @@ struct ManageCategoriesView: View {
                     selectedReassignmentCategory = nil
                 }
                 .font(.body)
-                .foregroundColor(.blue)
+                .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(Color(.systemGray6))
-                .cornerRadius(10)
+                .cornerRadius(ForagerTheme.Radius.md)
             }
         }
         .padding(20)
-    }
-    
-    // Helper function for category emojis
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
     }
     
     // MARK: - Reassignment Implementation
@@ -670,62 +653,53 @@ struct CategoryRowView: View {
             Text("\(position)")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
-            // Category color and icon
+            // Category color indicator
             Circle()
-                .fill(Color(hex: category.displayColor))
+                .fill(ForagerTheme.categoryColor(for: category.displayName))
                 .frame(width: 32, height: 32)
-                .overlay(
-                    Text(categoryEmoji(for: category.displayName))
-                        .font(.system(size: 16))
-                )
-            
+
             // Category info
             VStack(alignment: .leading, spacing: 4) {
-                Text(category.displayName)
-                    .font(.headline)
-                    .fontWeight(.medium)
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(category.displayName)
+                        .font(.headline)
+                        .fontWeight(.medium)
+
+                    if category.isDefault {
+                        Image(systemName: "lock.fill")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                }
             }
-            
+
             Spacer()
-            
-            // M7.2.3 Phase 3.7.2: Delete button - HIDE for protected categories (isDefault = true)
+
+            // Delete button — hidden for protected categories (isDefault = true)
             if !category.isDefault {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .foregroundColor(.red)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                         .font(.title3)
                 }
                 .buttonStyle(BorderlessButtonStyle())
             } else {
-                // Add spacing equivalent to the delete button to maintain alignment
                 Spacer()
-                    .frame(width: 24) // Approximate width of trash icon
+                    .frame(width: 24)
             }
-            
-            // Drag handle
+
+            // Drag handle — hidden for Uncategorized
             Image(systemName: "line.3.horizontal")
-                .foregroundColor(.secondary)
+                .foregroundStyle(category.isDefault ? .clear : ForagerTheme.textSecondary)
                 .font(.title2)
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
     }
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
-    }
 }
 
 #Preview {
@@ -774,26 +748,22 @@ struct CategorySelectionRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 16) {
-                // Category color and icon
+                // Category color indicator
                 Circle()
-                    .fill(Color(hex: category.displayColor))
+                    .fill(ForagerTheme.categoryColor(for: category.displayName))
                     .frame(width: 32, height: 32)
-                    .overlay(
-                        Text(categoryEmoji(for: category.displayName))
-                            .font(.system(size: 16))
-                    )
                 
                 // Category name
                 Text(category.displayName)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 // Selection indicator
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                         .font(.title3)
                 }
             }
@@ -803,18 +773,6 @@ struct CategorySelectionRow: View {
         .buttonStyle(PlainButtonStyle())
     }
     
-    private func categoryEmoji(for categoryName: String) -> String {
-        switch categoryName {
-        case "Produce": return "🥬"
-        case "Deli & Meat": return "🥩"
-        case "Dairy & Fridge": return "🥛"
-        case "Bread & Frozen": return "🍞"
-        case "Boxed & Canned": return "📦"
-        case "Snacks, Drinks, & Other": return "🥤"
-        case "Uncategorized": return "📋"
-        default: return "📂"
-        }
-    }
 }
 #Preview {
     NavigationView {
