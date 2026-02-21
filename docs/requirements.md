@@ -2,8 +2,8 @@
 
 **Last Updated**: February 21, 2026
 **Version**: 6.8
-**Current Milestone**: M9.1.2 ✅ COMPLETE | M9.5-partial 📋 NEXT | M15 ✅ COMPLETE | M8.4 📋 READY
-**Execution Order**: M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M9.5-partial ✅ COMPLETE | M8.4 📋 NEXT | M15 ✅ COMPLETE
+**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -556,11 +556,19 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 
 ## 🔮 **M9: TECHNICAL DEBT & CODEBASE OPTIMIZATION - PLANNED** 🛠️
 
-**Status**: ⏳ Planned
+**Status**: ⏳ Planned (M9.0 ✅, M9.1.2 ✅, M9.5-partial ✅ prerequisites complete)
 **Estimated**: 135-173 hours (17-22 weeks part-time)
 **Dependencies**: M7 complete, M8 complete
 **Summary**: Systematic refactoring, architectural improvements, and performance optimizations to reduce code size ~25%, eliminate performance bottlenecks, and establish sustainable patterns
 **PRD**: [M9 Technical Debt PRD](prds/active/m9-technical-debt-codebase-optimization.md)
+
+### **M9 Prerequisites** ✅
+
+| Prereq | Status | Description |
+|--------|--------|-------------|
+| M9.0: Warning Resolution | ✅ COMPLETE | Zero-warning build baseline (18 warnings resolved) |
+| M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | Single static method, 12 unit tests |
+| M9.5-partial: Parser DI | ✅ COMPLETE | Injectable HybridIngredientParser + IngredientParsingService, mock parser, 9 routing tests |
 
 ### **Summary of M9 Phases**
 

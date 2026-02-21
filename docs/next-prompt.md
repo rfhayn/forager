@@ -1,56 +1,18 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 21, 2026
-**For Milestone**: M9.1.2 ✅ COMPLETE → M9.5-partial → M8.4 → M7.7 → M6 → M9 → M10+
-**Status**: M9.1.2 ✅ **COMPLETE** | M9.5-partial 📋 **NEXT** | M8.4 📋 **READY**
-**Branch**: `main` (after M9.1.2 PR merges)
+**For Milestone**: M9.5-partial ✅ COMPLETE → M8.4 → M7.7 → M6 → M9 → M10+
+**Status**: M9.5-partial ✅ **COMPLETE** | M8.4 📋 **NEXT** | All M8.4 prerequisites done
+**Branch**: `main` (after M9.5 PR merges)
 
 ---
 
-## **NEXT: M9.5-partial — Parser Dependency Injection (~4h)**
+## ✅ **M9.5-partial — Parser Dependency Injection — COMPLETE**
 
-**Status**: 📋 NEXT (M9.0 + M9.1.2 done, last prereq before M8.4)
-**Why first**: Testable, swappable parsers before adding CoreML model
-**PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md` (M9.5-partial section)
+**Status**: ✅ COMPLETE (February 21, 2026, ~3h)
+**Branch**: `feature/M9.5-parser-di` (PR pending)
 
-```
-Branch: feature/M9.5-parser-di
-```
-
-### **Phase A: HybridIngredientParser DI (45 min)**
-- Add init parameters: `regexParser: IngredientParser`, `nlpParser: IngredientParser`, `regexConfidenceThreshold: Float`
-- All with defaults (backward compatible, zero call site changes)
-- Change `private static let regexConfidenceThreshold` → instance property from init
-
-### **Phase B: IngredientParsingService DI (30 min)**
-- Add `parser: IngredientParser` parameter to init with default `HybridIngredientParser()`
-- Static `extractCleanIngredientName()` unchanged (keeps own sharedParser)
-
-### **Phase C: MockIngredientParser + Routing Tests (1h)**
-- Create `foragerTests/Mocks/MockIngredientParser.swift` — configurable results, call counting
-- Create `foragerTests/Services/Parsing/HybridParserRoutingTests.swift` — 5+ routing tests
-- Tests: high-confidence short-circuit, low-confidence fallback, threshold config, tie handling
-- Must add both files to pbxproj (manual PBXGroup for test target)
-
-### **Phase D: Update Existing Test Files (45 min)**
-- Existing tests should compile unchanged (defaults). Verify all 146+ pass.
-- Add mock-based test in RecipeServiceTests showing parser injection works
-
-### **Phase E: QuantityMigrationService Update (15 min)**
-- Accept `IngredientParsingService` via init (currently creates own)
-- Update `foragerApp.swift` to pass shared instance
-
-### **Phase F: Build Verification + Documentation (30 min)**
-- Zero-warning build, all tests pass
-- Update insights log, development journal, core docs
-- Commit and PR
-
-### **Key Cross-Reference: M8.4 Impact**
-After M9.5-partial, M8.4 Phase 5 will:
-- Add optional `mlParser: IngredientParser?` parameter to `HybridIngredientParser.init`
-- Pass `regexConfidenceThreshold: 0.9` (raised from default 0.8)
-- Update `parse()` routing: regex → ML → NLP (3-tier)
-- Use `MockIngredientParser` from Phase C for router testing
+All M8.4 prerequisites are now complete. Parser construction is injectable with backward-compatible defaults.
 
 ### **M9 Prerequisites Summary**
 
@@ -58,11 +20,11 @@ After M9.5-partial, M8.4 Phase 5 will:
 |--------|--------|--------|
 | M9.0: Warning Resolution | ✅ COMPLETE | <1h |
 | M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
-| **M9.5-partial: Parser DI** | **📋 NEXT** | **~4h est** |
+| M9.5-partial: Parser DI | ✅ COMPLETE | ~3h |
 
 ---
 
-## **THEN: M8.4 ML-Powered Parsing (18-24h)**
+## **NEXT: M8.4 ML-Powered Parsing (18-24h)**
 
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 
@@ -113,5 +75,5 @@ Branch: feature/M7.7-app-store-submission
 
 ---
 
-**Version**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial NEXT
-**Dependencies**: M9.0 ✅, M9.1.2 ✅, M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md
+**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT
+**Dependencies**: M9.0 ✅, M9.1.2 ✅, M9.5-partial ✅, M7.5 ✅, TestFlight live (build 10, v1.1), M8.4 PRD at docs/prds/active/m8.4-ml-powered-parsing.md

@@ -1,12 +1,67 @@
 # Current Development Story
 
 **Last Updated**: February 21, 2026
-**Status**: M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **READY**
-**Total Progress**: ~223 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending)
-**Current Milestone**: M9.1.2 - Centralize extractCleanIngredientName — **COMPLETE**
+**Status**: M9.5-partial ✅ **COMPLETE** | M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **NEXT**
+**Total Progress**: ~226 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.5-parser-di`
+**Current Milestone**: M9.5-partial - Parser Dependency Injection — **COMPLETE**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M9.5-partial (parser DI) → M8.4 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 → M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M9.5-partial: PARSER DEPENDENCY INJECTION - COMPLETE**
+
+**Status**: ✅ **COMPLETE**
+**Session**: February 21, 2026 (session 23)
+**Branch**: `feature/M9.5-parser-di`
+**PRD**: `docs/prds/active/m9-technical-debt-codebase-optimization.md` (M9.5-partial section)
+
+### **What Was Delivered** ✅
+
+Made parser construction injectable with backward-compatible defaults so M8.4 can add an ML parser to the chain without modifying existing code.
+
+**Phase A: HybridIngredientParser DI**
+- Converted hardcoded sub-parsers to injectable init parameters
+- `regexParser: IngredientParser = RegexIngredientParser()`
+- `nlpParser: IngredientParser = NLPIngredientParser()`
+- `regexConfidenceThreshold: Float = 0.8` (instance property, was static)
+- M8.4 breadcrumb comment for future `mlParser` parameter
+
+**Phase B: IngredientParsingService DI**
+- Added `parser: IngredientParser = HybridIngredientParser()` to init
+- Static `extractCleanIngredientName()` unchanged (keeps own sharedParser)
+- All 11 existing instantiation sites continue working unchanged
+
+**Phase C: MockIngredientParser + Routing Tests**
+- Created `foragerTests/Mocks/` directory (new PBXGroup in pbxproj)
+- `MockIngredientParser`: configurable results, call tracking, preset injection
+- `HybridParserRoutingTests`: 8 tests covering routing logic with mocks
+- Tests: high-confidence short-circuit, NLP fallback, custom threshold, zero-confidence, call tracking, backward compat
+
+**Phase D: Demo Injection Test**
+- Added `testMockParserInjectionThroughFullChain` to ParsingIntegrationTests
+- Demonstrates: MockIngredientParser → IngredientParsingService → verified output
+
+**Phase E: QuantityMigrationService DI (Optional)**
+- Added optional `parsingService` parameter with backward-compatible default
+- `MigrationDebugView.swift:22` uses default (no change needed)
+
+**PRD Corrections Applied:**
+- M9 PRD: Phase E caller fix, time estimates, Mocks dir note, breadcrumb comment, post-M9.5 action item
+- M8.4 PRD: Phase 5 uses protocol type `IngredientParser?` (not concrete `MLIngredientParser?`)
+
+### **Commits**
+1. `45e2dc3` — M9.5: Add parser dependency injection with backward-compatible defaults
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ ZERO WARNINGS | Clean build, BUILD SUCCEEDED |
+| Routing tests | ✅ 8 PASSING | All new routing tests green |
+| Existing tests | ✅ 127 PASSING | No regressions (5 pre-existing failures unchanged) |
+| Demo injection | ✅ COMPILES | Mock flows through full chain correctly |
 
 ---
 
@@ -169,10 +224,10 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 ### **Key Change from Original Plan**
 Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences. Model ready from day one.
 
-### **Prerequisites (M9 subset, ~9h → ~8h remaining)**
+### **Prerequisites (M9 subset) — ALL COMPLETE**
 1. ~~M9.0: Warning resolution (2-3h)~~ — ✅ COMPLETE (<1h actual, Feb 21)
-2. M9.1.2: Centralize `extractCleanIngredientName()` (2-3h) — exists in 3 files with diverging regexes
-3. M9.5-partial: Parser dependency injection (4h) — testable, swappable parsers
+2. ~~M9.1.2: Centralize extractCleanIngredientName (2-3h)~~ — ✅ COMPLETE (~2h actual, Feb 21)
+3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
 M7.5 first (clean service layer) → Sessions 1-3: M9 Prerequisites → Sessions 4-7: M8.4 Phases 1-8 → M7.7 App Store
@@ -1220,8 +1275,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
 | M9.0: Warning Resolution | ✅ COMPLETE | <1h |
 | M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
-| **M9.5-partial: Parser Dependency Injection** | **📋 NEXT** | **4h** |
-| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M9.5-partial: Parser Dependency Injection | ✅ COMPLETE | ~3h |
+| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **18-24h** |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
@@ -1241,8 +1296,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial planned
-**Next Action**: M9.5-partial (parser DI, 4h) → M8.4 → M7.7
-**Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending → merge → start M9.5)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, M9.5 plan detailed)
-**Version**: February 21, 2026 - M9.1.2 COMPLETE, M9.5-partial NEXT
+**Last Session**: February 21, 2026 - M9.5-partial COMPLETE, all M8.4 prereqs done
+**Next Action**: M8.4 (ML-Powered Parsing, 18-24h) → M7.7
+**Branch**: `feature/M9.5-parser-di` (PR pending)
+**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 ready)
+**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT
