@@ -425,6 +425,11 @@ If interrupted or switching contexts mid-session:
 - [ ] On feature branch (not main)
 - [ ] Commits use M#.#.# format
 
+**Before ending ANY session (especially before context clears):**
+- [ ] Technical insights logged to `docs/insights-log.md` (don't defer — sessions can clear)
+- [ ] Narrative journal entry written to `docs/development-journal.md` (decisions, learning, AI tooling)
+- [ ] Both files committed and pushed
+
 ---
 
 ## 📈 CONTINUOUS IMPROVEMENT

@@ -204,7 +204,7 @@
   - LinkedIn post removed (handled via newsletter)
 - **Schema audit findings**: 2 dead entities (Tag, LeaveRequest), wrong cardinality (Recipe.plannedMeals), misnamed field (ownerEmail), 5 code-schema mismatches, 6 unused fields
 - **PRDs**: `docs/prds/active/m7.6-pre-launch-prep-testflight.md`, `docs/prds/active/m7.7-app-store-submission.md`
-- **All 5 core docs updated**
+- **All 7 core docs updated**
 
 ### **February 8, 2026** - M8.3.1 Template Hygiene & M8.3.2 Auto-Merge COMPLETE ✅
 - **Completed**: Template name hygiene, review badges, grocery auto-merge (~6 hours combined)

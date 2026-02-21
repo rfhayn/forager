@@ -34,7 +34,7 @@ The PRD estimated M7.5 at 14-19 hours. Actual: ~5 hours. The reason is exactly w
 This session highlighted something I've been refining over the past few weeks: using Claude Code for documentation management at milestone boundaries. The workflow:
 
 1. Complete the code work on a feature branch
-2. Ask Claude to update all 5 core docs simultaneously (current-story, next-prompt, roadmap, requirements, project-index)
+2. Ask Claude to update all 7 core docs simultaneously (current-story, next-prompt, roadmap, requirements, project-index, insights-log, development-journal)
 3. Claude reads all 5, understands the cross-references, and updates them consistently
 4. Commit the doc update, create the PR, merge
 

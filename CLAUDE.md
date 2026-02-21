@@ -291,15 +291,17 @@ git checkout -b feature/M#.#.#-description-v2
 
 ### Core Documentation Definition
 
-**"Core documentation" refers to these 5 files that must stay synchronized:**
+**"Core documentation" refers to these 7 files that must stay synchronized:**
 
 1. `docs/current-story.md` - Current milestone status and progress
 2. `docs/next-prompt.md` - Implementation guidance for next milestone
 3. `docs/roadmap.md` - Milestone tracking and execution order
 4. `docs/requirements.md` - Functional requirements and completion status
 5. `docs/project-index.md` - Central navigation hub and metrics
+6. `docs/insights-log.md` - Technical insights discovered during session
+7. `docs/development-journal.md` - Narrative session entry (decisions, learning, AI tooling)
 
-These files form the single source of truth for project status. When one changes, the others likely need updates too.
+These files form the single source of truth for project status and history. When one changes, the others likely need updates too.
 
 ### Session Documentation Updates
 
@@ -307,6 +309,8 @@ These files form the single source of truth for project status. When one changes
 2. Create/update learning notes in `docs/learning-notes/`
 3. Mark completed phases with actual hours
 4. Update `docs/next-prompt.md` for next phase
+5. Log any technical insights shared to `docs/insights-log.md` (don't defer — sessions can clear)
+6. Write narrative session entry in `docs/development-journal.md` (decisions, learning, AI tooling)
 
 ### Insights Logging (During Every Session)
 
@@ -330,7 +334,7 @@ Insights are non-obvious technical observations discovered during implementation
 
 ### Milestone Completion Documentation (MANDATORY)
 
-**After completing ANY milestone (M#.#.#), automatically update ALL 5 core documentation files.**
+**After completing ANY milestone (M#.#.#), automatically update ALL 7 core documentation files.**
 
 **Do this automatically without being asked.** The user should not need to request documentation updates after milestone completion.
 
