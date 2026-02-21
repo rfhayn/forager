@@ -6,6 +6,49 @@
 
 ---
 
+## Session 19 — February 21, 2026
+**Milestone**: M9.0 Warning Resolution → COMPLETE
+**Branches**: `chore/prd-folder-cleanup` → merged (PR #40), `feature/M9.0-warning-resolution` → open (PR #41)
+
+### What Happened
+
+Two cleanup tasks today, both foundational work before the M9 technical debt milestones begin in earnest.
+
+**PRD Folder Cleanup** came first — the `prds/` directory had accumulated clutter. M7.5 and M15 PRDs were still sitting in `active/` or the root despite both milestones being complete. Moved 15 files total: completed M15 and M7.5 docs into `complete/` (with M15's 8 implementation plans in a new `complete/plans/` subfolder), and upcoming M9/M6/M7.x docs into `active/`. The tricky part was updating 19 stale cross-references across 10 documentation files — every file that linked to a PRD path needed fixing. This is the kind of work that's easy to get 90% right and have the last 10% haunt you for weeks.
+
+**M9.0 Warning Resolution** was the main event: take the codebase from 18 compiler warnings to zero. The M9 PRD had a Phase 0 section with a warning list, but it was written before M15 shipped — meaning it was stale. Did a fresh `xcodebuild clean build`, compared actual warnings to the PRD's list, and rewrote Phase 0 with the real data. This PRD audit step added maybe 10 minutes but saved confusion later.
+
+The most interesting fix was the CloudKit `discoverUserIdentity` deprecation. Apple deprecated it in iOS 17 with *no replacement*. The API was already broken in practice — `nameComponents` returned nil for the current user since iOS 16. Our code had a 57-line continuation-based wrapper around this dead API, with fallback paths that were actually the only paths that ever executed. Replacing all of that with a 2-line `container.userRecordID()` call was a satisfying deletion.
+
+The remaining 16 warnings were mechanical: unused variables, unnecessary `await` on same-actor calls, non-exhaustive switches, and a redundant type cast. The batch took about 30 minutes.
+
+### Decisions Made
+
+1. **PRD folder cleanup first, M9.0 code second**: The user made this call, and it was right. Doing the folder moves on main before branching for M9.0 meant the M9.0 branch started with a clean directory structure. Otherwise we'd have had conflicting path changes to resolve.
+
+2. **Update M9 PRD before implementing**: Another user directive. Rather than treating the stale PRD as a rough guide and just fixing whatever warnings the build showed, we updated Phase 0 to be the actual source of truth. Future sessions that reference M9.0 will find accurate data.
+
+3. **Remove deprecated APIs, don't replace them**: For `discoverUserIdentity`, there's no modern equivalent. The app already collected display names during household creation (user types their name), and the deprecated API was just a pre-fill that never worked. Clean deletion was the right call.
+
+### AI Tooling Learnings
+
+This session had a useful process correction. I started reading source files to begin M9.0 code changes immediately, and the user redirected me twice: first to update the PRD, then to do the folder cleanup as a separate branch. Both redirections improved the outcome.
+
+The pattern: **Claude defaults to "go build" mode when given a plan, but the user often sees sequencing improvements that aren't in the plan.** The plan said "Part 1: warnings, Part 2: cleanup" — the user flipped the order and added a PRD-update step. This is where the human-AI collaboration works best: AI handles the execution depth, human handles the strategic sequencing.
+
+Also notable: the insights logging rule in CLAUDE.md works as intended. I added 3 insights during the session and the user still had to remind me about the development journal. The system of rules enforces consistency, but only for the rules that actually exist. Need to make sure the journal habit is as ingrained as the insights one.
+
+### Where This Leaves The Project
+
+M9.0 is the first of three M9-prereqs milestones:
+- **M9.0**: Warning resolution ✅ (this session)
+- **M9.1.2**: Centralize `extractCleanIngredientName` (next)
+- **M9.5-partial**: Parser dependency injection
+
+After those three, the codebase is ready for M8.4's ML parser integration — the big feature milestone. The zero-warning baseline matters because M8.4 will introduce CoreML and new model files; we need to be able to spot *new* warnings immediately rather than hunting through a pile of pre-existing noise.
+
+---
+
 ## Session 18 — February 20, 2026
 **Milestone**: M7.5 Architecture Hardening → COMPLETE
 **Branch**: `feature/M7.5-service-ownership` → merged to main
