@@ -2,10 +2,10 @@
 
 **Last Updated**: February 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9.1.2 📋 **NEXT** | M8.4 📋 **READY**
-**Current Phase**: M9.0 ✅ **COMPLETE** (zero-warning baseline, PR #41 merged) | M9.1.2 📋 **NEXT**
-**Next Priority**: M9.1.2 → M9.5-partial → M8.4 → M7.7 App Store
-**Execution Order**: M9.1.2 (2-3h) → M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M9.1.2 ✅ COMPLETE | M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M9.5-partial 📋 **NEXT** | M8.4 📋 **READY**
+**Current Phase**: M9.1.2 ✅ **COMPLETE** (centralized parser name extraction) | M9.5-partial 📋 **NEXT**
+**Next Priority**: M9.5-partial → M8.4 → M7.7 App Store
+**Execution Order**: M9.5-partial (4h) → M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -51,13 +51,10 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
-### **February 21, 2026** - M9.0 Warning Resolution COMPLETE ✅ + PRD Folder Cleanup
-- **Completed**: Zero-warning build baseline — 18 compiler warnings resolved across 7 source files
-- **Key Fixes**:
-  - Removed deprecated CloudKit `discoverUserIdentity` (no replacement API — just delete)
-  - 8 unused variables removed/prefixed
-  - 3 unnecessary `await` removed from `@MainActor` class
-  - 2 non-exhaustive switch cases added
+### **February 21, 2026** - M9.1.2 COMPLETE ✅ + M9.5-partial Planned
+- **Completed**: Centralized `extractCleanIngredientName` — two diverging view-layer regex implementations (40 + 18 lines) replaced by single static method delegating to HybridIngredientParser. Fixed merge normalization bug. 12 unit tests.
+- **Planned**: M9.5-partial (Parser DI) — detailed 6-phase execution plan in M9 PRD, cross-validated against M8.4 expectations
+- **Previous**: M9.0 Warning Resolution — 18 compiler warnings resolved, zero-warning baseline
   - 3 code quality fixes (redundant cast, immutable var, unused result)
 - **PRD Folder Cleanup**: 15 files moved — completed M7.5/M15 PRDs to `complete/`, upcoming M9/M6/M7.x to `active/`, 19 path references updated across 10 docs
 - **PRs**: #40 (PRD cleanup, merged), #41 (M9.0 warnings, merged)

@@ -406,7 +406,202 @@ primary path.
 
 **Objective**: Improve testability, reduce coupling, establish consistent patterns
 
-**M9.5: Dependency Injection** (12-15 hours)
+**M9.5: Dependency Injection** (12-15 hours total)
+
+> **M9.5-partial (4h) — M8.4 PREREQUISITE**
+>
+> Subset of M9.5 focused specifically on parser dependency injection. This is a prerequisite
+> for M8.4 ML-Powered Parsing — enables mock parsers in tests and ML parser A/B testing.
+> Scoped to parser architecture only; full-app DI (views, PersistenceController.shared,
+> ServiceFactory) deferred to M9.5-full.
+>
+> **Audited February 21, 2026** — cross-validated against M8.4 PRD Phase 5 expectations
+> and current codebase (11 instantiation sites, 6 dependent services).
+
+---
+
+#### **M9.5-partial: Parser Dependency Injection (4 hours)**
+
+```
+Branch: feature/M9.5-parser-di
+```
+
+**Current State (Problems)**:
+- `HybridIngredientParser` hardcodes sub-parsers: `private let regexParser = RegexIngredientParser()`
+- `IngredientParsingService` hardcodes its parser: `private let parser: IngredientParser = HybridIngredientParser()`
+- Static `extractCleanIngredientName()` uses a separate `private static let sharedParser = HybridIngredientParser()`
+- No mock parser infrastructure — all tests use real implementations
+- `QuantityMigrationService` creates its own `IngredientParsingService` instead of accepting via init
+
+**Target State (After M9.5-partial)**:
+- All parser construction injectable with backward-compatible defaults
+- Mock parser available for unit tests
+- Confidence threshold configurable (prepares for M8.4 raising 0.8 → 0.9)
+- Routing testable with mock sub-parsers
+
+**Phase A: HybridIngredientParser DI (45 min)**
+
+Make sub-parsers and threshold injectable:
+
+```swift
+// Before
+class HybridIngredientParser: IngredientParser {
+    private static let regexConfidenceThreshold: Float = 0.8
+    private let regexParser = RegexIngredientParser()
+    private let nlpParser = NLPIngredientParser()
+}
+
+// After
+class HybridIngredientParser: IngredientParser {
+    private let regexConfidenceThreshold: Float
+    private let regexParser: IngredientParser
+    private let nlpParser: IngredientParser
+
+    init(regexParser: IngredientParser = RegexIngredientParser(),
+         nlpParser: IngredientParser = NLPIngredientParser(),
+         regexConfidenceThreshold: Float = 0.8) {
+        self.regexParser = regexParser
+        self.nlpParser = nlpParser
+        self.regexConfidenceThreshold = regexConfidenceThreshold
+    }
+}
+```
+
+- All existing callers (`HybridIngredientParser()`) continue to work unchanged
+- Tests can inject mock parsers to verify routing behavior
+- M8.4 will add optional `mlParser: IngredientParser?` parameter and update `parse()` routing
+
+**Phase B: IngredientParsingService DI (30 min)**
+
+Accept parser via init:
+
+```swift
+// Before
+class IngredientParsingService: ObservableObject {
+    private let parser: IngredientParser = HybridIngredientParser()
+
+    init(context: NSManagedObjectContext, templateService: IngredientTemplateService) { ... }
+}
+
+// After
+class IngredientParsingService: ObservableObject {
+    private let parser: IngredientParser
+
+    init(context: NSManagedObjectContext,
+         templateService: IngredientTemplateService,
+         parser: IngredientParser = HybridIngredientParser()) {
+        self.parser = parser
+        // ...
+    }
+}
+```
+
+- Static `extractCleanIngredientName()` keeps its own `sharedParser` (pure utility, no DI needed)
+- All 11 existing instantiation sites continue to work (default parameter)
+- Tests can inject `MockIngredientParser` to isolate service logic from parsing
+
+**Phase C: MockIngredientParser + Routing Tests (1h)**
+
+Create test infrastructure:
+
+```swift
+// foragerTests/Mocks/MockIngredientParser.swift
+class MockIngredientParser: IngredientParser {
+    let parserName: String
+    var parseResults: [String: ParserResult] = [:]
+    var parseCalls: [String] = []
+
+    init(name: String = "mock") { self.parserName = name }
+
+    func parse(_ input: String) -> ParserResult {
+        parseCalls.append(input)
+        return parseResults[input] ?? ParserResult(
+            name: input, quantity: nil, unit: nil, notes: nil,
+            confidence: 0.5, originalText: input, parserUsed: parserName
+        )
+    }
+}
+```
+
+New test file: `foragerTests/Services/Parsing/HybridParserRoutingTests.swift`
+- Test: high-confidence regex → returns regex result, NLP not consulted
+- Test: low-confidence regex → NLP consulted, higher confidence wins
+- Test: custom threshold (e.g., 0.9) changes routing boundary
+- Test: NLP ties with regex → hybrid tag applied
+- Test: zero-confidence both → NLP result returned
+
+**Phase D: Update Existing Test Files (45 min)**
+
+Update test `setUp()` methods to pass through new init signatures:
+
+| Test File | Change |
+|-----------|--------|
+| `HybridIngredientParserTests.swift` | No change (tests direct instantiation, defaults work) |
+| `RecipeServiceTests.swift` | No change (already receives `IngredientParsingService` via init) |
+| `WeeklyListServiceTests.swift` | No change (already receives via init) |
+| `ParsingIntegrationTests.swift` | No change (creates real instances, defaults work) |
+| `IngredientParsingServiceCleanNameTests.swift` | No change (tests static method) |
+
+Add to project file: MockIngredientParser.swift, HybridParserRoutingTests.swift
+
+**Phase E: QuantityMigrationService Update (15 min)**
+
+Accept `IngredientParsingService` via init instead of creating own:
+
+```swift
+// Before (creates own)
+init(context: NSManagedObjectContext) {
+    self.parsingService = IngredientParsingService(context: context, templateService: ...)
+}
+
+// After (accepts via init)
+init(context: NSManagedObjectContext, parsingService: IngredientParsingService) {
+    self.parsingService = parsingService
+}
+```
+
+Update `foragerApp.swift` to pass shared instance.
+
+**Phase F: Build Verification + Documentation (30 min)**
+
+- Zero-warning build
+- All 146+ existing tests pass
+- New routing tests pass
+- Update insights log, development journal, core docs
+
+---
+
+**M9.5-partial Deliverables:**
+- ✅ HybridIngredientParser: injectable sub-parsers and threshold
+- ✅ IngredientParsingService: injectable parser
+- ✅ MockIngredientParser test helper
+- ✅ 5+ routing tests with mock parsers
+- ✅ QuantityMigrationService accepts parser via init
+- ✅ All existing tests pass unchanged
+
+**M9.5-partial Success Metrics:**
+- All existing instantiation sites compile with zero changes (defaults)
+- Mock parser injection works in tests
+- Confidence threshold is configurable
+- HybridIngredientParser routing testable with mocks
+
+**How M8.4 Benefits (Cross-Reference: m8.4-ml-powered-parsing.md §3.2, §5):**
+- M8.4 Phase 4 creates `MLIngredientParser` implementing `IngredientParser` protocol
+- M8.4 Phase 5 adds optional `mlParser: IngredientParser?` parameter to `HybridIngredientParser.init`
+- M8.4 Phase 5 passes `regexConfidenceThreshold: 0.9` (raised from 0.8)
+- M8.4 Phase 5 updates `parse()` routing: regex → ML → NLP (3-tier)
+- M8.4 Phase 6 uses `MockIngredientParser` for router testing
+
+**What's NOT in M9.5-partial (Deferred to M9.5-full):**
+- View-level injection (views still create their own IngredientParsingService)
+- @EnvironmentObject propagation of parsing service
+- PersistenceController.shared reduction (24 → 5 references)
+- ServiceFactory pattern
+- Full-app DI container
+
+---
+
+#### **M9.5-full: Full Dependency Injection (8-11 hours, deferred)**
 
 **Tasks:**
 1. **Audit PersistenceController.shared Usage** (2h)
@@ -429,16 +624,10 @@ primary path.
    - Inject dependencies (context, other services)
    - Enable testing with mock services
 
-4. **Testing** (2h)
-   - Create mock PersistenceController for tests
-   - Write unit tests for services
-   - Verify in-memory Core Data works
-
 **Deliverables:**
 - ✅ Environment injection in 5+ major views
 - ✅ ServiceFactory implemented
 - ✅ Mock testing infrastructure
-- ✅ 10+ unit tests for services
 
 **Success Metrics:**
 - PersistenceController.shared usage: 24 → 5 references

@@ -6,6 +6,42 @@
 
 ---
 
+## Session 22 — February 21, 2026
+**Milestone**: M9.1.2 wrap-up + M9.5-partial planning
+**Branch**: `feature/M9.1.2-centralize-extract-clean-name` (PR pending)
+
+### What Happened
+
+Picked up M9.1.2 from the previous session where the core centralization was done and a merge-comparison normalization fix was committed. The remaining work was cleanup: removed 3 blocks of `#if DEBUG` print statements from `AddIngredientsToListView.swift` that were leftover from debugging the normalization fix. Verified clean build (zero warnings).
+
+The main work this session was a deep architecture analysis for M9.5-partial (Parser Dependency Injection) — the next prerequisite before M8.4 ML parsing. This involved reading every file that touches `IngredientParsingService` (11 instantiation sites), mapping the dependency graph, cross-referencing with the M8.4 PRD's expectations, and identifying conflicts between the two PRDs.
+
+### Decisions Made
+
+1. **M9.5-partial scope**: Only parser DI (HybridIngredientParser + IngredientParsingService injectable constructors, mock parser, routing tests). Full-app DI (views, PersistenceController.shared, ServiceFactory) deferred to M9.5-full. This is the minimum needed for M8.4 — adding more would delay the ML parser without proportional benefit.
+
+2. **Default parameter pattern over DI container**: Swift default parameters (`parser: IngredientParser = HybridIngredientParser()`) give us testability with zero blast radius. All 11 existing call sites compile unchanged. No ServiceFactory, no protocol witnesses, no Environment keys. The "thin DI" pattern is the right tool for a 4-hour task.
+
+3. **Static method stays static**: `extractCleanIngredientName()` keeps its own `sharedParser` rather than converting to an instance method. Converting would require all 7 call sites to hold an IngredientParsingService instance — but those call sites (views) don't always have the Core Data context needed to construct one. The static method is a pure text utility; it doesn't need DI.
+
+4. **M8.4 Phase 5 adjustment identified**: The M8.4 PRD's Phase 5 code hardcodes `MLIngredientParser` in `HybridIngredientParser.init()`. After M9.5-partial, this should instead pass it as an init parameter. Documented in PRD cross-reference so the M8.4 session doesn't re-hardcode.
+
+5. **Threshold injectability**: Making `regexConfidenceThreshold` an init parameter prepares for M8.4 raising it from 0.8 → 0.9. One parameter change at construction time vs editing a private constant.
+
+### AI Tooling Learnings
+
+Used a parallel exploration agent to deep-dive the parser architecture while editing files in the main context. The agent read 20 files, mapped 11 instantiation sites, 6 dependent services, and 5 test files — work that would have been tedious in the main conversation and would have consumed significant context. The resulting report was comprehensive enough to write the full M9.5-partial PRD section without additional research.
+
+Cross-referencing two PRDs (M9 and M8.4) before planning revealed a conflict that would have been a session-wasting surprise during implementation. The M8.4 Phase 5 code sample directly contradicts the DI approach M9.5 is supposed to establish. Catching this during planning — not implementation — is exactly why the "audit PRDs before implementation" rule exists.
+
+### What It Means
+
+M9.1.2 is ready to PR and merge. The M9.5-partial plan is detailed enough to execute mechanically in one session (~4h). The key architectural insight is that Forager's parser architecture was *already designed* for extensibility (M8.3 protocol abstraction, M7.5 service-level init injection) — M9.5-partial just extends that pattern one more level by making the sub-parser constructors injectable. The blast radius is small because Swift default parameters make the change backward-compatible at every call site.
+
+After M9.5-partial, M8.4 becomes a pure feature addition: create the ML parser, pass it as a parameter, update routing. No architectural restructuring needed.
+
+---
+
 ## Session 21 — February 21, 2026
 **Milestone**: M9.1.2 Centralize `extractCleanIngredientName`
 **Branch**: `feature/M9.1.2-centralize-extract-clean-name`
