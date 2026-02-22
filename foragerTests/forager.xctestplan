@@ -22,13 +22,6 @@
         "identifier" : "9B731C3C2E535C3300CE26F0",
         "name" : "foragerTests"
       }
-    },
-    {
-      "target" : {
-        "containerPath" : "container:forager.xcodeproj",
-        "identifier" : "9B731C462E535C3300CE26F0",
-        "name" : "foragerUITests"
-      }
     }
   ],
   "version" : 1

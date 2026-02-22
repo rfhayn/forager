@@ -234,9 +234,9 @@ Wired `logCorrection()` into production edit flows, creating the data foundation
 
 **Tests**: 6 new tests (v2 compat decode, v3 encode/decode, CorrectionSource round-trip, schema version check, getTotalCorrectionCount, logCorrection field passthrough)
 
-### **Phase 7.5: Pre-Existing Test Failure Fixes** ✅
+### **Phase 7.5: Pre-Existing Test Failure Fixes + Test Infrastructure** ✅
 
-Fixed 14+ pre-existing test failures across 7 test classes. Zero production code changes.
+Fixed 14+ pre-existing test failures across 7 test classes. Also fixed test runner crashes from test host app lifecycle and CloudKit mirroring on in-memory stores.
 
 **Root causes discovered:**
 - Recipe `validateForInsert()` requires non-empty `instructions` (added after test creation)
@@ -245,6 +245,8 @@ Fixed 14+ pre-existing test failures across 7 test classes. Zero production code
 - `preferPlural` dict intentionally maps eggs→eggs, tomatoes→tomatoes
 - 3-tier routing (0.9 threshold) sends medium-confidence to ML parser
 - Core Data property renames: name→title, quantity→numericValue, weekStart→dateCreated
+- Test host app rendering full TabView with `@FetchRequest` against unconfigured stores
+- CloudKit mirroring delegates on in-memory test stores causing teardown crashes
 
 **Files modified (7 test files):**
 - `RecipeServiceTests.swift` — instructions + @MainActor tearDown
@@ -268,7 +270,7 @@ Fixed 14+ pre-existing test failures across 7 test classes. Zero production code
 | Test | Status | Notes |
 |------|--------|-------|
 | Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
-| Existing tests | ✅ ALL PASSING | 80/80 unit tests, 0 failures (pre-existing fixed in Phase 7.5) |
+| Existing tests | ✅ ALL PASSING | 245/245 unit tests, 0 failures, TEST SUCCEEDED (pre-existing fixed in Phase 7.5) |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
 | Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |

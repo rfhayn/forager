@@ -28,15 +28,31 @@ The failures fell into five categories, each teaching something about how test s
 
 5. **Swift/Core Data type mismatch**: The `.xcdatamodeld` marks `displayText` as Non-Optional (required), but Swift codegen types it as `String?`. Code compiles with nil, but `context.save()` throws error 1570 at runtime — invisible until a test actually saves.
 
+### Test Host App Crash Investigation
+
+After fixing all 80 unit test assertions (0 failures), the test runner still exited with `** TEST FAILED **`. Three separate issues:
+
+1. **Broken UI test target**: `foragerUITests` was in the test plan but contained only Xcode boilerplate with no configuration. Removed from `forager.xctestplan`.
+
+2. **CloudKit mirroring on in-memory stores**: `NSPersistentCloudKitContainer` creates `NSCloudKitMirroringDelegate` for every store with `cloudKitContainerOptions`. In-memory test stores got mirroring delegates that fired fetch requests during teardown against disappearing contexts. Fixed by guarding `cloudKitContainerOptions` with `if !inMemory` in `createStoreDescription()`.
+
+3. **Test host app rendering full UI**: The critical crash. When tests run, the app launches as test host. `prepare()` was short-circuiting with `isReady = true`, causing the full SwiftUI TabView to render — including views with `@FetchRequest` that tried to execute fetch requests against a context with no loaded stores. The fix: keep `isReady = false` in test mode so the app stays on `AppLoadingView` (a simple image + spinner). The full view hierarchy never renders.
+
+Final result: 245 tests, 0 failures, `** TEST SUCCEEDED **`.
+
 ### Design Decisions
 
 **Parser-agnostic assertions**: For HybridIngredientParser tests, rather than pinning assertions to regex-specific output, the tests now verify *pipeline correctness* (did we extract the ingredient name?) rather than *parser-specific output* (did regex return exactly 3.0 for "2-3 cloves garlic?"). This makes tests resilient to future routing changes.
 
-**Zero production code changes**: All 7 files modified are test files. The production code is correct — the tests were stale.
+**Minimal production changes**: Two surgical changes to `PersistenceController.swift` — both guarded by `#if DEBUG` or test-only code paths. All other fixes are test-only.
 
 ### What Was Learned
 
-The most surprising discovery was the Core Data model-vs-Swift type mismatch: `displayText` is required in the xcdatamodeld but `@NSManaged public var displayText: String?` in Swift. The compiler gives zero warning. Only the runtime save validates it. This class of bug is completely invisible during development and only surfaces in tests that exercise the full save path. Worth adding to CLAUDE.md as a recurring gotcha.
+Two key discoveries:
+
+1. **Core Data model-vs-Swift type mismatch**: `displayText` is required in the xcdatamodeld but `@NSManaged public var displayText: String?` in Swift. The compiler gives zero warning. Only the runtime save validates it. This class of bug is completely invisible during development and only surfaces in tests that exercise the full save path.
+
+2. **Test host app lifecycle**: iOS unit tests launch the full app as a test host. The `@main` struct's `init()` and `body` all execute. If `isReady` flips to true, SwiftUI renders the complete view hierarchy including `@FetchRequest` controllers — against a context where stores were intentionally not loaded. The correct pattern is to detect `XCTestConfigurationFilePath` and keep the app on a minimal static screen.
 
 ---
 
