@@ -1,19 +1,19 @@
 # Current Development Story
 
-**Last Updated**: February 21, 2026
-**Status**: M8.4 Phase 0-2 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~231 hours | 89% planning accuracy
+**Last Updated**: February 22, 2026
+**Status**: M8.4 Phase 0-3 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~233 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-2 ✅ COMPLETE, **Phase 3 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-3 ✅ COMPLETE, **Phase 4 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phase 3 → Phases 4-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phase 4 → Phases 5-9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
-## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0+1 Complete)**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-3 Complete)**
 
-**Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE, Phase 2 NEXT
-**Session**: February 21, 2026 (session 26)
+**Status**: 🔄 **ACTIVE** — Phase 0-3 ✅ COMPLETE, Phase 4 NEXT
+**Session**: February 22, 2026 (session 27)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours total (10 phases)
@@ -98,21 +98,52 @@ Trained BiLSTM-CRF sequence labeler — all acceptance criteria met.
 
 **Model Card** updated with training metadata, hyperparameters, and evaluation metrics.
 
+### **Phase 3: CoreML Conversion** ✅
+
+Converted BiLSTM emission scorer to CoreML and passed all parity gates.
+
+**CoreML Conversion** (`Tools/ml-training/convert_to_coreml.py`, 283 lines)
+- Extracted `EmissionScorer` wrapper (embedding + BiLSTM + linear, no CRF)
+- Traced and converted via coremltools 9.0 with variable-length input `(1, RangeDim(1, 64))`
+- FLOAT32 precision, iOS 18 minimum deployment target
+- CoreML model size: 5.15 MB
+
+**Emission Parity** (PyTorch vs CoreML)
+- Max absolute difference: 4.77e-06 across sequence lengths 3-20
+- Well within 0.01 threshold
+
+**Viterbi Parity Gate** (HARD GATE — PASSED)
+- Python reference Viterbi decoder implemented (~40 lines)
+- 1,000 test samples: **100.0000% token agreement** (8,030/8,030 tokens)
+- 100.00% sentence agreement (1,000/1,000 sentences)
+- End-to-end (CoreML emissions + Viterbi): 100.0000% (794/794 tokens on 100 samples)
+- Zero disagreements
+
+**Xcode Integration**
+- `IngredientTaggerEmissions.mlpackage` → Sources build phase (auto-generates Swift prediction class)
+- `transitions.json` → Copy Bundle Resources
+- `vocabulary.json` → Copy Bundle Resources
+- All 3 files in app bundle, BUILD SUCCEEDED
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
 3. `ce98e43` — M8.4 Phase 2: BiLSTM-CRF model training pipeline
+4. (pending) — M8.4 Phase 3: CoreML conversion + Viterbi parity gate
 
 ### **Testing Status**
 
 | Test | Status | Notes |
 |------|--------|-------|
-| Build | ✅ BUILD SUCCEEDED | Clean build after Phase 0c refactor |
+| Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
 | Existing tests | ✅ ALL PASSING | No regressions from single-parse refactor |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
 | Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |
-| Model size | ✅ 5.2 MB | Under 10 MB budget |
+| Model size | ✅ 5.2 MB checkpoint | Under 10 MB budget |
+| CoreML conversion | ✅ 5.15 MB | Emissions match PyTorch within 4.77e-06 |
+| Viterbi parity gate | ✅ 100.0000% | 8,030/8,030 tokens, 1,000/1,000 sentences |
+| Xcode integration | ✅ BUILD SUCCEEDED | .mlpackage compiled, JSON in bundle |
 
 ### **Files Created/Modified**
 
@@ -132,6 +163,12 @@ Trained BiLSTM-CRF sequence labeler — all acceptance criteria met.
 | `Tools/ml-training/requirements.txt` | NEW | Python dependencies |
 | `.gitignore` | MODIFIED | +data/model artifact exclusions |
 | `Tools/ml-training/train_model.py` | NEW | BiLSTM-CRF training pipeline (340 lines) |
+| `Tools/ml-training/convert_to_coreml.py` | NEW | CoreML conversion + Viterbi parity gate (283 lines) |
+| `Tools/ml-training/parity_report.md` | NEW | Viterbi parity gate results |
+| `forager/IngredientTaggerEmissions.mlpackage` | NEW | CoreML emission scorer (5.15 MB) |
+| `forager/MLModel/transitions.json` | NEW | CRF transition parameters (copy for bundle) |
+| `forager/MLModel/vocabulary.json` | NEW | Token vocabulary (copy for bundle) |
+| `forager.xcodeproj/project.pbxproj` | MODIFIED | +mlpackage in Sources, +JSON in Resources |
 
 ---
 
@@ -344,7 +381,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 **Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours (10 phases including Phase 0 feasibility gate) + 9 hours M9 prerequisites (complete)
-**Actual so far**: ~5h (Phase 0-2)
+**Actual so far**: ~7h (Phase 0-3)
 **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (word-only v1)
 **External Review**: 12 review passes (9 external, 3 internal) — 60 findings integrated + priority validation pass
 
@@ -355,7 +392,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 | 0 | Contract Lock + Single-Parse Refactor | 2-3h | ✅ COMPLETE |
 | 1 | Dataset Preparation Pipeline | 3-4h | ✅ COMPLETE |
 | 2 | Model Architecture & Training | 4-5h | ✅ COMPLETE |
-| 3 | CoreML Conversion | 2-3h | 📋 NEXT |
+| 3 | CoreML Conversion | 2-3h | ✅ COMPLETE |
 | 4 | MLIngredientParser Implementation | 3-4h | ⏳ |
 | 5 | HybridIngredientParser Integration | 2-3h | ⏳ |
 | 6 | Test Suite | 2-3h | ⏳ |
@@ -369,7 +406,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-2 ✅ → **Phase 3 NEXT** → Phases 4-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-3 ✅ → **Phase 4 NEXT** → Phases 5-9 → M7.7 App Store
 
 ---
 
@@ -1435,8 +1472,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M8.4 Phase 2 COMPLETE (BiLSTM-CRF model training, all targets met)
-**Next Action**: M8.4 Phase 3 (CoreML conversion, 2-3h) → Phase 4 (MLIngredientParser, 3-4h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
+**Last Session**: February 22, 2026 - M8.4 Phase 3 COMPLETE (CoreML conversion + Viterbi parity gate, all gates passed)
+**Next Action**: M8.4 Phase 4 (MLIngredientParser + ViterbiDecoder.swift, 3-4h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
 **Branch**: `feature/M8.4-ml-parsing`
-**Confidence**: **GREEN** (Phase 0-2 complete, model trained 98.49% token accuracy, 5.2 MB checkpoint ready for CoreML conversion)
-**Version**: February 21, 2026 - M8.4 Phase 0-2 COMPLETE, Phase 3 NEXT
+**Confidence**: **GREEN** (Phase 0-3 complete, CoreML model 5.15 MB, 100% Viterbi parity, .mlpackage + JSON in Xcode bundle)
+**Version**: February 22, 2026 - M8.4 Phase 0-3 COMPLETE, Phase 4 NEXT

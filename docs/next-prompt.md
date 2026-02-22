@@ -1,81 +1,60 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 21, 2026
+**Last Updated**: February 22, 2026
 **For Milestone**: M8.4 ML-Powered Parsing (23-32h across 6 sessions)
-**Status**: M8.4 Phase 0-2 ✅ **COMPLETE** | **Phase 3 NEXT**
+**Status**: M8.4 Phase 0-3 ✅ **COMPLETE** | **Phase 4 NEXT**
 **Branch**: `feature/M8.4-ml-parsing`
 
 ---
 
-## **NEXT: M8.4 Phase 3 — CoreML Conversion (2-3h)**
+## **NEXT: M8.4 Phase 4 — MLIngredientParser Implementation (3-4h)**
 
-**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 4, Phase 3)
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 5, Phase 4)
 
-### What's Already Done (Phases 0-2)
+### What's Already Done (Phases 0-3)
 - ✅ Architecture locked: word-only BiLSTM v1, no char features
 - ✅ Tokenizer spec frozen (`TOKENIZER_SPEC.md` + 100-sentence test vectors)
 - ✅ Single-parse refactor complete (`parseCore()` → `parseUnified()`)
 - ✅ Dataset ready: 68,846 unique samples in 80/10/10 JSONL splits
 - ✅ Labels: 7 Forager labels (QTY, UNIT, NAME, MODIFIER, PREP, COMMENT, OTHER)
-- ✅ Model card template + license attribution (MIT/Apache 2.0)
 - ✅ BiLSTM-CRF trained: 98.49% token accuracy, 95.40% sentence accuracy
-- ✅ All F1 targets met: QTY=0.9968, UNIT=0.9939, NAME=0.9869
-- ✅ Checkpoint exported: `models/ingredient_tagger.pt` (5.2 MB, 1.35M params)
-- ✅ CRF parameters exported: `models/transitions.json` (7×7 + start/end)
-- ✅ Vocabulary exported: `models/vocabulary.json` (5,372 words)
-- ✅ MODEL_CARD.md auto-updated with training metadata
+- ✅ CoreML model: `IngredientTaggerEmissions.mlpackage` (5.15 MB)
+- ✅ Emission parity: PyTorch vs CoreML max diff 4.77e-06
+- ✅ Viterbi parity gate: 100.0000% token agreement (8,030/8,030 on 1,000 samples)
+- ✅ Xcode integration: .mlpackage in Sources, JSON in Bundle Resources, BUILD SUCCEEDED
+- ✅ Xcode auto-generated `IngredientTaggerEmissions` Swift prediction class
 
 ### Key Architecture Decisions (Unchanged)
-- **CRF cannot convert to CoreML** — split into 3 components:
-  1. BiLSTM emission scorer → CoreML `.mlpackage`
-  2. CRF parameters → `transitions.json` (7×7 transition matrix + 1×7 start transitions + 1×7 end transitions)
-  3. Viterbi decoder → Pure Swift (~40 lines)
+- **CRF split into 3 runtime components**: CoreML emissions + JSON transitions + Swift Viterbi
 - **Winner-only parser attribution** — `parserUsed` reports `regex`/`ml`/`nlp`, never `"hybrid"`
 - **Parsers stay synchronous** — background dispatch owned by service/callsite layers
 
-### Phase 3: CoreML Conversion
-```
-Branch: feature/M8.4-ml-parsing (already created)
-Working dir: Tools/ml-training/
-```
+### Phase 4 Tasks
 
-**Tasks:**
-1. Write `convert_to_coreml.py`:
-   - Load trained checkpoint (`models/ingredient_tagger.pt`)
-   - Extract BiLSTM emission scorer (everything except CRF layer)
-   - Create wrapper `nn.Module` that outputs raw emissions (batch, seq_len, 7)
-   - Convert via `coremltools.convert()` with `ct.RangeDim(1, 64)` for variable-length input
-   - Input: `token_ids: Int32 (1, seq_len)` — Output: `emissions: Float32 (1, seq_len, 7)`
-   - Save as `.mlpackage` in `models/`
-2. Write Python Viterbi decoder (reference implementation):
-   - Standalone function using `transitions.json`
-   - Must match `pytorch-crf` decode output exactly
-3. **Viterbi parity gate** (critical):
-   - Run 1,000 test samples through both Python CRF decode and Python Viterbi
-   - Require ≥99.9% token-level agreement
-   - Document any disagreements
-4. Verify CoreML emission outputs match PyTorch emissions (numerical parity)
-5. Update `MODEL_CARD.md` with conversion metadata (coremltools version, model size, compute units)
+**4a: ViterbiDecoder.swift** (`Services/Parsing/ViterbiDecoder.swift`, ~40 lines)
+- Port the Python reference Viterbi decoder to Swift
+- Load `transitions.json` from bundle at init
+- `decode(emissions: [[Float]]) -> [String]` — standard forward pass + backtrace
+- Must consume ALL CRF params: 7×7 transitions + start_transitions + end_transitions
 
-**Targets (from PRD):**
-- CoreML model loads and produces valid emissions
-- Emission numerical parity: PyTorch vs CoreML within 0.01%
-- Viterbi parity: ≥99.9% token agreement with CRF decode
-- CoreML model size: reasonable (expect ~5 MB)
+**4b: MLIngredientParser.swift** (`Services/Parsing/MLIngredientParser.swift`)
+- Implements `IngredientParser` protocol
+- Load CoreML model (`IngredientTaggerEmissions`), vocabulary, and ViterbiDecoder at init
+- Tokenize input: NFKD normalize → lowercase → whitespace split → punctuation split (per TOKENIZER_SPEC.md)
+- Map tokens to IDs via vocabulary (unknown → UNK=0)
+- Run CoreML prediction → get emissions → Viterbi decode → label sequence
+- Reconstruct `ParserResult` from token-label pairs (group consecutive NAME tokens, etc.)
+- Cross-validate tokenizer against `data/tokenizer_test_vectors.json` (100 sentences)
+- `parserUsed = "ml"`, confidence based on emission entropy
 
-**Key Implementation Notes:**
-- Use `coremltools` 8.x for conversion
-- CoreML compute units: ALL (CPU + Neural Engine)
-- The emission scorer is the BiLSTM + linear projection — no CRF layer in CoreML
-- Variable-length sequences: use `ct.RangeDim` for dynamic input shape
-- Viterbi decoder is the algorithm that CRF uses at inference time — implementing it separately verifies we can replicate CRF decode without the CRF layer
+**Key Files to Reference:**
+- `Tools/ml-training/TOKENIZER_SPEC.md` — tokenizer contract (must match exactly)
+- `Tools/ml-training/data/tokenizer_test_vectors.json` — cross-validation vectors
+- `Services/Parsing/IngredientParser.swift` — protocol to implement
+- `Services/Parsing/RegexIngredientParser.swift` — reference for ParserResult construction
+- PRD Section 5, Phase 4 — detailed pseudocode for both files
 
-### Remaining Sessions After Phase 3
-
-**Phase 4: MLIngredientParser Implementation (3-4h)**
-- Implement `ViterbiDecoder.swift` and `MLIngredientParser.swift`
-- Cross-validate tokenizer against Phase 0b test vectors
-- Load CoreML model + transitions.json in Swift
+### Remaining Sessions After Phase 4
 
 **Phases 5+6: Integration + Test Suite (4-6h)**
 - Add `mlParser: IngredientParser?` to HybridIngredientParser init
@@ -106,6 +85,6 @@ Working dir: Tools/ml-training/
 
 ---
 
-**Dependencies**: All prerequisites ✅ | Dataset ✅ | Model trained ✅ | Checkpoint + CRF params + vocabulary exported ✅
-**Model**: 1.35M params, 5.2 MB, 98.49% token accuracy — ready for CoreML conversion
-**M8.4 PRD**: Execution-ready after 12 review passes. Phase 3 is pure Python ML work — no Swift changes needed.
+**Dependencies**: All prerequisites ✅ | CoreML model in bundle ✅ | Viterbi parity verified ✅
+**Model**: 1.35M params, 5.15 MB CoreML, 98.49% token accuracy, 100% Viterbi parity
+**M8.4 PRD**: Phase 4 is Swift implementation — ViterbiDecoder + MLIngredientParser.
