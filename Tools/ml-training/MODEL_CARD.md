@@ -1,8 +1,8 @@
 # Model Card — Forager Ingredient Tagger
 
 **Model Name**: IngredientTaggerEmissions
-**Version**: (filled after training)
-**Date Trained**: (filled after training)
+**Version**: 1.0
+**Date Trained**: 2026-02-21
 **Architecture**: Word-only BiLSTM emission scorer (v1)
 
 ---
@@ -25,8 +25,8 @@ The emission scorer is the BiLSTM + linear projection component of a BiLSTM-CRF 
 | LSTM layers | 2 |
 | Dropout | 0.5 |
 | Output labels | 7 |
-| Vocabulary size | (filled after training) |
-| Total parameters | (filled after training) |
+| Vocabulary size | 5,372 |
+| Total parameters | 1,348,934 |
 
 ### v1 Decision: Word-Only
 
@@ -40,12 +40,12 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 |-------|-------|
 | Primary dataset | strangetom/ingredient-parser (MIT) |
 | Supplement | NYT/ingredient-phrase-tagger (Apache 2.0) |
-| Total sentences | (filled after training) |
-| Unique sentences (after dedup) | (filled after training) |
+| Total sentences | 81,316 |
+| Unique sentences (after dedup) | 68,846 |
 | Label mapping | strangetom 13 → Forager 7 |
-| Dataset snapshot SHA-256 | (filled after training) |
+| Dataset snapshot SHA-256 | `ead59b783d4a8ff8...` |
 | Train/val/test split | 80/10/10 (stratified by source) |
-| Split hash | (filled after training) |
+| Split hash | `de9b8c5cb0b7fdee...` |
 
 ---
 
@@ -59,8 +59,8 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 | Max epochs | 30 |
 | Early stopping patience | 5 |
 | Dropout | 0.5 |
-| Random seed | (filled after training) |
-| Training duration | (filled after training) |
+| Random seed | 42 |
+| Training duration | 2326s (38.8 min) |
 
 ---
 
@@ -68,15 +68,15 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 
 | Metric | Value |
 |--------|-------|
-| Token-level accuracy (test) | (filled after training) |
-| Sentence-level accuracy (test) | (filled after training) |
-| Per-class F1 — QTY | (filled after training) |
-| Per-class F1 — UNIT | (filled after training) |
-| Per-class F1 — NAME | (filled after training) |
-| Per-class F1 — MODIFIER | (filled after training) |
-| Per-class F1 — PREP | (filled after training) |
-| Per-class F1 — COMMENT | (filled after training) |
-| Per-class F1 — OTHER | (filled after training) |
+| Token-level accuracy (test) | 98.49% |
+| Sentence-level accuracy (test) | 95.40% |
+| Per-class F1 — QTY | 0.9968 |
+| Per-class F1 — UNIT | 0.9939 |
+| Per-class F1 — NAME | 0.9869 |
+| Per-class F1 — MODIFIER | 0.9261 |
+| Per-class F1 — PREP | 0.9789 |
+| Per-class F1 — COMMENT | 0.9463 |
+| Per-class F1 — OTHER | 0.9997 |
 
 ---
 
