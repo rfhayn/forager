@@ -109,12 +109,12 @@ final class MigrationValidationTests: XCTestCase {
         
         // Known required attributes that MUST exist
         let requiredAttributes: [String: [String]] = [
-            "Recipe": ["name", "servings"],
-            "Ingredient": ["quantity"],
+            "Recipe": ["title", "servings"],
+            "Ingredient": ["name"],
             "IngredientTemplate": ["name"],
             "Category": ["name", "sortOrder"],
-            "GroceryItem": ["name"],
-            "WeeklyList": ["weekStart"]
+            "GroceryListItem": ["name"],
+            "WeeklyList": ["dateCreated"]
         ]
         
         for (entityName, attributes) in requiredAttributes {

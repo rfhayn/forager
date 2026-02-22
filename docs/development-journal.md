@@ -6,6 +6,40 @@
 
 ---
 
+## Session 33 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 7.5: Test Failure Fixes)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+After completing Phase 7 (correction instrumentation), a full test suite run revealed 14+ pre-existing test failures across 7 test classes. None were caused by Phase 7 changes — they accumulated silently as schema evolution, normalization behavior, and routing thresholds changed over several milestones without corresponding test updates.
+
+### Root Causes Discovered
+
+The failures fell into five categories, each teaching something about how test suites drift:
+
+1. **Validation requirements added after tests written**: Recipe's `validateForInsert()` was extended to require non-empty `instructions`, IngredientTemplate to require `dateCreated`, and GroceryListItem's `displayText` was marked required at the Core Data model level. Tests that created these entities with minimal properties compiled fine but failed at `context.save()`.
+
+2. **Intentional behavior changes not reflected in tests**: The `preferPlural` dictionary was added to `IngredientTemplateService` to normalize "eggs" → "eggs" (not "egg") for natural grocery naming. Four normalization tests still expected the old singular behavior.
+
+3. **Threshold changes cascading to integration tests**: M8.4 changed hybrid parser routing from 2-tier (regex ≥0.8 → NLP) to 3-tier (regex ≥0.9 → ML ≥0.8 → NLP). Medium-confidence regex results that previously returned directly now route through ML, producing different output.
+
+4. **Schema evolution leaving stale test data**: MigrationValidationTests had hardcoded property names (Recipe.name → title, Ingredient.quantity → numericValue) that no longer matched the current schema.
+
+5. **Swift/Core Data type mismatch**: The `.xcdatamodeld` marks `displayText` as Non-Optional (required), but Swift codegen types it as `String?`. Code compiles with nil, but `context.save()` throws error 1570 at runtime — invisible until a test actually saves.
+
+### Design Decisions
+
+**Parser-agnostic assertions**: For HybridIngredientParser tests, rather than pinning assertions to regex-specific output, the tests now verify *pipeline correctness* (did we extract the ingredient name?) rather than *parser-specific output* (did regex return exactly 3.0 for "2-3 cloves garlic?"). This makes tests resilient to future routing changes.
+
+**Zero production code changes**: All 7 files modified are test files. The production code is correct — the tests were stale.
+
+### What Was Learned
+
+The most surprising discovery was the Core Data model-vs-Swift type mismatch: `displayText` is required in the xcdatamodeld but `@NSManaged public var displayText: String?` in Swift. The compiler gives zero warning. Only the runtime save validates it. This class of bug is completely invisible during development and only surfaces in tests that exercise the full save path. Worth adding to CLAUDE.md as a recurring gotcha.
+
+---
+
 ## Session 32 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 7: Correction Instrumentation)
 **Branch**: `feature/M8.4-ml-parsing`

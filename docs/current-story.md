@@ -234,6 +234,27 @@ Wired `logCorrection()` into production edit flows, creating the data foundation
 
 **Tests**: 6 new tests (v2 compat decode, v3 encode/decode, CorrectionSource round-trip, schema version check, getTotalCorrectionCount, logCorrection field passthrough)
 
+### **Phase 7.5: Pre-Existing Test Failure Fixes** ✅
+
+Fixed 14+ pre-existing test failures across 7 test classes. Zero production code changes.
+
+**Root causes discovered:**
+- Recipe `validateForInsert()` requires non-empty `instructions` (added after test creation)
+- IngredientTemplate `validateForInsert()` requires `dateCreated`
+- GroceryListItem `displayText` required at Core Data model level (not in Swift types)
+- `preferPlural` dict intentionally maps eggs→eggs, tomatoes→tomatoes
+- 3-tier routing (0.9 threshold) sends medium-confidence to ML parser
+- Core Data property renames: name→title, quantity→numericValue, weekStart→dateCreated
+
+**Files modified (7 test files):**
+- `RecipeServiceTests.swift` — instructions + @MainActor tearDown
+- `CoreDataInvariantsTests.swift` — instructions, dateCreated, resetSeedingStatus
+- `ParsingIntegrationTests.swift` — instructions, "cup" assertion, @MainActor tearDown
+- `IngredientTemplateNormalizationTests.swift` — preferPlural assertions
+- `HybridIngredientParserTests.swift` — parser-agnostic assertions
+- `MigrationValidationTests.swift` — property name corrections
+- `WeeklyListServiceTests.swift` — displayText + @MainActor tearDown
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
@@ -247,7 +268,7 @@ Wired `logCorrection()` into production edit flows, creating the data foundation
 | Test | Status | Notes |
 |------|--------|-------|
 | Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
-| Existing tests | ✅ ALL PASSING | No regressions from single-parse refactor |
+| Existing tests | ✅ ALL PASSING | 80/80 unit tests, 0 failures (pre-existing fixed in Phase 7.5) |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
 | Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |

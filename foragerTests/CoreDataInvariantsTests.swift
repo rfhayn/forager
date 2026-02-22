@@ -12,6 +12,9 @@ final class CoreDataInvariantsTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
+        #if DEBUG
+        DefaultSeeder.resetSeedingStatus()
+        #endif
         persistence = PersistenceController(inMemory: true)
         context = persistence.container.viewContext
     }
@@ -43,6 +46,7 @@ final class CoreDataInvariantsTests: XCTestCase {
         let template = IngredientTemplate(context: context)
         template.id = UUID()
         template.name = "Basil"
+        template.dateCreated = Date()
         try context.save()
 
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
@@ -60,6 +64,7 @@ final class CoreDataInvariantsTests: XCTestCase {
         recipe.id = UUID()
         recipe.title = "Test Recipe"
         recipe.servings = 4
+        recipe.instructions = "Test instructions"
 
         let ingredient = Ingredient(context: context)
         ingredient.id = UUID()
@@ -100,6 +105,7 @@ final class CoreDataInvariantsTests: XCTestCase {
         recipe.id = UUID()
         recipe.title = "Test"
         recipe.servings = 4
+        recipe.instructions = "Test instructions"
 
         let ingredient = Ingredient(context: context)
         ingredient.id = UUID()

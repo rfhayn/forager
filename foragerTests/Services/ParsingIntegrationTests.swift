@@ -25,6 +25,7 @@ final class ParsingIntegrationTests: XCTestCase {
         weeklyListService = WeeklyListService(context: context, parsingService: parsingService)
     }
 
+    @MainActor
     override func tearDown() {
         weeklyListService = nil
         recipeService = nil
@@ -40,7 +41,7 @@ final class ParsingIntegrationTests: XCTestCase {
     /// Test 1: Parse text → RecipeService → Ingredient entity with correct structured data
     @MainActor
     func testParseToRecipeIngredientPipeline() {
-        let recipe = recipeService.createRecipe(title: "Test Recipe", servings: 4)
+        let recipe = recipeService.createRecipe(title: "Test Recipe", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         // Parse "2 cups flour" through the real parsing service
@@ -55,8 +56,8 @@ final class ParsingIntegrationTests: XCTestCase {
         XCTAssertNotNil(ingredient)
         XCTAssertEqual(ingredient?.numericValue ?? 0, 2.0, accuracy: 0.01,
                        "Parsed numericValue should be 2.0")
-        XCTAssertEqual(ingredient?.standardUnit, "cups",
-                       "Parsed standardUnit should be 'cups'")
+        XCTAssertEqual(ingredient?.standardUnit, "cup",
+                       "Parsed standardUnit should be 'cup' (normalized singular)")
         XCTAssertTrue(ingredient?.isParseable ?? false,
                       "Should be parseable")
         XCTAssertGreaterThan(ingredient?.parseConfidence ?? 0, 0.5,
@@ -99,12 +100,12 @@ final class ParsingIntegrationTests: XCTestCase {
     @MainActor
     func testTemplateNormalizationAcrossServices() {
         // Add "flour" via RecipeService
-        let recipe = recipeService.createRecipe(title: "Recipe A", servings: 2)
+        let recipe = recipeService.createRecipe(title: "Recipe A", servings: 2, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
         let _ = templateService.findOrCreateTemplate(name: "flour")
 
         // Add "flour" via another recipe (simulating WeeklyListService path)
-        let recipe2 = recipeService.createRecipe(title: "Recipe B", servings: 4)
+        let recipe2 = recipeService.createRecipe(title: "Recipe B", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe2)
         let _ = templateService.findOrCreateTemplate(name: "Flour") // uppercase variation
 
@@ -120,7 +121,7 @@ final class ParsingIntegrationTests: XCTestCase {
     /// Test 4: Duplicate recipe preserves all structured quantity fields
     @MainActor
     func testDuplicateRecipePreservesStructuredData() {
-        let recipe = recipeService.createRecipe(title: "Original", servings: 4)
+        let recipe = recipeService.createRecipe(title: "Original", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         // Add ingredient with specific structured data
@@ -157,7 +158,7 @@ final class ParsingIntegrationTests: XCTestCase {
     func testParsingServiceInjectionForwarding() {
         // Create services with our specific parsingService instance
         // (This test ensures M9.5-partial DI will work when ML parser is injected)
-        let recipe = recipeService.createRecipe(title: "DI Test", servings: 1)
+        let recipe = recipeService.createRecipe(title: "DI Test", servings: 1, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         // Use the parsing service to parse — verifying it's the same instance
