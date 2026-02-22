@@ -528,7 +528,7 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 |----|-------------|----------------------|-----------|-------|
 | **FR-ML-001** | **Dataset preparation** | ✅ strangetom (81k) → 68,846 unique samples, 13→7 label mapping, fraction decoding, JSONL format | M8.4 Phase 1 | ✅ **Quality data from day one** |
 | **FR-ML-002** | **Data validation** | ✅ Token/label alignment, label validity, fraction decode verification, stratified 80/10/10 split, dedup verified | M8.4 Phase 1 | ✅ **Model accuracy** |
-| **FR-ML-003** | **Model training** | BiLSTM-CRF sequence labeler, ≥96% token accuracy on test set | M8.4 Phase 2 | 🎯 **Custom intelligence** |
+| **FR-ML-003** | **Model training** | ✅ BiLSTM-CRF: 98.49% token accuracy, 95.40% sentence accuracy, all F1 ≥0.90 | M8.4 Phase 2 | ✅ **Custom intelligence** |
 | **FR-ML-004** | **CoreML conversion** | PyTorch → coremltools → .mlpackage, predictions match within 0.01% | M8.4 Phase 3 | 🎯 **On-device deployment** |
 | **FR-ML-005** | **On-device inference** | MLIngredientParser with CoreML, < 5ms per parse | M8.4 Phase 4 | 🎯 **Privacy + speed** |
 | **FR-ML-006** | **Hybrid system integration** | MLIngredientParser as third tier in HybridIngredientParser routing | M8.4 Phase 5 | 🎯 **Progressive enhancement** |

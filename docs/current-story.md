@@ -1,12 +1,12 @@
 # Current Development Story
 
 **Last Updated**: February 21, 2026
-**Status**: M8.4 Phase 0+1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~230 hours | 89% planning accuracy
+**Status**: M8.4 Phase 0-2 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~231 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0+1 ✅ COMPLETE, **Phase 2 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-2 ✅ COMPLETE, **Phase 3 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phase 2 → Phases 3-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phase 3 → Phases 4-9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
@@ -68,9 +68,40 @@ Converted strangetom SQLite database to Forager training format.
 - `data/test_data.jsonl` (6,885 samples)
 - `data/dataset_statistics.json` (distribution and split metadata)
 
+### **Phase 2: Model Architecture & Training** ✅
+
+Trained BiLSTM-CRF sequence labeler — all acceptance criteria met.
+
+**Model Architecture** (`Tools/ml-training/train_model.py`, 340 lines)
+- `IngredientTagger(nn.Module)`: embedding → BiLSTM → dropout → linear → CRF
+- Embedding dim: 128, Hidden dim: 256, 2 BiLSTM layers, dropout: 0.5
+- `pytorch-crf` for CRF layer (Viterbi decoding during inference)
+- Variable-length inputs via `pack_padded_sequence` with sorted batch collation
+- Gradient clipping at 5.0, Adam optimizer, lr=0.001, batch size 64
+
+**Training Results** (MPS device, ~39 min)
+- Vocabulary: 5,372 words (min_freq=2), UNK rate: 1.47%
+- Parameters: 1,348,934 (all trainable)
+- Best epoch: 21/30 (early stopped at epoch 26, patience=5)
+- Best validation loss: 0.2045
+
+**Test Set Evaluation**
+- Token accuracy: **98.49%** (target: ≥96%) ✅
+- Sentence accuracy: **95.40%** (target: ≥92%) ✅
+- Per-class F1: QTY=0.9968, UNIT=0.9939, NAME=0.9869, MODIFIER=0.9261, PREP=0.9789, COMMENT=0.9463, OTHER=0.9997
+- All key F1 ≥ 0.90: QTY ✅, UNIT ✅, NAME ✅
+
+**Exported Artifacts** (gitignored)
+- `models/ingredient_tagger.pt` — 5.2 MB checkpoint (target: <10 MB) ✅
+- `models/transitions.json` — 7×7 CRF transition matrix + start/end transitions + label names
+- `models/vocabulary.json` — 5,372 word→index mappings
+
+**Model Card** updated with training metadata, hyperparameters, and evaluation metrics.
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
+3. `ce98e43` — M8.4 Phase 2: BiLSTM-CRF model training pipeline
 
 ### **Testing Status**
 
@@ -80,6 +111,8 @@ Converted strangetom SQLite database to Forager training format.
 | Existing tests | ✅ ALL PASSING | No regressions from single-parse refactor |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
+| Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |
+| Model size | ✅ 5.2 MB | Under 10 MB budget |
 
 ### **Files Created/Modified**
 
@@ -98,6 +131,7 @@ Converted strangetom SQLite database to Forager training format.
 | `Tools/ml-training/README.md` | NEW | Training infrastructure overview |
 | `Tools/ml-training/requirements.txt` | NEW | Python dependencies |
 | `.gitignore` | MODIFIED | +data/model artifact exclusions |
+| `Tools/ml-training/train_model.py` | NEW | BiLSTM-CRF training pipeline (340 lines) |
 
 ---
 
@@ -310,7 +344,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 **Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours (10 phases including Phase 0 feasibility gate) + 9 hours M9 prerequisites (complete)
-**Actual so far**: ~4h (Phase 0+1)
+**Actual so far**: ~5h (Phase 0-2)
 **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (word-only v1)
 **External Review**: 12 review passes (9 external, 3 internal) — 60 findings integrated + priority validation pass
 
@@ -320,8 +354,8 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 |-------|-------------|------|--------|
 | 0 | Contract Lock + Single-Parse Refactor | 2-3h | ✅ COMPLETE |
 | 1 | Dataset Preparation Pipeline | 3-4h | ✅ COMPLETE |
-| 2 | Model Architecture & Training | 4-5h | 📋 NEXT |
-| 3 | CoreML Conversion | 2-3h | ⏳ |
+| 2 | Model Architecture & Training | 4-5h | ✅ COMPLETE |
+| 3 | CoreML Conversion | 2-3h | 📋 NEXT |
 | 4 | MLIngredientParser Implementation | 3-4h | ⏳ |
 | 5 | HybridIngredientParser Integration | 2-3h | ⏳ |
 | 6 | Test Suite | 2-3h | ⏳ |
@@ -335,7 +369,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-1 ✅ → **Phase 2 NEXT** → Phases 3-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-2 ✅ → **Phase 3 NEXT** → Phases 4-9 → M7.7 App Store
 
 ---
 
@@ -1401,8 +1435,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M8.4 Phase 0+1 COMPLETE (contract lock + dataset preparation)
-**Next Action**: M8.4 Phase 2 (model training, 4-5h) → Phase 3+4 (5-7h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
+**Last Session**: February 21, 2026 - M8.4 Phase 2 COMPLETE (BiLSTM-CRF model training, all targets met)
+**Next Action**: M8.4 Phase 3 (CoreML conversion, 2-3h) → Phase 4 (MLIngredientParser, 3-4h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
 **Branch**: `feature/M8.4-ml-parsing`
-**Confidence**: **GREEN** (Phase 0+1 complete, 68,846 training samples ready, single-parse refactor verified, all tests passing)
-**Version**: February 21, 2026 - M8.4 Phase 0+1 COMPLETE, Phase 2 NEXT
+**Confidence**: **GREEN** (Phase 0-2 complete, model trained 98.49% token accuracy, 5.2 MB checkpoint ready for CoreML conversion)
+**Version**: February 21, 2026 - M8.4 Phase 0-2 COMPLETE, Phase 3 NEXT

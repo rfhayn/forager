@@ -2,10 +2,10 @@
 
 **Last Updated**: February 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8.4 ML-Powered Parsing 🔄 **ACTIVE** (Phase 0+1 ✅ COMPLETE) | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE
-**Current Phase**: M8.4 Phase 0+1 ✅ **COMPLETE** | **Phase 2 (model training) NEXT**
-**Next Priority**: M8.4 Phase 2 → Phases 3-9 → M7.7 App Store
-**Execution Order**: M8.4 remaining (19-28h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M8.4 ML-Powered Parsing 🔄 **ACTIVE** (Phase 0-2 ✅ COMPLETE) | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE
+**Current Phase**: M8.4 Phase 0-2 ✅ **COMPLETE** | **Phase 3 (CoreML conversion) NEXT**
+**Next Priority**: M8.4 Phase 3 → Phases 4-9 → M7.7 App Store
+**Execution Order**: M8.4 remaining (15-23h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -50,6 +50,15 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 21, 2026** - M8.4 Phase 2 COMPLETE ✅ — BiLSTM-CRF Model Training
+- **Completed**: BiLSTM-CRF sequence labeler trained on 55,076 samples, all acceptance criteria exceeded
+- **Results**: Token accuracy 98.49% (≥96%), sentence accuracy 95.40% (≥92%), all key F1 ≥0.90
+- **Architecture**: Embedding 128, hidden 256, 2 BiLSTM layers, dropout 0.5, CRF layer — 1.35M params, 5.2 MB
+- **Training**: 21 epochs (early stopped at 26), ~39 min on Apple Silicon MPS
+- **Artifacts**: `ingredient_tagger.pt` (checkpoint), `transitions.json` (CRF params), `vocabulary.json`
+- **Commit**: `ce98e43` on `feature/M8.4-ml-parsing`
+- **Next**: Phase 3 — CoreML conversion (extract emission scorer → .mlpackage, Viterbi parity gate)
 
 ### **February 21, 2026** - M8.4 Phase 0+1 COMPLETE ✅ — Contract Lock + Dataset Preparation
 - **Completed**: Architecture locked (word-only BiLSTM v1), tokenizer spec frozen (NFKD + 100 test vectors), single-parse refactor (`parseCore()`/`parseUnified()`), dataset prepared (68,846 unique samples in 80/10/10 JSONL splits from strangetom's 81,316 rows)

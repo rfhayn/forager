@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 21, 2026
-**Current Phase**: **M8.4 Phase 0+1 ✅ COMPLETE** | Phase 2 **NEXT** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE, M8.4 Phase 0+1 COMPLETE
-**Execution Order**: M8.4 Phase 2-9 (19-28h remaining) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Phase**: **M8.4 Phase 0-2 ✅ COMPLETE** | Phase 3 **NEXT** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE, M8.4 Phase 0-2 COMPLETE
+**Execution Order**: M8.4 Phase 3-9 (15-23h remaining) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -940,7 +940,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 **M8.4: ML-Powered Parsing (23-32 hours) - 🔄 ACTIVE** 🎓
 - **Phase 0+1**: ✅ COMPLETE (~4h) — contract lock, single-parse refactor, dataset preparation (68,846 samples)
-- **Phase 2**: 📋 NEXT — model training (BiLSTM-CRF, word-only)
+- **Phase 2**: ✅ COMPLETE (~1h) — model training (BiLSTM-CRF, 98.49% token / 95.40% sentence accuracy)
 - **Phases 3-9**: ⏳ — CoreML export, Swift implementation, integration, testing, corrections, docs
 - **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (BIO tagging)
 - **Training data**: strangetom 81k → 68,846 unique after dedup, 7 Forager labels, 80/10/10 splits

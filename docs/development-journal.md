@@ -6,6 +6,55 @@
 
 ---
 
+## Session 27 — February 21, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 2: Model Architecture & Training)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Phase 2 of M8.4 — the core ML training phase. Wrote `train_model.py` (340 lines) and trained a BiLSTM-CRF sequence labeler that exceeded all acceptance criteria on first attempt.
+
+**The Training Pipeline:**
+
+The script implements a complete training pipeline: vocabulary building (min_freq=2 → 5,372 words), `IngredientTagger(nn.Module)` with embedding → BiLSTM → dropout → linear → CRF architecture, sorted-batch collation with `pack_padded_sequence`, gradient clipping at 5.0, and early stopping with patience=5. The CRF layer from `pytorch-crf` handles both training loss (negative log-likelihood) and inference (Viterbi decoding).
+
+**Architecture Decisions:**
+
+Hidden dim was bumped from the PRD's 128 to 256 during implementation — the larger hidden state provides more capacity for the BiLSTM to capture ingredient patterns, and the model still comes in at 5.2 MB (well under the 10 MB budget). Dropout was also increased from 0.3 to 0.5, which proved prescient: the train/val loss gap at stopping was only 0.03 (0.17 vs 0.20), suggesting dropout effectively controlled overfitting.
+
+**Results:**
+
+All targets exceeded comfortably:
+- Token accuracy: 98.49% (target ≥96%)
+- Sentence accuracy: 95.40% (target ≥92%)
+- QTY F1: 0.9968, UNIT F1: 0.9939, NAME F1: 0.9869 (all target ≥0.90)
+- MODIFIER F1: 0.9261 — the weakest label due to severe class imbalance (only 1.1% of tokens)
+- Model size: 5.2 MB (target <10 MB)
+
+Training took ~39 minutes on Apple Silicon MPS (Metal Performance Shaders). Early stopping found the best model at epoch 21/30, stopping at epoch 26.
+
+**CRF Transition Patterns:**
+
+The learned CRF transition matrix is interpretable and matches ingredient grammar: QTY→UNIT has the highest forward weight (1.28), NAME→NAME self-transitions (1.32) capture multi-word ingredient names, and PREP→PREP/COMMENT→COMMENT model multi-word phrases. Start transitions favor QTY (0.59), reflecting that most ingredients begin with quantities.
+
+### Debugging Notes
+
+Two notable issues during the session:
+
+1. **Em dash encoding mismatch**: `update_model_card()` used `--` in replacement keys but MODEL_CARD.md uses Unicode `—` (U+2014). Replacements silently failed. Fixed by using `\u2014` escape in Python code.
+
+2. **Python stdout buffering**: Training output wasn't visible when run as a background task. Python buffers stdout when not connected to a terminal. Fixed by rerunning with `python -u` flag.
+
+### AI Tooling Learnings
+
+Running a ~39-minute training job inside Claude Code required some workflow adjustment — the initial attempt used background execution which obscured output due to Python's stdout buffering. Running in foreground with `-u` flag gave real-time epoch-by-epoch visibility. The model trained successfully on first attempt with no hyperparameter tuning needed, which speaks to the quality of the Phase 1 dataset preparation.
+
+### What It Means
+
+The hardest "will this work?" question of M8.4 is now answered definitively: yes. The model exceeds all targets and the CRF transition patterns show it has learned real ingredient grammar. Phase 3 (CoreML conversion) is the next critical gate — extracting the BiLSTM emission scorer into a `.mlpackage` and verifying Viterbi parity between Python and Swift implementations.
+
+---
+
 ## Session 26 — February 21, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 0+1: Contract Lock + Dataset Preparation)
 **Branch**: `feature/M8.4-ml-parsing`
