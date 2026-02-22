@@ -804,31 +804,20 @@ struct RecipeListView: View {
         let parsingService = IngredientParsingService(context: context, templateService: templateService)
         
         for (index, text) in ingredients.enumerated() {
-            let parsed = parsingService.parseIngredient(text: text)
-            let structured = parsingService.parseToStructured(text: text)
-            
+            // M8.4: Single parse via parseUnified (was double-parse)
+            let (parsed, structured) = parsingService.parseUnified(text: text)
+
             let ingredient = Ingredient(context: context)
             ingredient.id = UUID()
             ingredient.name = text
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
-            
-            // M4.3.5 FIX: Create/link ingredient template (was missing!)
-            // Extract ingredient name from parsed result and create template
+
             let ingredientName = parsed.displayName
-            #if DEBUG
-            print("      Parsing '\(text)' -> template name: '\(ingredientName)'")
-            #endif
-            
             if !ingredientName.isEmpty && ingredientName.lowercased() != "unknown ingredient" {
                 ingredient.ingredientTemplate = templateService.findOrCreateTemplate(name: ingredientName)
-            } else {
-                #if DEBUG
-                print("      ⚠️ WARNING: Skipping template creation for empty/unknown ingredient")
-                #endif
             }
-            
-            // M4.3.1 FIX: Populate all structured quantity fields
+
             ingredient.displayText = structured.displayText
             ingredient.numericValue = structured.numericValue ?? 0.0
             ingredient.standardUnit = structured.standardUnit

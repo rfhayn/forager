@@ -299,9 +299,9 @@ struct AddListItemView: View {
     private func addItemToList() {
         let trimmedText = ingredientText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
-        
-        let parsed = parsingService.parseIngredient(text: trimmedText)
-        let structured = parsingService.parseToStructured(text: trimmedText)
+
+        // M8.4: Single parse via parseUnified (was double-parse)
+        let (parsed, structured) = parsingService.parseUnified(text: trimmedText, source: .groceryListItem)
         
         // Try to find exact match if no template selected
         if selectedTemplate == nil {

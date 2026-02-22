@@ -4,6 +4,7 @@
 //
 //  Updated for M3 Phase 2: Structured Quantity Management
 //  M8.3: Refactored to delegate to hybrid parser architecture
+//  M8.4 Phase 0c: Single-parse refactor — parser.parse() called exactly once per ingredient
 //
 
 import Foundation
@@ -57,52 +58,16 @@ class IngredientParsingService: ObservableObject {
         self.parser = parser
     }
 
-    // MARK: - Smart Ingredient Parsing (Legacy)
+    // MARK: - Core Parse (Single Entry Point)
 
-    /// Parse ingredient text into components (legacy method)
-    func parseIngredient(text: String) -> ParsedIngredient {
+    /// M8.4 Phase 0c: Single parsing entry point — calls parser.parse() exactly once
+    /// and logs telemetry. All public parsing methods delegate through this.
+    private func parseCore(text: String, source: ParsingTelemetryEvent.ParsingSource) -> ParserResult {
         let startTime = CFAbsoluteTimeGetCurrent()
-
         let result = parser.parse(text)
-
         let duration = CFAbsoluteTimeGetCurrent() - startTime
         self.lastParsingDuration = duration
 
-        // Convert ParserResult back to ParsedIngredient for legacy callers
-        return ParsedIngredient(
-            originalText: result.originalText,
-            quantity: result.quantity.map { String($0) },
-            unit: result.unit,
-            name: result.name,
-            notes: result.notes
-        )
-    }
-
-    // MARK: - Structured Quantity Parsing
-
-    /// Parse ingredient text into structured quantity format
-    /// M8.1: Logs telemetry for low-confidence parses
-    /// M8.3: Now delegates to parser protocol
-    func parseToStructured(text: String, source: ParsingTelemetryEvent.ParsingSource = .recipeIngredient) -> StructuredQuantity {
-        let startTime = CFAbsoluteTimeGetCurrent()
-
-        let result = parser.parse(text)
-
-        // Build display text
-        var displayParts: [String] = []
-        if let qty = result.quantity {
-            displayParts.append(String(qty))
-        }
-        if let unit = result.unit {
-            displayParts.append(unit)
-        }
-        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let displayText = displayParts.isEmpty ? trimmedText : displayParts.joined(separator: " ")
-
-        let duration = CFAbsoluteTimeGetCurrent() - startTime
-        self.lastParsingDuration = duration
-
-        // M8.1: Log telemetry for all parsing events
         _ = ParsingTelemetryService.shared.logParsingEvent(
             rawInput: text,
             parsedName: result.name,
@@ -112,6 +77,28 @@ class IngredientParsingService: ObservableObject {
             parserUsed: result.parserUsed,
             source: source
         )
+
+        return result
+    }
+
+    // MARK: - Result Mapping Helpers
+
+    private static func mapToParsedIngredient(_ result: ParserResult) -> ParsedIngredient {
+        ParsedIngredient(
+            originalText: result.originalText,
+            quantity: result.quantity.map { String($0) },
+            unit: result.unit,
+            name: result.name,
+            notes: result.notes
+        )
+    }
+
+    private static func mapToStructuredQuantity(_ result: ParserResult, text: String) -> StructuredQuantity {
+        var displayParts: [String] = []
+        if let qty = result.quantity { displayParts.append(String(qty)) }
+        if let unit = result.unit { displayParts.append(unit) }
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let displayText = displayParts.isEmpty ? trimmedText : displayParts.joined(separator: " ")
 
         return StructuredQuantity(
             numericValue: result.quantity,
@@ -123,33 +110,61 @@ class IngredientParsingService: ObservableObject {
         )
     }
 
-    // MARK: - Parse and Connect (UPDATED for Structured Quantities)
+    // MARK: - Unified Parsing (Single Parse → Both Results)
 
-    /// Parse ingredient list and connect to templates using structured quantities
+    /// Parse ingredient text once, returning both legacy and structured results with telemetry.
+    /// Use this instead of calling parseIngredient() + parseToStructured() separately.
+    func parseUnified(text: String, source: ParsingTelemetryEvent.ParsingSource = .recipeIngredient) -> (parsed: ParsedIngredient, structured: StructuredQuantity) {
+        let result = parseCore(text: text, source: source)
+        return (Self.mapToParsedIngredient(result), Self.mapToStructuredQuantity(result, text: text))
+    }
+
+    // MARK: - Legacy Parsing (Lightweight, No Telemetry)
+
+    /// Parse ingredient text into components. Lightweight — no telemetry logging.
+    /// Used for intermediate operations (autocomplete, typing previews, template lookup).
+    /// For final parse operations that need telemetry, use parseUnified() or parseToStructured().
+    func parseIngredient(text: String) -> ParsedIngredient {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let result = parser.parse(text)
+        let duration = CFAbsoluteTimeGetCurrent() - startTime
+        self.lastParsingDuration = duration
+
+        return Self.mapToParsedIngredient(result)
+    }
+
+    // MARK: - Structured Quantity Parsing
+
+    /// Parse ingredient text into structured quantity format with telemetry.
+    /// M8.4: Now delegates through parseCore() for single-parse guarantee.
+    func parseToStructured(text: String, source: ParsingTelemetryEvent.ParsingSource = .recipeIngredient) -> StructuredQuantity {
+        let result = parseCore(text: text, source: source)
+        return Self.mapToStructuredQuantity(result, text: text)
+    }
+
+    // MARK: - Parse and Connect
+
+    /// Parse ingredient list and connect to templates using structured quantities.
+    /// M8.4: Refactored to single-parse via parseUnified().
     func parseAndConnectIngredients(for recipe: Recipe, ingredientTexts: [String]) -> [Ingredient] {
         var createdIngredients: [Ingredient] = []
         var successfulParses = 0
 
         for (index, text) in ingredientTexts.enumerated() {
-            let parsed = parseIngredient(text: text)
-            let structured = parseToStructured(text: text)
+            let (parsed, structured) = parseUnified(text: text)
 
-            // Create Ingredient entity with structured fields
             let ingredient = Ingredient(context: context)
             ingredient.id = UUID()
-            ingredient.name = parsed.originalText // Store original text as name
-
+            ingredient.name = parsed.originalText
             ingredient.numericValue = structured.numericValue ?? 0.0
             ingredient.standardUnit = structured.standardUnit
             ingredient.displayText = structured.displayText
             ingredient.isParseable = structured.isParseable
             ingredient.parseConfidence = structured.parseConfidence
-
             ingredient.notes = parsed.notes
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
 
-            // Connect to IngredientTemplate for normalization
             let template = templateService.findOrCreateTemplate(
                 name: parsed.displayName,
                 category: categorizeIngredient(parsed.displayName)
@@ -164,7 +179,6 @@ class IngredientParsingService: ObservableObject {
             }
         }
 
-        // Update success rate
         if !ingredientTexts.isEmpty {
             parseSuccessRate = Double(successfulParses) / Double(ingredientTexts.count)
         }

@@ -456,8 +456,8 @@ struct GroceryListDetailView: View {
         let trimmedText = quickAddText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
 
-        let parsed = parsingService.parseIngredient(text: trimmedText)
-        let structured = parsingService.parseToStructured(text: trimmedText)
+        // M8.4: Single parse via parseUnified (was double-parse)
+        let (parsed, structured) = parsingService.parseUnified(text: trimmedText, source: .groceryListItem)
 
         if selectedTemplate == nil {
             selectedTemplate = templateService.searchTemplates(query: parsed.name, limit: 1)
