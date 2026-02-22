@@ -74,6 +74,18 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
     let quantityChanged: Bool
     let unitChanged: Bool
 
+    // M8.4 Phase 7: Schema v3 — correction attribution
+    let parserUsed: String?         // "regex", "ml", or "nlp" (nil for unattributed)
+    let source: CorrectionSource?   // Where the correction occurred
+
+    /// M8.4 Phase 7: Where a user correction originated
+    enum CorrectionSource: String, Codable {
+        case editRecipe
+        case createRecipe
+        case groceryListEdit
+        case templateRename
+    }
+
     init(
         originalEventId: UUID? = nil,
         originalName: String,
@@ -82,7 +94,9 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
         originalConfidence: Float,
         correctedName: String,
         correctedQuantity: Double?,
-        correctedUnit: String?
+        correctedUnit: String?,
+        parserUsed: String? = nil,
+        source: CorrectionSource? = nil
     ) {
         self.id = UUID()
         self.timestamp = Date()
@@ -97,6 +111,8 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
         self.nameChanged = originalName != correctedName
         self.quantityChanged = originalQuantity != correctedQuantity
         self.unitChanged = originalUnit != correctedUnit
+        self.parserUsed = parserUsed
+        self.source = source
     }
 }
 
@@ -106,7 +122,7 @@ struct ParsingTelemetryData: Codable {
     var correctionEvents: [ParsingCorrectionEvent]
     var schemaVersion: Int
 
-    static let currentSchemaVersion = 2  // M8.3: Added parserUsed field
+    static let currentSchemaVersion = 3  // M8.4 Phase 7: Added correction source + parserUsed
 
     init() {
         self.parsingEvents = []
@@ -223,7 +239,9 @@ class ParsingTelemetryService: ObservableObject {
         originalConfidence: Float,
         correctedName: String,
         correctedQuantity: Double?,
-        correctedUnit: String?
+        correctedUnit: String?,
+        parserUsed: String? = nil,
+        source: ParsingCorrectionEvent.CorrectionSource? = nil
     ) {
         let correction = ParsingCorrectionEvent(
             originalEventId: originalEventId,
@@ -233,7 +251,9 @@ class ParsingTelemetryService: ObservableObject {
             originalConfidence: originalConfidence,
             correctedName: correctedName,
             correctedQuantity: correctedQuantity,
-            correctedUnit: correctedUnit
+            correctedUnit: correctedUnit,
+            parserUsed: parserUsed,
+            source: source
         )
 
         queue.async { [weak self] in
@@ -271,6 +291,11 @@ class ParsingTelemetryService: ObservableObject {
     /// Get all correction events for analysis
     func getAllCorrectionEvents() -> [ParsingCorrectionEvent] {
         return telemetryData.correctionEvents
+    }
+
+    /// M8.4 Phase 7: Total correction count across all sessions (for corpus gate display)
+    func getTotalCorrectionCount() -> Int {
+        return telemetryData.correctionEvents.count
     }
 
     /// Get low confidence events (parseConfidence < threshold)

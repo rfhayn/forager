@@ -806,6 +806,22 @@ struct IngredientRowView: View {
                 print("📝 M8.3.1: Merging into existing '\(existingTemplate.name ?? "nil")' (moving \(ingredient.ingredients?.count ?? 0) ingredients)")
                 #endif
 
+                // M8.4 Phase 7: Log correction before merge (original = old template, corrected = merge target)
+                let originalName = ingredient.name ?? ""
+                let correctedName = existingTemplate.name ?? trimmedName
+                if originalName.lowercased() != correctedName.lowercased() {
+                    ParsingTelemetryService.shared.logCorrection(
+                        originalName: originalName,
+                        originalQuantity: nil,
+                        originalUnit: nil,
+                        originalConfidence: 0,
+                        correctedName: correctedName,
+                        correctedQuantity: nil,
+                        correctedUnit: nil,
+                        source: .templateRename
+                    )
+                }
+
                 // M8.3.1: Merge — move all ingredient relationships to the existing template
                 if let ingredientsToMove = ingredient.ingredients as? Set<Ingredient> {
                     for ing in ingredientsToMove {
@@ -831,6 +847,21 @@ struct IngredientRowView: View {
                     isEditingName = false
                 }
             } else {
+                // M8.4 Phase 7: Log correction if name actually changed (case-insensitive)
+                let originalName = ingredient.name ?? ""
+                if originalName.lowercased() != trimmedName.lowercased() {
+                    ParsingTelemetryService.shared.logCorrection(
+                        originalName: originalName,
+                        originalQuantity: nil,
+                        originalUnit: nil,
+                        originalConfidence: 0,
+                        correctedName: trimmedName,
+                        correctedQuantity: nil,
+                        correctedUnit: nil,
+                        source: .templateRename
+                    )
+                }
+
                 // No duplicate — just rename
                 ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
                     category: ingredient.category, isStaple: ingredient.isStaple)

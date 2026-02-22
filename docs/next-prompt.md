@@ -1,17 +1,17 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 22, 2026
-**For Milestone**: M8.4 ML-Powered Parsing (23-32h across 7 sessions)
-**Status**: M8.4 Phase 0-6 ✅ **COMPLETE** | **Phase 7 NEXT**
+**For Milestone**: M8.4 ML-Powered Parsing (23-32h across 8 sessions)
+**Status**: M8.4 Phase 0-7 ✅ **COMPLETE** | **Phase 8 NEXT**
 **Branch**: `feature/M8.4-ml-parsing`
 
 ---
 
-## **NEXT: M8.4 Phase 7 — Correction Instrumentation (2-3h)**
+## **NEXT: M8.4 Phase 8 — Continuous Learning Pipeline (2h)**
 
-**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 5, Phase 7)
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 5, Phase 8)
 
-### What's Already Done (Phases 0-6)
+### What's Already Done (Phases 0-7)
 - ✅ Architecture locked: word-only BiLSTM v1, no char features
 - ✅ Tokenizer spec frozen + cross-validated (tokenizer bug fix in Phase 6)
 - ✅ Single-parse refactor complete (`parseCore()` → `parseUnified()`)
@@ -26,50 +26,25 @@
 - ✅ ViterbiDecoderTests: 15 pure algorithm tests, all passing
 - ✅ MLIngredientParserTests: 21 integration tests, all passing (0.84ms/parse)
 - ✅ Tokenizer fix: fraction/decimal/NFKD combining marks now match Python training tokenizer
+- ✅ Correction instrumentation: schema v3, 3 edit flows wired, corpus gate display, 6 new tests
 
-### Key Architecture Decisions (Unchanged)
-- **CRF split into 3 runtime components**: CoreML emissions + JSON transitions + Swift Viterbi
-- **Winner-only parser attribution** — `parserUsed` reports `regex`/`ml`/`nlp`, never `"hybrid"`
-- **Parsers stay synchronous** — background dispatch owned by service/callsite layers
-- **3-tier routing**: regex ≥0.9 → ML ≥0.8 → NLP fallback (only when both < 0.5)
+### Phase 8 Tasks
 
-### Phase 7 Tasks
+**BIO Export from Correction Events**
+- Export correction events as BIO-format training data
+- Script in `Tools/ml-training/retrain_with_corrections.py`
 
-**7a: Telemetry Schema v3 Changes** (must complete before 7b)
-- Add `parserUsed: String?` and `source: CorrectionSource?` to `ParsingCorrectionEvent`
-- Define `CorrectionSource` enum with 4 cases: `.editRecipe`, `.createRecipe`, `.groceryListEdit`, `.templateRename`
-- Update `logCorrection()` signature with new parameters
-- Bump `currentSchemaVersion` to 3
-- Backward compatible: new fields are optionals, v2 data loads fine
-
-**7b: Wire Correction Logging into Edit Flows**
-- **EditRecipeView**: Compare original vs edited values on save, log correction with `source: .editRecipe`
-- **CreateRecipeView**: Same pattern, `parserUsed` available from in-memory `ParserResult`
-- **GroceryListDetailView**: Compare original name with edited name, `source: .groceryListEdit`
-- **IngredientsView**: Template rename → correction, `source: .templateRename`
-
-**7c: Minimum Corpus Gate**
-- ≥50 corrections before enabling retraining workflow
-- Add correction count display in debug menu
+**Retraining Pipeline**
+- Merge correction corpus with original training data
+- Fine-tune existing model with user corrections
+- Gate: requires ≥50 corrections (corpus gate from Phase 7)
 
 **Key Files to Reference:**
-- `Services/ParsingTelemetryService.swift` — logCorrection() method to extend
-- `forager/EditRecipeView.swift` — edit flow to wire
-- `forager/CreateRecipeView.swift` — edit flow to wire
-- `forager/GroceryListDetailView.swift` — edit flow to wire
-- `forager/IngredientsView.swift` — template rename flow to wire
-- PRD Section 5, Phase 7 — detailed specifications + schema v3 migration details
+- `Services/ParsingTelemetryService.swift` — correction events to export
+- `Tools/ml-training/train_model.py` — existing training pipeline
+- PRD Section 5, Phase 8 — detailed specifications
 
-**IMPORTANT: Correction Linkage Contract**
-- v1: Corrections logged **unlinked** (`originalEventId: nil`)
-- `parserUsed` only available in CreateRecipeView (in-memory ParserResult)
-- Other flows: `parserUsed: nil` (unattributable)
-- Per-parser rates computed on attributable subset only (N ≥ 20 guardrail)
-
-### Remaining Sessions After Phase 7
-
-**Phase 8: Continuous Learning Pipeline (2h)**
-- BIO export from correction events, retraining script hooks
+### Remaining Sessions After Phase 8
 
 **Phase 9: Integration Testing + Documentation (1-2h)**
 - 8 end-to-end scenarios, core doc updates
@@ -91,6 +66,6 @@
 
 ---
 
-**Dependencies**: All prerequisites ✅ | CoreML model in bundle ✅ | 3-tier routing ✅ | Test suite ✅
+**Dependencies**: All prerequisites ✅ | CoreML model in bundle ✅ | 3-tier routing ✅ | Test suite ✅ | Correction instrumentation ✅
 **Model**: 1.35M params, 5.15 MB CoreML, 98.49% token accuracy, 100% Viterbi parity
-**M8.4 PRD**: Phase 7 is correction instrumentation — schema v3 + edit flow wiring + corpus gate.
+**M8.4 PRD**: Phase 8 is continuous learning — BIO export + retraining pipeline. Gated on ≥50 corrections.

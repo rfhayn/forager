@@ -6,6 +6,46 @@
 
 ---
 
+## Session 32 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 7: Correction Instrumentation)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Phase 7 closes the feedback loop between the ML parser and user behavior. The BiLSTM-CRF model from Phases 2-6 is accurate (98.5% token accuracy), but no parser is perfect for every input. When users edit parser output — renaming an ingredient, fixing a quantity, correcting a unit — those corrections are *exactly* the training data needed to improve the model.
+
+This phase wired `ParsingTelemetryService.logCorrection()` into three production edit flows:
+
+1. **EditRecipeView** — The primary correction source. When a user edits an existing recipe ingredient, `loadRecipeData()` now captures the original parsed values (name, quantity, unit, confidence) as `IngredientInput` fields. At save time, `completeSave()` uses `parseUnified()` (replacing the previous `parseToStructured()` call) to get both the structured entity fields and the parsed ingredient name, then compares original vs edited values. Any difference triggers a correction event.
+
+2. **CreateRecipeView** — Same pattern for new recipes. When a user adds an ingredient (manually or via autocomplete), `originalFullText` is captured. If they edit the text before saving, the correction is logged.
+
+3. **IngredientsView** — Template renames. Both the merge branch (user renames to an existing template name, triggering a merge) and the rename branch (simple name change) now log corrections. These are high-signal because the user is explicitly fixing parser categorization.
+
+### Design Decisions
+
+**Schema v3 with optional backward compat**: Added `parserUsed: String?` and `source: CorrectionSource?` to `ParsingCorrectionEvent`. Both are optional with nil defaults, so v2 JSON decodes fine — `JSONDecoder` silently skips missing optional keys. This is the same proven pattern from schema v1→v2.
+
+**`CorrectionSource` is separate from `ParsingSource`**: Semantic distinction matters. `ParsingSource` tracks where parsing happened (recipe, grocery list, meal plan). `CorrectionSource` tracks where the correction happened (editing a recipe, renaming a template). A correction in `.editRecipe` may have originated from a `.recipeIngredient` parse.
+
+**GroceryListDetailView skipped**: The plan initially included grocery list editing, but examination showed no item name editing exists in the UI — it's quick-add only. No correction flow to wire.
+
+**v1 unlinked corrections**: All corrections use `originalEventId: nil` and `parserUsed: nil`. Linking corrections to their original parse events would require persisting the `parseEventId` on Core Data entities — a schema change deferred to a future phase.
+
+### What Was Learned
+
+The `parseUnified()` refactor from Phase 0c continues to pay dividends. By replacing `parseToStructured()` with `parseUnified()` in save flows, we get both `ParsedIngredient.name` (needed for correction comparison) and `StructuredQuantity` fields (needed for entity population) from a single parse. No double-parse.
+
+The corpus gate display (50 corrections threshold) is a pragmatic guardrail. Retraining on < 50 corrections would likely overfit to a narrow distribution of user preferences rather than capture genuine parser errors.
+
+### Metrics
+- 6 new tests, all passing (25 total in telemetry suite)
+- 8 files modified (service, models, 3 views, settings, tests, docs)
+- Build succeeded first try — nil defaults preserved all existing callsites
+- ~2 hours implementation time
+
+---
+
 ## Session 31 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 6: Test Suite + Tokenizer Fix)
 **Branch**: `feature/M8.4-ml-parsing`

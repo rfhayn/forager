@@ -208,7 +208,12 @@ struct EditRecipeView: View {
                 IngredientInput(
                     fullText: ingredient.name ?? "",
                     template: ingredient.ingredientTemplate,
-                    matchedViaAutocomplete: ingredient.ingredientTemplate != nil
+                    matchedViaAutocomplete: ingredient.ingredientTemplate != nil,
+                    // M8.4 Phase 7: Capture original state for correction telemetry
+                    originalFullText: ingredient.name,
+                    originalNumericValue: ingredient.numericValue != 0 ? ingredient.numericValue : nil,
+                    originalStandardUnit: ingredient.standardUnit,
+                    originalParseConfidence: ingredient.parseConfidence
                 )
             }
         }
@@ -655,16 +660,37 @@ struct EditRecipeView: View {
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
 
-            // M15 fix: Populate structured quantity fields (matches CreateRecipeView pattern)
-            let parsed = parsingService.parseToStructured(text: trimmed)
-            ingredient.displayText = parsed.displayText
-            ingredient.numericValue = parsed.numericValue ?? 0.0
-            ingredient.standardUnit = parsed.standardUnit
-            ingredient.isParseable = parsed.isParseable
-            ingredient.parseConfidence = parsed.parseConfidence
+            // M8.4 Phase 7: Use parseUnified for both structured fields + correction detection
+            let (parsedIngredient, structured) = parsingService.parseUnified(text: trimmed)
+            ingredient.displayText = structured.displayText
+            ingredient.numericValue = structured.numericValue ?? 0.0
+            ingredient.standardUnit = structured.standardUnit
+            ingredient.isParseable = structured.isParseable
+            ingredient.parseConfidence = structured.parseConfidence
 
             if let template = ingredientInput.template {
                 ingredient.ingredientTemplate = template
+            }
+
+            // M8.4 Phase 7: Log correction if user edited the ingredient text
+            if let originalText = ingredientInput.originalFullText, trimmed != originalText {
+                let originalParsed = parsingService.parseIngredient(text: originalText)
+                let nameChanged = originalParsed.name.lowercased() != parsedIngredient.name.lowercased()
+                let qtyChanged = ingredientInput.originalNumericValue != (structured.numericValue ?? 0.0)
+                let unitChanged = ingredientInput.originalStandardUnit != structured.standardUnit
+
+                if nameChanged || qtyChanged || unitChanged {
+                    ParsingTelemetryService.shared.logCorrection(
+                        originalName: originalParsed.name,
+                        originalQuantity: ingredientInput.originalNumericValue,
+                        originalUnit: ingredientInput.originalStandardUnit,
+                        originalConfidence: ingredientInput.originalParseConfidence ?? 0,
+                        correctedName: parsedIngredient.name,
+                        correctedQuantity: structured.numericValue,
+                        correctedUnit: structured.standardUnit,
+                        source: .editRecipe
+                    )
+                }
             }
         }
 

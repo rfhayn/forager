@@ -46,12 +46,23 @@ struct IngredientInput: Identifiable, Equatable {
     var fullText: String
     var template: IngredientTemplate?  // READ-ONLY reference
     var matchedViaAutocomplete: Bool
-    
-    init(id: UUID = UUID(), fullText: String = "", template: IngredientTemplate? = nil, matchedViaAutocomplete: Bool = false) {
+
+    // M8.4 Phase 7: Original state tracking for correction telemetry
+    var originalFullText: String?          // Change detection (was text modified?)
+    var originalNumericValue: Double?       // Original quantity from entity
+    var originalStandardUnit: String?       // Original unit from entity
+    var originalParseConfidence: Float?     // Original confidence from entity
+
+    init(id: UUID = UUID(), fullText: String = "", template: IngredientTemplate? = nil, matchedViaAutocomplete: Bool = false,
+         originalFullText: String? = nil, originalNumericValue: Double? = nil, originalStandardUnit: String? = nil, originalParseConfidence: Float? = nil) {
         self.id = id
         self.fullText = fullText
         self.template = template
         self.matchedViaAutocomplete = matchedViaAutocomplete
+        self.originalFullText = originalFullText
+        self.originalNumericValue = originalNumericValue
+        self.originalStandardUnit = originalStandardUnit
+        self.originalParseConfidence = originalParseConfidence
     }
     
     var statusIndicator: IngredientStatus {
@@ -74,7 +85,11 @@ struct IngredientInput: Identifiable, Equatable {
         return lhs.id == rhs.id &&
                lhs.fullText == rhs.fullText &&
                lhs.template?.objectID == rhs.template?.objectID &&
-               lhs.matchedViaAutocomplete == rhs.matchedViaAutocomplete
+               lhs.matchedViaAutocomplete == rhs.matchedViaAutocomplete &&
+               lhs.originalFullText == rhs.originalFullText &&
+               lhs.originalNumericValue == rhs.originalNumericValue &&
+               lhs.originalStandardUnit == rhs.originalStandardUnit &&
+               lhs.originalParseConfidence == rhs.originalParseConfidence
     }
 }
 

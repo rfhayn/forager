@@ -602,6 +602,151 @@ final class ParsingTelemetryServiceTests: XCTestCase {
         XCTAssertEqual(lowEvents.first?.parseConfidence, 0.0)
     }
 
+    // MARK: - P0: Schema v3 Tests (M8.4 Phase 7)
+
+    /// TEST-TEL-026: Schema version is 3
+    func testSchemaVersionIs3() {
+        XCTAssertEqual(ParsingTelemetryData.currentSchemaVersion, 3, "Schema version should be 3")
+    }
+
+    /// TEST-TEL-027: v2 data decodes with nil parserUsed/source on corrections
+    func testV2CorrectionDataDecodesWithNilNewFields() {
+        // Given - v2 correction event JSON (no parserUsed or source fields)
+        let v2JSON = """
+        {
+            "id": "12345678-1234-1234-1234-123456789012",
+            "timestamp": "2026-02-22T12:00:00Z",
+            "originalEventId": null,
+            "originalName": "flour",
+            "originalQuantity": 2.0,
+            "originalUnit": "cup",
+            "originalConfidence": 0.6,
+            "correctedName": "all-purpose flour",
+            "correctedQuantity": 2.0,
+            "correctedUnit": "cup",
+            "nameChanged": true,
+            "quantityChanged": false,
+            "unitChanged": false
+        }
+        """
+
+        // When
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let data = v2JSON.data(using: .utf8)!
+        let correction = try? decoder.decode(ParsingCorrectionEvent.self, from: data)
+
+        // Then
+        XCTAssertNotNil(correction, "v2 correction JSON should decode successfully")
+        XCTAssertNil(correction?.parserUsed, "parserUsed should be nil for v2 data")
+        XCTAssertNil(correction?.source, "source should be nil for v2 data")
+        XCTAssertEqual(correction?.originalName, "flour")
+        XCTAssertEqual(correction?.correctedName, "all-purpose flour")
+    }
+
+    /// TEST-TEL-028: v3 correction with source + parserUsed encodes/decodes correctly
+    func testV3CorrectionWithSourceAndParserUsed() {
+        // Given
+        let correction = ParsingCorrectionEvent(
+            originalEventId: nil,
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "all-purpose flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup",
+            parserUsed: "regex",
+            source: .editRecipe
+        )
+
+        // When - encode and decode
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let data = try? encoder.encode(correction),
+              let decoded = try? decoder.decode(ParsingCorrectionEvent.self, from: data) else {
+            XCTFail("v3 correction should encode and decode")
+            return
+        }
+
+        // Then
+        XCTAssertEqual(decoded.parserUsed, "regex")
+        XCTAssertEqual(decoded.source, .editRecipe)
+        XCTAssertEqual(decoded.originalName, "flour")
+        XCTAssertEqual(decoded.correctedName, "all-purpose flour")
+        XCTAssertTrue(decoded.nameChanged)
+        XCTAssertFalse(decoded.quantityChanged)
+    }
+
+    /// TEST-TEL-029: CorrectionSource raw values round-trip
+    func testCorrectionSourceRawValuesRoundTrip() {
+        let sources: [ParsingCorrectionEvent.CorrectionSource] = [
+            .editRecipe, .createRecipe, .groceryListEdit, .templateRename
+        ]
+        let expectedRawValues = ["editRecipe", "createRecipe", "groceryListEdit", "templateRename"]
+
+        for (source, expected) in zip(sources, expectedRawValues) {
+            XCTAssertEqual(source.rawValue, expected, "\(source) raw value should be '\(expected)'")
+            XCTAssertEqual(
+                ParsingCorrectionEvent.CorrectionSource(rawValue: expected),
+                source,
+                "Should round-trip from raw value '\(expected)'"
+            )
+        }
+    }
+
+    /// TEST-TEL-030: getTotalCorrectionCount returns correct count
+    func testGetTotalCorrectionCount() {
+        // Given - no corrections yet
+        XCTAssertEqual(service.getTotalCorrectionCount(), 0, "Should start with 0 corrections")
+
+        // When - log 3 corrections
+        for i in 0..<3 {
+            service.logCorrection(
+                originalName: "item\(i)",
+                originalQuantity: 1.0,
+                originalUnit: "cup",
+                originalConfidence: 0.5,
+                correctedName: "corrected\(i)",
+                correctedQuantity: 1.0,
+                correctedUnit: "cup",
+                source: .editRecipe
+            )
+        }
+
+        service.waitForPendingOperations()
+
+        // Then
+        XCTAssertEqual(service.getTotalCorrectionCount(), 3, "Should have 3 total corrections")
+    }
+
+    /// TEST-TEL-031: logCorrection passes source and parserUsed through to event
+    func testLogCorrectionPassesV3Fields() {
+        // When
+        service.logCorrection(
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "bread flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup",
+            parserUsed: "ml",
+            source: .templateRename
+        )
+
+        service.waitForPendingOperations()
+
+        // Then
+        let corrections = service.getAllCorrectionEvents()
+        XCTAssertEqual(corrections.count, 1)
+        XCTAssertEqual(corrections.first?.parserUsed, "ml")
+        XCTAssertEqual(corrections.first?.source, .templateRename)
+    }
+
     // MARK: - P2: Performance Tests
 
     /// TEST-TEL-025: Logging Performance

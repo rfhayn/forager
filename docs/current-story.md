@@ -1,19 +1,19 @@
 # Current Development Story
 
 **Last Updated**: February 22, 2026
-**Status**: M8.4 Phase 0-6 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~233 hours | 89% planning accuracy
+**Status**: M8.4 Phase 0-7 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~235 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-6 ✅ COMPLETE, **Phase 7 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-7 ✅ COMPLETE, **Phase 8 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phases 7-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phases 8-9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
-## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-5 Complete)**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-7 Complete)**
 
-**Status**: 🔄 **ACTIVE** — Phase 0-6 ✅ COMPLETE, Phase 7 NEXT
-**Session**: February 22, 2026 (sessions 29-31)
+**Status**: 🔄 **ACTIVE** — Phase 0-7 ✅ COMPLETE, Phase 8 NEXT
+**Session**: February 22, 2026 (sessions 29-32)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours total (10 phases)
@@ -207,6 +207,32 @@ Comprehensive tests for ML parser, Viterbi decoder, and tokenizer cross-validati
 - Fixed NFKD combining marks not stripped (`jalapeño` → now correctly `jalapeno`)
 - Root cause: Swift tokenizer had punctuation splitting that didn't match Python training tokenizer
 - Impact: Model now receives correct token IDs matching what it was trained on
+
+### **Phase 7: Correction Instrumentation** ✅
+
+Wired `logCorrection()` into production edit flows, creating the data foundation for Phase 8's continuous learning pipeline.
+
+**Schema v3** (`ParsingTelemetryService.swift`)
+- Added `CorrectionSource` enum: `.editRecipe`, `.createRecipe`, `.groceryListEdit`, `.templateRename`
+- Added `parserUsed: String?` and `source: CorrectionSource?` to `ParsingCorrectionEvent`
+- Updated `logCorrection()` with new params (nil defaults preserve all existing callsites)
+- Bumped `currentSchemaVersion` from 2 → 3
+- Added `getTotalCorrectionCount()` convenience method
+
+**IngredientInput original state tracking** (`RecipeFormModels.swift`)
+- Added 4 optional fields: `originalFullText`, `originalNumericValue`, `originalStandardUnit`, `originalParseConfidence`
+- Enables change detection: compare original vs edited values at save time
+
+**Edit flow wiring** (3 views)
+- `EditRecipeView`: Populates originals in `loadRecipeData()`, detects corrections in `completeSave()` via `parseUnified()`
+- `CreateRecipeView`: Sets `originalFullText` at add time, detects corrections in `completeSave()` via `parseUnified()`
+- `IngredientsView`: Logs corrections in both rename and merge branches of `saveNameEdit()`
+- `GroceryListDetailView`: Skipped (no item name editing in UI)
+
+**Corpus gate display** (`SettingsView.swift`)
+- Debug-only row showing correction count + gate status ("Need N more" or "Ready for retraining")
+
+**Tests**: 6 new tests (v2 compat decode, v3 encode/decode, CorrectionSource round-trip, schema version check, getTotalCorrectionCount, logCorrection field passthrough)
 
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
