@@ -6,6 +6,173 @@
 
 ---
 
+## Session 25 — February 21, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Recipe Import Research & Validation)
+**Branch**: `main` (research session, no code changes)
+
+### What Happened
+
+A focused research session validating that M8.4's BiLSTM-CRF parser investment pays forward to Forager's future recipe import feature. Updated `recipe-import-research.md` with three new sections synthesized from competitive research, M8.4 PRD analysis, and Forager codebase review.
+
+**Three sections added:**
+
+1. **M8.4 Architecture Validation for Recipe Import** — confirmed that M8.4 directly supports recipe import with zero new plumbing. Key validation: all three import paths (URL, text paste, photo) converge at `parseAndConnectIngredients()`, which automatically benefits from the ML parser tier. Documented 7 implementation pitfalls with severity ratings and mitigations.
+
+2. **Competitive Parsing Quality & User Complaints** — deep dive into how competitors handle ingredient parsing. Mapped 10 specific failure patterns (unicode fractions, range quantities, unmeasured amounts, product variants, multi-word units, compound names, ingredient groups, inline prep, word-number quantities) to M8.4's coverage. Used Mealie's open GitHub issues as a cautionary tale — re-parsing destroys user edits, silent API failures, database interference with parser.
+
+3. **AI-Assisted Import Strategy** — recommended layered extraction architecture using Foundation Models for document-level understanding + BiLSTM-CRF for token-level extraction. Key finding: Foundation Models CANNOT run in Share Extensions (120MB limit vs 1.2GB model), which reinforces minimal share extension architecture. Hardware availability analysis: ~60-70% of iOS 26 users have Apple Intelligence support.
+
+### Decisions Made
+
+1. **Foundation Models + BiLSTM-CRF are complementary, not competing** — LLM for "what is this text?" (section detection), ML for "what does each token mean?" (ingredient parsing). No competitor uses both layers.
+
+2. **Share Extension must be minimal** — the 120MB memory limit rules out Foundation Models in the extension. URL extraction only, AI processing in main app.
+
+3. **Mealie's re-parse data loss is the anti-pattern** — Forager's correction instrumentation (M8.4 Phase 7) explicitly avoids this by logging corrections separately from parse results.
+
+### Research and Planning Approach
+
+Conducted parallel web searches across 4 categories: BiLSTM-CRF benchmarks, competitive parsing complaints, Foundation Models limitations, and strangetom dataset accuracy. Cross-referenced findings against the M8.4 PRD to verify all pitfalls were captured.
+
+The strangetom model accuracy data (95.27% sentence / 98.10% word on 81k sentences) was confirmed directly from the project documentation. BiLSTM-CRF typically exceeds pure CRF by 1-3% on sequence labeling tasks, supporting the 96%+ target in the M8.4 PRD.
+
+Pestle's competitive position was clarified: on-device ML optimized for social media captions (~0.1s), now adding Apple Intelligence for broader website support. Their developer explicitly chose on-device ML over ChatGPT for speed, privacy, and control — the same philosophy as Forager.
+
+### AI Tooling Learnings
+
+**Parallel web search is essential for research sessions.** Running 4+ searches simultaneously and synthesizing results produces a much richer picture than sequential searching. The competitive parsing quality section would have been thin without cross-referencing Mealie GitHub issues, Pestle TechCrunch coverage, and NYT tagger edge case documentation in the same pass.
+
+### What It Means
+
+M8.4 is validated as a foundational investment — not just a parsing improvement, but the core of Forager's future recipe import quality. The research document now serves as a reference for future PRD writing, with specific evidence for architectural decisions.
+
+Next session: M8.4 Phase 0+1 (contract lock + dataset preparation). Create `feature/M8.4-ml-parsing` branch.
+
+---
+
+## Session 24 — February 21, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Planning — 11 review passes)
+**Branch**: `main` (planning session, no code changes)
+
+### What Happened
+
+This was a pure planning session — no code written, but arguably more valuable than a coding session. The M8.4 PRD went through **eleven review passes** (8 external via Codex, 3 internal) producing **60 findings** across 3 severity levels. Every finding was triaged and integrated.
+
+**Pass 1 (Codex, 11 findings)** caught architectural gaps: Viterbi decoder missing start/end transition handling, model spec inconsistent about char features, double-parsing per ingredient, correction instrumentation not wired, main-thread ML risk.
+
+**Pass 2 (Codex, 6 findings)** caught contract and migration gaps introduced by the pass 1 fixes: `parseEventId` doesn't exist on entities, background dispatch conflated with sync parsers, `"hybrid"` vs winner-only attribution conflict, schema v3 not planned.
+
+**Pass 3 (Codex, 5 findings)** caught precision gaps in the corrections system: per-parser correction rate underspecified without linkage, acceptance criterion conflicts with existing test assertions, stale CRF text in Section 2, `source` field doesn't exist on correction model.
+
+**Pass 4 (Internal, 12 findings)** was a full code cross-reference audit — reading every referenced source file and verifying claims. Biggest discoveries: the double-parse pattern exists in 5 call sites (not just 1), 11 production `parseIngredient()` callers generate zero telemetry, strangetom has 13 labels (not 12), session hour estimates didn't add up to phase estimates, and the static `sharedParser` implicitly gets the ML parser through default init parameters.
+
+**Pass 5 (Codex, 3 findings)** caught the `ParsingSource` vs `CorrectionSource` typing mismatch (parse-context enum reused for edit-flow context), a Section 3.3 contradiction ("Modified" vs "NOT modified"), and per-parser rate source bias needing denominator guardrails.
+
+**Pass 6 (Codex, 2 findings)** was the final convergence pass: winner-only test update scope was too narrow ("2 assertions" when there are actually 3 across 2 test files), and legacy `"hybrid"` telemetry values from prior app versions need a handling strategy. Zero high-severity findings — the PRD converged.
+
+**Pass 7 (External Codex, 3 findings)** caught: Phase 7b `logCorrection()` example included `parserUsed` but was missing the `source` parameter (medium), stale "18-24h" estimate at line 188 (low), and Section 3.3 "No file changes required" self-contradictory wording (low).
+
+**Pass 8 (Internal, 3 findings)** cross-referenced PRD against ADRs and future milestones: ADR 010 still documents `"hybrid"` attribution but Phase 5 switches to winner-only without mentioning the ADR update (medium), `HybridIngredientParser.parserName = "hybrid"` becomes orphaned after winner-only but PRD didn't address it (medium), and `docs/roadmap.md` had stale "18-24h" estimates in 4 places (medium). Also performed a tech debt assessment against M9.5-full, M9.3, M6, and M10 — no conflicts found.
+
+**Pass 9 (External Codex, 2 findings)** caught: `parserName` removal conflicts with the `IngredientParser` protocol contract which requires `parserName: String { get }` on all conforming types (medium), and the header review-count arithmetic was confusing (low). Fixed by retaining `parserName = "hybrid"` for protocol conformance and simplifying the header format.
+
+**Pass 10 (External Codex + Internal consistency sweep, 3 findings)** caught: M9.3 rationale was stale — referenced "called on main thread" which is no longer accurate after M9.5-partial made parsers injectable (low-medium), Section 3.4 "no changes needed" wording was misleading after Phase 7 added correction instrumentation (low). The internal consistency sweep found duplicate "7b" sub-section labels in Phase 7 — two different sub-sections both labeled "#### 7b:". Fixed by demoting the second to an unnumbered bold subsection.
+
+**Pass 11 (Internal principal mobile engineer review, 10 findings)** was a deep technical review from a senior iOS/CoreML engineering perspective. Key findings: tokenizer padding spec contradicted RangeDim dynamic input shapes (should be no padding, not right-pad), Swift NFKD normalization requires `applyingTransform` (not `decomposedStringWithCanonicalMapping`), missing `runEmissionModel` implementation sketch for MLMultiArray stride-based access, unit canonicalization duplicated across parsers needs extraction, CoreML first-prediction warmup latency (100-500ms JIT compilation on first load), silent model load failure needs `#if DEBUG` logging, memory estimate too low (runtime ~8-10MB not <5MB), test structure should split into 3 files, model presence guard test needed, and 4 CoreML platform risks added.
+
+### Decisions Made
+
+1. **Phase 0 feasibility gate**: Dedicated contract-locking phase before any ML implementation. Tokenizer spec, architecture lock, single-parse refactor, Viterbi parity criteria, governance artifacts. Worth the schedule impact for reduced downstream risk.
+
+2. **Word-only architecture for v1**: No char CNN/LSTM features. Simplicity wins — strangetom CRF achieves 95.25% without them.
+
+3. **Single-parse refactor expanded to all call sites (Phase 0c)**: Internal review found 5 double-parse sites (not just `parseAndConnectIngredients`) and 11 `parseIngredient()` callers with zero telemetry. Phase 0c now covers the full scope.
+
+4. **Correction instrumentation as its own feature (Phase 7)**: User elevated this from "part of continuous learning" to a dedicated phase.
+
+5. **Unlinked corrections for v1**: Corrections logged with `originalEventId: nil`. Per-parser rates scoped to attributable subset (CreateRecipeView where `parserUsed` is in memory), with denominator guardrails (N ≥ 20) and unattributable share always displayed.
+
+6. **Winner-only parser attribution**: `parserUsed` reports the winning parser (`regex`/`ml`/`nlp`). Explicit Phase 5 sub-steps for code change, comment updates, and 2 test assertion updates.
+
+7. **Dedicated `CorrectionSource` enum**: `ParsingSource` is parse-context oriented (`.recipeIngredient`, `.groceryListItem`). Corrections need an edit-flow oriented enum (`.editRecipe`, `.createRecipe`, `.groceryListEdit`, `.templateRename`). Reusing `ParsingSource` would conflate two different dimensions.
+
+8. **Schema v3 includes both `parserUsed` and `source`**: Backward-compatible via optional Codable fields.
+
+9. **Phase 7 sub-section reordering**: 7a = schema v3 changes, 7b = edit flow wiring, 7c = corpus gate. The wiring depends on the new `logCorrection()` parameters, so schema changes must come first.
+
+10. **NLP intentionally excluded from moderate-confidence band**: When regex is [0.5, 0.9) and ML is [0.5, 0.8), NLP is not consulted. ML is expected to outperform NLP in this range. Documented as intentional design choice, revisitable during threshold calibration.
+
+### Phase-by-Phase Breakdown (Why Each Phase Exists)
+
+**Phase 0: Feasibility + Contract Lock (2-3h)** — Principal engineering review found that contract ambiguity creates silent quality regressions. Locking contracts here saves 3-5x in debugging time later. Includes the expanded single-parse refactor (5 call sites + 11 telemetry gaps).
+
+**Phase 1: Dataset Preparation (3-4h)** — The ML model needs training data. strangetom (81k) + NYT (180k) provide ~120-150k labeled ingredient sentences — enough to train without waiting for user corrections. Convert SQLite + CSV → unified JSONL with 13→7 label mapping.
+
+**Phase 2: Model Architecture & Training (4-5h)** — Build the BiLSTM-CRF. Right architecture for the job: small (2-5MB), fast (<5ms), proven on this exact domain. Target: ≥96% token, ≥92% sentence accuracy, ≥0.90 F1 per key class.
+
+**Phase 3: CoreML Conversion (2-3h)** — CRF layers can't convert to CoreML, so we split: BiLSTM → `.mlpackage`, CRF params → JSON, Viterbi → Swift. Hard parity gate (≥99.9% token agreement) blocks Phase 4.
+
+**Phase 4: MLIngredientParser Implementation (3-4h)** — Wrap CoreML model in Swift behind the `IngredientParser` protocol. Tokenize → CoreML emissions → Viterbi decode → `ParserResult`. Route ML-produced units through shared canonicalization pipeline.
+
+**Phase 5: HybridIngredientParser Integration (2-3h)** — Slot ML parser into the routing chain (regex ≥0.9 → ML ≥0.8 → NLP if both <0.5). Switch to winner-only attribution. Add background dispatch for bulk operations. The architecture was designed for this since M8.3.
+
+**Phase 6: Test Suite (2-3h)** — Prove the ML parser handles the 6 known failure cases from Section 1. Prove zero regressions on 204 existing tests. Performance validation (<5ms per parse).
+
+**Phase 7: Correction Instrumentation (2-3h)** — `logCorrection()` exists but is never called from production code. Wire it into 4 edit flows. Schema v3 adds `parserUsed` + `CorrectionSource` to correction events. Creates the data foundation for model improvement.
+
+**Phase 8: Continuous Learning Pipeline (2h)** — Connect corrections to the training pipeline. Manual in v1 (developer exports + retrains locally), but the plumbing makes it repeatable.
+
+**Phase 9: Integration Testing & Documentation (1-2h)** — End-to-end validation across 8 integration scenarios. Update all project documentation.
+
+### Research and Planning Approach
+
+The eight-pass review workflow followed a clear pattern of diminishing severity:
+
+| Pass | Agent | Findings | Severity Profile | Character |
+|------|-------|----------|-----------------|-----------|
+| 1 | Codex | 11 | 5 high, 4 med, 2 low | Architecture gaps |
+| 2 | Codex | 6 | 2 high, 3 med, 1 low | Contract/migration gaps |
+| 3 | Codex | 5 | 1 high, 3 med, 1 low | Precision gaps in corrections |
+| 4 | Internal | 12 | 2 high, 5 med, 5 low | Code cross-reference audit |
+| 5 | Codex | 3 | 0 high, 1 med, 2 low | Typing/consistency cleanup |
+| 6 | Codex | 2 | 0 high, 1 med, 1 low | Test scope + legacy data |
+| 7 | Codex | 3 | 0 high, 1 med, 2 low | Example code + stale estimates |
+| 8 | Internal | 3 | 0 high, 3 med, 0 low | ADR sync + orphaned code + roadmap staleness |
+| 9 | Codex | 2 | 0 high, 1 med, 1 low | Protocol contract + header arithmetic |
+| 10 | Codex+Internal | 3 | 0 high, 1 med, 2 low | Stale rationale + misleading wording + duplicate labels |
+| 11 | Internal (PME) | 10 | 1 high, 7 med, 2 low | CoreML platform risks + implementation sketches |
+
+Key observations:
+- **Each pass found genuinely new things** — no repeated findings across 11 passes. This validates the multi-pass approach.
+- **Severity decreased monotonically** — high-count dropped from 5 → 2 → 1 → 2 → 0 → 0 → 0 → 0 → 0 → 0 then **1 high resurfaced in pass 11** (PME review found CI testing gap). The PRD converged by pass 6 for consistency issues, but a fresh perspective (principal engineer framing) found a new class of issues.
+- **The internal review (pass 4) found the highest single-pass count** — 12 findings — because it actually read the source files and cross-referenced claims. The PME review (pass 11) found the second-highest (10 findings) by applying platform-specific engineering expertise.
+- **The PME review was the most implementation-enriching pass** — it added concrete code sketches (`runEmissionModel`, warmup strategy, debug logging), platform risk mitigations, and test structure improvements. Previous passes focused on spec correctness; pass 11 focused on implementation readiness.
+- **The double-parse expansion was the biggest scope change** — going from 1 call site to 5 + 11 telemetry gaps. This only surfaced by reading the actual code, not the PRD.
+
+### AI Tooling Learnings
+
+**Five-pass review with diminishing severity is the convergence signal — but fresh perspectives reset it.** When high-severity findings drop to zero and remaining findings are typing/consistency level, the document has converged *for that review framing*. Pass 11's principal mobile engineer review found a new high-severity finding (CI testing gap) because it applied a different lens than consistency checking.
+
+**External review + internal code audit + domain expert review are three distinct review types.** Codex reviews the PRD's internal logic and consistency. The internal code audit reads actual source files and verifies claims. The PME review applies platform engineering expertise (CoreML memory, thread safety, bundle lifecycle) that neither of the other types would surface.
+
+**Semantic type design surfaces in late passes.** The `ParsingSource` vs `CorrectionSource` distinction only became visible in pass 5, after the correction system was fully specified. You can't review type design until the use cases are concrete. This argues for iterative review over single-pass review, even for type definitions.
+
+**PRD surgery scales to 60+ edits.** This session made ~80 targeted edits across 11 passes to a 1500-line document. Every edit preserved surrounding context. No full rewrites. The final grep checks confirmed zero stale references across all dimensions checked.
+
+**Implementation sketches in PRDs reduce ambiguity dramatically.** Pass 11 added concrete code for `runEmissionModel`, CoreML warmup, and debug logging. These sketches eliminate the "I'll figure it out during implementation" gap that causes surprises. A 10-line code sample is worth a paragraph of prose.
+
+### What It Means
+
+M8.4 has been hardened through 11 review passes producing 60 findings, all integrated. The PRD grew from ~885 lines to ~1500 lines — the additional content is acceptance criteria, provenance rules, concurrency boundaries, phase sub-steps, implementation sketches, platform risk mitigations, and review documentation. This is spec weight that prevents implementation weight.
+
+Passes 7-8 caught important integration gaps (missing parameter in example code, ADR contradiction, orphaned property). Passes 9-10 caught protocol contract conflicts and stale rationale. Pass 11 (principal mobile engineer review) was qualitatively different — instead of finding consistency issues, it found CoreML platform risks (warmup latency, MLMultiArray type variance, RangeDim CPU fallback, silent model load failure) and added concrete implementation guidance (code sketches, test structure, memory estimates).
+
+The plan is 10 phases across 6 sessions (23-32h). Phase 0 front-loads risk reduction. Phases 1-4 are the core ML pipeline. Phase 5 is integration. Phase 6 is testing. Phases 7-8 are the correction data plumbing. Phase 9 is wrap-up.
+
+Next session: Phase 0 + Phase 1 (contract lock + dataset preparation). Create `feature/M8.4-ml-parsing` branch.
+
+---
+
 ## Session 23 — February 21, 2026
 **Milestone**: M9.5-partial: Parser Dependency Injection
 **Branch**: `feature/M9.5-parser-di`

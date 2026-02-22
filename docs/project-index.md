@@ -5,7 +5,7 @@
 **Current Milestone**: M9.5-partial ✅ COMPLETE | M9.1.2 ✅ COMPLETE | M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M8.4 📋 **NEXT**
 **Current Phase**: M9.5-partial ✅ **COMPLETE** (parser dependency injection) | M8.4 📋 **NEXT**
 **Next Priority**: M8.4 → M7.7 App Store
-**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Execution Order**: M8.4 (23-32h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -523,7 +523,7 @@ _[Previous entries remain the same through December 23...]_
 |------|--------|------------|
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
 | M9-prereqs (M9.0, M9.1.2, M9.5-partial) | ✅ COMPLETE | ~6h |
-| M8.4: ML-Powered Parsing | 📋 READY | 18-24h |
+| M8.4: ML-Powered Parsing | 📋 READY | 23-32h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
 | M10+: Future Features | FUTURE | 48-72h |
@@ -668,7 +668,7 @@ _[Previous entries remain the same through December 23...]_
 - **M8.1**: Parsing Resilience & Telemetry — ✅ COMPLETE
 - **M8.2**: Telemetry Analysis & Strategy — ✅ COMPLETE
 - **M8.3**: Hybrid NLP Parser — ✅ COMPLETE (98%+ accuracy, 7 regex categories)
-- **M8.4**: ML-Powered Parsing (18-24h) — QUEUED
+- **M8.4**: ML-Powered Parsing (23-32h) — QUEUED
   - CoreML BiLSTM-CRF model, on-device inference
   - **Target**: 98% → 99.5%+ accuracy
   - **Source**: [M9.5 ML-Powered Parsing PRD](prds/parsing/M9.5-ml-powered-parsing-prd.md)

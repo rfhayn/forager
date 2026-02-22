@@ -216,13 +216,24 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 
 ## 📋 **M8.4: ML-POWERED PARSING - READY**
 
-**Status**: 📋 **READY** (PRD complete, prerequisites identified)
+**Status**: 📋 **READY** (PRD execution-ready — 12 review passes, 60 findings + 1 validation pass)
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
-**Estimated**: 18-24 hours (8 phases) + 9 hours M9 prerequisites
-**Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler
+**Estimated**: 23-32 hours (10 phases including Phase 0 feasibility gate) + 9 hours M9 prerequisites (complete)
+**Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (word-only v1)
+**External Review**: 12 review passes (9 external, 3 internal) completed Feb 21, 2026 — 60 findings integrated + priority validation pass, zero high-severity by pass 6
 
 ### **Key Change from Original Plan**
-Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences. Model ready from day one.
+Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from strangetom (81k sentences, 13 labels) → mapped to 7 Forager labels. Model ready from day one.
+
+### **PRD Changes (from 11 review passes, 60 findings)**
+- **Phase 0**: Feasibility + Contract Lock — architecture lock (word-only v1), tokenizer spec (NFKD normalization, no padding with RangeDim), single-parse refactor (5 double-parse sites + 11 zero-telemetry callers), Viterbi parity gate, governance
+- **Phase 4**: `runEmissionModel` implementation sketch with MLMultiArray stride-based access, unit canonicalization extraction as explicit sub-task
+- **Phase 5**: Winner-only parser attribution (`regex`/`ml`/`nlp`, never `"hybrid"`), parsers stay synchronous, static `sharedParser` lazy CoreML loading, CoreML background warmup strategy, `#if DEBUG` model load warning, runtime memory <10MB, ADR 010 update, `parserName = "hybrid"` retained for protocol conformance
+- **Phase 6**: Test structure split into 3 files (ViterbiDecoderTests, MLIngredientParserTests, HybridParserRoutingTests), model presence guard test
+- **Phase 7**: Reordered to 7a (schema v3) → 7b (edit flow wiring with `source` parameter) → 7c (corpus gate). Added `CorrectionSource` enum (edit-flow oriented), provenance rules per edit flow, denominator guardrails (N ≥ 20), legacy `"hybrid"` telemetry handling
+- **Section 8**: 4 CoreML platform risks added (warmup latency, MLMultiArray Float16/32, RangeDim CPU fallback, silent model load failure)
+- **CRF architecture**: Split into BiLSTM emission scorer (.mlpackage) + CRF params (7×7 transitions + 1×7 start + 1×7 end as JSON) + Viterbi decoder (pure Swift)
+- **Corrections**: v1 uses unlinked corrections (no `parseEventId` persistence); correction linkage contract deferred with Option A/B for v2
 
 ### **Prerequisites (M9 subset) — ALL COMPLETE**
 1. ~~M9.0: Warning resolution (2-3h)~~ — ✅ COMPLETE (<1h actual, Feb 21)
@@ -230,7 +241,7 @@ Original M8.4 required 100+ user corrections (cold start). New approach bootstra
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 first (clean service layer) → Sessions 1-3: M9 Prerequisites → Sessions 4-7: M8.4 Phases 1-8 → M7.7 App Store
+M7.5 ✅ → Sessions 1-3: M9 Prerequisites ✅ → Sessions 4-9: M8.4 Phases 0-9 → M7.7 App Store
 
 ---
 
@@ -1276,7 +1287,7 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M9.0: Warning Resolution | ✅ COMPLETE | <1h |
 | M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
 | M9.5-partial: Parser Dependency Injection | ✅ COMPLETE | ~3h |
-| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **18-24h** |
+| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **23-32h** |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
@@ -1296,8 +1307,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 PRD updated with research, PR #44 merged
-**Next Action**: M8.4 Phase 1+2 (dataset prep + model training, ~4h) → Phase 3+4 → Phase 5+6 → Phase 7+8
+**Last Session**: February 21, 2026 - M8.4 PRD finalized (12 review passes, 60 findings + priority validation)
+**Next Action**: M8.4 Phase 0+1 (contract lock + dataset prep, 5-7h) → Phase 2 (4-5h) → Phase 3+4 (5-7h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
 **Branch**: `main` (create `feature/M8.4-ml-parsing` when starting)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 PRD execution-ready)
-**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT
+**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 PRD execution-ready after 12 review passes including PME review + priority validation)
+**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT (PRD finalized, 60 findings + validation)
