@@ -6,6 +6,42 @@
 
 ---
 
+## Session 29 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 4: ViterbiDecoder + MLIngredientParser)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Phase 4 implements the Swift runtime components that consume the CoreML model from Phase 3. Two new files:
+
+1. **ViterbiDecoder.swift** (~70 lines) — Pure-Swift Viterbi algorithm ported from the Python reference. Standard forward pass with backpointers + backtrace, consuming all 3 CRF parameter sets (7×7 transitions + start + end vectors). The critical detail from Phase 3 was that `transitions.json` uses `label_names` as the key, not `labels` as the PRD pseudocode showed.
+
+2. **MLIngredientParser.swift** (~300 lines) — Full pipeline: tokenize → vocabulary lookup → CoreML emissions → Viterbi decode → assemble result. Implements the `IngredientParser` protocol with failable `init?()` for graceful degradation when resources are unavailable.
+
+The tokenizer follows the frozen TOKENIZER_SPEC.md contract exactly: NFKD normalize → lowercase → whitespace normalize → punctuation split → truncate to 64 tokens. Key subtlety: NFKD decomposes Unicode fractions (½ → "1⁄2" with U+2044 fraction slash), so the quantity parser handles both regular "/" and U+2044.
+
+### Decisions Made and Why
+
+**Simple per-label token collection for result assembly**: Rather than complex region-based grouping, tokens are collected by label type (QTY → quantity, UNIT → unit, NAME+MODIFIER → name, PREP+COMMENT → notes). This means connecting words like "and" labeled as OTHER between PREP tokens get dropped from notes (e.g., "peeled and diced" might become "peeled diced"). Accepted as v1 trade-off — the critical data (qty/unit/name) is correct, and the model may actually label "and" as PREP in context.
+
+**Geometric mean for confidence**: Using `exp(mean(log(max_softmax_probs)))` rather than arithmetic mean. This is sensitive to ANY uncertain token — even one low-confidence prediction drags down the entire score. Better for routing decisions in the HybridIngredientParser.
+
+**Unicode fraction slash handling**: Added explicit handling for U+2044 (FRACTION SLASH) in quantity parsing. After NFKD, ½ decomposes to "1⁄2" with this character, which is different from the regular "/" (U+002F). Without this, fraction quantities from Unicode input would silently fail to parse.
+
+**Deferred UnitCanonicalizer extraction**: The PRD mentions extracting a shared unit standardizer as a Phase 4 sub-task. Deferred to Phase 5 integration work where all three parsers' unit maps will be reconciled. For now, MLIngredientParser has its own `standardizeUnit()` matching the same patterns.
+
+### AI Tooling Learnings
+
+Context recovery after session compaction worked smoothly. The summary preserved all critical details: file paths, architecture decisions, the `label_names` vs `labels` JSON key mismatch, and the pending CLAUDE.md update. The previous session's interrupted documentation work (insights log + journal) was picked up and completed before moving to new code.
+
+The CLAUDE.md update to make insights/journal updates MANDATORY was committed first, reinforcing the behavioral rule going forward. This kind of process improvement — encoding session learnings into durable instructions — is one of the most valuable uses of the CLAUDE.md file.
+
+### What It Means
+
+Phase 4 is the last "pure implementation" phase. From Phase 5 onward, it's integration and testing. The ML parser is now a complete `IngredientParser` implementation that can be slotted into the HybridIngredientParser routing chain. Build succeeds with both new files auto-detected by Xcode's `PBXFileSystemSynchronizedRootGroup`.
+
+---
+
 ## Session 28 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 3: CoreML Conversion + Viterbi Parity Gate)
 **Branch**: `feature/M8.4-ml-parsing`

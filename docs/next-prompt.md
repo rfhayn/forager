@@ -2,16 +2,16 @@
 
 **Last Updated**: February 22, 2026
 **For Milestone**: M8.4 ML-Powered Parsing (23-32h across 6 sessions)
-**Status**: M8.4 Phase 0-3 ✅ **COMPLETE** | **Phase 4 NEXT**
+**Status**: M8.4 Phase 0-4 ✅ **COMPLETE** | **Phase 5 NEXT**
 **Branch**: `feature/M8.4-ml-parsing`
 
 ---
 
-## **NEXT: M8.4 Phase 4 — MLIngredientParser Implementation (3-4h)**
+## **NEXT: M8.4 Phase 5 — HybridIngredientParser Integration (2-3h)**
 
-**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 5, Phase 4)
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md` (Section 5, Phase 5)
 
-### What's Already Done (Phases 0-3)
+### What's Already Done (Phases 0-4)
 - ✅ Architecture locked: word-only BiLSTM v1, no char features
 - ✅ Tokenizer spec frozen (`TOKENIZER_SPEC.md` + 100-sentence test vectors)
 - ✅ Single-parse refactor complete (`parseCore()` → `parseUnified()`)
@@ -22,44 +22,47 @@
 - ✅ Emission parity: PyTorch vs CoreML max diff 4.77e-06
 - ✅ Viterbi parity gate: 100.0000% token agreement (8,030/8,030 on 1,000 samples)
 - ✅ Xcode integration: .mlpackage in Sources, JSON in Bundle Resources, BUILD SUCCEEDED
-- ✅ Xcode auto-generated `IngredientTaggerEmissions` Swift prediction class
+- ✅ ViterbiDecoder.swift: Pure-Swift Viterbi decoder (~70 lines)
+- ✅ MLIngredientParser.swift: Full pipeline (~300 lines) — tokenize → CoreML → Viterbi → ParserResult
+- ✅ BUILD SUCCEEDED with both new files
 
 ### Key Architecture Decisions (Unchanged)
 - **CRF split into 3 runtime components**: CoreML emissions + JSON transitions + Swift Viterbi
 - **Winner-only parser attribution** — `parserUsed` reports `regex`/`ml`/`nlp`, never `"hybrid"`
 - **Parsers stay synchronous** — background dispatch owned by service/callsite layers
 
-### Phase 4 Tasks
+### Phase 5 Tasks
 
-**4a: ViterbiDecoder.swift** (`Services/Parsing/ViterbiDecoder.swift`, ~40 lines)
-- Port the Python reference Viterbi decoder to Swift
-- Load `transitions.json` from bundle at init
-- `decode(emissions: [[Float]]) -> [String]` — standard forward pass + backtrace
-- Must consume ALL CRF params: 7×7 transitions + start_transitions + end_transitions
+**5a: Update HybridIngredientParser routing** (`Services/Parsing/HybridIngredientParser.swift`)
+- Add `mlParser: IngredientParser?` parameter to init (default: `MLIngredientParser()`)
+- Update routing: regex ≥0.9 → ML ≥0.8 → NLP fallback
+- Winner-only attribution: return whichever parser's result is used (no "hybrid" label)
+- Comment: M8.4 breadcrumb already exists in the file
 
-**4b: MLIngredientParser.swift** (`Services/Parsing/MLIngredientParser.swift`)
-- Implements `IngredientParser` protocol
-- Load CoreML model (`IngredientTaggerEmissions`), vocabulary, and ViterbiDecoder at init
-- Tokenize input: NFKD normalize → lowercase → whitespace split → punctuation split (per TOKENIZER_SPEC.md)
-- Map tokens to IDs via vocabulary (unknown → UNK=0)
-- Run CoreML prediction → get emissions → Viterbi decode → label sequence
-- Reconstruct `ParserResult` from token-label pairs (group consecutive NAME tokens, etc.)
-- Cross-validate tokenizer against `data/tokenizer_test_vectors.json` (100 sentences)
-- `parserUsed = "ml"`, confidence based on emission entropy
+**5b: Background dispatch for bulk operations** (`Services/IngredientParsingService.swift`)
+- Ensure `parseAndConnectIngredients()` works correctly with ML parser in chain
+- Background dispatch owned by callsite/service layer (parsers stay synchronous)
+
+**5c: Update ADR 010** (`docs/architecture/010-hybrid-parser-confidence-routing.md`)
+- Add 3-tier routing diagram
+- Document ML parser tier between regex and NLP
+
+**5d: Update IngredientParser.swift comments** (`Services/Parsing/IngredientParser.swift`)
+- Update protocol doc to list all three implementations
+- Update `parserUsed` valid values: "regex", "ml", "nlp"
 
 **Key Files to Reference:**
-- `Tools/ml-training/TOKENIZER_SPEC.md` — tokenizer contract (must match exactly)
-- `Tools/ml-training/data/tokenizer_test_vectors.json` — cross-validation vectors
-- `Services/Parsing/IngredientParser.swift` — protocol to implement
-- `Services/Parsing/RegexIngredientParser.swift` — reference for ParserResult construction
-- PRD Section 5, Phase 4 — detailed pseudocode for both files
+- `Services/Parsing/HybridIngredientParser.swift` — current routing (has M8.4 breadcrumb comment)
+- `Services/Parsing/MLIngredientParser.swift` — new ML parser (just implemented)
+- `Services/IngredientParsingService.swift` — public API, `parseCore()` entry point
+- PRD Section 5, Phase 5 — detailed routing pseudocode
 
-### Remaining Sessions After Phase 4
+### Remaining Sessions After Phase 5
 
-**Phases 5+6: Integration + Test Suite (4-6h)**
-- Add `mlParser: IngredientParser?` to HybridIngredientParser init
-- Update routing: regex ≥0.9 → ML ≥0.8 → NLP fallback
-- Winner-only attribution updates
+**Phase 6: Test Suite (2-3h)**
+- Tokenizer test vectors (100 sentences cross-validation)
+- MLIngredientParser unit tests
+- HybridIngredientParser routing tests with ML tier
 - 20+ test cases
 
 **Phases 7+8: Corrections + Continuous Learning (4-5h)**
@@ -85,6 +88,6 @@
 
 ---
 
-**Dependencies**: All prerequisites ✅ | CoreML model in bundle ✅ | Viterbi parity verified ✅
+**Dependencies**: All prerequisites ✅ | CoreML model in bundle ✅ | ViterbiDecoder + MLIngredientParser ✅
 **Model**: 1.35M params, 5.15 MB CoreML, 98.49% token accuracy, 100% Viterbi parity
-**M8.4 PRD**: Phase 4 is Swift implementation — ViterbiDecoder + MLIngredientParser.
+**M8.4 PRD**: Phase 5 is integration — slot MLIngredientParser into HybridIngredientParser routing chain.
