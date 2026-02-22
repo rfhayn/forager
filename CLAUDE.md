@@ -309,12 +309,12 @@ These files form the single source of truth for project status and history. When
 2. Create/update learning notes in `docs/learning-notes/`
 3. Mark completed phases with actual hours
 4. Update `docs/next-prompt.md` for next phase
-5. Log any technical insights shared to `docs/insights-log.md` (don't defer — sessions can clear)
-6. Write narrative session entry in `docs/development-journal.md` (decisions, learning, AI tooling)
+5. Log any technical insights shared to `docs/insights-log.md` **(MANDATORY — don't defer, sessions can clear)**
+6. Write narrative session entry in `docs/development-journal.md` **(MANDATORY — update before each commit, not at end of session)**
 
-### Insights Logging (During Every Session)
+### Insights Logging (MANDATORY — During Every Session)
 
-**Whenever you share a technical insight with the user, log it to `docs/insights-log.md`.**
+**Whenever you share a technical insight with the user, IMMEDIATELY log it to `docs/insights-log.md`.** Do not defer this to end-of-session — sessions can be interrupted or run out of context. Treat every commit as a potential last commit: insights and journal entries must be current before each commit.
 
 Insights are non-obvious technical observations discovered during implementation — gotchas, platform behaviors, architectural trade-offs, or patterns worth remembering. Each entry must include:
 

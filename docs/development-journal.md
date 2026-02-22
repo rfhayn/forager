@@ -6,6 +6,50 @@
 
 ---
 
+## Session 28 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 3: CoreML Conversion + Viterbi Parity Gate)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Phase 3 converted the trained BiLSTM-CRF model into a CoreML `.mlpackage` and verified Viterbi parity — the critical gate between Python training and Swift runtime.
+
+**CoreML Conversion:**
+
+Wrote `convert_to_coreml.py` (283 lines) that extracts the BiLSTM emission scorer from the full BiLSTM-CRF model. The key insight: `pack_padded_sequence` (used in training for batched variable-length inputs) cannot convert to CoreML, but for single-sequence inference (batch_size=1 with no padding), dropping packing produces identical results — max diff was literally 0.0.
+
+The conversion used coremltools 9.0 with `RangeDim(1, 64)` for variable-length input sequences. Torch 2.8.0 is newer than the officially tested 2.7.0, but conversion succeeded without issues. Final model: 5.15 MB, FLOAT32, iOS 18 minimum deployment.
+
+**Viterbi Parity Gate (the big one):**
+
+The Python reference Viterbi decoder matches pytorch-crf's decode output with 100.0000% parity — 8,030/8,030 tokens across 1,000 test samples, zero disagreements. This is actually expected: the Viterbi algorithm is deterministic given identical inputs, and with emission differences at 4.77e-06, no argmax decisions are flipped.
+
+The end-to-end check (CoreML emissions + Python Viterbi vs full PyTorch CRF) also achieved 100% parity on 100 samples.
+
+**Xcode Integration:**
+
+Added three files to the project: `.mlpackage` in Sources (Xcode auto-generates `IngredientTaggerEmissions` prediction class), `transitions.json` and `vocabulary.json` in Copy Bundle Resources. Build succeeded clean. Verified all resources present in the app bundle.
+
+### Decisions Made
+
+1. **FLOAT32 over FLOAT16**: Used full FLOAT32 precision for maximum emission parity. FLOAT16 would halve model size but increase emission differences, potentially causing label prediction differences at decision boundaries. At 5.15 MB, size is not a concern.
+
+2. **iOS 18 minimum deployment target**: Matches the app's current iOS 26 deployment target with headroom. No iOS 18-specific features used by the CoreML model itself.
+
+3. **MLModel/ directory for JSON resources**: Created `forager/MLModel/` to group ML-related resources separate from other app files. The `.mlpackage` stays at top level for Xcode to auto-generate the prediction class.
+
+### AI Tooling Learnings
+
+The entire Phase 3 was completed in a single session — about 2 hours including documentation. The conversion script ran end-to-end on first attempt with no debugging needed. This continues the pattern from Phase 2: when the PRD specs are thorough (12 review passes), implementation is smooth.
+
+The coremltools scikit-learn compatibility warning and Torch version warning were both non-issues — these are advisory, not errors. Good to know for future ML work.
+
+### What It Means
+
+The "can we get it to iOS?" question is now answered. The CoreML model produces identical predictions to the Python model (100% Viterbi parity), fits in the bundle at 5.15 MB, and Xcode generates the prediction class automatically. Phase 4 is the transition from Python to Swift: implementing `ViterbiDecoder.swift` and `MLIngredientParser.swift` that consume these resources at runtime.
+
+---
+
 ## Session 27 — February 21, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 2: Model Architecture & Training)
 **Branch**: `feature/M8.4-ml-parsing`
