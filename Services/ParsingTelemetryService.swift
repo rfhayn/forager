@@ -344,6 +344,67 @@ class ParsingTelemetryService: ObservableObject {
         return String(data: data, encoding: .utf8)
     }
 
+    // MARK: - M8.4 Phase 8: Training Data Export
+
+    /// Export correction events as JSONL training data for model retraining.
+    /// Each line is a JSON object with "tokens" and "labels" arrays.
+    /// Uses shared `foragerTokenize()` to ensure token consistency with ML inference.
+    ///
+    /// Quality filter: skips corrections where nothing changed or correctedName is empty.
+    /// Labels: QTY, UNIT, NAME (corrections don't capture MODIFIER/PREP/COMMENT).
+    func exportCorrectionsAsTrainingData() -> String {
+        var lines: [String] = []
+
+        for correction in telemetryData.correctionEvents {
+            // Quality filter: skip no-op corrections
+            guard correction.nameChanged || correction.quantityChanged || correction.unitChanged else {
+                continue
+            }
+
+            // Skip corrections with empty corrected name
+            guard !correction.correctedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                continue
+            }
+
+            var tokens: [String] = []
+            var labels: [String] = []
+
+            // Reconstruct tokens + labels from corrected fields
+            if let qty = correction.correctedQuantity {
+                let qtyTokens = foragerTokenize(formatQuantity(qty), maxTokens: Int.max)
+                tokens.append(contentsOf: qtyTokens)
+                labels.append(contentsOf: Array(repeating: "QTY", count: qtyTokens.count))
+            }
+
+            if let unit = correction.correctedUnit,
+               !unit.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let unitTokens = foragerTokenize(unit, maxTokens: Int.max)
+                tokens.append(contentsOf: unitTokens)
+                labels.append(contentsOf: Array(repeating: "UNIT", count: unitTokens.count))
+            }
+
+            let nameTokens = foragerTokenize(correction.correctedName, maxTokens: Int.max)
+            tokens.append(contentsOf: nameTokens)
+            labels.append(contentsOf: Array(repeating: "NAME", count: nameTokens.count))
+
+            guard !tokens.isEmpty else { continue }
+
+            // Serialize as JSONL line
+            let entry: [String: [String]] = ["tokens": tokens, "labels": labels]
+            if let data = try? JSONSerialization.data(withJSONObject: entry, options: [.sortedKeys]),
+               let line = String(data: data, encoding: .utf8) {
+                lines.append(line)
+            }
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    /// Format quantity for tokenization: integers → "2", fractional → "2.5"
+    private func formatQuantity(_ qty: Double) -> String {
+        return String(format: "%g", qty)
+    }
+
     /// Clear all telemetry data (for testing/privacy)
     func clearAllData() {
         queue.async { [weak self] in

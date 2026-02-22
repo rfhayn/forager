@@ -1,18 +1,18 @@
 # Current Development Story
 
 **Last Updated**: February 22, 2026
-**Status**: M8.4 Phase 0-7 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~235 hours | 89% planning accuracy
+**Status**: M8.4 Phase 0-8 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~237 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-7 ✅ COMPLETE, **Phase 8 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-8 ✅ COMPLETE, **Phase 9 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phases 8-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phase 9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
-## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-7 Complete)**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-8 Complete)**
 
-**Status**: 🔄 **ACTIVE** — Phase 0-7 ✅ COMPLETE, Phase 8 NEXT
+**Status**: 🔄 **ACTIVE** — Phase 0-8 ✅ COMPLETE, Phase 9 NEXT
 **Session**: February 22, 2026 (sessions 29-32)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
@@ -257,6 +257,27 @@ Fixed 14+ pre-existing test failures across 7 test classes. Also fixed test runn
 - `MigrationValidationTests.swift` — property name corrections
 - `WeeklyListServiceTests.swift` — displayText + @MainActor tearDown
 
+### **Phase 8: Continuous Learning Pipeline** ✅
+
+Closed the feedback loop: correction export + retraining script.
+
+**Shared tokenizer extraction:**
+- Extracted `foragerTokenize()` from `MLIngredientParser` into `IngredientTokenizer.swift`
+- Ensures token consistency between ML inference and correction export
+- `MLIngredientParser.tokenize()` now delegates to shared function
+
+**Correction export (`ParsingTelemetryService.exportCorrectionsAsTrainingData()`):**
+- Synthetic reconstruction from corrected fields (QTY/UNIT/NAME labels)
+- Quality filter: skips no-op corrections and empty names
+- Output: JSONL matching Phase 1 training data schema
+- 6 new tests (TEST-TEL-032 through TEST-TEL-037), all passing
+
+**Python retraining script (`Tools/ml-training/retrain_with_corrections.py`):**
+- Fine-tunes from existing checkpoint (lower LR: 0.0005 vs 0.001)
+- Auto-oversampling (up to 50x) to give corrections meaningful influence
+- Improvement gate: saves retrained model only if both primary metrics improve
+- Reuses all infrastructure from `train_model.py`
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
@@ -270,7 +291,7 @@ Fixed 14+ pre-existing test failures across 7 test classes. Also fixed test runn
 | Test | Status | Notes |
 |------|--------|-------|
 | Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
-| Existing tests | ✅ ALL PASSING | 245/245 unit tests, 0 failures, TEST SUCCEEDED (pre-existing fixed in Phase 7.5) |
+| Existing tests | ✅ ALL PASSING | 251/251 unit tests, 0 failures, TEST SUCCEEDED (245 + 6 Phase 8 export tests) |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
 | Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |

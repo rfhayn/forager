@@ -6,6 +6,35 @@
 
 ---
 
+## Session 34 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 8: Continuous Learning Pipeline)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Closed the ML feedback loop. Phase 7 wired correction telemetry into production edit flows; Phase 8 makes those corrections usable for model improvement. Two deliverables: a Swift correction-to-training-data exporter and a Python fine-tuning script.
+
+### Key Design Decisions
+
+**Shared tokenizer extraction**: The tokenizer in `MLIngredientParser` was a 50-line method that only used a static punctuation set — completely stateless. Extracting it as a free function `foragerTokenize()` lets both `MLIngredientParser` (inference) and `ParsingTelemetryService` (export) share the exact same tokenization logic. This is critical for train/serve consistency — if the export tokenized differently from inference, the model would train on mismatched data.
+
+**Synthetic reconstruction over raw input alignment**: Corrections carry corrected fields (name, quantity, unit) but not the original raw text. Rather than trying to re-derive raw text from the correction metadata, we reconstruct clean training tokens from the corrected fields themselves. This actually produces *better* training data than raw input alignment would, because the reconstructed form matches the clean tokenized distribution the model was originally trained on.
+
+**Fine-tune with oversampling**: 50 corrections in a 55k-sample training set is noise (<0.1%). The script auto-oversamples corrections up to 50x (targeting ~4.5% of the merged set), giving them enough gradient influence to matter. Combined with a lower learning rate (0.0005 vs 0.001), this balances learning from corrections against preserving existing model knowledge.
+
+### What Went Well
+
+- Clean extraction of tokenizer: swapping from `Self.punctuation` to module-level `tokenizerPunctuation` was straightforward because the tokenizer was already stateless
+- All 6 new export tests passed on first run
+- Build succeeded immediately after all changes — no compilation issues
+- Python script reuses all infrastructure from `train_model.py` (model, dataset, training, evaluation, export) — zero code duplication
+
+### Test Results
+
+251 total tests (245 existing + 6 new), 0 failures. `** TEST SUCCEEDED **`.
+
+---
+
 ## Session 33 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 7.5: Test Failure Fixes)
 **Branch**: `feature/M8.4-ml-parsing`
