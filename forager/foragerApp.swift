@@ -95,6 +95,12 @@ struct foragerApp: App {
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
+
+        // M8.4: CoreML warmup — triggers lazy model loading off main thread
+        // Prevents first-prediction latency spike (100-500ms JIT compilation)
+        DispatchQueue.global(qos: .utility).async {
+            _ = IngredientParsingService.extractCleanIngredientName(from: "warmup")
+        }
     }
 
     var body: some Scene {

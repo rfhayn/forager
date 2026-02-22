@@ -36,14 +36,14 @@ final class HybridIngredientParserTests: XCTestCase {
         XCTAssertEqual(result.confidence, 1.0)
     }
 
-    func testMediumConfidenceConsultsNLP() {
+    func testMediumConfidenceConsultsMLOrNLP() {
         // Ambiguous input that regex can parse but with lower confidence
         // "garlic, minced" gets parsed by qualifier pattern with confidence 0.70
         let result = parser.parse("garlic, minced")
         XCTAssertTrue(result.name.lowercased().contains("garlic"))
-        // Should be "hybrid" or "nlp" since regex confidence < 0.8
-        XCTAssertTrue(["hybrid", "nlp"].contains(result.parserUsed),
-            "Low-confidence regex should trigger NLP consultation, got: \(result.parserUsed)")
+        // M8.4: Winner-only attribution — should be "regex", "ml", or "nlp" (never "hybrid")
+        XCTAssertTrue(["regex", "ml", "nlp"].contains(result.parserUsed),
+            "Should use winner-only attribution, got: \(result.parserUsed)")
     }
 
     func testZeroConfidenceFallsBackToNLP() {

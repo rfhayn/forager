@@ -1,19 +1,19 @@
 # Current Development Story
 
 **Last Updated**: February 22, 2026
-**Status**: M8.4 Phase 0-4 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Status**: M8.4 Phase 0-5 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
 **Total Progress**: ~233 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-4 ✅ COMPLETE, **Phase 5 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-5 ✅ COMPLETE, **Phase 6 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phase 5 → Phases 6-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phase 6 → Phases 7-9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
-## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-4 Complete)**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-5 Complete)**
 
-**Status**: 🔄 **ACTIVE** — Phase 0-4 ✅ COMPLETE, Phase 5 NEXT
-**Session**: February 22, 2026 (session 29)
+**Status**: 🔄 **ACTIVE** — Phase 0-5 ✅ COMPLETE, Phase 6 NEXT
+**Session**: February 22, 2026 (sessions 29-30)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours total (10 phases)
@@ -149,12 +149,43 @@ Swift runtime components consuming the CoreML model.
 - PREP + COMMENT labels grouped for notes field
 - Unit standardization matches existing parser patterns
 
+### **Phase 5: HybridIngredientParser Integration** ✅
+
+3-tier routing integration — ML parser slotted between regex and NLP.
+
+**HybridIngredientParser.swift** (rewritten)
+- Added `mlParser: IngredientParser?` parameter (default: `MLIngredientParser()`)
+- Raised regex threshold from 0.8 → 0.9 (skip ML only for very high-confidence regex)
+- 3-tier routing: regex ≥0.9 → ML ≥0.8 → NLP fallback (only when both < 0.5)
+- Winner-only attribution: `parserUsed` reports winning parser, never `"hybrid"`
+- `#if DEBUG` warning when ML parser fails to load
+- Graceful degradation: when `mlParser == nil`, falls back to original 2-tier behavior
+
+**Comment Updates**
+- `IngredientParser.swift`: Protocol doc updated for 3 implementations, `parserUsed` values: `"regex"`, `"ml"`, `"nlp"`
+- `ParsingTelemetryService.swift`: `parserUsed` comment updated from `"hybrid"` to winner-only
+
+**CoreML Warmup**
+- `foragerApp.init()`: Background warmup via `DispatchQueue.global(qos: .utility).async`
+- Triggers lazy model loading off main thread, prevents first-prediction latency spike
+
+**Test Updates**
+- `HybridParserRoutingTests.swift`: Rewritten for 3-tier routing with `mockML` parser
+- New tests: ML wins when confident, regex vs ML moderate range, NLP gate, no-ML degradation
+- `HybridIngredientParserTests.swift`: Updated `testMediumConfidenceConsultsMLOrNLP` assertion
+
+**ADR 010 Updated**
+- Routing diagram: 3-tier (regex → ML → NLP) with thresholds
+- Winner-only attribution documented
+- File locations updated with MLIngredientParser, ViterbiDecoder, CoreML model
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
 3. `ce98e43` — M8.4 Phase 2: BiLSTM-CRF model training pipeline
 4. `6c37b28` — M8.4 Phase 3: CoreML conversion + Viterbi parity gate
 5. (pending) — M8.4 Phase 4: ViterbiDecoder + MLIngredientParser
+6. (pending) — M8.4 Phase 5: HybridIngredientParser 3-tier integration
 
 ### **Testing Status**
 
@@ -171,6 +202,8 @@ Swift runtime components consuming the CoreML model.
 | Xcode integration | ✅ BUILD SUCCEEDED | .mlpackage compiled, JSON in bundle |
 | ViterbiDecoder | ✅ BUILD SUCCEEDED | Compiles, matches PRD + Python reference |
 | MLIngredientParser | ✅ BUILD SUCCEEDED | Full pipeline compiles, IngredientParser protocol |
+| 3-tier routing | ✅ BUILD SUCCEEDED | HybridIngredientParser with ML tier, winner-only attribution |
+| Test target | ✅ TEST BUILD SUCCEEDED | Updated routing tests compile with 3-tier assertions |
 
 ### **Files Created/Modified**
 
@@ -198,6 +231,13 @@ Swift runtime components consuming the CoreML model.
 | `forager.xcodeproj/project.pbxproj` | MODIFIED | +mlpackage in Sources, +JSON in Resources |
 | `Services/Parsing/ViterbiDecoder.swift` | NEW | Pure-Swift Viterbi decoder (~70 lines) |
 | `Services/Parsing/MLIngredientParser.swift` | NEW | ML parser: tokenize → CoreML → Viterbi → result (~300 lines) |
+| `Services/Parsing/HybridIngredientParser.swift` | MODIFIED | 3-tier routing, mlParser param, winner-only attribution |
+| `Services/Parsing/IngredientParser.swift` | MODIFIED | Protocol/parserUsed comment updates for ML tier |
+| `Services/ParsingTelemetryService.swift` | MODIFIED | parserUsed comment update (winner-only) |
+| `forager/foragerApp.swift` | MODIFIED | CoreML warmup in init() |
+| `docs/architecture/010-hybrid-parser-confidence-routing.md` | MODIFIED | 3-tier routing, winner-only attribution |
+| `foragerTests/Services/Parsing/HybridParserRoutingTests.swift` | MODIFIED | Rewritten for 3-tier with mockML |
+| `foragerTests/Services/Parsing/HybridIngredientParserTests.swift` | MODIFIED | Winner-only assertion update |
 
 ---
 
@@ -423,7 +463,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 | 2 | Model Architecture & Training | 4-5h | ✅ COMPLETE |
 | 3 | CoreML Conversion | 2-3h | ✅ COMPLETE |
 | 4 | MLIngredientParser Implementation | 3-4h | ✅ COMPLETE |
-| 5 | HybridIngredientParser Integration | 2-3h | ⏳ |
+| 5 | HybridIngredientParser Integration | 2-3h | ✅ COMPLETE |
 | 6 | Test Suite | 2-3h | ⏳ |
 | 7 | Correction Instrumentation | 2-3h | ⏳ |
 | 8 | Continuous Learning Pipeline | 2h | ⏳ |
@@ -435,7 +475,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-4 ✅ → **Phase 5 NEXT** → Phases 6-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-5 ✅ → **Phase 6 NEXT** → Phases 7-9 → M7.7 App Store
 
 ---
 
@@ -1501,8 +1541,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 22, 2026 - M8.4 Phase 4 COMPLETE (ViterbiDecoder.swift + MLIngredientParser.swift, BUILD SUCCEEDED)
-**Next Action**: M8.4 Phase 5 (HybridIngredientParser integration, 2-3h) → Phase 6 (tests, 2-3h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
+**Last Session**: February 22, 2026 - M8.4 Phase 5 COMPLETE (3-tier routing, winner-only attribution, CoreML warmup, BUILD + TEST BUILD SUCCEEDED)
+**Next Action**: M8.4 Phase 6 (test suite, 2-3h) → Phase 7+8 (corrections + continuous learning, 4-5h) → Phase 9 (integration, 1-2h)
 **Branch**: `feature/M8.4-ml-parsing`
-**Confidence**: **GREEN** (Phase 0-4 complete, ML parser implements IngredientParser protocol, Viterbi decoder matches Python reference, ready for routing integration)
-**Version**: February 22, 2026 - M8.4 Phase 0-4 COMPLETE, Phase 5 NEXT
+**Confidence**: **GREEN** (Phase 0-5 complete, ML parser fully integrated into routing chain, 3-tier routing works, winner-only attribution in place)
+**Version**: February 22, 2026 - M8.4 Phase 0-5 COMPLETE, Phase 6 NEXT

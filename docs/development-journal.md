@@ -6,6 +6,38 @@
 
 ---
 
+## Session 30 — February 22, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 5: HybridIngredientParser Integration)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+Phase 5 integrates the ML parser into the production routing chain. This is the culmination of Phases 0-4 — the ML model is now live in the app, processing real ingredient text alongside regex and NLP.
+
+The core change was rewriting `HybridIngredientParser.swift` from 2-tier (regex → NLP) to 3-tier (regex → ML → NLP) routing with winner-only attribution. The routing logic mirrors the PRD pseudocode almost exactly, with graceful degradation when the ML model is unavailable (`mlParser: IngredientParser? = nil`).
+
+**Files changed**: 9 production files + 2 test files + 1 ADR document. Despite the breadth, each change was surgical — routing logic update, comment updates, warmup call, and test assertion fixes.
+
+### Decisions Made and Why
+
+**NLP gate at both < 0.5**: NLP is only consulted when BOTH regex and ML produce confidence below 0.5. This is conservative but intentional — NLP's confidence cap (0.75 from ADR 010) means it can never beat a decent ML result (0.5-0.8), so consulting it in the moderate band wastes time. The gate protects against NLP overriding ML on inputs where ML is simply less confident than usual but still correct.
+
+**Winner-only attribution over "hybrid" label**: The old `"hybrid"` parserUsed value was a routing artifact — it said "regex won but we checked NLP too." For telemetry analysis, you want to know which parser to improve: group corrections by `parserUsed` and each group directly measures one parser's accuracy. `"hybrid"` would require additional metadata about consultation history.
+
+**CoreML warmup in `foragerApp.init()`**: The static `sharedParser` lazily loads the CoreML model on first use. If that first use is during SwiftUI body evaluation (e.g., `extractCleanIngredientName` called from a view), the 100-500ms JIT compilation blocks the main thread. A one-line warmup dispatch during app init prevents this entirely.
+
+### AI Tooling Learnings
+
+Context recovery from session compaction was seamless. The summary preserved every detail needed to continue: PRD line numbers, file contents read in the previous session, the "yes, let's continue with phase 5" user intent, and the detailed routing pseudocode from the PRD. No ramp-up time was needed.
+
+The build → test build verification (both SUCCEEDED) confirmed that changes across 11 files compile correctly together. SourceKit continued to report false positives about missing types — these are consistently unreliable in this project's `PBXFileSystemSynchronizedRootGroup` structure.
+
+### What It Means
+
+The ML parser is now live in the routing chain. Every `HybridIngredientParser()` instance — including the static `sharedParser` — now includes the ML tier by default. Phase 6 (tests) will validate that the routing works correctly with real model outputs, and that known regex failure cases are handled by the ML parser.
+
+---
+
 ## Session 29 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 4: ViterbiDecoder + MLIngredientParser)
 **Branch**: `feature/M8.4-ml-parsing`

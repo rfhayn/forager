@@ -20,7 +20,7 @@ struct ParsingTelemetryEvent: Codable, Identifiable {
     let parsedQuantity: Double?
     let parsedUnit: String?
     let parseConfidence: Float
-    let parserUsed: String?     // M8.3: "regex", "nlp", or "hybrid"
+    let parserUsed: String?     // M8.4: "regex", "ml", or "nlp" (winner-only attribution)
     let source: ParsingSource
 
     /// Where the parsing occurred
