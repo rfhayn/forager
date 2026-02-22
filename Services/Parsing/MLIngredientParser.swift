@@ -80,22 +80,38 @@ class MLIngredientParser: IngredientParser {
             StringTransform("NFKD"), reverse: false
         ) else { return text.split(separator: " ").map(String.init) }
 
-        // Step 2: Lowercase
-        let lowered = normalized.lowercased()
+        // Step 2: Strip combining marks (diacritics) — matches Python's encode('ascii','ignore')
+        // After NFKD, ñ becomes n + combining tilde (U+0303). Stripping Unicode category M
+        // characters produces the ASCII-folded form the model was trained on.
+        let stripped = String(normalized.unicodeScalars.filter {
+            !CharacterSet.nonBaseCharacters.contains($0)
+        })
 
-        // Step 3: Whitespace normalization (strip + collapse)
+        // Step 3: Lowercase
+        let lowered = stripped.lowercased()
+
+        // Step 4: Whitespace normalization (strip + collapse)
         let collapsed = lowered.split(omittingEmptySubsequences: true,
                                        whereSeparator: \.isWhitespace)
                                .joined(separator: " ")
 
-        // Step 4: Punctuation splitting
+        // Step 5: Punctuation splitting
         // Hyphens (-) and apostrophes (') are NOT split — part of compound words/contractions
+        // Periods (.) and slashes (/) between digits are NOT split — preserves decimals and fractions
+        let chars = Array(collapsed)
         var result: [Character] = []
-        for char in collapsed {
+        for (i, char) in chars.enumerated() {
             if Self.punctuation.contains(char) {
-                result.append(" ")
-                result.append(char)
-                result.append(" ")
+                let prevIsDigit = i > 0 && chars[i - 1].isNumber
+                let nextIsDigit = i < chars.count - 1 && chars[i + 1].isNumber
+                if (char == "." || char == "/") && prevIsDigit && nextIsDigit {
+                    // Keep . and / between digits (decimals: 14.5, fractions: 1/4)
+                    result.append(char)
+                } else {
+                    result.append(" ")
+                    result.append(char)
+                    result.append(" ")
+                }
             } else {
                 result.append(char)
             }

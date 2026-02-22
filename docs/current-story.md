@@ -1,19 +1,19 @@
 # Current Development Story
 
 **Last Updated**: February 22, 2026
-**Status**: M8.4 Phase 0-5 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Status**: M8.4 Phase 0-6 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
 **Total Progress**: ~233 hours | 89% planning accuracy
 **Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-5 ✅ COMPLETE, **Phase 6 NEXT**
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-6 ✅ COMPLETE, **Phase 7 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phase 6 → Phases 7-9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phases 7-9 → M7.7 → M6 → M9 remaining → M10+
 
 ---
 
 ## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-5 Complete)**
 
-**Status**: 🔄 **ACTIVE** — Phase 0-5 ✅ COMPLETE, Phase 6 NEXT
-**Session**: February 22, 2026 (sessions 29-30)
+**Status**: 🔄 **ACTIVE** — Phase 0-6 ✅ COMPLETE, Phase 7 NEXT
+**Session**: February 22, 2026 (sessions 29-31)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours total (10 phases)
@@ -179,6 +179,35 @@ Swift runtime components consuming the CoreML model.
 - Winner-only attribution documented
 - File locations updated with MLIngredientParser, ViterbiDecoder, CoreML model
 
+### **Phase 6: Test Suite + Tokenizer Fix** ✅
+
+Comprehensive tests for ML parser, Viterbi decoder, and tokenizer cross-validation.
+
+**ViterbiDecoderTests.swift** (NEW — 15 tests, pure algorithm, no CoreML)
+- Empty input, single token, multi-token sequences (2-5 tokens)
+- Start/end transition influence on label selection
+- Transition overrides vs emission scores
+- Backpointer correctness (non-greedy path selection)
+- Edge cases: all-equal scores, negative emissions, very large values
+- Full 7-label Forager label set (QTY/UNIT/NAME/MODIFIER/PREP/COMMENT/OTHER)
+
+**MLIngredientParserTests.swift** (NEW — 21 tests, requires CoreML model)
+- Model presence guard: `XCTAssertNotNil(MLIngredientParser())`
+- Standard format regression: cups flour, tbsp olive oil, lb ground beef
+- Known regex failure cases: cloves as unit, fractions with compound names, product variants
+- Fractions: simple (1/2), unicode (½), mixed fractions
+- Complex inputs: parentheticals, comma-separated prep, name-only, single-word
+- Confidence range validation, parser attribution, original text preservation
+- Tokenizer cross-validation against frozen test vectors (inline subset)
+- Performance: 0.84ms per parse (100 parses, well under 5ms target)
+
+**Tokenizer Bug Fix** (discovered by cross-validation tests)
+- Fixed `/` between digits being split (fractions: `1/4` → was `["1", "/", "4"]`, now `["1/4"]`)
+- Fixed `.` between digits being split (decimals: `14.5` → was `["14", ".", "5"]`, now `["14.5"]`)
+- Fixed NFKD combining marks not stripped (`jalapeño` → now correctly `jalapeno`)
+- Root cause: Swift tokenizer had punctuation splitting that didn't match Python training tokenizer
+- Impact: Model now receives correct token IDs matching what it was trained on
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
@@ -204,6 +233,10 @@ Swift runtime components consuming the CoreML model.
 | MLIngredientParser | ✅ BUILD SUCCEEDED | Full pipeline compiles, IngredientParser protocol |
 | 3-tier routing | ✅ BUILD SUCCEEDED | HybridIngredientParser with ML tier, winner-only attribution |
 | Test target | ✅ TEST BUILD SUCCEEDED | Updated routing tests compile with 3-tier assertions |
+| ViterbiDecoderTests | ✅ 15/15 PASSING | Pure algorithm tests, no CoreML dependency |
+| MLIngredientParserTests | ✅ 21/21 PASSING | Model presence guard, accuracy, tokenizer, performance |
+| ML parse performance | ✅ 0.84ms/parse | Well under 5ms target (100 parses steady-state) |
+| Tokenizer cross-validation | ✅ PASSING | Inline vectors match after fraction/decimal/NFKD fix |
 
 ### **Files Created/Modified**
 
@@ -238,6 +271,9 @@ Swift runtime components consuming the CoreML model.
 | `docs/architecture/010-hybrid-parser-confidence-routing.md` | MODIFIED | 3-tier routing, winner-only attribution |
 | `foragerTests/Services/Parsing/HybridParserRoutingTests.swift` | MODIFIED | Rewritten for 3-tier with mockML |
 | `foragerTests/Services/Parsing/HybridIngredientParserTests.swift` | MODIFIED | Winner-only assertion update |
+| `foragerTests/Services/Parsing/ViterbiDecoderTests.swift` | NEW | 15 pure algorithm tests |
+| `foragerTests/Services/Parsing/MLIngredientParserTests.swift` | NEW | 21 integration tests (model + tokenizer + perf) |
+| `Services/Parsing/MLIngredientParser.swift` | MODIFIED | Tokenizer fix: fraction/decimal/NFKD combining marks |
 
 ---
 
@@ -464,7 +500,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 | 3 | CoreML Conversion | 2-3h | ✅ COMPLETE |
 | 4 | MLIngredientParser Implementation | 3-4h | ✅ COMPLETE |
 | 5 | HybridIngredientParser Integration | 2-3h | ✅ COMPLETE |
-| 6 | Test Suite | 2-3h | ⏳ |
+| 6 | Test Suite + Tokenizer Fix | 2-3h | ✅ COMPLETE |
 | 7 | Correction Instrumentation | 2-3h | ⏳ |
 | 8 | Continuous Learning Pipeline | 2h | ⏳ |
 | 9 | Integration Testing & Documentation | 1-2h | ⏳ |
@@ -475,7 +511,7 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-5 ✅ → **Phase 6 NEXT** → Phases 7-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-6 ✅ → **Phase 7 NEXT** → Phases 8-9 → M7.7 App Store
 
 ---
 
@@ -1541,8 +1577,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 22, 2026 - M8.4 Phase 5 COMPLETE (3-tier routing, winner-only attribution, CoreML warmup, BUILD + TEST BUILD SUCCEEDED)
-**Next Action**: M8.4 Phase 6 (test suite, 2-3h) → Phase 7+8 (corrections + continuous learning, 4-5h) → Phase 9 (integration, 1-2h)
+**Last Session**: February 22, 2026 - M8.4 Phase 6 COMPLETE (36 new tests, tokenizer bug fix, 0.84ms/parse performance)
+**Next Action**: M8.4 Phase 7+8 (corrections + continuous learning, 4-5h) → Phase 9 (integration, 1-2h)
 **Branch**: `feature/M8.4-ml-parsing`
-**Confidence**: **GREEN** (Phase 0-5 complete, ML parser fully integrated into routing chain, 3-tier routing works, winner-only attribution in place)
-**Version**: February 22, 2026 - M8.4 Phase 0-5 COMPLETE, Phase 6 NEXT
+**Confidence**: **GREEN** (Phase 0-6 complete, 36 new tests passing, tokenizer bug discovered and fixed by cross-validation, ML parsing fully tested)
+**Version**: February 22, 2026 - M8.4 Phase 0-6 COMPLETE, Phase 7 NEXT

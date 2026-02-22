@@ -10,6 +10,8 @@
 		2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */; };
 		D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */; };
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
+		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
+		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
 		85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */; };
 		85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */; };
@@ -268,6 +270,8 @@
 		C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridIngredientParserTests.swift; sourceTree = "<group>"; };
 		D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridParserRoutingTests.swift; sourceTree = "<group>"; };
 		F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockIngredientParser.swift; sourceTree = "<group>"; };
+		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
+		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 		9BMLM00100010001AABB0001 /* IngredientTaggerEmissions.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = IngredientTaggerEmissions.mlpackage; sourceTree = "<group>"; };
 		9BMLM00100010001AABB0002 /* transitions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = transitions.json; sourceTree = "<group>"; };
 		9BMLM00100010001AABB0003 /* vocabulary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vocabulary.json; sourceTree = "<group>"; };
@@ -313,6 +317,8 @@
 				25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */,
 				C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */,
 				D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */,
+				M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */,
+				M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */,
 			);
 			path = Parsing;
 			sourceTree = "<group>";
@@ -775,6 +781,8 @@
 				E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */,
 				09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */,
 				C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */,
+				M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */,
+				M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
