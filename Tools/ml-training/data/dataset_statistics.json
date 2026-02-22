@@ -1,0 +1,53 @@
+{
+  "total_sentences": 68846,
+  "total_tokens": 533235,
+  "label_distribution": {
+    "COMMENT": {
+      "count": 53583,
+      "pct": "10.0%"
+    },
+    "MODIFIER": {
+      "count": 5715,
+      "pct": "1.1%"
+    },
+    "NAME": {
+      "count": 162125,
+      "pct": "30.4%"
+    },
+    "OTHER": {
+      "count": 70775,
+      "pct": "13.3%"
+    },
+    "PREP": {
+      "count": 88830,
+      "pct": "16.7%"
+    },
+    "QTY": {
+      "count": 80905,
+      "pct": "15.2%"
+    },
+    "UNIT": {
+      "count": 71302,
+      "pct": "13.4%"
+    }
+  },
+  "source_distribution": {
+    "allrecipes": 14792,
+    "bbc": 14738,
+    "cookstr": 14087,
+    "nyt": 18940,
+    "tc": 6289
+  },
+  "token_length": {
+    "min": 1,
+    "max": 50,
+    "mean": "7.7",
+    "median": "7.0",
+    "p95": "15"
+  },
+  "splits": {
+    "train": 55076,
+    "val": 6885,
+    "test": 6885
+  }
+}
