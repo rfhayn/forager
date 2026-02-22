@@ -3,7 +3,7 @@
 **Last Updated**: February 21, 2026
 **Current Phase**: **M9.5-partial ✅ COMPLETE** | **M9.1.2 ✅ COMPLETE** | **M9.0 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M8.4 📋 NEXT**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9.0 COMPLETE, M9.1.2 COMPLETE, M9.5-partial COMPLETE
-**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Execution Order**: M8.4 (23-32h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -938,9 +938,9 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - 19 new unit tests covering all merge scenarios
 - **Source**: [M8.3.2 PRD](prds/complete/m8.3.2-auto-merge-grocery-quantities.md)
 
-**M8.4: ML-Powered Parsing (18-24 hours) - READY** 🎓🚀
+**M8.4: ML-Powered Parsing (23-32 hours) - READY** 🎓🚀
 - **Approach changed**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (BIO tagging)
-- **Training data**: NYT (180k) + strangetom (81k) = ~260k labeled ingredient sentences
+- **Training data**: strangetom (81k sentences, 13 labels) + NYT supplement → ~120-150k unique after dedup
 - **No cold start**: Model ready from day one — no need for 100+ user corrections first
 - **Moved to pre-launch**: Resolves class-level parsing failures (cloves, fractions, product variants)
 - **Prerequisites**: M9.0 (warnings), M9.1.2 (centralize extractCleanIngredientName), M9.5-partial (parser DI) — ~9h total
@@ -1478,7 +1478,7 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 |------|--------|------------|
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
 | M9-prereqs (M9.0, M9.1.2, M9.5-partial) | ✅ COMPLETE | ~6h actual |
-| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **18-24h** |
+| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **23-32h** |
 | M7.7: App Store Submission | 📋 QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
@@ -1512,5 +1512,5 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 19. **M7.5 before M9-prereqs** — Clean service layer first, then parser DI and ML work build on solid foundation
 20. **M7.7 after M8.4** — App Store submission delayed until ML parser is in, so we launch with the best parsing
 21. **M6 before M9 remaining** — Testing foundation protects quality during the big ~120h tech debt refactor
-22. **BiLSTM-CRF over Transformer** — 2-5 MB model size, <5ms inference, 260k training sentences. Slots into existing HybridIngredientParser as third tier.
+22. **BiLSTM-CRF over Transformer** — 2-5 MB model size, <5ms inference, ~120-150k unique training sentences (strangetom + NYT after dedup). Slots into existing HybridIngredientParser as third tier.
 23. **M15 testing bug fixes** — 7 commits on branch: EditRecipeView structured qty loss, redundant displays, strikethrough, dark mode settings, template sanitization, category refresh, code review fixes, pluralization fixes

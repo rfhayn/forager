@@ -3,7 +3,7 @@
 **Last Updated**: February 21, 2026
 **Version**: 6.8
 **Current Milestone**: M9.5-partial ✅ COMPLETE | M8.4 📋 NEXT | M15 ✅ COMPLETE
-**Execution Order**: M8.4 (18-24h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Execution Order**: M8.4 (23-32h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -550,7 +550,7 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 | **NFR-ML-004** | **Privacy compliance** | 100% on-device, no cloud calls | M8.4 | 🎯 **User trust** |
 | **NFR-ML-005** | **Zero regressions** | Existing patterns maintain/improve accuracy | M8 All | 🎯 **Quality** |
 
-**M8 Summary**: 43 requirements across 5 phases: resilience & telemetry (6 ✅), hybrid NLP parser (10 ✅), template hygiene (6 ✅), auto-merge grocery (5 ✅), ML enhancement (8 📋 READY), and non-functional requirements (10). Professional-grade 98%+ accuracy achieved. M8.2 skipped (PRD analysis sufficient). **M8.4 moved to pre-launch** — dataset-bootstrapped CoreML (no cold start). Total done: ~17h, 102 unit tests. M8.4 remaining: 18-24h + 9h prerequisites.
+**M8 Summary**: 43 requirements across 5 phases: resilience & telemetry (6 ✅), hybrid NLP parser (10 ✅), template hygiene (6 ✅), auto-merge grocery (5 ✅), ML enhancement (8 📋 READY), and non-functional requirements (10). Professional-grade 98%+ accuracy achieved. M8.2 skipped (PRD analysis sufficient). **M8.4 moved to pre-launch** — dataset-bootstrapped CoreML (no cold start). Total done: ~17h, 102 unit tests. M8.4 remaining: 23-32h (9h prerequisites already complete).
 
 ---
 
