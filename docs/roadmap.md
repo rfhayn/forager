@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 21, 2026
-**Current Phase**: **M9.5-partial ✅ COMPLETE** | **M9.1.2 ✅ COMPLETE** | **M9.0 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M8.4 📋 NEXT**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9.0 COMPLETE, M9.1.2 COMPLETE, M9.5-partial COMPLETE
-**Execution Order**: M8.4 (23-32h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Phase**: **M8.4 Phase 0+1 ✅ COMPLETE** | Phase 2 **NEXT** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8 parsing intelligence complete, M7.6 complete, TestFlight live, M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE, M8.4 Phase 0+1 COMPLETE
+**Execution Order**: M8.4 Phase 2-9 (19-28h remaining) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -938,12 +938,14 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - 19 new unit tests covering all merge scenarios
 - **Source**: [M8.3.2 PRD](prds/complete/m8.3.2-auto-merge-grocery-quantities.md)
 
-**M8.4: ML-Powered Parsing (23-32 hours) - READY** 🎓🚀
-- **Approach changed**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (BIO tagging)
-- **Training data**: strangetom (81k sentences, 13 labels) + NYT supplement → ~120-150k unique after dedup
+**M8.4: ML-Powered Parsing (23-32 hours) - 🔄 ACTIVE** 🎓
+- **Phase 0+1**: ✅ COMPLETE (~4h) — contract lock, single-parse refactor, dataset preparation (68,846 samples)
+- **Phase 2**: 📋 NEXT — model training (BiLSTM-CRF, word-only)
+- **Phases 3-9**: ⏳ — CoreML export, Swift implementation, integration, testing, corrections, docs
+- **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (BIO tagging)
+- **Training data**: strangetom 81k → 68,846 unique after dedup, 7 Forager labels, 80/10/10 splits
 - **No cold start**: Model ready from day one — no need for 100+ user corrections first
-- **Moved to pre-launch**: Resolves class-level parsing failures (cloves, fractions, product variants)
-- **Prerequisites**: M9.0 (warnings), M9.1.2 (centralize extractCleanIngredientName), M9.5-partial (parser DI) — ~9h total
+- **Prerequisites**: All complete (M9.0, M9.1.2, M9.5-partial — ~6h total)
 - **Source**: [M8.4 ML-Powered Parsing PRD](prds/active/m8.4-ml-powered-parsing.md)
 
 **Success Criteria:**
@@ -1202,7 +1204,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M15**: UX Design System & Visual Refresh (~50-65h)
 - **M7.5**: Architecture Hardening (~5h)
 - **M9.0**: Warning Resolution (<1h)
-- **Total Completed**: ~221 hours
+- **M9.1.2**: Centralize extractCleanIngredientName (~2h)
+- **M9.5-partial**: Parser Dependency Injection (~3h)
+- **M8.4 Phase 0+1**: Contract Lock + Dataset Preparation (~4h)
+- **Total Completed**: ~230 hours
 
 ### **Planned Core Platform:**
 - **M7**: 27-37 hours base, 32-42 hours with buffer (CloudKit sync + external TestFlight)
@@ -1456,9 +1461,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 
 ---
 
-**Next Action**: M8.4 (ML parsing) → M7.7 (App Store)
+**Next Action**: M8.4 Phase 2 (model training) → Phases 3-9 → M7.7 (App Store)
 
-**Status**: M1-M5.0 (~92.5h), M7.0-M7.6 (~81h), M8 (~17h), M15 (~50-65h), M7.5 (~5h), M9-prereqs (~6h). Total: ~226 hours. TestFlight live. Zero warnings. Parser DI complete.
+**Status**: M1-M5.0 (~92.5h), M7.0-M7.6 (~81h), M8 (~17h), M15 (~50-65h), M7.5 (~5h), M9-prereqs (~6h), M8.4 Phase 0+1 (~4h). Total: ~230 hours. TestFlight live. Zero warnings. Dataset ready (68,846 samples).
 
 ---
 

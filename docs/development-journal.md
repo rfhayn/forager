@@ -6,6 +6,54 @@
 
 ---
 
+## Session 26 — February 21, 2026
+**Milestone**: M8.4 ML-Powered Parsing (Phase 0+1: Contract Lock + Dataset Preparation)
+**Branch**: `feature/M8.4-ml-parsing`
+
+### What Happened
+
+The first implementation session of M8.4, covering two phases in a single session. Phase 0 locked all contracts (architecture, tokenizer spec, model card), and Phase 1 built the complete dataset preparation pipeline.
+
+**Phase 0 — Contract Lock (3 deliverables):**
+
+1. **Architecture locked**: Word-only BiLSTM v1 — no character features. The decision came from PRD review passes 1-11: char-level features add CoreML conversion complexity for marginal accuracy gain on ingredient vocabulary where words are already distinctive ("cups", "tsp", "garlic").
+
+2. **Tokenizer spec frozen**: `TOKENIZER_SPEC.md` with 100 test vectors covering NFKD normalization, case folding, punctuation splitting, and compound word preservation. The critical NFKD vs NFD distinction (Session 24 insight) was baked into the contract.
+
+3. **Single-parse refactor**: `parseCore()` became the single telemetry entry point, and `parseUnified()` returns both `ParsedIngredient` + `StructuredQuantity` from one `parser.parse()` call. This eliminated redundant parsing across 3 view files and IngredientParsingService itself — critical prep for when ML inference enters the pipeline.
+
+**Phase 1 — Dataset Preparation (1 deliverable):**
+
+4. **`prepare_dataset.py`**: Full pipeline converting strangetom's SQLite (81,316 rows) to Forager's JSONL format. Key steps: fraction decoding (3-pass `re.sub` for mixed/prefixed/simple fractions), 13→7 label mapping, deduplication by sentence (removed 12,470 = 15.3%), validation, statistics computation, stratified 80/10/10 splitting by source.
+
+Final dataset: 68,846 unique samples → 55,076 train / 6,885 val / 6,885 test. Zero data leakage verified between splits.
+
+### Decisions Made
+
+1. **strangetom only, not NYT**: The PRD originally mentioned merging NYT (180k) + strangetom. In practice, strangetom already includes NYT-sourced data among its 5 sources. Using strangetom's unified labeling avoids cross-dataset label alignment issues.
+
+2. **Deduplicate before splitting**: 15% of strangetom is duplicate sentences. Without dedup, identical sentences would appear in both training and test sets, inflating evaluation metrics. Standard ML hygiene, but the duplicate rate was higher than expected.
+
+3. **Coarse labels over fine-grained**: Mapping 13 strangetom labels to 7 Forager labels (QTY, UNIT, NAME, MODIFIER, PREP, COMMENT, OTHER) loses some granularity (B_NAME_TOK vs I_NAME_TOK distinction) but matches what Forager actually needs for structured ingredient display. The mapping is a dict, not regex, so it's auditable.
+
+4. **Fraction decoding at dataset time**: strangetom's `#num$den` notation must be decoded to decimals before training, since production text won't contain these encoding artifacts. The 3-pass `re.sub` approach handles mixed fractions, embedded ranges, and suffixed tokens cleanly.
+
+### Research and Planning Approach
+
+This was a "build exactly what the PRD says" session — the 11 review passes from Session 24 had already resolved all ambiguities. The only discovery was the deduplication rate being higher than anticipated (15% vs the implicit assumption of unique data).
+
+### AI Tooling Learnings
+
+**PRD review investment pays off immediately.** Zero implementation surprises — every edge case (fraction encoding, label mapping, deduplication, split leakage) was already spec'd. The single-parse refactor was identified in PRD review pass 1 (finding: "double-parsing per ingredient") and executed cleanly because the scope and rationale were pre-documented.
+
+### What It Means
+
+M8.4's foundation is solid: contracts locked, dataset ready, pipeline validated. Phase 2 (model training) is pure Python ML work — `train_model.py` with BiLSTM-CRF, early stopping, evaluation metrics. No Swift changes needed. The training targets are clear: ≥96% token accuracy, ≥92% sentence accuracy, ≥0.90 per-class F1 on QTY/UNIT/NAME.
+
+Next session: M8.4 Phase 2 (model architecture and training).
+
+---
+
 ## Session 25 — February 21, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Recipe Import Research & Validation)
 **Branch**: `main` (research session, no code changes)

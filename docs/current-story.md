@@ -1,12 +1,103 @@
 # Current Development Story
 
 **Last Updated**: February 21, 2026
-**Status**: M9.5-partial ✅ **COMPLETE** | M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **NEXT**
-**Total Progress**: ~226 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M9.5-partial ✅ COMPLETE | M8.4 ML-Powered Parsing — **NEXT**
+**Status**: M8.4 Phase 0+1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~230 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.4-ml-parsing`
+**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0+1 ✅ COMPLETE, **Phase 2 NEXT**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M8.4 Phase 2 → Phases 3-9 → M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0+1 Complete)**
+
+**Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE, Phase 2 NEXT
+**Session**: February 21, 2026 (session 26)
+**Branch**: `feature/M8.4-ml-parsing`
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
+**Estimated**: 23-32 hours total (10 phases)
+
+### **Phase 0: Contract Lock + Single-Parse Refactor** ✅
+
+Architecture locked and parsing infrastructure hardened for ML integration.
+
+**Phase 0a: Architecture Lock**
+- Word-only BiLSTM v1 (no char features) — locked for v1
+
+**Phase 0b: Tokenizer Spec**
+- `TOKENIZER_SPEC.md` — binding contract between Python training and Swift runtime tokenizers
+- NFKD normalization, case folding, whitespace normalization, punctuation splitting
+- 100-sentence test vectors in `data/tokenizer_test_vectors.json`
+
+**Phase 0c: Single-Parse Refactor**
+- Added `parseCore()` — private, single telemetry-instrumented entry point
+- Added `parseUnified()` — public, returns both `ParsedIngredient` + `StructuredQuantity` from one parse call
+- Added static mapping helpers (`mapToParsedIngredient`, `mapToStructuredQuantity`)
+- Refactored `parseAndConnectIngredients()` to use `parseUnified()` (was calling `parser.parse()` twice per ingredient)
+- Fixed 3 view files with double-parse patterns (GroceryListDetailView, AddListItemView, RecipeListView)
+
+**Phase 0d-e: Governance**
+- Viterbi parity gate criteria documented in PRD
+- Model card template + license attribution (MIT/Apache 2.0 for strangetom)
+
+**Training Infrastructure**
+- `Tools/ml-training/` directory with README, requirements.txt
+- `.gitignore` for data/model artifacts (SQLite, JSONL, checkpoints, .mlpackage)
+
+### **Phase 1: Dataset Preparation Pipeline** ✅
+
+Converted strangetom SQLite database to Forager training format.
+
+**Data Pipeline** (`Tools/ml-training/prepare_dataset.py`, 335 lines)
+- Loaded strangetom SQLite: 81,316 sentences, 13 token-level labels
+- Mapped 13 strangetom labels → 7 Forager labels (QTY, UNIT, NAME, MODIFIER, PREP, COMMENT, OTHER)
+- Decoded all fraction notation via `re.sub` (handles mixed `1#1$2`, prefixed `#1$2`, simple `1$2`, ranges, dimensions)
+- Deduplicated by sentence: removed 12,470 duplicates → 68,846 unique samples
+- Split 80/10/10 stratified by source, verified no cross-split data leakage
+
+**Dataset Statistics** (68,846 sentences, 533,235 tokens)
+- Label distribution: NAME 30.4%, PREP 16.7%, QTY 15.2%, OTHER 13.3%, UNIT 13.4%, COMMENT 10.0%, MODIFIER 1.1%
+- Sources: NYT 18,940 | AllRecipes 14,792 | BBC 14,738 | Cookstr 14,087 | TC 6,289
+- Token length: mean 7.7, median 7.0, p95 15, max 50
+- Splits: train 55,076 | val 6,885 | test 6,885
+
+**Output Files**
+- `data/training_data.jsonl` (55,076 samples)
+- `data/validation_data.jsonl` (6,885 samples)
+- `data/test_data.jsonl` (6,885 samples)
+- `data/dataset_statistics.json` (distribution and split metadata)
+
+### **Commits**
+1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
+2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build after Phase 0c refactor |
+| Existing tests | ✅ ALL PASSING | No regressions from single-parse refactor |
+| Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
+| Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `Services/IngredientParsingService.swift` | MODIFIED | +parseCore(), +parseUnified(), +static mappers, refactored parseAndConnectIngredients |
+| `forager/GroceryListDetailView.swift` | MODIFIED | Single-parse refactor (eliminated double parse) |
+| `forager/AddListItemView.swift` | MODIFIED | Single-parse refactor |
+| `forager/RecipeListView.swift` | MODIFIED | Single-parse refactor |
+| `Tools/ml-training/TOKENIZER_SPEC.md` | NEW | Tokenizer contract (frozen) |
+| `Tools/ml-training/prepare_dataset.py` | NEW | Dataset preparation pipeline (335 lines) |
+| `Tools/ml-training/data/tokenizer_test_vectors.json` | NEW | 100 cross-validation sentences |
+| `Tools/ml-training/data/dataset_statistics.json` | NEW | Distribution and split metadata |
+| `Tools/ml-training/MODEL_CARD.md` | NEW | Model card template |
+| `Tools/ml-training/LICENSES.md` | NEW | License attribution (MIT/Apache 2.0) |
+| `Tools/ml-training/README.md` | NEW | Training infrastructure overview |
+| `Tools/ml-training/requirements.txt` | NEW | Python dependencies |
+| `.gitignore` | MODIFIED | +data/model artifact exclusions |
 
 ---
 
@@ -214,26 +305,29 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 
 ---
 
-## 📋 **M8.4: ML-POWERED PARSING - READY**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Details)**
 
-**Status**: 📋 **READY** (PRD execution-ready — 12 review passes, 60 findings + 1 validation pass)
+**Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours (10 phases including Phase 0 feasibility gate) + 9 hours M9 prerequisites (complete)
+**Actual so far**: ~4h (Phase 0+1)
 **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (word-only v1)
-**External Review**: 12 review passes (9 external, 3 internal) completed Feb 21, 2026 — 60 findings integrated + priority validation pass, zero high-severity by pass 6
+**External Review**: 12 review passes (9 external, 3 internal) — 60 findings integrated + priority validation pass
 
-### **Key Change from Original Plan**
-Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from strangetom (81k sentences, 13 labels) → mapped to 7 Forager labels. Model ready from day one.
+### **Phase Progress**
 
-### **PRD Changes (from 11 review passes, 60 findings)**
-- **Phase 0**: Feasibility + Contract Lock — architecture lock (word-only v1), tokenizer spec (NFKD normalization, no padding with RangeDim), single-parse refactor (5 double-parse sites + 11 zero-telemetry callers), Viterbi parity gate, governance
-- **Phase 4**: `runEmissionModel` implementation sketch with MLMultiArray stride-based access, unit canonicalization extraction as explicit sub-task
-- **Phase 5**: Winner-only parser attribution (`regex`/`ml`/`nlp`, never `"hybrid"`), parsers stay synchronous, static `sharedParser` lazy CoreML loading, CoreML background warmup strategy, `#if DEBUG` model load warning, runtime memory <10MB, ADR 010 update, `parserName = "hybrid"` retained for protocol conformance
-- **Phase 6**: Test structure split into 3 files (ViterbiDecoderTests, MLIngredientParserTests, HybridParserRoutingTests), model presence guard test
-- **Phase 7**: Reordered to 7a (schema v3) → 7b (edit flow wiring with `source` parameter) → 7c (corpus gate). Added `CorrectionSource` enum (edit-flow oriented), provenance rules per edit flow, denominator guardrails (N ≥ 20), legacy `"hybrid"` telemetry handling
-- **Section 8**: 4 CoreML platform risks added (warmup latency, MLMultiArray Float16/32, RangeDim CPU fallback, silent model load failure)
-- **CRF architecture**: Split into BiLSTM emission scorer (.mlpackage) + CRF params (7×7 transitions + 1×7 start + 1×7 end as JSON) + Viterbi decoder (pure Swift)
-- **Corrections**: v1 uses unlinked corrections (no `parseEventId` persistence); correction linkage contract deferred with Option A/B for v2
+| Phase | Description | Est. | Status |
+|-------|-------------|------|--------|
+| 0 | Contract Lock + Single-Parse Refactor | 2-3h | ✅ COMPLETE |
+| 1 | Dataset Preparation Pipeline | 3-4h | ✅ COMPLETE |
+| 2 | Model Architecture & Training | 4-5h | 📋 NEXT |
+| 3 | CoreML Conversion | 2-3h | ⏳ |
+| 4 | MLIngredientParser Implementation | 3-4h | ⏳ |
+| 5 | HybridIngredientParser Integration | 2-3h | ⏳ |
+| 6 | Test Suite | 2-3h | ⏳ |
+| 7 | Correction Instrumentation | 2-3h | ⏳ |
+| 8 | Continuous Learning Pipeline | 2h | ⏳ |
+| 9 | Integration Testing & Documentation | 1-2h | ⏳ |
 
 ### **Prerequisites (M9 subset) — ALL COMPLETE**
 1. ~~M9.0: Warning resolution (2-3h)~~ — ✅ COMPLETE (<1h actual, Feb 21)
@@ -241,7 +335,7 @@ Original M8.4 required 100+ user corrections (cold start). New approach bootstra
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → Sessions 1-3: M9 Prerequisites ✅ → Sessions 4-9: M8.4 Phases 0-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-1 ✅ → **Phase 2 NEXT** → Phases 3-9 → M7.7 App Store
 
 ---
 
@@ -1307,8 +1401,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M8.4 PRD finalized (12 review passes, 60 findings + priority validation)
-**Next Action**: M8.4 Phase 0+1 (contract lock + dataset prep, 5-7h) → Phase 2 (4-5h) → Phase 3+4 (5-7h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
-**Branch**: `main` (create `feature/M8.4-ml-parsing` when starting)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 PRD execution-ready after 12 review passes including PME review + priority validation)
-**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT (PRD finalized, 60 findings + validation)
+**Last Session**: February 21, 2026 - M8.4 Phase 0+1 COMPLETE (contract lock + dataset preparation)
+**Next Action**: M8.4 Phase 2 (model training, 4-5h) → Phase 3+4 (5-7h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
+**Branch**: `feature/M8.4-ml-parsing`
+**Confidence**: **GREEN** (Phase 0+1 complete, 68,846 training samples ready, single-parse refactor verified, all tests passing)
+**Version**: February 21, 2026 - M8.4 Phase 0+1 COMPLETE, Phase 2 NEXT

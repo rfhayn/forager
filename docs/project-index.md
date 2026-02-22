@@ -2,10 +2,10 @@
 
 **Last Updated**: February 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M9.5-partial ✅ COMPLETE | M9.1.2 ✅ COMPLETE | M9.0 ✅ COMPLETE | M7.5 ✅ COMPLETE | M15 ✅ COMPLETE | M8.4 📋 **NEXT**
-**Current Phase**: M9.5-partial ✅ **COMPLETE** (parser dependency injection) | M8.4 📋 **NEXT**
-**Next Priority**: M8.4 → M7.7 App Store
-**Execution Order**: M8.4 (23-32h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M8.4 ML-Powered Parsing 🔄 **ACTIVE** (Phase 0+1 ✅ COMPLETE) | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE
+**Current Phase**: M8.4 Phase 0+1 ✅ **COMPLETE** | **Phase 2 (model training) NEXT**
+**Next Priority**: M8.4 Phase 2 → Phases 3-9 → M7.7 App Store
+**Execution Order**: M8.4 remaining (19-28h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -51,13 +51,13 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
-### **February 21, 2026** - M9.5-partial COMPLETE ✅ — All M8.4 Prerequisites Done
-- **Completed**: Parser Dependency Injection — HybridIngredientParser and IngredientParsingService now have injectable constructors with backward-compatible defaults. MockIngredientParser + 9 routing tests. PRDs corrected for both M9 and M8.4.
-- **Previous**: M9.1.2 — centralized extractCleanIngredientName (12 unit tests), M9.0 — zero-warning baseline (18 warnings resolved)
-  - 3 code quality fixes (redundant cast, immutable var, unused result)
-- **PRD Folder Cleanup**: 15 files moved — completed M7.5/M15 PRDs to `complete/`, upcoming M9/M6/M7.x to `active/`, 19 path references updated across 10 docs
-- **PRs**: #40 (PRD cleanup, merged), #41 (M9.0 warnings, merged)
-- **M9 PRD Updated**: Phase 0 rewritten with actual build findings (staleness audit)
+### **February 21, 2026** - M8.4 Phase 0+1 COMPLETE ✅ — Contract Lock + Dataset Preparation
+- **Completed**: Architecture locked (word-only BiLSTM v1), tokenizer spec frozen (NFKD + 100 test vectors), single-parse refactor (`parseCore()`/`parseUnified()`), dataset prepared (68,846 unique samples in 80/10/10 JSONL splits from strangetom's 81,316 rows)
+- **Key Deliverables**: `Tools/ml-training/` with `prepare_dataset.py`, `TOKENIZER_SPEC.md`, `MODEL_CARD.md`, `LICENSES.md`, `requirements.txt`
+- **Single-Parse Refactor**: Eliminated redundant `parser.parse()` calls across 3 view files + IngredientParsingService — critical prep for ML inference in the pipeline
+- **Dataset**: 12,470 duplicates removed (15%), 7 Forager labels mapped from 13 strangetom labels, fraction notation decoded, stratified by 5 sources
+- **Commits**: `dd332c9` (Phase 0), `e39b098` (Phase 1) on `feature/M8.4-ml-parsing`
+- **Previous**: M9.5-partial (parser DI), M9.1.2 (centralized extractCleanIngredientName), M9.0 (zero-warning baseline)
 - **Insights**: 3 new — CloudKit deprecation, MainActor await, PRD staleness pattern
 - **Next**: M9.1.2 (centralize extractCleanIngredientName)
 
@@ -769,8 +769,9 @@ _[Previous entries remain the same through December 23...]_
 
 ---
 
-**Documentation Update**: February 21, 2026 - Post-M9.5-partial
-- ✅ M15, M7.5, M9.0, M9.1.2, M9.5-partial complete on main
-- ✅ All M8.4 prerequisites complete — parser DI, mock infrastructure, routing tests
+**Documentation Update**: February 21, 2026 - Post-M8.4 Phase 0+1
+- ✅ M8.4 Phase 0+1 complete on `feature/M8.4-ml-parsing` (contract lock + dataset preparation)
+- ✅ 68,846 training samples prepared in 80/10/10 JSONL splits
+- ✅ Single-parse refactor eliminates redundant parser.parse() calls
 - ✅ All core docs synchronized
-- ✅ Next: M8.4 → M7.7
+- ✅ Next: M8.4 Phase 2 (model training) → Phases 3-9 → M7.7
