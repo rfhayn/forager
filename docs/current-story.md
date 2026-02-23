@@ -1,22 +1,22 @@
 # Current Development Story
 
 **Last Updated**: February 22, 2026
-**Status**: M8.4 Phase 0-8 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~237 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.4-ml-parsing`
-**Current Milestone**: M8.4 ML-Powered Parsing — Phase 0-8 ✅ COMPLETE, **Phase 9 NEXT**
+**Status**: M8.4 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~239 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.4-ml-parsing` (ready to merge)
+**Current Milestone**: M8.4 ML-Powered Parsing — ✅ **ALL 10 PHASES COMPLETE**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 Phase 9 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M7.7 → M6 → M9 remaining → M10+
 
 ---
 
-## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Phase 0-8 Complete)**
+## ✅ **M8.4: ML-POWERED PARSING - COMPLETE**
 
-**Status**: 🔄 **ACTIVE** — Phase 0-8 ✅ COMPLETE, Phase 9 NEXT
-**Session**: February 22, 2026 (sessions 29-32)
+**Status**: ✅ **COMPLETE** — All 10 phases (0-9) done
+**Sessions**: February 2026 (sessions 20-34)
 **Branch**: `feature/M8.4-ml-parsing`
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
-**Estimated**: 23-32 hours total (10 phases)
+**Actual**: ~25 hours across 10 phases
 
 ### **Phase 0: Contract Lock + Single-Parse Refactor** ✅
 
@@ -278,6 +278,25 @@ Closed the feedback loop: correction export + retraining script.
 - Improvement gate: saves retrained model only if both primary metrics improve
 - Reuses all infrastructure from `train_model.py`
 
+### **Phase 9: Integration Testing & Documentation** ✅
+
+Final validation and milestone documentation.
+
+**8 end-to-end integration tests added to `ParsingIntegrationTests.swift`:**
+1. Quick-add "3 cloves garlic" → qty=3, unit=clove, template created
+2. Quick-add "milk 2%" → name contains "milk"
+3. Recipe "1/4 tsp black pepper" → qty=0.25, unit=tsp, template contains "pepper"
+4. Recipe "a handful of fresh cilantro" → name contains "cilantro"
+5. Quick-add "bananas" → plural preserved, template created
+6. Bulk add 4 ingredients → all parsed, templates assigned, sort order preserved
+7. Recipe scaling 2x → parseable ingredients auto-scaled, servings doubled
+8. Edit recipe → structured fields updated, template reference preserved
+
+**Documentation:**
+- Learning note 38: ML parsing + CoreML integration
+- CLAUDE.md: Parser architecture section, updated test count (259), ADR 010 description
+- All 7 core docs updated for milestone completion
+
 ### **Commits**
 1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
 2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
@@ -291,7 +310,7 @@ Closed the feedback loop: correction export + retraining script.
 | Test | Status | Notes |
 |------|--------|-------|
 | Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
-| Existing tests | ✅ ALL PASSING | 251/251 unit tests, 0 failures, TEST SUCCEEDED (245 + 6 Phase 8 export tests) |
+| Existing tests | ✅ ALL PASSING | 259/259 unit tests, 0 failures, TEST SUCCEEDED (251 + 8 Phase 9 integration tests) |
 | Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
 | Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
 | Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |

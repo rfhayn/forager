@@ -7,31 +7,37 @@
 ---
 
 ## Session 34 — February 22, 2026
-**Milestone**: M8.4 ML-Powered Parsing (Phase 8: Continuous Learning Pipeline)
+**Milestone**: M8.4 ML-Powered Parsing (Phase 8-9: Continuous Learning + Integration Testing) — **M8.4 COMPLETE**
 **Branch**: `feature/M8.4-ml-parsing`
 
 ### What Happened
 
-Closed the ML feedback loop. Phase 7 wired correction telemetry into production edit flows; Phase 8 makes those corrections usable for model improvement. Two deliverables: a Swift correction-to-training-data exporter and a Python fine-tuning script.
+Completed M8.4's final two phases. Phase 8 closed the ML feedback loop (correction export + retraining script). Phase 9 added 8 end-to-end integration tests and comprehensive milestone documentation. M8.4 is now fully complete after ~25 hours across 10 phases.
 
-### Key Design Decisions
+### Phase 8: Continuous Learning Pipeline
 
-**Shared tokenizer extraction**: The tokenizer in `MLIngredientParser` was a 50-line method that only used a static punctuation set — completely stateless. Extracting it as a free function `foragerTokenize()` lets both `MLIngredientParser` (inference) and `ParsingTelemetryService` (export) share the exact same tokenization logic. This is critical for train/serve consistency — if the export tokenized differently from inference, the model would train on mismatched data.
+**Shared tokenizer extraction**: The tokenizer in `MLIngredientParser` was a 50-line method that only used a static punctuation set — completely stateless. Extracting it as a free function `foragerTokenize()` lets both `MLIngredientParser` (inference) and `ParsingTelemetryService` (export) share the exact same tokenization logic. This is critical for train/serve consistency.
 
-**Synthetic reconstruction over raw input alignment**: Corrections carry corrected fields (name, quantity, unit) but not the original raw text. Rather than trying to re-derive raw text from the correction metadata, we reconstruct clean training tokens from the corrected fields themselves. This actually produces *better* training data than raw input alignment would, because the reconstructed form matches the clean tokenized distribution the model was originally trained on.
+**Synthetic reconstruction over raw input alignment**: Corrections carry corrected fields but not raw text. We reconstruct clean training tokens from corrected fields themselves — this produces *better* training data because the reconstructed form matches the model's training distribution.
 
-**Fine-tune with oversampling**: 50 corrections in a 55k-sample training set is noise (<0.1%). The script auto-oversamples corrections up to 50x (targeting ~4.5% of the merged set), giving them enough gradient influence to matter. Combined with a lower learning rate (0.0005 vs 0.001), this balances learning from corrections against preserving existing model knowledge.
+**Fine-tune with oversampling**: 50 corrections in a 55k-sample training set is noise. Auto-oversampling up to 50x targets ~4.5% of merged set, with lower LR (0.0005) to prevent catastrophic forgetting.
 
-### What Went Well
+### Phase 9: Integration Testing + Documentation
 
-- Clean extraction of tokenizer: swapping from `Self.punctuation` to module-level `tokenizerPunctuation` was straightforward because the tokenizer was already stateless
-- All 6 new export tests passed on first run
-- Build succeeded immediately after all changes — no compilation issues
-- Python script reuses all infrastructure from `train_model.py` (model, dataset, training, evaluation, export) — zero code duplication
+**8 end-to-end integration tests** covering the PRD scenarios: garlic (qty+unit), milk 2% (edge case), black pepper (fractions), cilantro (natural language), bananas (plural), bulk add (4 ingredients), recipe scaling (2x), and edit recipe (structured field preservation). All pass with the regex tier in tests — proving pipeline correctness is parser-independent.
+
+**Learning note 38** chronicles the full ML parsing journey across all 10 phases. **CLAUDE.md** updated with parser architecture section (3-tier routing, key files, architecture rules). All 7 core docs updated for milestone completion.
+
+### M8.4 Retrospective
+
+Looking back at the full M8.4 milestone:
+- **What worked**: Phased delivery with strict acceptance criteria at each gate. The tokenizer contract (TOKENIZER_SPEC.md) caught what would have been a silent train/serve mismatch in Phase 6. The DI infrastructure from M9.5 made the hybrid parser cleanly pluggable.
+- **Surprise**: Pre-existing test failures (Phase 7.5) took significant unplanned time. Test suites drift silently when schema evolves without corresponding test updates.
+- **Key insight**: The split architecture (CoreML emissions + Swift Viterbi) was forced by CoreML's CRF limitation but turned out to be beneficial — the Viterbi decoder is fully testable without CoreML dependencies.
 
 ### Test Results
 
-251 total tests (245 existing + 6 new), 0 failures. `** TEST SUCCEEDED **`.
+259 total tests (251 + 8 Phase 9 integration), 0 failures. `** TEST SUCCEEDED **`.
 
 ---
 

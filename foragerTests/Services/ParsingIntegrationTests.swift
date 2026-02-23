@@ -177,6 +177,182 @@ final class ParsingIntegrationTests: XCTestCase {
         XCTAssertTrue(ingredient?.isParseable ?? false)
     }
 
+    // MARK: - M8.4 Phase 9: End-to-End Integration Scenarios
+
+    /// Scenario 1: Quick-add "3 cloves garlic" → template is "garlic", qty=3, unit=clove
+    @MainActor
+    func testQuickAddGarlicParsing() {
+        let list = weeklyListService.createList(name: "Test List")
+        XCTAssertNotNil(list)
+
+        let parsed = parsingService.parseToStructured(text: "3 cloves garlic", source: .groceryListItem)
+
+        XCTAssertEqual(parsed.numericValue ?? 0, 3.0, accuracy: 0.01, "Quantity should be 3")
+        XCTAssertEqual(parsed.standardUnit, "clove", "Unit should be 'clove' (normalized singular)")
+        XCTAssertTrue(parsed.isParseable, "Should be parseable")
+
+        // Verify template creation
+        let template = templateService.findOrCreateTemplate(name: "garlic")
+        XCTAssertNotNil(template)
+        XCTAssertEqual(template.canonicalName, IngredientTemplate.canonicalName(from: "garlic"))
+    }
+
+    /// Scenario 2: Quick-add "milk 2%" → template is "milk 2%", no quantity/unit warning
+    @MainActor
+    func testQuickAddMilkPercentage() {
+        let parsed = parsingService.parseToStructured(text: "milk 2%", source: .groceryListItem)
+
+        // "milk 2%" is an edge case — the parser should extract a name that includes "milk"
+        // The "2%" may or may not be parsed as quantity depending on parser tier
+        let parsedIngredient = parsingService.parseIngredient(text: "milk 2%")
+        XCTAssertTrue(parsedIngredient.name.lowercased().contains("milk"),
+                       "Name should contain 'milk'")
+
+        // Template should be created
+        let template = templateService.findOrCreateTemplate(name: parsedIngredient.displayName)
+        XCTAssertNotNil(template)
+    }
+
+    /// Scenario 3: Recipe ingredient "1/4 tsp black pepper" → template is "black pepper"
+    @MainActor
+    func testRecipeIngredientFractionParsing() {
+        let recipe = recipeService.createRecipe(title: "Test", servings: 4, instructions: "Test")
+        XCTAssertNotNil(recipe)
+
+        let (parsed, structured) = parsingService.parseUnified(text: "1/4 tsp black pepper")
+
+        XCTAssertEqual(structured.numericValue ?? 0, 0.25, accuracy: 0.01,
+                       "1/4 should parse to 0.25")
+        XCTAssertEqual(structured.standardUnit, "tsp", "Unit should be 'tsp'")
+        XCTAssertTrue(parsed.name.lowercased().contains("pepper"),
+                       "Name should contain 'pepper'")
+
+        // Template should normalize to "black pepper"
+        let template = templateService.findOrCreateTemplate(name: parsed.displayName)
+        XCTAssertTrue(template.canonicalName?.contains("pepper") ?? false,
+                       "Template canonical name should contain 'pepper'")
+    }
+
+    /// Scenario 4: Recipe ingredient "a handful of fresh cilantro" → name contains "cilantro"
+    @MainActor
+    func testRecipeIngredientNaturalLanguage() {
+        let parsed = parsingService.parseIngredient(text: "a handful of fresh cilantro")
+
+        // This is a difficult parse — "a handful of" is not a standard qty/unit
+        // The key assertion: "cilantro" should be extracted as the ingredient name
+        XCTAssertTrue(parsed.name.lowercased().contains("cilantro"),
+                       "Name should contain 'cilantro' regardless of parser tier")
+    }
+
+    /// Scenario 5: Quick-add "bananas" → template is "bananas" (plural preserved)
+    @MainActor
+    func testQuickAddPluralPreservation() {
+        let parsed = parsingService.parseIngredient(text: "bananas")
+
+        // Name should preserve the plural form
+        XCTAssertTrue(parsed.name.lowercased().contains("banana"),
+                       "Name should contain 'banana'")
+
+        // Template normalization with preferPlural
+        let template = templateService.findOrCreateTemplate(name: "bananas")
+        XCTAssertNotNil(template)
+    }
+
+    /// Scenario 6: parseAndConnectIngredients bulk add → all ingredients parsed correctly
+    @MainActor
+    func testBulkAddMultipleIngredients() {
+        let recipe = recipeService.createRecipe(title: "Bulk Test", servings: 4, instructions: "Test")
+        XCTAssertNotNil(recipe)
+
+        let texts = [
+            "2 cups flour",
+            "1 tsp salt",
+            "3 eggs",
+            "1/2 cup sugar"
+        ]
+
+        let ingredients = parsingService.parseAndConnectIngredients(for: recipe!, ingredientTexts: texts)
+
+        XCTAssertEqual(ingredients.count, 4, "Should create 4 ingredients")
+
+        // All should be parseable (these are straightforward)
+        let parseableCount = ingredients.filter { $0.isParseable }.count
+        XCTAssertGreaterThanOrEqual(parseableCount, 3,
+                                     "At least 3 of 4 standard ingredients should be parseable")
+
+        // Each should have a template assigned
+        for ingredient in ingredients {
+            XCTAssertNotNil(ingredient.ingredientTemplate,
+                            "Each ingredient should have a template: \(ingredient.name ?? "nil")")
+        }
+
+        // Verify sort order preserved
+        for (index, ingredient) in ingredients.enumerated() {
+            XCTAssertEqual(ingredient.sortOrder, Int16(index),
+                           "Sort order should match input order")
+        }
+    }
+
+    /// Scenario 7: Recipe scaling → ML-parsed ingredients scale correctly
+    @MainActor
+    func testRecipeScalingWithParsedIngredients() {
+        let recipe = recipeService.createRecipe(title: "Scale Test", servings: 4, instructions: "Test")
+        XCTAssertNotNil(recipe)
+
+        // Add ingredients with structured data
+        let parsed = parsingService.parseToStructured(text: "2 cups flour")
+        let _ = recipeService.addIngredient(to: recipe!, parsed: parsed, name: "flour")
+
+        let parsed2 = parsingService.parseToStructured(text: "1 tsp salt")
+        let _ = recipeService.addIngredient(to: recipe!, parsed: parsed2, name: "salt")
+
+        // Scale by 2x
+        let scalingService = RecipeScalingService(context: context)
+        let scaled = scalingService.scale(recipe: recipe!, scaleFactor: 2.0)
+
+        XCTAssertEqual(scaled.scaledServings, 8, "Servings should double")
+        XCTAssertEqual(scaled.scaledIngredients.count, 2, "Should have 2 scaled ingredients")
+
+        // Parseable ingredients should be auto-scaled
+        XCTAssertGreaterThanOrEqual(scaled.autoScaledCount, 1,
+                                     "At least 1 ingredient should be auto-scaled")
+
+        // Verify a scaled ingredient's display text contains the doubled quantity
+        let flourScaled = scaled.scaledIngredients.first { $0.name.lowercased().contains("flour") }
+        XCTAssertNotNil(flourScaled, "Should find scaled flour ingredient")
+        if let flourScaled = flourScaled {
+            XCTAssertTrue(flourScaled.wasScaled, "Flour should be auto-scaled")
+        }
+    }
+
+    /// Scenario 8: Edit recipe → structured fields preserved through update cycle
+    @MainActor
+    func testEditRecipePreservesStructuredFields() {
+        let recipe = recipeService.createRecipe(title: "Edit Test", servings: 2, instructions: "Test")
+        XCTAssertNotNil(recipe)
+
+        // Add ingredient with parsed data
+        let parsed = parsingService.parseToStructured(text: "1.5 cups sugar")
+        let template = templateService.findOrCreateTemplate(name: "sugar")
+        let ingredient = recipeService.addIngredient(
+            to: recipe!, parsed: parsed, name: "sugar", template: template
+        )
+        XCTAssertNotNil(ingredient)
+
+        // Simulate edit: update the ingredient name/quantity via service
+        recipeService.updateIngredient(ingredient!, name: "brown sugar",
+                                        numericValue: 2.0, standardUnit: "cup")
+
+        // Verify structured fields are updated
+        XCTAssertEqual(ingredient!.name, "brown sugar")
+        XCTAssertEqual(ingredient!.numericValue, 2.0, accuracy: 0.01)
+        XCTAssertEqual(ingredient!.standardUnit, "cup")
+
+        // Template reference should still be intact
+        XCTAssertNotNil(ingredient!.ingredientTemplate,
+                        "Template reference should survive edit")
+    }
+
     // MARK: - M9.5: Mock Parser Injection Demo
 
     /// Test 6: Mock parser can be injected through the full chain

@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 21, 2026
+**Last Updated**: February 22, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8.4 ML-Powered Parsing 🔄 **ACTIVE** (Phase 0-2 ✅ COMPLETE) | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE
-**Current Phase**: M8.4 Phase 0-2 ✅ **COMPLETE** | **Phase 3 (CoreML conversion) NEXT**
-**Next Priority**: M8.4 Phase 3 → Phases 4-9 → M7.7 App Store
-**Execution Order**: M8.4 remaining (15-23h) → M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M8.4 ✅ **COMPLETE** | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M7.7 NEXT**
+**Current Phase**: M8.4 ✅ **ALL PHASES COMPLETE** (259 tests, 0 failures)
+**Next Priority**: M7.7 App Store Submission
+**Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
 
@@ -50,6 +50,16 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 22, 2026** - M8.4 ✅ COMPLETE — ML-Powered Parsing (All 10 Phases)
+- **Completed**: Full ML parsing pipeline — BiLSTM-CRF model, CoreML deployment, 3-tier hybrid routing, correction feedback loop
+- **Key metrics**: 98.49% token accuracy, 95.40% sentence accuracy, 100% Viterbi parity, <5ms inference
+- **Architecture**: 3-tier hybrid parser (regex ≥0.9 → ML ≥0.8 → NLP fallback) with shared tokenizer
+- **Testing**: 259 total tests (83 added in M8.4), 0 failures, 8 end-to-end integration scenarios
+- **Correction pipeline**: Schema v3 telemetry → correction export → fine-tuning script
+- **Documentation**: Learning note 38, CLAUDE.md updated, all 7 core docs updated
+- **Total effort**: ~25 hours across 10 phases, 15 sessions
+- **Next**: M7.7 App Store Submission
 
 ### **February 21, 2026** - M8.4 Phase 2 COMPLETE ✅ — BiLSTM-CRF Model Training
 - **Completed**: BiLSTM-CRF sequence labeler trained on 55,076 samples, all acceptance criteria exceeded
@@ -475,7 +485,7 @@ _[Previous entries remain the same through December 23...]_
   - **M8.3.2**: Auto-merge grocery quantities (~3h)
   - **M9.5-partial**: ✅ COMPLETE (Feb 21, 2026) — Parser DI, mock parser, 9 routing tests
 - **M8.4**: ML-powered parsing — 📋 READY (all prerequisites complete)
-- **Total tests**: 155 unit tests across 8 test files
+- **Total tests**: 259 unit tests across 19 test files
 
 ### **Technology Stack**
 - **Language**: Swift 6+
