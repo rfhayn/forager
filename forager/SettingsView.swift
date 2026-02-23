@@ -273,6 +273,27 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            // M8.4 Phase 7: Correction corpus gate status
+            let correctionCount = ParsingTelemetryService.shared.getTotalCorrectionCount()
+            let retrainingThreshold = 50
+            HStack {
+                Image(systemName: "brain")
+                    .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                VStack(alignment: .leading) {
+                    Text("Correction Corpus")
+                        .font(.headline)
+                    Text(correctionCount >= retrainingThreshold
+                        ? "Ready for retraining (\(correctionCount) corrections)"
+                        : "Need \(retrainingThreshold - correctionCount) more corrections (\(correctionCount)/\(retrainingThreshold))")
+                        .font(.caption)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+                Spacer()
+                Text("\(correctionCount)")
+                    .font(.title2.monospacedDigit())
+                    .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+            }
             #endif
             
         } header: {

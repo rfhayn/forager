@@ -570,7 +570,8 @@ struct CreateRecipeView: View {
         let ingredientInput = IngredientInput(
             fullText: rebuiltText,
             template: template,
-            matchedViaAutocomplete: true
+            matchedViaAutocomplete: true,
+            originalFullText: rebuiltText  // M8.4 Phase 7: Track original for correction detection
         )
         
         formData.ingredients.append(ingredientInput)
@@ -593,7 +594,8 @@ struct CreateRecipeView: View {
         let ingredientInput = IngredientInput(
             fullText: trimmed,
             template: existingTemplate,
-            matchedViaAutocomplete: false
+            matchedViaAutocomplete: false,
+            originalFullText: trimmed  // M8.4 Phase 7: Track original for correction detection
         )
         
         formData.ingredients.append(ingredientInput)
@@ -663,27 +665,47 @@ struct CreateRecipeView: View {
             for (index, ingredientInput) in formData.ingredients.enumerated() {
                 let trimmed = ingredientInput.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
                 guard !trimmed.isEmpty else { continue }
-                
-                // M4.3.1 FIX: Parse ingredient to get structured quantity fields
-                let parsed = parsingService.parseToStructured(text: trimmed)
-                
+
+                // M8.4 Phase 7: Use parseUnified for both structured fields + correction detection
+                let (parsedIngredient, structured) = parsingService.parseUnified(text: trimmed)
+
                 let ingredient = Ingredient(context: viewContext)
                 ingredient.id = UUID()
                 ingredient.name = trimmed // Full text with quantity
                 ingredient.sortOrder = Int16(index)
                 ingredient.recipe = recipe
-                
-                // M4.3.1 FIX: Populate structured quantity fields from parsing
-                ingredient.displayText = parsed.displayText
-                ingredient.numericValue = parsed.numericValue ?? 0.0
-                ingredient.standardUnit = parsed.standardUnit
-                ingredient.isParseable = parsed.isParseable
-                ingredient.parseConfidence = parsed.parseConfidence
-                
+
+                ingredient.displayText = structured.displayText
+                ingredient.numericValue = structured.numericValue ?? 0.0
+                ingredient.standardUnit = structured.standardUnit
+                ingredient.isParseable = structured.isParseable
+                ingredient.parseConfidence = structured.parseConfidence
+
                 // Link to template (READ-ONLY reference)
                 if let template = ingredientInput.template {
                     ingredient.ingredientTemplate = template
                     template.usageCount += 1
+                }
+
+                // M8.4 Phase 7: Log correction if user edited the ingredient text after adding
+                if let originalText = ingredientInput.originalFullText, trimmed != originalText {
+                    let originalParsed = parsingService.parseIngredient(text: originalText)
+                    let nameChanged = originalParsed.name.lowercased() != parsedIngredient.name.lowercased()
+                    let qtyChanged = (structured.numericValue ?? 0.0) != 0.0 && ingredientInput.originalNumericValue != (structured.numericValue ?? 0.0)
+                    let unitChanged = structured.standardUnit != nil && ingredientInput.originalStandardUnit != structured.standardUnit
+
+                    if nameChanged || qtyChanged || unitChanged {
+                        ParsingTelemetryService.shared.logCorrection(
+                            originalName: originalParsed.name,
+                            originalQuantity: ingredientInput.originalNumericValue,
+                            originalUnit: ingredientInput.originalStandardUnit,
+                            originalConfidence: ingredientInput.originalParseConfidence ?? 0,
+                            correctedName: parsedIngredient.name,
+                            correctedQuantity: structured.numericValue,
+                            correctedUnit: structured.standardUnit,
+                            source: .createRecipe
+                        )
+                    }
                 }
             }
             

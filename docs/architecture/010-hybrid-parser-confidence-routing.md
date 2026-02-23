@@ -2,20 +2,22 @@
 
 **Status**: ACTIVE
 **Created**: February 8, 2026
-**Context**: M8.3 Hybrid NLP Parser
+**Updated**: February 22, 2026 (M8.4: 3-tier routing, winner-only attribution)
+**Context**: M8.3 Hybrid NLP Parser → M8.4 ML-Powered Parsing
 **Related**: M8.1 (Parsing Telemetry), `service-layer-pattern.md`
 
 ---
 
 ## Decision
 
-Route ingredient parsing through a **confidence-scored hybrid architecture** where a fast regex parser runs first, and an NLP fallback is only consulted when regex confidence falls below a threshold.
+Route ingredient parsing through a **confidence-scored 3-tier architecture** with winner-only attribution. The fast regex parser runs first; if uncertain, the ML parser (BiLSTM-CRF) is tried; NLP is a final fallback only when both regex and ML are highly uncertain.
 
 ```
 IngredientParsingService (public API — unchanged)
-  └── HybridIngredientParser (router, confidence threshold = 0.8)
-        ├── RegexIngredientParser (fast path, microseconds)
-        └── NLPIngredientParser (fallback, Apple NaturalLanguage)
+  └── HybridIngredientParser (router)
+        ├── RegexIngredientParser   (tier 1: fast path, microseconds, threshold ≥0.9)
+        ├── MLIngredientParser      (tier 2: BiLSTM-CRF, milliseconds, threshold ≥0.8)
+        └── NLPIngredientParser     (tier 3: fallback, only when regex <0.5 AND ML <0.5)
 ```
 
 ---
@@ -39,9 +41,9 @@ Roughly 5% of real-world ingredient inputs produced low confidence.
 
 2. **NLP only (replace regex)**: Apple's NaturalLanguage is powerful but slower and less precise for structured formats. "2 cups flour" is perfectly captured by regex in microseconds — NLP would be wasteful overhead.
 
-3. **ML/CoreML model**: Highest accuracy ceiling but requires training data, model management, and significant implementation effort. Overkill for current scale.
+3. **ML/CoreML model only**: Highest accuracy ceiling but slower than regex for standard inputs. Replaced regex for everything would sacrifice microsecond performance on the 80%+ of inputs regex handles perfectly.
 
-4. **Hybrid with confidence routing** (chosen): Regex handles the 80%+ of inputs it excels at. NLP handles the ambiguous remainder. Confidence scores drive the routing decision.
+4. **3-tier hybrid with confidence routing** (chosen): Regex handles high-confidence inputs (≥0.9) in microseconds. ML (BiLSTM-CRF) handles the moderate band with 98.49% token accuracy. NLP is a final fallback for the rare cases where both primary parsers are uncertain.
 
 ---
 
@@ -58,27 +60,41 @@ protocol IngredientParser {
 
 All parsers return a `ParserResult` with a `confidence: Float` (0.0-1.0) and `parserUsed: String` for telemetry tracking.
 
-### Routing Logic
+### Routing Logic (M8.4: 3-Tier)
 
 ```
 1. Run RegexIngredientParser
-2. If confidence >= 0.8 → return regex result (fast path, no NLP overhead)
-3. If confidence < 0.8 → also run NLPIngredientParser
-4. Return whichever result has higher confidence
-5. Tag parserUsed = "regex" | "nlp" | "hybrid"
+2. If confidence >= 0.9 → return regex result (fast path, no ML/NLP overhead)
+3. If ML parser available:
+   a. Run MLIngredientParser
+   b. If ML confidence >= 0.8 → return ML result
+   c. If regex < 0.5 AND ML < 0.5 → run NLPIngredientParser, return best of all three
+   d. Otherwise → return better of regex vs ML
+4. If ML parser unavailable (graceful degradation):
+   a. If regex confidence >= 0.8 → return regex result
+   b. Run NLPIngredientParser, return better of regex vs NLP
+5. parserUsed = winner's parserName ("regex" | "ml" | "nlp") — never "hybrid"
 ```
 
-### Why 0.8 Threshold?
+### Winner-Only Attribution (M8.4)
 
-The threshold sits between two tiers:
-- **Above 0.8**: Full parse (1.0), unicode fractions (0.90), ranges with units (0.85) — patterns where regex is confident and correct
-- **Below 0.8**: Parentheticals (0.80), qualifiers (0.70), descriptive amounts (0.60), name-only fallback (0.0) — patterns where NLP might extract additional structure
+Previously, `parserUsed` could be `"hybrid"` when the regex result won after NLP was consulted. M8.4 eliminates this — the winning parser's result is returned directly with its own `parserUsed` value. This makes telemetry directly actionable: each event maps to exactly one parser implementation.
 
-Setting the threshold at 0.8 means regex results at 0.85+ skip NLP entirely, while 0.80 and below get a second opinion.
+### Why 0.9 Regex Threshold?
+
+Raised from 0.8 (M8.3) to 0.9 (M8.4) to give the ML parser opportunities to run on moderate-confidence inputs. The ML model (98.49% token accuracy, 95.40% sentence accuracy) outperforms NLP in the 0.8-0.9 confidence band. Only very high-confidence regex results (full parse, unicode fractions with unit+name) skip ML.
+
+### Why ML Threshold at 0.8?
+
+ML confidence is computed as the geometric mean of max per-token softmax probabilities. A threshold of 0.8 means the model is confidently labeling most tokens. Below 0.8, the model is uncertain about some tokens — NLP might add value if both parsers are very uncertain (< 0.5).
+
+### Why NLP Only When Both < 0.5?
+
+NLP confidence is capped at 0.75 (see below). In the moderate band (regex 0.5-0.9, ML 0.5-0.8), ML is almost certainly more accurate than NLP, so consulting NLP would only add latency. NLP is reserved for cases where both primary parsers are highly uncertain — unusual inputs like qualifiers without quantities.
 
 ### Why Cap NLP at 0.75?
 
-NLP confidence is capped at 0.75 to prevent it from overriding good regex results. Without the cap, NLP could return 0.9 confidence for a plausible-but-wrong parse, beating a correct-but-partial regex parse. The cap ensures the hierarchy: confident regex > NLP > uncertain regex.
+NLP confidence is capped at 0.75 to prevent it from overriding good regex or ML results. Without the cap, NLP could return 0.9 confidence for a plausible-but-wrong parse, beating a correct-but-partial regex parse. The cap ensures the hierarchy: confident regex > confident ML > NLP > uncertain regex/ML.
 
 ### Confidence Tiers
 
@@ -87,12 +103,14 @@ NLP confidence is capped at 0.75 to prevent it from overriding good regex result
 | Full parse: qty + unit + name | 1.0 | regex |
 | Unicode fraction + unit + name | 1.0 | regex |
 | Unicode fraction + name only | 0.90 | regex |
+| ML confident parse (all tokens) | 0.80-0.99 | ml |
 | Range + unit + name | 0.85 | regex |
 | Compound phrase + unit | 0.85 | regex |
 | Range/parenthetical + name | 0.80 | regex |
 | NLP full parse (capped) | 0.75 | nlp |
 | Qty + name (no unit) | 0.75 | regex |
 | Qualifier detected | 0.70 | regex |
+| ML moderate parse | 0.50-0.79 | ml |
 | Descriptive amount | 0.60 | regex |
 | NLP qty + name | 0.60 | nlp |
 | NLP name + notes | 0.50 | nlp |
@@ -113,7 +131,7 @@ Regex runs in microseconds. NLP (even on-device via NaturalLanguage framework) r
 
 ### 3. Telemetry-Informed Evolution
 
-The `parserUsed` field in telemetry events enables data-driven decisions about whether to invest in ML-based parsing (M8.4). If NLP handles >20% of inputs in production, the ML investment is justified.
+The `parserUsed` field in telemetry events tracks which parser won each input. With M8.4's winner-only attribution, telemetry shows the exact parser (`"regex"`, `"ml"`, `"nlp"`) that produced each result — enabling data-driven threshold tuning.
 
 ### 4. Pattern Priority Order Matters
 
@@ -148,10 +166,11 @@ Regex patterns are tried in a specific order because earlier patterns can shadow
 
 ## Future Considerations
 
-- **M8.4 (ML-Powered Parsing)**: If telemetry shows NLP handling >20% of inputs, consider a trained CoreML model as a third parser option
-- **Confidence threshold tuning**: Production telemetry may reveal a better threshold than 0.8
+- **Threshold calibration**: Run all 3 parsers on held-out samples, measure accuracy by confidence band, adjust 0.9/0.8 thresholds based on observed accuracy curves
+- **Disagreement arbitration**: If regex and ML disagree on structural slots, NLP could arbitrate (v2)
 - **Pattern caching**: RegexIngredientParser re-creates NSRegularExpression objects per call — could be cached as static properties for marginal speedup
 - **Locale awareness**: Current patterns are English-only; international expansion would need locale-specific parsers
+- **Continuous learning (M8.4 Phases 7-8)**: User corrections feed back into ML model retraining
 
 ---
 
@@ -159,9 +178,14 @@ Regex patterns are tried in a specific order because earlier patterns can shadow
 
 ```
 Services/Parsing/IngredientParser.swift       # Protocol + ParserResult
-Services/Parsing/RegexIngredientParser.swift   # Fast path (7 pattern categories)
-Services/Parsing/NLPIngredientParser.swift     # Fallback (NaturalLanguage)
-Services/Parsing/HybridIngredientParser.swift  # Router
+Services/Parsing/RegexIngredientParser.swift   # Tier 1: Fast path (7 pattern categories)
+Services/Parsing/MLIngredientParser.swift      # Tier 2: BiLSTM-CRF (M8.4)
+Services/Parsing/ViterbiDecoder.swift          # CRF decode step (M8.4)
+Services/Parsing/NLPIngredientParser.swift     # Tier 3: Fallback (NaturalLanguage)
+Services/Parsing/HybridIngredientParser.swift  # Router (3-tier confidence routing)
 Services/IngredientParsingService.swift        # Public API (facade)
 Services/ParsingTelemetryService.swift         # Tracks parserUsed
+forager/MLModel/IngredientTaggerEmissions.mlpackage  # CoreML model (5.15 MB)
+forager/MLModel/vocabulary.json               # Token → ID mapping (3,545 tokens)
+forager/MLModel/transitions.json              # CRF transition parameters
 ```

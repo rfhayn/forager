@@ -178,31 +178,36 @@ final class PersistenceController: ObservableObject {
         let description = NSPersistentStoreDescription(url: url)
         // Both stores use the same data model automatically
 
-        // CloudKit container options with explicit database scope
-        let containerOptions = NSPersistentCloudKitContainerOptions(
-            containerIdentifier: "iCloud.com.richhayn.forager"
-        )
-        containerOptions.databaseScope = scope // CRITICAL: Explicit scope assignment
-        description.cloudKitContainerOptions = containerOptions
+        // M8.4: Skip CloudKit options for in-memory stores (unit tests).
+        // CloudKit mirroring delegates on in-memory stores cause
+        // NSFetchedResultsController crashes during test teardown.
+        if !inMemory {
+            // CloudKit container options with explicit database scope
+            let containerOptions = NSPersistentCloudKitContainerOptions(
+                containerIdentifier: "iCloud.com.richhayn.forager"
+            )
+            containerOptions.databaseScope = scope // CRITICAL: Explicit scope assignment
+            description.cloudKitContainerOptions = containerOptions
 
-        #if DEBUG
-        // Force Development environment in Debug builds
-        description.setOption("Development" as NSObject,
-                            forKey: "NSPersistentStoreCloudKitEnvironment")
-        if scope == .private {
-            print("☁️ M7.2.2: CloudKit sync ENABLED")
-            print("   Container: iCloud.com.richhayn.forager")
-            print("   Environment: Development")
-            print("   Device: \(UIDevice.current.name)")
-            print("   iCloud Account: \(FileManager.default.ubiquityIdentityToken != nil ? "✅ Signed In" : "❌ NOT SIGNED IN")")
-        }
-        #else
-        if scope == .private {
             #if DEBUG
-            print("☁️ M7.2.2: CloudKit sync enabled (Production)")
+            // Force Development environment in Debug builds
+            description.setOption("Development" as NSObject,
+                                forKey: "NSPersistentStoreCloudKitEnvironment")
+            if scope == .private {
+                print("☁️ M7.2.2: CloudKit sync ENABLED")
+                print("   Container: iCloud.com.richhayn.forager")
+                print("   Environment: Development")
+                print("   Device: \(UIDevice.current.name)")
+                print("   iCloud Account: \(FileManager.default.ubiquityIdentityToken != nil ? "✅ Signed In" : "❌ NOT SIGNED IN")")
+            }
+            #else
+            if scope == .private {
+                #if DEBUG
+                print("☁️ M7.2.2: CloudKit sync enabled (Production)")
+                #endif
+            }
             #endif
         }
-        #endif
 
         // M7.1.3: Enable automatic lightweight migration
         description.setOption(true as NSNumber, forKey: NSMigratePersistentStoresAutomaticallyOption)
@@ -388,6 +393,18 @@ final class PersistenceController: ObservableObject {
     /// Sets isReady = true when complete.
     func prepare() {
         guard !isReady else { return }
+
+        // M8.4: Skip full store loading when running as unit test host.
+        // Tests create their own PersistenceController(inMemory: true) instances.
+        // Keep isReady = false so the app stays on AppLoadingView and the full
+        // TabView (with @FetchRequest controllers) never renders. This prevents
+        // NSFetchedResultsController crashes from fetches against unconfigured stores.
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            return
+        }
+        #endif
+
         DispatchQueue.global(qos: .userInitiated).async { [self] in
             self.loadPersistentStores()
             DispatchQueue.main.async { [self] in

@@ -602,6 +602,347 @@ final class ParsingTelemetryServiceTests: XCTestCase {
         XCTAssertEqual(lowEvents.first?.parseConfidence, 0.0)
     }
 
+    // MARK: - P0: Schema v3 Tests (M8.4 Phase 7)
+
+    /// TEST-TEL-026: Schema version is 3
+    func testSchemaVersionIs3() {
+        XCTAssertEqual(ParsingTelemetryData.currentSchemaVersion, 3, "Schema version should be 3")
+    }
+
+    /// TEST-TEL-027: v2 data decodes with nil parserUsed/source on corrections
+    func testV2CorrectionDataDecodesWithNilNewFields() {
+        // Given - v2 correction event JSON (no parserUsed or source fields)
+        let v2JSON = """
+        {
+            "id": "12345678-1234-1234-1234-123456789012",
+            "timestamp": "2026-02-22T12:00:00Z",
+            "originalEventId": null,
+            "originalName": "flour",
+            "originalQuantity": 2.0,
+            "originalUnit": "cup",
+            "originalConfidence": 0.6,
+            "correctedName": "all-purpose flour",
+            "correctedQuantity": 2.0,
+            "correctedUnit": "cup",
+            "nameChanged": true,
+            "quantityChanged": false,
+            "unitChanged": false
+        }
+        """
+
+        // When
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let data = v2JSON.data(using: .utf8)!
+        let correction = try? decoder.decode(ParsingCorrectionEvent.self, from: data)
+
+        // Then
+        XCTAssertNotNil(correction, "v2 correction JSON should decode successfully")
+        XCTAssertNil(correction?.parserUsed, "parserUsed should be nil for v2 data")
+        XCTAssertNil(correction?.source, "source should be nil for v2 data")
+        XCTAssertEqual(correction?.originalName, "flour")
+        XCTAssertEqual(correction?.correctedName, "all-purpose flour")
+    }
+
+    /// TEST-TEL-028: v3 correction with source + parserUsed encodes/decodes correctly
+    func testV3CorrectionWithSourceAndParserUsed() {
+        // Given
+        let correction = ParsingCorrectionEvent(
+            originalEventId: nil,
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "all-purpose flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup",
+            parserUsed: "regex",
+            source: .editRecipe
+        )
+
+        // When - encode and decode
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        guard let data = try? encoder.encode(correction),
+              let decoded = try? decoder.decode(ParsingCorrectionEvent.self, from: data) else {
+            XCTFail("v3 correction should encode and decode")
+            return
+        }
+
+        // Then
+        XCTAssertEqual(decoded.parserUsed, "regex")
+        XCTAssertEqual(decoded.source, .editRecipe)
+        XCTAssertEqual(decoded.originalName, "flour")
+        XCTAssertEqual(decoded.correctedName, "all-purpose flour")
+        XCTAssertTrue(decoded.nameChanged)
+        XCTAssertFalse(decoded.quantityChanged)
+    }
+
+    /// TEST-TEL-029: CorrectionSource raw values round-trip
+    func testCorrectionSourceRawValuesRoundTrip() {
+        let sources: [ParsingCorrectionEvent.CorrectionSource] = [
+            .editRecipe, .createRecipe, .groceryListEdit, .templateRename
+        ]
+        let expectedRawValues = ["editRecipe", "createRecipe", "groceryListEdit", "templateRename"]
+
+        for (source, expected) in zip(sources, expectedRawValues) {
+            XCTAssertEqual(source.rawValue, expected, "\(source) raw value should be '\(expected)'")
+            XCTAssertEqual(
+                ParsingCorrectionEvent.CorrectionSource(rawValue: expected),
+                source,
+                "Should round-trip from raw value '\(expected)'"
+            )
+        }
+    }
+
+    /// TEST-TEL-030: getTotalCorrectionCount returns correct count
+    func testGetTotalCorrectionCount() {
+        // Given - no corrections yet
+        XCTAssertEqual(service.getTotalCorrectionCount(), 0, "Should start with 0 corrections")
+
+        // When - log 3 corrections
+        for i in 0..<3 {
+            service.logCorrection(
+                originalName: "item\(i)",
+                originalQuantity: 1.0,
+                originalUnit: "cup",
+                originalConfidence: 0.5,
+                correctedName: "corrected\(i)",
+                correctedQuantity: 1.0,
+                correctedUnit: "cup",
+                source: .editRecipe
+            )
+        }
+
+        service.waitForPendingOperations()
+
+        // Then
+        XCTAssertEqual(service.getTotalCorrectionCount(), 3, "Should have 3 total corrections")
+    }
+
+    /// TEST-TEL-031: logCorrection passes source and parserUsed through to event
+    func testLogCorrectionPassesV3Fields() {
+        // When
+        service.logCorrection(
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "bread flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup",
+            parserUsed: "ml",
+            source: .templateRename
+        )
+
+        service.waitForPendingOperations()
+
+        // Then
+        let corrections = service.getAllCorrectionEvents()
+        XCTAssertEqual(corrections.count, 1)
+        XCTAssertEqual(corrections.first?.parserUsed, "ml")
+        XCTAssertEqual(corrections.first?.source, .templateRename)
+    }
+
+    // MARK: - P0: Correction Export Tests (M8.4 Phase 8)
+
+    /// TEST-TEL-032: Basic correction export produces 1 JSONL line with correct tokens/labels
+    func testExportCorrectionsBasicCase() {
+        // Given - name change correction
+        service.logCorrection(
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "all-purpose flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup"
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        let lines = output.split(separator: "\n")
+        XCTAssertEqual(lines.count, 1, "Should produce exactly 1 JSONL line")
+
+        // Parse the JSONL line
+        let data = lines[0].data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: data) as! [String: [String]]
+        let tokens = parsed["tokens"]!
+        let labels = parsed["labels"]!
+
+        XCTAssertEqual(tokens.count, labels.count, "Token and label counts must match")
+        XCTAssertTrue(tokens.contains("all-purpose"), "Should contain name tokens")
+        XCTAssertTrue(tokens.contains("flour"), "Should contain name token 'flour'")
+        XCTAssertTrue(tokens.contains("2"), "Should contain quantity token")
+        XCTAssertTrue(tokens.contains("cup"), "Should contain unit token")
+        XCTAssertTrue(labels.contains("QTY"), "Should have QTY labels")
+        XCTAssertTrue(labels.contains("UNIT"), "Should have UNIT labels")
+        XCTAssertTrue(labels.contains("NAME"), "Should have NAME labels")
+    }
+
+    /// TEST-TEL-033: No-change corrections produce empty output
+    func testExportSkipsNoOpCorrections() {
+        // Given - correction where nothing actually changed
+        service.logCorrection(
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup"
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        XCTAssertTrue(output.isEmpty, "No-op corrections should produce empty output")
+    }
+
+    /// TEST-TEL-034: Name-only correction (nil quantity and unit) produces NAME labels only
+    func testExportHandlesNilQuantityAndUnit() {
+        // Given - name-only correction with nil qty/unit
+        service.logCorrection(
+            originalName: "salt",
+            originalQuantity: nil,
+            originalUnit: nil,
+            originalConfidence: 0.4,
+            correctedName: "kosher salt",
+            correctedQuantity: nil,
+            correctedUnit: nil
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        let lines = output.split(separator: "\n")
+        XCTAssertEqual(lines.count, 1, "Should produce 1 JSONL line")
+
+        let data = lines[0].data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: data) as! [String: [String]]
+        let labels = parsed["labels"]!
+
+        // All labels should be NAME (no QTY or UNIT)
+        XCTAssertTrue(labels.allSatisfy { $0 == "NAME" }, "All labels should be NAME when qty/unit are nil")
+        XCTAssertFalse(labels.contains("QTY"), "Should not have QTY labels")
+        XCTAssertFalse(labels.contains("UNIT"), "Should not have UNIT labels")
+    }
+
+    /// TEST-TEL-035: Quantity-only correction produces correct QTY/UNIT/NAME labels
+    func testExportHandlesQuantityOnlyCorrection() {
+        // Given - quantity changed, name/unit unchanged
+        service.logCorrection(
+            originalName: "butter",
+            originalQuantity: 1.0,
+            originalUnit: "tbsp",
+            originalConfidence: 0.7,
+            correctedName: "butter",
+            correctedQuantity: 2.5,
+            correctedUnit: "tbsp"
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        let lines = output.split(separator: "\n")
+        XCTAssertEqual(lines.count, 1)
+
+        let data = lines[0].data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: data) as! [String: [String]]
+        let tokens = parsed["tokens"]!
+        let labels = parsed["labels"]!
+
+        XCTAssertTrue(tokens.contains("2.5"), "Should contain corrected quantity '2.5'")
+        XCTAssertTrue(labels.contains("QTY"), "Should have QTY label")
+        XCTAssertTrue(labels.contains("UNIT"), "Should have UNIT label")
+        XCTAssertTrue(labels.contains("NAME"), "Should have NAME label")
+    }
+
+    /// TEST-TEL-036: Multiple corrections produce multiple JSONL lines
+    func testExportMultipleCorrections() {
+        // Given - 2 corrections
+        service.logCorrection(
+            originalName: "flour",
+            originalQuantity: 2.0,
+            originalUnit: "cup",
+            originalConfidence: 0.6,
+            correctedName: "bread flour",
+            correctedQuantity: 2.0,
+            correctedUnit: "cup"
+        )
+        service.logCorrection(
+            originalName: "sugar",
+            originalQuantity: 1.0,
+            originalUnit: "tbsp",
+            originalConfidence: 0.5,
+            correctedName: "brown sugar",
+            correctedQuantity: 1.0,
+            correctedUnit: "tbsp"
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        let lines = output.split(separator: "\n")
+        XCTAssertEqual(lines.count, 2, "Should produce 2 JSONL lines for 2 corrections")
+    }
+
+    /// TEST-TEL-037: Export produces valid JSONL schema with correct keys and valid label set
+    func testExportUsesValidJSONLSchema() {
+        // Given
+        service.logCorrection(
+            originalName: "chicken",
+            originalQuantity: 1.0,
+            originalUnit: "lb",
+            originalConfidence: 0.7,
+            correctedName: "chicken breast",
+            correctedQuantity: 1.5,
+            correctedUnit: "lb"
+        )
+        service.waitForPendingOperations()
+
+        // When
+        let output = service.exportCorrectionsAsTrainingData()
+
+        // Then
+        let lines = output.split(separator: "\n")
+        XCTAssertEqual(lines.count, 1)
+
+        let data = lines[0].data(using: .utf8)!
+        let parsed = try! JSONSerialization.jsonObject(with: data) as! [String: Any]
+
+        // Verify exactly "tokens" + "labels" keys
+        XCTAssertEqual(Set(parsed.keys), Set(["tokens", "labels"]),
+                       "JSONL should have exactly 'tokens' and 'labels' keys")
+
+        let tokens = parsed["tokens"] as! [String]
+        let labels = parsed["labels"] as! [String]
+
+        // Token and label counts must match
+        XCTAssertEqual(tokens.count, labels.count, "Token and label counts must match")
+
+        // All labels must be from valid set
+        let validLabels: Set<String> = ["QTY", "UNIT", "NAME"]
+        for label in labels {
+            XCTAssertTrue(validLabels.contains(label),
+                          "Label '\(label)' should be in valid set: \(validLabels)")
+        }
+    }
+
     // MARK: - P2: Performance Tests
 
     /// TEST-TEL-025: Logging Performance

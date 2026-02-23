@@ -23,7 +23,7 @@ open forager.xcodeproj
 - **Current**: iOS 26+ (Liquid Glass, raised in M15.1)
 - Xcode 26.0+, macOS 26.0+
 - No external dependencies (pure Swift/iOS frameworks)
-- 146 unit tests across 7 test files (M8 parsing, telemetry, merge, validation, normalization). Formal test infrastructure planned for M6.
+- 259 unit tests across 19 test files (M8.4 parsing/ML/telemetry, merge, validation, normalization, integration). Formal test infrastructure planned for M6.
 - Debug builds: CloudKit DISABLED (faster local development)
 - Release builds: CloudKit ENABLED
 - CloudKit container: `iCloud.com.richhayn.forager`
@@ -111,7 +111,7 @@ Key services in `Services/`:
 - `HouseholdService` - Household management, CloudKit sharing, member invitations
 - `MealPlanService` - Meal planning operations
 - `OptimizedRecipeDataService` - Recipe CRUD
-- `IngredientParsingService` - Text parsing with regex (<0.05s)
+- `IngredientParsingService` - Text parsing via 3-tier hybrid parser (<0.05s)
 - `IngredientTemplateService` - Normalization & deduplication
 - `QuantityMergeService` - Intelligent quantity consolidation
 - `UnitConversionService` - Unit conversions (cups/tbsp/tsp, lbs/oz)
@@ -126,6 +126,33 @@ Repositories provide **read-only** data access (not writes):
 - `CategoryRepository` - Category queries
 - `IngredientTemplateRepository` - Template queries
 - `PlannedMealRepository` - Meal plan queries
+
+### Ingredient Parsing (M8.4)
+
+3-tier hybrid parser with ML-powered fallback:
+
+```
+Input → RegexParser (≥0.9 confidence → return)
+      → MLParser    (≥0.8 confidence → return)  [CoreML BiLSTM + Swift Viterbi]
+      → NLPParser   (fallback, capped at 0.75)
+```
+
+**Key files** in `Services/Parsing/`:
+- `IngredientParser.swift` — Protocol (`parse(_ input:) -> ParserResult`)
+- `RegexIngredientParser.swift` — Fast deterministic parser (tier 1)
+- `MLIngredientParser.swift` — BiLSTM-CRF via CoreML (tier 2)
+- `NLPIngredientParser.swift` — NaturalLanguage.framework fallback (tier 3)
+- `HybridIngredientParser.swift` — 3-tier router with confidence thresholds
+- `ViterbiDecoder.swift` — CRF Viterbi decoding (pure Swift)
+- `IngredientTokenizer.swift` — Shared `foragerTokenize()` (frozen contract)
+
+**Architecture rules:**
+- `IngredientParsingService` is the public API — callers never use parsers directly
+- `foragerTokenize()` is the single tokenizer — used by both inference and correction export
+- `MLIngredientParser.init?()` returns nil if model unavailable (graceful degradation)
+- Telemetry logs `parserUsed` as winner-only attribution (`"regex"`, `"ml"`, or `"nlp"`)
+- Correction feedback: `ParsingTelemetryService.exportCorrectionsAsTrainingData()` → JSONL
+- 259 tests across 7 test files cover the full parsing pipeline
 
 ### Core Data Model (10 Entities)
 
@@ -309,12 +336,12 @@ These files form the single source of truth for project status and history. When
 2. Create/update learning notes in `docs/learning-notes/`
 3. Mark completed phases with actual hours
 4. Update `docs/next-prompt.md` for next phase
-5. Log any technical insights shared to `docs/insights-log.md` (don't defer — sessions can clear)
-6. Write narrative session entry in `docs/development-journal.md` (decisions, learning, AI tooling)
+5. Log any technical insights shared to `docs/insights-log.md` **(MANDATORY — don't defer, sessions can clear)**
+6. Write narrative session entry in `docs/development-journal.md` **(MANDATORY — update before each commit, not at end of session)**
 
-### Insights Logging (During Every Session)
+### Insights Logging (MANDATORY — During Every Session)
 
-**Whenever you share a technical insight with the user, log it to `docs/insights-log.md`.**
+**Whenever you share a technical insight with the user, IMMEDIATELY log it to `docs/insights-log.md`.** Do not defer this to end-of-session — sessions can be interrupted or run out of context. Treat every commit as a potential last commit: insights and journal entries must be current before each commit.
 
 Insights are non-obvious technical observations discovered during implementation — gotchas, platform behaviors, architectural trade-offs, or patterns worth remembering. Each entry must include:
 
@@ -378,7 +405,7 @@ docs/
 - **ADR 007**: Core Data change process (read before any schema changes)
 - **ADR 008**: Shared zone architecture (dual-store foundation)
 - **ADR 009**: Public link sharing (bypasses broken UICloudSharingController on iOS 18.x)
-- **ADR 010**: Hybrid parser confidence routing (regex fast path + NLP fallback)
+- **ADR 010**: Hybrid parser confidence routing (3-tier: regex → ML → NLP fallback)
 - **ADR 011**: Tab architecture reduction (6→5 tabs for M15, read before navigation changes)
 - **ADR 012**: GroceryListItem flat string snapshots (snapshot-only, not relationships)
 - **Service Layer Pattern**: M7.5+ standard for all Core Data writes

@@ -20,7 +20,7 @@ struct ParsingTelemetryEvent: Codable, Identifiable {
     let parsedQuantity: Double?
     let parsedUnit: String?
     let parseConfidence: Float
-    let parserUsed: String?     // M8.3: "regex", "nlp", or "hybrid"
+    let parserUsed: String?     // M8.4: "regex", "ml", or "nlp" (winner-only attribution)
     let source: ParsingSource
 
     /// Where the parsing occurred
@@ -74,6 +74,18 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
     let quantityChanged: Bool
     let unitChanged: Bool
 
+    // M8.4 Phase 7: Schema v3 — correction attribution
+    let parserUsed: String?         // "regex", "ml", or "nlp" (nil for unattributed)
+    let source: CorrectionSource?   // Where the correction occurred
+
+    /// M8.4 Phase 7: Where a user correction originated
+    enum CorrectionSource: String, Codable {
+        case editRecipe
+        case createRecipe
+        case groceryListEdit
+        case templateRename
+    }
+
     init(
         originalEventId: UUID? = nil,
         originalName: String,
@@ -82,7 +94,9 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
         originalConfidence: Float,
         correctedName: String,
         correctedQuantity: Double?,
-        correctedUnit: String?
+        correctedUnit: String?,
+        parserUsed: String? = nil,
+        source: CorrectionSource? = nil
     ) {
         self.id = UUID()
         self.timestamp = Date()
@@ -97,6 +111,8 @@ struct ParsingCorrectionEvent: Codable, Identifiable {
         self.nameChanged = originalName != correctedName
         self.quantityChanged = originalQuantity != correctedQuantity
         self.unitChanged = originalUnit != correctedUnit
+        self.parserUsed = parserUsed
+        self.source = source
     }
 }
 
@@ -106,7 +122,7 @@ struct ParsingTelemetryData: Codable {
     var correctionEvents: [ParsingCorrectionEvent]
     var schemaVersion: Int
 
-    static let currentSchemaVersion = 2  // M8.3: Added parserUsed field
+    static let currentSchemaVersion = 3  // M8.4 Phase 7: Added correction source + parserUsed
 
     init() {
         self.parsingEvents = []
@@ -223,7 +239,9 @@ class ParsingTelemetryService: ObservableObject {
         originalConfidence: Float,
         correctedName: String,
         correctedQuantity: Double?,
-        correctedUnit: String?
+        correctedUnit: String?,
+        parserUsed: String? = nil,
+        source: ParsingCorrectionEvent.CorrectionSource? = nil
     ) {
         let correction = ParsingCorrectionEvent(
             originalEventId: originalEventId,
@@ -233,7 +251,9 @@ class ParsingTelemetryService: ObservableObject {
             originalConfidence: originalConfidence,
             correctedName: correctedName,
             correctedQuantity: correctedQuantity,
-            correctedUnit: correctedUnit
+            correctedUnit: correctedUnit,
+            parserUsed: parserUsed,
+            source: source
         )
 
         queue.async { [weak self] in
@@ -271,6 +291,11 @@ class ParsingTelemetryService: ObservableObject {
     /// Get all correction events for analysis
     func getAllCorrectionEvents() -> [ParsingCorrectionEvent] {
         return telemetryData.correctionEvents
+    }
+
+    /// M8.4 Phase 7: Total correction count across all sessions (for corpus gate display)
+    func getTotalCorrectionCount() -> Int {
+        return telemetryData.correctionEvents.count
     }
 
     /// Get low confidence events (parseConfidence < threshold)
@@ -317,6 +342,67 @@ class ParsingTelemetryService: ObservableObject {
         }
 
         return String(data: data, encoding: .utf8)
+    }
+
+    // MARK: - M8.4 Phase 8: Training Data Export
+
+    /// Export correction events as JSONL training data for model retraining.
+    /// Each line is a JSON object with "tokens" and "labels" arrays.
+    /// Uses shared `foragerTokenize()` to ensure token consistency with ML inference.
+    ///
+    /// Quality filter: skips corrections where nothing changed or correctedName is empty.
+    /// Labels: QTY, UNIT, NAME (corrections don't capture MODIFIER/PREP/COMMENT).
+    func exportCorrectionsAsTrainingData() -> String {
+        var lines: [String] = []
+
+        for correction in telemetryData.correctionEvents {
+            // Quality filter: skip no-op corrections
+            guard correction.nameChanged || correction.quantityChanged || correction.unitChanged else {
+                continue
+            }
+
+            // Skip corrections with empty corrected name
+            guard !correction.correctedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                continue
+            }
+
+            var tokens: [String] = []
+            var labels: [String] = []
+
+            // Reconstruct tokens + labels from corrected fields
+            if let qty = correction.correctedQuantity {
+                let qtyTokens = foragerTokenize(formatQuantity(qty), maxTokens: Int.max)
+                tokens.append(contentsOf: qtyTokens)
+                labels.append(contentsOf: Array(repeating: "QTY", count: qtyTokens.count))
+            }
+
+            if let unit = correction.correctedUnit,
+               !unit.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let unitTokens = foragerTokenize(unit, maxTokens: Int.max)
+                tokens.append(contentsOf: unitTokens)
+                labels.append(contentsOf: Array(repeating: "UNIT", count: unitTokens.count))
+            }
+
+            let nameTokens = foragerTokenize(correction.correctedName, maxTokens: Int.max)
+            tokens.append(contentsOf: nameTokens)
+            labels.append(contentsOf: Array(repeating: "NAME", count: nameTokens.count))
+
+            guard !tokens.isEmpty else { continue }
+
+            // Serialize as JSONL line
+            let entry: [String: [String]] = ["tokens": tokens, "labels": labels]
+            if let data = try? JSONSerialization.data(withJSONObject: entry, options: [.sortedKeys]),
+               let line = String(data: data, encoding: .utf8) {
+                lines.append(line)
+            }
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    /// Format quantity for tokenization: integers → "2", fractional → "2.5"
+    private func formatQuantity(_ qty: Double) -> String {
+        return String(format: "%g", qty)
     }
 
     /// Clear all telemetry data (for testing/privacy)

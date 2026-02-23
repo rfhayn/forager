@@ -1,12 +1,368 @@
 # Current Development Story
 
-**Last Updated**: February 21, 2026
-**Status**: M9.5-partial ✅ **COMPLETE** | M9.1.2 ✅ **COMPLETE** | M9.0 ✅ **COMPLETE** | M7.5 ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M8.4 📋 **NEXT**
-**Total Progress**: ~226 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M9.5-partial ✅ COMPLETE | M8.4 ML-Powered Parsing — **NEXT**
+**Last Updated**: February 22, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~239 hours | 89% planning accuracy
+**Current Branch**: `feature/M8.4-ml-parsing` (ready to merge)
+**Current Milestone**: M8.4 ML-Powered Parsing — ✅ **ALL 10 PHASES COMPLETE**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M8.4 → M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M8.4: ML-POWERED PARSING - COMPLETE**
+
+**Status**: ✅ **COMPLETE** — All 10 phases (0-9) done
+**Sessions**: February 2026 (sessions 20-34)
+**Branch**: `feature/M8.4-ml-parsing`
+**PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
+**Actual**: ~25 hours across 10 phases
+
+### **Phase 0: Contract Lock + Single-Parse Refactor** ✅
+
+Architecture locked and parsing infrastructure hardened for ML integration.
+
+**Phase 0a: Architecture Lock**
+- Word-only BiLSTM v1 (no char features) — locked for v1
+
+**Phase 0b: Tokenizer Spec**
+- `TOKENIZER_SPEC.md` — binding contract between Python training and Swift runtime tokenizers
+- NFKD normalization, case folding, whitespace normalization, punctuation splitting
+- 100-sentence test vectors in `data/tokenizer_test_vectors.json`
+
+**Phase 0c: Single-Parse Refactor**
+- Added `parseCore()` — private, single telemetry-instrumented entry point
+- Added `parseUnified()` — public, returns both `ParsedIngredient` + `StructuredQuantity` from one parse call
+- Added static mapping helpers (`mapToParsedIngredient`, `mapToStructuredQuantity`)
+- Refactored `parseAndConnectIngredients()` to use `parseUnified()` (was calling `parser.parse()` twice per ingredient)
+- Fixed 3 view files with double-parse patterns (GroceryListDetailView, AddListItemView, RecipeListView)
+
+**Phase 0d-e: Governance**
+- Viterbi parity gate criteria documented in PRD
+- Model card template + license attribution (MIT/Apache 2.0 for strangetom)
+
+**Training Infrastructure**
+- `Tools/ml-training/` directory with README, requirements.txt
+- `.gitignore` for data/model artifacts (SQLite, JSONL, checkpoints, .mlpackage)
+
+### **Phase 1: Dataset Preparation Pipeline** ✅
+
+Converted strangetom SQLite database to Forager training format.
+
+**Data Pipeline** (`Tools/ml-training/prepare_dataset.py`, 335 lines)
+- Loaded strangetom SQLite: 81,316 sentences, 13 token-level labels
+- Mapped 13 strangetom labels → 7 Forager labels (QTY, UNIT, NAME, MODIFIER, PREP, COMMENT, OTHER)
+- Decoded all fraction notation via `re.sub` (handles mixed `1#1$2`, prefixed `#1$2`, simple `1$2`, ranges, dimensions)
+- Deduplicated by sentence: removed 12,470 duplicates → 68,846 unique samples
+- Split 80/10/10 stratified by source, verified no cross-split data leakage
+
+**Dataset Statistics** (68,846 sentences, 533,235 tokens)
+- Label distribution: NAME 30.4%, PREP 16.7%, QTY 15.2%, OTHER 13.3%, UNIT 13.4%, COMMENT 10.0%, MODIFIER 1.1%
+- Sources: NYT 18,940 | AllRecipes 14,792 | BBC 14,738 | Cookstr 14,087 | TC 6,289
+- Token length: mean 7.7, median 7.0, p95 15, max 50
+- Splits: train 55,076 | val 6,885 | test 6,885
+
+**Output Files**
+- `data/training_data.jsonl` (55,076 samples)
+- `data/validation_data.jsonl` (6,885 samples)
+- `data/test_data.jsonl` (6,885 samples)
+- `data/dataset_statistics.json` (distribution and split metadata)
+
+### **Phase 2: Model Architecture & Training** ✅
+
+Trained BiLSTM-CRF sequence labeler — all acceptance criteria met.
+
+**Model Architecture** (`Tools/ml-training/train_model.py`, 340 lines)
+- `IngredientTagger(nn.Module)`: embedding → BiLSTM → dropout → linear → CRF
+- Embedding dim: 128, Hidden dim: 256, 2 BiLSTM layers, dropout: 0.5
+- `pytorch-crf` for CRF layer (Viterbi decoding during inference)
+- Variable-length inputs via `pack_padded_sequence` with sorted batch collation
+- Gradient clipping at 5.0, Adam optimizer, lr=0.001, batch size 64
+
+**Training Results** (MPS device, ~39 min)
+- Vocabulary: 5,372 words (min_freq=2), UNK rate: 1.47%
+- Parameters: 1,348,934 (all trainable)
+- Best epoch: 21/30 (early stopped at epoch 26, patience=5)
+- Best validation loss: 0.2045
+
+**Test Set Evaluation**
+- Token accuracy: **98.49%** (target: ≥96%) ✅
+- Sentence accuracy: **95.40%** (target: ≥92%) ✅
+- Per-class F1: QTY=0.9968, UNIT=0.9939, NAME=0.9869, MODIFIER=0.9261, PREP=0.9789, COMMENT=0.9463, OTHER=0.9997
+- All key F1 ≥ 0.90: QTY ✅, UNIT ✅, NAME ✅
+
+**Exported Artifacts** (gitignored)
+- `models/ingredient_tagger.pt` — 5.2 MB checkpoint (target: <10 MB) ✅
+- `models/transitions.json` — 7×7 CRF transition matrix + start/end transitions + label names
+- `models/vocabulary.json` — 5,372 word→index mappings
+
+**Model Card** updated with training metadata, hyperparameters, and evaluation metrics.
+
+### **Phase 3: CoreML Conversion** ✅
+
+Converted BiLSTM emission scorer to CoreML and passed all parity gates.
+
+**CoreML Conversion** (`Tools/ml-training/convert_to_coreml.py`, 283 lines)
+- Extracted `EmissionScorer` wrapper (embedding + BiLSTM + linear, no CRF)
+- Traced and converted via coremltools 9.0 with variable-length input `(1, RangeDim(1, 64))`
+- FLOAT32 precision, iOS 18 minimum deployment target
+- CoreML model size: 5.15 MB
+
+**Emission Parity** (PyTorch vs CoreML)
+- Max absolute difference: 4.77e-06 across sequence lengths 3-20
+- Well within 0.01 threshold
+
+**Viterbi Parity Gate** (HARD GATE — PASSED)
+- Python reference Viterbi decoder implemented (~40 lines)
+- 1,000 test samples: **100.0000% token agreement** (8,030/8,030 tokens)
+- 100.00% sentence agreement (1,000/1,000 sentences)
+- End-to-end (CoreML emissions + Viterbi): 100.0000% (794/794 tokens on 100 samples)
+- Zero disagreements
+
+**Xcode Integration**
+- `IngredientTaggerEmissions.mlpackage` → Sources build phase (auto-generates Swift prediction class)
+- `transitions.json` → Copy Bundle Resources
+- `vocabulary.json` → Copy Bundle Resources
+- All 3 files in app bundle, BUILD SUCCEEDED
+
+### **Phase 4: MLIngredientParser Implementation** ✅
+
+Swift runtime components consuming the CoreML model.
+
+**ViterbiDecoder.swift** (~70 lines)
+- Pure-Swift Viterbi algorithm: forward pass with backpointers + backtrace
+- Consumes ALL CRF parameters: 7×7 transitions + start_transitions + end_transitions
+- Matches Python reference decoder (verified at 100.0000% parity in Phase 3)
+
+**MLIngredientParser.swift** (~300 lines)
+- Implements `IngredientParser` protocol with failable `init?()`
+- Tokenizer: NFKD normalize → lowercase → whitespace normalize → punctuation split → truncate to 64
+- CoreML inference: `MLMultiArray` input → emission scores → Viterbi decode → label sequence
+- Result assembly: token-label pairs → quantity/unit/name/notes
+- Handles Unicode fraction slash (U+2044) from NFKD decomposition of ½, ¼, etc.
+- Confidence: geometric mean of max per-token softmax probability
+- Graceful degradation: `init?()` returns nil if model/vocabulary/transitions unavailable
+
+**Key Details:**
+- `transitions.json` uses `label_names` key (not `labels` as PRD pseudocode showed)
+- MODIFIER labels grouped with NAME for ingredient name construction
+- PREP + COMMENT labels grouped for notes field
+- Unit standardization matches existing parser patterns
+
+### **Phase 5: HybridIngredientParser Integration** ✅
+
+3-tier routing integration — ML parser slotted between regex and NLP.
+
+**HybridIngredientParser.swift** (rewritten)
+- Added `mlParser: IngredientParser?` parameter (default: `MLIngredientParser()`)
+- Raised regex threshold from 0.8 → 0.9 (skip ML only for very high-confidence regex)
+- 3-tier routing: regex ≥0.9 → ML ≥0.8 → NLP fallback (only when both < 0.5)
+- Winner-only attribution: `parserUsed` reports winning parser, never `"hybrid"`
+- `#if DEBUG` warning when ML parser fails to load
+- Graceful degradation: when `mlParser == nil`, falls back to original 2-tier behavior
+
+**Comment Updates**
+- `IngredientParser.swift`: Protocol doc updated for 3 implementations, `parserUsed` values: `"regex"`, `"ml"`, `"nlp"`
+- `ParsingTelemetryService.swift`: `parserUsed` comment updated from `"hybrid"` to winner-only
+
+**CoreML Warmup**
+- `foragerApp.init()`: Background warmup via `DispatchQueue.global(qos: .utility).async`
+- Triggers lazy model loading off main thread, prevents first-prediction latency spike
+
+**Test Updates**
+- `HybridParserRoutingTests.swift`: Rewritten for 3-tier routing with `mockML` parser
+- New tests: ML wins when confident, regex vs ML moderate range, NLP gate, no-ML degradation
+- `HybridIngredientParserTests.swift`: Updated `testMediumConfidenceConsultsMLOrNLP` assertion
+
+**ADR 010 Updated**
+- Routing diagram: 3-tier (regex → ML → NLP) with thresholds
+- Winner-only attribution documented
+- File locations updated with MLIngredientParser, ViterbiDecoder, CoreML model
+
+### **Phase 6: Test Suite + Tokenizer Fix** ✅
+
+Comprehensive tests for ML parser, Viterbi decoder, and tokenizer cross-validation.
+
+**ViterbiDecoderTests.swift** (NEW — 15 tests, pure algorithm, no CoreML)
+- Empty input, single token, multi-token sequences (2-5 tokens)
+- Start/end transition influence on label selection
+- Transition overrides vs emission scores
+- Backpointer correctness (non-greedy path selection)
+- Edge cases: all-equal scores, negative emissions, very large values
+- Full 7-label Forager label set (QTY/UNIT/NAME/MODIFIER/PREP/COMMENT/OTHER)
+
+**MLIngredientParserTests.swift** (NEW — 21 tests, requires CoreML model)
+- Model presence guard: `XCTAssertNotNil(MLIngredientParser())`
+- Standard format regression: cups flour, tbsp olive oil, lb ground beef
+- Known regex failure cases: cloves as unit, fractions with compound names, product variants
+- Fractions: simple (1/2), unicode (½), mixed fractions
+- Complex inputs: parentheticals, comma-separated prep, name-only, single-word
+- Confidence range validation, parser attribution, original text preservation
+- Tokenizer cross-validation against frozen test vectors (inline subset)
+- Performance: 0.84ms per parse (100 parses, well under 5ms target)
+
+**Tokenizer Bug Fix** (discovered by cross-validation tests)
+- Fixed `/` between digits being split (fractions: `1/4` → was `["1", "/", "4"]`, now `["1/4"]`)
+- Fixed `.` between digits being split (decimals: `14.5` → was `["14", ".", "5"]`, now `["14.5"]`)
+- Fixed NFKD combining marks not stripped (`jalapeño` → now correctly `jalapeno`)
+- Root cause: Swift tokenizer had punctuation splitting that didn't match Python training tokenizer
+- Impact: Model now receives correct token IDs matching what it was trained on
+
+### **Phase 7: Correction Instrumentation** ✅
+
+Wired `logCorrection()` into production edit flows, creating the data foundation for Phase 8's continuous learning pipeline.
+
+**Schema v3** (`ParsingTelemetryService.swift`)
+- Added `CorrectionSource` enum: `.editRecipe`, `.createRecipe`, `.groceryListEdit`, `.templateRename`
+- Added `parserUsed: String?` and `source: CorrectionSource?` to `ParsingCorrectionEvent`
+- Updated `logCorrection()` with new params (nil defaults preserve all existing callsites)
+- Bumped `currentSchemaVersion` from 2 → 3
+- Added `getTotalCorrectionCount()` convenience method
+
+**IngredientInput original state tracking** (`RecipeFormModels.swift`)
+- Added 4 optional fields: `originalFullText`, `originalNumericValue`, `originalStandardUnit`, `originalParseConfidence`
+- Enables change detection: compare original vs edited values at save time
+
+**Edit flow wiring** (3 views)
+- `EditRecipeView`: Populates originals in `loadRecipeData()`, detects corrections in `completeSave()` via `parseUnified()`
+- `CreateRecipeView`: Sets `originalFullText` at add time, detects corrections in `completeSave()` via `parseUnified()`
+- `IngredientsView`: Logs corrections in both rename and merge branches of `saveNameEdit()`
+- `GroceryListDetailView`: Skipped (no item name editing in UI)
+
+**Corpus gate display** (`SettingsView.swift`)
+- Debug-only row showing correction count + gate status ("Need N more" or "Ready for retraining")
+
+**Tests**: 6 new tests (v2 compat decode, v3 encode/decode, CorrectionSource round-trip, schema version check, getTotalCorrectionCount, logCorrection field passthrough)
+
+### **Phase 7.5: Pre-Existing Test Failure Fixes + Test Infrastructure** ✅
+
+Fixed 14+ pre-existing test failures across 7 test classes. Also fixed test runner crashes from test host app lifecycle and CloudKit mirroring on in-memory stores.
+
+**Root causes discovered:**
+- Recipe `validateForInsert()` requires non-empty `instructions` (added after test creation)
+- IngredientTemplate `validateForInsert()` requires `dateCreated`
+- GroceryListItem `displayText` required at Core Data model level (not in Swift types)
+- `preferPlural` dict intentionally maps eggs→eggs, tomatoes→tomatoes
+- 3-tier routing (0.9 threshold) sends medium-confidence to ML parser
+- Core Data property renames: name→title, quantity→numericValue, weekStart→dateCreated
+- Test host app rendering full TabView with `@FetchRequest` against unconfigured stores
+- CloudKit mirroring delegates on in-memory test stores causing teardown crashes
+
+**Files modified (7 test files):**
+- `RecipeServiceTests.swift` — instructions + @MainActor tearDown
+- `CoreDataInvariantsTests.swift` — instructions, dateCreated, resetSeedingStatus
+- `ParsingIntegrationTests.swift` — instructions, "cup" assertion, @MainActor tearDown
+- `IngredientTemplateNormalizationTests.swift` — preferPlural assertions
+- `HybridIngredientParserTests.swift` — parser-agnostic assertions
+- `MigrationValidationTests.swift` — property name corrections
+- `WeeklyListServiceTests.swift` — displayText + @MainActor tearDown
+
+### **Phase 8: Continuous Learning Pipeline** ✅
+
+Closed the feedback loop: correction export + retraining script.
+
+**Shared tokenizer extraction:**
+- Extracted `foragerTokenize()` from `MLIngredientParser` into `IngredientTokenizer.swift`
+- Ensures token consistency between ML inference and correction export
+- `MLIngredientParser.tokenize()` now delegates to shared function
+
+**Correction export (`ParsingTelemetryService.exportCorrectionsAsTrainingData()`):**
+- Synthetic reconstruction from corrected fields (QTY/UNIT/NAME labels)
+- Quality filter: skips no-op corrections and empty names
+- Output: JSONL matching Phase 1 training data schema
+- 6 new tests (TEST-TEL-032 through TEST-TEL-037), all passing
+
+**Python retraining script (`Tools/ml-training/retrain_with_corrections.py`):**
+- Fine-tunes from existing checkpoint (lower LR: 0.0005 vs 0.001)
+- Auto-oversampling (up to 50x) to give corrections meaningful influence
+- Improvement gate: saves retrained model only if both primary metrics improve
+- Reuses all infrastructure from `train_model.py`
+
+### **Phase 9: Integration Testing & Documentation** ✅
+
+Final validation and milestone documentation.
+
+**8 end-to-end integration tests added to `ParsingIntegrationTests.swift`:**
+1. Quick-add "3 cloves garlic" → qty=3, unit=clove, template created
+2. Quick-add "milk 2%" → name contains "milk"
+3. Recipe "1/4 tsp black pepper" → qty=0.25, unit=tsp, template contains "pepper"
+4. Recipe "a handful of fresh cilantro" → name contains "cilantro"
+5. Quick-add "bananas" → plural preserved, template created
+6. Bulk add 4 ingredients → all parsed, templates assigned, sort order preserved
+7. Recipe scaling 2x → parseable ingredients auto-scaled, servings doubled
+8. Edit recipe → structured fields updated, template reference preserved
+
+**Documentation:**
+- Learning note 38: ML parsing + CoreML integration
+- CLAUDE.md: Parser architecture section, updated test count (259), ADR 010 description
+- All 7 core docs updated for milestone completion
+
+### **Commits**
+1. `dd332c9` — M8.4 Phase 0: Contract lock + single-parse refactor
+2. `e39b098` — M8.4 Phase 1: Dataset preparation pipeline
+3. `ce98e43` — M8.4 Phase 2: BiLSTM-CRF model training pipeline
+4. `6c37b28` — M8.4 Phase 3: CoreML conversion + Viterbi parity gate
+5. (pending) — M8.4 Phase 4: ViterbiDecoder + MLIngredientParser
+6. (pending) — M8.4 Phase 5: HybridIngredientParser 3-tier integration
+
+### **Testing Status**
+
+| Test | Status | Notes |
+|------|--------|-------|
+| Build | ✅ BUILD SUCCEEDED | Clean build with CoreML model + JSON resources |
+| Existing tests | ✅ ALL PASSING | 259/259 unit tests, 0 failures, TEST SUCCEEDED (251 + 8 Phase 9 integration tests) |
+| Dataset integrity | ✅ VERIFIED | No cross-split leakage, all labels mapped |
+| Fraction decoding | ✅ VERIFIED | Mixed, prefixed, simple, range patterns all correct |
+| Model training | ✅ ALL TARGETS MET | Token 98.49% ≥96%, Sentence 95.40% ≥92%, all F1 ≥0.90 |
+| Model size | ✅ 5.2 MB checkpoint | Under 10 MB budget |
+| CoreML conversion | ✅ 5.15 MB | Emissions match PyTorch within 4.77e-06 |
+| Viterbi parity gate | ✅ 100.0000% | 8,030/8,030 tokens, 1,000/1,000 sentences |
+| Xcode integration | ✅ BUILD SUCCEEDED | .mlpackage compiled, JSON in bundle |
+| ViterbiDecoder | ✅ BUILD SUCCEEDED | Compiles, matches PRD + Python reference |
+| MLIngredientParser | ✅ BUILD SUCCEEDED | Full pipeline compiles, IngredientParser protocol |
+| 3-tier routing | ✅ BUILD SUCCEEDED | HybridIngredientParser with ML tier, winner-only attribution |
+| Test target | ✅ TEST BUILD SUCCEEDED | Updated routing tests compile with 3-tier assertions |
+| ViterbiDecoderTests | ✅ 15/15 PASSING | Pure algorithm tests, no CoreML dependency |
+| MLIngredientParserTests | ✅ 21/21 PASSING | Model presence guard, accuracy, tokenizer, performance |
+| ML parse performance | ✅ 0.84ms/parse | Well under 5ms target (100 parses steady-state) |
+| Tokenizer cross-validation | ✅ PASSING | Inline vectors match after fraction/decimal/NFKD fix |
+
+### **Files Created/Modified**
+
+| File | Status | Notes |
+|------|--------|-------|
+| `Services/IngredientParsingService.swift` | MODIFIED | +parseCore(), +parseUnified(), +static mappers, refactored parseAndConnectIngredients |
+| `forager/GroceryListDetailView.swift` | MODIFIED | Single-parse refactor (eliminated double parse) |
+| `forager/AddListItemView.swift` | MODIFIED | Single-parse refactor |
+| `forager/RecipeListView.swift` | MODIFIED | Single-parse refactor |
+| `Tools/ml-training/TOKENIZER_SPEC.md` | NEW | Tokenizer contract (frozen) |
+| `Tools/ml-training/prepare_dataset.py` | NEW | Dataset preparation pipeline (335 lines) |
+| `Tools/ml-training/data/tokenizer_test_vectors.json` | NEW | 100 cross-validation sentences |
+| `Tools/ml-training/data/dataset_statistics.json` | NEW | Distribution and split metadata |
+| `Tools/ml-training/MODEL_CARD.md` | NEW | Model card template |
+| `Tools/ml-training/LICENSES.md` | NEW | License attribution (MIT/Apache 2.0) |
+| `Tools/ml-training/README.md` | NEW | Training infrastructure overview |
+| `Tools/ml-training/requirements.txt` | NEW | Python dependencies |
+| `.gitignore` | MODIFIED | +data/model artifact exclusions |
+| `Tools/ml-training/train_model.py` | NEW | BiLSTM-CRF training pipeline (340 lines) |
+| `Tools/ml-training/convert_to_coreml.py` | NEW | CoreML conversion + Viterbi parity gate (283 lines) |
+| `Tools/ml-training/parity_report.md` | NEW | Viterbi parity gate results |
+| `forager/IngredientTaggerEmissions.mlpackage` | NEW | CoreML emission scorer (5.15 MB) |
+| `forager/MLModel/transitions.json` | NEW | CRF transition parameters (copy for bundle) |
+| `forager/MLModel/vocabulary.json` | NEW | Token vocabulary (copy for bundle) |
+| `forager.xcodeproj/project.pbxproj` | MODIFIED | +mlpackage in Sources, +JSON in Resources |
+| `Services/Parsing/ViterbiDecoder.swift` | NEW | Pure-Swift Viterbi decoder (~70 lines) |
+| `Services/Parsing/MLIngredientParser.swift` | NEW | ML parser: tokenize → CoreML → Viterbi → result (~300 lines) |
+| `Services/Parsing/HybridIngredientParser.swift` | MODIFIED | 3-tier routing, mlParser param, winner-only attribution |
+| `Services/Parsing/IngredientParser.swift` | MODIFIED | Protocol/parserUsed comment updates for ML tier |
+| `Services/ParsingTelemetryService.swift` | MODIFIED | parserUsed comment update (winner-only) |
+| `forager/foragerApp.swift` | MODIFIED | CoreML warmup in init() |
+| `docs/architecture/010-hybrid-parser-confidence-routing.md` | MODIFIED | 3-tier routing, winner-only attribution |
+| `foragerTests/Services/Parsing/HybridParserRoutingTests.swift` | MODIFIED | Rewritten for 3-tier with mockML |
+| `foragerTests/Services/Parsing/HybridIngredientParserTests.swift` | MODIFIED | Winner-only assertion update |
+| `foragerTests/Services/Parsing/ViterbiDecoderTests.swift` | NEW | 15 pure algorithm tests |
+| `foragerTests/Services/Parsing/MLIngredientParserTests.swift` | NEW | 21 integration tests (model + tokenizer + perf) |
+| `Services/Parsing/MLIngredientParser.swift` | MODIFIED | Tokenizer fix: fraction/decimal/NFKD combining marks |
 
 ---
 
@@ -214,26 +570,29 @@ User testing on M15.5b build revealed 12 issues across parsing, display, data pr
 
 ---
 
-## 📋 **M8.4: ML-POWERED PARSING - READY**
+## 🔄 **M8.4: ML-POWERED PARSING - ACTIVE (Details)**
 
-**Status**: 📋 **READY** (PRD execution-ready — 12 review passes, 60 findings + 1 validation pass)
+**Status**: 🔄 **ACTIVE** — Phase 0+1 ✅ COMPLETE
 **PRD**: `docs/prds/active/m8.4-ml-powered-parsing.md`
 **Estimated**: 23-32 hours (10 phases including Phase 0 feasibility gate) + 9 hours M9 prerequisites (complete)
+**Actual so far**: ~7h (Phase 0-3)
 **Approach**: Dataset-bootstrapped CoreML BiLSTM-CRF sequence labeler (word-only v1)
-**External Review**: 12 review passes (9 external, 3 internal) completed Feb 21, 2026 — 60 findings integrated + priority validation pass, zero high-severity by pass 6
+**External Review**: 12 review passes (9 external, 3 internal) — 60 findings integrated + priority validation pass
 
-### **Key Change from Original Plan**
-Original M8.4 required 100+ user corrections (cold start). New approach bootstraps from strangetom (81k sentences, 13 labels) → mapped to 7 Forager labels. Model ready from day one.
+### **Phase Progress**
 
-### **PRD Changes (from 11 review passes, 60 findings)**
-- **Phase 0**: Feasibility + Contract Lock — architecture lock (word-only v1), tokenizer spec (NFKD normalization, no padding with RangeDim), single-parse refactor (5 double-parse sites + 11 zero-telemetry callers), Viterbi parity gate, governance
-- **Phase 4**: `runEmissionModel` implementation sketch with MLMultiArray stride-based access, unit canonicalization extraction as explicit sub-task
-- **Phase 5**: Winner-only parser attribution (`regex`/`ml`/`nlp`, never `"hybrid"`), parsers stay synchronous, static `sharedParser` lazy CoreML loading, CoreML background warmup strategy, `#if DEBUG` model load warning, runtime memory <10MB, ADR 010 update, `parserName = "hybrid"` retained for protocol conformance
-- **Phase 6**: Test structure split into 3 files (ViterbiDecoderTests, MLIngredientParserTests, HybridParserRoutingTests), model presence guard test
-- **Phase 7**: Reordered to 7a (schema v3) → 7b (edit flow wiring with `source` parameter) → 7c (corpus gate). Added `CorrectionSource` enum (edit-flow oriented), provenance rules per edit flow, denominator guardrails (N ≥ 20), legacy `"hybrid"` telemetry handling
-- **Section 8**: 4 CoreML platform risks added (warmup latency, MLMultiArray Float16/32, RangeDim CPU fallback, silent model load failure)
-- **CRF architecture**: Split into BiLSTM emission scorer (.mlpackage) + CRF params (7×7 transitions + 1×7 start + 1×7 end as JSON) + Viterbi decoder (pure Swift)
-- **Corrections**: v1 uses unlinked corrections (no `parseEventId` persistence); correction linkage contract deferred with Option A/B for v2
+| Phase | Description | Est. | Status |
+|-------|-------------|------|--------|
+| 0 | Contract Lock + Single-Parse Refactor | 2-3h | ✅ COMPLETE |
+| 1 | Dataset Preparation Pipeline | 3-4h | ✅ COMPLETE |
+| 2 | Model Architecture & Training | 4-5h | ✅ COMPLETE |
+| 3 | CoreML Conversion | 2-3h | ✅ COMPLETE |
+| 4 | MLIngredientParser Implementation | 3-4h | ✅ COMPLETE |
+| 5 | HybridIngredientParser Integration | 2-3h | ✅ COMPLETE |
+| 6 | Test Suite + Tokenizer Fix | 2-3h | ✅ COMPLETE |
+| 7 | Correction Instrumentation | 2-3h | ⏳ |
+| 8 | Continuous Learning Pipeline | 2h | ⏳ |
+| 9 | Integration Testing & Documentation | 1-2h | ⏳ |
 
 ### **Prerequisites (M9 subset) — ALL COMPLETE**
 1. ~~M9.0: Warning resolution (2-3h)~~ — ✅ COMPLETE (<1h actual, Feb 21)
@@ -241,7 +600,7 @@ Original M8.4 required 100+ user corrections (cold start). New approach bootstra
 3. ~~M9.5-partial: Parser dependency injection (4h)~~ — ✅ COMPLETE (~3h actual, Feb 21)
 
 ### **Execution Order**
-M7.5 ✅ → Sessions 1-3: M9 Prerequisites ✅ → Sessions 4-9: M8.4 Phases 0-9 → M7.7 App Store
+M7.5 ✅ → M9 Prerequisites ✅ → M8.4 Phases 0-6 ✅ → **Phase 7 NEXT** → Phases 8-9 → M7.7 App Store
 
 ---
 
@@ -1307,8 +1666,8 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 
 ---
 
-**Last Session**: February 21, 2026 - M8.4 PRD finalized (12 review passes, 60 findings + priority validation)
-**Next Action**: M8.4 Phase 0+1 (contract lock + dataset prep, 5-7h) → Phase 2 (4-5h) → Phase 3+4 (5-7h) → Phase 5+6 (4-6h) → Phase 7+8 (4-5h) → Phase 9 (1-2h)
-**Branch**: `main` (create `feature/M8.4-ml-parsing` when starting)
-**Confidence**: **GREEN** (zero-warning baseline, clean build, all tests pass, parser DI complete, M8.4 PRD execution-ready after 12 review passes including PME review + priority validation)
-**Version**: February 21, 2026 - M9.5-partial COMPLETE, M8.4 NEXT (PRD finalized, 60 findings + validation)
+**Last Session**: February 22, 2026 - M8.4 Phase 6 COMPLETE (36 new tests, tokenizer bug fix, 0.84ms/parse performance)
+**Next Action**: M8.4 Phase 7+8 (corrections + continuous learning, 4-5h) → Phase 9 (integration, 1-2h)
+**Branch**: `feature/M8.4-ml-parsing`
+**Confidence**: **GREEN** (Phase 0-6 complete, 36 new tests passing, tokenizer bug discovered and fixed by cross-validation, ML parsing fully tested)
+**Version**: February 22, 2026 - M8.4 Phase 0-6 COMPLETE, Phase 7 NEXT

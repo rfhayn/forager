@@ -1,0 +1,6 @@
+torch>=2.0
+pytorch-crf>=0.7.2
+coremltools>=7.0
+numpy
+pandas
+scikit-learn

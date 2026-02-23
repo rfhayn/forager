@@ -67,3 +67,12 @@ fastlane/test_output
 .LSOverride 
 # Claude AI assistant context
 .claude/
+
+# ML training data and model artifacts (large files)
+Tools/ml-training/data/*.sqlite
+Tools/ml-training/data/*.csv
+Tools/ml-training/data/training_data.jsonl
+Tools/ml-training/data/validation_data.jsonl
+Tools/ml-training/data/test_data.jsonl
+Tools/ml-training/models/
+Tools/ml-training/venv/

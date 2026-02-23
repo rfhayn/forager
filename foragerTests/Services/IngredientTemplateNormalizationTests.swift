@@ -96,14 +96,14 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     // MARK: - Regular Plurals (Should Singularize)
 
-    func testEggsSingularizes() {
+    func testEggsPreferPlural() {
         let result = service.normalize(name: "Eggs")
-        XCTAssertEqual(result, "egg", "'Eggs' should normalize to 'egg'")
+        XCTAssertEqual(result, "eggs", "'Eggs' should stay plural via preferPlural for natural grocery naming")
     }
 
-    func testTomatoesSingularizes() {
+    func testTomatoesPreferPlural() {
         let result = service.normalize(name: "Tomatoes")
-        XCTAssertEqual(result, "tomato", "'Tomatoes' should normalize to 'tomato'")
+        XCTAssertEqual(result, "tomatoes", "'Tomatoes' should stay plural via preferPlural for natural grocery naming")
     }
 
     func testBerriesSingularizes() {
@@ -118,17 +118,13 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
         XCTAssertEqual(result, "peas", "'Frozen Peas' should strip qualifier and keep plural")
     }
 
-    func testDicedTomatoesSingularizes() {
+    func testDicedTomatoesPreferPlural() {
         let result = service.normalize(name: "Diced Tomatoes")
-        // normalizePlural runs before removeVariations, so "diced tomatoes" → "diced tomato" → "tomato"
-        // Actually: normalize order is case → plural → abbreviation → variation
-        // So "Diced Tomatoes" → "diced tomatoes" (case) → plural check → variation removal
-        // In normalizePlural, qualifiers are stripped for the alwaysPlural check
-        // "diced tomatoes" → checkName = "tomatoes" (after stripping "diced ")
-        // "tomatoes" ends with "oes" → singular = "tomato" (Pattern 2)
-        // Then removeVariations strips "diced " → "tomato"
-        let expected = "tomato"
-        XCTAssertEqual(result, expected, "'Diced Tomatoes' should normalize to 'tomato'")
+        // normalize order: case → plural → abbreviation → variation
+        // "Diced Tomatoes" → "diced tomatoes" (case) → preferPlural keeps "tomatoes"
+        // → variation removal strips "diced " → "tomatoes"
+        let expected = "tomatoes"
+        XCTAssertEqual(result, expected, "'Diced Tomatoes' should normalize to 'tomatoes' via preferPlural")
     }
 
     // MARK: - Case Normalization
@@ -147,7 +143,7 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     func testLargeEggsStripsQualifier() {
         let result = service.normalize(name: "Large Eggs")
-        XCTAssertEqual(result, "egg", "'Large Eggs' should strip 'large' and singularize")
+        XCTAssertEqual(result, "eggs", "'Large Eggs' should strip 'large' and keep plural via preferPlural")
     }
 
     func testFreshBasilStripsQualifier() {

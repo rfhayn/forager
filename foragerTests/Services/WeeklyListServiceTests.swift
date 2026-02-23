@@ -23,6 +23,7 @@ final class WeeklyListServiceTests: XCTestCase {
         service = WeeklyListService(context: context, parsingService: parsingService)
     }
 
+    @MainActor
     override func tearDown() {
         service = nil
         parsingService = nil
@@ -102,7 +103,7 @@ final class WeeklyListServiceTests: XCTestCase {
         let list = service.createList(name: "Test List")
         XCTAssertNotNil(list)
 
-        let item = service.addItem(to: list!, name: "butter", categoryName: "Dairy")
+        let item = service.addItem(to: list!, name: "butter", categoryName: "Dairy", displayText: "butter")
         XCTAssertNotNil(item)
         XCTAssertEqual(item?.name, "butter")
 
@@ -116,7 +117,7 @@ final class WeeklyListServiceTests: XCTestCase {
     @MainActor
     func testRemoveItem() throws {
         let list = service.createList(name: "Test List")
-        let item = service.addItem(to: list!, name: "milk")
+        let item = service.addItem(to: list!, name: "milk", displayText: "milk")
         XCTAssertNotNil(item)
 
         let itemID = item!.objectID
@@ -129,7 +130,7 @@ final class WeeklyListServiceTests: XCTestCase {
     @MainActor
     func testToggleItemChecked() {
         let list = service.createList(name: "Test List")
-        let item = service.addItem(to: list!, name: "eggs")
+        let item = service.addItem(to: list!, name: "eggs", displayText: "eggs")
         XCTAssertNotNil(item)
         XCTAssertFalse(item!.isCompleted)
         XCTAssertNil(item?.dateCompleted)
@@ -148,9 +149,9 @@ final class WeeklyListServiceTests: XCTestCase {
     @MainActor
     func testRemoveCompletedItems() {
         let list = service.createList(name: "Test List")
-        let item1 = service.addItem(to: list!, name: "milk")
-        let item2 = service.addItem(to: list!, name: "eggs")
-        let item3 = service.addItem(to: list!, name: "bread")
+        let item1 = service.addItem(to: list!, name: "milk", displayText: "milk")
+        let item2 = service.addItem(to: list!, name: "eggs", displayText: "eggs")
+        let item3 = service.addItem(to: list!, name: "bread", displayText: "bread")
 
         // Complete two items
         service.toggleItemChecked(item1!)

@@ -22,6 +22,7 @@ final class RecipeServiceTests: XCTestCase {
         service = RecipeService(context: context, parsingService: parsingService)
     }
 
+    @MainActor
     override func tearDown() {
         service = nil
         parsingService = nil
@@ -35,7 +36,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testCreateRecipe() {
-        let recipe = service.createRecipe(title: "Pasta Carbonara", servings: 4, prepTime: 15, cookTime: 20)
+        let recipe = service.createRecipe(title: "Pasta Carbonara", servings: 4, prepTime: 15, cookTime: 20, instructions: "Test instructions")
 
         XCTAssertNotNil(recipe)
         XCTAssertEqual(recipe?.title, "Pasta Carbonara")
@@ -51,7 +52,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testUpdateRecipe() {
-        let recipe = service.createRecipe(title: "Original", servings: 2)
+        let recipe = service.createRecipe(title: "Original", servings: 2, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         service.updateRecipe(recipe!, title: "Updated Title", servings: 6)
@@ -63,7 +64,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testDeleteRecipe() throws {
-        let recipe = service.createRecipe(title: "To Delete", servings: 1)
+        let recipe = service.createRecipe(title: "To Delete", servings: 1, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         let recipeID = recipe!.objectID
@@ -77,7 +78,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testToggleFavorite() {
-        let recipe = service.createRecipe(title: "Favorite Test", servings: 1)
+        let recipe = service.createRecipe(title: "Favorite Test", servings: 1, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
         XCTAssertFalse(recipe!.isFavorite)
 
@@ -92,7 +93,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testDuplicateRecipe() {
-        let original = service.createRecipe(title: "Original Recipe", servings: 4, prepTime: 10, cookTime: 30)
+        let original = service.createRecipe(title: "Original Recipe", servings: 4, prepTime: 10, cookTime: 30, instructions: "Test instructions")
         XCTAssertNotNil(original)
 
         // Add an ingredient to the original
@@ -130,7 +131,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testAddIngredientWithStructuredData() {
-        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         let ingredient = service.addIngredient(
@@ -151,7 +152,7 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testAddIngredientFromParsedStructuredQuantity() {
-        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
         let parsed = StructuredQuantity(
@@ -175,10 +176,10 @@ final class RecipeServiceTests: XCTestCase {
 
     @MainActor
     func testRemoveIngredient() throws {
-        let recipe = service.createRecipe(title: "Test Recipe", servings: 4)
+        let recipe = service.createRecipe(title: "Test Recipe", servings: 4, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
 
-        let ingredient = service.addIngredient(to: recipe!, name: "salt")
+        let ingredient = service.addIngredient(to: recipe!, name: "salt", displayText: "salt")
         XCTAssertNotNil(ingredient)
 
         let ingredientID = ingredient!.objectID
@@ -196,7 +197,7 @@ final class RecipeServiceTests: XCTestCase {
         service.errorMessage = "Previous error"
 
         // A successful operation should clear it
-        let recipe = service.createRecipe(title: "Test", servings: 1)
+        let recipe = service.createRecipe(title: "Test", servings: 1, instructions: "Test instructions")
         XCTAssertNotNil(recipe)
         XCTAssertNil(service.errorMessage, "errorMessage should clear on successful operation")
     }
