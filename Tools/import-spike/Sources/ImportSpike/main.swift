@@ -201,7 +201,9 @@ func extractMatrix(matrixPath: String, reportPath: String?) {
                 )
                 results.append(result)
 
-                let status = recipe.fieldsMissing.isEmpty ? "FULL" : "PARTIAL (\(recipe.fieldsMissing.joined(separator: ", ")))"
+                let level = recipe.successLevel.rawValue.uppercased()
+                let optMissing = recipe.optionalFieldsMissing
+                let status = optMissing.isEmpty ? level : "\(level) (optional missing: \(optMissing.joined(separator: ", ")))"
                 fputs("  ✓ Recipe found via \(extractCtx.extractionMethod) — \(status) — \(fetchTimeMs)ms\n", stderr)
             } else {
                 let hasJSONLD = !RecipeJSONLDExtractor.extractJSONLDBlocks(from: html).isEmpty

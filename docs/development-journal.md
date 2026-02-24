@@ -26,6 +26,18 @@ A Codex architecture review of commit `966fb59` (the M10 spike output) identifie
 
 **Cascading number corrections**: Regenerated the extraction report after code fixes. Recipe count dropped from 13/28 to 12/28 (BBC false positive eliminated). All 12 are full extractions (0 partial). Updated all references across PRD, acceptance criteria, test matrix, insights log, and dev journal.
 
+### Round 3 Review (same session)
+
+Sent updated artifacts to Codex for re-review. All 5 original findings confirmed resolved. 4 new findings surfaced:
+
+**Finding 1 (Medium) — Transaction semantics**: PRD claimed atomic save but `createRecipe()` and `parseAndConnectIngredients()` are two separate commits. Fixed by adding explicit implementation note to §3.1 requiring a new `importRecipe(from:ingredientTexts:)` method that creates Recipe + Ingredients + saves once. Updated §3.2 orchestrator diagram.
+
+**Finding 2 (Medium) — "Dead URLs" number inconsistency**: PRD said "~7/28 (25%)" but actual data shows 16/28 failures. Replaced vague row with precise 3-row breakdown: "No extraction possible | 16/28 (57%)" split into "client-rendered WKWebView recoverable | ~8/28 (29%)" and "truly unrecoverable | ~3/28 (11%)" in both PRD and acceptance criteria.
+
+**Finding 3 (Low) — `__NEXT_DATA__` recall risk**: Tightened `recipeIngredient` requirement could theoretically reject legitimate non-@type recipes. Added risk register entry with mitigation: build validation corpus of 10+ `__NEXT_DATA__` sites during M10.1.
+
+**Finding 4 (Low) — CLI vs report classification mismatch**: `fieldsMissing` checked 6 fields while `classifySuccess()` checked 3 core fields — two competing classification systems. Created single source of truth via `ExtractedRecipe.successLevel` computed property, refactored `classifySuccess()` to delegate, updated CLI to use same classification.
+
 ### Key Decisions and Why
 
 **Strict success classification**: Defined "full" as title + ingredients + instructions (the 3 core fields). Previously counted all 8 fields for full/partial. This is more meaningful because time fields and author are genuinely optional — a recipe without cookTime is still usable.
@@ -42,7 +54,9 @@ A Codex architecture review of commit `966fb59` (the M10 spike output) identifie
 | 4 | `m10-recipe-import.md` | PRD §3.1 persistence invariant, §2.x numbers corrected |
 | 5 | `acceptance-criteria.md` | Spike findings summary + per-field rates corrected |
 | 6 | `test-site-matrix.md` | All placeholder sections filled with spike data |
-| 7 | `insights-log.md` | 4 new review insights + corrected stale numbers |
+| 7 | `insights-log.md` | 4 Round 2 insights + 2 Round 3 insights + corrected stale numbers |
+| 8 | `ExtractedRecipe.swift` | Round 3: Added `successLevel` computed property, single classification source of truth |
+| 9 | `main.swift` | Round 3: CLI uses `successLevel` instead of `fieldsMissing` |
 
 ---
 

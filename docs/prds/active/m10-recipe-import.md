@@ -34,8 +34,9 @@ A structured spike validated assumptions before this PRD was written. All target
 | Recipe extractable (URLSession) | 12/28 (43%) | Server-rendered HTML only |
 | Full extraction (title + ingredients + instructions) | 12/28 (43%) | All 12 successful extractions have the 3 core fields |
 | Partial extraction (1-2 core fields missing) | 0/28 (0%) | Strict classification: full requires title + ingredients + instructions |
-| Client-rendered JSON-LD | ~8/28 (29%) | WordPress WPRM/Tasty plugins inject via JS |
-| Dead URLs / no structured data | ~7/28 (25%) | 404s, social media, markdown, no schema.org |
+| No extraction possible | 16/28 (57%) | 9 no JSON-LD + 7 JSON-LD without Recipe @type |
+| — of which: client-rendered (WKWebView recoverable) | ~8/28 (29%) | WordPress WPRM/Tasty plugins inject Recipe via JS |
+| — of which: truly unrecoverable | ~3/28 (11%) | Pinterest (aggregator), GitHub (markdown), plain blog without recipe plugin |
 | Median extraction time | 343ms | Fetch + parse combined |
 | P95 extraction time | 1.7s | Slowest successful extractions |
 
@@ -89,7 +90,7 @@ A structured spike validated assumptions before this PRD was written. All target
 
 ### 3.1 Core Design Principles
 
-1. **Draft-first workflow** — Never persist `Recipe` entities during extraction or preview. Populate `RecipeFormData` (pure in-memory struct) for user review. On confirm, a single call to `RecipeService.createRecipe()` + `parseAndConnectIngredients()` writes recipe + ingredients + links in one transaction. On cancel, nothing is persisted — `RecipeFormData` is discarded. **Persistence contract invariant**: No `Recipe` entity exists in the view context before the user taps "Save". Integration test required: URL → preview → cancel → assert zero `Recipe` rows. (Addresses Codex Finding #1: preview flow conflicts with persistence)
+1. **Draft-first workflow** — Never persist `Recipe` entities during extraction or preview. Populate `RecipeFormData` (pure in-memory struct) for user review. On cancel, nothing is persisted — `RecipeFormData` is discarded. **Persistence contract invariant**: No `Recipe` entity exists in the view context before the user taps "Save". Integration test required: URL → preview → cancel → assert zero `Recipe` rows. **Implementation note**: Current `RecipeService.createRecipe()` calls `context.save()` immediately (line 44), while `parseAndConnectIngredients()` creates Ingredient entities without saving. These are two separate commits, not one atomic transaction. The import path requires a new `RecipeService.importRecipe(from:ingredientTexts:)` method that: (a) creates the Recipe entity, (b) calls `parseAndConnectIngredients()`, (c) saves once via a single `context.save()`. This keeps the existing `createRecipe()` API unchanged for manual recipe creation. (Addresses Codex Findings #1 and Round 3 #1: preview flow + transaction atomicity)
 
 2. **Strategy pattern extractors** — `RecipeExtractor` protocol with `JSONLDExtractor`, `WKWebViewExtractor`, `HeuristicExtractor`, `AIExtractor` implementations. Mirrors `HybridIngredientParser`'s proven architecture. (Addresses Codex recommendation for extractor interface)
 
@@ -116,7 +117,7 @@ ImportOrchestrator
 ├── Draft Assembly
 │   └── RecipeFormData population with field-level confidence
 └── Commit Path
-    └── RecipeService.createRecipe() + parseAndConnectIngredients()
+    └── RecipeService.importRecipe(from:ingredientTexts:) — single atomic save
 ```
 
 ### 3.3 Import Job State Machine
@@ -308,6 +309,7 @@ Extend existing `ParsingTelemetryService` with import events:
 | Recipe sites change HTML structure frequently | Medium | Low | Strategy pattern allows adding/updating extractors without architectural changes |
 | CloudKit sync issues with imported recipe images | Medium | Medium | File-based storage with CloudKit Assets; images stored in documents directory with Core Data path reference |
 | Multi-component recipes lose structure on import | Known | Low | v1 explicitly flattens groups with section labels; communicated in preview UX |
+| `__NEXT_DATA__` fallback may reject legitimate non-@type recipes | Low | Low | Tightened rules require `recipeIngredient` key; no known false negatives in spike. Build validation corpus of 10+ `__NEXT_DATA__` sites during M10.1 implementation to confirm recall |
 | Legal risk from automated recipe extraction | Low | High | Pre-launch legal review gates; source attribution; respect robots.txt; user-initiated single fetch only |
 
 ---

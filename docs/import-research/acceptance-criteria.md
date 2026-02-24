@@ -15,8 +15,9 @@
 | Recipe extractable (URLSession) | 12/28 (43%) | Standard ld+json (10) + inline scripts (2) |
 | Full extraction (title + ingredients + instructions) | 12/28 (43%) | All 12 successful extractions have the 3 core fields |
 | Partial extraction | 0/28 (0%) | Strict: full = title + ingredients + instructions |
-| Client-rendered JSON-LD | ~8/28 (29%) | WordPress blogs requiring JS rendering to access Recipe data |
-| Dead URLs / no structured data | ~7/28 (25%) | 404s, social media, markdown, sites without schema.org |
+| No extraction possible | 16/28 (57%) | 9 no JSON-LD + 7 JSON-LD without Recipe @type |
+| — of which: client-rendered (WKWebView recoverable) | ~8/28 (29%) | WordPress blogs requiring JS rendering to access Recipe data |
+| — of which: truly unrecoverable | ~3/28 (11%) | Pinterest (aggregator), GitHub (markdown), plain blog without recipe plugin |
 | Median extraction time | 343ms | Fetch + parse combined |
 | @graph wrappers encountered | 5/28 (18%) | Recipe nested in @graph array |
 | HowToStep instructions | 11/28 (39%) | Most extracted sites use structured instruction format |

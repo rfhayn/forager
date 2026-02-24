@@ -44,6 +44,26 @@ struct ExtractedRecipe: Codable {
         if servings == nil { missing.append("servings") }
         return missing
     }
+
+    /// Core-field classification matching ExtractionReport.classifySuccess().
+    /// Full = title + ingredients + instructions. Partial = title + ingredients. Failure = below partial.
+    var successLevel: ExtractionSuccessLevel {
+        let hasTitle = title != nil
+        let hasIngredients = ingredients != nil && !(ingredients?.isEmpty ?? true)
+        let hasInstructions = instructions != nil
+        if hasTitle && hasIngredients && hasInstructions { return .full }
+        if hasTitle && hasIngredients { return .partial }
+        return .failure
+    }
+
+    /// Optional fields missing (not counted for core classification).
+    var optionalFieldsMissing: [String] {
+        var missing: [String] = []
+        if prepTimeMinutes == nil { missing.append("prepTime") }
+        if cookTimeMinutes == nil { missing.append("cookTime") }
+        if servings == nil { missing.append("servings") }
+        return missing
+    }
 }
 
 // MARK: - Site Extraction Result
@@ -126,18 +146,10 @@ struct ExtractionReport: Codable {
         return dist
     }
 
-    /// Classify a site result into success levels using strict criteria.
-    /// Full: title + ingredients + instructions all present.
-    /// Partial: title + ingredients present.
-    /// Failure: anything below partial.
+    /// Classify a site result into success levels.
+    /// Delegates to ExtractedRecipe.successLevel for consistent classification.
     func classifySuccess(_ result: SiteExtractionResult) -> ExtractionSuccessLevel {
-        guard let recipe = result.recipe else { return .failure }
-        let hasTitle = recipe.title != nil
-        let hasIngredients = recipe.ingredients != nil && !(recipe.ingredients?.isEmpty ?? true)
-        let hasInstructions = recipe.instructions != nil
-        if hasTitle && hasIngredients && hasInstructions { return .full }
-        if hasTitle && hasIngredients { return .partial }
-        return .failure
+        result.recipe?.successLevel ?? .failure
     }
 
     // MARK: - Custom Codable (serialize computed metrics)
