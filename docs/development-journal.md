@@ -7,7 +7,7 @@
 ---
 
 ## Session 40 — February 24, 2026
-**Milestone**: M10.1.1–M10.1.2 — Import models, JSON-LD extractor + schema mapper
+**Milestone**: M10.1.1–M10.1.3 — Import models, extraction, orchestration
 **Branch**: `feature/M10.1-url-import`
 
 ### What Happened
@@ -42,12 +42,22 @@ Key adaptation from spike: the spike's `MappingContext` returned diagnostic flag
 
 Both M10.1.1 (4 files) and M10.1.2 (2 files) compile clean. BUILD SUCCEEDED on first try for both.
 
+**M10.1.3** builds the import orchestrator — `RecipeImportService.swift`. This is the central coordinator: URL fetch → extraction → preview → atomic save.
+
+Key verification: the PRD flagged a concern about `IngredientTemplateService.findOrCreateTemplate()` and `incrementUsage()` calling `context.save()` internally. Confirmed this is true (lines 437 and 474). Solution: **child context pattern** — create a child of viewContext, run all template/ingredient operations there (their saves push to parent in memory only), then call `viewContext.save()` exactly once to persist everything to disk atomically. If the save fails, `viewContext.rollback()` discards everything cleanly.
+
+The orchestrator also implements the error collection pattern: extractors return `nil` ("not my format") or throw `ImportError` ("my format but failed"). The orchestrator keeps the last thrown error and shows it if all extractors pass; if no extractor claims the input, shows "No recipe found."
+
+M10.1.3 (1 file) compiles clean. BUILD SUCCEEDED — 3 for 3 on first try across all sub-phases.
+
 ### Insights Logged
 - Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
 - ImportDraftRecipe separation rationale vs RecipeFormData
 - ImportField<T: Equatable> generic wrapper design
 - Confidence-from-context pattern (MappingContext flags → ImportConfidence levels)
 - Guard-before-work pattern (containsEntities check before decode)
+- Child context for atomic saves (template service saves internally)
+- Orchestrator error collection pattern (nil vs throw semantics)
 
 ---
 
