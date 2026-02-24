@@ -1,8 +1,8 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 22, 2026
+**Last Updated**: February 24, 2026
 **For Milestone**: M7.7 App Store Submission (3-5h)
-**Status**: M8.4 ✅ **COMPLETE** | **M7.7 NEXT**
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | **M7.7 NEXT**
 **Branch**: Create `feature/M7.7-app-store-submission`
 
 ---
@@ -13,10 +13,11 @@
 
 ### What's Already Done
 - ✅ M8.4: ML-powered parsing — 3-tier hybrid parser, 259 tests, correction feedback loop
+- ✅ M8.4.1: Normalization qualifier reclassification — identity qualifiers preserved, 282 tests
 - ✅ M15: UX design system — Liquid Glass, ForagerTheme, all screens polished
 - ✅ M7: CloudKit sync — Dual-store, household sharing, public link invitations
 - ✅ M9.5-partial: Service layer DI, code quality improvements
-- ✅ All 259 tests passing, 0 failures
+- ✅ All 282 tests passing, 0 failures
 
 ### M7.7 Tasks
 - Beta landing page

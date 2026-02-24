@@ -115,7 +115,7 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     func testFrozenPeasStaysPlural() {
         let result = service.normalize(name: "Frozen Peas")
-        XCTAssertEqual(result, "peas", "'Frozen Peas' should strip qualifier and keep plural")
+        XCTAssertEqual(result, "frozen peas", "'Frozen Peas' preserves identity qualifier — different aisle from fresh peas")
     }
 
     func testDicedTomatoesPreferPlural() {
@@ -141,14 +141,14 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     // MARK: - Variation Stripping
 
-    func testLargeEggsStripsQualifier() {
+    func testLargeEggsPreservesSize() {
         let result = service.normalize(name: "Large Eggs")
-        XCTAssertEqual(result, "eggs", "'Large Eggs' should strip 'large' and keep plural via preferPlural")
+        XCTAssertEqual(result, "large eggs", "'Large Eggs' preserves size — egg cartons are labeled by size")
     }
 
-    func testFreshBasilStripsQualifier() {
+    func testFreshBasilPreservesIdentity() {
         let result = service.normalize(name: "Fresh Basil")
-        XCTAssertEqual(result, "basil", "'Fresh Basil' should strip 'fresh'")
+        XCTAssertEqual(result, "fresh basil", "'Fresh Basil' preserves identity qualifier — different product from dried basil")
     }
 
     // MARK: - Baby Variant Preservation (distinct products, not size descriptors)

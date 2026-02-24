@@ -2,7 +2,7 @@
 
 **Last Updated**: February 22, 2026
 **Version**: 6.9
-**Current Milestone**: M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.7 NEXT
+**Current Milestone**: M8.4.1 ✅ COMPLETE | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.7 NEXT
 **Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
@@ -535,6 +535,17 @@ _Completed February 8, 2026 (~3h). Automatic quantity aggregation when adding sa
 | **FR-ML-007** | **Test suite** | ✅ 83 tests across 7 test files (ML, Viterbi, routing, telemetry, integration) | M8.4 Phase 6-9 | ✅ **Quality assurance** |
 | **FR-ML-008** | **Continuous learning pipeline** | ✅ exportCorrectionsAsTrainingData() + retrain_with_corrections.py, corpus gate ≥50 | M8.4 Phase 7-8 | ✅ **Self-improving** |
 
+### **Functional Requirements - Normalization Qualifier Reclassification (M8.4.1) - ✅ COMPLETE**
+
+_Completed February 24, 2026 (~2h). Fixed identity qualifier stripping in IngredientTemplateService.normalize(). 15 new tests + 3 updated._
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-NQ-001** | **Identity qualifier preservation** | ✅ ground, fresh, frozen, dried, dark, whole, unsalted, etc. preserved in normalize() | M8.4.1 | 🎯 **Correct dedup** |
+| **FR-NQ-002** | **Preparation qualifier stripping** | ✅ 9 pure preparation qualifiers (diced, chopped, sliced, minced, crushed, grated, shredded, halved, quartered) still stripped | M8.4.1 | 🎯 **Template consolidation** |
+| **FR-NQ-003** | **Compound preferPlural** | ✅ Last-word lookup for multi-word ingredients (e.g., "dried cranberries" stays plural) | M8.4.1 | 🎯 **Natural naming** |
+| **FR-NQ-004** | **Separate templates for qualified ingredients** | ✅ "ground beef" and "beef" are distinct templates | M8.4.1 | 🎯 **Shopping accuracy** |
+
 ### **Non-Functional Requirements - M8**
 
 | ID | Requirement | Target | Milestone | Value |
@@ -787,7 +798,8 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | **Hybrid NLP Parser (M8.3)** | **10** | ✅ **Complete** |
 | **Template Hygiene (M8.3.1)** | **6** | ✅ **Complete** |
 | **Auto-Merge Grocery (M8.3.2)** | **5** | ✅ **Complete** |
-| **ML Parsing (M8.4)** | **2/8** | 🔄 **Active (Phase 0+1 ✅, Phase 2 next)** |
+| **ML Parsing (M8.4)** | **8** | ✅ **Complete** |
+| **Normalization Fix (M8.4.1)** | **4** | ✅ **Complete** |
 | Pre-Launch Prep (M7.6) | 9 | 🔄 In Progress (M7.6.1-M7.6.6 ✅, M7.6.7-M7.6.8 pending) |
 | Analytics & Insights | 12 | ⏳ Planned (M10) |
 | Health & Nutrition | 4 | ⏳ Planned (M11) |
@@ -887,9 +899,9 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 requirements delivered). M8.4 ML parsing active (2/8 complete — dataset prepared, validation done). M15 UX Design System complete (20 requirements delivered, 1 deferred). Complete platform: 234 total requirements (205 complete, 18 in progress, 11 planned).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 + 8 + 4 = 39 requirements delivered across M8.1-M8.4.1). M15 UX Design System complete (20 requirements delivered, 1 deferred). Complete platform: 238 total requirements (217 complete, 18 in progress, 3 planned).
 
-**Last Updated**: February 17, 2026
-**Version**: 6.5
+**Last Updated**: February 24, 2026
+**Version**: 7.0
 **Next Update**: After M7.7 App Store Submission
 **Current Focus**: M15 ✅ COMPLETE — Merge branch, TestFlight push, then M7.7

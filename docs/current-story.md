@@ -1,12 +1,25 @@
 # Current Development Story
 
-**Last Updated**: February 23, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
-**Total Progress**: ~239 hours | 89% planning accuracy
-**Current Branch**: `feature/M8.4-ml-parsing` (ready to merge)
-**Current Milestone**: M8.4 ML-Powered Parsing — ✅ **ALL 10 PHASES COMPLETE**
+**Last Updated**: February 24, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Total Progress**: ~241 hours | 89% planning accuracy
+**Current Branch**: `main`
+**Current Milestone**: M8.4.1 Normalization Qualifier Reclassification — ✅ **COMPLETE**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M7.7 → M6 → M9 remaining → M10+
+
+---
+
+## ✅ **M8.4.1: NORMALIZATION QUALIFIER RECLASSIFICATION - COMPLETE**
+
+**Status**: ✅ **COMPLETE** — Bug fix for identity qualifier stripping
+**Session**: February 24, 2026 (session 38)
+**Branch**: `main`
+**PRD**: `docs/prds/complete/m8.4.1-normalization-qualifier-reclassification.md`
+**Actual**: ~2 hours
+
+### Summary
+Fixed `IngredientTemplateService.normalize()` stripping identity qualifiers (ground, fresh, frozen, dried, etc.) from ingredient names. "Ground beef" was becoming "beef". Root cause: `removeVariations()` conflated identity qualifiers with preparation qualifiers. Data-driven fix using strangetom training data (68,846 samples) to reclassify — reduced strip list from 30+ to 9 pure preparation qualifiers. 282 tests pass, 0 failures.
 
 ---
 

@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 22, 2026
-**Current Phase**: **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M7.7 NEXT**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE (259 tests), M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE
+**Last Updated**: February 24, 2026
+**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M7.7 NEXT**
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M8.4.1 normalization fix COMPLETE (282 tests), M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE
 **Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
 ---
@@ -951,6 +951,14 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **Final**: 259 tests, 0 failures, all acceptance criteria met
 - **Source**: [M8.4 ML-Powered Parsing PRD](prds/active/m8.4-ml-powered-parsing.md)
 
+**M8.4.1: Normalization Qualifier Reclassification (~2 hours) - ✅ COMPLETE**
+- Fixed identity qualifier stripping: "ground beef" → "beef" bug caused by removeVariations() conflating identity and preparation qualifiers
+- Data-driven fix: mined strangetom training data (68,846 samples), found 3,032 compound ingredients where qualifiers are labeled NAME
+- Reduced strip list from 30+ to 9 pure preparation qualifiers (diced, chopped, sliced, minced, crushed, grated, shredded, halved, quartered)
+- Added compound preferPlural last-word check for multi-word ingredients
+- 15 new tests, 3 updated tests, 282 total tests passing
+- **Source**: [M8.4.1 PRD](prds/complete/m8.4.1-normalization-qualifier-reclassification.md)
+
 **Success Criteria:**
 - [x] Professional UX for parsing failures (M8.1)
 - [x] Telemetry collecting real data (M8.1)
@@ -963,6 +971,8 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [x] On-device CoreML inference < 5ms (M8.4) ✅
 - [x] "3 cloves garlic" → template="garlic" (M8.4) ✅
 - [x] "milk 2%" → name contains "milk" (M8.4) ✅
+- [x] "ground beef" → "ground beef" (not "beef") (M8.4.1) ✅
+- [x] Identity qualifiers preserved in normalization (M8.4.1) ✅
 
 ---
 
