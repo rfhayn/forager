@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager M10 — Recipe Import Wireframes</title>
+<style>
+  /* ───────────────────────────────────────────────
+     DESIGN TOKENS (from PRD Section 4)
+     ─────────────────────────────────────────────── */
+  :root {
+    /* Brand */
+    --forest-green: #2D5016;
+    --leaf-green: #4A7C2E;
+    --spring-green: #6B9B37;
+    --bark: #2C2418;
+    --stone: #7A7067;
+    --pebble: #B0A89E;
+    --sand: #D4CBC0;
+    --cream: #F5F0E8;
+    --canvas: #FDFBF7;
+
+    /* Semantic: Backgrounds */
+    --bg-canvas: #FDFBF7;
+    --bg-primary: #F5F0E8;
+    --bg-secondary: #EDE6D8;
+    --bg-tertiary: #E4DDD0;
+
+    /* Semantic: Surfaces */
+    --surface-primary: #FFFFFF;
+    --surface-secondary: #F8F4EE;
+    --surface-accent: #E8F0E0;
+    --surface-warning: #FFF8E6;
+    --surface-danger: #FFF0EE;
+    --surface-success: #EEF6EE;
+
+    /* Semantic: Text */
+    --text-primary: #2C2418;
+    --text-secondary: #5A5347;
+    --text-tertiary: #6A6057;
+    --text-disabled: #B0A89E;
+    --text-link: #2D6A3F;
+
+    /* Semantic: Accent */
+    --accent-primary: #2D5016;
+    --accent-secondary: #4A7C2E;
+    --accent-tertiary: #6B9B37;
+    --accent-tint: #E8F0E0;
+
+    /* Semantic: Status */
+    --success-fg: #2D7A2D;
+    --success-bg: #EEF6EE;
+    --warning-fg: #8B6607;
+    --warning-bg: #FFF8E6;
+    --danger-fg: #C4402F;
+    --danger-bg: #FFF0EE;
+    --info-fg: #3D7A9C;
+    --info-bg: #EEF6FA;
+
+    /* Semantic: Borders */
+    --border-default: #D4CBC0;
+    --border-subtle: #E0D8CC;
+    --border-strong: #C8BFB3;
+    --border-accent: #4A7C2E;
+
+    /* Shadows (bark-tinted) */
+    --shadow-1: 0 1px 3px rgba(44,36,24, 0.08);
+    --shadow-2: 0 2px 8px rgba(44,36,24, 0.12);
+    --shadow-3: 0 4px 16px rgba(44,36,24, 0.16);
+
+    /* Spacing */
+    --sp-xs: 4px;
+    --sp-sm: 8px;
+    --sp-md: 12px;
+    --sp-lg: 16px;
+    --sp-xl: 24px;
+    --sp-xxl: 32px;
+
+    /* Radius */
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+
+    /* Type Scale */
+    --font-2xs: 10px;
+    --font-xs: 12px;
+    --font-sm: 13px;
+    --font-base: 15px;
+    --font-md: 17px;
+    --font-lg: 20px;
+    --font-xl: 28px;
+    --font-2xl: 34px;
+
+    /* Button */
+    --btn-primary-bg: #2D5016;
+    --btn-primary-text: #FFFFFF;
+    --btn-primary-pressed: #1F3A0F;
+    --btn-disabled-bg: #D4CBC0;
+  }
+
+  /* Dark mode overrides */
+  [data-theme="dark"] {
+    --forest-green: #7BC08A;
+    --leaf-green: #5AAD5A;
+    --spring-green: #3D8B37;
+    --bark: #F0EBE3;
+    --stone: #938D83;
+    --pebble: #5A5650;
+    --sand: #443F38;
+    --cream: #221E16;
+    --canvas: #1C1A14;
+
+    --bg-canvas: #1C1A14;
+    --bg-primary: #221E16;
+    --bg-secondary: #2A251C;
+    --bg-tertiary: #332E24;
+
+    --surface-primary: #2E2A1F;
+    --surface-secondary: #363127;
+    --surface-accent: #2A3520;
+    --surface-warning: #332B18;
+    --surface-danger: #331E1A;
+    --surface-success: #1E3020;
+
+    --text-primary: #F0EBE3;
+    --text-secondary: #C4BDB2;
+    --text-tertiary: #A09A90;
+    --text-disabled: #5A5650;
+    --text-link: #7BC08A;
+
+    --accent-primary: #7BC08A;
+    --accent-secondary: #5AAD5A;
+    --accent-tertiary: #3D8B37;
+    --accent-tint: #2A3520;
+
+    --success-fg: #5AAD5A;
+    --success-bg: #1E3020;
+    --warning-fg: #D4A62B;
+    --warning-bg: #332B18;
+    --danger-fg: #E06050;
+    --danger-bg: #331E1A;
+    --info-fg: #5A9BBD;
+    --info-bg: #1A2830;
+
+    --border-default: #443F38;
+    --border-subtle: #3A3630;
+    --border-strong: #4E4840;
+    --border-accent: #5AAD5A;
+
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+
+    --btn-primary-bg: #7BC08A;
+    --btn-primary-text: #1C1A14;
+    --btn-primary-pressed: #5AAD5A;
+    --btn-disabled-bg: #3A3630;
+  }
+
+  /* ───────────────────────────────────────────────
+     BASE STYLES
+     ─────────────────────────────────────────────── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, 'SF Pro', system-ui, sans-serif;
+    background: var(--bg-canvas);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ───────────────────────────────────────────────
+     PHONE FRAME
+     ─────────────────────────────────────────────── */
+  .phone-frame {
+    width: 393px;
+    height: 852px;
+    background: var(--bg-canvas);
+    border-radius: 47px;
+    border: 8px solid #1A1A1A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-theme="dark"] .phone-frame {
+    border-color: #333;
+  }
+
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .status-bar {
+    height: 54px;
+    padding: 14px 30px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .dynamic-island {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 126px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 10;
+  }
+
+  /* ───────────────────────────────────────────────
+     NAV BAR
+     ─────────────────────────────────────────────── */
+  .nav-bar {
+    padding: 0 var(--sp-lg) var(--sp-sm);
+    flex-shrink: 0;
+    position: relative;
+    text-align: center;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-bar .nav-back {
+    position: absolute;
+    left: var(--sp-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    font-size: var(--font-base);
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .nav-bar .nav-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    pointer-events: none;
+  }
+
+  .nav-bar .nav-trailing {
+    position: absolute;
+    right: var(--sp-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* ───────────────────────────────────────────────
+     PAGE LAYOUT
+     ─────────────────────────────────────────────── */
+  .page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--sp-xl) var(--sp-lg);
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: var(--sp-xxl);
+    padding-bottom: var(--sp-xl);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .page-header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .page-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Controls bar */
+  .controls-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: var(--sp-md) var(--sp-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .controls-bar label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .theme-toggle {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: var(--r-sm);
+    overflow: hidden;
+  }
+
+  .theme-toggle button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .theme-toggle button.active {
+    background: var(--accent-primary);
+    color: var(--btn-primary-text);
+    border-radius: var(--r-sm);
+  }
+
+  /* ───────────────────────────────────────────────
+     MOCKUP GRID
+     ─────────────────────────────────────────────── */
+  .mockup-row {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: var(--sp-xl) 0;
+  }
+
+  .mockup-wrapper {
+    text-align: center;
+    max-width: 393px;
+  }
+
+  .mockup-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: var(--sp-md);
+    margin-bottom: var(--sp-xs);
+  }
+
+  .mockup-sublabel {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  /* Content inside phone */
+  .content-area {
+    flex: 1;
+    padding: 0 var(--sp-lg);
+    overflow-y: auto;
+  }
+
+  .font-rounded {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+  }
+
+  /* ───────────────────────────────────────────────
+     SHARED COMPONENTS
+     ─────────────────────────────────────────────── */
+
+  /* Primary button */
+  .btn-primary {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: none;
+    border-radius: var(--r-sm);
+    padding: var(--sp-sm) var(--sp-lg);
+    font-size: var(--font-base);
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+  }
+
+  .btn-primary.full-width {
+    display: block;
+    width: 100%;
+    padding: var(--sp-md) var(--sp-lg);
+    font-size: var(--font-md);
+    border-radius: var(--r-md);
+  }
+
+  /* Outlined button */
+  .btn-outlined {
+    background: transparent;
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-primary);
+    border-radius: var(--r-md);
+    padding: var(--sp-md) var(--sp-lg);
+    font-size: var(--font-md);
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Text button */
+  .btn-text {
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    padding: var(--sp-md) var(--sp-lg);
+    font-size: var(--font-md);
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Section header inside phone */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--sp-lg) 0 var(--sp-sm);
+  }
+
+  .section-header h3 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-md);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Edit icon button */
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    padding: var(--sp-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  /* Source link */
+  .source-link {
+    font-size: var(--font-sm);
+    color: var(--text-link);
+    text-decoration: none;
+    padding: var(--sp-sm) 0;
+    display: block;
+  }
+
+  /* Metadata row */
+  .meta-row {
+    display: flex;
+    gap: var(--sp-sm);
+    align-items: center;
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    padding: var(--sp-xs) 0 var(--sp-sm);
+    flex-wrap: wrap;
+  }
+
+  .meta-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--text-disabled);
+    flex-shrink: 0;
+  }
+
+  /* Ingredient row */
+  .ingredient-row {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--surface-primary);
+    border-radius: var(--r-sm);
+    margin-bottom: var(--sp-xs);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .confidence-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .confidence-dot.high { background: var(--success-fg); }
+  .confidence-dot.medium { background: var(--warning-fg); }
+  .confidence-dot.low { background: var(--danger-fg); }
+
+  .ingredient-qty {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    min-width: 48px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ingredient-name {
+    font-size: var(--font-base);
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  /* Instruction step */
+  .instruction-step {
+    display: flex;
+    gap: var(--sp-md);
+    padding: var(--sp-sm) 0;
+  }
+
+  .step-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-tint);
+    color: var(--accent-primary);
+    font-size: var(--font-xs);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .step-text {
+    font-size: var(--font-base);
+    color: var(--text-primary);
+    line-height: 1.45;
+  }
+
+  /* Show more link */
+  .show-more {
+    font-size: var(--font-sm);
+    color: var(--text-link);
+    text-decoration: none;
+    padding: var(--sp-sm) 0 var(--sp-md);
+    display: block;
+    text-align: center;
+  }
+
+  /* Warning banner */
+  .warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-sm);
+    background: var(--surface-warning);
+    border: 1px solid var(--warning-fg);
+    border-radius: var(--r-sm);
+    padding: var(--sp-md);
+    margin-bottom: var(--sp-md);
+  }
+
+  .warning-banner svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--warning-fg);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .warning-banner p {
+    font-size: var(--font-sm);
+    color: var(--warning-fg);
+    line-height: 1.4;
+  }
+
+  /* Empty field placeholder */
+  .field-placeholder {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-sm);
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--surface-warning);
+    border: 1px dashed var(--warning-fg);
+    border-radius: var(--r-sm);
+    margin-bottom: var(--sp-xs);
+  }
+
+  .field-placeholder span {
+    font-size: var(--font-base);
+    color: var(--text-disabled);
+    font-style: italic;
+  }
+
+  .field-uncertain {
+    font-size: var(--font-base);
+    color: var(--warning-fg);
+    font-weight: 500;
+  }
+
+  /* Ingredient row with warning */
+  .ingredient-row.warning {
+    background: var(--surface-warning);
+    border-color: var(--warning-fg);
+  }
+
+  /* ───────────────────────────────────────────────
+     SHARE EXTENSION (COMPACT)
+     ─────────────────────────────────────────────── */
+  .share-ext {
+    background: var(--surface-primary);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    margin-top: auto;
+    padding: var(--sp-xl) var(--sp-lg) var(--sp-xxl);
+    box-shadow: 0 -4px 24px rgba(44,36,24, 0.12);
+  }
+
+  [data-theme="dark"] .share-ext {
+    box-shadow: none;
+  }
+
+  .share-ext-header {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-md);
+    margin-bottom: var(--sp-lg);
+  }
+
+  .share-ext-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-sm);
+    background: var(--accent-tint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-ext-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--accent-primary);
+  }
+
+  .share-ext-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-md);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .share-ext-url {
+    font-size: var(--font-sm);
+    color: var(--text-tertiary);
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--bg-primary);
+    border-radius: var(--r-sm);
+    margin-bottom: var(--sp-lg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .share-ext-status {
+    text-align: center;
+    padding: var(--sp-xl) 0;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-default);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto var(--sp-md);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .share-ext-status p {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+  }
+
+  /* Success state for share extension */
+  .share-success-check {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--surface-success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--sp-md);
+  }
+
+  .share-success-check svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--success-fg);
+  }
+
+  .share-success-title {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-xs);
+  }
+
+  .share-success-recipe {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-lg);
+  }
+
+  /* ───────────────────────────────────────────────
+     MODAL OVERLAY
+     ─────────────────────────────────────────────── */
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(44, 36, 24, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    padding: var(--sp-xl);
+  }
+
+  [data-theme="dark"] .modal-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .modal-card {
+    background: var(--surface-primary);
+    border-radius: var(--r-lg);
+    padding: var(--sp-xl);
+    width: 100%;
+    max-width: 320px;
+    box-shadow: var(--shadow-3);
+    text-align: center;
+  }
+
+  .modal-card h2 {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--sp-md);
+  }
+
+  .modal-card p {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+    margin-bottom: var(--sp-xl);
+    line-height: 1.45;
+  }
+
+  .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-sm);
+  }
+
+  /* ───────────────────────────────────────────────
+     ERROR STATES (MINI FRAMES)
+     ─────────────────────────────────────────────── */
+  .mini-frame {
+    width: 393px;
+    height: 280px;
+    background: var(--bg-canvas);
+    border-radius: 28px;
+    border: 6px solid #1A1A1A;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-theme="dark"] .mini-frame {
+    border-color: #333;
+  }
+
+  .mini-frame .status-bar {
+    height: 40px;
+    padding: 10px 20px 0;
+    font-size: 13px;
+  }
+
+  .error-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-lg) var(--sp-xl);
+    text-align: center;
+    gap: var(--sp-sm);
+  }
+
+  .error-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--sp-xs);
+  }
+
+  .error-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .error-icon.warning-icon {
+    background: var(--surface-warning);
+  }
+  .error-icon.warning-icon svg { fill: var(--warning-fg); }
+
+  .error-icon.danger-icon {
+    background: var(--surface-danger);
+  }
+  .error-icon.danger-icon svg { fill: var(--danger-fg); }
+
+  .error-icon.info-icon {
+    background: var(--info-bg);
+  }
+  .error-icon.info-icon svg { fill: var(--info-fg); }
+
+  .error-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-md);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .error-body {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .error-link {
+    font-size: var(--font-sm);
+    color: var(--text-link);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .error-btn {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: none;
+    border-radius: var(--r-sm);
+    padding: var(--sp-sm) var(--sp-xl);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    cursor: pointer;
+    margin-top: var(--sp-xs);
+  }
+
+  .error-partial-data {
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  /* Error screens wrapper */
+  .error-screens-wrapper {
+    text-align: center;
+    max-width: 393px;
+  }
+
+  .error-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-lg);
+  }
+
+  .error-mini-label {
+    font-size: var(--font-xs);
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--sp-xs);
+    text-align: left;
+    padding-left: var(--sp-sm);
+  }
+
+  /* ───────────────────────────────────────────────
+     SECTION DIVIDER
+     ─────────────────────────────────────────────── */
+  .section-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: var(--sp-sm) 0;
+  }
+
+  /* Recipe title area inside phone */
+  .recipe-title {
+    font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    font-size: var(--font-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+    padding: var(--sp-sm) 0;
+  }
+
+  /* ───────────────────────────────────────────────
+     SHARE EXTENSION DIMMED BACKGROUND
+     ─────────────────────────────────────────────── */
+  .share-bg-dimmed {
+    flex: 1;
+    background: var(--bg-tertiary);
+    opacity: 0.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .share-bg-dimmed p {
+    font-size: var(--font-sm);
+    color: var(--text-disabled);
+  }
+
+  /* Duplicate preview - blurred content behind overlay */
+  .blurred-content {
+    filter: blur(2px);
+    opacity: 0.4;
+  }
+
+  /* Meta field row for partial extraction */
+  .meta-field-row {
+    display: flex;
+    gap: var(--sp-sm);
+    margin-bottom: var(--sp-sm);
+  }
+
+  .meta-field {
+    flex: 1;
+    padding: var(--sp-sm) var(--sp-md);
+    background: var(--surface-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-xs);
+  }
+
+  .meta-field.empty {
+    background: var(--surface-warning);
+    border: 1px dashed var(--warning-fg);
+  }
+
+  .meta-field-label {
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .meta-field-value {
+    font-size: var(--font-base);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .meta-field-value.placeholder {
+    color: var(--text-disabled);
+    font-weight: 400;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     CONTROLS BAR (sticky theme toggle)
+     ═══════════════════════════════════════════════ -->
+<div class="controls-bar">
+  <label>Forager M10 — Recipe Import Wireframes</label>
+  <div class="theme-toggle">
+    <button class="active" onclick="setTheme('light')">Light</button>
+    <button onclick="setTheme('dark')">Dark</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1>Forager M10 — Recipe Import Wireframes</h1>
+    <p>5 screens covering the recipe import flow: happy path, share extension, partial extraction, duplicate detection, and error states.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       ROW 1: Import Preview + Share Extension + Partial Extraction
+       ═══════════════════════════════════════════════ -->
+  <div class="mockup-row">
+
+    <!-- ─── Screen 1: Import Preview (Happy Path) ─── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span></span>
+            <span style="font-size: 12px; letter-spacing: 2px;">
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M2 22h20V2z" opacity="0.3"/><path d="M2 22h20V2zm18-2H6.83L20 6.83z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </span>
+          </div>
+
+          <!-- Nav bar -->
+          <div class="nav-bar">
+            <a class="nav-back" href="#">Cancel</a>
+            <span class="nav-title">Import Recipe</span>
+            <div class="nav-trailing">
+              <button class="btn-primary" style="padding: 6px 14px; font-size: var(--font-sm);">Save Recipe</button>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="content-area">
+            <!-- Source URL -->
+            <a class="source-link" href="#">From allrecipes.com</a>
+
+            <!-- Recipe Title -->
+            <h2 class="recipe-title">Best Chocolate Chip Cookies</h2>
+
+            <!-- Metadata -->
+            <div class="meta-row">
+              <span>48 servings</span>
+              <span class="meta-dot"></span>
+              <span>20 min prep</span>
+              <span class="meta-dot"></span>
+              <span>10 min cook</span>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Ingredients Section -->
+            <div class="section-header">
+              <h3>Ingredients</h3>
+              <button class="icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              </button>
+            </div>
+
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">2 1/4 cups</span>
+              <span class="ingredient-name">all-purpose flour</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 tsp</span>
+              <span class="ingredient-name">baking soda</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 tsp</span>
+              <span class="ingredient-name">salt</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 cup</span>
+              <span class="ingredient-name">butter, softened</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">3/4 cup</span>
+              <span class="ingredient-name">granulated sugar</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">2 large</span>
+              <span class="ingredient-name">eggs</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">2 cups</span>
+              <span class="ingredient-name">chocolate chips</span>
+            </div>
+
+            <div class="section-divider" style="margin-top: var(--sp-md);"></div>
+
+            <!-- Instructions Section -->
+            <div class="section-header">
+              <h3>Instructions</h3>
+              <button class="icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              </button>
+            </div>
+
+            <div class="instruction-step">
+              <span class="step-number">1</span>
+              <p class="step-text">Preheat oven to 375 degrees F. Combine flour, baking soda, and salt in a small bowl.</p>
+            </div>
+            <div class="instruction-step">
+              <span class="step-number">2</span>
+              <p class="step-text">Beat butter, granulated sugar, and brown sugar in a large mixer bowl until creamy.</p>
+            </div>
+            <div class="instruction-step">
+              <span class="step-number">3</span>
+              <p class="step-text">Add eggs and vanilla extract; beat well. Gradually beat in flour mixture.</p>
+            </div>
+
+            <a class="show-more" href="#">Show all 9 steps</a>
+
+            <!-- Bottom spacing -->
+            <div style="height: var(--sp-xxl);"></div>
+          </div>
+        </div>
+      </div>
+      <p class="mockup-label">1. Import Preview</p>
+      <p class="mockup-sublabel">Happy path - recipe successfully extracted from URL</p>
+    </div>
+
+    <!-- ─── Screen 2: Share Extension Flow ─── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span></span>
+            <span style="font-size: 12px; letter-spacing: 2px;">
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M2 22h20V2z" opacity="0.3"/><path d="M2 22h20V2zm18-2H6.83L20 6.83z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </span>
+          </div>
+
+          <!-- Dimmed background representing Safari content behind share sheet -->
+          <div class="share-bg-dimmed">
+            <p>Safari - allrecipes.com</p>
+          </div>
+
+          <!-- Share Extension Card (Loading State) -->
+          <div class="share-ext" style="position: relative;">
+            <div class="share-ext-header">
+              <div class="share-ext-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+              </div>
+              <span class="share-ext-title">Save to Forager</span>
+            </div>
+
+            <div class="share-ext-url">https://www.allrecipes.com/recipe/10813/best-chocolate-chip-cookies/</div>
+
+            <div class="share-ext-status">
+              <div class="spinner"></div>
+              <p>Extracting recipe...</p>
+            </div>
+
+            <!-- Divider between states -->
+            <div style="border-top: 1px dashed var(--border-default); margin: var(--sp-lg) 0; position: relative;">
+              <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--surface-primary); padding: 0 var(--sp-sm); font-size: var(--font-xs); color: var(--text-disabled);">then</span>
+            </div>
+
+            <!-- Success State -->
+            <div class="share-ext-status">
+              <div class="share-success-check">
+                <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+              </div>
+              <p class="share-success-title">Recipe found!</p>
+              <p class="share-success-recipe">Best Chocolate Chip Cookies</p>
+              <button class="btn-primary full-width" style="max-width: 260px; margin: 0 auto;">Open in Forager</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mockup-label">2. Share Extension Flow</p>
+      <p class="mockup-sublabel">Compact share sheet with loading and success states</p>
+    </div>
+
+    <!-- ─── Screen 3: Partial Extraction ─── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span></span>
+            <span style="font-size: 12px; letter-spacing: 2px;">
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M2 22h20V2z" opacity="0.3"/><path d="M2 22h20V2zm18-2H6.83L20 6.83z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </span>
+          </div>
+
+          <!-- Nav bar -->
+          <div class="nav-bar">
+            <a class="nav-back" href="#">Cancel</a>
+            <span class="nav-title">Import Recipe</span>
+            <div class="nav-trailing">
+              <button class="btn-primary" style="padding: 6px 14px; font-size: var(--font-sm);">Save Recipe</button>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="content-area">
+            <!-- Source URL -->
+            <a class="source-link" href="#">From food52.com</a>
+
+            <!-- Recipe Title -->
+            <h2 class="recipe-title">Grandma's Banana Bread</h2>
+
+            <!-- Warning Banner -->
+            <div class="warning-banner">
+              <svg viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+              <p>Some fields couldn't be extracted. Please review highlighted items.</p>
+            </div>
+
+            <!-- Metadata fields -->
+            <div class="meta-field-row">
+              <div class="meta-field empty">
+                <div>
+                  <div class="meta-field-label">Prep time</div>
+                  <div class="meta-field-value placeholder">Add prep time</div>
+                </div>
+                <span class="confidence-dot medium" style="margin-left: auto;"></span>
+              </div>
+              <div class="meta-field empty">
+                <div>
+                  <div class="meta-field-label">Cook time</div>
+                  <div class="meta-field-value placeholder">Add cook time</div>
+                </div>
+                <span class="confidence-dot medium" style="margin-left: auto;"></span>
+              </div>
+            </div>
+            <div class="meta-field-row">
+              <div class="meta-field" style="background: var(--surface-warning); border-color: var(--warning-fg); border-style: solid;">
+                <div>
+                  <div class="meta-field-label">Servings</div>
+                  <div class="meta-field-value field-uncertain">4?</div>
+                </div>
+                <span class="confidence-dot medium" style="margin-left: auto;"></span>
+              </div>
+              <div class="meta-field" style="flex: 2;"></div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <!-- Ingredients Section -->
+            <div class="section-header">
+              <h3>Ingredients</h3>
+              <button class="icon-btn">
+                <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+              </button>
+            </div>
+
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">3 large</span>
+              <span class="ingredient-name">ripe bananas</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1/3 cup</span>
+              <span class="ingredient-name">melted butter</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 cup</span>
+              <span class="ingredient-name">sugar</span>
+            </div>
+            <div class="ingredient-row warning">
+              <span class="confidence-dot medium"></span>
+              <span class="ingredient-qty">1</span>
+              <span class="ingredient-name" style="color: var(--warning-fg);">egg, beaten (verify)</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 tsp</span>
+              <span class="ingredient-name">vanilla extract</span>
+            </div>
+            <div class="ingredient-row warning">
+              <span class="confidence-dot medium"></span>
+              <span class="ingredient-qty">1 1/2</span>
+              <span class="ingredient-name" style="color: var(--warning-fg);">cups flour (type?)</span>
+            </div>
+            <div class="ingredient-row">
+              <span class="confidence-dot high"></span>
+              <span class="ingredient-qty">1 tsp</span>
+              <span class="ingredient-name">baking soda</span>
+            </div>
+
+            <!-- Bottom spacing -->
+            <div style="height: var(--sp-xxl);"></div>
+          </div>
+        </div>
+      </div>
+      <p class="mockup-label">3. Partial Extraction</p>
+      <p class="mockup-sublabel">Missing or uncertain fields highlighted for user review</p>
+    </div>
+
+  </div><!-- /mockup-row -->
+
+  <!-- ═══════════════════════════════════════════════
+       ROW 2: Duplicate Detection + Error States
+       ═══════════════════════════════════════════════ -->
+  <div class="mockup-row">
+
+    <!-- ─── Screen 4: Duplicate Detection Dialog ─── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen" style="position: relative;">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span></span>
+            <span style="font-size: 12px; letter-spacing: 2px;">
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M2 22h20V2z" opacity="0.3"/><path d="M2 22h20V2zm18-2H6.83L20 6.83z"/></svg>
+              <svg style="width:14px;height:14px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            </span>
+          </div>
+
+          <!-- Blurred import preview behind -->
+          <div class="blurred-content">
+            <div class="nav-bar">
+              <a class="nav-back" href="#">Cancel</a>
+              <span class="nav-title">Import Recipe</span>
+              <div class="nav-trailing">
+                <button class="btn-primary" style="padding: 6px 14px; font-size: var(--font-sm);">Save Recipe</button>
+              </div>
+            </div>
+            <div class="content-area">
+              <a class="source-link" href="#">From allrecipes.com</a>
+              <h2 class="recipe-title">Chocolate Chip Cookies</h2>
+              <div class="meta-row">
+                <span>24 servings</span>
+                <span class="meta-dot"></span>
+                <span>15 min prep</span>
+                <span class="meta-dot"></span>
+                <span>12 min cook</span>
+              </div>
+              <div class="section-divider"></div>
+              <div class="section-header">
+                <h3>Ingredients</h3>
+              </div>
+              <div class="ingredient-row">
+                <span class="confidence-dot high"></span>
+                <span class="ingredient-qty">2 1/4 cups</span>
+                <span class="ingredient-name">all-purpose flour</span>
+              </div>
+              <div class="ingredient-row">
+                <span class="confidence-dot high"></span>
+                <span class="ingredient-qty">1 cup</span>
+                <span class="ingredient-name">butter</span>
+              </div>
+              <div class="ingredient-row">
+                <span class="confidence-dot high"></span>
+                <span class="ingredient-qty">3/4 cup</span>
+                <span class="ingredient-name">sugar</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Overlay -->
+          <div class="modal-overlay">
+            <div class="modal-card">
+              <!-- Duplicate icon -->
+              <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--surface-warning); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--sp-md);">
+                <svg style="width: 24px; height: 24px; fill: var(--warning-fg);" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              </div>
+              <h2>Similar Recipe Found</h2>
+              <p>You already have "Chocolate Chip Cookies" from cookieandkate.com</p>
+              <div class="modal-actions">
+                <button class="btn-outlined">Import as New Recipe</button>
+                <button class="btn-outlined">Replace Existing</button>
+                <button class="btn-text">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mockup-label">4. Duplicate Detection</p>
+      <p class="mockup-sublabel">Modal dialog when a similar recipe already exists</p>
+    </div>
+
+    <!-- ─── Screen 5: Error States (3 Mini Frames) ─── -->
+    <div class="error-screens-wrapper">
+      <div class="error-stack">
+
+        <!-- 5a: Paywall -->
+        <div>
+          <p class="error-mini-label">Paywall Detected</p>
+          <div class="mini-frame">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span></span>
+              <span style="font-size: 11px; letter-spacing: 2px;">
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+              </span>
+            </div>
+            <div class="error-content">
+              <div class="error-icon warning-icon">
+                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+              </div>
+              <p class="error-title">Recipe Behind a Paywall</p>
+              <p class="error-body">We extracted what we could from this page.</p>
+              <p class="error-partial-data">Found: "Classic French Onion Soup"</p>
+              <button class="error-btn">Open in Safari</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5b: No Recipe Found -->
+        <div>
+          <p class="error-mini-label">No Recipe Found</p>
+          <div class="mini-frame">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span></span>
+              <span style="font-size: 11px; letter-spacing: 2px;">
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+              </span>
+            </div>
+            <div class="error-content">
+              <div class="error-icon info-icon">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              </div>
+              <p class="error-title">No Recipe Found</p>
+              <p class="error-body">We couldn't find a recipe on this page.</p>
+              <a class="error-link" href="#">Try pasting the recipe text instead</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5c: Network Error -->
+        <div>
+          <p class="error-mini-label">Network Error</p>
+          <div class="mini-frame">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span></span>
+              <span style="font-size: 11px; letter-spacing: 2px;">
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;" viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+                <svg style="width:12px;height:12px;vertical-align:middle;fill:currentColor;margin-left:2px;" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.34C7 21.4 7.6 22 8.33 22h7.34c.73 0 1.33-.6 1.33-1.33V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+              </span>
+            </div>
+            <div class="error-content">
+              <div class="error-icon danger-icon">
+                <svg viewBox="0 0 24 24"><path d="M24 8.98C20.93 5.9 16.69 4 12 4S3.07 5.9 0 8.98L12 21 24 8.98zM2.92 9.07C5.51 7.08 8.67 6 12 6s6.49 1.08 9.08 3.07L12 18.17 2.92 9.07z"/><line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
+              </div>
+              <p class="error-title">Unable to Reach This Site</p>
+              <p class="error-body">Check your connection and try again.</p>
+              <button class="error-btn">Try Again</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <p class="mockup-label" style="margin-top: var(--sp-lg);">5. Error States</p>
+      <p class="mockup-sublabel">Paywall, no recipe found, and network error</p>
+    </div>
+
+  </div><!-- /mockup-row -->
+
+  <!-- ═══════════════════════════════════════════════
+       ROW 4: PHOTO IMPORT
+       ═══════════════════════════════════════════════ -->
+  <div class="mockup-row">
+
+    <!-- ── Screen 6: Photo Import — Camera/OCR Flow ── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>9:41</span><span></span><span style="font-size: 12px;">&#x25D4; &#x25CE; &#x1F50B;</span>
+          </div>
+
+          <!-- Nav bar -->
+          <div style="padding: 0 var(--sp-lg) var(--sp-sm); position: relative; text-align: center; min-height: 44px; flex-shrink: 0;">
+            <span style="position: absolute; left: var(--sp-lg); top: 50%; transform: translateY(-50%); color: var(--accent-primary); font-size: 15px; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif;">Cancel</span>
+            <span style="font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; font-size: 20px; font-weight: 700; color: var(--text-primary);">Photo Import</span>
+          </div>
+
+          <!-- Scrollable content -->
+          <div style="flex: 1; overflow-y: auto; padding: 0 var(--sp-lg) var(--sp-lg);">
+
+            <!-- Image preview area -->
+            <div style="background: var(--bg-tertiary); border-radius: var(--r-md); height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: var(--sp-lg); position: relative; overflow: hidden;">
+              <!-- Simulated cookbook page image -->
+              <div style="width: 100%; height: 100%; background: #f5f5f0; display: flex; flex-direction: column; padding: 16px 20px; font-family: Georgia, serif;">
+                <div style="font-size: 14px; font-weight: bold; color: #333; margin-bottom: 6px;">Classic Banana Bread</div>
+                <div style="font-size: 9px; color: #666; line-height: 1.4;">
+                  3 ripe bananas, mashed<br>
+                  1/3 cup melted butter<br>
+                  3/4 cup sugar<br>
+                  1 egg, beaten<br>
+                  <span style="color: #999;">...more text below...</span>
+                </div>
+              </div>
+              <!-- OCR overlay lines -->
+              <div style="position: absolute; inset: 0; pointer-events: none;">
+                <div style="position: absolute; top: 14px; left: 18px; right: 40px; height: 18px; border: 1.5px solid var(--accent-tertiary); border-radius: 2px; opacity: 0.6;"></div>
+                <div style="position: absolute; top: 40px; left: 18px; right: 60px; height: 12px; border: 1px solid var(--info-fg); border-radius: 2px; opacity: 0.5;"></div>
+                <div style="position: absolute; top: 56px; left: 18px; right: 50px; height: 12px; border: 1px solid var(--info-fg); border-radius: 2px; opacity: 0.5;"></div>
+                <div style="position: absolute; top: 72px; left: 18px; right: 80px; height: 12px; border: 1px solid var(--info-fg); border-radius: 2px; opacity: 0.5;"></div>
+                <div style="position: absolute; top: 88px; left: 18px; right: 70px; height: 12px; border: 1px solid var(--info-fg); border-radius: 2px; opacity: 0.5;"></div>
+              </div>
+              <!-- Retake button -->
+              <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-family: -apple-system, system-ui, sans-serif;">Retake</div>
+            </div>
+
+            <!-- OCR Status -->
+            <div style="display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-lg);">
+              <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--success-bg); display: flex; align-items: center; justify-content: center;">
+                <span style="color: var(--success-fg); font-size: 12px; font-weight: bold;">&#10003;</span>
+              </div>
+              <div>
+                <div style="font-size: var(--font-sm); font-weight: 600; color: var(--text-primary);">22 lines recognized</div>
+                <div style="font-size: var(--font-xs); color: var(--text-tertiary);">OCR confidence: 98% &middot; 563ms</div>
+              </div>
+            </div>
+
+            <!-- Classified Lines Section -->
+            <div style="font-size: var(--font-xs); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--sp-sm);">Detected Sections</div>
+
+            <!-- Title detection -->
+            <div style="background: var(--surface-accent); border-radius: var(--r-sm); padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-sm);">
+              <span style="font-size: 9px; font-weight: 700; color: var(--accent-primary); background: var(--accent-tint); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">Title</span>
+              <span style="font-size: var(--font-sm); color: var(--text-primary); font-weight: 600;">Classic Banana Bread</span>
+            </div>
+
+            <!-- Metadata detection -->
+            <div style="background: var(--surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-xs); display: flex; align-items: center; gap: var(--sp-sm);">
+              <span style="font-size: 9px; font-weight: 700; color: var(--info-fg); background: var(--info-bg); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;">Meta</span>
+              <span style="font-size: var(--font-sm); color: var(--text-secondary);">Prep: 15 min &middot; Cook: 60 min &middot; Serves 8</span>
+            </div>
+
+            <!-- Ingredients group -->
+            <div style="background: var(--surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-xs);">
+              <div style="display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: 6px;">
+                <span style="font-size: 9px; font-weight: 700; color: var(--accent-secondary); background: var(--surface-accent); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Ingredients</span>
+                <span style="font-size: var(--font-xs); color: var(--text-tertiary);">8 lines</span>
+              </div>
+              <div style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.6;">
+                <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success-fg); flex-shrink: 0;"></span> 3 ripe bananas, mashed</div>
+                <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success-fg); flex-shrink: 0;"></span> 1/3 cup melted butter</div>
+                <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--success-fg); flex-shrink: 0;"></span> 3/4 cup sugar</div>
+                <div style="display: flex; align-items: center; gap: 4px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: var(--warning-fg); flex-shrink: 0;"></span> <span style="color: var(--warning-fg);">Pinch of salt</span> <span style="font-size: 9px; color: var(--warning-fg);">(low conf)</span></div>
+                <div style="font-size: 10px; color: var(--text-disabled); margin-top: 2px;">+4 more ingredients</div>
+              </div>
+            </div>
+
+            <!-- Instructions group -->
+            <div style="background: var(--surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--r-sm); padding: var(--sp-sm) var(--sp-md); margin-bottom: var(--sp-lg);">
+              <div style="display: flex; align-items: center; gap: var(--sp-sm); margin-bottom: 6px;">
+                <span style="font-size: 9px; font-weight: 700; color: #6A5030; background: #F5EDE0; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px;">Steps</span>
+                <span style="font-size: var(--font-xs); color: var(--text-tertiary);">6 lines</span>
+              </div>
+              <div style="font-size: var(--font-xs); color: var(--text-secondary); line-height: 1.6;">
+                <div>1. Preheat oven to 350 deg F...</div>
+                <div>2. Mash the ripe bananas...</div>
+                <div style="font-size: 10px; color: var(--text-disabled); margin-top: 2px;">+4 more steps</div>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display: flex; gap: var(--sp-sm); margin-bottom: var(--sp-lg);">
+              <button style="flex: 1; background: var(--btn-primary-bg); color: var(--btn-primary-text); border: none; border-radius: var(--r-sm); padding: 14px; font-size: var(--font-md); font-weight: 600; font-family: 'SF Pro Rounded', -apple-system, system-ui, sans-serif; cursor: pointer;">Review & Save</button>
+            </div>
+
+            <!-- Tip -->
+            <div style="background: var(--info-bg); border-radius: var(--r-sm); padding: var(--sp-sm) var(--sp-md); font-size: var(--font-xs); color: var(--info-fg); text-align: center;">
+              Tap any section to edit before saving
+            </div>
+
+          </div><!-- /scrollable content -->
+        </div><!-- /phone-screen -->
+      </div><!-- /phone-frame -->
+      <p class="mockup-label">6. Photo Import (OCR Result)</p>
+      <p class="mockup-sublabel">Camera capture, OCR line detection, section classification</p>
+    </div>
+
+    <!-- ── Screen 7: Photo Import — Camera Capture ── -->
+    <div class="mockup-wrapper">
+      <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="phone-screen" style="background: #111;">
+          <div class="status-bar" style="color: white;">
+            <span>9:41</span><span></span><span style="font-size: 12px;">&#x25D4; &#x25CE; &#x1F50B;</span>
+          </div>
+
+          <!-- Camera viewfinder simulation -->
+          <div style="flex: 1; display: flex; flex-direction: column; position: relative;">
+            <!-- Viewfinder area -->
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative;">
+              <!-- Simulated cookbook page in camera -->
+              <div style="width: 280px; height: 380px; background: #f5f5f0; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); transform: perspective(600px) rotateY(-2deg) rotateX(1deg); display: flex; flex-direction: column; padding: 20px; font-family: Georgia, serif; position: relative;">
+                <div style="font-size: 16px; font-weight: bold; color: #333; margin-bottom: 8px;">Banana Bread</div>
+                <div style="font-size: 10px; color: #555; line-height: 1.5;">
+                  <strong>Ingredients</strong><br>
+                  3 ripe bananas<br>
+                  1/3 cup butter<br>
+                  3/4 cup sugar<br>
+                  1 egg<br>
+                  1 tsp vanilla<br>
+                  1 tsp baking soda<br>
+                  pinch of salt<br>
+                  1 1/2 cups flour<br><br>
+                  <strong>Directions</strong><br>
+                  1. Preheat oven to 350...<br>
+                  2. Mash bananas...<br>
+                </div>
+                <!-- Auto-detect frame overlay -->
+                <div style="position: absolute; inset: -4px; border: 2px solid rgba(107,155,55,0.8); border-radius: 6px; pointer-events: none;"></div>
+                <!-- Corner markers -->
+                <div style="position: absolute; top: -6px; left: -6px; width: 20px; height: 20px; border-top: 3px solid var(--spring-green); border-left: 3px solid var(--spring-green); border-radius: 2px 0 0 0;"></div>
+                <div style="position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-top: 3px solid var(--spring-green); border-right: 3px solid var(--spring-green); border-radius: 0 2px 0 0;"></div>
+                <div style="position: absolute; bottom: -6px; left: -6px; width: 20px; height: 20px; border-bottom: 3px solid var(--spring-green); border-left: 3px solid var(--spring-green); border-radius: 0 0 0 2px;"></div>
+                <div style="position: absolute; bottom: -6px; right: -6px; width: 20px; height: 20px; border-bottom: 3px solid var(--spring-green); border-right: 3px solid var(--spring-green); border-radius: 0 0 2px 0;"></div>
+              </div>
+
+              <!-- Auto-detect label -->
+              <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(107,155,55,0.9); color: white; font-size: 12px; font-weight: 600; padding: 4px 14px; border-radius: 12px; font-family: -apple-system, system-ui, sans-serif;">Page detected</div>
+            </div>
+
+            <!-- Camera controls -->
+            <div style="height: 120px; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: space-around; padding: 0 40px; flex-shrink: 0;">
+              <!-- Photo library -->
+              <div style="width: 44px; height: 44px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;">
+                <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+              </div>
+              <!-- Shutter button -->
+              <div style="width: 72px; height: 72px; border-radius: 50%; border: 4px solid white; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <div style="width: 60px; height: 60px; border-radius: 50%; background: white;"></div>
+              </div>
+              <!-- Cancel -->
+              <div style="color: rgba(255,255,255,0.8); font-size: 15px; font-family: -apple-system, system-ui, sans-serif; cursor: pointer;">Cancel</div>
+            </div>
+
+            <!-- Home indicator -->
+            <div style="height: 34px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; background: rgba(0,0,0,0.85);">
+              <div style="width: 134px; height: 5px; border-radius: 2.5px; background: rgba(255,255,255,0.3);"></div>
+            </div>
+          </div>
+        </div><!-- /phone-screen -->
+      </div><!-- /phone-frame -->
+      <p class="mockup-label">7. Photo Import (Camera)</p>
+      <p class="mockup-sublabel">Document scanner with auto edge detection</p>
+    </div>
+
+  </div><!-- /mockup-row -->
+
+</div><!-- /page -->
+
+<!-- ═══════════════════════════════════════════════
+     THEME TOGGLE SCRIPT
+     ═══════════════════════════════════════════════ -->
+<script>
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : '');
+    document.querySelectorAll('.theme-toggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent.trim().toLowerCase() === theme);
+    });
+  }
+</script>
+
+</body>
+</html>

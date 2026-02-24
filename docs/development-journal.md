@@ -6,6 +6,60 @@
 
 ---
 
+## Session 39 — February 24, 2026
+**Milestone**: M10 Spike — Codex Round 2 Review Fixes
+**Branch**: `spike/M10-import-prd-preparation`
+
+### What Happened
+
+A Codex architecture review of commit `966fb59` (the M10 spike output) identified 5 findings. All 5 were assessed as valid and fixed in this session.
+
+**Finding 1 (High) — Draft-first persistence gap**: PRD §3.1 said "draft-first" but referenced `createRecipe()` which calls `save()` immediately. Fixed by adding an explicit **persistence contract invariant** to §3.1: "No `Recipe` entity exists in the view context before the user taps Save." Added integration test requirement: URL → preview → cancel → assert zero Recipe rows.
+
+**Finding 2 (High) — BBC Good Food false positive**: `recipeFound: true` for BBC Good Food with only `imageURL: "Image"` — a non-recipe object in `__NEXT_DATA__` had `cookTime` + `prepTime`. Tightened `findObjectWithRecipeKeys()` to require `recipeIngredient` as mandatory key (not just any 2 of N keys). Eliminated the false positive with zero impact on legitimate extractions.
+
+**Finding 3 (Medium) — extractionMethod always "none"**: The `extract(from:)` method set `ctx.extractionMethod` after strategy calls but returned the stale tuple from the strategy (which captured context before the method was set). Fixed by returning `(result.recipe, ctx)` instead of `result` for all 3 strategies.
+
+**Finding 4 (Medium) — Computed metrics not in JSON**: `ExtractionReport`'s computed properties (fullExtractionCount, medianTime, etc.) weren't serialized by Codable's auto-synthesis. Added custom `encode(to:)` with `SummaryPayload` + `EdgeCaseCounts` structs, `ExtractionSuccessLevel` enum, and `classifySuccess()` method.
+
+**Finding 5 (Low) — Test matrix placeholders**: Results Summary, Edge Case Catalog, and Failure Taxonomy sections had placeholder text. Filled all three with data from the regenerated report.
+
+**Cascading number corrections**: Regenerated the extraction report after code fixes. Recipe count dropped from 13/28 to 12/28 (BBC false positive eliminated). All 12 are full extractions (0 partial). Updated all references across PRD, acceptance criteria, test matrix, insights log, and dev journal.
+
+### Round 3 Review (same session)
+
+Sent updated artifacts to Codex for re-review. All 5 original findings confirmed resolved. 4 new findings surfaced:
+
+**Finding 1 (Medium) — Transaction semantics**: PRD claimed atomic save but `createRecipe()` and `parseAndConnectIngredients()` are two separate commits. Fixed by adding explicit implementation note to §3.1 requiring a new `importRecipe(from:ingredientTexts:)` method that creates Recipe + Ingredients + saves once. Updated §3.2 orchestrator diagram.
+
+**Finding 2 (Medium) — "Dead URLs" number inconsistency**: PRD said "~7/28 (25%)" but actual data shows 16/28 failures. Replaced vague row with precise 3-row breakdown: "No extraction possible | 16/28 (57%)" split into "client-rendered WKWebView recoverable | ~8/28 (29%)" and "truly unrecoverable | ~3/28 (11%)" in both PRD and acceptance criteria.
+
+**Finding 3 (Low) — `__NEXT_DATA__` recall risk**: Tightened `recipeIngredient` requirement could theoretically reject legitimate non-@type recipes. Added risk register entry with mitigation: build validation corpus of 10+ `__NEXT_DATA__` sites during M10.1.
+
+**Finding 4 (Low) — CLI vs report classification mismatch**: `fieldsMissing` checked 6 fields while `classifySuccess()` checked 3 core fields — two competing classification systems. Created single source of truth via `ExtractedRecipe.successLevel` computed property, refactored `classifySuccess()` to delegate, updated CLI to use same classification.
+
+### Key Decisions and Why
+
+**Strict success classification**: Defined "full" as title + ingredients + instructions (the 3 core fields). Previously counted all 8 fields for full/partial. This is more meaningful because time fields and author are genuinely optional — a recipe without cookTime is still usable.
+
+**Regenerate, don't patch**: After fixing extractor bugs, re-ran the full 28-site extraction instead of manually adjusting numbers. This ensures the report is a faithful snapshot of the code's actual behavior, not a hand-edited approximation.
+
+### Deliverables Modified
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `RecipeJSONLDExtractor.swift` | Tightened `findObjectWithRecipeKeys()`, fixed `extractionMethod` attribution |
+| 2 | `ExtractedRecipe.swift` | Added custom Codable, `ExtractionSuccessLevel`, `classifySuccess()` |
+| 3 | `extraction-report.json` | Regenerated with all fixes |
+| 4 | `m10-recipe-import.md` | PRD §3.1 persistence invariant, §2.x numbers corrected |
+| 5 | `acceptance-criteria.md` | Spike findings summary + per-field rates corrected |
+| 6 | `test-site-matrix.md` | All placeholder sections filled with spike data |
+| 7 | `insights-log.md` | 4 Round 2 insights + 2 Round 3 insights + corrected stale numbers |
+| 8 | `ExtractedRecipe.swift` | Round 3: Added `successLevel` computed property, single classification source of truth |
+| 9 | `main.swift` | Round 3: CLI uses `successLevel` instead of `fieldsMissing` |
+
+---
+
 ## Session 38 — February 24, 2026
 **Milestone**: M8.4.1 Normalization Qualifier Reclassification
 **Branch**: `feature/M8.4.1-normalization-qualifier-fix`
@@ -51,6 +105,111 @@ All 282 tests pass, 0 failures. Code review (5 parallel agents) found no blockin
 | 2 | `foragerTests/Services/IngredientTemplateServiceTests.swift` | 15 new tests |
 | 3 | `foragerTests/Services/IngredientTemplateNormalizationTests.swift` | 3 tests updated |
 | 4 | `docs/prds/complete/m8.4.1-normalization-qualifier-reclassification.md` | PRD documenting change |
+
+---
+
+## Session 37 — February 24, 2026
+**Milestone**: M10 Recipe Import PRD Preparation Spike
+**Branch**: `spike/M10-import-prd-preparation`
+
+### What Happened
+
+Executed a comprehensive overnight spike to validate assumptions from the recipe import research doc before writing the formal PRD. The spike covered 5 work packages (WP1-WP5) plus a user-requested photo/OCR addition — all in one session.
+
+**Work completed**:
+1. **Test Site Matrix (WP2)**: Built a 28-URL matrix across 4 tiers: major sites (9), food blogs (9), challenging sources (6), and international sites (4). Each URL was a specific recipe page chosen to test different JSON-LD patterns.
+
+2. **Swift CLI JSON-LD Extractor (WP1)**: Built a full Swift Package Manager CLI tool (`Tools/import-spike/`) with 6 source files: ExtractedRecipe models, ISO 8601 duration parser, yield parser, JSON-LD extractor (3 strategies), schema.org mapper, and a CLI main. Ran it against all 28 sites.
+
+3. **Photo/OCR Extraction (WP8 — user addition)**: Added `ImageRecipeExtractor.swift` with Vision framework OCR + heuristic line classification + section-aware context boosting. Tested against a programmatically generated recipe image.
+
+4. **Acceptance Criteria (WP4)**: Wrote data-backed targets for all 4 phases. Every percentage and latency target traces to a spike measurement.
+
+5. **Wireframes (WP3)**: Created 7 phone-frame screens in HTML/CSS matching ForagerTheme design system: import preview, share extension, partial extraction, duplicate detection, error states, photo OCR result, and camera capture.
+
+6. **PRD Draft (WP5)**: Wrote the formal M10 PRD incorporating all spike findings, Codex review responses, calibrated effort estimates (72-97h), and 7 wireframe references.
+
+### Key Decisions and Why
+
+**WKWebView is Phase 1, not Phase 2**: The research doc assumed ~90% JSON-LD coverage. The spike measured 43% via URLSession because ~30% of recipe sites use WordPress plugins that inject JSON-LD via client-side JavaScript. This single finding reshuffled the Phase 1 architecture — WKWebView fallback is now a sub-phase in Phase 1, not an optional enhancement.
+
+**Three extraction strategies, not one**: The initial extractor only found `<script type="application/ld+json">` tags. Debugging failures revealed Marmiton embeds Recipe JSON in regular `<script>` blocks, and BBC Good Food buries it in `__NEXT_DATA__` Next.js payloads. Each strategy individually covers a small slice; together they reach 43% (estimated 75-80% with WKWebView).
+
+**Extend RecipeFormData, don't replace it**: The Codex review suggested a dedicated `ImportDraftRecipe` model. The spike showed that all extracted fields map naturally to existing `RecipeFormData` fields. Adding optional confidence properties is simpler than building a parallel model hierarchy. The draft-first workflow already exists in create/edit flows.
+
+**Section-aware OCR classification**: Pure line-by-line heuristics achieve ~80% accuracy on recipe text. Tracking section headers ("Ingredients:", "Instructions:") and applying that context to subsequent lines raises accuracy to ~90%+. This is a simple state machine that dramatically improves quality — worth the 20 extra lines of code.
+
+### What Was Learned
+
+**Spike-before-PRD is essential for external dependencies**: Three of the spike's most important findings (43% vs 90% extraction rate, 4 distinct JSON-LD patterns, WKWebView as Phase 1 requirement) would have caused expensive mid-implementation pivots if discovered during build. The 4-hour spike prevented at least 10 hours of wrong-direction work.
+
+**Real-world JSON-LD is messy**: The research doc described clean schema.org patterns. The spike found: HTML entities in 25% of JSON-LD values, @graph wrappers in 18%, array @type fields in 11%, full URL @type in some sites, and HowToStep instruction objects in 39%. A production extractor needs all of these handled from day one.
+
+**OCR is solved; classification is the challenge**: Vision framework OCR achieved 100% character accuracy on clean printed text. The entire complexity lies in figuring out what each line means — is "Mix in the flour" an ingredient or an instruction? Section-aware context is the key insight.
+
+### Process Insight
+
+This session used parallel Task agents extensively — launching wireframe creation, OCR spike, and acceptance criteria concurrently while the main thread handled sequential work. The total wall clock time was significantly less than the sum of individual task hours because independent work packages ran simultaneously.
+
+### Deliverables Created
+
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `Tools/import-spike/Package.swift` | SPM package (6 source files) |
+| 2 | `Tools/import-spike/Sources/ImportSpike/*.swift` (6 files) | CLI: JSON-LD extractor + OCR pipeline |
+| 3 | `docs/import-research/test-site-matrix.md` | 28 URLs across 4 tiers |
+| 4 | `docs/import-research/extraction-report.json` | Machine-readable results |
+| 5 | `docs/import-research/acceptance-criteria.md` | Data-backed thresholds per phase |
+| 6 | `docs/import-research/import-wireframes.html` | 7 phone-frame screens |
+| 7 | `docs/prds/active/m10-recipe-import.md` | Formal PRD |
+
+### Next Steps
+
+M10 PRD is written and ready for review. Implementation order: M8.4 (ML parsing) first, then M10 (recipe import). M8.4's BiLSTM-CRF parser improves ingredient parsing quality for all three import modes simultaneously — it's the rising tide that lifts all boats.
+
+---
+
+## Session 36 — February 23, 2026
+**Milestone**: Recipe Import Research Review
+**Branch**: `main` (research/documentation)
+
+### What Happened
+
+Reviewed the recipe-import-research.md document against an external architecture review produced by Codex. The review identified 5 critical findings and 5 missing architecture elements. Evaluated each finding against the actual Forager codebase to determine which were valid, which were overstated, and what the review missed.
+
+### Key Findings from Evaluation
+
+**Valid and high-value**: (1) Preview flow persistence timing — `RecipeService.createRecipe()` saves immediately, so the research doc's code example would persist records before user confirmation. The existing create/edit views already use `RecipeFormData` as a draft, but the research doc's integration example skipped this pattern. (2) `RecipeFormData(from: Recipe)` doesn't exist — the research doc assumed an initializer that hasn't been built. (3) Multi-component recipe model gap — ingredient groups ("For the sauce:") are identified as a pain point but no v1 scoping decision was made.
+
+**Partially valid**: Foundation Models share extension constraint was stated as absolute ("CANNOT run") when it should be qualified ("expected to exceed memory limits — validate with spike"). The Codex review correctly noted no compile-time unavailability annotations exist, but underweighted the practical ~1.2 GB vs 120 MB memory constraint.
+
+**Overstated**: Legal section critique was stylistic rather than architectural. The research doc's legal treatment was already nuanced.
+
+**Missed by Codex**: App Group container sharing for the share extension, CloudKit sync timing during import, `sourceURL` uniqueness not enforced in Core Data, and `OptimizedRecipeDataService` naming inconsistency.
+
+### Process Insight
+
+Running research docs through multiple AI reviewers (Claude for authoring, Codex for architecture review, Claude for meta-evaluation) creates a productive adversarial loop. Each model catches different things. The pattern: author → external review → meta-evaluation → targeted improvements is more effective than any single pass.
+
+### Edits Applied to Research Doc
+
+Applied 6 priority edits plus supporting changes:
+1. **Fixed preview flow** — replaced `createRecipe()` code example with draft-first `RecipeFormData` workflow
+2. **Added `RecipeFormData` gap note** — acknowledged `init(from:)` doesn't exist yet
+3. **Softened Foundation Models constraint** — "CANNOT" → "expected to exceed memory limits, validate with spike"
+4. **Added v1 scoping for ingredient groups** — explicit "flatten with labels" decision
+5. **Added dedup strategy** (Decision 7) — `sourceURL` match + fuzzy title match
+6. **Added share extension handoff** (Decision 8) — App Group shared container pattern
+7. **Added Observability & Telemetry section** — KPIs and implementation approach
+8. **Added Domain Policy Table** — explicit handling for 8 input source types
+9. **Added Open Questions for PRD** — 8 product decisions needed before implementation
+10. **Updated effort estimates** — 55-73h → 62-84h with buffer guidance
+11. **Expanded legal section** — copyright vs ToS distinction, pre-launch review gates
+12. **Updated executive summary and ToC** — reflects all changes
+
+### Next Steps
+
+Research doc is now post-review quality. Gap to A+/PRD-ready: prototype validation (build a JSON-LD extractor spike against top-20 sites), user research (which import method do Forager's actual users want most?), and acceptance criteria quantification.
 
 ---
 
