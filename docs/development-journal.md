@@ -7,12 +7,20 @@
 ---
 
 ## Session 40 — February 24, 2026
-**Milestone**: M10.1.1 — Import models + extraction infrastructure
+**Milestone**: M10.1.1–M10.1.2 — Import models, JSON-LD extractor + schema mapper
 **Branch**: `feature/M10.1-url-import`
 
 ### What Happened
 
-Starting M10 implementation — the biggest feature since M7 CloudKit. M10.1.1 lays the data model foundation for the entire import system: `ImportDraftRecipe`, `ImportField<T>`, `ImportConfidence`, `ImportFieldSource`, `ImportJobState`, `ImportError`, `RecipeExtractor` protocol, and utility parsers (ISO8601Duration, RecipeYield, HTMLEntity).
+Starting M10 implementation — the biggest feature since M7 CloudKit.
+
+**M10.1.1** lays the data model foundation for the entire import system: `ImportDraftRecipe`, `ImportField<T>`, `ImportConfidence`, `ImportFieldSource`, `ImportJobState`, `ImportError`, `RecipeExtractor` protocol, and utility parsers (ISO8601Duration, RecipeYield, HTMLEntity). All 4 files compiled clean on first try.
+
+**M10.1.2** ports the spike's JSON-LD extraction and schema mapping into production. Two files created:
+- `RecipeJSONLDExtractor.swift` — 3-tier HTML extraction strategy (ld+json → inline scripts → __NEXT_DATA__), implements `RecipeExtractor` protocol
+- `SchemaRecipeMapper.swift` — maps schema.org/Recipe dict → `ImportDraftRecipe` with per-field `ImportField<T>` confidence wrappers
+
+Key adaptation from spike: the spike's `MappingContext` returned diagnostic flags as a separate return value. Production inlines these flags to directly drive `ImportConfidence` levels (HowToSections → `.medium`, unusual yield → `.medium`). Also switched from unconditional entity decoding to guard-first with `HTMLEntityDecoder.containsEntities()`.
 
 **Architecture decisions verified against codebase before coding:**
 - Confirmed `RecipeFormData` at `RecipeFormModels.swift:98` has no import-specific fields — separate `ImportDraftRecipe` is the right call
@@ -20,19 +28,26 @@ Starting M10 implementation — the biggest feature since M7 CloudKit. M10.1.1 l
 - Confirmed `ParsingSource.import_` already exists in `ParsingTelemetryService.swift:31` — telemetry attribution ready
 - Services/ uses `PBXFileSystemSynchronizedRootGroup` — just create files on disk, no pbxproj edits needed
 
-**Key design choices:**
+**Key design choices (M10.1.1):**
 1. `ImportField<T: Equatable>` generic wrapper — avoids repeating confidence/source/wasEdited for each field
 2. `ImportConfidence: Int, Comparable` with raw values — enables sorting for UI dot colors and min() aggregation
 3. `DuplicateResult` uses `NSManagedObjectID` not `Recipe` — reference semantics for Core Data objects
 4. `ImportError.userMessage` computed property — every error case maps to a user-facing string (zero silent failures)
 5. ISO8601DurationParser and RecipeYieldParser ported directly from spike with no changes needed
 
-All 4 files compile clean. BUILD SUCCEEDED on first try.
+**Key design choices (M10.1.2):**
+6. Confidence levels driven by parsing context — HowToSection nesting and unusual yield formats get `.medium` vs `.high`
+7. `HTMLEntityDecoder.containsEntities()` guard-first pattern in instruction text cleaning
+8. `filterIngredientHeaders()` strips section headers ("For the sauce:") from ingredient lists
+
+Both M10.1.1 (4 files) and M10.1.2 (2 files) compile clean. BUILD SUCCEEDED on first try for both.
 
 ### Insights Logged
 - Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
 - ImportDraftRecipe separation rationale vs RecipeFormData
 - ImportField<T: Equatable> generic wrapper design
+- Confidence-from-context pattern (MappingContext flags → ImportConfidence levels)
+- Guard-before-work pattern (containsEntities check before decode)
 
 ---
 
