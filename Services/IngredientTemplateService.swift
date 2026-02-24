@@ -46,22 +46,16 @@ class IngredientTemplateService: ObservableObject {
             "tortilla chips"
         ]
         
-        // M4.3.5 PHASE 4 FIX: Strip qualifiers BEFORE checking preserve-plural list
-        // This ensures "frozen peas" matches "peas" in the list
-        // We'll apply a simplified version of removeVariations just for this check
-        let qualifierPrefixes = [
+        // Strip only preparation qualifiers before checking preserve-plural lists.
+        // Identity qualifiers (ground, fresh, frozen, etc.) are kept so they participate
+        // in plural matching — "frozen peas" stays intact, "diced tomatoes" → "tomatoes".
+        let preparationPrefixes = [
             "diced ", "chopped ", "sliced ", "minced ", "crushed ", "grated ",
-            "shredded ", "ground ", "whole ", "halved ", "quartered ",
-            "fresh ", "frozen ", "canned ", "dried ", "raw ",
-            "organic ", "free-range ", "grass-fed ", "wild-caught ",
-            "all-purpose ", "self-rising ", "unsalted ", "salted ",
-            "extra-virgin ", "light ", "dark ", "heavy ", "lite ",
-            "large ", "medium ", "small ", "jumbo "
+            "shredded ", "halved ", "quartered "
         ]
-        
+
         var checkName = lowercased
-        // Remove qualifiers for preserve-plural check
-        for prefix in qualifierPrefixes {
+        for prefix in preparationPrefixes {
             if checkName.hasPrefix(prefix) {
                 checkName = String(checkName.dropFirst(prefix.count)).trimmingCharacters(in: .whitespaces)
             }
@@ -101,6 +95,7 @@ class IngredientTemplateService: ObservableObject {
             "baby corn": "baby corn", // uncountable
             "baby bella": "baby bellas", "baby bellas": "baby bellas",
         ]
+        // Exact match in preferPlural (handles single-word and known compounds)
         if let preferred = preferPlural[checkName] {
             return preferred
         }
@@ -115,6 +110,18 @@ class IngredientTemplateService: ObservableObject {
             return lowercased
         }
 
+        let words = checkName.split(separator: " ").map(String.init)
+
+        // For compound names (e.g., "dried cranberries", "frozen peas"), check the
+        // LAST word against preferPlural. This handles identity-qualifier + plural combos
+        // that don't have exact entries in the map.
+        if words.count > 1, let lastWord = words.last,
+           let preferred = preferPlural[lastWord] {
+            var result = words
+            result[result.count - 1] = preferred
+            return result.joined(separator: " ")
+        }
+
         // M8.3.1: Check if the LAST WORD is inherently plural
         // Handles compound names like "black beans", "red pepper flakes", "tortilla strips"
         let alwaysPluralSuffixes: Set<String> = [
@@ -123,7 +130,6 @@ class IngredientTemplateService: ObservableObject {
             "peas", "seeds", "sprinkles", "strips",
             "snacks", "berries", "grapes", "crackers"
         ]
-        let words = checkName.split(separator: " ").map(String.init)
         if words.count > 1, let lastWord = words.last,
            alwaysPluralSuffixes.contains(lastWord) {
             return checkName
@@ -245,49 +251,48 @@ class IngredientTemplateService: ObservableObject {
     }
     
     // Phase 4: Variation Handling
-    // Removes qualifiers and descriptors to consolidate ingredient variations
-    // Handles: "diced tomato" → "tomato", "fresh basil" → "basil", "all-purpose flour" → "flour"
-    // ENHANCED: Also handles compound words without spaces like "largeegg" → "egg", "organictomato" → "tomato"
-    // This phase reduces template fragmentation by normalizing ingredient variants
+    // Strips only PREPARATION qualifiers that describe what you DO to an ingredient.
+    // Identity qualifiers that describe what an ingredient IS are preserved.
+    //
+    // Stripped (preparation): "diced tomato" → "tomato", "chopped onion" → "onion"
+    // Preserved (identity): "ground beef" stays, "dark chocolate" stays, "frozen peas" stays
+    //
+    // Rationale: Training data (68,846 samples from strangetom) shows identity qualifiers
+    // are consistently labeled NAME, not PREP. Stripping them loses critical product info:
+    //   "ground beef" (46x NAME) ≠ "beef"
+    //   "ground cinnamon" (79x NAME) ≠ "cinnamon"
+    //   "dark chocolate" (88x NAME) ≠ "chocolate"
+    //   "unsalted butter" (797x NAME) ≠ "butter"
+    //   "whole milk" (125x NAME) ≠ "milk"
+    //   "dried cranberries" (35x NAME) ≠ "cranberries"
+    //   "frozen peas" (46x NAME) ≠ "peas"
     private func removeVariations(_ name: String) -> String {
         let lowercased = name.lowercased()
-        
-        // Common qualifiers to remove (WITHOUT trailing space for matching)
-        let qualifierWords = [
-            // Preparation descriptors
+
+        // ONLY strip pure preparation qualifiers — these describe cutting/processing
+        // and don't change what the ingredient IS for shopping purposes.
+        // All other qualifiers (identity, freshness, quality, type) are preserved
+        // because they describe fundamentally different products or store locations.
+        let preparationQualifiers = [
             "diced", "chopped", "sliced", "minced", "crushed", "grated",
-            "shredded", "ground", "whole", "halved", "quartered",
-            
-            // Freshness descriptors
-            "fresh", "frozen", "canned", "dried", "raw",
-            
-            // Quality descriptors
-            "organic", "free-range", "grass-fed", "wild-caught",
-            
-            // Type/variety descriptors (common ones)
-            "all-purpose", "self-rising", "unsalted", "salted",
-            "extra-virgin", "light", "dark", "heavy", "lite",
-            
-            // Size descriptors
-            "large", "medium", "small", "jumbo"
+            "shredded", "halved", "quartered"
         ]
-        
+
         var result = lowercased
-        
-        // Remove qualifiers from start of name
-        // Loop to handle multiple qualifiers (e.g., "fresh diced tomato" or "freshdicedt omato")
+
+        // Remove preparation qualifiers from start of name
+        // Loop to handle multiple qualifiers (e.g., "diced sliced tomato")
         var changed = true
         while changed {
             changed = false
-            for qualifier in qualifierWords {
-                // Try matching with space first (e.g., "large egg")
+            for qualifier in preparationQualifiers {
+                // Try matching with space (e.g., "diced tomato")
                 if result.hasPrefix(qualifier + " ") {
                     result = String(result.dropFirst((qualifier + " ").count))
                     changed = true
                     break
                 }
-                // Try matching without space (e.g., "largeegg")
-                // Only if there's more content after the qualifier
+                // Try matching without space (e.g., "dicedtomato")
                 else if result.hasPrefix(qualifier) && result.count > qualifier.count {
                     result = String(result.dropFirst(qualifier.count))
                     changed = true
@@ -295,7 +300,7 @@ class IngredientTemplateService: ObservableObject {
                 }
             }
         }
-        
+
         return result.trimmingCharacters(in: .whitespaces)
     }
     

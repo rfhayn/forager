@@ -1,9 +1,9 @@
 # Forager - Project Index
 
-**Last Updated**: February 22, 2026
+**Last Updated**: February 24, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8.4 ✅ **COMPLETE** | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M7.7 NEXT**
-**Current Phase**: M8.4 ✅ **ALL PHASES COMPLETE** (259 tests, 0 failures)
+**Current Milestone**: M8.4.1 ✅ **COMPLETE** | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M7.7 NEXT**
+**Current Phase**: M8.4.1 ✅ **COMPLETE** (282 tests, 0 failures)
 **Next Priority**: M7.7 App Store Submission
 **Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
 
@@ -50,6 +50,15 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 24, 2026** - M8.4.1 ✅ COMPLETE — Normalization Qualifier Reclassification
+- **Completed**: Fixed identity qualifier stripping bug — "ground beef" was being normalized to "beef"
+- **Root cause**: `removeVariations()` conflated identity qualifiers (ground, fresh, frozen) with preparation qualifiers (diced, chopped, sliced)
+- **Fix**: Data-driven reclassification using strangetom training data (68,846 samples, 3,032 compound ingredients)
+- **Changes**: Reduced strip list from 30+ to 9 preparation-only qualifiers, added compound preferPlural check
+- **Testing**: 15 new tests + 3 updated, 282 total tests passing
+- **Documentation**: PRD at `docs/prds/complete/m8.4.1-normalization-qualifier-reclassification.md`
+- **Next**: M7.7 App Store Submission
 
 ### **February 22, 2026** - M8.4 ✅ COMPLETE — ML-Powered Parsing (All 10 Phases)
 - **Completed**: Full ML parsing pipeline — BiLSTM-CRF model, CoreML deployment, 3-tier hybrid routing, correction feedback loop

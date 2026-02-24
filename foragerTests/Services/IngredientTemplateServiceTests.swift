@@ -99,4 +99,107 @@ final class IngredientTemplateServiceTests: XCTestCase {
         XCTAssertEqual(first.objectID, second.objectID,
                        "findOrCreateTemplate should return the same template for normalized-equivalent names")
     }
+
+    // MARK: - Identity Qualifier Preservation
+
+    @MainActor
+    func testGroundBeefPreserved() {
+        let normalized = service.normalize(name: "ground beef")
+        XCTAssertEqual(normalized, "ground beef",
+                       "\"ground\" is an identity qualifier — ground beef is a distinct product from beef")
+    }
+
+    @MainActor
+    func testGroundTurkeyPreserved() {
+        let normalized = service.normalize(name: "ground turkey")
+        XCTAssertEqual(normalized, "ground turkey")
+    }
+
+    @MainActor
+    func testGroundCinnamonPreserved() {
+        let normalized = service.normalize(name: "ground cinnamon")
+        XCTAssertEqual(normalized, "ground cinnamon")
+    }
+
+    @MainActor
+    func testDarkChocolatePreserved() {
+        let normalized = service.normalize(name: "dark chocolate")
+        XCTAssertEqual(normalized, "dark chocolate")
+    }
+
+    @MainActor
+    func testWholeWheatFlourPreserved() {
+        let normalized = service.normalize(name: "whole wheat flour")
+        XCTAssertEqual(normalized, "whole wheat flour")
+    }
+
+    @MainActor
+    func testUnsaltedButterPreserved() {
+        let normalized = service.normalize(name: "unsalted butter")
+        XCTAssertEqual(normalized, "unsalted butter")
+    }
+
+    @MainActor
+    func testHeavyCreamPreserved() {
+        let normalized = service.normalize(name: "heavy cream")
+        XCTAssertEqual(normalized, "heavy cream")
+    }
+
+    @MainActor
+    func testFrozenPeasPreserved() {
+        let normalized = service.normalize(name: "frozen peas")
+        XCTAssertEqual(normalized, "frozen peas")
+    }
+
+    @MainActor
+    func testDriedCranberriesPreserved() {
+        let normalized = service.normalize(name: "dried cranberries")
+        XCTAssertEqual(normalized, "dried cranberries")
+    }
+
+    @MainActor
+    func testFreshBasilPreserved() {
+        let normalized = service.normalize(name: "fresh basil")
+        XCTAssertEqual(normalized, "fresh basil")
+    }
+
+    // MARK: - Preparation Qualifiers Still Stripped
+
+    @MainActor
+    func testDicedTomatoStillStripped() {
+        let normalized = service.normalize(name: "diced tomato")
+        XCTAssertEqual(normalized, "tomatoes",
+                       "\"diced\" is a preparation qualifier — should be stripped")
+    }
+
+    @MainActor
+    func testChoppedOnionStillStripped() {
+        let normalized = service.normalize(name: "chopped onion")
+        XCTAssertEqual(normalized, "onions",
+                       "\"chopped\" is a preparation qualifier — should be stripped")
+    }
+
+    @MainActor
+    func testSlicedMushroomsStillStripped() {
+        let normalized = service.normalize(name: "sliced mushrooms")
+        XCTAssertEqual(normalized, "mushrooms",
+                       "\"sliced\" is a preparation qualifier — should be stripped")
+    }
+
+    @MainActor
+    func testMincedGarlicStillStripped() {
+        let normalized = service.normalize(name: "minced garlic")
+        XCTAssertEqual(normalized, "garlic")
+    }
+
+    // MARK: - Template Dedup with Identity Qualifiers
+
+    @MainActor
+    func testGroundBeefAndBeefAreSeparateTemplates() {
+        let groundBeef = service.findOrCreateTemplate(name: "ground beef")
+        let beef = service.findOrCreateTemplate(name: "beef")
+
+        XCTAssertNotEqual(groundBeef.objectID, beef.objectID,
+                          "ground beef and beef should be separate templates")
+    }
 }

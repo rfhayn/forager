@@ -6,6 +6,54 @@
 
 ---
 
+## Session 38 — February 24, 2026
+**Milestone**: M8.4.1 Normalization Qualifier Reclassification
+**Branch**: `feature/M8.4.1-normalization-qualifier-fix`
+
+### What Happened
+
+User testing found that "ground beef" was being normalized to just "beef" when entering recipe ingredients. The 3-tier parser (regex → ML → NLP) was correctly producing `name: "ground beef"`, but `IngredientTemplateService.normalize()` Phase 4 (`removeVariations()`) stripped "ground" as a qualifier word.
+
+**Root cause**: The `removeVariations()` method maintained a flat list of 30+ qualifier words to strip, conflating two fundamentally different categories:
+- **Identity qualifiers** (ground, fresh, frozen, dried, dark, whole, unsalted) — change WHAT an ingredient IS
+- **Preparation qualifiers** (diced, chopped, sliced, minced) — describe what you DO to it
+
+**Data-driven fix**: Instead of hand-curating an allowlist of compound ingredients, mined the strangetom training dataset (68,846 samples) for qualifier words labeled as NAME. Found 3,032 unique compounds — "ground" appears as NAME 838 times, "fresh" 4,523 times, "unsalted" 904 times. The data overwhelmingly shows these qualifiers are part of ingredient identity.
+
+**Changes made**:
+1. Reduced `removeVariations()` strip list from 30+ qualifiers to 9 pure preparation qualifiers (diced, chopped, sliced, minced, crushed, grated, shredded, halved, quartered)
+2. Aligned `normalizePlural()` prefix stripping to match the same 9 qualifiers
+3. Added compound `preferPlural` last-word check so "dried cranberries" stays plural
+4. Added 15 new tests (identity preservation + preparation stripping + dedup)
+5. Updated 3 existing tests to match new behavior
+
+All 282 tests pass, 0 failures. Code review (5 parallel agents) found no blocking bugs.
+
+### Key Decisions and Why
+
+**Reclassify rather than allowlist**: The user correctly challenged the initial hand-curated `preservedCompounds` set approach — "how do you know you've gotten all of these compound ingredients?" The training data already encodes this knowledge. Reducing the strip list to only preparation qualifiers is more maintainable and complete than an ever-growing allowlist.
+
+**Trust the parser, fix the normalizer**: The ML model was trained on 68,846 samples that label "ground" as NAME in "ground beef" contexts. The parser gets it right. The normalization layer was undoing correct parser output — a classic case of the bug being downstream from where symptoms appear.
+
+**Only 9 preparation qualifiers survive**: The principle is simple — only strip qualifiers that describe a physical cutting/processing action. Everything else (freshness, quality, type, form) is an identity qualifier that changes the product for shopping purposes.
+
+### What Was Learned
+
+**Data beats hand-curation for normalization rules**: When you have 68,846 labeled training samples, use them to drive decisions. Mining the data for qualifier-as-NAME occurrences took minutes and provided conclusive evidence for the reclassification.
+
+**Pipeline tracing is essential**: The bug symptom ("ground beef" → "beef") could have been in any of 5 places: regex parser, ML parser, NLP parser, template service normalization, or template dedup. Tracing the full pipeline identified the exact location (Phase 4 of normalize) without wasting time fixing the wrong layer.
+
+### Deliverables
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `Services/IngredientTemplateService.swift` | Reduced qualifier strip list, aligned plural prefixes, added compound preferPlural |
+| 2 | `foragerTests/Services/IngredientTemplateServiceTests.swift` | 15 new tests |
+| 3 | `foragerTests/Services/IngredientTemplateNormalizationTests.swift` | 3 tests updated |
+| 4 | `docs/prds/complete/m8.4.1-normalization-qualifier-reclassification.md` | PRD documenting change |
+
+---
+
 ## Session 35 — February 23, 2026
 **Milestone**: Post-M8.4 bugfixes (parsing + CloudKit schema)
 **Branch**: `main` (direct fixes)
