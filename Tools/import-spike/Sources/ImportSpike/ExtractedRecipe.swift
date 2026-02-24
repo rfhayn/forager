@@ -74,21 +74,34 @@ struct SiteExtractionResult: Codable {
 
 // MARK: - Extraction Report
 
+/// Classification of extraction success level.
+enum ExtractionSuccessLevel: String, Codable {
+    /// Title + ingredients + instructions all present
+    case full
+    /// Title + ingredients present, instructions or other fields missing
+    case partial
+    /// Below partial — not a usable recipe
+    case failure
+}
+
 /// Aggregate report across all tested sites.
+/// Uses custom Codable to serialize computed summary metrics alongside raw results.
 struct ExtractionReport: Codable {
     let generatedAt: String
     let totalSites: Int
     let results: [SiteExtractionResult]
 
+    // Computed metrics (also serialized via custom encode)
     var jsonLDFoundCount: Int { results.filter(\.jsonLDFound).count }
     var recipeFoundCount: Int { results.filter(\.recipeFound).count }
     var fullExtractionCount: Int {
-        results.filter { $0.recipe?.fieldsMissing.isEmpty == true }.count
+        results.filter { classifySuccess($0) == .full }.count
     }
     var partialExtractionCount: Int {
-        results.filter { r in
-            r.recipeFound && !(r.recipe?.fieldsMissing.isEmpty == true)
-        }.count
+        results.filter { classifySuccess($0) == .partial }.count
+    }
+    var failureCount: Int {
+        results.filter { classifySuccess($0) == .failure }.count
     }
     var noExtractionCount: Int { results.filter { !$0.recipeFound }.count }
     var graphWrapperCount: Int { results.filter(\.usedGraphWrapper).count }
@@ -105,22 +118,92 @@ struct ExtractionReport: Codable {
         return times[times.count / 2]
     }
 
-    var summary: [String: Any] {
-        [
-            "totalSites": totalSites,
-            "jsonLDFound": jsonLDFoundCount,
-            "recipeFound": recipeFoundCount,
-            "fullExtraction": fullExtractionCount,
-            "partialExtraction": partialExtractionCount,
-            "noExtraction": noExtractionCount,
-            "graphWrappers": graphWrapperCount,
-            "arrayTypes": arrayTypeCount,
-            "howToSteps": howToStepsCount,
-            "howToSections": howToSectionsCount,
-            "htmlEntities": htmlEntitiesCount,
-            "unusualYields": unusualYieldCount,
-            "blocked": blockedCount,
-            "medianExtractionTimeMs": medianExtractionTimeMs
-        ]
+    var extractionMethodDistribution: [String: Int] {
+        var dist: [String: Int] = [:]
+        for r in results {
+            dist[r.extractionMethod, default: 0] += 1
+        }
+        return dist
+    }
+
+    /// Classify a site result into success levels using strict criteria.
+    /// Full: title + ingredients + instructions all present.
+    /// Partial: title + ingredients present.
+    /// Failure: anything below partial.
+    func classifySuccess(_ result: SiteExtractionResult) -> ExtractionSuccessLevel {
+        guard let recipe = result.recipe else { return .failure }
+        let hasTitle = recipe.title != nil
+        let hasIngredients = recipe.ingredients != nil && !(recipe.ingredients?.isEmpty ?? true)
+        let hasInstructions = recipe.instructions != nil
+        if hasTitle && hasIngredients && hasInstructions { return .full }
+        if hasTitle && hasIngredients { return .partial }
+        return .failure
+    }
+
+    // MARK: - Custom Codable (serialize computed metrics)
+
+    enum CodingKeys: String, CodingKey {
+        case generatedAt, totalSites, results, summary
+    }
+
+    struct SummaryPayload: Codable {
+        let jsonLDFound: Int
+        let recipeFound: Int
+        let fullExtraction: Int
+        let partialExtraction: Int
+        let failure: Int
+        let noExtraction: Int
+        let blocked: Int
+        let medianExtractionTimeMs: Int
+        let extractionMethodDistribution: [String: Int]
+        let edgeCases: EdgeCaseCounts
+    }
+
+    struct EdgeCaseCounts: Codable {
+        let graphWrappers: Int
+        let arrayTypes: Int
+        let howToSteps: Int
+        let howToSections: Int
+        let htmlEntities: Int
+        let unusualYields: Int
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(generatedAt, forKey: .generatedAt)
+        try container.encode(totalSites, forKey: .totalSites)
+        try container.encode(results, forKey: .results)
+        try container.encode(SummaryPayload(
+            jsonLDFound: jsonLDFoundCount,
+            recipeFound: recipeFoundCount,
+            fullExtraction: fullExtractionCount,
+            partialExtraction: partialExtractionCount,
+            failure: failureCount,
+            noExtraction: noExtractionCount,
+            blocked: blockedCount,
+            medianExtractionTimeMs: medianExtractionTimeMs,
+            extractionMethodDistribution: extractionMethodDistribution,
+            edgeCases: EdgeCaseCounts(
+                graphWrappers: graphWrapperCount,
+                arrayTypes: arrayTypeCount,
+                howToSteps: howToStepsCount,
+                howToSections: howToSectionsCount,
+                htmlEntities: htmlEntitiesCount,
+                unusualYields: unusualYieldCount
+            )
+        ), forKey: .summary)
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        generatedAt = try container.decode(String.self, forKey: .generatedAt)
+        totalSites = try container.decode(Int.self, forKey: .totalSites)
+        results = try container.decode([SiteExtractionResult].self, forKey: .results)
+    }
+
+    init(generatedAt: String, totalSites: Int, results: [SiteExtractionResult]) {
+        self.generatedAt = generatedAt
+        self.totalSites = totalSites
+        self.results = results
     }
 }

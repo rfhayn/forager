@@ -6,6 +6,46 @@
 
 ---
 
+## Session 39 — February 24, 2026
+**Milestone**: M10 Spike — Codex Round 2 Review Fixes
+**Branch**: `spike/M10-import-prd-preparation`
+
+### What Happened
+
+A Codex architecture review of commit `966fb59` (the M10 spike output) identified 5 findings. All 5 were assessed as valid and fixed in this session.
+
+**Finding 1 (High) — Draft-first persistence gap**: PRD §3.1 said "draft-first" but referenced `createRecipe()` which calls `save()` immediately. Fixed by adding an explicit **persistence contract invariant** to §3.1: "No `Recipe` entity exists in the view context before the user taps Save." Added integration test requirement: URL → preview → cancel → assert zero Recipe rows.
+
+**Finding 2 (High) — BBC Good Food false positive**: `recipeFound: true` for BBC Good Food with only `imageURL: "Image"` — a non-recipe object in `__NEXT_DATA__` had `cookTime` + `prepTime`. Tightened `findObjectWithRecipeKeys()` to require `recipeIngredient` as mandatory key (not just any 2 of N keys). Eliminated the false positive with zero impact on legitimate extractions.
+
+**Finding 3 (Medium) — extractionMethod always "none"**: The `extract(from:)` method set `ctx.extractionMethod` after strategy calls but returned the stale tuple from the strategy (which captured context before the method was set). Fixed by returning `(result.recipe, ctx)` instead of `result` for all 3 strategies.
+
+**Finding 4 (Medium) — Computed metrics not in JSON**: `ExtractionReport`'s computed properties (fullExtractionCount, medianTime, etc.) weren't serialized by Codable's auto-synthesis. Added custom `encode(to:)` with `SummaryPayload` + `EdgeCaseCounts` structs, `ExtractionSuccessLevel` enum, and `classifySuccess()` method.
+
+**Finding 5 (Low) — Test matrix placeholders**: Results Summary, Edge Case Catalog, and Failure Taxonomy sections had placeholder text. Filled all three with data from the regenerated report.
+
+**Cascading number corrections**: Regenerated the extraction report after code fixes. Recipe count dropped from 13/28 to 12/28 (BBC false positive eliminated). All 12 are full extractions (0 partial). Updated all references across PRD, acceptance criteria, test matrix, insights log, and dev journal.
+
+### Key Decisions and Why
+
+**Strict success classification**: Defined "full" as title + ingredients + instructions (the 3 core fields). Previously counted all 8 fields for full/partial. This is more meaningful because time fields and author are genuinely optional — a recipe without cookTime is still usable.
+
+**Regenerate, don't patch**: After fixing extractor bugs, re-ran the full 28-site extraction instead of manually adjusting numbers. This ensures the report is a faithful snapshot of the code's actual behavior, not a hand-edited approximation.
+
+### Deliverables Modified
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `RecipeJSONLDExtractor.swift` | Tightened `findObjectWithRecipeKeys()`, fixed `extractionMethod` attribution |
+| 2 | `ExtractedRecipe.swift` | Added custom Codable, `ExtractionSuccessLevel`, `classifySuccess()` |
+| 3 | `extraction-report.json` | Regenerated with all fixes |
+| 4 | `m10-recipe-import.md` | PRD §3.1 persistence invariant, §2.x numbers corrected |
+| 5 | `acceptance-criteria.md` | Spike findings summary + per-field rates corrected |
+| 6 | `test-site-matrix.md` | All placeholder sections filled with spike data |
+| 7 | `insights-log.md` | 4 new review insights + corrected stale numbers |
+
+---
+
 ## Session 38 — February 24, 2026
 **Milestone**: M8.4.1 Normalization Qualifier Reclassification
 **Branch**: `feature/M8.4.1-normalization-qualifier-fix`
@@ -77,9 +117,9 @@ Executed a comprehensive overnight spike to validate assumptions from the recipe
 
 ### Key Decisions and Why
 
-**WKWebView is Phase 1, not Phase 2**: The research doc assumed ~90% JSON-LD coverage. The spike measured 46% via URLSession because ~30% of recipe sites use WordPress plugins that inject JSON-LD via client-side JavaScript. This single finding reshuffled the Phase 1 architecture — WKWebView fallback is now a sub-phase in Phase 1, not an optional enhancement.
+**WKWebView is Phase 1, not Phase 2**: The research doc assumed ~90% JSON-LD coverage. The spike measured 43% via URLSession because ~30% of recipe sites use WordPress plugins that inject JSON-LD via client-side JavaScript. This single finding reshuffled the Phase 1 architecture — WKWebView fallback is now a sub-phase in Phase 1, not an optional enhancement.
 
-**Three extraction strategies, not one**: The initial extractor only found `<script type="application/ld+json">` tags. Debugging failures revealed Marmiton embeds Recipe JSON in regular `<script>` blocks, and BBC Good Food buries it in `__NEXT_DATA__` Next.js payloads. Each strategy individually covers a small slice; together they reach 46% (estimated 75-80% with WKWebView).
+**Three extraction strategies, not one**: The initial extractor only found `<script type="application/ld+json">` tags. Debugging failures revealed Marmiton embeds Recipe JSON in regular `<script>` blocks, and BBC Good Food buries it in `__NEXT_DATA__` Next.js payloads. Each strategy individually covers a small slice; together they reach 43% (estimated 75-80% with WKWebView).
 
 **Extend RecipeFormData, don't replace it**: The Codex review suggested a dedicated `ImportDraftRecipe` model. The spike showed that all extracted fields map naturally to existing `RecipeFormData` fields. Adding optional confidence properties is simpler than building a parallel model hierarchy. The draft-first workflow already exists in create/edit flows.
 
@@ -87,7 +127,7 @@ Executed a comprehensive overnight spike to validate assumptions from the recipe
 
 ### What Was Learned
 
-**Spike-before-PRD is essential for external dependencies**: Three of the spike's most important findings (46% vs 90% extraction rate, 4 distinct JSON-LD patterns, WKWebView as Phase 1 requirement) would have caused expensive mid-implementation pivots if discovered during build. The 4-hour spike prevented at least 10 hours of wrong-direction work.
+**Spike-before-PRD is essential for external dependencies**: Three of the spike's most important findings (43% vs 90% extraction rate, 4 distinct JSON-LD patterns, WKWebView as Phase 1 requirement) would have caused expensive mid-implementation pivots if discovered during build. The 4-hour spike prevented at least 10 hours of wrong-direction work.
 
 **Real-world JSON-LD is messy**: The research doc described clean schema.org patterns. The spike found: HTML entities in 25% of JSON-LD values, @graph wrappers in 18%, array @type fields in 11%, full URL @type in some sites, and HowToStep instruction objects in 39%. A production extractor needs all of these handled from day one.
 

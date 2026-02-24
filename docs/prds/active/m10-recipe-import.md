@@ -31,15 +31,15 @@ A structured spike validated assumptions before this PRD was written. All target
 |--------|--------|-------|
 | Sites tested | 28 | 4 tiers: major (9), blogs (9), challenging (6), international (4) |
 | JSON-LD present (any form) | 19/28 (68%) | Standard ld+json + embedded + __NEXT_DATA__ |
-| Recipe extractable (URLSession) | 13/28 (46%) | Server-rendered HTML only |
-| Full extraction (all core fields) | 9/28 (32%) | Title + ingredients + instructions + times + servings |
-| Partial extraction (1-2 fields missing) | 4/28 (14%) | Typically prepTime or cookTime omitted |
+| Recipe extractable (URLSession) | 12/28 (43%) | Server-rendered HTML only |
+| Full extraction (title + ingredients + instructions) | 12/28 (43%) | All 12 successful extractions have the 3 core fields |
+| Partial extraction (1-2 core fields missing) | 0/28 (0%) | Strict classification: full requires title + ingredients + instructions |
 | Client-rendered JSON-LD | ~8/28 (29%) | WordPress WPRM/Tasty plugins inject via JS |
 | Dead URLs / no structured data | ~7/28 (25%) | 404s, social media, markdown, no schema.org |
-| Median extraction time | 150ms | Fetch + parse combined |
+| Median extraction time | 343ms | Fetch + parse combined |
 | P95 extraction time | 1.7s | Slowest successful extractions |
 
-**Key finding — why 46% ≠ 90%**: The research doc's claim that "~90%+ of major recipe sites have JSON-LD" is accurate — sites DO embed JSON-LD for Google Rich Results. However, ~30% render it via client-side JavaScript (WordPress recipe plugins inject `<script type="application/ld+json">` after page load). `URLSession` only gets server-rendered HTML.
+**Key finding — why 43% ≠ 90%**: The research doc's claim that "~90%+ of major recipe sites have JSON-LD" is accurate — sites DO embed JSON-LD for Google Rich Results. However, ~30% render it via client-side JavaScript (WordPress recipe plugins inject `<script type="application/ld+json">` after page load). `URLSession` only gets server-rendered HTML.
 
 **Implication**: Phase 1 requires a `WKWebView` fallback path. Estimated extraction rate with WKWebView: 75-80%.
 
@@ -53,8 +53,8 @@ A structured spike validated assumptions before this PRD was written. All target
 | HowToSection nested instructions | 4% (1/28) | Flatten with section headers |
 | HTML entities in JSON-LD | 25% (7/28) | Full entity decoding before parse |
 | Unusual recipeYield formats | 14% (4/28) | Parse "6-8 servings", "Makes 12", etc. |
-| __NEXT_DATA__ SSR payloads | ~7% (2/28) | Recursive key search in Next.js JSON |
-| Inline script JSON-LD (not ld+json type) | ~4% (1/28) | Regex scan for Recipe JSON in script blocks |
+| __NEXT_DATA__ SSR payloads | 7% (2/28) | Recursive key search in Next.js JSON; tightened to require recipeIngredient |
+| Inline script JSON-LD (not ld+json type) | 7% (2/28) | Regex scan for Recipe JSON in script blocks |
 
 ### 2.3 Photo/OCR Spike
 
@@ -70,18 +70,18 @@ A structured spike validated assumptions before this PRD was written. All target
 
 **Key finding**: Line-by-line heuristics alone achieve ~80% classification accuracy. Adding section-aware context (tracking which section header preceded each line) raises accuracy to ~90%+. Foundation Models would handle the remaining ambiguous cases.
 
-### 2.4 Per-Field Extraction Rates (13 Successful Sites)
+### 2.4 Per-Field Extraction Rates (12 Successful Sites)
 
 | Field | Extraction Rate | Notes |
 |-------|----------------|-------|
-| Title | 100% (13/13) | Always present in Recipe JSON-LD |
-| Ingredients | 100% (13/13) | recipeIngredient is the core field |
-| Instructions | 100% (13/13) | Occasionally missing on partial extractions |
-| Prep time | 69% (9/13) | ISO 8601 parsing; some sites omit |
-| Cook time | 62% (8/13) | More commonly omitted than prepTime |
-| Servings | 85% (11/13) | Various formats handled by yield parser |
-| Image URL | 92% (12/13) | Nearly always present |
-| Author | 85% (11/13) | Present in most JSON-LD |
+| Title | 100% (12/12) | Always present in Recipe JSON-LD |
+| Ingredients | 100% (12/12) | recipeIngredient is the core field |
+| Instructions | 100% (12/12) | Always present when Recipe @type is found |
+| Prep time | 83% (10/12) | ISO 8601 parsing; missing on paywall sites (NYT, Cook's Illustrated) |
+| Cook time | 75% (9/12) | Missing on Serious Eats + paywall sites |
+| Servings | 100% (12/12) | Various formats handled by yield parser |
+| Image URL | 100% (12/12) | Always present |
+| Author | 83% (10/12) | Missing on Budget Bytes, RecipeTin Eats |
 
 ---
 
@@ -89,7 +89,7 @@ A structured spike validated assumptions before this PRD was written. All target
 
 ### 3.1 Core Design Principles
 
-1. **Draft-first workflow** — Never persist `Recipe` entities during extraction or preview. Populate `RecipeFormData` for user review. Single final transaction writes recipe + ingredients + links on confirm. (Addresses Codex Finding #1: preview flow conflicts with persistence)
+1. **Draft-first workflow** — Never persist `Recipe` entities during extraction or preview. Populate `RecipeFormData` (pure in-memory struct) for user review. On confirm, a single call to `RecipeService.createRecipe()` + `parseAndConnectIngredients()` writes recipe + ingredients + links in one transaction. On cancel, nothing is persisted — `RecipeFormData` is discarded. **Persistence contract invariant**: No `Recipe` entity exists in the view context before the user taps "Save". Integration test required: URL → preview → cancel → assert zero `Recipe` rows. (Addresses Codex Finding #1: preview flow conflicts with persistence)
 
 2. **Strategy pattern extractors** — `RecipeExtractor` protocol with `JSONLDExtractor`, `WKWebViewExtractor`, `HeuristicExtractor`, `AIExtractor` implementations. Mirrors `HybridIngredientParser`'s proven architecture. (Addresses Codex recommendation for extractor interface)
 

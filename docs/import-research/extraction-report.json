@@ -1,9 +1,9 @@
 {
-  "generatedAt" : "2026-02-24T08:00:22-0500",
+  "generatedAt" : "2026-02-24T08:42:29-0500",
   "results" : [
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 13,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 343,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -50,8 +50,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 6,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 297,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -102,7 +102,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 335,
+      "extractionTimeMs" : 549,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -122,7 +122,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 419,
+      "extractionTimeMs" : 325,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -141,8 +141,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 1,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 437,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -192,8 +192,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 1,
+      "extractionMethod" : "inline-script",
+      "extractionTimeMs" : 248,
       "hadHTMLEntities" : true,
       "hadHowToSections" : true,
       "hadHowToSteps" : true,
@@ -256,7 +256,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 69,
+      "extractionTimeMs" : 279,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -276,7 +276,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 109,
+      "extractionTimeMs" : 240,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -295,8 +295,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 75,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 181,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -344,7 +344,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 753,
+      "extractionTimeMs" : 812,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -364,7 +364,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 120,
+      "extractionTimeMs" : 376,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -383,8 +383,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 131,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 117,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -430,7 +430,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 98,
+      "extractionTimeMs" : 183,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -449,8 +449,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 80,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 131,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -502,8 +502,8 @@
       "usedGraphWrapper" : true
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 97,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 104,
       "hadHTMLEntities" : true,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -547,7 +547,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 423,
+      "extractionTimeMs" : 478,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -567,7 +567,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 104,
+      "extractionTimeMs" : 867,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -587,7 +587,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 426,
+      "extractionTimeMs" : 517,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -606,8 +606,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 1497,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 1663,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -654,8 +654,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 266,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 1132,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -702,7 +702,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 257,
+      "extractionTimeMs" : 293,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -722,7 +722,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 12444,
+      "extractionTimeMs" : 12683,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -742,7 +742,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 374,
+      "extractionTimeMs" : 421,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -761,8 +761,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 226,
+      "extractionMethod" : "ld+json",
+      "extractionTimeMs" : 192,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -813,21 +813,17 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 469,
+      "extractionTimeMs" : 1462,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
       "hadUnusualYield" : false,
       "httpStatusCode" : 404,
       "issues" : [
-        "JSON-LD found but no Recipe @type detected in ld+json tags"
+        "JSON-LD found but no Recipe type"
       ],
       "jsonLDFound" : true,
-      "recipe" : {
-        "imageURL" : "Image",
-        "sourceURL" : "https:\/\/www.bbcgoodfood.com\/recipes\/classic-victoria-sponge"
-      },
-      "recipeFound" : true,
+      "recipeFound" : false,
       "siteName" : "BBC Good Food",
       "siteNumber" : 25,
       "tier" : 4,
@@ -837,7 +833,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 150,
+      "extractionTimeMs" : 146,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -856,8 +852,8 @@
       "usedGraphWrapper" : false
     },
     {
-      "extractionMethod" : "none",
-      "extractionTimeMs" : 63,
+      "extractionMethod" : "inline-script",
+      "extractionTimeMs" : 72,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : true,
@@ -901,7 +897,7 @@
     },
     {
       "extractionMethod" : "none",
-      "extractionTimeMs" : 1662,
+      "extractionTimeMs" : 1064,
       "hadHTMLEntities" : false,
       "hadHowToSections" : false,
       "hadHowToSteps" : false,
@@ -920,5 +916,28 @@
       "usedGraphWrapper" : false
     }
   ],
+  "summary" : {
+    "blocked" : 0,
+    "edgeCases" : {
+      "arrayTypes" : 3,
+      "graphWrappers" : 5,
+      "howToSections" : 1,
+      "howToSteps" : 11,
+      "htmlEntities" : 7,
+      "unusualYields" : 4
+    },
+    "extractionMethodDistribution" : {
+      "inline-script" : 2,
+      "ld+json" : 10,
+      "none" : 16
+    },
+    "failure" : 16,
+    "fullExtraction" : 12,
+    "jsonLDFound" : 19,
+    "medianExtractionTimeMs" : 343,
+    "noExtraction" : 16,
+    "partialExtraction" : 0,
+    "recipeFound" : 12
+  },
   "totalSites" : 28
 }

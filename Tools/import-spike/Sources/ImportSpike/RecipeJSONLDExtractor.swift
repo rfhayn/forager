@@ -25,19 +25,19 @@ enum RecipeJSONLDExtractor {
         // Strategy 1: Standard <script type="application/ld+json"> blocks
         if let result = extractFromLDJsonTags(html: html, context: &ctx) {
             ctx.extractionMethod = "ld+json"
-            return result
+            return (result.recipe, ctx)
         }
 
         // Strategy 2: Inline JSON-LD in regular <script> blocks
         if let result = extractFromInlineScripts(html: html, context: &ctx) {
             ctx.extractionMethod = "inline-script"
-            return result
+            return (result.recipe, ctx)
         }
 
         // Strategy 3: __NEXT_DATA__ (Next.js SSR payload)
         if let result = extractFromNextData(html: html, context: &ctx) {
             ctx.extractionMethod = "__NEXT_DATA__"
-            return result
+            return (result.recipe, ctx)
         }
 
         if !ctx.jsonLDFound {
@@ -222,14 +222,19 @@ enum RecipeJSONLDExtractor {
         return findObjectWithRecipeKeys(in: json)
     }
 
-    /// Find any dict that has recipe-like keys (recipeIngredient, recipeInstructions, etc.)
+    /// Find any dict that has recipe-like keys.
+    /// Requires `recipeIngredient` (the single most distinctive Recipe key) plus at least
+    /// one other recipe key. This prevents false positives from non-recipe objects that
+    /// happen to have cookTime or prepTime (e.g., BBC Good Food __NEXT_DATA__).
     private static func findObjectWithRecipeKeys(in json: Any) -> [String: Any]? {
         if let dict = json as? [String: Any] {
-            // Check if this looks like a recipe (has key recipe fields)
-            let recipeKeys = ["recipeIngredient", "recipeInstructions", "cookTime", "prepTime"]
-            let matchCount = recipeKeys.filter { dict[$0] != nil }.count
-            if matchCount >= 2 {
-                return dict
+            // Check if this dict qualifies as a recipe
+            if dict["recipeIngredient"] != nil {
+                let secondaryKeys = ["recipeInstructions", "cookTime", "prepTime", "name", "recipeYield"]
+                let secondaryCount = secondaryKeys.filter { dict[$0] != nil }.count
+                if secondaryCount >= 1 {
+                    return dict
+                }
             }
 
             // Recurse into dict values
