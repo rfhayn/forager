@@ -2,10 +2,10 @@
 
 **Last Updated**: February 24, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8.4.1 ✅ **COMPLETE** | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M7.7 NEXT**
+**Current Milestone**: M8.4.1 ✅ **COMPLETE** | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M10 NEXT**
 **Current Phase**: M8.4.1 ✅ **COMPLETE** (282 tests, 0 failures)
-**Next Priority**: M7.7 App Store Submission
-**Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Next Priority**: M10 Recipe Import (70-95h, 4 phases, 27 sub-phases — implementation blueprint ready)
+**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -58,7 +58,21 @@
 - **Changes**: Reduced strip list from 30+ to 9 preparation-only qualifiers, added compound preferPlural check
 - **Testing**: 15 new tests + 3 updated, 282 total tests passing
 - **Documentation**: PRD at `docs/prds/complete/m8.4.1-normalization-qualifier-reclassification.md`
-- **Next**: M7.7 App Store Submission
+- **Next**: M10 Recipe Import
+
+### **February 24, 2026** - M10 Implementation Blueprint Finalized
+- **Update**: Full implementation plan reviewed and incorporated into PRD
+- **Key decisions**: Separate `ImportDraftRecipe` model (not extending RecipeFormData), `imageURL`-only v1 (no schema change), import history in UserDefaults (not Core Data), extractors return `nil` pattern
+- **Scope**: 27 sub-phases, ~16 new production files, ~11 views, ~119 new tests, ~4,500-5,000 new lines, zero Core Data schema changes
+- **PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
+- **Status**: Ready for Codex review before implementation begins
+
+### **February 24, 2026** - Documentation Update: M10 Recipe Import Prioritized
+- **Change**: M10 redefined from "Analytics & Insights" (8-12h) to "Recipe Import" (70-95h)
+- **Old Analytics scope**: Bumped to M11
+- **New execution order**: M10 (Recipe Import) → M7.7 → M6 → M9 → M11+
+- **Rationale**: Recipe import is the #1 competitive gap; completing before launch
+- **PRD**: `docs/prds/active/m10-recipe-import.md` (spike-validated, 28 sites tested)
 
 ### **February 22, 2026** - M8.4 ✅ COMPLETE — ML-Powered Parsing (All 10 Phases)
 - **Completed**: Full ML parsing pipeline — BiLSTM-CRF model, CoreML deployment, 3-tier hybrid routing, correction feedback loop
@@ -710,35 +724,43 @@ _[Previous entries remain the same through December 23...]_
 - **Impact**: ~2,000 lines removed, 50-80% performance improvement, RecipeListView 1,204→400 lines
 - **PRD**: [m9-technical-debt-codebase-optimization.md](prds/active/m9-technical-debt-codebase-optimization.md)
 
-**M10: Analytics & Insights** (8-12 hours)
+**M10: Recipe Import** (70-95 hours) 🚀 **NEXT**
+- Phase 1: URL Import — JSON-LD + WKWebView, Share extension (24-32h)
+- Phase 2: Text Paste — Foundation Models + heuristic fallback (14-19h)
+- Phase 3: Photo/Image — OCR + section classification (23-30h)
+- Phase 4: Polish — History, telemetry, regression testing (11-16h)
+- **PRD**: [m10-recipe-import.md](prds/active/m10-recipe-import.md)
+- **Spike**: [docs/import-research/](import-research/) — 28 sites tested
+
+**M11: Analytics & Insights** (8-12 hours)
 - Phase 1: Analytics Infrastructure (2-3h)
 - Phase 2: Insights Dashboard (3-4h)
 - Phase 3: Recommendations (2-3h)
 - Phase 4: Export & Sharing (1-2h)
 - **Leverages**: M3 structured quantities, M4 meal planning data
 
-**M11: Health & Nutrition Integration** (10-15 hours)
+**M12: Health & Nutrition Integration** (10-15 hours)
 - Apple Health integration
 - Nutritional database
 - Dietary goal tracking
 - Health-aware recommendations
 - Allergen and dietary restriction support
 
-**M12: Budget Intelligence** (10-15 hours)
+**M13: Budget Intelligence** (10-15 hours)
 - Price tracking and history
 - Budget planning tools
 - Cost optimization suggestions
 - Store price comparison
 - Deal and coupon integration
 
-**M13: AI-Powered Shopping Assistant** (10-15 hours)
+**M14: AI-Powered Shopping Assistant** (10-15 hours)
 - Natural language meal planning
 - Smart recipe discovery
 - Automated list generation
 - Contextual recommendations
 - Learning user preferences
 
-**M14: Advanced Collaboration** (10-15 hours)
+**M16: Advanced Collaboration** (10-15 hours)
 - Real-time shopping mode
 - Assignment and delegation
 - Shopping history and analytics

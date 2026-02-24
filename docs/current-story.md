@@ -1,12 +1,58 @@
 # Current Development Story
 
 **Last Updated**: February 24, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10 NEXT**
 **Total Progress**: ~241 hours | 89% planning accuracy
 **Current Branch**: `main`
-**Current Milestone**: M8.4.1 Normalization Qualifier Reclassification — ✅ **COMPLETE**
+**Current Milestone**: M10 Recipe Import — 🚀 **READY**
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M10 (Recipe Import) → M7.7 → M6 → M9 → M11+
+
+---
+
+## 🚀 **M10: RECIPE IMPORT - READY**
+
+**Status**: 🚀 **READY** — Implementation blueprint complete, spike validated, wireframes designed
+**Estimated**: 70-95 hours (4 phases)
+**PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
+**Spike Research**: `docs/import-research/` (7 supporting documents)
+**Wireframes**: `docs/import-research/import-wireframes.html`
+**Branch**: Create `feature/M10.1-url-import`
+
+### Phase Overview
+
+| Phase | Scope | Hours | Sub-phases | New Tests |
+|-------|-------|-------|------------|-----------|
+| M10.1: URL Import | JSON-LD + WKWebView extraction, Share extension, preview UI, duplicate detection | 24-32h | M10.1.1-M10.1.8 | ~68 |
+| M10.2: Text Paste Import | Foundation Models `@Generable` + heuristic fallback, shared line classifier, section detection | 14-19h | M10.2.1-M10.2.6 | ~35 |
+| M10.3: Photo/Image Import | OCR + section classification, AI-assisted extraction, Mela-style UI | 21-28h | M10.3.1-M10.3.7 | ~8 |
+| M10.4: Polish & Integration | History, household sharing, telemetry dashboard, regression testing | 11-16h | M10.4.1-M10.4.6 | ~8 |
+
+### Key Architecture Decisions
+- **ImportDraftRecipe (separate model)** — NOT extending RecipeFormData; import needs fields it lacks (author, imageURL, cuisine) + field-level confidence tracking via `ImportField<T>` generic wrapper. Same save validation gate as manual creation (title + ≥1 ingredient + instructions required).
+- **Draft-first workflow** — `ImportDraftRecipe` in-memory staging, persist only on confirm via atomic `RecipeService.importRecipe()` using `factory.make(Recipe.self, in: scope) { ... }` for household scope safety (single `context.save()`)
+- **Strategy pattern extractors** — `RecipeExtractor` protocol with 5 implementations (mirrors `HybridIngredientParser`); return `nil` pattern like `MLIngredientParser.init?()`
+- **Image handling v1** — `imageURL` (web URL) only via AsyncImage; no Core Data schema change; local persistence deferred
+- **Flat ingredient groups v1** — Multi-component recipes flattened; structured `RecipeSection` is future milestone
+- **Telemetry ownership** — PTS owns raw import events (Documents directory JSON), ImportTelemetryService (M10.4) is read-only KPI aggregation, ImportHistoryService is user-facing log (UserDefaults)
+- **Zero Core Data schema changes** — No model version bump, no migration needed
+
+### Key Targets
+- ≥ 80% extraction rate on Tier 1 sites, ≥ 70% on Tier 2 blogs
+- < 3s URLSession path, < 8s WKWebView fallback
+- 100% graceful failure rate (every failure → user-facing message)
+- ~119 new tests across 10 test files, ~4,500-5,000 new lines
+- Spike-validated: 28 sites tested, 12/28 server-rendered, ~8 more via WKWebView
+
+### M10.1 Implementation Order (First Phase)
+1. M10.1.1: Import models + extraction infrastructure (4-5h)
+2. M10.1.2: JSON-LD extractor + schema mapper — port spike (5-6h)
+3. M10.1.3: Import orchestrator + service (4-5h)
+4. M10.1.4: Import preview UI (5-6h)
+5. M10.1.5: WKWebView fallback (3-4h) — parallel with M10.1.3+
+6. M10.1.6: Duplicate detection (2-3h)
+7. M10.1.7: Share extension + App Group (3-4h)
+8. M10.1.8: Error handling + edge cases (2-3h)
 
 ---
 
@@ -1659,12 +1705,13 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M9.0: Warning Resolution | ✅ COMPLETE | <1h |
 | M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
 | M9.5-partial: Parser Dependency Injection | ✅ COMPLETE | ~3h |
-| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **23-32h** |
-| M7.7: App Store Submission | 📋 QUEUED | 3-5h |
+| M8.4: ML-Powered Parsing | ✅ COMPLETE | ~25h actual |
+| **M10: Recipe Import** | **🚀 NEXT** | **70-95h** |
+| M7.7: App Store Submission | QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
-| M10: Analytics & Insights | PLANNED | 8-12h |
-| M11-M14: Advanced Features | FUTURE | 40-60h |
+| M11: Analytics & Insights | PLANNED | 8-12h |
+| M12-M16: Advanced Features | FUTURE | 40-60h |
 
 ---
 
