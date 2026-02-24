@@ -140,6 +140,18 @@ class RecipeImportService: ObservableObject {
         }
     }
 
+    // MARK: - Duplicate Detection
+
+    /// Check if a draft recipe already exists in the database.
+    /// Called by the preview UI before save — returns nil if no duplicate found.
+    func checkDuplicate(for draft: ImportDraftRecipe) -> DuplicateResult? {
+        DuplicateDetectionService.checkForDuplicate(
+            title: draft.title.value,
+            sourceURL: draft.sourceURL,
+            context: viewContext
+        )
+    }
+
     // MARK: - Cancel
 
     /// Reset to idle state. No cleanup needed — draft is in-memory only.
