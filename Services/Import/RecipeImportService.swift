@@ -30,8 +30,8 @@ class RecipeImportService: ObservableObject {
 
     // Extractors (strategy pattern — tried in priority order)
     private let extractors: [RecipeExtractor] = [
-        RecipeJSONLDExtractor()
-        // WKWebViewExtractor added in M10.1.5
+        RecipeJSONLDExtractor(),
+        WKWebViewExtractor()
     ]
 
     // MARK: - Initialization
