@@ -7,11 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */; };
-		D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */; };
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
-		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
-		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
+		2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */; };
 		808BA3E192D2397BFC6DC4B5 /* ForagerTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3101722433E156A2E2EF6318 /* ForagerTheme.swift */; };
 		85ADBDB92EA90D4200E3B1B5 /* IngredientTemplate+Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDB82EA90D3D00E3B1B5 /* IngredientTemplate+Validation.swift */; };
 		85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */; };
@@ -113,6 +110,9 @@
 		9BF1F8CA2E566BCC00E79B3F /* Category+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */; };
 		9BF1F8CC2E566BFF00E79B3F /* Category+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */; };
 		9BFA76022F5A000000A76001 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9BFA76012F5A000000A76001 /* LaunchScreen.storyboard */; };
+		9BMLM00100010002AABB0001 /* IngredientTaggerEmissions.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0001 /* IngredientTaggerEmissions.mlpackage */; };
+		9BMLM00100010002AABB0002 /* transitions.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0002 /* transitions.json */; };
+		9BMLM00100010002AABB0003 /* vocabulary.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0003 /* vocabulary.json */; };
 		A1B2C3D4E5F60002AABB0001 /* ForagerCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */; };
 		A1B2C3D4E5F60002AABB0002 /* ForagerProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */; };
 		A1B2C3D4E5F60002AABB0003 /* ForagerSectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */; };
@@ -122,10 +122,10 @@
 		A1B2C3D4E5F60002AABB0007 /* ForagerButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0007 /* ForagerButtonStyles.swift */; };
 		A1B2C3D4E5F60002AABB0008 /* HouseholdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60001AABB0008 /* HouseholdView.swift */; };
 		C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */; };
+		D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */; };
 		E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */; };
-		9BMLM00100010002AABB0001 /* IngredientTaggerEmissions.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0001 /* IngredientTaggerEmissions.mlpackage */; };
-		9BMLM00100010002AABB0002 /* transitions.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0002 /* transitions.json */; };
-		9BMLM00100010002AABB0003 /* vocabulary.json in Resources */ = {isa = PBXBuildFile; fileRef = 9BMLM00100010001AABB0003 /* vocabulary.json */; };
+		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
+		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -258,6 +258,9 @@
 		9BF1F8C92E566BC100E79B3F /* Category+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Category+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9BF1F8CB2E566BF200E79B3F /* Category+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Category+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		9BFA76012F5A000000A76001 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		9BMLM00100010001AABB0001 /* IngredientTaggerEmissions.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = IngredientTaggerEmissions.mlpackage; sourceTree = "<group>"; };
+		9BMLM00100010001AABB0002 /* transitions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = transitions.json; sourceTree = "<group>"; };
+		9BMLM00100010001AABB0003 /* vocabulary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vocabulary.json; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0001 /* ForagerCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerCard.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0002 /* ForagerProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerProgressRing.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60001AABB0003 /* ForagerSectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForagerSectionHeader.swift; sourceTree = "<group>"; };
@@ -272,9 +275,6 @@
 		F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockIngredientParser.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
-		9BMLM00100010001AABB0001 /* IngredientTaggerEmissions.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = IngredientTaggerEmissions.mlpackage; sourceTree = "<group>"; };
-		9BMLM00100010001AABB0002 /* transitions.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = transitions.json; sourceTree = "<group>"; };
-		9BMLM00100010001AABB0003 /* vocabulary.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = vocabulary.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -819,7 +819,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 33;
+				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -858,7 +858,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 33;
+				CURRENT_PROJECT_VERSION = 35;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
