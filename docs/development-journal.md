@@ -6,6 +6,36 @@
 
 ---
 
+## Session 40 — February 24, 2026
+**Milestone**: M10.1.1 — Import models + extraction infrastructure
+**Branch**: `feature/M10.1-url-import`
+
+### What Happened
+
+Starting M10 implementation — the biggest feature since M7 CloudKit. M10.1.1 lays the data model foundation for the entire import system: `ImportDraftRecipe`, `ImportField<T>`, `ImportConfidence`, `ImportFieldSource`, `ImportJobState`, `ImportError`, `RecipeExtractor` protocol, and utility parsers (ISO8601Duration, RecipeYield, HTMLEntity).
+
+**Architecture decisions verified against codebase before coding:**
+- Confirmed `RecipeFormData` at `RecipeFormModels.swift:98` has no import-specific fields — separate `ImportDraftRecipe` is the right call
+- Confirmed `RecipeService.createRecipe()` at line 44 calls `save()` immediately — validates the need for a separate atomic `importRecipe()` method (M10.1.3)
+- Confirmed `ParsingSource.import_` already exists in `ParsingTelemetryService.swift:31` — telemetry attribution ready
+- Services/ uses `PBXFileSystemSynchronizedRootGroup` — just create files on disk, no pbxproj edits needed
+
+**Key design choices:**
+1. `ImportField<T: Equatable>` generic wrapper — avoids repeating confidence/source/wasEdited for each field
+2. `ImportConfidence: Int, Comparable` with raw values — enables sorting for UI dot colors and min() aggregation
+3. `DuplicateResult` uses `NSManagedObjectID` not `Recipe` — reference semantics for Core Data objects
+4. `ImportError.userMessage` computed property — every error case maps to a user-facing string (zero silent failures)
+5. ISO8601DurationParser and RecipeYieldParser ported directly from spike with no changes needed
+
+All 4 files compile clean. BUILD SUCCEEDED on first try.
+
+### Insights Logged
+- Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
+- ImportDraftRecipe separation rationale vs RecipeFormData
+- ImportField<T: Equatable> generic wrapper design
+
+---
+
 ## Session 39 — February 24, 2026
 **Milestone**: M10 Spike — Codex Round 2 Review Fixes
 **Branch**: `spike/M10-import-prd-preparation`
