@@ -37,6 +37,8 @@ struct HouseholdView: View {
     @State private var sharedRecipeCount = 0
     @State private var sharedListCount = 0
     @State private var sharedPlanCount = 0
+    @State private var sharedCategoryCount = 0
+    @State private var sharedTemplateCount = 0
 
     var body: some View {
         Form {
@@ -258,12 +260,22 @@ struct HouseholdView: View {
 
     private var sharingStatsSection: some View {
         Section {
-            HStack {
-                statItem("Recipes", count: sharedRecipeCount, icon: "book")
-                Spacer()
-                statItem("Lists", count: sharedListCount, icon: "cart")
-                Spacer()
-                statItem("Plans", count: sharedPlanCount, icon: "calendar")
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                HStack {
+                    statItem("Recipes", count: sharedRecipeCount, icon: "book")
+                    Spacer()
+                    statItem("Lists", count: sharedListCount, icon: "cart")
+                    Spacer()
+                    statItem("Plans", count: sharedPlanCount, icon: "calendar")
+                }
+                HStack {
+                    statItem("Categories", count: sharedCategoryCount, icon: "folder")
+                    Spacer()
+                    statItem("Templates", count: sharedTemplateCount, icon: "text.badge.checkmark")
+                    Spacer()
+                    // Empty spacer to balance the 3-column grid
+                    Color.clear.frame(maxWidth: .infinity)
+                }
             }
             .padding(.vertical, ForagerTheme.Spacing.sm)
         } header: {
@@ -373,10 +385,18 @@ struct HouseholdView: View {
         let planRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         planRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
 
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+
         do {
             sharedRecipeCount = try viewContext.count(for: recipeRequest)
             sharedListCount = try viewContext.count(for: listRequest)
             sharedPlanCount = try viewContext.count(for: planRequest)
+            sharedCategoryCount = try viewContext.count(for: categoryRequest)
+            sharedTemplateCount = try viewContext.count(for: templateRequest)
         } catch {
             #if DEBUG
             print("HouseholdView: Failed to load sharing stats: \(error)")

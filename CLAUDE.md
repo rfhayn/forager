@@ -23,7 +23,7 @@ open forager.xcodeproj
 - **Current**: iOS 26+ (Liquid Glass, raised in M15.1)
 - Xcode 26.0+, macOS 26.0+
 - No external dependencies (pure Swift/iOS frameworks)
-- 259 unit tests across 19 test files (M8.4 parsing/ML/telemetry, merge, validation, normalization, integration). Formal test infrastructure planned for M6.
+- 267 unit tests across 19 test files (M8.4 parsing/ML/telemetry, merge, validation, normalization, integration). Formal test infrastructure planned for M6.
 - Debug builds: CloudKit DISABLED (faster local development)
 - Release builds: CloudKit ENABLED
 - CloudKit container: `iCloud.com.richhayn.forager`
@@ -152,7 +152,7 @@ Input → RegexParser (≥0.9 confidence → return)
 - `MLIngredientParser.init?()` returns nil if model unavailable (graceful degradation)
 - Telemetry logs `parserUsed` as winner-only attribution (`"regex"`, `"ml"`, or `"nlp"`)
 - Correction feedback: `ParsingTelemetryService.exportCorrectionsAsTrainingData()` → JSONL
-- 259 tests across 7 test files cover the full parsing pipeline
+- 267 tests across 7 test files cover the full parsing pipeline
 
 ### Core Data Model (10 Entities)
 

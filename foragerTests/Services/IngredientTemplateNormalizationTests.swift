@@ -150,4 +150,26 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
         let result = service.normalize(name: "Fresh Basil")
         XCTAssertEqual(result, "basil", "'Fresh Basil' should strip 'fresh'")
     }
+
+    // MARK: - Baby Variant Preservation (distinct products, not size descriptors)
+
+    func testBabyCarrotsPreserved() {
+        let result = service.normalize(name: "Baby Carrots")
+        XCTAssertEqual(result, "baby carrots", "'Baby Carrots' is a distinct product — should NOT strip 'baby'")
+    }
+
+    func testBabySpinachPreserved() {
+        let result = service.normalize(name: "Baby Spinach")
+        XCTAssertEqual(result, "baby spinach", "'Baby Spinach' is a distinct product — should NOT strip 'baby'")
+    }
+
+    func testBabyCornPreserved() {
+        let result = service.normalize(name: "Baby Corn")
+        XCTAssertEqual(result, "baby corn", "'Baby Corn' is a distinct product — should NOT strip 'baby'")
+    }
+
+    func testBabyBellasPreserved() {
+        let result = service.normalize(name: "Baby Bellas")
+        XCTAssertEqual(result, "baby bellas", "'Baby Bellas' is a distinct product — should NOT strip 'baby'")
+    }
 }

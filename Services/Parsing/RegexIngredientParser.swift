@@ -69,20 +69,28 @@ class RegexIngredientParser: IngredientParser {
             )
         }
 
+        // Pre-process: Insert space between leading digits and letters
+        // Handles concatenated qty+unit like "16oz" → "16 oz", "2tbsp" → "2 tbsp"
+        let normalized = trimmed.replacingOccurrences(
+            of: #"^(\d+(?:\.\d+)?)\s*([a-zA-Z])"#,
+            with: "$1 $2",
+            options: .regularExpression
+        )
+
         // Try patterns in priority order (highest specificity first)
         // Each returns non-nil if it matched
 
-        if let result = tryUnicodeFractionPattern(trimmed, original: input) { return result }
-        if let result = tryRangePattern(trimmed, original: input) { return result }
-        if let result = tryParentheticalPattern(trimmed, original: input) { return result }
-        if let result = tryCompoundPhrasePattern(trimmed, original: input) { return result }
-        if let result = tryStandardPattern(trimmed, original: input) { return result }
-        if let result = tryQualifierPattern(trimmed, original: input) { return result }
-        if let result = tryDescriptiveAmountPattern(trimmed, original: input) { return result }
+        if let result = tryUnicodeFractionPattern(normalized, original: input) { return result }
+        if let result = tryRangePattern(normalized, original: input) { return result }
+        if let result = tryParentheticalPattern(normalized, original: input) { return result }
+        if let result = tryCompoundPhrasePattern(normalized, original: input) { return result }
+        if let result = tryStandardPattern(normalized, original: input) { return result }
+        if let result = tryQualifierPattern(normalized, original: input) { return result }
+        if let result = tryDescriptiveAmountPattern(normalized, original: input) { return result }
 
         // Fallback: just ingredient name
         return ParserResult(
-            name: trimmed,
+            name: normalized,
             quantity: nil, unit: nil, notes: nil,
             confidence: 0.0, originalText: input, parserUsed: parserName
         )

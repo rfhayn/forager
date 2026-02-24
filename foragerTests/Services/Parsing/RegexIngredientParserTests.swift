@@ -282,6 +282,38 @@ final class RegexIngredientParserTests: XCTestCase {
         XCTAssertEqual(result.unit, "lb")
     }
 
+    // MARK: - Concatenated Qty+Unit (no space)
+
+    func testConcatenatedOzUnit() {
+        // "16oz baby carrots" → qty 16, unit oz, name "baby carrots"
+        let result = parser.parse("16oz baby carrots")
+        XCTAssertEqual(result.quantity, 16.0, "Should extract 16 from '16oz'")
+        XCTAssertEqual(result.unit, "oz", "Should extract 'oz' from '16oz'")
+        XCTAssertEqual(result.name, "baby carrots", "Should preserve 'baby carrots' as name")
+        XCTAssertGreaterThan(result.confidence, 0.5, "Should have reasonable confidence")
+    }
+
+    func testConcatenatedTbspUnit() {
+        let result = parser.parse("2tbsp olive oil")
+        XCTAssertEqual(result.quantity, 2.0)
+        XCTAssertEqual(result.unit, "tbsp")
+        XCTAssertEqual(result.name, "olive oil")
+    }
+
+    func testConcatenatedCupUnit() {
+        let result = parser.parse("1cup sugar")
+        XCTAssertEqual(result.quantity, 1.0)
+        XCTAssertEqual(result.unit, "cup")
+        XCTAssertEqual(result.name, "sugar")
+    }
+
+    func testConcatenatedDecimalQty() {
+        let result = parser.parse("1.5cups flour")
+        XCTAssertEqual(result.quantity, 1.5)
+        XCTAssertEqual(result.unit, "cup")
+        XCTAssertEqual(result.name, "flour")
+    }
+
     // MARK: - Performance Tests
 
     func testParsingPerformance100Items() {

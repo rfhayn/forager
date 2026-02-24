@@ -56,7 +56,7 @@ class IngredientTemplateService: ObservableObject {
             "organic ", "free-range ", "grass-fed ", "wild-caught ",
             "all-purpose ", "self-rising ", "unsalted ", "salted ",
             "extra-virgin ", "light ", "dark ", "heavy ", "lite ",
-            "large ", "medium ", "small ", "baby ", "jumbo "
+            "large ", "medium ", "small ", "jumbo "
         ]
         
         var checkName = lowercased
@@ -95,6 +95,11 @@ class IngredientTemplateService: ObservableObject {
             "egg": "eggs", "eggs": "eggs",
             "shrimp": "shrimp", // uncountable
             "scallop": "scallops", "scallops": "scallops",
+            "baby carrot": "baby carrots", "baby carrots": "baby carrots",
+            "baby potato": "baby potatoes", "baby potatoes": "baby potatoes",
+            "baby spinach": "baby spinach", // uncountable
+            "baby corn": "baby corn", // uncountable
+            "baby bella": "baby bellas", "baby bellas": "baby bellas",
         ]
         if let preferred = preferPlural[checkName] {
             return preferred
@@ -264,7 +269,7 @@ class IngredientTemplateService: ObservableObject {
             "extra-virgin", "light", "dark", "heavy", "lite",
             
             // Size descriptors
-            "large", "medium", "small", "baby", "jumbo"
+            "large", "medium", "small", "jumbo"
         ]
         
         var result = lowercased

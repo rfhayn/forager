@@ -6,6 +6,37 @@
 
 ---
 
+## Session 35 — February 23, 2026
+**Milestone**: Post-M8.4 bugfixes (parsing + CloudKit schema)
+**Branch**: `main` (direct fixes)
+
+### What Happened
+
+User testing surfaced three issues: (1) "16oz baby carrots" failed to parse because the regex parser requires a space between quantity and unit, (2) editing "baby carrots" to fix it resulted in the template name being normalized to just "carrots" because "baby" was treated as a strippable qualifier, and (3) creating a household on a Release/TestFlight build failed with a CloudKit error because the `quickOption` field on `PlannedMeal` (added in Core Data v6) was never deployed to the CloudKit Production schema.
+
+### Parsing Fixes
+
+**Concatenated qty+unit**: Added a pre-processing step in `RegexIngredientParser.parse()` that inserts a space between trailing digits and leading letters at the start of input. `"16oz baby carrots"` → `"16 oz baby carrots"` before patterns run. This is cleaner than adding dedicated patterns for every concatenated format.
+
+**"Baby" qualifier removal**: Removed "baby" from qualifier lists in both `normalizePlural()` and `removeVariations()`. In grocery context, "baby X" always denotes a distinct product (baby carrots, baby spinach, baby corn), unlike true size descriptors ("large eggs" → "eggs"). Added compound "baby X" entries to the `preferPlural` map for proper plural handling.
+
+### CloudKit Schema Deployment
+
+The `quickOption` field was added to `PlannedMeal` in v6 (M15.5) but the CloudKit Development schema was never updated because no `PlannedMeal` record was synced after the change. Used `initializeCloudKitSchema(options: [])` temporarily to force-push the complete v6 schema to Development, then deployed Development → Production via CloudKit Dashboard. This is a common gotcha documented in our own learning note 34 — schema fields only register when records with those fields actually sync.
+
+### Household Shared Data UI
+
+Fixed the Shared Data section on the household screen to show all 5 data types (recipes, lists, plans, categories, templates) — matching the Migration screen which already showed all 5.
+
+### Key Takeaways
+
+- **Pre-processing beats pattern proliferation**: One normalization step handles all concatenated qty+unit formats.
+- **Food vocabulary ≠ generic vocabulary**: "baby" is a product qualifier in grocery context, not a size descriptor. The normalization pipeline needs domain awareness.
+- **CloudKit schema requires active pushing**: Adding a field to Core Data doesn't automatically update CloudKit's schema. Must sync records or use `initializeCloudKitSchema()`.
+- **267 tests** (259 existing + 8 new), 0 failures.
+
+---
+
 ## Session 34 — February 22, 2026
 **Milestone**: M8.4 ML-Powered Parsing (Phase 8-9: Continuous Learning + Integration Testing) — **M8.4 COMPLETE**
 **Branch**: `feature/M8.4-ml-parsing`
