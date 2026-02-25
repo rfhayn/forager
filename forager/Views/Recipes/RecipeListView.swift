@@ -15,6 +15,7 @@ struct RecipeListView: View {
     @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var showingImport = false
+    @State private var showingTextImport = false
     @State private var showingBrowser = false
     @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
@@ -226,6 +227,9 @@ struct RecipeListView: View {
                         Button { showingImport = true } label: {
                             Label("Paste URL", systemImage: "link")
                         }
+                        Button { showingTextImport = true } label: {
+                            Label("Paste Recipe Text", systemImage: "doc.text")
+                        }
                     } label: {
                         Image(systemName: "square.and.arrow.down")
                     }
@@ -239,7 +243,10 @@ struct RecipeListView: View {
             CreateRecipeView(context: viewContext)
         }
         .sheet(isPresented: $showingImport) {
-            RecipeImportSheet(importService: importService)
+            RecipeImportSheet(importService: importService, mode: .url)
+        }
+        .sheet(isPresented: $showingTextImport) {
+            RecipeImportSheet(importService: importService, mode: .text)
         }
         .fullScreenCover(isPresented: $showingBrowser) {
             RecipeBrowserView()
