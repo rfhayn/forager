@@ -1,18 +1,18 @@
 # Current Development Story
 
 **Last Updated**: February 24, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10 NEXT**
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 ACTIVE**
 **Total Progress**: ~241 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M10 Recipe Import — 🚀 **READY**
+**Current Branch**: `feature/M10.1-url-import`
+**Current Milestone**: M10.1 URL Import — 🔧 **ACTIVE** (6/8 sub-phases complete)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M10 (Recipe Import) → M7.7 → M6 → M9 → M11+
 
 ---
 
-## 🚀 **M10: RECIPE IMPORT - READY**
+## 🔧 **M10: RECIPE IMPORT - ACTIVE**
 
-**Status**: 🚀 **READY** — Implementation blueprint complete, spike validated, wireframes designed
+**Status**: 🔧 **ACTIVE** — M10.1 URL Import in progress (6/8 sub-phases complete)
 **Estimated**: 70-95 hours (4 phases)
 **PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
 **Spike Research**: `docs/import-research/` (7 supporting documents)
@@ -44,15 +44,36 @@
 - ~119 new tests across 10 test files, ~4,500-5,000 new lines
 - Spike-validated: 28 sites tested, 12/28 server-rendered, ~8 more via WKWebView
 
-### M10.1 Implementation Order (First Phase)
-1. M10.1.1: Import models + extraction infrastructure (4-5h)
-2. M10.1.2: JSON-LD extractor + schema mapper — port spike (5-6h)
-3. M10.1.3: Import orchestrator + service (4-5h)
-4. M10.1.4: Import preview UI (5-6h)
-5. M10.1.5: WKWebView fallback (3-4h) — parallel with M10.1.3+
-6. M10.1.6: Duplicate detection (2-3h)
-7. M10.1.7: Share extension + App Group (3-4h)
+### M10.1 Implementation Progress
+1. ✅ M10.1.1: Import models + extraction infrastructure — COMPLETE
+2. ✅ M10.1.2: JSON-LD extractor + schema mapper — COMPLETE
+3. ✅ M10.1.3: Import orchestrator + service — COMPLETE
+4. ✅ M10.1.4: Import preview UI — COMPLETE
+5. ✅ M10.1.5: WKWebView fallback — COMPLETE
+6. ✅ M10.1.6: Duplicate detection — COMPLETE
+7. M10.1.7: Share extension + App Group (3-4h) — NEXT
 8. M10.1.8: Error handling + edge cases (2-3h)
+
+### Files Created This Session
+**Services/Import/** (auto-detected):
+- `ImportDraftRecipe.swift` — Core models, state machine, error taxonomy
+- `RecipeExtractor.swift` — Protocol + input enum + context struct
+- `ISO8601DurationParser.swift` — Duration + yield parsers
+- `HTMLEntityDecoder.swift` — HTML entity decoding
+- `RecipeJSONLDExtractor.swift` — 3-tier JSON-LD extraction
+- `SchemaRecipeMapper.swift` — Schema.org dict → ImportDraftRecipe
+- `RecipeImportService.swift` — Import orchestrator (URL fetch, extraction, atomic save)
+- `DuplicateDetectionService.swift` — Exact URL + fuzzy title matching
+- `WKWebViewExtractor.swift` — JS-rendered fallback extractor
+
+**forager/** (manual pbxproj):
+- `RecipeImportSheet.swift` — Entry point sheet
+- `RecipeImportPreviewView.swift` — Preview with confidence dots
+- `DuplicateResolutionSheet.swift` — Duplicate resolution modal
+
+**Modified**:
+- `RecipeListView.swift` — Import button + sheet
+- `forager.xcodeproj/project.pbxproj` — 3 view file entries
 
 ---
 
