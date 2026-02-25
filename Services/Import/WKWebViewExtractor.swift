@@ -62,12 +62,15 @@ class WKWebViewExtractor: NSObject, RecipeExtractor, WKNavigationDelegate {
 
         let elapsedMs = Int((CFAbsoluteTimeGetCurrent() - startTime) * 1000)
 
-        let draft = SchemaRecipeMapper.map(
+        var draft = SchemaRecipeMapper.map(
             recipeDict,
             sourceURL: url.absoluteString,
             extractionMethod: updatedContext.extractorChain.last ?? extractorName,
             extractionTimeMs: elapsedMs
         )
+
+        // Enhance title from HTML metadata when JSON-LD name is incomplete
+        RecipeJSONLDExtractor.enhanceTitleFromHTML(&draft, html: renderedHTML)
 
         return draft
     }
