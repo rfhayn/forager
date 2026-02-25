@@ -458,21 +458,55 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 
 #### New Files — Views (forager/)
 
+> **Design alignment**: All import views follow M15 design system patterns (ForagerTheme tokens, SF Pro Rounded chrome, section headers, card patterns) and match wireframes in `docs/import-research/import-wireframes.html`. See wireframe screens 1-5.
+
 **`RecipeImportSheet.swift`** (~250 lines)
 - Entry point sheet from RecipeListView toolbar
+- Nav bar: Cancel (leading), "Import Recipe" title (center, inline)
 - URL input field, state-driven content (loading, preview, error)
 - Tab/segment for "URL" mode (expanded in M10.2/M10.3 for "Text"/"Photo")
+- Error states (wireframe screen 5): Three distinct presentations:
+  - Paywall: lock icon in `surface.warning` circle, "Recipe Behind a Paywall", partial data hint if available, "Open in Safari" button
+  - No Recipe Found: search icon in `info.bg` circle, "No Recipe Found", link to "Try pasting the recipe text instead" (M10.2+)
+  - Network Error: wifi-off icon in `surface.danger` circle, "Unable to Reach This Site", "Try Again" button
 
 **`RecipeImportPreviewView.swift`** (~400 lines)
-- Shows extracted fields with confidence dots (green ≥high, amber medium, red low)
-- Inline editing for all fields
-- Warning banner for partial extractions
-- Save/Cancel buttons
-- Image preview via AsyncImage from imageURL
-- Source link ("From allrecipes.com")
+
+Layout follows wireframe screen 1 (happy path) and screen 3 (partial extraction), using M15 design patterns:
+
+**Nav bar**: Cancel (leading), "Import Recipe" (center), "Save Recipe" button (trailing, `ForagerPrimaryButtonStyle` compact). Disabled when `successLevel == .failure`.
+
+**Content area (top to bottom)**:
+1. **Source attribution**: "From [host]" link in `text.link` color, `font-sm` (matches wireframe `source-link` class)
+2. **Recipe title**: Large bold (`font-xl`, rounded), inline editable `TextField`. Confidence dot beside title.
+3. **Compact metadata row**: Single row with dot separators — "N servings · N min prep · N min cook" (matches wireframe `meta-row` class). Follows M15's compact timing row pattern from RecipeDetailView. Each value shows confidence dot. Missing values show "—".
+4. **Section divider**: Hairline (`border.subtle`)
+5. **Ingredients section**: Section header "Ingredients" (12pt bold uppercase, rounded) with edit pencil icon (`pencil` SF Symbol) on trailing edge. Pencil taps into edit mode for the section.
+   - **Per-ingredient rows** (wireframe `ingredient-row` class): Bordered card rows (`surface.primary` background, `border.subtle` border, `radius.sm`). Each row: `[confidence dot 8px] [qty in text.secondary, .monospacedDigit()] [name in text.primary]`. Follows M15's inline ingredient pattern (§6.2).
+   - **Low-confidence ingredients**: Row uses `surface.warning` background, `warning.fg` border. Name shows "(verify)" or "(type?)" annotation in `warning.fg`.
+   - **Missing ingredients**: Dashed border row, `surface.warning` background, placeholder text in `text.disabled` italic.
+6. **Section divider**
+7. **Instructions section**: Section header "Instructions" with edit pencil icon (trailing).
+   - **Instruction steps**: Numbered step circles (24px, `accent.tint` background, `accent.primary` text, 12pt bold) + step text in `font-base`. Matches M15's instruction step pattern.
+   - **"Show all N steps" collapse**: First 3 steps visible by default. "Show all N steps" link in `text.link` color below. Tap expands to show all. Follows wireframe `show-more` class.
+8. **Image preview** (if available): AsyncImage from `imageURL`, max height 200pt, rounded corners.
+9. **Metadata section** (if author/cuisine/category available): Compact rows with SF Symbol icons.
+
+**Partial extraction state** (wireframe screen 3):
+- **Warning banner**: `surface.warning` background with `warning.fg` border, triangle icon + "Some fields couldn't be extracted. Please review highlighted items."
+- **Meta field cards**: Side-by-side cards for Prep time, Cook time, Servings. Empty fields: dashed border, `surface.warning` background, placeholder text ("Add prep time"). Uncertain values shown with `?` suffix in `warning.fg` (e.g., "4?"). Each card has confidence dot on trailing edge.
 
 **`DuplicateResolutionSheet.swift`** (~120 lines)
-- Modal dialog: "Import as New" / "Replace Existing" / "Cancel"
+
+Follows wireframe screen 4 — centered modal card over blurred preview content:
+- **Duplicate icon**: 48px circle, `surface.warning` background, document-copy SF Symbol in `warning.fg`
+- **Title**: "Similar Recipe Found" (20pt bold, rounded)
+- **Message**: "You already have '[title]' from [source]" (15pt, `text.secondary`)
+- **Three action buttons** (stacked vertically):
+  1. "Import as New Recipe" — outlined button (`btn-outlined` style, `accent.primary` border)
+  2. "Replace Existing" — outlined button (same style). In-place update of existing Recipe entity preserving PlannedMeal references and CloudKit identity (see §4.7 "Replace Existing" semantics).
+  3. "Cancel" — text button (`text.secondary`)
+- Uses `.presentationDetents([.medium])` as half-sheet with drag indicator
 
 #### New Files — Share Extension (new Xcode target)
 
@@ -821,6 +855,23 @@ Seven screens designed in `docs/import-research/import-wireframes.html` (open in
 | 7 | Camera Capture | M10.3 | Document scanner with auto edge detection, corner markers, shutter button |
 
 All wireframes use ForagerTheme design tokens, 393x852px phone frames with Dynamic Island, and support light/dark toggle.
+
+### M15 Design System Alignment
+
+Import views follow M15 design patterns established across the app:
+
+| M15 Pattern | Import Application |
+|-------------|-------------------|
+| Nav bar: back + centered title + trailing action | Cancel + "Import Recipe" + "Save Recipe" button |
+| Inline ingredient layout: `• qty unit name` | Per-ingredient rows: `[dot] [qty] [name]` in bordered cards |
+| Section headers: 12pt bold uppercase, rounded | "Ingredients", "Instructions" section headers |
+| Compact timing row with dot separators | "N servings · N min prep · N min cook" |
+| ForagerTheme semantic color tokens | All status colors (success/warning/danger), text hierarchy |
+| Instruction steps: numbered prefix + step text | 24px accent circle + step text, with collapse |
+| Edit affordances: pencil icon on section headers | Edit pencil on Ingredients/Instructions headers |
+| Status surfaces: `surface.warning`, `surface.danger` | Warning banners, low-confidence ingredient rows |
+| `ContentUnavailableView` for empty states | Used for error states (no recipe, network error) |
+| `.presentationDetents([.medium])` for half-sheets | DuplicateResolutionSheet |
 
 ---
 
