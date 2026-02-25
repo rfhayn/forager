@@ -10,6 +10,15 @@
 import Foundation
 import CoreData
 
+// MARK: - Import Save Result
+
+/// Return type for save operations — includes recipe object ID and any
+/// uncategorized templates that need CategoryAssignmentModal presentation.
+struct ImportSaveResult {
+    let recipeObjectID: NSManagedObjectID
+    let uncategorizedTemplateIDs: [NSManagedObjectID]
+}
+
 // MARK: - Recipe Import Service
 
 /// Orchestrates the recipe import flow: URL fetch → extraction → preview → save.
@@ -98,8 +107,8 @@ class RecipeImportService: ObservableObject {
 
     /// Atomically save a reviewed draft as a Recipe + Ingredients.
     /// Uses a child context so template service saves stay in-memory until final persist.
-    /// Returns the saved Recipe's objectID, or nil on failure.
-    func saveImport(from draft: ImportDraftRecipe) -> NSManagedObjectID? {
+    /// Returns ImportSaveResult with recipe ID and uncategorized template IDs, or nil on failure.
+    func saveImport(from draft: ImportDraftRecipe) -> ImportSaveResult? {
         state = .saving
 
         // Child context for atomic save — template service saves push to parent in memory
@@ -127,8 +136,8 @@ class RecipeImportService: ObservableObject {
         recipe.usageCount = 0
         recipe.isFavorite = false
 
-        // Parse and connect ingredients — template saves go to childContext only
-        let _ = childParsingService.parseAndConnectIngredients(
+        // Parse and connect ingredients — capture created ingredients for category check
+        let createdIngredients = childParsingService.parseAndConnectIngredients(
             for: recipe,
             ingredientTexts: draft.ingredients.value
         )
@@ -137,9 +146,21 @@ class RecipeImportService: ObservableObject {
         do {
             try childContext.save()    // Push all changes to viewContext (in memory)
             try viewContext.save()     // Persist everything to disk in one write
+
+            // Collect uncategorized template IDs after save (objectIDs are now permanent)
+            let uncategorizedIDs = createdIngredients.compactMap { ingredient -> NSManagedObjectID? in
+                guard let template = ingredient.ingredientTemplate else { return nil }
+                if template.category == nil || template.category?.isEmpty == true {
+                    return template.objectID
+                }
+                return nil
+            }
+            // Deduplicate (multiple ingredients can share the same template)
+            let uniqueIDs = Array(Set(uncategorizedIDs))
+
             let objectID = recipe.objectID
             state = .saved(objectID)
-            return objectID
+            return ImportSaveResult(recipeObjectID: objectID, uncategorizedTemplateIDs: uniqueIDs)
         } catch {
             viewContext.rollback()
             state = .failed(.saveError(error.localizedDescription))
@@ -152,7 +173,7 @@ class RecipeImportService: ObservableObject {
     /// In-place update of an existing Recipe with data from the import draft.
     /// Preserves PlannedMeal references and CloudKit object identity (ADR 012).
     /// Deletes old Ingredients and creates new ones via parseAndConnectIngredients.
-    func replaceExistingRecipe(objectID: NSManagedObjectID, with draft: ImportDraftRecipe) -> NSManagedObjectID? {
+    func replaceExistingRecipe(objectID: NSManagedObjectID, with draft: ImportDraftRecipe) -> ImportSaveResult? {
         state = .saving
 
         // Child context for atomic replace
@@ -187,8 +208,8 @@ class RecipeImportService: ObservableObject {
         recipe.sourceURL = draft.sourceURL
         recipe.tags = draft.tags
 
-        // Parse and connect new ingredients
-        let _ = childParsingService.parseAndConnectIngredients(
+        // Parse and connect new ingredients — capture for category check
+        let createdIngredients = childParsingService.parseAndConnectIngredients(
             for: recipe,
             ingredientTexts: draft.ingredients.value
         )
@@ -197,8 +218,19 @@ class RecipeImportService: ObservableObject {
         do {
             try childContext.save()
             try viewContext.save()
+
+            // Collect uncategorized template IDs
+            let uncategorizedIDs = createdIngredients.compactMap { ingredient -> NSManagedObjectID? in
+                guard let template = ingredient.ingredientTemplate else { return nil }
+                if template.category == nil || template.category?.isEmpty == true {
+                    return template.objectID
+                }
+                return nil
+            }
+            let uniqueIDs = Array(Set(uncategorizedIDs))
+
             state = .saved(objectID)
-            return objectID
+            return ImportSaveResult(recipeObjectID: objectID, uncategorizedTemplateIDs: uniqueIDs)
         } catch {
             viewContext.rollback()
             state = .failed(.saveError(error.localizedDescription))

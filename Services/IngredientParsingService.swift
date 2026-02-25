@@ -167,7 +167,7 @@ class IngredientParsingService: ObservableObject {
 
             let template = templateService.findOrCreateTemplate(
                 name: parsed.displayName,
-                category: categorizeIngredient(parsed.displayName)
+                category: nil
             )
             ingredient.ingredientTemplate = template
             templateService.incrementUsage(template: template)
@@ -200,25 +200,4 @@ class IngredientParsingService: ObservableObject {
         return name.isEmpty ? trimmed.capitalized : name.capitalized
     }
 
-    // MARK: - Category Inference
-
-    private func categorizeIngredient(_ name: String) -> String? {
-        let lowercased = name.lowercased()
-
-        if lowercased.contains("chicken") || lowercased.contains("beef") ||
-           lowercased.contains("pork") || lowercased.contains("fish") {
-            return "Meat & Seafood"
-        } else if lowercased.contains("milk") || lowercased.contains("cheese") ||
-                  lowercased.contains("butter") || lowercased.contains("cream") {
-            return "Dairy"
-        } else if lowercased.contains("apple") || lowercased.contains("banana") ||
-                  lowercased.contains("orange") || lowercased.contains("berry") {
-            return "Produce"
-        } else if lowercased.contains("bread") || lowercased.contains("pasta") ||
-                  lowercased.contains("rice") || lowercased.contains("flour") {
-            return "Pantry"
-        }
-
-        return "Other"
-    }
 }

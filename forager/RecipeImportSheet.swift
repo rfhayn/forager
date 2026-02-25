@@ -23,6 +23,8 @@ struct RecipeImportSheet: View {
     @State private var urlText = ""
     @State private var showingDuplicateSheet = false
     @State private var duplicateResult: DuplicateResult?
+    @State private var showingCategoryAssignment = false
+    @State private var uncategorizedTemplates: [IngredientTemplate] = []
     @FocusState private var urlFieldFocused: Bool
 
     var body: some View {
@@ -70,6 +72,18 @@ struct RecipeImportSheet: View {
                         onReplaceExisting: { replaceExistingWithDraft() },
                         onCancel: { showingDuplicateSheet = false }
                     )
+                }
+            }
+            .sheet(isPresented: $showingCategoryAssignment) {
+                if !uncategorizedTemplates.isEmpty {
+                    CategoryAssignmentModal(
+                        uncategorizedTemplates: uncategorizedTemplates,
+                        onAssignmentsComplete: {
+                            showingCategoryAssignment = false
+                            uncategorizedTemplates = []
+                        }
+                    )
+                    .environment(\.managedObjectContext, viewContext)
                 }
             }
         }
@@ -334,14 +348,18 @@ struct RecipeImportSheet: View {
             duplicateResult = duplicate
             showingDuplicateSheet = true
         } else {
-            let _ = importService.saveImport(from: draft)
+            if let result = importService.saveImport(from: draft) {
+                presentCategoryAssignmentIfNeeded(result)
+            }
         }
     }
 
     private func saveWithoutDuplicateCheck() {
         showingDuplicateSheet = false
         if case .needsReview(let draft) = importService.state {
-            let _ = importService.saveImport(from: draft)
+            if let result = importService.saveImport(from: draft) {
+                presentCategoryAssignmentIfNeeded(result)
+            }
         }
     }
 
@@ -358,7 +376,22 @@ struct RecipeImportSheet: View {
             existingID = objectID
         }
 
-        let _ = importService.replaceExistingRecipe(objectID: existingID, with: draft)
+        if let result = importService.replaceExistingRecipe(objectID: existingID, with: draft) {
+            presentCategoryAssignmentIfNeeded(result)
+        }
+    }
+
+    /// Resolve uncategorized template object IDs to live objects and present modal if needed.
+    private func presentCategoryAssignmentIfNeeded(_ result: ImportSaveResult) {
+        guard !result.uncategorizedTemplateIDs.isEmpty else { return }
+
+        let templates = result.uncategorizedTemplateIDs.compactMap { objectID in
+            try? viewContext.existingObject(with: objectID) as? IngredientTemplate
+        }
+
+        guard !templates.isEmpty else { return }
+        uncategorizedTemplates = templates
+        showingCategoryAssignment = true
     }
 
     private func handleCancel() {
