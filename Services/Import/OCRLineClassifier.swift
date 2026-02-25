@@ -177,12 +177,17 @@ enum OCRLineClassifier {
     private static func scoreIngredient(_ text: String) -> Float {
         var score: Float = 0.0
 
+        // Penalty: numbered steps (1. Mix, Step 2:) are instructions, not ingredients
+        if isNumberedStep(text) {
+            score -= 0.4
+        }
+
         // Starts with digit or fraction
         if startsWithNumber(text) {
             score += 0.5
         }
 
-        // Contains unit words
+        // Contains unit words — strong ingredient signal
         if containsUnitWord(text) {
             score += 0.35
         }
