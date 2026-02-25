@@ -204,16 +204,19 @@ struct foragerApp: App {
                         }
                     }
                     // M10.1.7: Share extension URL handoff
+                    // Primary path: extension opens forager://import → .onOpenURL fires
+                    // Fallback path: user switches to app → scenePhase .active checks defaults
+                    // Both paths use checkForPendingImport() which reads + clears atomically
                     .onOpenURL { url in
                         guard url.scheme == "forager", url.host == "import" else { return }
-                        importService.checkForPendingImport()
-                        selectedTab = .recipes
-                        showShareImport = true
+                        if importService.checkForPendingImport() {
+                            selectedTab = .recipes
+                            showShareImport = true
+                        }
                     }
                     .onChange(of: scenePhase) { _, newPhase in
                         if newPhase == .active {
-                            importService.checkForPendingImport()
-                            if importService.state != .idle {
+                            if importService.checkForPendingImport() {
                                 selectedTab = .recipes
                                 showShareImport = true
                             }
