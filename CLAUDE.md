@@ -191,7 +191,10 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 - Native Liquid Glass TabView with 5 tabs: Lists, Recipes, Meals, Settings, Search (ADR 011)
 - `ForagerTheme` semantic color tokens — never hardcode colors
 - `ContentUnavailableView` for all empty states (not custom empty state views)
-- App entry: `foragerApp.swift`, CloudKit share handling: `SceneDelegate.swift`
+- App entry: `forager/App/foragerApp.swift`, CloudKit share handling: `forager/App/SceneDelegate.swift`
+- Views organized by feature: `forager/Views/{Grocery,Recipes,Import,MealPlanning,Household,Settings,Search}/`
+- Core Data models: `Models/` (36 entity files, auto-synced)
+- All source directories (forager/, Models/, Services/) use `PBXFileSystemSynchronizedRootGroup` — just create files on disk
 
 ### Design System (ForagerTheme) — Established M15
 

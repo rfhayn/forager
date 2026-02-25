@@ -6,6 +6,28 @@
 
 ---
 
+## Session 44 — February 25, 2026
+**Milestone**: M10.9 — Repository Structure Cleanup
+**Branch**: `chore/M10.9-repo-structure-cleanup`
+
+### Repo Spring Cleaning
+
+Executed the full M10.9 repo structure cleanup PRD — all 3 tiers in one session:
+
+**Tier 3** (quick fixes): Removed duplicate docs/recipe-import-research.md, deleted dead MigrationTestHelper.swift + its SettingsView debug button, moved milestone5.0.1-name-decision-record.md to docs/architecture/.
+
+**Tier 1** (Core Data models): Moved 36 Core Data entity files from project root to Models/ and converted to PBXFileSystemSynchronizedRootGroup. Root directory went from 46 items to 10. This was the biggest visual impact — the GitHub landing page no longer looks cluttered.
+
+**Tier 2** (app source): Reorganized forager/'s 55 flat Swift files into subdirectories: App/, Theme/, Components/, Views/{Grocery,Recipes,Import,MealPlanning,Household,Settings,Search}/, Debug/. Converted from manual PBXGroup to PBXFileSystemSynchronizedRootGroup. Required a PBXFileSystemSynchronizedBuildFileExceptionSet to exclude Info.plist and entitlements from auto-sync's bundle copy (they're already handled by build settings).
+
+### Key Learning: PBXFileSystemSynchronizedBuildFileExceptionSet
+
+The first Tier 2 build failed with "Multiple commands produce Info.plist" — auto-sync wanted to copy Info.plist as a bundle resource while INFOPLIST_FILE was also processing it. The fix is a membershipExceptions list that excludes files already handled by build settings. Same applies to entitlements referenced by CODE_SIGN_ENTITLEMENTS.
+
+All 3 source directories (forager/, Models/, Services/) now use auto-sync. Only foragerTests/ still uses manual PBXGroup.
+
+---
+
 ## Session 43 — February 25, 2026
 **Milestone**: M10.1.10 — Import bug fixes (validation limits + title extraction)
 **Branch**: `feature/M10.1-url-import`
