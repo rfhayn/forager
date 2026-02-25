@@ -16,6 +16,7 @@ import CoreData
 /// State-driven content switches between URL input, loading, preview, and error states.
 struct RecipeImportSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Environment(\.managedObjectContext) private var viewContext
     @ObservedObject var importService: RecipeImportService
 
@@ -177,38 +178,140 @@ struct RecipeImportSheet: View {
         }
     }
 
-    // MARK: - Error View
+    // MARK: - Error View (Wireframe Screen 5)
 
+    @ViewBuilder
     private func errorView(_ error: ImportError) -> some View {
+        switch error {
+        case .paywallDetected:
+            paywallErrorView(error)
+        case .noRecipeFound:
+            noRecipeErrorView(error)
+        case .networkError, .timeout:
+            networkErrorView(error)
+        default:
+            genericErrorView(error)
+        }
+    }
+
+    private func paywallErrorView(_ error: ImportError) -> some View {
+        errorLayout(
+            icon: error.errorIcon,
+            iconColor: ForagerTheme.statusWarningFG,
+            circleBG: ForagerTheme.surfaceWarning,
+            title: error.errorTitle,
+            body: "We extracted what we could from this page."
+        ) {
+            Button(action: {
+                if let url = URL(string: urlText.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                    openURL(url)
+                }
+            }) {
+                Label("Open in Safari", systemImage: "safari")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(ForagerTheme.accentPrimary)
+
+            tryDifferentURLButton
+        }
+    }
+
+    private func noRecipeErrorView(_ error: ImportError) -> some View {
+        errorLayout(
+            icon: error.errorIcon,
+            iconColor: ForagerTheme.statusInfoFG,
+            circleBG: ForagerTheme.surfaceAccent,
+            title: error.errorTitle,
+            body: "We couldn't find a recipe on this page."
+        ) {
+            // M10.2: "Try pasting the recipe text instead" link will go here
+            tryDifferentURLButton
+        }
+    }
+
+    private func networkErrorView(_ error: ImportError) -> some View {
+        errorLayout(
+            icon: error.errorIcon,
+            iconColor: ForagerTheme.statusDangerFG,
+            circleBG: ForagerTheme.surfaceDanger,
+            title: error.errorTitle,
+            body: "Check your connection and try again."
+        ) {
+            Button("Try Again") { startImport() }
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+
+            tryDifferentURLButton
+        }
+    }
+
+    private func genericErrorView(_ error: ImportError) -> some View {
+        errorLayout(
+            icon: error.errorIcon,
+            iconColor: ForagerTheme.statusWarningFG,
+            circleBG: ForagerTheme.surfaceWarning,
+            title: error.errorTitle,
+            body: error.userMessage
+        ) {
+            if error.isRetryable {
+                Button("Retry") { startImport() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForagerTheme.accentPrimary)
+            }
+
+            tryDifferentURLButton
+        }
+    }
+
+    // MARK: - Error Layout Template
+
+    /// Shared layout for all error presentations (wireframe screen 5 pattern):
+    /// Icon in colored circle → Title → Body → Action buttons
+    private func errorLayout<Actions: View>(
+        icon: String,
+        iconColor: Color,
+        circleBG: Color,
+        title: String,
+        body: String,
+        @ViewBuilder actions: () -> Actions
+    ) -> some View {
         VStack(spacing: ForagerTheme.Spacing.lg) {
             Spacer()
 
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(ForagerTheme.statusWarningFG)
+            ZStack {
+                Circle()
+                    .fill(circleBG)
+                    .frame(width: 80, height: 80)
 
-            Text(error.userMessage)
-                .font(ForagerTheme.bodyFont)
+                Image(systemName: icon)
+                    .font(.system(size: 32))
+                    .foregroundStyle(iconColor)
+            }
+
+            Text(title)
+                .font(ForagerTheme.cardTitle)
                 .foregroundStyle(ForagerTheme.textPrimary)
+
+            Text(body)
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, ForagerTheme.Spacing.lg)
 
-            HStack(spacing: ForagerTheme.Spacing.md) {
-                if error.isRetryable {
-                    Button("Retry") { startImport() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(ForagerTheme.accentPrimary)
-                }
-
-                Button("Try Different URL") {
-                    importService.cancelImport()
-                    urlText = ""
-                }
-                .buttonStyle(.bordered)
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                actions()
             }
 
             Spacer()
         }
+    }
+
+    private var tryDifferentURLButton: some View {
+        Button("Try Different URL") {
+            importService.cancelImport()
+            urlText = ""
+        }
+        .buttonStyle(.bordered)
     }
 
     // MARK: - Actions

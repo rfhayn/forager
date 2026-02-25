@@ -47,6 +47,13 @@ class RecipeImportService: ObservableObject {
     /// Transitions: idle → received → fetching → extracting → needsReview or failed
     func importFromURL(_ url: URL) async {
         state = .received(url)
+
+        // Check for known unsupported sources before fetching
+        if let sourceError = checkUnsupportedSource(url) {
+            state = .failed(sourceError)
+            return
+        }
+
         state = .fetching
 
         // Fetch HTML
@@ -229,6 +236,22 @@ class RecipeImportService: ObservableObject {
         //       let url = URL(string: urlString) else { return }
         // sharedDefaults.removeObject(forKey: "pendingImportURL")
         // Task { await importFromURL(url) }
+    }
+
+    // MARK: - Unsupported Source Detection
+
+    /// Pre-flight check for URLs that will never yield recipe data.
+    /// Fails fast with a helpful message instead of wasting a network round-trip.
+    private func checkUnsupportedSource(_ url: URL) -> ImportError? {
+        guard let host = url.host?.lowercased() else { return nil }
+
+        if host.contains("pinterest") {
+            return .unsupportedSource("Pinterest pins don't contain recipe data. Try the original recipe link.")
+        }
+        if host.contains("tiktok") || host.contains("instagram") || host.contains("facebook.com/reel") {
+            return .unsupportedSource("Social media video import is not yet supported.")
+        }
+        return nil
     }
 
     // MARK: - HTML Fetching

@@ -343,6 +343,8 @@ enum ImportError: LocalizedError, Equatable {
 
     var userMessage: String { ... }     // Maps to domain policy table (§8)
     var isRetryable: Bool { ... }
+    var errorTitle: String { ... }      // Wireframe screen 5: "Recipe Behind a Paywall", "No Recipe Found", etc.
+    var errorIcon: String { ... }       // Wireframe screen 5: SF Symbol name ("lock.fill", "magnifyingglass", etc.)
 }
 ```
 
@@ -401,7 +403,7 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 | M10.1.5 | WKWebView fallback | 3-4h | M10.1.2 |
 | M10.1.6 | Duplicate detection | 2-3h | M10.1.3 |
 | M10.1.7 | Share extension + App Group | 3-4h | M10.1.4 |
-| M10.1.8 | Error handling + edge cases | 2-3h | M10.1.4, M10.1.6 |
+| M10.1.8 | Error handling + edge cases | 2-3h | M10.1.4, M10.1.6 | ✅ IMPLEMENTED |
 
 #### New Files — Services/Import/ (auto-detected by Xcode)
 
@@ -441,10 +443,11 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 - Published: `state: ImportJobState`
 - Dependencies: `IngredientParsingService`, `NSManagedObjectContext`
 - Key methods:
-  - `importFromURL(_ url: URL) async` — fetch HTML → try extractors in priority order → populate draft
+  - `importFromURL(_ url: URL) async` — pre-flight unsupported source check → fetch HTML → try extractors in priority order → populate draft
   - `saveImport(from draft: ImportDraftRecipe) -> NSManagedObjectID?` — atomic save via child context
   - `replaceExistingRecipe(objectID:with:) -> NSManagedObjectID?` — in-place update of existing Recipe (deletes old ingredients, updates fields, creates new ingredients). Uses child context for atomicity. Preserves PlannedMeal references and CloudKit identity.
   - `checkDuplicate(for draft:) -> DuplicateResult?` — duplicate detection before save
+  - `checkUnsupportedSource(_ url: URL) -> ImportError?` — fail-fast detection of Pinterest, TikTok, Instagram, Facebook Reel URLs before network fetch (M10.1.8)
   - `cancelImport()` — reset to idle
   - `checkForPendingImport()` — check App Group UserDefaults for share extension URL
 - Telemetry: logs importAttempted/Succeeded/Failed/Cancelled to ParsingTelemetryService
@@ -465,16 +468,18 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 
 > **Design alignment**: All import views follow M15 design system patterns (ForagerTheme tokens, SF Pro Rounded chrome, section headers, card patterns) and match wireframes in `docs/import-research/import-wireframes.html`. See wireframe screens 1-5.
 
-**`RecipeImportSheet.swift`** (~270 lines) — ✅ IMPLEMENTED
+**`RecipeImportSheet.swift`** (~300 lines) — ✅ IMPLEMENTED
 - Entry point sheet from RecipeListView toolbar
 - Nav bar: Cancel (leading, hidden when in `.needsReview` state), "Import Recipe" title (center, inline)
 - URL input field, state-driven content (loading, preview, error)
 - Tab/segment for "URL" mode (expanded in M10.2/M10.3 for "Text"/"Photo")
 - Wires up `replaceExistingWithDraft()` → `importService.replaceExistingRecipe()` for duplicate resolution
-- Error states (wireframe screen 5): Three distinct presentations:
-  - Paywall: lock icon in `surface.warning` circle, "Recipe Behind a Paywall", partial data hint if available, "Open in Safari" button
-  - No Recipe Found: search icon in `info.bg` circle, "No Recipe Found", link to "Try pasting the recipe text instead" (M10.2+)
-  - Network Error: wifi-off icon in `surface.danger` circle, "Unable to Reach This Site", "Try Again" button
+- Uses `@Environment(\.openURL)` for paywall "Open in Safari" action
+- Error states (wireframe screen 5) — ✅ IMPLEMENTED (M10.1.8): Four type-specific presentations via `errorView(_:)` switch dispatch + shared `errorLayout()` generic template:
+  - **Paywall** (`paywallErrorView`): `lock.fill` icon in `surfaceWarning` circle, "Recipe Behind a Paywall", "Open in Safari" button (opens `urlText` in Safari)
+  - **No Recipe Found** (`noRecipeErrorView`): `magnifyingglass` icon in `surfaceAccent` circle, "No Recipe Found", "Try Different URL" (M10.2: add "Try pasting text" link)
+  - **Network Error** (`networkErrorView`): `wifi.slash` icon in `surfaceDanger` circle, "Unable to Reach This Site", "Try Again" button
+  - **Generic** (`genericErrorView`): Error-specific icon in `surfaceWarning` circle, `errorTitle`/`userMessage`, conditional "Retry" (if retryable) + "Try Different URL"
 
 **`RecipeImportPreviewView.swift`** (~350 lines) — ✅ IMPLEMENTED
 

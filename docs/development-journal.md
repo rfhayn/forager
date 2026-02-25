@@ -6,6 +6,33 @@
 
 ---
 
+## Session 41 — February 24, 2026
+**Milestone**: M10.1.8 — Error handling + edge cases
+**Branch**: `feature/M10.1-url-import`
+
+### What Happened
+
+Implemented M10.1.8: type-specific error presentations matching wireframe screen 5, plus fail-fast URL detection for unsupported social media sources.
+
+**Three changes, clean dependency chain:**
+1. **ImportError** — Added `errorTitle` and `errorIcon` computed properties. Each error case now knows its own title ("Recipe Behind a Paywall", "No Recipe Found", "Unable to Reach This Site") and SF Symbol icon (`lock.fill`, `magnifyingglass`, `wifi.slash`). This centralizes the error→UI mapping on the enum rather than scattering switches across view methods.
+
+2. **RecipeImportService** — Added `checkUnsupportedSource(_ url:)` that detects Pinterest, TikTok, Instagram, and Facebook Reel URLs before the network fetch. Called at the start of `importFromURL()`, before `state = .fetching`. Fails fast with a domain-specific message instead of wasting a network round-trip only to show a generic "No recipe found" error.
+
+3. **RecipeImportSheet** — Refactored the single generic `errorView()` into four type-specific presentations: `paywallErrorView`, `noRecipeErrorView`, `networkErrorView`, `genericErrorView`. All share a common `errorLayout<Actions: View>()` generic template (icon in colored circle → title → body → action buttons). Added `@Environment(\.openURL)` for the paywall "Open in Safari" action.
+
+### Design Decisions
+- Used `@ViewBuilder` generic template rather than `AnyView` type erasure — preserves SwiftUI's static type system and avoids performance overhead.
+- Error circle background colors use semantic tokens (`surfaceWarning`, `surfaceAccent`, `surfaceDanger`) to convey severity at a glance before reading any text.
+- "Open in Safari" uses `@Environment(\.openURL)` rather than `UIApplication.shared.open()` — testable, SwiftUI-idiomatic, and works in SwiftUI previews.
+
+### What Went Well
+- Clean dependency chain (enum → service → view) meant each change compiled independently
+- Build succeeded first try after all three files were edited
+- PRD updated inline with implementation status markers
+
+---
+
 ## Session 40 — February 24, 2026
 **Milestone**: M10.1.1–M10.1.6 — Import models, extraction, orchestration, UI, detection
 **Branch**: `feature/M10.1-url-import`

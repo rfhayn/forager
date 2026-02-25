@@ -262,6 +262,54 @@ enum ImportError: LocalizedError, Equatable {
         }
     }
 
+    /// Wireframe screen 5: error-type-specific title for the error view header
+    var errorTitle: String {
+        switch self {
+        case .paywallDetected:
+            return "Recipe Behind a Paywall"
+        case .noRecipeFound:
+            return "No Recipe Found"
+        case .networkError, .timeout:
+            return "Unable to Reach This Site"
+        case .unsupportedSource:
+            return "Unsupported Source"
+        case .duplicateFound:
+            return "Duplicate Recipe"
+        case .malformedData:
+            return "Couldn't Read Recipe"
+        case .saveError:
+            return "Save Failed"
+        case .ocrFailed, .noTextDetected:
+            return "Text Recognition Failed"
+        case .cameraPermissionDenied:
+            return "Camera Access Required"
+        case .aiExtractionFailed, .aiUnavailable:
+            return "Extraction Unavailable"
+        }
+    }
+
+    /// Wireframe screen 5: SF Symbol name for the error icon
+    var errorIcon: String {
+        switch self {
+        case .paywallDetected:
+            return "lock.fill"
+        case .noRecipeFound:
+            return "magnifyingglass"
+        case .networkError, .timeout:
+            return "wifi.slash"
+        case .unsupportedSource:
+            return "link.badge.plus"
+        case .duplicateFound:
+            return "doc.on.doc.fill"
+        case .malformedData, .saveError, .aiExtractionFailed, .aiUnavailable:
+            return "exclamationmark.triangle.fill"
+        case .ocrFailed, .noTextDetected:
+            return "text.viewfinder"
+        case .cameraPermissionDenied:
+            return "camera.fill"
+        }
+    }
+
     var errorDescription: String? { userMessage }
 }
 

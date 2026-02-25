@@ -52,7 +52,7 @@
 5. ✅ M10.1.5: WKWebView fallback — COMPLETE
 6. ✅ M10.1.6: Duplicate detection — COMPLETE (+ "Replace Existing" service method added)
 7. M10.1.7: Share extension + App Group (3-4h) — NEXT
-8. M10.1.8: Error handling + edge cases (2-3h)
+8. ✅ M10.1.8: Error handling + edge cases — COMPLETE
 
 **View wireframe alignment** (M10.1.4 follow-up):
 - ✅ RecipeImportPreviewView — rewritten to match wireframe screens 1 & 3
@@ -61,6 +61,9 @@
 - ✅ RecipeImportService — `replaceExistingRecipe()` method added
 - ✅ ImportJobState — `isReviewing` property for nav bar coordination
 - ✅ PRD updated with implementation status markers
+- ✅ RecipeImportSheet errorView — refactored to 4 type-specific presentations (wireframe screen 5)
+- ✅ ImportError — `errorTitle` + `errorIcon` computed properties for UI dispatch
+- ✅ RecipeImportService — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
 
 ### Files Created This Session
 **Services/Import/** (auto-detected):
