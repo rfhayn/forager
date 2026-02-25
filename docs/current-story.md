@@ -1,18 +1,18 @@
 # Current Development Story
 
-**Last Updated**: February 24, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 ACTIVE**
+**Last Updated**: February 25, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 TESTING**
 **Total Progress**: ~241 hours | 89% planning accuracy
 **Current Branch**: `feature/M10.1-url-import`
-**Current Milestone**: M10.1 URL Import — 🔧 **ACTIVE** (10/10 sub-phases complete, ready for integration testing)
+**Current Milestone**: M10.1 URL Import — 🧪 **TESTING** (10/10 sub-phases + 2 bug fixes complete, integration testing before PR)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10 (Recipe Import) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.2 (Text Paste Import) → M7.7 → M6 → M9 → M11+
 
 ---
 
 ## 🔧 **M10: RECIPE IMPORT - ACTIVE**
 
-**Status**: 🔧 **ACTIVE** — M10.1 URL Import in progress (8/8 sub-phases + 2 follow-ups complete)
+**Status**: 🧪 **TESTING** — M10.1 URL Import complete (8/8 sub-phases + 2 follow-ups + 2 bug fixes), integration testing before PR merge
 **Estimated**: 70-95 hours (4 phases)
 **PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
 **Spike Research**: `docs/import-research/` (7 supporting documents)

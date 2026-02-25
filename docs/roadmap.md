@@ -1,7 +1,7 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 24, 2026
-**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M10 NEXT**
+**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M10.1 ✅ COMPLETE** | **M10.2 NEXT**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M8.4.1 normalization fix COMPLETE (282 tests), M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE
 **Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
@@ -128,7 +128,7 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **Clean**: Zero-warning build baseline established (M9.0)
 - **Live**: TestFlight build 10 (v1.1), external testers active
 
-**Next**: M10 (Recipe Import) → M7.7 (App Store)
+**Next**: M10.2 (Text Paste Import) → M10.3 → M10.4 → M7.7 (App Store)
 
 ### **M4 Component Summary:**
 
