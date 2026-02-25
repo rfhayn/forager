@@ -13,6 +13,7 @@ struct RecipeListView: View {
 
     @State private var searchText = ""
     @State private var showingAddRecipe = false
+    @State private var showingImport = false
     @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
@@ -215,13 +216,29 @@ struct RecipeListView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button { showingAddRecipe = true } label: {
-                    Image(systemName: "plus")
+                HStack(spacing: 12) {
+                    Button { showingImport = true } label: {
+                        Image(systemName: "square.and.arrow.down")
+                    }
+                    Button { showingAddRecipe = true } label: {
+                        Image(systemName: "plus")
+                    }
                 }
             }
         }
         .sheet(isPresented: $showingAddRecipe) {
             CreateRecipeView(context: viewContext)
+        }
+        .sheet(isPresented: $showingImport) {
+            RecipeImportSheet(
+                importService: RecipeImportService(
+                    context: viewContext,
+                    parsingService: IngredientParsingService(
+                        context: viewContext,
+                        templateService: IngredientTemplateService(context: viewContext)
+                    )
+                )
+            )
         }
         .sheet(isPresented: $showingMealPlanSheet) {
             if let recipe = selectedRecipeForMealPlan {

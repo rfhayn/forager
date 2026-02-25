@@ -7,7 +7,7 @@
 ---
 
 ## Session 40 — February 24, 2026
-**Milestone**: M10.1.1–M10.1.3 — Import models, extraction, orchestration
+**Milestone**: M10.1.1–M10.1.6 — Import models, extraction, orchestration, UI, detection
 **Branch**: `feature/M10.1-url-import`
 
 ### What Happened
@@ -50,6 +50,19 @@ The orchestrator also implements the error collection pattern: extractors return
 
 M10.1.3 (1 file) compiles clean. BUILD SUCCEEDED — 3 for 3 on first try across all sub-phases.
 
+**M10.1.6** adds duplicate detection — exact sourceURL match via Core Data fetch predicate, plus fuzzy title match using Levenshtein distance (Wagner-Fischer algorithm, O(n) space). Integrated into `RecipeImportService.checkDuplicate(for:)`.
+
+**M10.1.5** adds WKWebView fallback extractor for ~30% of recipe sites that inject JSON-LD via client-side JS. Uses `CheckedContinuation` to bridge `WKNavigationDelegate` callbacks to async/await. Key pattern: nil-check continuation before resuming to handle the race between didFinish+settle, timeout, and didFail code paths.
+
+**M10.1.4** builds the import preview UI — 3 view files + RecipeListView integration:
+- `RecipeImportSheet.swift` — entry point with URL input, state-driven content
+- `RecipeImportPreviewView.swift` — extracted fields with confidence dots (green/amber/red/gray)
+- `DuplicateResolutionSheet.swift` — modal dialog for duplicate resolution
+- Manual pbxproj entries for all 3 files (PBXFileReference, PBXBuildFile, PBXGroup, PBXSourcesBuildPhase)
+- Import button added to RecipeListView toolbar (square.and.arrow.down icon)
+
+All sub-phases M10.1.1–M10.1.6 compile clean. 7 BUILD SUCCEEDED on first try, zero regressions.
+
 ### Insights Logged
 - Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
 - ImportDraftRecipe separation rationale vs RecipeFormData
@@ -58,6 +71,8 @@ M10.1.3 (1 file) compiles clean. BUILD SUCCEEDED — 3 for 3 on first try across
 - Guard-before-work pattern (containsEntities check before decode)
 - Child context for atomic saves (template service saves internally)
 - Orchestrator error collection pattern (nil vs throw semantics)
+- CheckedContinuation multi-resume guard for WKWebView async bridge
+- Manual PBXGroup friction for view files vs auto-detected Services/
 
 ---
 
