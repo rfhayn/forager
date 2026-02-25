@@ -54,7 +54,6 @@
 		9B1B39672EF4DED6001E1876 /* IngredientTemplate+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39662EF4DED6001E1876 /* IngredientTemplate+Extensions.swift */; };
 		9B1B39692EF4E005001E1876 /* PlannedMeal+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39682EF4E005001E1876 /* PlannedMeal+Extensions.swift */; };
 		9B1B396B2EF4E0F4001E1876 /* Recipe+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B396A2EF4E0F4001E1876 /* Recipe+Extensions.swift */; };
-		9B1B396D2EF4E48C001E1876 /* MigrationTestHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B396C2EF4E48C001E1876 /* MigrationTestHelper.swift */; };
 		9B1B398A2EF5DB19001E1876 /* IngredientTemplateRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39872EF5DB19001E1876 /* IngredientTemplateRepository.swift */; };
 		9B1B398B2EF5DB19001E1876 /* PlannedMealRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */; };
 		9B1B398C2EF5DB19001E1876 /* CategoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1B39862EF5DB19001E1876 /* CategoryRepository.swift */; };
@@ -199,7 +198,6 @@
 		9B1B39662EF4DED6001E1876 /* IngredientTemplate+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "IngredientTemplate+Extensions.swift"; sourceTree = "<group>"; };
 		9B1B39682EF4E005001E1876 /* PlannedMeal+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PlannedMeal+Extensions.swift"; sourceTree = "<group>"; };
 		9B1B396A2EF4E0F4001E1876 /* Recipe+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recipe+Extensions.swift"; sourceTree = "<group>"; };
-		9B1B396C2EF4E48C001E1876 /* MigrationTestHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrationTestHelper.swift; sourceTree = "<group>"; };
 		9B1B39862EF5DB19001E1876 /* CategoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryRepository.swift; sourceTree = "<group>"; };
 		9B1B39872EF5DB19001E1876 /* IngredientTemplateRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateRepository.swift; sourceTree = "<group>"; };
 		9B1B39882EF5DB19001E1876 /* PlannedMealRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlannedMealRepository.swift; sourceTree = "<group>"; };
@@ -479,7 +477,6 @@
 				9BE384A32F088918001929B8 /* MealPlan+CoreDataClass.swift */,
 				9B56ECB72F0859E800877716 /* MealPlan+CoreDataProperties.swift */,
 				9BD3C3AD2F0ABE2500F50495 /* MealPlan+Extensions.swift */,
-				9B1B396C2EF4E48C001E1876 /* MigrationTestHelper.swift */,
 				9BE384A42F088918001929B8 /* PlannedMeal+CoreDataClass.swift */,
 				9B56ECB22F0857FB00877716 /* PlannedMeal+CoreDataProperties.swift */,
 				9B1B39682EF4E005001E1876 /* PlannedMeal+Extensions.swift */,
@@ -675,7 +672,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9B1B396D2EF4E48C001E1876 /* MigrationTestHelper.swift in Sources */,
 				9B731C7F2E5364A300CE26F0 /* WeeklyList+CoreDataProperties.swift in Sources */,
 				85ADBDBD2EA91E9200E3B1B5 /* Recipe+ComputedProperties.swift in Sources */,
 				9BF1F8CC2E566BFF00E79B3F /* Category+CoreDataProperties.swift in Sources */,
@@ -835,7 +831,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -874,7 +870,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
