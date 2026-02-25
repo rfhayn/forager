@@ -236,25 +236,6 @@ struct SettingsView: View {
             */
             
             #if DEBUG
-            // M7.1.3 Part 4: Migration reset button (TEMPORARY - testing only)
-            // Resets Stage A migration flag to re-run migration with current data
-            Button {
-                MigrationTestHelper.resetStageAMigration()
-                print(MigrationTestHelper.getMigrationStatus())
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.counterclockwise")
-                        .foregroundStyle(ForagerTheme.statusWarningFG)
-                    VStack(alignment: .leading) {
-                        Text("Reset Migration")
-                            .font(.headline)
-                        Text("Re-run Stage A migration for testing")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                }
-            }
-
             // M7.3.3: Category Sync Diagnostic
             // Dumps all categories with their store location and householdKey
             // Use to troubleshoot why categories aren't syncing to members
