@@ -73,11 +73,11 @@ public class Recipe: NSManagedObject {
             )
         }
         
-        if title.count > 100 {
+        if title.count > 300 {
             throw NSError(
                 domain: "RecipeValidation",
                 code: 1003,
-                userInfo: [NSLocalizedDescriptionKey: "Recipe title cannot exceed 100 characters"]
+                userInfo: [NSLocalizedDescriptionKey: "Recipe title cannot exceed 300 characters"]
             )
         }
         
