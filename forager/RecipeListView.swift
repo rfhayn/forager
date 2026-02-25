@@ -15,6 +15,7 @@ struct RecipeListView: View {
     @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var showingImport = false
+    @State private var showingBrowser = false
     @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
@@ -218,7 +219,14 @@ struct RecipeListView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: 12) {
-                    Button { showingImport = true } label: {
+                    Menu {
+                        Button { showingBrowser = true } label: {
+                            Label("Browse for Recipe", systemImage: "globe")
+                        }
+                        Button { showingImport = true } label: {
+                            Label("Paste URL", systemImage: "link")
+                        }
+                    } label: {
                         Image(systemName: "square.and.arrow.down")
                     }
                     Button { showingAddRecipe = true } label: {
@@ -232,6 +240,9 @@ struct RecipeListView: View {
         }
         .sheet(isPresented: $showingImport) {
             RecipeImportSheet(importService: importService)
+        }
+        .fullScreenCover(isPresented: $showingBrowser) {
+            RecipeBrowserView()
         }
         .sheet(isPresented: $showingMealPlanSheet) {
             if let recipe = selectedRecipeForMealPlan {
