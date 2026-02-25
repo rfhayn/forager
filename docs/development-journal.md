@@ -8,24 +8,26 @@
 
 ## Session 45 — February 25, 2026
 **Milestone**: M10.2 — Text Paste Import
-**Focus**: Foundation Models `@Generable` extraction + heuristic fallback + test suite
+**Focus**: Full M10.2 build — Foundation Models + heuristic fallback + SectionHighlightView + tests
 **Branch**: `feature/M10.2-text-paste-import`
 
 ### What Happened
-Built the core M10.2 text paste import feature in a single session — Foundation Models extractor, heuristic line classifier, text input UI, and 31 tests. The session covered M10.2.1 (spike), M10.2.2 (UI), M10.2.3 (Foundation Models extractor), M10.2.4 (heuristic fallback), and most of M10.2.6 (testing).
+Built the complete M10.2 text paste import feature across two conversation windows — Foundation Models extractor, heuristic line classifier, text input UI, SectionHighlightView classification review, and 31 tests. All 6 sub-phases complete.
 
 ### Key Decisions
 - **Foundation Models API discovery**: The PRD assumed `LanguageModelSession.isSupported` but the actual API is `SystemLanguageModel.default.isAvailable` with a detailed `.availability` enum. Discovered by reading the Swift interface files directly from the SDK.
 - **Numbered step scoring bug**: Lines like "1. Mix ingredients" were scoring 0.6 as ingredient (startsWithNumber: +0.5, shortLine: +0.1) and only 0.5 as instruction (numberedStep: +0.5). Added a -0.4 ingredient penalty for numbered steps. This is a generalizable lesson about multi-category scorers — signals can double-count across categories.
 - **Mode-aware RecipeImportSheet**: Rather than creating a separate sheet for text import, added an `ImportMode` enum (.url, .text) to the existing sheet. This shares the preview, duplicate detection, category assignment, and error handling flows.
+- **SectionHighlightView as local phase**: Rather than adding states to the global `ImportJobState` machine, the classification review lives as a local `TextPastePhase` enum inside `TextPasteImportView`. This keeps the review step scoped to text paste only — it doesn't affect URL import flow at all.
+- **Tap-to-cycle reclassification**: Users tap a line to cycle through types (ingredient → instruction → title → metadata → unknown). Simpler than a picker/dropdown for each line, and the color-coded badges give instant visual feedback.
 
 ### AI Tooling
 - Claude Opus 4.6 in explanatory mode — the SDK interface file reading was particularly valuable for verifying the exact API surface before writing code. This prevented a PRD assumption from becoming a runtime bug.
+- Second conversation window picked up seamlessly from context summary after the first ran out of context.
 
-### What's Left for M10.2
-- M10.2.5: Section detection UI (color-coded line highlights, tap to reclassify)
-- Foundation Models testing on physical device
-- Documentation updates (current-story, next-prompt)
+### What's Left
+- Foundation Models testing on physical device (requires Pro hardware)
+- PR merge to main
 
 ---
 
