@@ -6,6 +6,29 @@
 
 ---
 
+## Session 45 — February 25, 2026
+**Milestone**: M10.2 — Text Paste Import
+**Focus**: Foundation Models `@Generable` extraction + heuristic fallback + test suite
+**Branch**: `feature/M10.2-text-paste-import`
+
+### What Happened
+Built the core M10.2 text paste import feature in a single session — Foundation Models extractor, heuristic line classifier, text input UI, and 31 tests. The session covered M10.2.1 (spike), M10.2.2 (UI), M10.2.3 (Foundation Models extractor), M10.2.4 (heuristic fallback), and most of M10.2.6 (testing).
+
+### Key Decisions
+- **Foundation Models API discovery**: The PRD assumed `LanguageModelSession.isSupported` but the actual API is `SystemLanguageModel.default.isAvailable` with a detailed `.availability` enum. Discovered by reading the Swift interface files directly from the SDK.
+- **Numbered step scoring bug**: Lines like "1. Mix ingredients" were scoring 0.6 as ingredient (startsWithNumber: +0.5, shortLine: +0.1) and only 0.5 as instruction (numberedStep: +0.5). Added a -0.4 ingredient penalty for numbered steps. This is a generalizable lesson about multi-category scorers — signals can double-count across categories.
+- **Mode-aware RecipeImportSheet**: Rather than creating a separate sheet for text import, added an `ImportMode` enum (.url, .text) to the existing sheet. This shares the preview, duplicate detection, category assignment, and error handling flows.
+
+### AI Tooling
+- Claude Opus 4.6 in explanatory mode — the SDK interface file reading was particularly valuable for verifying the exact API surface before writing code. This prevented a PRD assumption from becoming a runtime bug.
+
+### What's Left for M10.2
+- M10.2.5: Section detection UI (color-coded line highlights, tap to reclassify)
+- Foundation Models testing on physical device
+- Documentation updates (current-story, next-prompt)
+
+---
+
 ## Session 44 — February 25, 2026
 **Milestone**: M10.9 — Repository Structure Cleanup
 **Branch**: `chore/M10.9-repo-structure-cleanup`
