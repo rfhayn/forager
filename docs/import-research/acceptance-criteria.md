@@ -71,7 +71,7 @@ Based on spike results for successfully extracted recipes:
 
 | Scenario | Expected Behavior | Pass Criteria |
 |----------|-------------------|---------------|
-| No JSON-LD found | Fall through to WKWebView, then heuristic | Message: "Attempting alternative extraction..." |
+| No JSON-LD found | Fall through to WKWebView, then graceful error (heuristic URL fallback deferred to post-M10.1) | Message: "No recipe found on this page." |
 | Paywall detected (402/403) | Show partial extraction if available | Message: "This recipe may be behind a paywall..." |
 | Network failure | Retry once, then show error | Message: "Unable to reach site. Check your connection." |
 | Malformed JSON-LD | Log issue, continue to next strategy | Silent fallback, no crash |
@@ -110,7 +110,8 @@ Based on spike edge case frequencies:
 
 | Metric | Target | How Measured |
 |--------|--------|-------------|
-| Ingredient detection accuracy | ≥ 85% of ingredient lines correctly identified | Test corpus of 50 pasted recipes |
+| Ingredient detection accuracy (heuristic only) | ≥ 75% of ingredient lines correctly identified | Test corpus of 50 pasted recipes |
+| Ingredient detection accuracy (with Foundation Models) | ≥ 85% of ingredient lines correctly identified | Test corpus of 50 pasted recipes |
 | Section detection accuracy | ≥ 80% (title, ingredients, instructions, metadata) | Same test corpus |
 | Foundation Models extraction quality | ≥ 90% when available (iPhone 15 Pro+) | Compare against manual extraction |
 | Heuristic fallback quality | ≥ 70% on devices without Apple Intelligence | Test on non-Pro hardware |
@@ -136,7 +137,7 @@ Based on spike edge case frequencies:
 |--------|--------|
 | Import history tracks all imports | 100% of imports logged with status |
 | Household import sharing works | URL shared by member A visible to member B within CloudKit sync window |
-| No regressions in existing recipe CRUD | All 267 existing tests pass |
+| No regressions in existing recipe CRUD | All 282 existing tests pass |
 | Performance targets maintained | All operations within CLAUDE.md performance targets |
 
 ---

@@ -6,6 +6,182 @@
 
 ---
 
+## Session 43 — February 25, 2026
+**Milestone**: M10.1.10 — Import bug fixes (validation limits + title extraction)
+**Branch**: `feature/M10.1-url-import`
+
+### Two Import Bugs from Real-World Testing
+
+First real-world test of the new in-app browser against NYT Cooking revealed two issues:
+
+1. **Validation limits too tight for imports**: The 100-character limit on `IngredientTemplate.name` was designed for manual entry, where users type short names. Imported recipes have verbose ingredients — NYT Cooking's carbonara includes "1 ounce (about ⅓ packed cup) grated pecorino Romano, plus additional for serving" — and after parsing, template names can inherit qualifiers that push past 100 chars. Increased to 250 for templates and 300 for recipe titles.
+
+2. **JSON-LD `name` field is unreliable**: NYT Cooking puts just "Carbonara" in the JSON-LD structured data while the actual recipe title is "Spaghetti Carbonara". The full title was available in the HTML `og:title` meta tag. Added a post-extraction enhancement step that checks `og:title` and `<title>` tags — only upgrading when the metadata title is longer AND contains the JSON-LD name (prevents false replacements). Wired into all three extraction paths (JSON-LD, WKWebView, browser).
+
+### Technical Notes
+
+The title enhancement is a containment-based safety check: `og:title.localizedCaseInsensitiveContains(jsonLDTitle)` ensures we're enhancing an incomplete title, not replacing a genuinely different one. Common suffixes like " Recipe" and " - Site Name" are stripped before comparison. This handles the NYT pattern (JSON-LD "Carbonara" → og:title "Spaghetti Carbonara") without over-reaching.
+
+---
+
+## Session 42 — February 24, 2026
+**Milestone**: M10.1.9–M10.1.10 — Share extension removal, in-app browser, categorization fix
+**Branch**: `feature/M10.1-url-import`
+
+### The Pivot
+
+This session represents a significant UX pivot within M10.1. After completing the share extension (M10.1.7) in Session 41, testing revealed the UX was fundamentally poor — the share sheet flash-and-disappear pattern, combined with the app-switching handoff, felt janky. The user decided to rip it all out and replace with a Paprika-style in-app browser.
+
+This is a textbook example of "technically correct, experientially wrong." The share extension *worked* — App Group handoff, URL scheme, scenePhase fallback, race condition handling — but the resulting user flow didn't meet the bar. The lesson: share extensions are great for content *creation* (posting, saving) but awkward for content *import* where the user needs to see results in the receiving app immediately.
+
+### What Got Built
+
+**M10.1.9 — Share Extension Removal**: Clean deletion of all share extension code. The ~28 pbxproj entries across 9 sections were the trickiest part. The `importService` stayed at app level because the browser needs it.
+
+**M10.1.9 — In-App Browser**: `RecipeBrowserViewModel` manages a WKWebView via KVO observations (URL, title, loading, progress, canGoBack/Forward). The key insight: no settle delay needed. The headless `WKWebViewExtractor` needs 2 seconds for JS to inject JSON-LD, but the in-app browser's page is already rendered by the time the user taps "Import" — extraction is instant.
+
+**M10.1.10 — Categorization Fix**: Found and fixed `categorizeIngredient()` returning phantom category names ("Meat & Seafood", "Dairy", "Pantry", "Other") that don't match seeded Category entity names. New templates now start uncategorized; `CategoryAssignmentModal` handles proper assignment. Also wired the modal into the import save flow — same pattern as CreateRecipeView.
+
+### Architecture Decisions
+
+- **In-app browser over share extension**: Better UX, simpler code (no IPC, no App Groups, no URL scheme), and the extraction reuses existing JSON-LD infrastructure
+- **KVO over Combine for WKWebView**: WKWebView's properties are KVC-observable, not Combine publishers. KVO is the natural fit.
+- **`@Observable` over `ObservableObject`**: The new macro is cleaner for pure state management — no `@Published` wrappers needed
+
+---
+
+## Session 41 — February 24, 2026
+**Milestone**: M10.1.7–M10.1.8 — Share extension + error handling
+**Branch**: `feature/M10.1-url-import`
+
+### What Happened
+
+**M10.1.7 — Share Extension + App Group**
+
+Created the `ForagerShareExtension` Xcode target and implemented the full share-to-import handoff:
+
+1. **ShareViewController** — Rewrote Xcode's `SLComposeServiceViewController` template into a minimal no-UI `UIViewController`. Extracts URL from `NSExtensionItem` attachments via `loadItem(forTypeIdentifier: UTType.url.identifier)`, writes to App Group `UserDefaults`, opens main app via `forager://import` URL scheme, completes request.
+
+2. **Info.plist** — Switched from storyboard entry (`NSExtensionMainStoryboard`) to principal class (`NSExtensionPrincipalClass`). Tightened activation from `TRUEPREDICATE` (Apple rejects this) to `NSExtensionActivationSupportsWebURLWithMaxCount: 1` (URLs only).
+
+3. **App Group entitlements** — Added `group.com.richhayn.forager` to both main app (`forager.entitlements`) and extension (`ForagerShareExtension.entitlements`). Added `CODE_SIGN_ENTITLEMENTS` to extension build settings.
+
+4. **foragerApp.swift** — Lifted `RecipeImportService` from inline creation in RecipeListView to app-level `@StateObject` + `.environmentObject()`. Added `.onOpenURL` handler for `forager://import` scheme and `.onChange(of: scenePhase)` fallback. Both trigger `importService.checkForPendingImport()`.
+
+5. **RecipeImportService** — Uncommented `checkForPendingImport()` stub: reads URL from App Group defaults, clears immediately, triggers `importFromURL()`.
+
+**M10.1.8 — Error Handling + Edge Cases**
+
+Implemented wireframe screen 5's type-specific error presentations:
+- `ImportError` — `errorTitle` + `errorIcon` computed properties
+- `RecipeImportService` — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
+- `RecipeImportSheet` — 4 error views via generic `errorLayout<Actions>()` template
+
+### Design Decisions
+- **No-UI extension**: Subclass `UIViewController` instead of `SLComposeServiceViewController` — the compose sheet is unnecessary for a URL-only handoff. User sees no extension UI at all.
+- **Dual handoff paths**: `.onOpenURL` handles the happy path (extension opens app); `.onChange(of: scenePhase)` handles the fallback (URL stays in defaults until next activation).
+- **Service lifted to app level**: `RecipeImportService` moved from inline creation in RecipeListView to `foragerApp` `@StateObject`, injected as `.environmentObject()`. Necessary so `.onOpenURL` at the app level can trigger imports.
+
+### What Went Well
+- Xcode target wizard handled all pbxproj complexity for the new extension target
+- `PBXFileSystemSynchronizedRootGroup` on the extension directory means no manual file reference management
+- Both targets build clean on first try after all changes
+
+---
+
+## Session 40 — February 24, 2026
+**Milestone**: M10.1.1–M10.1.6 — Import models, extraction, orchestration, UI, detection
+**Branch**: `feature/M10.1-url-import`
+
+### What Happened
+
+Starting M10 implementation — the biggest feature since M7 CloudKit.
+
+**M10.1.1** lays the data model foundation for the entire import system: `ImportDraftRecipe`, `ImportField<T>`, `ImportConfidence`, `ImportFieldSource`, `ImportJobState`, `ImportError`, `RecipeExtractor` protocol, and utility parsers (ISO8601Duration, RecipeYield, HTMLEntity). All 4 files compiled clean on first try.
+
+**M10.1.2** ports the spike's JSON-LD extraction and schema mapping into production. Two files created:
+- `RecipeJSONLDExtractor.swift` — 3-tier HTML extraction strategy (ld+json → inline scripts → __NEXT_DATA__), implements `RecipeExtractor` protocol
+- `SchemaRecipeMapper.swift` — maps schema.org/Recipe dict → `ImportDraftRecipe` with per-field `ImportField<T>` confidence wrappers
+
+Key adaptation from spike: the spike's `MappingContext` returned diagnostic flags as a separate return value. Production inlines these flags to directly drive `ImportConfidence` levels (HowToSections → `.medium`, unusual yield → `.medium`). Also switched from unconditional entity decoding to guard-first with `HTMLEntityDecoder.containsEntities()`.
+
+**Architecture decisions verified against codebase before coding:**
+- Confirmed `RecipeFormData` at `RecipeFormModels.swift:98` has no import-specific fields — separate `ImportDraftRecipe` is the right call
+- Confirmed `RecipeService.createRecipe()` at line 44 calls `save()` immediately — validates the need for a separate atomic `importRecipe()` method (M10.1.3)
+- Confirmed `ParsingSource.import_` already exists in `ParsingTelemetryService.swift:31` — telemetry attribution ready
+- Services/ uses `PBXFileSystemSynchronizedRootGroup` — just create files on disk, no pbxproj edits needed
+
+**Key design choices (M10.1.1):**
+1. `ImportField<T: Equatable>` generic wrapper — avoids repeating confidence/source/wasEdited for each field
+2. `ImportConfidence: Int, Comparable` with raw values — enables sorting for UI dot colors and min() aggregation
+3. `DuplicateResult` uses `NSManagedObjectID` not `Recipe` — reference semantics for Core Data objects
+4. `ImportError.userMessage` computed property — every error case maps to a user-facing string (zero silent failures)
+5. ISO8601DurationParser and RecipeYieldParser ported directly from spike with no changes needed
+
+**Key design choices (M10.1.2):**
+6. Confidence levels driven by parsing context — HowToSection nesting and unusual yield formats get `.medium` vs `.high`
+7. `HTMLEntityDecoder.containsEntities()` guard-first pattern in instruction text cleaning
+8. `filterIngredientHeaders()` strips section headers ("For the sauce:") from ingredient lists
+
+Both M10.1.1 (4 files) and M10.1.2 (2 files) compile clean. BUILD SUCCEEDED on first try for both.
+
+**M10.1.3** builds the import orchestrator — `RecipeImportService.swift`. This is the central coordinator: URL fetch → extraction → preview → atomic save.
+
+Key verification: the PRD flagged a concern about `IngredientTemplateService.findOrCreateTemplate()` and `incrementUsage()` calling `context.save()` internally. Confirmed this is true (lines 437 and 474). Solution: **child context pattern** — create a child of viewContext, run all template/ingredient operations there (their saves push to parent in memory only), then call `viewContext.save()` exactly once to persist everything to disk atomically. If the save fails, `viewContext.rollback()` discards everything cleanly.
+
+The orchestrator also implements the error collection pattern: extractors return `nil` ("not my format") or throw `ImportError` ("my format but failed"). The orchestrator keeps the last thrown error and shows it if all extractors pass; if no extractor claims the input, shows "No recipe found."
+
+M10.1.3 (1 file) compiles clean. BUILD SUCCEEDED — 3 for 3 on first try across all sub-phases.
+
+**M10.1.6** adds duplicate detection — exact sourceURL match via Core Data fetch predicate, plus fuzzy title match using Levenshtein distance (Wagner-Fischer algorithm, O(n) space). Integrated into `RecipeImportService.checkDuplicate(for:)`.
+
+**M10.1.5** adds WKWebView fallback extractor for ~30% of recipe sites that inject JSON-LD via client-side JS. Uses `CheckedContinuation` to bridge `WKNavigationDelegate` callbacks to async/await. Key pattern: nil-check continuation before resuming to handle the race between didFinish+settle, timeout, and didFail code paths.
+
+**M10.1.4** builds the import preview UI — 3 view files + RecipeListView integration:
+- `RecipeImportSheet.swift` — entry point with URL input, state-driven content
+- `RecipeImportPreviewView.swift` — extracted fields with confidence dots (green/amber/red/gray)
+- `DuplicateResolutionSheet.swift` — modal dialog for duplicate resolution
+- Manual pbxproj entries for all 3 files (PBXFileReference, PBXBuildFile, PBXGroup, PBXSourcesBuildPhase)
+- Import button added to RecipeListView toolbar (square.and.arrow.down icon)
+
+All sub-phases M10.1.1–M10.1.6 compile clean. 7 BUILD SUCCEEDED on first try, zero regressions.
+
+**M10.1 View alignment to wireframes** (continued session): Rewrote all 3 import view files + added service layer method to align with wireframes:
+
+1. **RecipeImportPreviewView.swift** — Major layout rewrite from simplified prototype to wireframe-accurate:
+   - Per-ingredient bordered card rows with confidence dots + qty/name split (replaces numbered gray box)
+   - Numbered instruction step circles with "Show all N steps" collapse (replaces full text block)
+   - Compact metadata row with dot separators "N servings · N min prep · N min cook" (replaces separate sections)
+   - Warning banner with `surfaceWarning` + `warningFG` border (replaces inline text)
+   - Partial meta field cards with dashed borders for empty fields
+   - Save moved to nav bar `.confirmationAction` toolbar (removed bottom save bar)
+
+2. **DuplicateResolutionSheet.swift** — Added "Replace Existing" as third button, updated title "Similar Recipe Found", all buttons use `.bordered` style matching wireframe screen 4.
+
+3. **RecipeImportSheet.swift** — Wired up `replaceExistingWithDraft()` → `importService.replaceExistingRecipe()`, hides parent Cancel when in `.needsReview` state.
+
+4. **RecipeImportService.swift** — Added `replaceExistingRecipe(objectID:with:)` using child context pattern for atomic in-place update (preserves PlannedMeal references and CloudKit identity).
+
+5. **ImportJobState** — Added `isReviewing` computed property for nav bar coordination.
+
+BUILD SUCCEEDED with zero errors. All existing functionality preserved.
+
+### Insights Logged
+- Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
+- ImportDraftRecipe separation rationale vs RecipeFormData
+- ImportField<T: Equatable> generic wrapper design
+- Confidence-from-context pattern (MappingContext flags → ImportConfidence levels)
+- Guard-before-work pattern (containsEntities check before decode)
+- Child context for atomic saves (template service saves internally)
+- Orchestrator error collection pattern (nil vs throw semantics)
+- CheckedContinuation multi-resume guard for WKWebView async bridge
+- Manual PBXGroup friction for view files vs auto-detected Services/
+- SwiftUI toolbar coordination: parent hides Cancel, child manages its own via `.toolbar`
+- Child context `existingObject(with:)` for atomic in-place replace preserving object ID
+- HTML wireframe CSS classes → SwiftUI component mapping (bordered HStack, Circle Text, StrokeStyle dash)
+
+---
+
 ## Session 39 — February 24, 2026
 **Milestone**: M10 Spike — Codex Round 2 Review Fixes
 **Branch**: `spike/M10-import-prd-preparation`

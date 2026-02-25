@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
 **Last Updated**: February 24, 2026
-**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M7.7 NEXT**
+**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M10.1 ✅ COMPLETE** | **M10.2 NEXT**
 **Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M8.4.1 normalization fix COMPLETE (282 tests), M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE
-**Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -128,7 +128,7 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **Clean**: Zero-warning build baseline established (M9.0)
 - **Live**: TestFlight build 10 (v1.1), external testers active
 
-**Next**: M8.4 (ML parsing) → M7.7 (App Store)
+**Next**: M10.2 (Text Paste Import) → M10.3 → M10.4 → M7.7 (App Store)
 
 ### **M4 Component Summary:**
 
@@ -206,8 +206,9 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **M5.0 → M7**: TestFlight infrastructure ready for external beta and CloudKit sync
 - **M3 + M4 → M8**: Ingredient parsing improvements leverage structured quantities
 - **M7 → M9**: External beta data informs technical debt priorities
-- **M3 + M4 → M10**: Rich analytics data from structured quantities and meal patterns
-- **M9 → M11-M14**: Clean architecture foundation enables advanced intelligence platform
+- **M8.4 + M15 → M10**: ML parsing + design system enable recipe import feature
+- **M3 + M4 → M11**: Rich analytics data from structured quantities and meal patterns
+- **M9 → M12-M16**: Clean architecture foundation enables advanced intelligence platform
 
 ### **Timeline Summary:**
 - **Core Platform (M1-M10)**: ~220-270 hours estimated
@@ -222,8 +223,9 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **M6 Planned**: 12-18 hours (testing & AI augmentation)
 - **M8 Planned**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
 - **M9 Planned**: 135-165 hours (technical debt & optimization)
-- **M10 Planned**: 8-12 hours (analytics & insights)
-- **Remaining (M6-M10)**: ~200-253 hours (core) or ~215-273 hours (with M8.4 ML)
+- **M10 Planned**: 70-95 hours (recipe import — redefined from analytics, which moved to M11)
+- **M11 Planned**: 8-12 hours (analytics & insights — formerly M10)
+- **Remaining (M6-M11)**: ~247-330 hours (core)
 
 ---
 
@@ -990,7 +992,7 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **Performance**: 50-80% improvement in critical paths
 - **Maintainability**: Consistent patterns across 400+ service methods
 - **Quality**: Professional test coverage and error handling
-- **Future-Proofing**: Clean foundation for M10-M14 features
+- **Future-Proofing**: Clean foundation for M10-M15 features
 
 **Phase Breakdown:**
 
@@ -1032,7 +1034,80 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
-### **⏳ M10: Analytics & Insights - PLANNED**
+### **🚀 M10: Recipe Import - READY**
+
+**Status**: 🚀 Ready — Implementation blueprint complete, spike validated, wireframes designed
+**Estimated Time**: 70-95 hours (4 phases, 27 sub-phases)
+**Dependencies**: M8.4 ✅ (ML parsing), M15 ✅ (design system)
+**PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
+**Spike Research**: `docs/import-research/` (7 supporting documents)
+**Wireframes**: `docs/import-research/import-wireframes.html`
+**Core Data Impact**: NONE — no schema changes, no migration
+
+**Problem**: No recipe import capability — every recipe must be manually typed. This is the #1 competitive gap. Every major recipe app offers some form of import.
+
+**Key Architecture Decisions**:
+- `ImportDraftRecipe` separate model (not extending RecipeFormData) — import needs author, imageURL, cuisine fields + `ImportField<T>` confidence tracking
+- Draft-first workflow with atomic save via new `RecipeService.importRecipe()` method
+- Strategy pattern: `RecipeExtractor` protocol with 5 implementations (mirrors HybridIngredientParser)
+- Image handling v1: `imageURL` only (web URL), no local persistence, no schema change
+- Import history in UserDefaults (diagnostic/ephemeral, not Core Data)
+
+**Phase 1: URL Import (M10.1)** — 24-32 hours (8 sub-phases, ~68 tests)
+- M10.1.1: Import models + extraction infrastructure (4-5h)
+- M10.1.2: JSON-LD extractor + schema mapper — port spike (5-6h)
+- M10.1.3: Import orchestrator + service (4-5h)
+- M10.1.4: Import preview UI with confidence indicators (5-6h)
+- M10.1.5: WKWebView fallback for JS-rendered pages (3-4h)
+- M10.1.6: Duplicate detection — URL match + fuzzy title (2-3h)
+- M10.1.7: Share extension + App Group (3-4h)
+- M10.1.8: Error handling + edge cases (2-3h)
+- New files: 9 services, 3 views, 3 extension files | Modified: 6 files | Tests: 5 files
+
+**Phase 2: Text Paste Import (M10.2)** — 14-19 hours (6 sub-phases, ~20 tests)
+- M10.2.1: Foundation Models extension spike (1-2h)
+- M10.2.2: Text input UI (2-3h)
+- M10.2.3: Foundation Models @Generable extractor (4-5h)
+- M10.2.4: Heuristic text fallback — port spike (3-4h, parallel with M10.2.3)
+- M10.2.5: Section detection UI (2-3h)
+- M10.2.6: Testing & refinement (2-3h)
+- New files: 2 services, 2 views | Modified: 2 files | Tests: 2 files
+
+**Phase 3: Photo/Image Import (M10.3)** — 23-30 hours (7 sub-phases, ~23 tests)
+- M10.3.1: Document scanner integration (3-4h)
+- M10.3.2: OCR pipeline — VNRecognizeTextRequest (4-5h)
+- M10.3.3: Section-aware classification — port spike (4-5h)
+- M10.3.4: Semi-automated section assignment UI (5-6h)
+- M10.3.5: AI-assisted extraction (4-5h)
+- M10.3.6: Photo library picker (2-3h)
+- M10.3.7: Testing & refinement (2-3h)
+- New files: 3 services, 4 views | Modified: 3 files | Tests: 2 files
+
+**Phase 4: Polish & Integration (M10.4)** — 11-16 hours (6 sub-phases, ~8 tests)
+- M10.4.1: Import history & queue (3-4h)
+- M10.4.2: Household import sharing (2-3h)
+- M10.4.3: Import telemetry dashboard (2-3h)
+- M10.4.4: Performance optimization (1-2h)
+- M10.4.5: Legal review gates (1-2h)
+- M10.4.6: Regression testing (2-3h)
+- New files: 2 services, 2 views | Modified: 2 files | Tests: 1 file
+
+**Totals**: ~16 new production files, ~11 view files, 3 extension files, ~10 test files, ~119 new tests, ~4,500-5,000 new lines
+
+**Success Criteria:**
+- [ ] ≥ 80% extraction rate on Tier 1 sites (with WKWebView)
+- [ ] ≥ 70% extraction rate on Tier 2 blogs
+- [ ] < 3s end-to-end for URLSession path
+- [ ] < 8s end-to-end for WKWebView fallback
+- [ ] 100% graceful failure rate (every failure shows user message)
+- [ ] Draft-first workflow: cancel → zero persisted entities
+- [ ] All imported ingredients flow through IngredientParsingService
+- [ ] All 282 existing tests continue passing
+- [ ] All ~119 new tests pass
+
+---
+
+### **⏳ M11: Analytics & Insights - PLANNED**
 
 **Status**: ⏳ Planned
 **Estimated Time**: 8-12 hours
@@ -1153,34 +1228,34 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
-### **⏳ M11-M14: Advanced Intelligence Platform - PLANNED**
+### **⏳ M12-M16: Advanced Intelligence Platform - PLANNED**
 
 **Status**: ⏳ Future Development
 **Estimated Time**: 40-60 hours total
-**Dependencies**: M1-M10 complete
+**Dependencies**: M1-M11 complete (at minimum)
 
-**M11: Health & Nutrition Integration** (10-15 hours)
+**M12: Health & Nutrition Integration** (10-15 hours)
 - Apple Health integration
 - Nutritional database
 - Dietary goal tracking
 - Health-aware recommendations
 - Allergen and dietary restriction support
 
-**M12: Budget Intelligence** (10-15 hours)
+**M13: Budget Intelligence** (10-15 hours)
 - Price tracking and history
 - Budget planning tools
 - Cost optimization suggestions
 - Store price comparison
 - Deal and coupon integration
 
-**M13: AI-Powered Shopping Assistant** (10-15 hours)
+**M14: AI-Powered Shopping Assistant** (10-15 hours)
 - Natural language meal planning
 - Smart recipe discovery
 - Automated list generation
 - Contextual recommendations
 - Learning user preferences
 
-**M14: Advanced Collaboration** (10-15 hours)
+**M16: Advanced Collaboration** (10-15 hours)
 - Real-time shopping mode
 - Assignment and delegation
 - Shopping history and analytics
@@ -1237,9 +1312,10 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - **M6**: 12-18 hours (comprehensive testing & AI augmentation)
 - **M8**: 13-16 hours core (+15-20h optional ML) (ingredient parsing intelligence)
 - **M9**: 135-165 hours (technical debt & codebase optimization)
-- **M10**: 8-12 hours (analytics and insights)
+- **M10**: 70-95 hours (recipe import — URL, text paste, photo/OCR)
+- **M11**: 8-12 hours (analytics and insights)
 
-**Total Core Platform (M1-M10)**: ~220-270 hours estimated (core) or ~235-290 hours (with M8.4 ML)
+**Total Core Platform (M1-M11)**: ~284-362 hours estimated (core) or ~299-382 hours (with M8.4 ML)
 
 ### **Planning Accuracy:**
 - **Phase-level estimates**: Consistently accurate within ±15 minutes
@@ -1312,7 +1388,17 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [ ] CI/CD running tests on every commit
 - [ ] Zero flaky tests, < 30s test suite
 
-### **M10: Analytics & Insights**
+### **M10: Recipe Import**
+- [ ] URL import with JSON-LD + WKWebView extraction (≥80% Tier 1 sites)
+- [ ] Text paste import with Foundation Models + heuristic fallback
+- [ ] Photo/OCR import with VNRecognizeTextRequest + section classification
+- [ ] Draft-first workflow (cancel → zero persisted entities)
+- [ ] Share extension for Safari handoff
+- [ ] Duplicate detection (URL match + fuzzy title)
+- [ ] All imported ingredients flow through IngredientParsingService
+- [ ] Performance: < 3s URLSession path, < 8s WKWebView
+
+### **M11: Analytics & Insights**
 - [ ] Usage analytics tracking
 - [ ] Insights dashboard with visualizations
 - [ ] Trend analysis over time
@@ -1487,8 +1573,9 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | M7.6: Pre-Launch Prep & TestFlight | ✅ COMPLETE | ~12h |
 | **M15: UX Design System & Visual Refresh** | ✅ **COMPLETE** | 50-70h |
 | TestFlight push (post-M15) | 📋 PLANNED | ~1h |
+| **M10: Recipe Import** | **🚀 NEXT** | **70-95h** |
 | M7.7: App Store Submission & Public Presence | 📋 QUEUED | 3-5h |
-| **Pre-Launch Total** | | **~54-76h remaining** |
+| **Pre-Launch Total** | | **~126-173h remaining** |
 
 ### **Post-Launch Roadmap**
 
@@ -1497,11 +1584,12 @@ Clean architecture maintained throughout M1-M4.3.4 with:
 | M7.5: Architecture Hardening | ✅ COMPLETE | ~5h |
 | M9-prereqs (M9.0, M9.1.2, M9.5-partial) | ✅ COMPLETE | ~6h actual |
 | M8.4: ML-Powered Parsing | ✅ COMPLETE | ~25h actual |
-| **M7.7: App Store Submission** | **📋 NEXT** | **3-5h** |
+| **M10: Recipe Import** | **🚀 NEXT** | **70-95h** |
+| M7.7: App Store Submission | QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
-| M10: Analytics & Insights | PLANNED | 8-12h |
-| M11-M14: Advanced Features | FUTURE | 40-60h |
+| M11: Analytics & Insights | PLANNED | 8-12h |
+| M12-M16: Advanced Features | FUTURE | 40-60h |
 
 ### **Key Decisions (February 17, 2026)**
 

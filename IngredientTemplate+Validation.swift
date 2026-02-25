@@ -62,7 +62,7 @@ extension IngredientTemplate {
             throw ValidationError.nameTooShort
         }
         
-        if trimmedName.count > 100 {
+        if trimmedName.count > 250 {
             throw ValidationError.nameTooLong
         }
         
@@ -253,7 +253,7 @@ extension IngredientTemplate {
             case .nameTooShort:
                 return "Ingredient template name must be at least 2 characters"
             case .nameTooLong:
-                return "Ingredient template name cannot exceed 100 characters"
+                return "Ingredient template name cannot exceed 250 characters"
             case .duplicateName(let name):
                 return "An ingredient template named '\(name)' already exists"
             case .categoryEmpty:
@@ -280,7 +280,7 @@ extension IngredientTemplate {
             case .nameTooShort:
                 return "Use a longer, more descriptive name"
             case .nameTooLong:
-                return "Shorten the ingredient name to 100 characters or less"
+                return "Shorten the ingredient name to 250 characters or less"
             case .duplicateName:
                 return "Use the existing template or choose a different name"
             case .categoryEmpty:

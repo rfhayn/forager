@@ -1,12 +1,107 @@
 # Current Development Story
 
-**Last Updated**: February 24, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE**
+**Last Updated**: February 25, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 TESTING**
 **Total Progress**: ~241 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M8.4.1 Normalization Qualifier Reclassification — ✅ **COMPLETE**
+**Current Branch**: `feature/M10.1-url-import`
+**Current Milestone**: M10.1 URL Import — 🧪 **TESTING** (10/10 sub-phases + 2 bug fixes complete, integration testing before PR)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M7.7 → M6 → M9 remaining → M10+
+**Next Priority**: M10.2 (Text Paste Import) → M7.7 → M6 → M9 → M11+
+
+---
+
+## 🔧 **M10: RECIPE IMPORT - ACTIVE**
+
+**Status**: 🧪 **TESTING** — M10.1 URL Import complete (8/8 sub-phases + 2 follow-ups + 2 bug fixes), integration testing before PR merge
+**Estimated**: 70-95 hours (4 phases)
+**PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
+**Spike Research**: `docs/import-research/` (7 supporting documents)
+**Wireframes**: `docs/import-research/import-wireframes.html`
+**Branch**: Create `feature/M10.1-url-import`
+
+### Phase Overview
+
+| Phase | Scope | Hours | Sub-phases | New Tests |
+|-------|-------|-------|------------|-----------|
+| M10.1: URL Import | JSON-LD + WKWebView extraction, Share extension, preview UI, duplicate detection | 24-32h | M10.1.1-M10.1.8 | ~68 |
+| M10.2: Text Paste Import | Foundation Models `@Generable` + heuristic fallback, shared line classifier, section detection | 14-19h | M10.2.1-M10.2.6 | ~35 |
+| M10.3: Photo/Image Import | OCR + section classification, AI-assisted extraction, Mela-style UI | 21-28h | M10.3.1-M10.3.7 | ~8 |
+| M10.4: Polish & Integration | History, household sharing, telemetry dashboard, regression testing | 11-16h | M10.4.1-M10.4.6 | ~8 |
+
+### Key Architecture Decisions
+- **ImportDraftRecipe (separate model)** — NOT extending RecipeFormData; import needs fields it lacks (author, imageURL, cuisine) + field-level confidence tracking via `ImportField<T>` generic wrapper. Same save validation gate as manual creation (title + ≥1 ingredient + instructions required).
+- **Draft-first workflow** — `ImportDraftRecipe` in-memory staging, persist only on confirm via atomic `RecipeService.importRecipe()` using `factory.make(Recipe.self, in: scope) { ... }` for household scope safety (single `context.save()`)
+- **Strategy pattern extractors** — `RecipeExtractor` protocol with 5 implementations (mirrors `HybridIngredientParser`); return `nil` pattern like `MLIngredientParser.init?()`
+- **Image handling v1** — `imageURL` (web URL) only via AsyncImage; no Core Data schema change; local persistence deferred
+- **Flat ingredient groups v1** — Multi-component recipes flattened; structured `RecipeSection` is future milestone
+- **Telemetry ownership** — PTS owns raw import events (Documents directory JSON), ImportTelemetryService (M10.4) is read-only KPI aggregation, ImportHistoryService is user-facing log (UserDefaults)
+- **Zero Core Data schema changes** — No model version bump, no migration needed
+
+### Key Targets
+- ≥ 80% extraction rate on Tier 1 sites, ≥ 70% on Tier 2 blogs
+- < 3s URLSession path, < 8s WKWebView fallback
+- 100% graceful failure rate (every failure → user-facing message)
+- ~119 new tests across 10 test files, ~4,500-5,000 new lines
+- Spike-validated: 28 sites tested, 12/28 server-rendered, ~8 more via WKWebView
+
+### M10.1 Implementation Progress
+1. ✅ M10.1.1: Import models + extraction infrastructure — COMPLETE
+2. ✅ M10.1.2: JSON-LD extractor + schema mapper — COMPLETE
+3. ✅ M10.1.3: Import orchestrator + service — COMPLETE
+4. ✅ M10.1.4: Import preview UI — COMPLETE (wireframe-aligned rewrite in progress)
+5. ✅ M10.1.5: WKWebView fallback — COMPLETE
+6. ✅ M10.1.6: Duplicate detection — COMPLETE (+ "Replace Existing" service method added)
+7. ✅ M10.1.7: Share extension + App Group — COMPLETE (removed in M10.1.9 — poor UX)
+8. ✅ M10.1.8: Error handling + edge cases — COMPLETE
+9. ✅ M10.1.9: Share extension removal + in-app browser — COMPLETE (Paprika-style WKWebView)
+10. ✅ M10.1.10: Fix ingredient categorization + CategoryAssignmentModal — COMPLETE
+
+**View wireframe alignment** (M10.1.4 follow-up):
+- ✅ RecipeImportPreviewView — rewritten to match wireframe screens 1 & 3
+- ✅ DuplicateResolutionSheet — 3 buttons, "Similar Recipe Found" title
+- ✅ RecipeImportSheet — Replace Existing wired up, nav bar coordination
+- ✅ RecipeImportService — `replaceExistingRecipe()` method added
+- ✅ ImportJobState — `isReviewing` property for nav bar coordination
+- ✅ PRD updated with implementation status markers
+- ✅ RecipeImportSheet errorView — refactored to 4 type-specific presentations (wireframe screen 5)
+- ✅ ImportError — `errorTitle` + `errorIcon` computed properties for UI dispatch
+- ✅ RecipeImportService — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
+- ~~ForagerShareExtension — removed in M10.1.9 (poor UX, replaced with in-app browser)~~
+- ✅ RecipeBrowserViewModel — KVO-observed WKWebView state + recipe extraction
+- ✅ RecipeBrowserView — Full-screen in-app browser with address bar, nav, import button
+- ✅ RecipeListView — Import button → Menu with "Browse for Recipe" + "Paste URL"
+- ✅ ImportSaveResult — Returns uncategorized template IDs for CategoryAssignmentModal
+- ✅ RecipeImportSheet — CategoryAssignmentModal wired into import save flow
+- ✅ IngredientParsingService — Removed phantom categorizeIngredient() method
+
+### Files Created/Modified Across Sessions
+**Services/Import/** (auto-detected):
+- `ImportDraftRecipe.swift` — Core models, state machine, error taxonomy
+- `RecipeExtractor.swift` — Protocol + input enum + context struct
+- `ISO8601DurationParser.swift` — Duration + yield parsers
+- `HTMLEntityDecoder.swift` — HTML entity decoding
+- `RecipeJSONLDExtractor.swift` — 3-tier JSON-LD extraction
+- `SchemaRecipeMapper.swift` — Schema.org dict → ImportDraftRecipe
+- `RecipeImportService.swift` — Import orchestrator (URL fetch, extraction, atomic save)
+- `RecipeBrowserViewModel.swift` — M10.1.9: WKWebView state management + recipe extraction
+- `DuplicateDetectionService.swift` — Exact URL + fuzzy title matching
+- `WKWebViewExtractor.swift` — JS-rendered fallback extractor
+
+**forager/** (manual pbxproj):
+- `RecipeImportSheet.swift` — Entry point sheet
+- `RecipeImportPreviewView.swift` — Preview with confidence dots
+- `DuplicateResolutionSheet.swift` — Duplicate resolution modal
+- `RecipeBrowserView.swift` — M10.1.9: In-app WKWebView browser
+
+**Modified**:
+- `RecipeListView.swift` — Import Menu with browse + paste options
+- `IngredientParsingService.swift` — Removed categorizeIngredient()
+- `forager.entitlements` — Removed App Groups (share extension cleanup)
+- `foragerApp.swift` — Removed share extension handoff code
+- `forager.xcodeproj/project.pbxproj` — Share extension removed, browser view added
+
+**Deleted** (M10.1.9):
+- `ForagerShareExtension/` — Entire share extension target (poor UX, replaced with in-app browser)
 
 ---
 
@@ -1659,12 +1754,13 @@ Mechanical migration of ~300+ hardcoded color, typography, and radius values to 
 | M9.0: Warning Resolution | ✅ COMPLETE | <1h |
 | M9.1.2: Centralize extractCleanIngredientName | ✅ COMPLETE | ~2h |
 | M9.5-partial: Parser Dependency Injection | ✅ COMPLETE | ~3h |
-| **M8.4: ML-Powered Parsing** | **📋 NEXT** | **23-32h** |
-| M7.7: App Store Submission | 📋 QUEUED | 3-5h |
+| M8.4: ML-Powered Parsing | ✅ COMPLETE | ~25h actual |
+| **M10: Recipe Import** | **🚀 NEXT** | **70-95h** |
+| M7.7: App Store Submission | QUEUED | 3-5h |
 | M6: Testing Foundation | PLANNED | 20-30h |
 | M9: Remaining Technical Debt | PLANNED | ~120h |
-| M10: Analytics & Insights | PLANNED | 8-12h |
-| M11-M14: Advanced Features | FUTURE | 40-60h |
+| M11: Analytics & Insights | PLANNED | 8-12h |
+| M12-M16: Advanced Features | FUTURE | 40-60h |
 
 ---
 

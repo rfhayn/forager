@@ -66,6 +66,9 @@ struct foragerApp: App {
     @StateObject private var ingredientTemplateService: IngredientTemplateService
     @StateObject private var ingredientParsingService: IngredientParsingService
 
+    // M10.1: Import service at app level for browser and URL import
+    @StateObject private var importService: RecipeImportService
+
     // Coach mark onboarding
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showCoachMarks = false
@@ -95,6 +98,10 @@ struct foragerApp: App {
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
+
+        // M10.1: Import service for browser and URL import
+        let importSvc = RecipeImportService(context: context, parsingService: parsingService)
+        _importService = StateObject(wrappedValue: importSvc)
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
@@ -164,6 +171,7 @@ struct foragerApp: App {
                     .environmentObject(weeklyListService)
                     .environmentObject(ingredientTemplateService)
                     .environmentObject(ingredientParsingService)
+                    .environmentObject(importService)
                     .task {
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         if householdService.currentHousehold == nil {

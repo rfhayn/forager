@@ -2,8 +2,8 @@
 
 **Last Updated**: February 22, 2026
 **Version**: 6.9
-**Current Milestone**: M8.4.1 ✅ COMPLETE | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.7 NEXT
-**Execution Order**: M7.7 (3-5h) → M6 (20-30h) → M9 remaining (~120h) → M10+
+**Current Milestone**: M8.4.1 ✅ COMPLETE | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M10 NEXT
+**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -610,97 +610,172 @@ _Note: Full requirements for M9 are detailed in the dedicated PRD. This mileston
 
 ---
 
-## 🔮 **M10: ANALYTICS & INSIGHTS - PLANNED** 📊
+## 🚀 **M10: RECIPE IMPORT - READY** 📥
 
-**Status**: ⏳ Planned
-**Estimated**: 16-24 hours
-**Dependencies**: M7 complete (structured data from meal planning), M9 complete (clean architecture)
-**Summary**: Usage analytics, insights dashboard, and data-driven recommendations
+**Status**: 🚀 Ready — Implementation blueprint complete, spike validated, wireframes designed
+**Estimated**: 70-95 hours (4 phases, 27 sub-phases)
+**Dependencies**: M8.4 ✅ (ML parsing), M15 ✅ (design system)
+**PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
+**Core Data Impact**: NONE — no schema changes, no migration
+**Summary**: URL, text paste, and photo/OCR recipe import with draft-first workflow using separate `ImportDraftRecipe` model, `RecipeExtractor` strategy pattern, and `ImportField<T>` confidence tracking
 
-### **Functional Requirements - Analytics Infrastructure (M10.1)**
+### **Architecture Decisions (Implementation Plan)**
 
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-AN-001** | **Analytics service architecture** | Data aggregation and caching | M10.1 | 🎯 **Performance** |
-| **FR-AN-002** | **Query optimization** | Efficient trend queries | M10.1 | 🎯 **Responsiveness** |
+| Decision | Resolution |
+|----------|-----------|
+| Draft model | Separate `ImportDraftRecipe` struct (NOT extending RecipeFormData) — needs author, imageURL, cuisine + confidence tracking |
+| Save method | New atomic `RecipeService.importRecipe(from:ingredientTexts:sourceURL:)` — single `context.save()` |
+| Extractor pattern | `RecipeExtractor` protocol returning `nil` (mirrors `MLIngredientParser.init?()`) |
+| Image handling v1 | `imageURL` web URL only via AsyncImage — no Core Data schema change; local persistence deferred |
+| Ingredient groups v1 | Flattened with label lines — structured `RecipeSection` is future milestone |
+| Import history | UserDefaults JSON array (diagnostic/ephemeral, not Core Data) |
 
-### **Functional Requirements - Insights Dashboard (M10.2)**
-
-| ID | Requirement | Target Implementation | Milestone | Value |
-|----|-------------|----------------------|-----------|-------|
-| **FR-IN-001** | **Usage statistics** | Recipe popularity, ingredient frequency | M10.2 | 🎯 **User insights** |
-| **FR-IN-002** | **Cost tracking** | Budget trends and analysis | M10.2 | 🎯 **Financial awareness** |
-| **FR-IN-003** | **Visualizations** | Charts and graphs for trends | M10.2 | 🎯 **Data clarity** |
-
-### **Functional Requirements - Recommendations (M10.3)**
+### **Functional Requirements - URL Import (M10.1)**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-RE-001** | **Recipe suggestions** | Smart recommendations based on history | M10.3 | 🎯 **Discovery** |
-| **FR-RE-002** | **Seasonal highlights** | Ingredient seasonality awareness | M10.3 | 🎯 **Freshness** |
-| **FR-RE-003** | **Budget optimization** | Cost-saving tips and recommendations | M10.3 | 🎯 **Value** |
+| **FR-RI-001** | **JSON-LD extraction** | Server-rendered HTML via URLSession, 3-tier strategy (ld+json, inline scripts, __NEXT_DATA__) | M10.1.2 | 🎯 **Core import** |
+| **FR-RI-002** | **WKWebView fallback** | JS-rendered page extraction for WordPress blogs, headless with 8s timeout | M10.1.5 | 🎯 **Coverage** |
+| **FR-RI-003** | **Schema.org mapping** | ISO 8601 + yield parsing → `ImportDraftRecipe` with `ImportField<T>` confidence | M10.1.2 | 🎯 **Data quality** |
+| **FR-RI-004** | **Import preview UI** | Confidence dots (green/amber/red), inline editing, warning banner for partial | M10.1.4 | 🎯 **User control** |
+| **FR-RI-005** | **Share extension** | Safari Share Sheet → App Group UserDefaults → main app handoff | M10.1.7 | 🎯 **Convenience** |
+| **FR-RI-006** | **Duplicate detection** | Exact URL match + Levenshtein distance < 3 fuzzy title match | M10.1.6 | 🎯 **Data integrity** |
+| **FR-RI-007** | **Draft-first workflow** | `ImportDraftRecipe` in-memory staging, persist only on confirm, atomic save | M10.1.1 | 🎯 **Safety** |
 
-### **Functional Requirements - Export & Sharing (M10.4)**
+### **Functional Requirements - Text Paste Import (M10.2)**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-EX-001** | **Data export** | Export capabilities for analytics data | M10.4 | 🎯 **Data portability** |
-| **FR-EX-002** | **Report generation** | Formatted reports for sharing | M10.4 | 🎯 **Sharing** |
+| **FR-RI-008** | **Text input UI** | Large TextEditor, paste-from-clipboard, "Extract Recipe" button | M10.2.2 | 🎯 **Flexibility** |
+| **FR-RI-009** | **Foundation Models extraction** | `@Generable ImportedRecipeGenerable` struct with `@Guide` annotations | M10.2.3 | 🎯 **AI quality** |
+| **FR-RI-010** | **Heuristic fallback** | Line scoring with section-aware context boosting (ported from spike) | M10.2.4 | 🎯 **Universal** |
+| **FR-RI-011** | **Section detection** | Color-coded highlights, tap-to-reclassify lines | M10.2.5 | 🎯 **Accuracy** |
+
+### **Functional Requirements - Photo/Image Import (M10.3)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-RI-012** | **Document scanner** | `VNDocumentCameraViewController` via UIViewControllerRepresentable | M10.3.1 | 🎯 **Capture** |
+| **FR-RI-013** | **OCR pipeline** | `VNRecognizeTextRequest` accurate mode, 4 languages, returns `OCRLine` | M10.3.2 | 🎯 **Text extraction** |
+| **FR-RI-014** | **Section classification** | `OCRLineClassifier` with heuristic scoring + context boosting (ported from spike) | M10.3.3 | 🎯 **Structure** |
+| **FR-RI-015** | **Semi-automated assignment** | Mela-style overlay with TITLE/META/INGREDIENTS/STEPS section tags | M10.3.4 | 🎯 **User review** |
+| **FR-RI-016** | **AI-assisted extraction** | OCR text → `FoundationModelsExtractor` → structured recipe | M10.3.5 | 🎯 **Quality** |
+
+### **Functional Requirements - Polish & Integration (M10.4)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-RI-017** | **Import history** | `ImportHistoryService` — UserDefaults, 100-entry retention, auto-pruned | M10.4.1 | 🎯 **Management** |
+| **FR-RI-018** | **Household sharing** | Auto scope assignment via `factory.make(Recipe.self, in: scope) { ... }` — factory handles store placement and householdKey | M10.4.2 | 🎯 **Collaboration** |
+| **FR-RI-019** | **Import telemetry** | `ImportTelemetryService` — success rate, latency, correction rate, failure reasons | M10.4.3 | 🎯 **Observability** |
 
 ### **Non-Functional Requirements - M10**
 
 | ID | Requirement | Target | Milestone | Value |
 |----|-------------|--------|-----------|-------|
-| **NFR-AN-001** | **Dashboard load time** | < 1s for analytics display | M10.2 | 🎯 **User experience** |
-| **NFR-AN-002** | **Query performance** | < 0.5s for data retrieval | M10.1 | 🎯 **Snappy** |
-| **NFR-AN-003** | **Data accuracy** | 100% accurate based on Core Data | M10 All | 🎯 **Trust** |
+| **NFR-RI-001** | **URL extraction latency** | < 3s URLSession, < 8s WKWebView | M10.1 | 🎯 **Speed** |
+| **NFR-RI-002** | **Tier 1 extraction rate** | ≥ 80% (with WKWebView) | M10.1 | 🎯 **Coverage** |
+| **NFR-RI-003** | **Graceful failure rate** | 100% (every failure shows user message) | M10.1 | 🎯 **UX quality** |
+| **NFR-RI-004** | **OCR accuracy** | ≥ 95% clean printed, ≥ 80% neat handwriting | M10.3 | 🎯 **Accuracy** |
+| **NFR-RI-005** | **Zero data pollution** | Cancel → zero persisted entities | M10 All | 🎯 **Safety** |
+| **NFR-RI-006** | **Zero regressions** | All 282 existing tests continue passing | M10 All | 🎯 **Stability** |
+| **NFR-RI-007** | **New test coverage** | ~119 new tests across 10 test files | M10 All | 🎯 **Quality** |
 
-**M10 Summary (Planned)**: 12 requirements including analytics infrastructure (2), insights dashboard (3), recommendations (3), export/sharing (2), and non-functional requirements (3). Leverages clean ingredient data from M8 and optimized architecture from M9 to provide data-driven insights.
+**M10 Summary (Ready)**: 26 requirements including URL import (7), text paste (4), photo/image (5), polish (3), and non-functional (7). Implementation blueprint with 27 sub-phases, ~16 new production files, ~11 view files, ~119 new tests, zero Core Data schema changes. Spike-validated against 28 sites. PRD addresses 5 Codex review findings with revised architecture decisions.
 
 ---
 
-## 🔮 **M11-M13: ADVANCED INTELLIGENCE PLATFORM - PLANNED**
+## 🔮 **M11: ANALYTICS & INSIGHTS - PLANNED** 📊
 
-### **M11: Health & Nutrition Integration** (10-15h core)
+**Status**: ⏳ Planned
+**Estimated**: 8-12 hours
+**Dependencies**: M4 complete, M8 clean parsing, M9 optimized architecture
+**Summary**: Usage analytics, insights dashboard, and data-driven recommendations
+
+### **Functional Requirements - Analytics Infrastructure (M11.1)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-AN-001** | **Analytics service architecture** | Data aggregation and caching | M11.1 | 🎯 **Performance** |
+| **FR-AN-002** | **Query optimization** | Efficient trend queries | M11.1 | 🎯 **Responsiveness** |
+
+### **Functional Requirements - Insights Dashboard (M11.2)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-IN-001** | **Usage statistics** | Recipe popularity, ingredient frequency | M11.2 | 🎯 **User insights** |
+| **FR-IN-002** | **Cost tracking** | Budget trends and analysis | M11.2 | 🎯 **Financial awareness** |
+| **FR-IN-003** | **Visualizations** | Charts and graphs for trends | M11.2 | 🎯 **Data clarity** |
+
+### **Functional Requirements - Recommendations (M11.3)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-RE-001** | **Recipe suggestions** | Smart recommendations based on history | M11.3 | 🎯 **Discovery** |
+| **FR-RE-002** | **Seasonal highlights** | Ingredient seasonality awareness | M11.3 | 🎯 **Freshness** |
+| **FR-RE-003** | **Budget optimization** | Cost-saving tips and recommendations | M11.3 | 🎯 **Value** |
+
+### **Functional Requirements - Export & Sharing (M11.4)**
+
+| ID | Requirement | Target Implementation | Milestone | Value |
+|----|-------------|----------------------|-----------|-------|
+| **FR-EX-001** | **Data export** | Export capabilities for analytics data | M11.4 | 🎯 **Data portability** |
+| **FR-EX-002** | **Report generation** | Formatted reports for sharing | M11.4 | 🎯 **Sharing** |
+
+### **Non-Functional Requirements - M11**
+
+| ID | Requirement | Target | Milestone | Value |
+|----|-------------|--------|-----------|-------|
+| **NFR-AN-001** | **Dashboard load time** | < 1s for analytics display | M11.2 | 🎯 **User experience** |
+| **NFR-AN-002** | **Query performance** | < 0.5s for data retrieval | M11.1 | 🎯 **Snappy** |
+| **NFR-AN-003** | **Data accuracy** | 100% accurate based on Core Data | M11 All | 🎯 **Trust** |
+
+**M11 Summary (Planned)**: 12 requirements including analytics infrastructure (2), insights dashboard (3), recommendations (3), export/sharing (2), and non-functional requirements (3). Leverages clean ingredient data from M8 and optimized architecture from M9 to provide data-driven insights.
+
+---
+
+## 🔮 **M12-M16: ADVANCED INTELLIGENCE PLATFORM - PLANNED**
+
+### **M12: Health & Nutrition Integration** (10-15h core)
 
 #### **Functional Requirements - Core Health Features**
 
 | ID | Requirement | Target Implementation | Milestone | Value |
 |----|-------------|----------------------|-----------|-------|
-| **FR-HN-001** | **Apple Health integration** | HealthKit connection | M11.1-11.4 | 🎯 **Health awareness** |
-| **FR-HN-002** | **Nutritional database** | USDA nutrient data | M11.1-11.4 | 🎯 **Nutrition facts** |
-| **FR-HN-003** | **Dietary goal tracking** | Custom nutrition targets | M11.1-11.4 | 🎯 **Goal management** |
-| **FR-HN-004** | **Allergen support** | Dietary restriction filtering | M11.1-11.4 | 🎯 **Safety** |
+| **FR-HN-001** | **Apple Health integration** | HealthKit connection | M12.1-12.4 | 🎯 **Health awareness** |
+| **FR-HN-002** | **Nutritional database** | USDA nutrient data | M12.1-12.4 | 🎯 **Nutrition facts** |
+| **FR-HN-003** | **Dietary goal tracking** | Custom nutrition targets | M12.1-12.4 | 🎯 **Goal management** |
+| **FR-HN-004** | **Allergen support** | Dietary restriction filtering | M12.1-12.4 | 🎯 **Safety** |
 
 _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Optional ML Enhancement)_
 
-**M11 Summary (Planned)**: 4 requirements for core health features. Leverages clean ingredient data from M8 parsing improvements for accurate nutritional analysis.
+**M12 Summary (Planned)**: 4 requirements for core health features. Leverages clean ingredient data from M8 parsing improvements for accurate nutritional analysis.
 
-### **M12: Budget Intelligence** (10-15 hours)
-
-| ID | Requirement | Milestone | Value |
-|----|-------------|-----------|-------|
-| **FR-BD-001** | **Price tracking** | M12 | 🎯 **Cost awareness** |
-| **FR-BD-002** | **Budget planning** | M12 | 🎯 **Financial control** |
-| **FR-BD-003** | **Cost optimization** | M12 | 🎯 **Savings** |
-| **FR-BD-004** | **Store comparison** | M12 | 🎯 **Best value** |
-
-### **M13: AI-Powered Shopping Assistant** (10-15 hours)
+### **M13: Budget Intelligence** (10-15 hours)
 
 | ID | Requirement | Milestone | Value |
 |----|-------------|-----------|-------|
-| **FR-AI-001** | **Natural language meal planning** | M13 | 🎯 **Conversational UX** |
-| **FR-AI-002** | **Smart recipe discovery** | M13 | 🎯 **Personalization** |
-| **FR-AI-003** | **Automated list generation** | M13 | 🎯 **Convenience** |
-| **FR-AI-004** | **Learning preferences** | M13 | 🎯 **Adaptive** |
+| **FR-BD-001** | **Price tracking** | M13 | 🎯 **Cost awareness** |
+| **FR-BD-002** | **Budget planning** | M13 | 🎯 **Financial control** |
+| **FR-BD-003** | **Cost optimization** | M13 | 🎯 **Savings** |
+| **FR-BD-004** | **Store comparison** | M13 | 🎯 **Best value** |
 
-### **M14: Advanced Collaboration** (10-15 hours)
+### **M14: AI-Powered Shopping Assistant** (10-15 hours)
 
 | ID | Requirement | Milestone | Value |
 |----|-------------|-----------|-------|
-| **FR-AC-001** | **Real-time shopping mode** | M14 | 🎯 **Live coordination** |
-| **FR-AC-002** | **Task delegation** | M14 | 🎯 **Family workflow** |
-| **FR-AC-003** | **Shopping analytics** | M14 | 🎯 **Household insights** |
+| **FR-AI-001** | **Natural language meal planning** | M14 | 🎯 **Conversational UX** |
+| **FR-AI-002** | **Smart recipe discovery** | M14 | 🎯 **Personalization** |
+| **FR-AI-003** | **Automated list generation** | M14 | 🎯 **Convenience** |
+| **FR-AI-004** | **Learning preferences** | M14 | 🎯 **Adaptive** |
+
+### **M16: Advanced Collaboration** (10-15 hours)
+
+| ID | Requirement | Milestone | Value |
+|----|-------------|-----------|-------|
+| **FR-AC-001** | **Real-time shopping mode** | M16 | 🎯 **Live coordination** |
+| **FR-AC-002** | **Task delegation** | M16 | 🎯 **Family workflow** |
+| **FR-AC-003** | **Shopping analytics** | M16 | 🎯 **Household insights** |
 
 ---
 
@@ -801,11 +876,12 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 | **ML Parsing (M8.4)** | **8** | ✅ **Complete** |
 | **Normalization Fix (M8.4.1)** | **4** | ✅ **Complete** |
 | Pre-Launch Prep (M7.6) | 9 | 🔄 In Progress (M7.6.1-M7.6.6 ✅, M7.6.7-M7.6.8 pending) |
-| Analytics & Insights | 12 | ⏳ Planned (M10) |
-| Health & Nutrition | 4 | ⏳ Planned (M11) |
-| Budget Intelligence | 4 | ⏳ Planned (M12) |
-| AI Assistant | 4 | ⏳ Planned (M13) |
-| Advanced Collaboration | 3 | ⏳ Planned (M14) |
+| Recipe Import | 24 | 🚀 Ready (M10) |
+| Analytics & Insights | 12 | ⏳ Planned (M11) |
+| Health & Nutrition | 4 | ⏳ Planned (M12) |
+| Budget Intelligence | 4 | ⏳ Planned (M13) |
+| AI Assistant | 4 | ⏳ Planned (M14) |
+| Advanced Collaboration | 3 | ⏳ Planned (M16) |
 | **UX Design System (M15)** | **20 delivered + 1 deferred** | ✅ **Complete** |
 | **Complete** | **205** | **88% (205/234)** |
 | **In Progress** | **18** | **8% (18/234)** |
