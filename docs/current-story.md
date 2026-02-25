@@ -4,7 +4,7 @@
 **Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 ACTIVE**
 **Total Progress**: ~241 hours | 89% planning accuracy
 **Current Branch**: `feature/M10.1-url-import`
-**Current Milestone**: M10.1 URL Import — 🔧 **ACTIVE** (6/8 sub-phases complete)
+**Current Milestone**: M10.1 URL Import — 🔧 **ACTIVE** (10/10 sub-phases complete, ready for integration testing)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M10 (Recipe Import) → M7.7 → M6 → M9 → M11+
 
@@ -12,7 +12,7 @@
 
 ## 🔧 **M10: RECIPE IMPORT - ACTIVE**
 
-**Status**: 🔧 **ACTIVE** — M10.1 URL Import in progress (6/8 sub-phases complete)
+**Status**: 🔧 **ACTIVE** — M10.1 URL Import in progress (8/8 sub-phases + 2 follow-ups complete)
 **Estimated**: 70-95 hours (4 phases)
 **PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
 **Spike Research**: `docs/import-research/` (7 supporting documents)
@@ -51,8 +51,10 @@
 4. ✅ M10.1.4: Import preview UI — COMPLETE (wireframe-aligned rewrite in progress)
 5. ✅ M10.1.5: WKWebView fallback — COMPLETE
 6. ✅ M10.1.6: Duplicate detection — COMPLETE (+ "Replace Existing" service method added)
-7. ✅ M10.1.7: Share extension + App Group — COMPLETE
+7. ✅ M10.1.7: Share extension + App Group — COMPLETE (removed in M10.1.9 — poor UX)
 8. ✅ M10.1.8: Error handling + edge cases — COMPLETE
+9. ✅ M10.1.9: Share extension removal + in-app browser — COMPLETE (Paprika-style WKWebView)
+10. ✅ M10.1.10: Fix ingredient categorization + CategoryAssignmentModal — COMPLETE
 
 **View wireframe alignment** (M10.1.4 follow-up):
 - ✅ RecipeImportPreviewView — rewritten to match wireframe screens 1 & 3
@@ -64,11 +66,15 @@
 - ✅ RecipeImportSheet errorView — refactored to 4 type-specific presentations (wireframe screen 5)
 - ✅ ImportError — `errorTitle` + `errorIcon` computed properties for UI dispatch
 - ✅ RecipeImportService — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
-- ✅ ForagerShareExtension — new target, URL extraction + App Group handoff to main app
-- ✅ foragerApp — `.onOpenURL` + `.onChange(of: scenePhase)` for share extension handoff
-- ✅ RecipeImportService lifted to app-level @StateObject for share extension access
+- ~~ForagerShareExtension — removed in M10.1.9 (poor UX, replaced with in-app browser)~~
+- ✅ RecipeBrowserViewModel — KVO-observed WKWebView state + recipe extraction
+- ✅ RecipeBrowserView — Full-screen in-app browser with address bar, nav, import button
+- ✅ RecipeListView — Import button → Menu with "Browse for Recipe" + "Paste URL"
+- ✅ ImportSaveResult — Returns uncategorized template IDs for CategoryAssignmentModal
+- ✅ RecipeImportSheet — CategoryAssignmentModal wired into import save flow
+- ✅ IngredientParsingService — Removed phantom categorizeIngredient() method
 
-### Files Created This Session
+### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):
 - `ImportDraftRecipe.swift` — Core models, state machine, error taxonomy
 - `RecipeExtractor.swift` — Protocol + input enum + context struct
@@ -77,6 +83,7 @@
 - `RecipeJSONLDExtractor.swift` — 3-tier JSON-LD extraction
 - `SchemaRecipeMapper.swift` — Schema.org dict → ImportDraftRecipe
 - `RecipeImportService.swift` — Import orchestrator (URL fetch, extraction, atomic save)
+- `RecipeBrowserViewModel.swift` — M10.1.9: WKWebView state management + recipe extraction
 - `DuplicateDetectionService.swift` — Exact URL + fuzzy title matching
 - `WKWebViewExtractor.swift` — JS-rendered fallback extractor
 
@@ -84,10 +91,17 @@
 - `RecipeImportSheet.swift` — Entry point sheet
 - `RecipeImportPreviewView.swift` — Preview with confidence dots
 - `DuplicateResolutionSheet.swift` — Duplicate resolution modal
+- `RecipeBrowserView.swift` — M10.1.9: In-app WKWebView browser
 
 **Modified**:
-- `RecipeListView.swift` — Import button + sheet
-- `forager.xcodeproj/project.pbxproj` — 3 view file entries
+- `RecipeListView.swift` — Import Menu with browse + paste options
+- `IngredientParsingService.swift` — Removed categorizeIngredient()
+- `forager.entitlements` — Removed App Groups (share extension cleanup)
+- `foragerApp.swift` — Removed share extension handoff code
+- `forager.xcodeproj/project.pbxproj` — Share extension removed, browser view added
+
+**Deleted** (M10.1.9):
+- `ForagerShareExtension/` — Entire share extension target (poor UX, replaced with in-app browser)
 
 ---
 

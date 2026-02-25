@@ -6,6 +6,32 @@
 
 ---
 
+## Session 42 — February 24, 2026
+**Milestone**: M10.1.9–M10.1.10 — Share extension removal, in-app browser, categorization fix
+**Branch**: `feature/M10.1-url-import`
+
+### The Pivot
+
+This session represents a significant UX pivot within M10.1. After completing the share extension (M10.1.7) in Session 41, testing revealed the UX was fundamentally poor — the share sheet flash-and-disappear pattern, combined with the app-switching handoff, felt janky. The user decided to rip it all out and replace with a Paprika-style in-app browser.
+
+This is a textbook example of "technically correct, experientially wrong." The share extension *worked* — App Group handoff, URL scheme, scenePhase fallback, race condition handling — but the resulting user flow didn't meet the bar. The lesson: share extensions are great for content *creation* (posting, saving) but awkward for content *import* where the user needs to see results in the receiving app immediately.
+
+### What Got Built
+
+**M10.1.9 — Share Extension Removal**: Clean deletion of all share extension code. The ~28 pbxproj entries across 9 sections were the trickiest part. The `importService` stayed at app level because the browser needs it.
+
+**M10.1.9 — In-App Browser**: `RecipeBrowserViewModel` manages a WKWebView via KVO observations (URL, title, loading, progress, canGoBack/Forward). The key insight: no settle delay needed. The headless `WKWebViewExtractor` needs 2 seconds for JS to inject JSON-LD, but the in-app browser's page is already rendered by the time the user taps "Import" — extraction is instant.
+
+**M10.1.10 — Categorization Fix**: Found and fixed `categorizeIngredient()` returning phantom category names ("Meat & Seafood", "Dairy", "Pantry", "Other") that don't match seeded Category entity names. New templates now start uncategorized; `CategoryAssignmentModal` handles proper assignment. Also wired the modal into the import save flow — same pattern as CreateRecipeView.
+
+### Architecture Decisions
+
+- **In-app browser over share extension**: Better UX, simpler code (no IPC, no App Groups, no URL scheme), and the extraction reuses existing JSON-LD infrastructure
+- **KVO over Combine for WKWebView**: WKWebView's properties are KVC-observable, not Combine publishers. KVO is the natural fit.
+- **`@Observable` over `ObservableObject`**: The new macro is cleaner for pure state management — no `@Published` wrappers needed
+
+---
+
 ## Session 41 — February 24, 2026
 **Milestone**: M10.1.7–M10.1.8 — Share extension + error handling
 **Branch**: `feature/M10.1-url-import`
