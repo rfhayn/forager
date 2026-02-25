@@ -6,6 +6,24 @@
 
 ---
 
+## Session 43 — February 25, 2026
+**Milestone**: M10.1.10 — Import bug fixes (validation limits + title extraction)
+**Branch**: `feature/M10.1-url-import`
+
+### Two Import Bugs from Real-World Testing
+
+First real-world test of the new in-app browser against NYT Cooking revealed two issues:
+
+1. **Validation limits too tight for imports**: The 100-character limit on `IngredientTemplate.name` was designed for manual entry, where users type short names. Imported recipes have verbose ingredients — NYT Cooking's carbonara includes "1 ounce (about ⅓ packed cup) grated pecorino Romano, plus additional for serving" — and after parsing, template names can inherit qualifiers that push past 100 chars. Increased to 250 for templates and 300 for recipe titles.
+
+2. **JSON-LD `name` field is unreliable**: NYT Cooking puts just "Carbonara" in the JSON-LD structured data while the actual recipe title is "Spaghetti Carbonara". The full title was available in the HTML `og:title` meta tag. Added a post-extraction enhancement step that checks `og:title` and `<title>` tags — only upgrading when the metadata title is longer AND contains the JSON-LD name (prevents false replacements). Wired into all three extraction paths (JSON-LD, WKWebView, browser).
+
+### Technical Notes
+
+The title enhancement is a containment-based safety check: `og:title.localizedCaseInsensitiveContains(jsonLDTitle)` ensures we're enhancing an incomplete title, not replacing a genuinely different one. Common suffixes like " Recipe" and " - Site Name" are stripped before comparison. This handles the NYT pattern (JSON-LD "Carbonara" → og:title "Spaghetti Carbonara") without over-reaching.
+
+---
+
 ## Session 42 — February 24, 2026
 **Milestone**: M10.1.9–M10.1.10 — Share extension removal, in-app browser, categorization fix
 **Branch**: `feature/M10.1-url-import`
