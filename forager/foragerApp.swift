@@ -66,10 +66,17 @@ struct foragerApp: App {
     @StateObject private var ingredientTemplateService: IngredientTemplateService
     @StateObject private var ingredientParsingService: IngredientParsingService
 
+    // M10.1.7: Import service at app level for share extension handoff
+    @StateObject private var importService: RecipeImportService
+
     // Coach mark onboarding
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showCoachMarks = false
     @State private var selectedTab: NavigationTab = .lists
+
+    // M10.1.7: Share extension import sheet
+    @State private var showShareImport = false
+    @Environment(\.scenePhase) private var scenePhase
 
     // First-launch loading screen
     @State private var isReady = false
@@ -95,6 +102,10 @@ struct foragerApp: App {
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
+
+        // M10.1.7: Import service for share extension handoff
+        let importSvc = RecipeImportService(context: context, parsingService: parsingService)
+        _importService = StateObject(wrappedValue: importSvc)
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
@@ -164,6 +175,7 @@ struct foragerApp: App {
                     .environmentObject(weeklyListService)
                     .environmentObject(ingredientTemplateService)
                     .environmentObject(ingredientParsingService)
+                    .environmentObject(importService)
                     .task {
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         if householdService.currentHousehold == nil {
@@ -190,6 +202,25 @@ struct foragerApp: App {
                         Task {
                             await householdService.checkForAcceptedInvitations()
                         }
+                    }
+                    // M10.1.7: Share extension URL handoff
+                    .onOpenURL { url in
+                        guard url.scheme == "forager", url.host == "import" else { return }
+                        importService.checkForPendingImport()
+                        selectedTab = .recipes
+                        showShareImport = true
+                    }
+                    .onChange(of: scenePhase) { _, newPhase in
+                        if newPhase == .active {
+                            importService.checkForPendingImport()
+                            if importService.state != .idle {
+                                selectedTab = .recipes
+                                showShareImport = true
+                            }
+                        }
+                    }
+                    .sheet(isPresented: $showShareImport) {
+                        RecipeImportSheet(importService: importService)
                     }
                 } else {
                     AppLoadingView()

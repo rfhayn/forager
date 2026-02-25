@@ -7,29 +7,41 @@
 ---
 
 ## Session 41 — February 24, 2026
-**Milestone**: M10.1.8 — Error handling + edge cases
+**Milestone**: M10.1.7–M10.1.8 — Share extension + error handling
 **Branch**: `feature/M10.1-url-import`
 
 ### What Happened
 
-Implemented M10.1.8: type-specific error presentations matching wireframe screen 5, plus fail-fast URL detection for unsupported social media sources.
+**M10.1.7 — Share Extension + App Group**
 
-**Three changes, clean dependency chain:**
-1. **ImportError** — Added `errorTitle` and `errorIcon` computed properties. Each error case now knows its own title ("Recipe Behind a Paywall", "No Recipe Found", "Unable to Reach This Site") and SF Symbol icon (`lock.fill`, `magnifyingglass`, `wifi.slash`). This centralizes the error→UI mapping on the enum rather than scattering switches across view methods.
+Created the `ForagerShareExtension` Xcode target and implemented the full share-to-import handoff:
 
-2. **RecipeImportService** — Added `checkUnsupportedSource(_ url:)` that detects Pinterest, TikTok, Instagram, and Facebook Reel URLs before the network fetch. Called at the start of `importFromURL()`, before `state = .fetching`. Fails fast with a domain-specific message instead of wasting a network round-trip only to show a generic "No recipe found" error.
+1. **ShareViewController** — Rewrote Xcode's `SLComposeServiceViewController` template into a minimal no-UI `UIViewController`. Extracts URL from `NSExtensionItem` attachments via `loadItem(forTypeIdentifier: UTType.url.identifier)`, writes to App Group `UserDefaults`, opens main app via `forager://import` URL scheme, completes request.
 
-3. **RecipeImportSheet** — Refactored the single generic `errorView()` into four type-specific presentations: `paywallErrorView`, `noRecipeErrorView`, `networkErrorView`, `genericErrorView`. All share a common `errorLayout<Actions: View>()` generic template (icon in colored circle → title → body → action buttons). Added `@Environment(\.openURL)` for the paywall "Open in Safari" action.
+2. **Info.plist** — Switched from storyboard entry (`NSExtensionMainStoryboard`) to principal class (`NSExtensionPrincipalClass`). Tightened activation from `TRUEPREDICATE` (Apple rejects this) to `NSExtensionActivationSupportsWebURLWithMaxCount: 1` (URLs only).
+
+3. **App Group entitlements** — Added `group.com.richhayn.forager` to both main app (`forager.entitlements`) and extension (`ForagerShareExtension.entitlements`). Added `CODE_SIGN_ENTITLEMENTS` to extension build settings.
+
+4. **foragerApp.swift** — Lifted `RecipeImportService` from inline creation in RecipeListView to app-level `@StateObject` + `.environmentObject()`. Added `.onOpenURL` handler for `forager://import` scheme and `.onChange(of: scenePhase)` fallback. Both trigger `importService.checkForPendingImport()`.
+
+5. **RecipeImportService** — Uncommented `checkForPendingImport()` stub: reads URL from App Group defaults, clears immediately, triggers `importFromURL()`.
+
+**M10.1.8 — Error Handling + Edge Cases**
+
+Implemented wireframe screen 5's type-specific error presentations:
+- `ImportError` — `errorTitle` + `errorIcon` computed properties
+- `RecipeImportService` — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
+- `RecipeImportSheet` — 4 error views via generic `errorLayout<Actions>()` template
 
 ### Design Decisions
-- Used `@ViewBuilder` generic template rather than `AnyView` type erasure — preserves SwiftUI's static type system and avoids performance overhead.
-- Error circle background colors use semantic tokens (`surfaceWarning`, `surfaceAccent`, `surfaceDanger`) to convey severity at a glance before reading any text.
-- "Open in Safari" uses `@Environment(\.openURL)` rather than `UIApplication.shared.open()` — testable, SwiftUI-idiomatic, and works in SwiftUI previews.
+- **No-UI extension**: Subclass `UIViewController` instead of `SLComposeServiceViewController` — the compose sheet is unnecessary for a URL-only handoff. User sees no extension UI at all.
+- **Dual handoff paths**: `.onOpenURL` handles the happy path (extension opens app); `.onChange(of: scenePhase)` handles the fallback (URL stays in defaults until next activation).
+- **Service lifted to app level**: `RecipeImportService` moved from inline creation in RecipeListView to `foragerApp` `@StateObject`, injected as `.environmentObject()`. Necessary so `.onOpenURL` at the app level can trigger imports.
 
 ### What Went Well
-- Clean dependency chain (enum → service → view) meant each change compiled independently
-- Build succeeded first try after all three files were edited
-- PRD updated inline with implementation status markers
+- Xcode target wizard handled all pbxproj complexity for the new extension target
+- `PBXFileSystemSynchronizedRootGroup` on the extension directory means no manual file reference management
+- Both targets build clean on first try after all changes
 
 ---
 

@@ -402,7 +402,7 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 | M10.1.4 | Import preview UI | 5-6h | M10.1.3 |
 | M10.1.5 | WKWebView fallback | 3-4h | M10.1.2 |
 | M10.1.6 | Duplicate detection | 2-3h | M10.1.3 |
-| M10.1.7 | Share extension + App Group | 3-4h | M10.1.4 |
+| M10.1.7 | Share extension + App Group | 3-4h | M10.1.4 | ✅ IMPLEMENTED |
 | M10.1.8 | Error handling + edge cases | 2-3h | M10.1.4, M10.1.6 | ✅ IMPLEMENTED |
 
 #### New Files — Services/Import/ (auto-detected by Xcode)

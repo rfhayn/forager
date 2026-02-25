@@ -51,7 +51,7 @@
 4. ✅ M10.1.4: Import preview UI — COMPLETE (wireframe-aligned rewrite in progress)
 5. ✅ M10.1.5: WKWebView fallback — COMPLETE
 6. ✅ M10.1.6: Duplicate detection — COMPLETE (+ "Replace Existing" service method added)
-7. M10.1.7: Share extension + App Group (3-4h) — NEXT
+7. ✅ M10.1.7: Share extension + App Group — COMPLETE
 8. ✅ M10.1.8: Error handling + edge cases — COMPLETE
 
 **View wireframe alignment** (M10.1.4 follow-up):
@@ -64,6 +64,9 @@
 - ✅ RecipeImportSheet errorView — refactored to 4 type-specific presentations (wireframe screen 5)
 - ✅ ImportError — `errorTitle` + `errorIcon` computed properties for UI dispatch
 - ✅ RecipeImportService — `checkUnsupportedSource()` for Pinterest/TikTok/Instagram fail-fast
+- ✅ ForagerShareExtension — new target, URL extraction + App Group handoff to main app
+- ✅ foragerApp — `.onOpenURL` + `.onChange(of: scenePhase)` for share extension handoff
+- ✅ RecipeImportService lifted to app-level @StateObject for share extension access
 
 ### Files Created This Session
 **Services/Import/** (auto-detected):

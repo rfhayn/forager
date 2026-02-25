@@ -228,14 +228,14 @@ class RecipeImportService: ObservableObject {
     // MARK: - Pending Import Check (M10.1.7 — Share Extension)
 
     /// Check App Group UserDefaults for a URL shared via the share extension.
-    /// Called on scenePhase .active transitions.
+    /// Called on scenePhase .active transitions and .onOpenURL handler.
+    /// Clears the pending URL immediately to prevent duplicate consumption.
     func checkForPendingImport() {
-        // M10.1.7: Will read from App Group UserDefaults
-        // guard let sharedDefaults = UserDefaults(suiteName: "group.com.richhayn.forager"),
-        //       let urlString = sharedDefaults.string(forKey: "pendingImportURL"),
-        //       let url = URL(string: urlString) else { return }
-        // sharedDefaults.removeObject(forKey: "pendingImportURL")
-        // Task { await importFromURL(url) }
+        guard let sharedDefaults = UserDefaults(suiteName: "group.com.richhayn.forager"),
+              let urlString = sharedDefaults.string(forKey: "pendingImportURL"),
+              let url = URL(string: urlString) else { return }
+        sharedDefaults.removeObject(forKey: "pendingImportURL")
+        Task { await importFromURL(url) }
     }
 
     // MARK: - Unsupported Source Detection

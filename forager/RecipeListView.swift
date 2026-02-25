@@ -6,6 +6,7 @@ struct RecipeListView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var recipeServiceM75: RecipeService
+    @EnvironmentObject private var importService: RecipeImportService
 
     @Binding var popToRoot: Bool
 
@@ -230,15 +231,7 @@ struct RecipeListView: View {
             CreateRecipeView(context: viewContext)
         }
         .sheet(isPresented: $showingImport) {
-            RecipeImportSheet(
-                importService: RecipeImportService(
-                    context: viewContext,
-                    parsingService: IngredientParsingService(
-                        context: viewContext,
-                        templateService: IngredientTemplateService(context: viewContext)
-                    )
-                )
-            )
+            RecipeImportSheet(importService: importService)
         }
         .sheet(isPresented: $showingMealPlanSheet) {
             if let recipe = selectedRecipeForMealPlan {
