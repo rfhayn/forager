@@ -225,22 +225,6 @@ class RecipeImportService: ObservableObject {
         state = .idle
     }
 
-    // MARK: - Pending Import Check (M10.1.7 — Share Extension)
-
-    /// Check App Group UserDefaults for a URL shared via the share extension.
-    /// Called on scenePhase .active transitions and .onOpenURL handler.
-    /// Clears the pending URL immediately to prevent duplicate consumption.
-    /// Returns true if a pending URL was found and import was started.
-    @discardableResult
-    func checkForPendingImport() -> Bool {
-        guard let sharedDefaults = UserDefaults(suiteName: "group.com.richhayn.forager"),
-              let urlString = sharedDefaults.string(forKey: "pendingImportURL"),
-              let url = URL(string: urlString) else { return false }
-        sharedDefaults.removeObject(forKey: "pendingImportURL")
-        Task { await importFromURL(url) }
-        return true
-    }
-
     // MARK: - Unsupported Source Detection
 
     /// Pre-flight check for URLs that will never yield recipe data.

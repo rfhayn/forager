@@ -20,9 +20,5 @@
 	<array>
 		<string>applinks:www.icloud.com</string>
 	</array>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.richhayn.forager</string>
-	</array>
 </dict>
 </plist>

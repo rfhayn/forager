@@ -107,7 +107,6 @@
 		9BE384AB2F088918001929B8 /* UserPreferences+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE384A52F088918001929B8 /* UserPreferences+CoreDataClass.swift */; };
 		9BE384AC2F088918001929B8 /* UserPreferences+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE384A62F088918001929B8 /* UserPreferences+CoreDataProperties.swift */; };
 		9BE384AD2F088918001929B8 /* IngredientTemplate+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE384A22F088918001929B8 /* IngredientTemplate+CoreDataClass.swift */; };
-		9BEB1D1F2F4E8F0700ECB244 /* ForagerShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9BEB1D152F4E8F0700ECB244 /* ForagerShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9BF10A042F4D000100000004 /* DuplicateResolutionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF10A012F4D000100000001 /* DuplicateResolutionSheet.swift */; };
 		9BF10A052F4D000100000005 /* RecipeImportPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF10A022F4D000100000002 /* RecipeImportPreviewView.swift */; };
 		9BF10A062F4D000100000006 /* RecipeImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BF10A032F4D000100000003 /* RecipeImportSheet.swift */; };
@@ -147,28 +146,8 @@
 			remoteGlobalIDString = 9B731C282E535C3100CE26F0;
 			remoteInfo = GroceryRecipeManager;
 		};
-		9BEB1D1D2F4E8F0700ECB244 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 9B731C212E535C3100CE26F0 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9BEB1D142F4E8F0700ECB244;
-			remoteInfo = ForagerShareExtension;
-		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		9BEB1D202F4E8F0700ECB244 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				9BEB1D1F2F4E8F0700ECB244 /* ForagerShareExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLPIngredientParserTests.swift; sourceTree = "<group>"; };
@@ -280,7 +259,6 @@
 		9BE384A42F088918001929B8 /* PlannedMeal+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PlannedMeal+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9BE384A52F088918001929B8 /* UserPreferences+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserPreferences+CoreDataClass.swift"; sourceTree = "<group>"; };
 		9BE384A62F088918001929B8 /* UserPreferences+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserPreferences+CoreDataProperties.swift"; sourceTree = "<group>"; };
-		9BEB1D152F4E8F0700ECB244 /* ForagerShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ForagerShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		9BF10A012F4D000100000001 /* DuplicateResolutionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateResolutionSheet.swift; sourceTree = "<group>"; };
 		9BF10A022F4D000100000002 /* RecipeImportPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeImportPreviewView.swift; sourceTree = "<group>"; };
 		9BF10A032F4D000100000003 /* RecipeImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeImportSheet.swift; sourceTree = "<group>"; };
@@ -306,28 +284,10 @@
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		9BEB1D232F4E8F0700ECB244 /* Exceptions for "ForagerShareExtension" folder in "ForagerShareExtension" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 9BEB1D142F4E8F0700ECB244 /* ForagerShareExtension */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9BADD71F2E64E79A00D677DC /* Services */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Services;
-			sourceTree = "<group>";
-		};
-		9BEB1D162F4E8F0700ECB244 /* ForagerShareExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				9BEB1D232F4E8F0700ECB244 /* Exceptions for "ForagerShareExtension" folder in "ForagerShareExtension" target */,
-			);
-			path = ForagerShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -348,13 +308,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B731C442E535C3300CE26F0 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		9BEB1D122F4E8F0700ECB244 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -528,7 +481,6 @@
 				9BE384A42F088918001929B8 /* PlannedMeal+CoreDataClass.swift */,
 				9B56ECB22F0857FB00877716 /* PlannedMeal+CoreDataProperties.swift */,
 				9B1B39682EF4E005001E1876 /* PlannedMeal+Extensions.swift */,
-				9BEB1D162F4E8F0700ECB244 /* ForagerShareExtension */,
 				9B731C2A2E535C3100CE26F0 /* Products */,
 				85ADBDBC2EA91E9000E3B1B5 /* Recipe+ComputedProperties.swift */,
 				9B31714B2E6E2AA80004CD70 /* Recipe+CoreDataClass.swift */,
@@ -549,7 +501,6 @@
 				9B731C292E535C3100CE26F0 /* forager.app */,
 				9B731C3D2E535C3300CE26F0 /* foragerTests.xctest */,
 				9B731C472E535C3300CE26F0 /* foragerUITests.xctest */,
-				9BEB1D152F4E8F0700ECB244 /* ForagerShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -590,12 +541,10 @@
 				9B731C252E535C3100CE26F0 /* Sources */,
 				9B731C262E535C3100CE26F0 /* Frameworks */,
 				9B731C272E535C3100CE26F0 /* Resources */,
-				9BEB1D202F4E8F0700ECB244 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				9BEB1D1E2F4E8F0700ECB244 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				9BADD71F2E64E79A00D677DC /* Services */,
@@ -647,28 +596,6 @@
 			productReference = 9B731C472E535C3300CE26F0 /* foragerUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		9BEB1D142F4E8F0700ECB244 /* ForagerShareExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 9BEB1D242F4E8F0700ECB244 /* Build configuration list for PBXNativeTarget "ForagerShareExtension" */;
-			buildPhases = (
-				9BEB1D112F4E8F0700ECB244 /* Sources */,
-				9BEB1D122F4E8F0700ECB244 /* Frameworks */,
-				9BEB1D132F4E8F0700ECB244 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				9BEB1D162F4E8F0700ECB244 /* ForagerShareExtension */,
-			);
-			name = ForagerShareExtension;
-			packageProductDependencies = (
-			);
-			productName = ForagerShareExtension;
-			productReference = 9BEB1D152F4E8F0700ECB244 /* ForagerShareExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -690,9 +617,6 @@
 						CreatedOnToolsVersion = 16.4;
 						TestTargetID = 9B731C282E535C3100CE26F0;
 					};
-					9BEB1D142F4E8F0700ECB244 = {
-						CreatedOnToolsVersion = 26.2;
-					};
 				};
 			};
 			buildConfigurationList = 9B731C242E535C3100CE26F0 /* Build configuration list for PBXProject "forager" */;
@@ -712,7 +636,6 @@
 				9B731C282E535C3100CE26F0 /* forager */,
 				9B731C3C2E535C3300CE26F0 /* foragerTests */,
 				9B731C462E535C3300CE26F0 /* foragerUITests */,
-				9BEB1D142F4E8F0700ECB244 /* ForagerShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -737,13 +660,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		9B731C452E535C3300CE26F0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		9BEB1D132F4E8F0700ECB244 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -892,13 +808,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9BEB1D112F4E8F0700ECB244 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -912,11 +821,6 @@
 			target = 9B731C282E535C3100CE26F0 /* forager */;
 			targetProxy = 9B731C482E535C3300CE26F0 /* PBXContainerItemProxy */;
 		};
-		9BEB1D1E2F4E8F0700ECB244 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 9BEB1D142F4E8F0700ECB244 /* ForagerShareExtension */;
-			targetProxy = 9BEB1D1D2F4E8F0700ECB244 /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -928,7 +832,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -967,7 +871,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -1197,68 +1101,6 @@
 			};
 			name = Release;
 		};
-		9BEB1D212F4E8F0700ECB244 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = ForagerShareExtension/ForagerShareExtension.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 93FT2PT9NM;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ForagerShareExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ForagerShareExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.richhayn.forager.ForagerShareExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		9BEB1D222F4E8F0700ECB244 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = ForagerShareExtension/ForagerShareExtension.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 93FT2PT9NM;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ForagerShareExtension/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ForagerShareExtension;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.richhayn.forager.ForagerShareExtension;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1294,15 +1136,6 @@
 			buildConfigurations = (
 				9B731C592E535C3300CE26F0 /* Debug */,
 				9B731C5A2E535C3300CE26F0 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		9BEB1D242F4E8F0700ECB244 /* Build configuration list for PBXNativeTarget "ForagerShareExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				9BEB1D212F4E8F0700ECB244 /* Debug */,
-				9BEB1D222F4E8F0700ECB244 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
