@@ -140,6 +140,65 @@ class RecipeImportService: ObservableObject {
         }
     }
 
+    // MARK: - Replace Existing Recipe
+
+    /// In-place update of an existing Recipe with data from the import draft.
+    /// Preserves PlannedMeal references and CloudKit object identity (ADR 012).
+    /// Deletes old Ingredients and creates new ones via parseAndConnectIngredients.
+    func replaceExistingRecipe(objectID: NSManagedObjectID, with draft: ImportDraftRecipe) -> NSManagedObjectID? {
+        state = .saving
+
+        // Child context for atomic replace
+        let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
+        childContext.parent = viewContext
+
+        // Services scoped to child context
+        let childTemplateService = IngredientTemplateService(context: childContext)
+        let childParsingService = IngredientParsingService(
+            context: childContext,
+            templateService: childTemplateService
+        )
+
+        guard let recipe = try? childContext.existingObject(with: objectID) as? Recipe else {
+            state = .failed(.saveError("Could not find existing recipe"))
+            return nil
+        }
+
+        // Delete existing ingredients
+        if let ingredients = recipe.ingredients as? Set<Ingredient> {
+            for ingredient in ingredients {
+                childContext.delete(ingredient)
+            }
+        }
+
+        // Update recipe fields from draft
+        recipe.title = draft.title.value
+        recipe.instructions = draft.instructions.value
+        recipe.prepTime = Int16(draft.prepTimeMinutes.value ?? 0)
+        recipe.cookTime = Int16(draft.cookTimeMinutes.value ?? 0)
+        recipe.servings = Int16(draft.servings.value)
+        recipe.sourceURL = draft.sourceURL
+        recipe.tags = draft.tags
+
+        // Parse and connect new ingredients
+        let _ = childParsingService.parseAndConnectIngredients(
+            for: recipe,
+            ingredientTexts: draft.ingredients.value
+        )
+
+        // Atomic persist: child → parent → disk
+        do {
+            try childContext.save()
+            try viewContext.save()
+            state = .saved(objectID)
+            return objectID
+        } catch {
+            viewContext.rollback()
+            state = .failed(.saveError(error.localizedDescription))
+            return nil
+        }
+    }
+
     // MARK: - Duplicate Detection
 
     /// Check if a draft recipe already exists in the database.

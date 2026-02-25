@@ -311,6 +311,9 @@ enum ImportJobState: Equatable {
     case saving
     case saved(NSManagedObjectID)   // Not Recipe — NSManagedObject equality is reference-based
     case failed(ImportError)
+
+    var isLoading: Bool   // fetching, extracting, saving
+    var isReviewing: Bool // needsReview — used to hide parent sheet's Cancel toolbar
 }
 ```
 
@@ -433,13 +436,15 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 - Extracted from spike extractor. 16 named entities + numeric (&#123;) + hex (&#xBD;)
 - Applied before JSON parsing to prevent parse failures
 
-**`RecipeImportService.swift`** (~350 lines)
+**`RecipeImportService.swift`** (~400 lines) — ✅ IMPLEMENTED (M10.1.3+)
 - `@MainActor class RecipeImportService: ObservableObject`
-- Published: `state: ImportJobState`, `errorMessage: String?`, `isLoading: Bool`
-- Dependencies: `RecipeService`, `IngredientParsingService`, `NSManagedObjectContext`
+- Published: `state: ImportJobState`
+- Dependencies: `IngredientParsingService`, `NSManagedObjectContext`
 - Key methods:
-  - `importFromURL(_ url: URL) async` — fetch HTML → try JSON-LD → WKWebView fallback → populate draft
-  - `saveImport(from draft: ImportDraftRecipe) -> Recipe?` — atomic save via RecipeService
+  - `importFromURL(_ url: URL) async` — fetch HTML → try extractors in priority order → populate draft
+  - `saveImport(from draft: ImportDraftRecipe) -> NSManagedObjectID?` — atomic save via child context
+  - `replaceExistingRecipe(objectID:with:) -> NSManagedObjectID?` — in-place update of existing Recipe (deletes old ingredients, updates fields, creates new ingredients). Uses child context for atomicity. Preserves PlannedMeal references and CloudKit identity.
+  - `checkDuplicate(for draft:) -> DuplicateResult?` — duplicate detection before save
   - `cancelImport()` — reset to idle
   - `checkForPendingImport()` — check App Group UserDefaults for share extension URL
 - Telemetry: logs importAttempted/Succeeded/Failed/Cancelled to ParsingTelemetryService
@@ -460,21 +465,22 @@ Tracks which edge case paths were exercised during extraction. Logged to telemet
 
 > **Design alignment**: All import views follow M15 design system patterns (ForagerTheme tokens, SF Pro Rounded chrome, section headers, card patterns) and match wireframes in `docs/import-research/import-wireframes.html`. See wireframe screens 1-5.
 
-**`RecipeImportSheet.swift`** (~250 lines)
+**`RecipeImportSheet.swift`** (~270 lines) — ✅ IMPLEMENTED
 - Entry point sheet from RecipeListView toolbar
-- Nav bar: Cancel (leading), "Import Recipe" title (center, inline)
+- Nav bar: Cancel (leading, hidden when in `.needsReview` state), "Import Recipe" title (center, inline)
 - URL input field, state-driven content (loading, preview, error)
 - Tab/segment for "URL" mode (expanded in M10.2/M10.3 for "Text"/"Photo")
+- Wires up `replaceExistingWithDraft()` → `importService.replaceExistingRecipe()` for duplicate resolution
 - Error states (wireframe screen 5): Three distinct presentations:
   - Paywall: lock icon in `surface.warning` circle, "Recipe Behind a Paywall", partial data hint if available, "Open in Safari" button
   - No Recipe Found: search icon in `info.bg` circle, "No Recipe Found", link to "Try pasting the recipe text instead" (M10.2+)
   - Network Error: wifi-off icon in `surface.danger` circle, "Unable to Reach This Site", "Try Again" button
 
-**`RecipeImportPreviewView.swift`** (~400 lines)
+**`RecipeImportPreviewView.swift`** (~350 lines) — ✅ IMPLEMENTED
 
 Layout follows wireframe screen 1 (happy path) and screen 3 (partial extraction), using M15 design patterns:
 
-**Nav bar**: Cancel (leading), "Import Recipe" (center), "Save Recipe" button (trailing, `ForagerPrimaryButtonStyle` compact). Disabled when `successLevel == .failure`.
+**Nav bar**: Cancel (`.cancellationAction`), "Import Recipe" (center, from parent sheet), "Save Recipe" (`.confirmationAction`). Both managed via `.toolbar` on the preview view. Disabled when `successLevel == .failure`.
 
 **Content area (top to bottom)**:
 1. **Source attribution**: "From [host]" link in `text.link` color, `font-sm` (matches wireframe `source-link` class)
@@ -496,16 +502,16 @@ Layout follows wireframe screen 1 (happy path) and screen 3 (partial extraction)
 - **Warning banner**: `surface.warning` background with `warning.fg` border, triangle icon + "Some fields couldn't be extracted. Please review highlighted items."
 - **Meta field cards**: Side-by-side cards for Prep time, Cook time, Servings. Empty fields: dashed border, `surface.warning` background, placeholder text ("Add prep time"). Uncertain values shown with `?` suffix in `warning.fg` (e.g., "4?"). Each card has confidence dot on trailing edge.
 
-**`DuplicateResolutionSheet.swift`** (~120 lines)
+**`DuplicateResolutionSheet.swift`** (~100 lines) — ✅ IMPLEMENTED
 
-Follows wireframe screen 4 — centered modal card over blurred preview content:
-- **Duplicate icon**: 48px circle, `surface.warning` background, document-copy SF Symbol in `warning.fg`
-- **Title**: "Similar Recipe Found" (20pt bold, rounded)
-- **Message**: "You already have '[title]' from [source]" (15pt, `text.secondary`)
-- **Three action buttons** (stacked vertically):
-  1. "Import as New Recipe" — outlined button (`btn-outlined` style, `accent.primary` border)
-  2. "Replace Existing" — outlined button (same style). In-place update of existing Recipe entity preserving PlannedMeal references and CloudKit identity (see §4.7 "Replace Existing" semantics).
-  3. "Cancel" — text button (`text.secondary`)
+Follows wireframe screen 4 — half-sheet modal:
+- **Duplicate icon**: 48px `doc.on.doc.fill` in `statusWarningFG`
+- **Title**: "Similar Recipe Found" (`cardTitle` font)
+- **Message**: "You already have '[title]' in your collection." (body, `textSecondary`)
+- **Three action buttons** (stacked vertically, all `.bordered` style with `accentPrimary` tint):
+  1. "Import as New Recipe" → `onImportAsNew` callback
+  2. "Replace Existing" → `onReplaceExisting` callback — in-place update of existing Recipe entity preserving PlannedMeal references and CloudKit identity (see §4.7)
+  3. "Cancel" → `onCancel` callback (`.borderless`, `textSecondary`)
 - Uses `.presentationDetents([.medium])` as half-sheet with drag indicator
 
 #### New Files — Share Extension (new Xcode target)

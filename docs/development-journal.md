@@ -63,6 +63,26 @@ M10.1.3 (1 file) compiles clean. BUILD SUCCEEDED — 3 for 3 on first try across
 
 All sub-phases M10.1.1–M10.1.6 compile clean. 7 BUILD SUCCEEDED on first try, zero regressions.
 
+**M10.1 View alignment to wireframes** (continued session): Rewrote all 3 import view files + added service layer method to align with wireframes:
+
+1. **RecipeImportPreviewView.swift** — Major layout rewrite from simplified prototype to wireframe-accurate:
+   - Per-ingredient bordered card rows with confidence dots + qty/name split (replaces numbered gray box)
+   - Numbered instruction step circles with "Show all N steps" collapse (replaces full text block)
+   - Compact metadata row with dot separators "N servings · N min prep · N min cook" (replaces separate sections)
+   - Warning banner with `surfaceWarning` + `warningFG` border (replaces inline text)
+   - Partial meta field cards with dashed borders for empty fields
+   - Save moved to nav bar `.confirmationAction` toolbar (removed bottom save bar)
+
+2. **DuplicateResolutionSheet.swift** — Added "Replace Existing" as third button, updated title "Similar Recipe Found", all buttons use `.bordered` style matching wireframe screen 4.
+
+3. **RecipeImportSheet.swift** — Wired up `replaceExistingWithDraft()` → `importService.replaceExistingRecipe()`, hides parent Cancel when in `.needsReview` state.
+
+4. **RecipeImportService.swift** — Added `replaceExistingRecipe(objectID:with:)` using child context pattern for atomic in-place update (preserves PlannedMeal references and CloudKit identity).
+
+5. **ImportJobState** — Added `isReviewing` computed property for nav bar coordination.
+
+BUILD SUCCEEDED with zero errors. All existing functionality preserved.
+
 ### Insights Logged
 - Strategy pattern as Forager-wide convention (RecipeExtractor mirrors IngredientParser)
 - ImportDraftRecipe separation rationale vs RecipeFormData
@@ -73,6 +93,9 @@ All sub-phases M10.1.1–M10.1.6 compile clean. 7 BUILD SUCCEEDED on first try, 
 - Orchestrator error collection pattern (nil vs throw semantics)
 - CheckedContinuation multi-resume guard for WKWebView async bridge
 - Manual PBXGroup friction for view files vs auto-detected Services/
+- SwiftUI toolbar coordination: parent hides Cancel, child manages its own via `.toolbar`
+- Child context `existingObject(with:)` for atomic in-place replace preserving object ID
+- HTML wireframe CSS classes → SwiftUI component mapping (bordered HStack, Circle Text, StrokeStyle dash)
 
 ---
 

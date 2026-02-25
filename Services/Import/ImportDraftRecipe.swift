@@ -171,6 +171,11 @@ enum ImportJobState: Equatable {
         }
     }
 
+    var isReviewing: Bool {
+        if case .needsReview = self { return true }
+        return false
+    }
+
     var statusMessage: String {
         switch self {
         case .idle: return ""

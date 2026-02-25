@@ -48,11 +48,19 @@
 1. ✅ M10.1.1: Import models + extraction infrastructure — COMPLETE
 2. ✅ M10.1.2: JSON-LD extractor + schema mapper — COMPLETE
 3. ✅ M10.1.3: Import orchestrator + service — COMPLETE
-4. ✅ M10.1.4: Import preview UI — COMPLETE
+4. ✅ M10.1.4: Import preview UI — COMPLETE (wireframe-aligned rewrite in progress)
 5. ✅ M10.1.5: WKWebView fallback — COMPLETE
-6. ✅ M10.1.6: Duplicate detection — COMPLETE
+6. ✅ M10.1.6: Duplicate detection — COMPLETE (+ "Replace Existing" service method added)
 7. M10.1.7: Share extension + App Group (3-4h) — NEXT
 8. M10.1.8: Error handling + edge cases (2-3h)
+
+**View wireframe alignment** (M10.1.4 follow-up):
+- ✅ RecipeImportPreviewView — rewritten to match wireframe screens 1 & 3
+- ✅ DuplicateResolutionSheet — 3 buttons, "Similar Recipe Found" title
+- ✅ RecipeImportSheet — Replace Existing wired up, nav bar coordination
+- ✅ RecipeImportService — `replaceExistingRecipe()` method added
+- ✅ ImportJobState — `isReviewing` property for nav bar coordination
+- ✅ PRD updated with implementation status markers
 
 ### Files Created This Session
 **Services/Import/** (auto-detected):

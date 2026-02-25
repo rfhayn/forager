@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import CoreData
 
 // MARK: - Recipe Import Sheet
 
@@ -55,7 +56,7 @@ struct RecipeImportSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    if !importService.state.isLoading {
+                    if !importService.state.isLoading && !importService.state.isReviewing {
                         Button("Cancel") { handleCancel() }
                     }
                 }
@@ -65,6 +66,7 @@ struct RecipeImportSheet: View {
                     DuplicateResolutionSheet(
                         duplicateResult: duplicate,
                         onImportAsNew: { saveWithoutDuplicateCheck() },
+                        onReplaceExisting: { replaceExistingWithDraft() },
                         onCancel: { showingDuplicateSheet = false }
                     )
                 }
@@ -238,6 +240,22 @@ struct RecipeImportSheet: View {
         if case .needsReview(let draft) = importService.state {
             let _ = importService.saveImport(from: draft)
         }
+    }
+
+    private func replaceExistingWithDraft() {
+        showingDuplicateSheet = false
+        guard case .needsReview(let draft) = importService.state,
+              let duplicate = duplicateResult else { return }
+
+        let existingID: NSManagedObjectID
+        switch duplicate {
+        case .exactURL(let objectID):
+            existingID = objectID
+        case .fuzzyTitle(let objectID, _, _):
+            existingID = objectID
+        }
+
+        let _ = importService.replaceExistingRecipe(objectID: existingID, with: draft)
     }
 
     private func handleCancel() {
