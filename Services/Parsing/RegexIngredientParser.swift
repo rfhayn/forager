@@ -263,7 +263,7 @@ class RegexIngredientParser: IngredientParser {
             let numericValue = Double(highValue)
             let standardUnit = standardizeUnit(unit)
 
-            let confidence: Float = (standardUnit != nil) ? 0.85 : 0.80
+            let confidence: Float = (standardUnit != nil) ? 0.95 : 0.92
 
             return ParserResult(
                 name: name,
@@ -288,7 +288,7 @@ class RegexIngredientParser: IngredientParser {
                 quantity: numericValue,
                 unit: nil,
                 notes: "range: \(match[1])-\(match[2])",
-                confidence: 0.80,
+                confidence: 0.92,
                 originalText: original,
                 parserUsed: parserName
             )
@@ -315,7 +315,7 @@ class RegexIngredientParser: IngredientParser {
                 quantity: numericValue,
                 unit: standardUnit,
                 notes: "range: \(match[1])-\(match[2])",
-                confidence: (standardUnit != nil) ? 0.85 : 0.80,
+                confidence: (standardUnit != nil) ? 0.95 : 0.92,
                 originalText: original,
                 parserUsed: parserName
             )
@@ -408,7 +408,7 @@ class RegexIngredientParser: IngredientParser {
                     quantity: numericValue,
                     unit: standardUnit,
                     notes: nil,
-                    confidence: (standardUnit != nil) ? 0.85 : 0.75,
+                    confidence: (standardUnit != nil) ? 0.95 : 0.92,
                     originalText: original,
                     parserUsed: parserName
                 )
@@ -454,7 +454,7 @@ class RegexIngredientParser: IngredientParser {
                     quantity: numericValue,
                     unit: standardUnit,
                     notes: nil,
-                    confidence: (standardUnit != nil) ? 0.85 : 0.70,
+                    confidence: (standardUnit != nil) ? 0.95 : 0.92,
                     originalText: original,
                     parserUsed: parserName
                 )
@@ -477,7 +477,7 @@ class RegexIngredientParser: IngredientParser {
         if parsed.isFullyParsed && numericValue != nil {
             confidence = 1.0
         } else if numericValue != nil {
-            confidence = 0.75
+            confidence = 0.92
         } else if parsed.quantity != nil {
             confidence = 0.3
         } else {
@@ -497,8 +497,8 @@ class RegexIngredientParser: IngredientParser {
 
     /// Internal standard pattern that returns a ParsedIngredient (used by unicode fraction too)
     private func tryStandardPatternInternal(_ text: String) -> ParsedIngredient? {
-        // "2 cups flour" or "1 1/2 tbsp olive oil"
-        let pattern = #"^([0-9]+(?:\.\d+)?(?:\s+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([a-zA-Z]+)?\s*(.+)$"#
+        // "2 cups flour", "1 1/2 tbsp olive oil", "2-1/2 cups chicken stock"
+        let pattern = #"^([0-9]+(?:\.\d+)?(?:[-\s]+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([a-zA-Z]+)?\s*(.+)$"#
         if let match = matchPattern(pattern, in: text) {
             let quantity = match[1]
             var unit = match[2].isEmpty ? nil : match[2]
@@ -550,7 +550,7 @@ class RegexIngredientParser: IngredientParser {
                         quantity: Double(quantity),
                         unit: nil,
                         notes: nil,
-                        confidence: 0.85,
+                        confidence: 0.95,
                         originalText: original,
                         parserUsed: parserName
                     )
@@ -561,7 +561,7 @@ class RegexIngredientParser: IngredientParser {
                     quantity: Double(quantity),
                     unit: nil,
                     notes: nil,
-                    confidence: 0.85,
+                    confidence: 0.95,
                     originalText: original,
                     parserUsed: parserName
                 )
@@ -618,7 +618,7 @@ class RegexIngredientParser: IngredientParser {
             quantity: numericValue,
             unit: nil,
             notes: "\(descriptor) of",
-            confidence: 0.85,
+            confidence: 0.95,
             originalText: original,
             parserUsed: parserName
         )
@@ -683,7 +683,7 @@ class RegexIngredientParser: IngredientParser {
                 quantity: approxQty,
                 unit: nil,
                 notes: "a \(descriptor)",
-                confidence: 0.60,
+                confidence: 0.95,
                 originalText: original,
                 parserUsed: parserName
             )
@@ -701,7 +701,7 @@ class RegexIngredientParser: IngredientParser {
                 quantity: approxQty,
                 unit: nil,
                 notes: descriptor,
-                confidence: 0.60,
+                confidence: 0.95,
                 originalText: original,
                 parserUsed: parserName
             )
