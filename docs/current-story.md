@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: February 25, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | **M10.2 COMPLETE**
+**Last Updated**: February 26, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | **M10.5 Spike COMPLETE**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.2-text-paste-import`
-**Current Milestone**: M10.2 Text Paste Import — ✅ **COMPLETE** (6/6 sub-phases done, 31 tests pass)
+**Current Branch**: `feature/M10.5-spike-pipeline-fixes`
+**Current Milestone**: M10.5 Spike: Pipeline Accuracy + LLM Eval — ✅ **COMPLETE** (FM eval, 7 pipeline fixes, PRD with LLM API design)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (Photo Import) → M10.4 → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -90,6 +90,32 @@
 - `forager/Views/Import/SectionHighlightView.swift` — Color-coded line review with tap-to-reclassify
 - `foragerTests/Services/OCRLineClassifierTests.swift` — 21 tests
 - `foragerTests/Services/HeuristicTextExtractorTests.swift` — 10 tests
+
+### M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE
+
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+**PRD**: `docs/prds/active/m10.5-spike-pipeline-accuracy-llm-eval.md`
+
+**What we did**:
+1. ✅ Foundation Models evaluation — Tested FM vs pipeline on 50-recipe corpus (442 lines)
+2. ✅ Identified 7 systematic pipeline bugs from LLM-assisted corpus review (295 errors → 7 patterns)
+3. ✅ Implemented all 7 fixes + discovered/fixed 2 cascading regex bugs
+4. ✅ Wrote comprehensive spike PRD with external LLM API integration design (Claude → GPT → Gemini)
+5. ✅ Full verification via corpus tests and FM comparison
+
+**Results (before → after)**:
+- Ingredients detected: 442 → 477 (+7.9%)
+- Classification confidence: 0.520 → 0.641 (+23.3%)
+- Parsing confidence: 0.932 → 0.984 (+5.6%)
+- Regex parser usage: 18.3% → 79.8% (ML parser no longer compensating)
+- Pipeline vs FM: Pipeline 88.3% beats FM 63.5% (was losing 65.2% vs 78.7%)
+
+**Key files**:
+- `Services/Parsing/FoundationModelsIngredientParser.swift` — @Generable batch parser (spike artifact)
+- `Services/Import/OCRLineClassifier.swift` — 3 fixes: bullet stripping, bare names, metadata patterns
+- `Services/Parsing/RegexIngredientParser.swift` — 5 fixes: bullet stripping, count nouns, hyphen fractions, parenthetical prep
+- `foragerTests/Services/RecipeCorpusFMComparisonTests.swift` — FM vs pipeline comparison test
+- `docs/test-corpus/fm-comparison.md` — Comparison results data
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):
