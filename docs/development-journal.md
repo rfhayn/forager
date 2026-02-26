@@ -6,6 +6,40 @@
 
 ---
 
+## Session 52 — February 26, 2026
+**Milestone**: M10.3 Photo/Image Import
+**Focus**: Add third recipe import source — camera scan and photo library via Vision.framework OCR
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+Implemented M10.3 in a single focused session. Three new files created:
+1. `ImageOCRService.swift` — Vision.framework VNRecognizeTextRequest wrapper producing `[OCRLine]` with real boundingBox data
+2. `DocumentScannerView.swift` — UIViewControllerRepresentable for VNDocumentCameraViewController (multi-page scan support)
+3. `PhotoImportView.swift` — Full local phase state machine: pick → process → review → preview
+
+Modified `RecipeImportSheet` (`.photo` mode), `RecipeListView` (new menu button + sheet), `Info.plist` (`NSCameraUsageDescription`).
+
+### Key Decisions and Why
+
+**1. Single-pass implementation over sub-phase splits**: The plan broke PhotoImportView into M10.3.2 (entry points), M10.3.3 (review wiring), M10.3.4 (FM enhancement) — but all three live in one file following TextPasteImportView's proven pattern. Building them separately would create throwaway intermediate states.
+
+**2. View-driven flow, not extractor**: Like TextPasteImportView, PhotoImportView manages its own local phase enum rather than fitting into the RecipeExtractor protocol. The split-screen review step (image alongside classified text) doesn't fit the extractor's `input → draft` contract. The local state machine pattern is clean and proven.
+
+**3. Dual extraction path**: FM as primary with heuristic fallback mirrors M10.2. On FM-capable devices, OCR text goes to FoundationModelsExtractor first — if it produces a valid draft, the user skips the review step entirely. Only when FM fails/is unavailable does the heuristic classification → SectionHighlightView path activate. This gives the best UX on capable devices while maintaining full functionality everywhere.
+
+**4. Image data for review via JPEG compression**: Rather than holding a UIImage in state (which doesn't conform to Equatable), the review phase stores `Data` from JPEG compression at 0.5 quality. This keeps the enum Equatable and reduces memory for large photos.
+
+### What Was Learned
+
+Vision.framework's coordinate system (bottom-left origin) requires explicit sort for reading order — observations come back in arbitrary order. PhotosPicker's out-of-process design is elegant — no permission needed for library access. VNDocumentCameraViewController returns already-processed images (deskewed, contrast-enhanced), so no preprocessing is needed before OCR.
+
+### What's Next
+
+Manual testing with real recipe photos is the critical next step — the code compiles and follows the proven TextPasteImportView pattern, but real-world OCR accuracy on cookbook photos, screenshots, and handwritten recipes needs validation. After that, M10.4 (Polish & Integration) or M10.6 (Claude API) depending on priority.
+
+---
+
 ## Session 51 — February 26, 2026
 **Milestone**: M10.6 PRD Creation
 **Focus**: Formalize the LLM integration design into a standalone, implementation-ready PRD
