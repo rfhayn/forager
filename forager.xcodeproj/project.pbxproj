@@ -28,6 +28,7 @@
 		M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */; };
 		M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */; };
 		M105T001CORPUSTEST000000A /* RecipeCorpusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */; };
+		M105T002FMCOMPARE000000A /* RecipeCorpusFMComparisonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */; };
 		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
 		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
@@ -74,6 +75,7 @@
 		M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRLineClassifierTests.swift; sourceTree = "<group>"; };
 		M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeuristicTextExtractorTests.swift; sourceTree = "<group>"; };
 		M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusTests.swift; sourceTree = "<group>"; };
+		M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusFMComparisonTests.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -221,6 +223,7 @@
 				M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */,
 				M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */,
 				M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */,
+				M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -393,6 +396,7 @@
 				M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */,
 				M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */,
 				M105T001CORPUSTEST000000A /* RecipeCorpusTests.swift in Sources */,
+				M105T002FMCOMPARE000000A /* RecipeCorpusFMComparisonTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

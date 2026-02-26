@@ -6,6 +6,41 @@
 
 ---
 
+## Session 48 — February 26, 2026
+**Milestone**: M10.5 — Pipeline Accuracy Fixes + LLM Evaluation PRD
+**Focus**: Spike PRD creation, Foundation Models evaluation writeup, 7 pipeline bug fixes, external LLM API architecture design
+**Branch**: `feature/M10.2-text-paste-import` (spike artifacts) → `feature/M10.5-spike-pipeline-fixes` (pipeline fixes)
+
+### What Happened
+This session synthesized the findings from Sessions 46-47 (corpus testing, LLM review, FM evaluation) into a comprehensive spike PRD, then implemented the 7 pipeline bug fixes identified by the corpus review.
+
+The FM comparison test (run on physical device with Apple Intelligence) showed FM achieves 78.7% quantity extraction vs the pipeline's 65.2% — a clear accuracy advantage. But the hallucination analysis killed the "FM as primary parser" strategy: systematic gram-to-kilogram conversions (250g → 0.25), invented units (cucumber → unit=g), and batch count mismatches (7/50 recipes) make FM unsuitable for numeric extraction. The pivot: FM for soft tasks (category suggestion, template dedup), external LLM APIs (Claude/GPT/Gemini) for high-accuracy parsing, deterministic pipeline as always-available offline fallback.
+
+### Pipeline Bug Fixes
+The corpus review's most impactful finding was that a single root cause — leading bullet/list prefixes (`"- "`, `"• "`, `"* "`) — accounts for ~70% of all 295 errors. Both the classifier and regex parser use `^`-anchored patterns that fail when a `-` character sits at position 0 instead of a digit. Stripping these prefixes before scoring/parsing (while preserving original text in output) was the foundational fix that unlocked improvements across all other patterns.
+
+The remaining 6 fixes addressed specific pattern gaps: metric no-space (`400g`), unit-less count items (`2 eggs`), bare name ingredients (`celery`), unusual metadata (`Difficulty: Easy`), mixed fractions with hyphens (`2-1/2`), and parenthetical prep methods (`butter (softened)`). Each fix was independent after the bullet stripping foundation.
+
+### External LLM API Architecture
+Designed a clean architecture for external LLM integration: `LLMIngredientParser` protocol with provider adapters, user-owned API keys in iOS Keychain, Settings UI for opt-in, and a three-tier fallback chain (LLM API → on-device FM → deterministic pipeline). The key insight is that the user pays their own API costs directly (~$0.001/recipe with Claude Haiku) — no server-side proxy, no data collection, full privacy. This is the "bring your own key" model that respects user autonomy.
+
+### Key Decisions
+- **FM verdict: not a replacement, but an augmentation** — hallucinations are reproducible and systematic, not random errors that more prompting would fix. The gram-to-kg pattern alone is disqualifying for a grocery app where quantities must be exact.
+- **Pipeline fixes still worth doing** — even with LLM APIs as the future primary parser, the deterministic pipeline serves as the offline fallback. Fixing 7 bugs that affect 295/442 lines makes the fallback path much stronger.
+- **Claude API first (M10.6)** — among external LLMs, Claude's tool use provides the most reliable structured output for ingredient parsing. GPT and Gemini adapters are straightforward additions (M10.7+).
+- **Spike artifacts preserved** — FM parser and comparison test committed as reference even though FM isn't the strategic direction. Future sessions may revisit if Apple improves the model.
+
+### AI Tooling
+- Opus 4.6 in explanatory mode — the comprehensive PRD writing benefited from the educational style, producing a document that explains both the "what" and the "why" for each design decision
+- Plan mode → implementation execution worked well for a task with clear phases and dependencies
+
+### What's Left
+- M10.6: Claude API integration (estimated 8-12 hours)
+- M10.7+: GPT/Gemini adapter expansion
+- Corpus expansion from 50 to 250-500 recipes (deferred to after pipeline fixes settle)
+
+---
+
 ## Session 46 — February 25, 2026
 **Milestone**: M10.5 — Recipe Test Corpus & Accuracy Baseline
 **Focus**: PRD creation, 50-recipe corpus generation, test harness build + first run
