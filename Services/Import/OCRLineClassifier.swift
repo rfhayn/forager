@@ -439,6 +439,6 @@ enum OCRLineClassifier {
 
     /// Fix 5: Unusual metadata labels not covered by serving/time/yield patterns
     private static let metadataLabelPattern: NSRegularExpression = {
-        try! NSRegularExpression(pattern: #"^(?:difficulty|author|cuisine|source|category|course|diet|skill|level|rating|oven|active\s+time|inactive\s+time|hands-on\s+time)\s*:"#, options: .caseInsensitive)
+        try! NSRegularExpression(pattern: #"^(?:difficulty|author|cuisine|source|category|course|diet|skill|level|rating|oven|active\s+time|inactive\s+time|hands-on\s+time|(?:\w+\s+)?temperature)\s*:"#, options: .caseInsensitive)
     }()
 }

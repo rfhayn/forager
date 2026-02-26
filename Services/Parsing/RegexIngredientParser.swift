@@ -45,7 +45,8 @@ class RegexIngredientParser: IngredientParser {
     private static let descriptiveAmountMap: [String: Double] = [
         "pinch": 0.125, "dash": 0.125, "smidgen": 0.03125,
         "handful": 0.5, "splash": 0.5, "drizzle": 0.5,
-        "sprig": 1, "stalk": 1, "leaf": 1
+        "sprig": 1, "stalk": 1, "leaf": 1,
+        "bunch": 1, "sprinkling": 0.125, "squeeze": 1
     ]
 
     // MARK: - IngredientParser Protocol
@@ -93,6 +94,7 @@ class RegexIngredientParser: IngredientParser {
         if let result = tryCompoundPhrasePattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryStandardPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryCountNounPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
+        if let result = tryPrefixQuantityPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryQualifierPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryDescriptiveAmountPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
 
@@ -595,12 +597,39 @@ class RegexIngredientParser: IngredientParser {
         "shallots": "shallot", "scallions": "scallion", "anchovies": "anchovy"
     ]
 
+    // MARK: - Pattern 5c: Prefix-Before-Quantity (Fix 9)
+    // Handles: "Juice of 1/2 lemon", "Zest of 1 lemon", "Juice of 2 lemons"
+
+    private func tryPrefixQuantityPattern(_ text: String, original: String) -> ParserResult? {
+        let lowered = text.lowercased()
+
+        // "Juice of 1/2 lemon", "Zest of 1 lemon", "Juice of 2 lemons"
+        let prefixPattern = #"^(juice|zest)\s+of\s+(\d+(?:\s*/\s*\d+)?)\s+(.+)$"#
+        guard let match = matchPattern(prefixPattern, in: lowered) else { return nil }
+
+        let descriptor = match[1]
+        let quantityStr = match[2]
+        let name = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let numericValue = convertToNumeric(quantityStr)
+
+        return ParserResult(
+            name: name,
+            quantity: numericValue,
+            unit: nil,
+            notes: "\(descriptor) of",
+            confidence: 0.85,
+            originalText: original,
+            parserUsed: parserName
+        )
+    }
+
     // MARK: - Pattern 6: Qualifiers
     // Handles: "salt to taste", "pepper as needed", "garlic, minced"
 
     private func tryQualifierPattern(_ text: String, original: String) -> ParserResult? {
         // "salt to taste", "pepper as needed", "oil as desired"
-        let qualifierPattern = #"^([a-zA-Z\s]+?)\s*,?\s*(to taste|as needed|as desired|for garnish|for serving|optional)$"#
+        let qualifierPattern = #"^([a-zA-Z\s]+?)\s*,?\s*(to taste|as needed|as desired|for garnish|for garnishing|for serving|for dusting|for glazing|to serve|to garnish|optional)$"#
         if let match = matchPattern(qualifierPattern, in: text) {
             let name = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
             let qualifier = match[2]
@@ -643,7 +672,7 @@ class RegexIngredientParser: IngredientParser {
         let lowered = text.lowercased()
 
         // "a pinch of salt", "a dash of cayenne", "a handful of herbs"
-        let descriptivePattern = #"^a\s+(pinch|dash|smidgen|handful|splash|drizzle|sprig|stalk|leaf)\s+(?:of\s+)?(.+)$"#
+        let descriptivePattern = #"^a\s+(pinch|dash|smidgen|handful|splash|drizzle|sprig|stalk|leaf|bunch|sprinkling|squeeze)\s+(?:of\s+)?(.+)$"#
         if let match = matchPattern(descriptivePattern, in: lowered) {
             let descriptor = match[1]
             let name = match[2].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -661,7 +690,7 @@ class RegexIngredientParser: IngredientParser {
         }
 
         // Just the descriptor without "a": "pinch of salt"
-        let bareDescriptivePattern = #"^(pinch|dash|smidgen|handful|splash|drizzle)\s+(?:of\s+)?(.+)$"#
+        let bareDescriptivePattern = #"^(pinch|dash|smidgen|handful|splash|drizzle|bunch|sprinkling|squeeze)\s+(?:of\s+)?(.+)$"#
         if let match = matchPattern(bareDescriptivePattern, in: lowered) {
             let descriptor = match[1]
             let name = match[2].trimmingCharacters(in: .whitespacesAndNewlines)

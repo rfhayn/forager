@@ -6,6 +6,33 @@
 
 ---
 
+## Session 49 — February 26, 2026
+**Milestone**: M10.5.4 — Remaining Pipeline Gaps + PRD OAuth/Strategy Update
+**Focus**: OAuth research findings, 3 additional pipeline fixes (descriptors, juice/zest, temperature metadata), PRD strategy updates
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+
+### What Happened
+This session addressed the remaining pipeline gaps identified by the FM comparison test (33 lines where pipeline returned qty=nil but FM found a quantity). After analysis, ~12 were fixable with regex and ~21 were genuinely semantic (requiring LLM). Three targeted fixes were implemented.
+
+The OAuth research was a turning point for the LLM integration strategy. Discovering that Anthropic explicitly banned third-party OAuth (with a specific Jan 2026 enforcement date) eliminated the "seamless sign-in" UX dream. OpenAI's OAuth is designed for ChatGPT actions (their app calling your backend), not for your app calling their API. Only Google Gemini supports proper OAuth, but the consent screen review process adds friction that defeats the purpose. The conclusion: API keys are the universal approach, and the UX mitigation (deep links, clipboard auto-detect, test connection) is the right investment.
+
+### Pipeline Fixes Round 2
+Three fixes were implemented, reducing FM-fixable gaps from 33 to 25:
+
+**Fix 8 (Descriptive Amounts + Qualifiers)**: Added `bunch`, `sprinkling`, `squeeze` to the descriptor map and both regex patterns. Also expanded the qualifier pattern with `for dusting`, `for glazing`, `to serve`, `to garnish`, `for garnishing` — these are common recipe qualifiers that were being classified as unknown.
+
+**Fix 9 (Juice/Zest Prefix Pattern)**: A new `tryPrefixQuantityPattern()` method handles the inverted structure where a descriptor comes before the quantity: `"Juice of 1/2 lemon"`. This pattern is common enough in British and international recipes to warrant dedicated handling.
+
+**Fix 10 (Temperature Metadata)**: Updated the `metadataLabelPattern` to include `(?:\w+\s+)?temperature` so lines like `"Oil temperature: 350F / 175C"` are classified as metadata rather than ingredients.
+
+### Key Decision: Pipeline Has Reached Its Ceiling
+After 10 total fixes across 2 rounds, the pipeline is at ~88% qty extraction. The remaining 25 FM-fixable gaps are genuinely semantic — prose-embedded quantities, "X to serve" patterns, ambiguous multi-ingredients. No amount of regex will solve these. This validates the M10.6 LLM integration strategy: regex handles the structured 88%, LLM handles the semantic 12%.
+
+### PRD Strategy Updates
+The PRD was updated with OAuth findings (§4.4), household API key sharing (§4.10), future subscription model possibility (§4.11), and the remaining gaps analysis (§3.8). M10.6 was reframed as Claude-only with explicit emphasis that integration is optional.
+
+---
+
 ## Session 48 — February 26, 2026
 **Milestone**: M10.5 — Pipeline Accuracy Fixes + LLM Evaluation PRD
 **Focus**: Spike PRD creation, Foundation Models evaluation writeup, 7 pipeline bug fixes, external LLM API architecture design

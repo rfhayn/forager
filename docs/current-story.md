@@ -4,7 +4,7 @@
 **Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | **M10.5 Spike COMPLETE**
 **Total Progress**: ~253 hours | 89% planning accuracy
 **Current Branch**: `feature/M10.5-spike-pipeline-fixes`
-**Current Milestone**: M10.5 Spike: Pipeline Accuracy + LLM Eval — ✅ **COMPLETE** (FM eval, 7 pipeline fixes, PRD with LLM API design)
+**Current Milestone**: M10.5 Spike: Pipeline Accuracy + LLM Eval — ✅ **COMPLETE** (FM eval, 10 pipeline fixes, PRD with OAuth findings + LLM API design)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API) → M7.7 → M6 → M9 → M11+
 
@@ -99,21 +99,29 @@
 **What we did**:
 1. ✅ Foundation Models evaluation — Tested FM vs pipeline on 50-recipe corpus (442 lines)
 2. ✅ Identified 7 systematic pipeline bugs from LLM-assisted corpus review (295 errors → 7 patterns)
-3. ✅ Implemented all 7 fixes + discovered/fixed 2 cascading regex bugs
-4. ✅ Wrote comprehensive spike PRD with external LLM API integration design (Claude → GPT → Gemini)
+3. ✅ Implemented all 7 fixes + discovered/fixed 2 cascading regex bugs (round 1)
+4. ✅ Wrote comprehensive spike PRD with external LLM API integration design
 5. ✅ Full verification via corpus tests and FM comparison
+6. ✅ Round 2: 3 more fixes (descriptors, juice/zest, temperature metadata)
+7. ✅ PRD updated with OAuth findings, household sharing, subscription model, remaining gaps analysis
 
-**Results (before → after)**:
+**Results (round 1: before → after)**:
 - Ingredients detected: 442 → 477 (+7.9%)
 - Classification confidence: 0.520 → 0.641 (+23.3%)
 - Parsing confidence: 0.932 → 0.984 (+5.6%)
 - Regex parser usage: 18.3% → 79.8% (ML parser no longer compensating)
 - Pipeline vs FM: Pipeline 88.3% beats FM 63.5% (was losing 65.2% vs 78.7%)
 
+**Results (round 2: 3 additional fixes)**:
+- FM-fixes-gaps: 33 → 25 (8 fewer gaps, 24% improvement)
+- Qty extraction: 88.4% (maintained)
+- 316 tests, 0 failures
+- Remaining 25 gaps are semantic — intentionally left for M10.6 LLM integration
+
 **Key files**:
 - `Services/Parsing/FoundationModelsIngredientParser.swift` — @Generable batch parser (spike artifact)
-- `Services/Import/OCRLineClassifier.swift` — 3 fixes: bullet stripping, bare names, metadata patterns
-- `Services/Parsing/RegexIngredientParser.swift` — 5 fixes: bullet stripping, count nouns, hyphen fractions, parenthetical prep
+- `Services/Import/OCRLineClassifier.swift` — 4 fixes: bullet stripping, bare names, metadata patterns, temperature metadata
+- `Services/Parsing/RegexIngredientParser.swift` — 7 fixes: bullet stripping, count nouns, hyphen fractions, parenthetical prep, descriptors, juice/zest, qualifiers
 - `foragerTests/Services/RecipeCorpusFMComparisonTests.swift` — FM vs pipeline comparison test
 - `docs/test-corpus/fm-comparison.md` — Comparison results data
 
