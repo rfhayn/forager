@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "totalRecipes": 50,
+  "recipes": [
+    {
+      "filename": "clean/clean-01-chicken-handi.txt",
+      "category": "clean",
+      "title": "Chicken Handi",
+      "cuisine": "Indian",
+      "ingredientCount": 16,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-02-beef-wellington.txt",
+      "category": "clean",
+      "title": "Beef Wellington",
+      "cuisine": "British",
+      "ingredientCount": 8,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-03-leblebi-soup.txt",
+      "category": "clean",
+      "title": "Leblebi Soup",
+      "cuisine": "Tunisian",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-04-carrot-cake.txt",
+      "category": "clean",
+      "title": "Carrot Cake",
+      "cuisine": "British",
+      "ingredientCount": 12,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-05-french-onion-soup.txt",
+      "category": "clean",
+      "title": "French Onion Soup",
+      "cuisine": "French",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-06-beef-stroganoff.txt",
+      "category": "clean",
+      "title": "Beef Stroganoff",
+      "cuisine": "Russian",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-07-mediterranean-pasta-salad.txt",
+      "category": "clean",
+      "title": "Mediterranean Pasta Salad",
+      "cuisine": "Italian",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-08-pancakes.txt",
+      "category": "clean",
+      "title": "Pancakes",
+      "cuisine": "American",
+      "ingredientCount": 7,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-09-kung-pao-chicken.txt",
+      "category": "clean",
+      "title": "Kung Pao Chicken",
+      "cuisine": "Chinese",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-10-split-pea-soup.txt",
+      "category": "clean",
+      "title": "Split Pea Soup",
+      "cuisine": "Canadian",
+      "ingredientCount": 8,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-01-honey-teriyaki-salmon.txt",
+      "category": "no-headers",
+      "title": "Honey Teriyaki Salmon",
+      "cuisine": "Japanese",
+      "ingredientCount": 5,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-02-chicken-karaage.txt",
+      "category": "no-headers",
+      "title": "Chicken Karaage",
+      "cuisine": "Japanese",
+      "ingredientCount": 9,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-03-beef-pho.txt",
+      "category": "no-headers",
+      "title": "Beef Pho",
+      "cuisine": "Vietnamese",
+      "ingredientCount": 17,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-04-chicken-marengo.txt",
+      "category": "no-headers",
+      "title": "Chicken Marengo",
+      "cuisine": "French",
+      "ingredientCount": 7,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-05-rock-cakes.txt",
+      "category": "no-headers",
+      "title": "Rock Cakes",
+      "cuisine": "British",
+      "ingredientCount": 8,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-06-egg-drop-soup.txt",
+      "category": "no-headers",
+      "title": "Egg Drop Soup",
+      "cuisine": "Chinese",
+      "ingredientCount": 10,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-07-salmon-avocado-salad.txt",
+      "category": "no-headers",
+      "title": "Salmon Avocado Salad",
+      "cuisine": "British",
+      "ingredientCount": 8,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-08-sticky-chicken.txt",
+      "category": "no-headers",
+      "title": "Sticky Chicken",
+      "cuisine": "Australian",
+      "ingredientCount": 6,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-09-corned-beef-hash.txt",
+      "category": "no-headers",
+      "title": "Corned Beef Hash",
+      "cuisine": "British",
+      "ingredientCount": 7,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-10-thai-beef-stir-fry.txt",
+      "category": "no-headers",
+      "title": "Thai Beef Stir-Fry",
+      "cuisine": "Thai",
+      "ingredientCount": 5,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-01-beef-empanadas.txt",
+      "category": "unusual-metadata",
+      "title": "Beef Empanadas",
+      "cuisine": "Uruguayan",
+      "ingredientCount": 18,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-02-chicken-basquaise.txt",
+      "category": "unusual-metadata",
+      "title": "Chicken Basquaise",
+      "cuisine": "French",
+      "ingredientCount": 19,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-03-apple-cake.txt",
+      "category": "unusual-metadata",
+      "title": "Apple Cake",
+      "cuisine": "Dutch",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-04-thai-pumpkin-soup.txt",
+      "category": "unusual-metadata",
+      "title": "Thai Pumpkin Soup",
+      "cuisine": "Thai",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-05-kentucky-fried-chicken.txt",
+      "category": "unusual-metadata",
+      "title": "Kentucky Fried Chicken",
+      "cuisine": "American",
+      "ingredientCount": 17,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-06-beef-rendang.txt",
+      "category": "unusual-metadata",
+      "title": "Beef Rendang",
+      "cuisine": "Malaysian",
+      "ingredientCount": 12,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-07-eccles-cakes.txt",
+      "category": "unusual-metadata",
+      "title": "Eccles Cakes",
+      "cuisine": "British",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-08-salmon-eggs-benedict.txt",
+      "category": "unusual-metadata",
+      "title": "Salmon Eggs Benedict",
+      "cuisine": "American",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-09-chicken-couscous.txt",
+      "category": "unusual-metadata",
+      "title": "Chicken Couscous",
+      "cuisine": "Moroccan",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-10-dundee-cake.txt",
+      "category": "unusual-metadata",
+      "title": "Dundee Cake",
+      "cuisine": "British",
+      "ingredientCount": 14,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-01-beef-bourguignon.txt",
+      "category": "messy",
+      "title": "Beef Bourguignon",
+      "cuisine": "French",
+      "ingredientCount": 15,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-02-general-tsos-chicken.txt",
+      "category": "messy",
+      "title": "General Tso's Chicken",
+      "cuisine": "Chinese",
+      "ingredientCount": 20,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-03-beef-lo-mein.txt",
+      "category": "messy",
+      "title": "Beef Lo Mein",
+      "cuisine": "Chinese",
+      "ingredientCount": 17,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-04-irish-stew.txt",
+      "category": "messy",
+      "title": "Irish Stew",
+      "cuisine": "Irish",
+      "ingredientCount": 13,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-05-spanish-chicken-pie.txt",
+      "category": "messy",
+      "title": "Spanish Chicken Pie",
+      "cuisine": "Spanish",
+      "ingredientCount": 9,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-06-hot-and-sour-soup.txt",
+      "category": "messy",
+      "title": "Hot and Sour Soup",
+      "cuisine": "Chinese",
+      "ingredientCount": 15,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-07-chicken-fried-rice.txt",
+      "category": "messy",
+      "title": "Chicken Fried Rice",
+      "cuisine": "Chinese",
+      "ingredientCount": 14,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-08-creamy-tomato-soup.txt",
+      "category": "messy",
+      "title": "Creamy Tomato Soup",
+      "cuisine": "British",
+      "ingredientCount": 13,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-09-szechuan-beef.txt",
+      "category": "messy",
+      "title": "Szechuan Beef",
+      "cuisine": "Chinese",
+      "ingredientCount": 20,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-10-sweet-and-sour-chicken.txt",
+      "category": "messy",
+      "title": "Sweet and Sour Chicken",
+      "cuisine": "Chinese",
+      "ingredientCount": 13,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-01-tandoori-chicken.txt",
+      "category": "international",
+      "title": "Tandoori Chicken",
+      "cuisine": "Indian",
+      "ingredientCount": 12,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-02-chicken-congee.txt",
+      "category": "international",
+      "title": "Chicken Congee",
+      "cuisine": "Chinese",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-03-beef-asado.txt",
+      "category": "international",
+      "title": "Beef Asado",
+      "cuisine": "Filipino",
+      "ingredientCount": 14,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-04-parkin-cake.txt",
+      "category": "international",
+      "title": "Parkin Cake",
+      "cuisine": "British",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-05-minced-beef-pie.txt",
+      "category": "international",
+      "title": "Minced Beef Pie",
+      "cuisine": "British",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-06-massaman-beef-curry.txt",
+      "category": "international",
+      "title": "Massaman Beef Curry",
+      "cuisine": "Thai",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-07-madeira-cake.txt",
+      "category": "international",
+      "title": "Madeira Cake",
+      "cuisine": "British",
+      "ingredientCount": 7,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-08-thai-green-chicken-soup.txt",
+      "category": "international",
+      "title": "Thai Green Chicken Soup",
+      "cuisine": "Thai",
+      "ingredientCount": 14,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-09-red-peas-soup.txt",
+      "category": "international",
+      "title": "Red Peas Soup",
+      "cuisine": "Jamaican",
+      "ingredientCount": 15,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-10-fish-soup-ukha.txt",
+      "category": "international",
+      "title": "Fish Soup (Ukha)",
+      "cuisine": "Russian",
+      "ingredientCount": 9,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    }
+  ]
+}

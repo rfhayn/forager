@@ -6,6 +6,40 @@
 
 ---
 
+## Session 46 — February 25, 2026
+**Milestone**: M10.5 — Recipe Test Corpus & Accuracy Baseline
+**Focus**: PRD creation, 50-recipe corpus generation, test harness build + first run
+**Branch**: `feature/M10.2-text-paste-import` (tacked onto M10.2 branch)
+
+### What Happened
+After completing M10.2 and encountering parsing issues during real-world testing, pivoted to building a systematic accuracy measurement infrastructure. Created M10.5 PRD, generated a 50-recipe pilot corpus across 5 difficulty categories, built a test harness that runs the full two-stage pipeline (OCRLineClassifier → HybridIngredientParser), and produced the first accuracy baseline.
+
+### Key Results (First Corpus Run)
+- **50 recipes**, 1019 lines classified, 442 ingredients parsed, 0.359s total
+- **Classification confidence avg: 0.520** — surprisingly low, biggest improvement opportunity
+- **Parsing confidence avg: 0.932** — strong once a line is correctly identified as an ingredient
+- **Parser usage**: ML 81.7%, regex 18.3%, NLP 0%
+- **Messy category gap**: Only 33 ingredients detected vs 100-130 in structured categories — the classifier struggles with prose-embedded ingredients
+
+### Key Decisions
+- **Confirm-or-correct review model**: Pre-fill all predictions, human only marks errors. Same approach used by strangetom's 68,846-sample training set. Much faster than manual annotation from scratch.
+- **TheMealDB as data source**: Every major recipe site (AllRecipes, NYT Cooking, etc.) blocks automated fetching. TheMealDB provides a free API with structured ingredient/measure pairs — we reformatted into 5 realistic text styles.
+- **5 difficulty categories**: clean (standard headers + lists), no-headers (bare text), unusual-metadata (odd yield/time formats), messy (blog prose), international (metric + British). This covers the real-world formatting spectrum.
+- **`#filePath`-based resource location**: Test finds corpus files relative to source path, avoiding 50+ pbxproj resource entries.
+- **Two-file output**: JSON for programmatic analysis, markdown for human review. The markdown has per-recipe classification and parsing tables with "Correct? | Correction" columns.
+
+### AI Tooling
+- Third conversation window in the same day — context summary system worked well for continuity
+- Parallel agent spawning for PRD creation and corpus generation saved significant time
+- WebFetch limitations forced the TheMealDB pivot — a good example of tool constraints driving creative solutions
+
+### What's Left
+- User review of corpus-review.md (2284 lines of predictions to verify)
+- M10.5.4: Correction ingestion after human review
+- M10.5.5: Scale decision — expand from 50 to 250-500 based on pilot results
+
+---
+
 ## Session 45 — February 25, 2026
 **Milestone**: M10.2 — Text Paste Import
 **Focus**: Full M10.2 build — Foundation Models + heuristic fallback + SectionHighlightView + tests
