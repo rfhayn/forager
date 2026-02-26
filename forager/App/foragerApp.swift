@@ -187,6 +187,8 @@ struct foragerApp: App {
                             print("🔍 App launch: Checking for existing households...")
                             #endif
                             await householdService.checkForAcceptedInvitations()
+                            // Refresh display name if invitation check loaded a household
+                            await householdService.refreshCurrentMemberDisplayName()
                         }
                     }
                     .onAppear {
