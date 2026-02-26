@@ -16,6 +16,7 @@ struct RecipeListView: View {
     @State private var showingAddRecipe = false
     @State private var showingImport = false
     @State private var showingTextImport = false
+    @State private var showingPhotoImport = false
     @State private var showingBrowser = false
     @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
@@ -230,6 +231,9 @@ struct RecipeListView: View {
                         Button { showingTextImport = true } label: {
                             Label("Paste Recipe Text", systemImage: "doc.text")
                         }
+                        Button { showingPhotoImport = true } label: {
+                            Label("Import from Photo", systemImage: "camera")
+                        }
                     } label: {
                         Image(systemName: "square.and.arrow.down")
                     }
@@ -247,6 +251,9 @@ struct RecipeListView: View {
         }
         .sheet(isPresented: $showingTextImport) {
             RecipeImportSheet(importService: importService, mode: .text)
+        }
+        .sheet(isPresented: $showingPhotoImport) {
+            RecipeImportSheet(importService: importService, mode: .photo)
         }
         .fullScreenCover(isPresented: $showingBrowser) {
             RecipeBrowserView()

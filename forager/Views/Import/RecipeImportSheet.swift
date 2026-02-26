@@ -16,6 +16,7 @@ import CoreData
 enum ImportMode {
     case url
     case text
+    case photo
 }
 
 // MARK: - Recipe Import Sheet
@@ -52,6 +53,8 @@ struct RecipeImportSheet: View {
                         urlInputView
                     case .text:
                         TextPasteImportView(importService: importService)
+                    case .photo:
+                        PhotoImportView(importService: importService)
                     }
 
                 case .fetching, .extracting:
@@ -353,11 +356,19 @@ struct RecipeImportSheet: View {
 
     /// Context-aware "try again" button — resets to input view
     private var tryAgainButton: some View {
-        Button(mode == .url ? "Try Different URL" : "Try Different Text") {
+        Button(tryAgainLabel) {
             importService.cancelImport()
             urlText = ""
         }
         .buttonStyle(.bordered)
+    }
+
+    private var tryAgainLabel: String {
+        switch mode {
+        case .url: return "Try Different URL"
+        case .text: return "Try Different Text"
+        case .photo: return "Try Different Photo"
+        }
     }
 
     // MARK: - Actions
