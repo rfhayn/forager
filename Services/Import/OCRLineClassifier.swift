@@ -75,11 +75,15 @@ enum OCRLineClassifier {
             // Skip empty lines
             guard !trimmed.isEmpty else { continue }
 
-            // Score for each type
-            let scores = scoreLine(trimmed, lineIndex: index, totalLines: lines.count)
+            // Strip bullet/list prefixes before scoring so ^-anchored patterns see actual content.
+            // Preserves original trimmed text in output ClassifiedLine.
+            let cleaned = stripBulletPrefix(trimmed)
 
-            // Check if this is a section header first
-            if let headerType = detectSectionHeader(trimmed) {
+            // Score for each type using cleaned text
+            let scores = scoreLine(cleaned, lineIndex: index, totalLines: lines.count)
+
+            // Check if this is a section header first (use cleaned text for matching)
+            if let headerType = detectSectionHeader(cleaned) {
                 currentSection = headerType
                 results.append(ClassifiedLine(
                     text: trimmed,
@@ -202,6 +206,11 @@ enum OCRLineClassifier {
             score += 0.3
         }
 
+        // Fix 4: Bare ingredient names — common ingredients with no quantity/unit
+        if containsBareIngredientName(text) {
+            score += 0.3
+        }
+
         // Penalty: very long lines are rarely ingredients
         if text.count > 120 {
             score -= 0.3
@@ -271,6 +280,11 @@ enum OCRLineClassifier {
             score += 0.6
         }
 
+        // Fix 5: Unusual metadata labels (Difficulty:, Author:, Cuisine:, etc.)
+        if metadataLabelPattern.firstMatch(in: lower, range: NSRange(lower.startIndex..., in: lower)) != nil {
+            score += 0.6
+        }
+
         return max(score, 0.0)
     }
 
@@ -296,6 +310,24 @@ enum OCRLineClassifier {
         }
 
         return nil
+    }
+
+    // MARK: - Bullet Prefix Stripping (Fix 1)
+
+    /// Strip leading bullet/list prefixes so ^-anchored scoring patterns see actual content.
+    /// Only strips punctuated numbered lists (1. / 2) / 3:), NOT bare "2 cups flour".
+    private static func stripBulletPrefix(_ text: String) -> String {
+        // Bullet/dash/star prefixes: "- text", "• text", "* text"
+        if let range = text.range(of: #"^\s*[-•*]\s+"#, options: .regularExpression) {
+            let stripped = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+            if !stripped.isEmpty { return stripped }
+        }
+        // Numbered list prefixes: "1. text", "2) text", "3: text" — requires punctuation after digit
+        if let range = text.range(of: #"^\s*\d+[.\):]\s+"#, options: .regularExpression) {
+            let stripped = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+            if !stripped.isEmpty { return stripped }
+        }
+        return text
     }
 
     // MARK: - Pattern Helpers
@@ -328,6 +360,14 @@ enum OCRLineClassifier {
         timeReferencePattern.firstMatch(in: text.lowercased(), range: NSRange(text.startIndex..., in: text)) != nil
     }
 
+    /// Fix 4: Detect bare ingredient names with no quantity or unit
+    private static func containsBareIngredientName(_ text: String) -> Bool {
+        let lower = text.lowercased().trimmingCharacters(in: .whitespaces)
+        // Check single-word and common multi-word bare ingredients
+        return bareIngredients.contains(lower) ||
+               bareIngredients.contains(where: { lower.hasPrefix($0 + " ") || lower.hasPrefix($0 + ",") })
+    }
+
     // MARK: - Static Data
 
     /// 44 imperative cooking verbs from spike research
@@ -344,7 +384,7 @@ enum OCRLineClassifier {
 
     /// Common cooking measurement units
     private static let unitWords: Set<String> = [
-        "cup", "cups", "tablespoon", "tablespoons", "tbsp", "teaspoon", "teaspoons", "tsp",
+        "cup", "cups", "tablespoon", "tablespoons", "tbsp", "tbs", "teaspoon", "teaspoons", "tsp",
         "ounce", "ounces", "oz", "pound", "pounds", "lb", "lbs",
         "gram", "grams", "g", "kilogram", "kilograms", "kg",
         "ml", "milliliter", "milliliters", "liter", "liters", "l",
@@ -355,10 +395,26 @@ enum OCRLineClassifier {
         "stick", "sticks", "sprig", "sprigs"
     ]
 
+    /// Fix 4: Common bare ingredients (no quantity/unit needed)
+    private static let bareIngredients: Set<String> = [
+        "salt", "pepper", "oil", "olive oil", "vegetable oil", "sesame oil", "coconut oil",
+        "butter", "flour", "sugar", "water", "ice", "ice water",
+        "celery", "parsley", "cilantro", "basil", "thyme", "rosemary", "oregano", "dill", "mint",
+        "cinnamon", "paprika", "cumin", "turmeric", "nutmeg", "cayenne",
+        "garlic", "ginger", "honey", "vinegar", "mustard", "ketchup", "mayo", "mayonnaise",
+        "cream", "milk", "cheese", "rice", "pasta", "bread", "noodles",
+        "lettuce", "spinach", "arugula", "passata", "stock", "broth",
+        "wine", "beer", "sake", "mirin",
+        "soy sauce", "fish sauce", "worcestershire sauce", "hot sauce", "sriracha",
+        "cornstarch", "baking powder", "baking soda", "yeast",
+        "salt and pepper", "cooking spray", "nonstick spray"
+    ]
+
     // MARK: - Regex Patterns (compiled once)
 
     private static let numberedStepPattern: NSRegularExpression = {
-        try! NSRegularExpression(pattern: #"^\s*(?:step\s+)?\d+[\.\):\s]"#, options: .caseInsensitive)
+        // Requires punctuation after digit (. ) :), NOT bare digit+space like "2 cups"
+        try! NSRegularExpression(pattern: #"^\s*(?:step\s+)?\d+[\.\):]"#, options: .caseInsensitive)
     }()
 
     private static let temperaturePattern: NSRegularExpression = {
@@ -379,5 +435,10 @@ enum OCRLineClassifier {
 
     private static let timeReferencePattern: NSRegularExpression = {
         try! NSRegularExpression(pattern: #"\d+\s*(?:minutes?|mins?|hours?|hrs?|seconds?|secs?)"#, options: .caseInsensitive)
+    }()
+
+    /// Fix 5: Unusual metadata labels not covered by serving/time/yield patterns
+    private static let metadataLabelPattern: NSRegularExpression = {
+        try! NSRegularExpression(pattern: #"^(?:difficulty|author|cuisine|source|category|course|diet|skill|level|rating|oven|active\s+time|inactive\s+time|hands-on\s+time)\s*:"#, options: .caseInsensitive)
     }()
 }
