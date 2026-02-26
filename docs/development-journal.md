@@ -8,20 +8,50 @@
 
 ## Session 51 — February 26, 2026
 **Milestone**: M10.6 PRD Creation
-**Focus**: Extract standalone PRD for Claude API integration from M10.5 spike design
+**Focus**: Formalize the LLM integration design into a standalone, implementation-ready PRD
 **Branch**: `feature/M10.6-prd`
 
+### Why This Session Happened
+
+This was an impromptu planning session. The original plan was to move straight to M10.3 (Photo Import) now that M10.5's pipeline spike is merged. But the M10.5 spike produced a rich Section C in its PRD — a high-level LLM integration design covering protocol shape, OAuth research, provider comparison, prompt engineering, and cost analysis. That design was buried inside a spike document alongside FM evaluation data and 12 regex fix descriptions. If we'd started M10.6 implementation later by referencing Section C, we'd be working from a design embedded in the wrong document, mixed with irrelevant spike context.
+
+The decision to extract a standalone M10.6 PRD now, while the spike findings are fresh, means the implementation session can start clean. The PRD is self-contained — no need to cross-reference the spike document during implementation.
+
 ### What Happened
-Created the standalone M10.6 PRD (`docs/prds/active/m10.6-claude-api-integration.md`) based on the Section C design from the M10.5 spike PRD. The spike validated that an LLM API integration would fill the ~7-8% of ingredient lines the deterministic pipeline can't handle — messy prose, inverted structures, multi-ingredient lines, and "to serve" semantics.
 
-### Key Architecture Decision: Bypass, Not Tier
-The most important design decision in the PRD is that the LLM acts as a **pipeline bypass**, not a 4th tier within the hybrid router. When enabled, the LLM parses ALL ingredient lines in one batch API call and skips the regex→ML→NLP pipeline entirely. On any failure, the entire pipeline runs as before. This is cleaner than inserting LLM as a tier because: (1) the API shapes are fundamentally different (async batch vs sync per-line), (2) mixing would force all 3 existing parsers to become async, cascading through 11+ call sites, and (3) the fallback semantics are different — LLM failure means "use everything," not "try next tier."
+Created `docs/prds/active/m10.6-claude-api-integration.md` — a 12-section, 766-line PRD with implementation-ready detail. This isn't a copy of Section C; it's an enriched design that adds concrete file paths, exact API request/response schemas, the full error-to-fallback matrix, Settings UI wireframes, test file inventory, and sub-phase breakdown.
 
-### OAuth Research Conclusion
-The M10.5 spike discovered that Anthropic explicitly bans third-party OAuth, OpenAI's OAuth is designed for ChatGPT calling your backend (not your app calling their API), and only Google Gemini supports proper OAuth but with complex consent screen review. API keys are the only universal approach. The UX mitigation — deep links to Console, `sk-ant-` prefix validation, "Test Connection" button, Keychain storage — is the right investment.
+### Key Decisions and Why
+
+**1. Bypass, Not Tier**
+The LLM acts as a pipeline **bypass** in `RecipeImportService.saveImport()`, not a 4th tier inside the hybrid router. When LLM is enabled and configured, it parses ALL ingredient lines in one batch API call and skips regex→ML→NLP entirely. On any failure, the full pipeline runs unchanged.
+
+Why not a 4th tier: The existing `IngredientParser` protocol is sync + per-line. LLM is async + batch. Forcing `IngredientParser` to become async would cascade through `HybridIngredientParser`, `IngredientParsingService`, and 11+ call sites — a massive blast radius for what should be an optional enhancement. The bypass lives at the service layer (`RecipeImportService`), keeping the parsing infrastructure untouched.
+
+**2. Separate Protocol: LLMIngredientParser**
+Rather than extending `IngredientParser`, we introduce `LLMIngredientParser` with `parseBatch(_ lines:) async throws -> [LLMParserResult]`. The `toParserResult()` bridge method maps LLM output into the existing `ParserResult` type, so downstream code (Ingredient entity creation, telemetry) works identically regardless of which parser produced the result.
+
+**3. FM Excluded from Fallback Chain**
+The fallback chain is `LLM API → deterministic pipeline`. Foundation Models is intentionally **not** in this chain despite being "on-device AI." The M10.5 spike proved FM is unreliable for numeric extraction — it systematically converts grams to kilograms (a silent 1000x error), invents units for unitless items (`1 cucumber` → `unit=g`), and assigns wrong units (`4 slices bread` → `unit=clove`). FM may have a future role in soft tasks (category suggestion, template deduplication) but not for the one job this feature needs: accurate quantity parsing.
+
+**4. Claude-Only for M10.6**
+The PRD defines the `LLMIngredientParser` protocol to support multiple providers, but M10.6 only implements `ClaudeIngredientParser`. This is a deliberate "validate the pattern first" strategy. Adding GPT and Gemini adapters is trivial once the protocol, settings UI, and integration point are proven. Shipping Claude-only avoids the complexity of multi-provider testing and UI before we know if anyone uses the feature at all. GPT/Gemini deferred to M10.7+.
+
+**5. Toggle OFF by Default, No Nudges**
+The app is fully functional without LLM integration. The toggle is OFF by default. There are no setup banners, no "enhance your experience" prompts, no feature discovery nudges. If a user never opens Settings, they never know LLM integration exists. This is a strong philosophical position: the deterministic pipeline (92-94% accuracy) is the product. LLM is a power-user enhancement for the remaining ~7-8%.
+
+**6. UserDefaults + Keychain, Not Core Data**
+All LLM settings (`isLLMEnabled`, `selectedProvider`) go in UserDefaults. API keys go in iOS Keychain. This avoids a Core Data v7 migration entirely — no new entities, no schema change, no CloudKit sync complexity. The trade-off is that LLM settings don't sync across devices via CloudKit, but that's acceptable because API keys are personal (not household-shared in M10.6). Household key sharing is deferred to M10.6.x/M10.7 when we can evaluate whether CloudKit KV store or a Core Data entity is the right approach.
+
+**7. API Keys as the Universal Auth Approach**
+The M10.5 spike's OAuth research was a turning point. Anthropic explicitly banned third-party OAuth (Jan 2026 enforcement). OpenAI's OAuth is for ChatGPT actions calling your backend, not your app calling their API. Only Google Gemini supports proper OAuth, but with consent screen review friction that defeats the purpose. API keys are the only approach that works for all three providers. The UX mitigation — deep links to Console, `sk-ant-` prefix validation on paste, "Test Connection" button — turns a 5-minute setup into a 30-second setup.
+
+### Process Observation: PRD-Before-Implementation
+
+This is the second time we've done a "PRD extraction" session (the first was the M10 spike → M10 PRD back in session 23). The pattern is proving valuable: spike produces raw findings + rough design → separate session formalizes into implementation-ready PRD → implementation session starts clean. The spike document stays as a historical record of the exploration; the PRD is the actionable contract.
 
 ### What This Means for the Project
-M10.6 is estimated at 8.5-12 hours across 5 sub-phases. It sits after M10.3 (Photo Import) and M10.4 (Polish) in the execution order. The PRD is implementation-ready with exact file paths, API schemas, error matrices, and test counts. Zero Core Data schema changes means no migration risk.
+M10.6 is estimated at 8.5-12 hours across 5 sub-phases. It sits after M10.3 (Photo Import) and M10.4 (Polish) in the execution order — so the next session starts M10.3, and M10.6 implementation happens later with a ready PRD waiting. Zero Core Data schema changes means no migration risk.
 
 ---
 
