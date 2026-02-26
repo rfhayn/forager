@@ -34,6 +34,7 @@ struct WeeklyListsView: View {
     }
 
     // State management
+    @State private var initialLoadComplete = false
     @State private var isGeneratingList = false
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -64,6 +65,13 @@ struct WeeklyListsView: View {
             }
             .onAppear {
                 viewContext.refreshAllObjects()
+                // Brief delay lets @FetchRequest populate from local SQLite
+                // before deciding to show empty state vs content
+                if !initialLoadComplete {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        initialLoadComplete = true
+                    }
+                }
             }
             .onChange(of: popToRoot) { _, _ in
                 if showingError { showingError = false }
@@ -76,7 +84,11 @@ struct WeeklyListsView: View {
                 .ignoresSafeArea()
 
             if weeklyLists.isEmpty && !isGeneratingList {
-                emptyStateView
+                if initialLoadComplete {
+                    emptyStateView
+                } else {
+                    ProgressView()
+                }
             } else {
                 listsView
             }
