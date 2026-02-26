@@ -118,11 +118,27 @@
 - 316 tests, 0 failures
 - Remaining 25 gaps are semantic — intentionally left for M10.6 LLM integration
 
+**Results (round 3: confidence routing fix)**:
+- Discovery: Regex patterns with valid qty returned confidence 0.60-0.85 (below 0.90 threshold), causing ML parser to override with qty=nil
+- Fix: Raised all qty-extracting regex patterns above 0.90 threshold + fixed mixed fraction hyphen separator
+- Qty extraction: 88.4% → 94.1% (448/476, +27 lines)
+- Regex parser usage: 65.5% → 92.9% (ML override eliminated)
+- Only 28 nil-qty lines remaining (19 qualifiers [correct nil], 4 bare names, 2 prose, 3 other)
+
+**Results (corpus 2 validation — 50 unseen recipes)**:
+- 50 new recipes from TheMealDB (no overlap with corpus 1)
+- 453 ingredients parsed, 421/453 qty extracted (92.9%)
+- Regex parser usage: 91.8%
+- Validates pipeline generalizes — only 1.2% degradation vs corpus 1 (94.1%)
+- 32 nil-qty lines: instruction misclassification (messy prose) + genuine qualifiers + bare names
+
 **Key files**:
 - `Services/Parsing/FoundationModelsIngredientParser.swift` — @Generable batch parser (spike artifact)
 - `Services/Import/OCRLineClassifier.swift` — 4 fixes: bullet stripping, bare names, metadata patterns, temperature metadata
 - `Services/Parsing/RegexIngredientParser.swift` — 7 fixes: bullet stripping, count nouns, hyphen fractions, parenthetical prep, descriptors, juice/zest, qualifiers
 - `foragerTests/Services/RecipeCorpusFMComparisonTests.swift` — FM vs pipeline comparison test
+- `foragerTests/Services/RecipeCorpus2Tests.swift` — Corpus 2 validation test (50 unseen recipes)
+- `foragerTests/TestData/RecipeCorpus2/` — 50 validation recipe files across 5 categories
 - `docs/test-corpus/fm-comparison.md` — Comparison results data
 
 ### Files Created/Modified Across Sessions

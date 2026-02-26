@@ -6,6 +6,31 @@
 
 ---
 
+## Session 50 — February 26, 2026
+**Milestone**: M10.5.4 — Validation Corpus 2 + Confidence Routing Documentation
+**Focus**: Build 50-recipe validation corpus, verify pipeline generalization, update docs
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+
+### What Happened
+This session continued the M10.5 spike work by building a second 50-recipe corpus to validate that the pipeline fixes generalize beyond the original training data. The earlier part of this session (before context compaction) discovered and fixed a critical confidence routing issue where regex patterns with valid quantity extractions were being overridden by the ML parser.
+
+### Confidence Routing Discovery (Session 49 continuation)
+The biggest finding was that the hybrid parser's 0.90 confidence threshold was causing massive qty loss. Regex patterns for descriptive amounts returned 0.60 confidence, ranges returned 0.80-0.85, and standard quantities without units returned 0.75 — all below the threshold. The ML parser won with higher confidence but returned qty=nil for these patterns because it treats descriptive words like "bunch" and "dash" as unit names rather than quantities.
+
+The fix was straightforward: raise confidence levels for all regex patterns that successfully extract a quantity above the 0.90 routing threshold. Descriptive amounts went from 0.60→0.95, ranges from 0.80-0.85→0.92-0.95, and standard patterns from 0.75→0.92. Also fixed a mixed fraction pattern gap where "2-1/2 cups" wasn't matched because the regex only accepted space separators between the whole number and fraction, not hyphens. Changed to `[-\s]+`.
+
+Result: qty extraction jumped from 88.4% to 94.1% (448/476), and regex usage went from 65.5% to 92.9%.
+
+### Corpus 2 — Validation Set
+Built a second corpus of 50 recipes from TheMealDB API (no overlap with corpus 1) across the same 5 difficulty categories. Selected diverse cuisines (30+ including Algerian, Croatian, Filipino, Polish, Russian, Jamaican, Portuguese, Canadian) with ingredient counts ranging from 4 to 19.
+
+### Validation Results
+The key metric: **92.9% qty extraction on unseen data** vs 94.1% on corpus 1. Only 1.2% degradation means the regex patterns aren't overfitting. Messy category found only 47/~170 ingredients — expected, since prose defeats line-by-line classification. This is exactly the use case for M10.6 LLM integration.
+
+Regex parser usage at 91.8%, confirming the confidence routing fix works consistently across both corpora.
+
+---
+
 ## Session 49 — February 26, 2026
 **Milestone**: M10.5.4 — Remaining Pipeline Gaps + PRD OAuth/Strategy Update
 **Focus**: OAuth research findings, 3 additional pipeline fixes (descriptors, juice/zest, temperature metadata), PRD strategy updates
