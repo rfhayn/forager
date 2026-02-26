@@ -34,9 +34,50 @@ After completing M10.2 and encountering parsing issues during real-world testing
 - WebFetch limitations forced the TheMealDB pivot — a good example of tool constraints driving creative solutions
 
 ### What's Left
-- User review of corpus-review.md (2284 lines of predictions to verify)
+- ~~User review of corpus-review.md (2284 lines of predictions to verify)~~ — LLM-reviewed in Session 47
 - M10.5.4: Correction ingestion after human review
 - M10.5.5: Scale decision — expand from 50 to 250-500 based on pilot results
+
+---
+
+## Session 47 — February 25, 2026
+**Milestone**: M10.5 — LLM Corpus Review + Pipeline Improvement Tracking
+**Focus**: LLM review of 50-recipe corpus, systematic bug identification, Foundation Models integration design
+**Branch**: `feature/M10.2-text-paste-import`
+
+### What Happened
+Used Claude Opus to review all 50 corpus recipes — 5 parallel agents (one per category) identified **295 errors** across classification and parsing. Generated `corpus-review-corrected.md` with all corrections marked. More importantly, distilled 295 individual errors into **7 systematic patterns** that explain the vast majority of failures.
+
+### Corpus Review Results
+- **~146 classification errors** — primarily: unit-less ingredients→instruction, bare names→unknown, unusual metadata→unknown, STEP headers→instruction
+- **~149 parsing errors** — primarily: metric no-space (`400g`), `tbs`/`tablespoons` unrecognized, mixed fractions (`2-1/2`), prep methods in names
+- **LLM review took ~12 minutes** vs estimated 3-4 hours for human review
+- Generated `docs/test-corpus/corpus-review-corrected.md` (2286 lines, 295 corrections)
+
+### 7 Systematic Pipeline Bugs Identified
+1. **Metric no-space** (`400g`, `750ml`, `2L`) — ~120 parsing failures. Regex expects `\d+\s+unit`.
+2. **Unit-less ingredients** (`1 egg`, `2 bay leaves`) — ~30 classification failures. No unit = defaults to instruction.
+3. **Bare ingredient names** (`celery`, `sugar`, `passata`) — ~15 classification failures. No quantity = unknown.
+4. **Unusual metadata** (`Difficulty:`, `Oven:`, `Active time:`) — ~47 classification failures. Limited keyword list.
+5. **Unit abbreviations** (`tbs`, `tablespoons`) — ~15 parsing failures. Not in alias map.
+6. **Mixed fractions** (`2-1/2`, `1-1/2`) — parsing failures. Hyphenated form not handled.
+7. **Prep methods in names** (`(cubed)`, `(sliced)`, `minced`) — not stripped from ingredient names.
+
+### Strategic Pivot: Universal LLM Backend
+The corpus review naturally revealed that Foundation Models (already integrated in M10.2 for text paste) can handle classification AND parsing in a single pass — outperforming the 3-tier pipeline on every category. This led to a design discussion about making Foundation Models the primary ingredient processor for ALL input paths:
+- Manual entry → LLM normalizes + suggests category
+- URL import → LLM extracts + structures
+- Text paste → LLM classifies + parses (already works via M10.2)
+- Photo OCR → LLM processes OCR output
+- Existing regex→ML→NLP pipeline becomes the offline/fallback path
+
+### Key Decision
+The 7 pipeline bugs above are **still worth fixing** — they serve the fallback path and improve the baseline. But the strategic direction is Foundation Models as the primary processor, with the existing pipeline as graceful degradation for devices without Apple Intelligence.
+
+### AI Tooling
+- 5 parallel review agents processed the full 50-recipe corpus simultaneously — a powerful pattern for batch analysis tasks
+- LLM review found systematic patterns that individual recipe review would miss (aggregating ~120 metric-no-space failures across recipes)
+- Context continuity across 3 conversation windows in a day worked well
 
 ---
 
