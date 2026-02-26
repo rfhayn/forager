@@ -27,6 +27,9 @@
 		E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */; };
 		M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */; };
 		M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */; };
+		M105T001CORPUSTEST000000A /* RecipeCorpusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */; };
+		M105T002FMCOMPARE000000A /* RecipeCorpusFMComparisonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */; };
+		M105T003CORPUS2TEST0000A /* RecipeCorpus2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */; };
 		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
 		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
@@ -72,6 +75,9 @@
 		F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockIngredientParser.swift; sourceTree = "<group>"; };
 		M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRLineClassifierTests.swift; sourceTree = "<group>"; };
 		M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeuristicTextExtractorTests.swift; sourceTree = "<group>"; };
+		M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusTests.swift; sourceTree = "<group>"; };
+		M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusFMComparisonTests.swift; sourceTree = "<group>"; };
+		M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpus2Tests.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -218,6 +224,9 @@
 				9B75A0030002000200B24679 /* WeeklyListServiceTests.swift */,
 				M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */,
 				M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */,
+				M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */,
+				M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */,
+				M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -389,6 +398,9 @@
 				M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */,
 				M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */,
 				M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */,
+				M105T001CORPUSTEST000000A /* RecipeCorpusTests.swift in Sources */,
+				M105T002FMCOMPARE000000A /* RecipeCorpusFMComparisonTests.swift in Sources */,
+				M105T003CORPUS2TEST0000A /* RecipeCorpus2Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -425,7 +437,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/App/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -464,7 +476,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/App/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 9;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;

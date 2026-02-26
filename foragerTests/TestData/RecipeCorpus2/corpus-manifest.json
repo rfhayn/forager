@@ -1,0 +1,506 @@
+{
+  "version": 1,
+  "totalRecipes": 50,
+  "recipes": [
+    {
+      "filename": "clean/clean-01-beef-sunday-roast.txt",
+      "category": "clean",
+      "title": "Beef Sunday Roast",
+      "cuisine": "British",
+      "ingredientCount": 8,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-02-mini-chilli-beef-pies.txt",
+      "category": "clean",
+      "title": "Mini chilli beef pies",
+      "cuisine": "Australian",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-03-peanut-butter-cheesecake.txt",
+      "category": "clean",
+      "title": "Peanut Butter Cheesecake",
+      "cuisine": "American",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-04-potato-salad-olivier-salad.txt",
+      "category": "clean",
+      "title": "Potato Salad (Olivier Salad)",
+      "cuisine": "Russian",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-05-mushroom-soup-with-buckwheat.txt",
+      "category": "clean",
+      "title": "Mushroom soup with buckwheat",
+      "cuisine": "Croatian",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-06-croatian-lamb-peka.txt",
+      "category": "clean",
+      "title": "Croatian lamb peka",
+      "cuisine": "Croatian",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-07-sugar-pie.txt",
+      "category": "clean",
+      "title": "Sugar Pie",
+      "cuisine": "Canadian",
+      "ingredientCount": 7,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-08-moroccan-carrot-soup.txt",
+      "category": "clean",
+      "title": "Moroccan Carrot Soup",
+      "cuisine": "Moroccan",
+      "ingredientCount": 8,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-09-croatian-bean-stew.txt",
+      "category": "clean",
+      "title": "Croatian Bean Stew",
+      "cuisine": "Croatian",
+      "ingredientCount": 7,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "clean/clean-10-lamb-pilaf-plov.txt",
+      "category": "clean",
+      "title": "Lamb Pilaf (Plov)",
+      "cuisine": "Russian",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-01-callaloo-and-saltfish.txt",
+      "category": "international",
+      "title": "Callaloo and SaltFish",
+      "cuisine": "Jamaican",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-02-shawarma-bread.txt",
+      "category": "international",
+      "title": "Shawarma bread",
+      "cuisine": "Saudi Arabian",
+      "ingredientCount": 6,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-03-jamaican-pepper-shrimp.txt",
+      "category": "international",
+      "title": "Jamaican Pepper Shrimp",
+      "cuisine": "Jamaican",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-04-recheado-masala-fish.txt",
+      "category": "international",
+      "title": "Recheado Masala Fish",
+      "cuisine": "Indian",
+      "ingredientCount": 14,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-05-kidney-bean-curry.txt",
+      "category": "international",
+      "title": "Kidney Bean Curry",
+      "cuisine": "Indian",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-06-khobz-el-dar-algerian-semolina-bread.txt",
+      "category": "international",
+      "title": "Khobz el Dar (Algerian Semolina Bread)",
+      "cuisine": "Algerian",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-07-chtitha-batata-algerian-potato-stew.txt",
+      "category": "international",
+      "title": "Chtitha Batata (Algerian Potato Stew)",
+      "cuisine": "Algerian",
+      "ingredientCount": 12,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-08-lamb-tagine.txt",
+      "category": "international",
+      "title": "Lamb Tagine",
+      "cuisine": "Moroccan",
+      "ingredientCount": 15,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-09-algerian-flafla-bell-pepper-salad.txt",
+      "category": "international",
+      "title": "Algerian Flafla (Bell Pepper Salad)",
+      "cuisine": "Algerian",
+      "ingredientCount": 7,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "international/international-10-spicy-north-african-potato-salad.txt",
+      "category": "international",
+      "title": "Spicy North African Potato Salad",
+      "cuisine": "Moroccan",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-01-beef-dumpling-stew.txt",
+      "category": "messy",
+      "title": "Beef Dumpling Stew",
+      "cuisine": "British",
+      "ingredientCount": 19,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-02-braised-beef-chilli.txt",
+      "category": "messy",
+      "title": "Braised Beef Chilli",
+      "cuisine": "Mexican",
+      "ingredientCount": 17,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-03-pork-cassoulet.txt",
+      "category": "messy",
+      "title": "Pork Cassoulet",
+      "cuisine": "French",
+      "ingredientCount": 16,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-04-beef-caldereta.txt",
+      "category": "messy",
+      "title": "Beef Caldereta",
+      "cuisine": "Filipino",
+      "ingredientCount": 14,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-05-bigos-polish-hunters-stew.txt",
+      "category": "messy",
+      "title": "Bigos (Polish hunter's stew)",
+      "cuisine": "Polish",
+      "ingredientCount": 16,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-06-singapore-noodles-with-shrimp.txt",
+      "category": "messy",
+      "title": "Singapore Noodles with Shrimp",
+      "cuisine": "Chinese",
+      "ingredientCount": 18,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-07-beef-mechado.txt",
+      "category": "messy",
+      "title": "Beef Mechado",
+      "cuisine": "Filipino",
+      "ingredientCount": 12,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-08-chicken-parmentier.txt",
+      "category": "messy",
+      "title": "Chicken Parmentier",
+      "cuisine": "French",
+      "ingredientCount": 17,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-09-saltfish-and-ackee.txt",
+      "category": "messy",
+      "title": "Saltfish and Ackee",
+      "cuisine": "Jamaican",
+      "ingredientCount": 16,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "messy/messy-10-shrimp-chow-fun.txt",
+      "category": "messy",
+      "title": "Shrimp Chow Fun",
+      "cuisine": "Chinese",
+      "ingredientCount": 17,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-01-cajun-spiced-fish-tacos.txt",
+      "category": "no-headers",
+      "title": "Cajun spiced fish tacos",
+      "cuisine": "Mexican",
+      "ingredientCount": 12,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-02-tonkatsu-pork.txt",
+      "category": "no-headers",
+      "title": "Tonkatsu pork",
+      "cuisine": "Japanese",
+      "ingredientCount": 9,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-03-fish-fofos.txt",
+      "category": "no-headers",
+      "title": "Fish fofos",
+      "cuisine": "Portuguese",
+      "ingredientCount": 12,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-04-portuguese-barbecued-pork-febras-assadas.txt",
+      "category": "no-headers",
+      "title": "Portuguese barbecued pork (Febras assadas)",
+      "cuisine": "Portuguese",
+      "ingredientCount": 9,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-05-japanese-gohan-rice.txt",
+      "category": "no-headers",
+      "title": "Japanese gohan rice",
+      "cuisine": "Japanese",
+      "ingredientCount": 4,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-06-blini-pancakes.txt",
+      "category": "no-headers",
+      "title": "Blini Pancakes",
+      "cuisine": "Russian",
+      "ingredientCount": 7,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-07-sweet-and-sour-pork.txt",
+      "category": "no-headers",
+      "title": "Sweet and Sour Pork",
+      "cuisine": "Chinese",
+      "ingredientCount": 10,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-08-warm-roast-asparagus-salad.txt",
+      "category": "no-headers",
+      "title": "Warm roast asparagus salad",
+      "cuisine": "Australian",
+      "ingredientCount": 10,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-09-rappie-pie.txt",
+      "category": "no-headers",
+      "title": "Rappie Pie",
+      "cuisine": "Canadian",
+      "ingredientCount": 7,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "no-headers/no-headers-10-lamb-and-lemon-souvlaki.txt",
+      "category": "no-headers",
+      "title": "Lamb and Lemon Souvlaki",
+      "cuisine": "Greek",
+      "ingredientCount": 7,
+      "hasHeaders": false,
+      "hasMetadata": false,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-01-provenal-omelette-cake.txt",
+      "category": "unusual-metadata",
+      "title": "Proven\u00e7al Omelette Cake",
+      "cuisine": "French",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-02-skillet-apple-pork-chops-with-roasted-sw.txt",
+      "category": "unusual-metadata",
+      "title": "Skillet Apple Pork Chops with Roasted Sweet Potatoes & Zucchini",
+      "cuisine": "American",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-03-katsu-chicken-curry.txt",
+      "category": "unusual-metadata",
+      "title": "Katsu Chicken curry",
+      "cuisine": "Japanese",
+      "ingredientCount": 16,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-04-stuffed-lamb-tomatoes.txt",
+      "category": "unusual-metadata",
+      "title": "Stuffed Lamb Tomatoes",
+      "cuisine": "Greek",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-05-pistachio-cake.txt",
+      "category": "unusual-metadata",
+      "title": "Pistachio cake",
+      "cuisine": "Polish",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-06-snert-dutch-split-pea-soup.txt",
+      "category": "unusual-metadata",
+      "title": "Snert (Dutch Split Pea Soup)",
+      "cuisine": "Dutch",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-07-lamb-tzatziki-burgers.txt",
+      "category": "unusual-metadata",
+      "title": "Lamb Tzatziki Burgers",
+      "cuisine": "Greek",
+      "ingredientCount": 11,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-08-flapper-pie.txt",
+      "category": "unusual-metadata",
+      "title": "Flapper Pie",
+      "cuisine": "Canadian",
+      "ingredientCount": 13,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-09-coddled-pork-with-cider.txt",
+      "category": "unusual-metadata",
+      "title": "Coddled pork with cider",
+      "cuisine": "Irish",
+      "ingredientCount": 10,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    },
+    {
+      "filename": "unusual-metadata/unusual-metadata-10-fish-pie.txt",
+      "category": "unusual-metadata",
+      "title": "Fish pie",
+      "cuisine": "British",
+      "ingredientCount": 15,
+      "hasHeaders": true,
+      "hasMetadata": true,
+      "source": "TheMealDB"
+    }
+  ]
+}

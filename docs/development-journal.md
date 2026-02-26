@@ -6,6 +6,181 @@
 
 ---
 
+## Session 50 — February 26, 2026
+**Milestone**: M10.5.4 — Validation Corpus 2 + Confidence Routing Documentation
+**Focus**: Build 50-recipe validation corpus, verify pipeline generalization, update docs
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+
+### What Happened
+This session continued the M10.5 spike work by building a second 50-recipe corpus to validate that the pipeline fixes generalize beyond the original training data. The earlier part of this session (before context compaction) discovered and fixed a critical confidence routing issue where regex patterns with valid quantity extractions were being overridden by the ML parser.
+
+### Confidence Routing Discovery (Session 49 continuation)
+The biggest finding was that the hybrid parser's 0.90 confidence threshold was causing massive qty loss. Regex patterns for descriptive amounts returned 0.60 confidence, ranges returned 0.80-0.85, and standard quantities without units returned 0.75 — all below the threshold. The ML parser won with higher confidence but returned qty=nil for these patterns because it treats descriptive words like "bunch" and "dash" as unit names rather than quantities.
+
+The fix was straightforward: raise confidence levels for all regex patterns that successfully extract a quantity above the 0.90 routing threshold. Descriptive amounts went from 0.60→0.95, ranges from 0.80-0.85→0.92-0.95, and standard patterns from 0.75→0.92. Also fixed a mixed fraction pattern gap where "2-1/2 cups" wasn't matched because the regex only accepted space separators between the whole number and fraction, not hyphens. Changed to `[-\s]+`.
+
+Result: qty extraction jumped from 88.4% to 94.1% (448/476), and regex usage went from 65.5% to 92.9%.
+
+### Corpus 2 — Validation Set
+Built a second corpus of 50 recipes from TheMealDB API (no overlap with corpus 1) across the same 5 difficulty categories. Selected diverse cuisines (30+ including Algerian, Croatian, Filipino, Polish, Russian, Jamaican, Portuguese, Canadian) with ingredient counts ranging from 4 to 19.
+
+### Validation Results
+The key metric: **92.9% qty extraction on unseen data** vs 94.1% on corpus 1. Only 1.2% degradation means the regex patterns aren't overfitting. Messy category found only 47/~170 ingredients — expected, since prose defeats line-by-line classification. This is exactly the use case for M10.6 LLM integration.
+
+Regex parser usage at 91.8%, confirming the confidence routing fix works consistently across both corpora.
+
+---
+
+## Session 49 — February 26, 2026
+**Milestone**: M10.5.4 — Remaining Pipeline Gaps + PRD OAuth/Strategy Update
+**Focus**: OAuth research findings, 3 additional pipeline fixes (descriptors, juice/zest, temperature metadata), PRD strategy updates
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+
+### What Happened
+This session addressed the remaining pipeline gaps identified by the FM comparison test (33 lines where pipeline returned qty=nil but FM found a quantity). After analysis, ~12 were fixable with regex and ~21 were genuinely semantic (requiring LLM). Three targeted fixes were implemented.
+
+The OAuth research was a turning point for the LLM integration strategy. Discovering that Anthropic explicitly banned third-party OAuth (with a specific Jan 2026 enforcement date) eliminated the "seamless sign-in" UX dream. OpenAI's OAuth is designed for ChatGPT actions (their app calling your backend), not for your app calling their API. Only Google Gemini supports proper OAuth, but the consent screen review process adds friction that defeats the purpose. The conclusion: API keys are the universal approach, and the UX mitigation (deep links, clipboard auto-detect, test connection) is the right investment.
+
+### Pipeline Fixes Round 2
+Three fixes were implemented, reducing FM-fixable gaps from 33 to 25:
+
+**Fix 8 (Descriptive Amounts + Qualifiers)**: Added `bunch`, `sprinkling`, `squeeze` to the descriptor map and both regex patterns. Also expanded the qualifier pattern with `for dusting`, `for glazing`, `to serve`, `to garnish`, `for garnishing` — these are common recipe qualifiers that were being classified as unknown.
+
+**Fix 9 (Juice/Zest Prefix Pattern)**: A new `tryPrefixQuantityPattern()` method handles the inverted structure where a descriptor comes before the quantity: `"Juice of 1/2 lemon"`. This pattern is common enough in British and international recipes to warrant dedicated handling.
+
+**Fix 10 (Temperature Metadata)**: Updated the `metadataLabelPattern` to include `(?:\w+\s+)?temperature` so lines like `"Oil temperature: 350F / 175C"` are classified as metadata rather than ingredients.
+
+### Key Decision: Pipeline Has Reached Its Ceiling
+After 10 total fixes across 2 rounds, the pipeline is at ~88% qty extraction. The remaining 25 FM-fixable gaps are genuinely semantic — prose-embedded quantities, "X to serve" patterns, ambiguous multi-ingredients. No amount of regex will solve these. This validates the M10.6 LLM integration strategy: regex handles the structured 88%, LLM handles the semantic 12%.
+
+### PRD Strategy Updates
+The PRD was updated with OAuth findings (§4.4), household API key sharing (§4.10), future subscription model possibility (§4.11), and the remaining gaps analysis (§3.8). M10.6 was reframed as Claude-only with explicit emphasis that integration is optional.
+
+---
+
+## Session 48 — February 26, 2026
+**Milestone**: M10.5 — Pipeline Accuracy Fixes + LLM Evaluation PRD
+**Focus**: Spike PRD creation, Foundation Models evaluation writeup, 7 pipeline bug fixes, external LLM API architecture design
+**Branch**: `feature/M10.2-text-paste-import` (spike artifacts) → `feature/M10.5-spike-pipeline-fixes` (pipeline fixes)
+
+### What Happened
+This session synthesized the findings from Sessions 46-47 (corpus testing, LLM review, FM evaluation) into a comprehensive spike PRD, then implemented the 7 pipeline bug fixes identified by the corpus review.
+
+The FM comparison test (run on physical device with Apple Intelligence) showed FM achieves 78.7% quantity extraction vs the pipeline's 65.2% — a clear accuracy advantage. But the hallucination analysis killed the "FM as primary parser" strategy: systematic gram-to-kilogram conversions (250g → 0.25), invented units (cucumber → unit=g), and batch count mismatches (7/50 recipes) make FM unsuitable for numeric extraction. The pivot: FM for soft tasks (category suggestion, template dedup), external LLM APIs (Claude/GPT/Gemini) for high-accuracy parsing, deterministic pipeline as always-available offline fallback.
+
+### Pipeline Bug Fixes
+The corpus review's most impactful finding was that a single root cause — leading bullet/list prefixes (`"- "`, `"• "`, `"* "`) — accounts for ~70% of all 295 errors. Both the classifier and regex parser use `^`-anchored patterns that fail when a `-` character sits at position 0 instead of a digit. Stripping these prefixes before scoring/parsing (while preserving original text in output) was the foundational fix that unlocked improvements across all other patterns.
+
+The remaining 6 fixes addressed specific pattern gaps: metric no-space (`400g`), unit-less count items (`2 eggs`), bare name ingredients (`celery`), unusual metadata (`Difficulty: Easy`), mixed fractions with hyphens (`2-1/2`), and parenthetical prep methods (`butter (softened)`). Each fix was independent after the bullet stripping foundation.
+
+### Cascading Regex Bug Discovery
+The initial implementation had a subtle regex character class bug: `[\.\):\s]` in the bullet stripping pattern treated ANY digit followed by a space as a numbered list. This caused `"2 cups flour"` to have its `"2 "` stripped, breaking the parse completely. The same `\s` inclusion existed in `numberedStepPattern`, where it caused lines like `"2 tbs vegetable oil"` (after bullet stripping) to trigger a -0.4 ingredient penalty. Both were fixed to `[\.\):]` (punctuation only).
+
+### Corpus Results (Before → After)
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Ingredients detected | 442 | 477 | +7.9% |
+| Classification confidence | 0.520 | 0.641 | +23.3% |
+| Parsing confidence | 0.932 | 0.984 | +5.6% |
+| Regex parser usage | 18.3% | 79.8% | +61.5pp |
+
+Per-category: clean 92→106, no-headers 50→77 (+54%), unusual-metadata 135→130, messy 33→51 (+55%), international 132→113. The no-headers and messy categories saw the biggest improvements — exactly the categories that had the most issues in the original review.
+
+### External LLM API Architecture
+Designed a clean architecture for external LLM integration: `LLMIngredientParser` protocol with provider adapters, user-owned API keys in iOS Keychain, Settings UI for opt-in, and a three-tier fallback chain (LLM API → on-device FM → deterministic pipeline). The key insight is that the user pays their own API costs directly (~$0.001/recipe with Claude Haiku) — no server-side proxy, no data collection, full privacy. This is the "bring your own key" model that respects user autonomy.
+
+### Key Decisions
+- **FM verdict: not a replacement, but an augmentation** — hallucinations are reproducible and systematic, not random errors that more prompting would fix. The gram-to-kg pattern alone is disqualifying for a grocery app where quantities must be exact.
+- **Pipeline fixes still worth doing** — even with LLM APIs as the future primary parser, the deterministic pipeline serves as the offline fallback. Fixing 7 bugs that affect 295/442 lines makes the fallback path much stronger.
+- **Claude API first (M10.6)** — among external LLMs, Claude's tool use provides the most reliable structured output for ingredient parsing. GPT and Gemini adapters are straightforward additions (M10.7+).
+- **Spike artifacts preserved** — FM parser and comparison test committed as reference even though FM isn't the strategic direction. Future sessions may revisit if Apple improves the model.
+
+### AI Tooling
+- Opus 4.6 in explanatory mode — the comprehensive PRD writing benefited from the educational style, producing a document that explains both the "what" and the "why" for each design decision
+- Plan mode → implementation execution worked well for a task with clear phases and dependencies
+
+### What's Left
+- M10.6: Claude API integration (estimated 8-12 hours)
+- M10.7+: GPT/Gemini adapter expansion
+- Corpus expansion from 50 to 250-500 recipes (deferred to after pipeline fixes settle)
+
+---
+
+## Session 46 — February 25, 2026
+**Milestone**: M10.5 — Recipe Test Corpus & Accuracy Baseline
+**Focus**: PRD creation, 50-recipe corpus generation, test harness build + first run
+**Branch**: `feature/M10.2-text-paste-import` (tacked onto M10.2 branch)
+
+### What Happened
+After completing M10.2 and encountering parsing issues during real-world testing, pivoted to building a systematic accuracy measurement infrastructure. Created M10.5 PRD, generated a 50-recipe pilot corpus across 5 difficulty categories, built a test harness that runs the full two-stage pipeline (OCRLineClassifier → HybridIngredientParser), and produced the first accuracy baseline.
+
+### Key Results (First Corpus Run)
+- **50 recipes**, 1019 lines classified, 442 ingredients parsed, 0.359s total
+- **Classification confidence avg: 0.520** — surprisingly low, biggest improvement opportunity
+- **Parsing confidence avg: 0.932** — strong once a line is correctly identified as an ingredient
+- **Parser usage**: ML 81.7%, regex 18.3%, NLP 0%
+- **Messy category gap**: Only 33 ingredients detected vs 100-130 in structured categories — the classifier struggles with prose-embedded ingredients
+
+### Key Decisions
+- **Confirm-or-correct review model**: Pre-fill all predictions, human only marks errors. Same approach used by strangetom's 68,846-sample training set. Much faster than manual annotation from scratch.
+- **TheMealDB as data source**: Every major recipe site (AllRecipes, NYT Cooking, etc.) blocks automated fetching. TheMealDB provides a free API with structured ingredient/measure pairs — we reformatted into 5 realistic text styles.
+- **5 difficulty categories**: clean (standard headers + lists), no-headers (bare text), unusual-metadata (odd yield/time formats), messy (blog prose), international (metric + British). This covers the real-world formatting spectrum.
+- **`#filePath`-based resource location**: Test finds corpus files relative to source path, avoiding 50+ pbxproj resource entries.
+- **Two-file output**: JSON for programmatic analysis, markdown for human review. The markdown has per-recipe classification and parsing tables with "Correct? | Correction" columns.
+
+### AI Tooling
+- Third conversation window in the same day — context summary system worked well for continuity
+- Parallel agent spawning for PRD creation and corpus generation saved significant time
+- WebFetch limitations forced the TheMealDB pivot — a good example of tool constraints driving creative solutions
+
+### What's Left
+- ~~User review of corpus-review.md (2284 lines of predictions to verify)~~ — LLM-reviewed in Session 47
+- M10.5.4: Correction ingestion after human review
+- M10.5.5: Scale decision — expand from 50 to 250-500 based on pilot results
+
+---
+
+## Session 47 — February 25, 2026
+**Milestone**: M10.5 — LLM Corpus Review + Pipeline Improvement Tracking
+**Focus**: LLM review of 50-recipe corpus, systematic bug identification, Foundation Models integration design
+**Branch**: `feature/M10.2-text-paste-import`
+
+### What Happened
+Used Claude Opus to review all 50 corpus recipes — 5 parallel agents (one per category) identified **295 errors** across classification and parsing. Generated `corpus-review-corrected.md` with all corrections marked. More importantly, distilled 295 individual errors into **7 systematic patterns** that explain the vast majority of failures.
+
+### Corpus Review Results
+- **~146 classification errors** — primarily: unit-less ingredients→instruction, bare names→unknown, unusual metadata→unknown, STEP headers→instruction
+- **~149 parsing errors** — primarily: metric no-space (`400g`), `tbs`/`tablespoons` unrecognized, mixed fractions (`2-1/2`), prep methods in names
+- **LLM review took ~12 minutes** vs estimated 3-4 hours for human review
+- Generated `docs/test-corpus/corpus-review-corrected.md` (2286 lines, 295 corrections)
+
+### 7 Systematic Pipeline Bugs Identified
+1. **Metric no-space** (`400g`, `750ml`, `2L`) — ~120 parsing failures. Regex expects `\d+\s+unit`.
+2. **Unit-less ingredients** (`1 egg`, `2 bay leaves`) — ~30 classification failures. No unit = defaults to instruction.
+3. **Bare ingredient names** (`celery`, `sugar`, `passata`) — ~15 classification failures. No quantity = unknown.
+4. **Unusual metadata** (`Difficulty:`, `Oven:`, `Active time:`) — ~47 classification failures. Limited keyword list.
+5. **Unit abbreviations** (`tbs`, `tablespoons`) — ~15 parsing failures. Not in alias map.
+6. **Mixed fractions** (`2-1/2`, `1-1/2`) — parsing failures. Hyphenated form not handled.
+7. **Prep methods in names** (`(cubed)`, `(sliced)`, `minced`) — not stripped from ingredient names.
+
+### Strategic Pivot: Universal LLM Backend
+The corpus review naturally revealed that Foundation Models (already integrated in M10.2 for text paste) can handle classification AND parsing in a single pass — outperforming the 3-tier pipeline on every category. This led to a design discussion about making Foundation Models the primary ingredient processor for ALL input paths:
+- Manual entry → LLM normalizes + suggests category
+- URL import → LLM extracts + structures
+- Text paste → LLM classifies + parses (already works via M10.2)
+- Photo OCR → LLM processes OCR output
+- Existing regex→ML→NLP pipeline becomes the offline/fallback path
+
+### Key Decision
+The 7 pipeline bugs above are **still worth fixing** — they serve the fallback path and improve the baseline. But the strategic direction is Foundation Models as the primary processor, with the existing pipeline as graceful degradation for devices without Apple Intelligence.
+
+### AI Tooling
+- 5 parallel review agents processed the full 50-recipe corpus simultaneously — a powerful pattern for batch analysis tasks
+- LLM review found systematic patterns that individual recipe review would miss (aggregating ~120 metric-no-space failures across recipes)
+- Context continuity across 3 conversation windows in a day worked well
+
+---
+
 ## Session 45 — February 25, 2026
 **Milestone**: M10.2 — Text Paste Import
 **Focus**: Full M10.2 build — Foundation Models + heuristic fallback + SectionHighlightView + tests

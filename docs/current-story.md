@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: February 25, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | **M10.2 COMPLETE**
+**Last Updated**: February 26, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | **M10.5 Spike COMPLETE**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.2-text-paste-import`
-**Current Milestone**: M10.2 Text Paste Import — ✅ **COMPLETE** (6/6 sub-phases done, 31 tests pass)
+**Current Branch**: `feature/M10.5-spike-pipeline-fixes`
+**Current Milestone**: M10.5 Spike: Pipeline Accuracy + LLM Eval — ✅ **COMPLETE** (FM eval, 10 pipeline fixes, PRD with OAuth findings + LLM API design)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (Photo Import) → M10.4 → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -90,6 +90,56 @@
 - `forager/Views/Import/SectionHighlightView.swift` — Color-coded line review with tap-to-reclassify
 - `foragerTests/Services/OCRLineClassifierTests.swift` — 21 tests
 - `foragerTests/Services/HeuristicTextExtractorTests.swift` — 10 tests
+
+### M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE
+
+**Branch**: `feature/M10.5-spike-pipeline-fixes`
+**PRD**: `docs/prds/active/m10.5-spike-pipeline-accuracy-llm-eval.md`
+
+**What we did**:
+1. ✅ Foundation Models evaluation — Tested FM vs pipeline on 50-recipe corpus (442 lines)
+2. ✅ Identified 7 systematic pipeline bugs from LLM-assisted corpus review (295 errors → 7 patterns)
+3. ✅ Implemented all 7 fixes + discovered/fixed 2 cascading regex bugs (round 1)
+4. ✅ Wrote comprehensive spike PRD with external LLM API integration design
+5. ✅ Full verification via corpus tests and FM comparison
+6. ✅ Round 2: 3 more fixes (descriptors, juice/zest, temperature metadata)
+7. ✅ PRD updated with OAuth findings, household sharing, subscription model, remaining gaps analysis
+
+**Results (round 1: before → after)**:
+- Ingredients detected: 442 → 477 (+7.9%)
+- Classification confidence: 0.520 → 0.641 (+23.3%)
+- Parsing confidence: 0.932 → 0.984 (+5.6%)
+- Regex parser usage: 18.3% → 79.8% (ML parser no longer compensating)
+- Pipeline vs FM: Pipeline 88.3% beats FM 63.5% (was losing 65.2% vs 78.7%)
+
+**Results (round 2: 3 additional fixes)**:
+- FM-fixes-gaps: 33 → 25 (8 fewer gaps, 24% improvement)
+- Qty extraction: 88.4% (maintained)
+- 316 tests, 0 failures
+- Remaining 25 gaps are semantic — intentionally left for M10.6 LLM integration
+
+**Results (round 3: confidence routing fix)**:
+- Discovery: Regex patterns with valid qty returned confidence 0.60-0.85 (below 0.90 threshold), causing ML parser to override with qty=nil
+- Fix: Raised all qty-extracting regex patterns above 0.90 threshold + fixed mixed fraction hyphen separator
+- Qty extraction: 88.4% → 94.1% (448/476, +27 lines)
+- Regex parser usage: 65.5% → 92.9% (ML override eliminated)
+- Only 28 nil-qty lines remaining (19 qualifiers [correct nil], 4 bare names, 2 prose, 3 other)
+
+**Results (corpus 2 validation — 50 unseen recipes)**:
+- 50 new recipes from TheMealDB (no overlap with corpus 1)
+- 453 ingredients parsed, 421/453 qty extracted (92.9%)
+- Regex parser usage: 91.8%
+- Validates pipeline generalizes — only 1.2% degradation vs corpus 1 (94.1%)
+- 32 nil-qty lines: instruction misclassification (messy prose) + genuine qualifiers + bare names
+
+**Key files**:
+- `Services/Parsing/FoundationModelsIngredientParser.swift` — @Generable batch parser (spike artifact)
+- `Services/Import/OCRLineClassifier.swift` — 4 fixes: bullet stripping, bare names, metadata patterns, temperature metadata
+- `Services/Parsing/RegexIngredientParser.swift` — 7 fixes: bullet stripping, count nouns, hyphen fractions, parenthetical prep, descriptors, juice/zest, qualifiers
+- `foragerTests/Services/RecipeCorpusFMComparisonTests.swift` — FM vs pipeline comparison test
+- `foragerTests/Services/RecipeCorpus2Tests.swift` — Corpus 2 validation test (50 unseen recipes)
+- `foragerTests/TestData/RecipeCorpus2/` — 50 validation recipe files across 5 categories
+- `docs/test-corpus/fm-comparison.md` — Comparison results data
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):
