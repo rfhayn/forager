@@ -21,6 +21,19 @@ The corpus review's most impactful finding was that a single root cause — lead
 
 The remaining 6 fixes addressed specific pattern gaps: metric no-space (`400g`), unit-less count items (`2 eggs`), bare name ingredients (`celery`), unusual metadata (`Difficulty: Easy`), mixed fractions with hyphens (`2-1/2`), and parenthetical prep methods (`butter (softened)`). Each fix was independent after the bullet stripping foundation.
 
+### Cascading Regex Bug Discovery
+The initial implementation had a subtle regex character class bug: `[\.\):\s]` in the bullet stripping pattern treated ANY digit followed by a space as a numbered list. This caused `"2 cups flour"` to have its `"2 "` stripped, breaking the parse completely. The same `\s` inclusion existed in `numberedStepPattern`, where it caused lines like `"2 tbs vegetable oil"` (after bullet stripping) to trigger a -0.4 ingredient penalty. Both were fixed to `[\.\):]` (punctuation only).
+
+### Corpus Results (Before → After)
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| Ingredients detected | 442 | 477 | +7.9% |
+| Classification confidence | 0.520 | 0.641 | +23.3% |
+| Parsing confidence | 0.932 | 0.984 | +5.6% |
+| Regex parser usage | 18.3% | 79.8% | +61.5pp |
+
+Per-category: clean 92→106, no-headers 50→77 (+54%), unusual-metadata 135→130, messy 33→51 (+55%), international 132→113. The no-headers and messy categories saw the biggest improvements — exactly the categories that had the most issues in the original review.
+
 ### External LLM API Architecture
 Designed a clean architecture for external LLM integration: `LLMIngredientParser` protocol with provider adapters, user-owned API keys in iOS Keychain, Settings UI for opt-in, and a three-tier fallback chain (LLM API → on-device FM → deterministic pipeline). The key insight is that the user pays their own API costs directly (~$0.001/recipe with Claude Haiku) — no server-side proxy, no data collection, full privacy. This is the "bring your own key" model that respects user autonomy.
 
