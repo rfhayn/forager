@@ -1,9 +1,9 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 25, 2026
+**Last Updated**: February 26, 2026
 **For Milestone**: M10.3 Photo/Image Import (21-28h)
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | **M10.3 NEXT**
-**Branch**: Create `feature/M10.3-photo-import` (after M10.2 merges)
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.6 📋 **PRD READY** | **M10.3 NEXT**
+**Branch**: Create `feature/M10.3-photo-import`
 
 ---
 
@@ -60,10 +60,17 @@
 
 ---
 
-## **AFTER M10.3: M10.4 → M7.7 → M6 → M9 → M11+**
+## **AFTER M10.3: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
 
 ### M10.4: Polish & Integration (11-16h)
 - Import history, household sharing, telemetry dashboard
+
+### M10.6: Claude API Integration (8.5-12h) — PRD READY
+- **PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
+- Optional Claude API for import ingredient parsing (fills ~7-8% semantic gap)
+- 5 sub-phases: Protocol → Keychain → Settings UI → Integration → Docs
+- Zero Core Data schema changes, ~20 new tests
+- App fully functional without it — toggle OFF by default
 
 ### M7.7: App Store Submission (3-5h)
 - **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
@@ -76,4 +83,4 @@
 
 ---
 
-**Dependencies**: M10.2 merged to main ✅ | OCRLineClassifier + SectionHighlightView ready for reuse ✅ | Foundation Models requires iOS 26+ ✅
+**Dependencies**: M10.2 merged to main ✅ | M10.5 merged to main ✅ | OCRLineClassifier + SectionHighlightView ready for reuse ✅ | Foundation Models requires iOS 26+ ✅ | M10.6 PRD ready ✅

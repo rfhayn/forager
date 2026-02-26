@@ -6,6 +6,25 @@
 
 ---
 
+## Session 51 — February 26, 2026
+**Milestone**: M10.6 PRD Creation
+**Focus**: Extract standalone PRD for Claude API integration from M10.5 spike design
+**Branch**: `feature/M10.6-prd`
+
+### What Happened
+Created the standalone M10.6 PRD (`docs/prds/active/m10.6-claude-api-integration.md`) based on the Section C design from the M10.5 spike PRD. The spike validated that an LLM API integration would fill the ~7-8% of ingredient lines the deterministic pipeline can't handle — messy prose, inverted structures, multi-ingredient lines, and "to serve" semantics.
+
+### Key Architecture Decision: Bypass, Not Tier
+The most important design decision in the PRD is that the LLM acts as a **pipeline bypass**, not a 4th tier within the hybrid router. When enabled, the LLM parses ALL ingredient lines in one batch API call and skips the regex→ML→NLP pipeline entirely. On any failure, the entire pipeline runs as before. This is cleaner than inserting LLM as a tier because: (1) the API shapes are fundamentally different (async batch vs sync per-line), (2) mixing would force all 3 existing parsers to become async, cascading through 11+ call sites, and (3) the fallback semantics are different — LLM failure means "use everything," not "try next tier."
+
+### OAuth Research Conclusion
+The M10.5 spike discovered that Anthropic explicitly bans third-party OAuth, OpenAI's OAuth is designed for ChatGPT calling your backend (not your app calling their API), and only Google Gemini supports proper OAuth but with complex consent screen review. API keys are the only universal approach. The UX mitigation — deep links to Console, `sk-ant-` prefix validation, "Test Connection" button, Keychain storage — is the right investment.
+
+### What This Means for the Project
+M10.6 is estimated at 8.5-12 hours across 5 sub-phases. It sits after M10.3 (Photo Import) and M10.4 (Polish) in the execution order. The PRD is implementation-ready with exact file paths, API schemas, error matrices, and test counts. Zero Core Data schema changes means no migration risk.
+
+---
+
 ## Session 50 — February 26, 2026
 **Milestone**: M10.5.4 — Validation Corpus 2 + Confidence Routing Documentation
 **Focus**: Build 50-recipe validation corpus, verify pipeline generalization, update docs
