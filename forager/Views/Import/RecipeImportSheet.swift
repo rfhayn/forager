@@ -4,21 +4,31 @@
 //
 //  Created for M10.1.4: Import preview UI
 //  Entry point sheet for recipe import. URL input → loading → preview → save.
-//  Expanded in M10.2/M10.3 for "Text" and "Photo" import modes.
+//  M10.2: Added text paste import mode alongside URL.
 //
 
 import SwiftUI
 import CoreData
 
+// MARK: - Import Mode
+
+/// Determines which initial input view the import sheet shows
+enum ImportMode {
+    case url
+    case text
+}
+
 // MARK: - Recipe Import Sheet
 
-/// Entry point sheet for importing recipes from URLs.
-/// State-driven content switches between URL input, loading, preview, and error states.
+/// Entry point sheet for importing recipes from URLs or pasted text.
+/// State-driven content switches between input, loading, preview, and error states.
 struct RecipeImportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.managedObjectContext) private var viewContext
     @ObservedObject var importService: RecipeImportService
+
+    let mode: ImportMode
 
     @State private var urlText = ""
     @State private var showingDuplicateSheet = false
@@ -27,12 +37,22 @@ struct RecipeImportSheet: View {
     @State private var uncategorizedTemplates: [IngredientTemplate] = []
     @FocusState private var urlFieldFocused: Bool
 
+    init(importService: RecipeImportService, mode: ImportMode = .url) {
+        self.importService = importService
+        self.mode = mode
+    }
+
     var body: some View {
         NavigationStack {
             Group {
                 switch importService.state {
                 case .idle, .received:
-                    urlInputView
+                    switch mode {
+                    case .url:
+                        urlInputView
+                    case .text:
+                        TextPasteImportView(importService: importService)
+                    }
 
                 case .fetching, .extracting:
                     loadingView
@@ -226,7 +246,7 @@ struct RecipeImportSheet: View {
             .buttonStyle(.borderedProminent)
             .tint(ForagerTheme.accentPrimary)
 
-            tryDifferentURLButton
+            tryAgainButton
         }
     }
 
@@ -236,10 +256,21 @@ struct RecipeImportSheet: View {
             iconColor: ForagerTheme.statusInfoFG,
             circleBG: ForagerTheme.surfaceAccent,
             title: error.errorTitle,
-            body: "We couldn't find a recipe on this page."
+            body: mode == .text
+                ? "We couldn't identify a recipe in this text. Try including clear ingredient lines."
+                : "We couldn't find a recipe on this page."
         ) {
-            // M10.2: "Try pasting the recipe text instead" link will go here
-            tryDifferentURLButton
+            if mode == .url {
+                Button("Try Pasting Recipe Text") {
+                    importService.cancelImport()
+                    dismiss()
+                    // User should use the "Paste Recipe Text" menu option
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+            }
+
+            tryAgainButton
         }
     }
 
@@ -255,7 +286,7 @@ struct RecipeImportSheet: View {
                 .buttonStyle(.borderedProminent)
                 .tint(ForagerTheme.accentPrimary)
 
-            tryDifferentURLButton
+            tryAgainButton
         }
     }
 
@@ -273,7 +304,7 @@ struct RecipeImportSheet: View {
                     .tint(ForagerTheme.accentPrimary)
             }
 
-            tryDifferentURLButton
+            tryAgainButton
         }
     }
 
@@ -320,8 +351,9 @@ struct RecipeImportSheet: View {
         }
     }
 
-    private var tryDifferentURLButton: some View {
-        Button("Try Different URL") {
+    /// Context-aware "try again" button — resets to input view
+    private var tryAgainButton: some View {
+        Button(mode == .url ? "Try Different URL" : "Try Different Text") {
             importService.cancelImport()
             urlText = ""
         }

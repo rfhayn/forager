@@ -1,18 +1,18 @@
 # Current Development Story
 
 **Last Updated**: February 25, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | **M10.1 TESTING**
-**Total Progress**: ~241 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.1-url-import`
-**Current Milestone**: M10.1 URL Import — 🧪 **TESTING** (10/10 sub-phases + 2 bug fixes complete, integration testing before PR)
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | **M10.2 COMPLETE**
+**Total Progress**: ~253 hours | 89% planning accuracy
+**Current Branch**: `feature/M10.2-text-paste-import`
+**Current Milestone**: M10.2 Text Paste Import — ✅ **COMPLETE** (6/6 sub-phases done, 31 tests pass)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.2 (Text Paste Import) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (Photo Import) → M10.4 → M7.7 → M6 → M9 → M11+
 
 ---
 
 ## 🔧 **M10: RECIPE IMPORT - ACTIVE**
 
-**Status**: 🧪 **TESTING** — M10.1 URL Import complete (8/8 sub-phases + 2 follow-ups + 2 bug fixes), integration testing before PR merge
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** (6/6 sub-phases, 31 tests)
 **Estimated**: 70-95 hours (4 phases)
 **PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint)
 **Spike Research**: `docs/import-research/` (7 supporting documents)
@@ -73,6 +73,23 @@
 - ✅ ImportSaveResult — Returns uncategorized template IDs for CategoryAssignmentModal
 - ✅ RecipeImportSheet — CategoryAssignmentModal wired into import save flow
 - ✅ IngredientParsingService — Removed phantom categorizeIngredient() method
+
+### M10.2 Implementation Progress
+1. ✅ M10.2.1: Foundation Models spike — SDK API surface verified (isAvailable, not isSupported)
+2. ✅ M10.2.2: Text input UI — TextEditor with paste-from-clipboard, monospaced font
+3. ✅ M10.2.3: Foundation Models @Generable extractor — on-device LLM structured extraction
+4. ✅ M10.2.4: Heuristic text fallback — OCRLineClassifier + HeuristicTextExtractor adapter
+5. ✅ M10.2.5: Section detection UI — SectionHighlightView with color-coded tap-to-reclassify
+6. ✅ M10.2.6: Testing — 21 classifier + 10 extractor tests (31 total, all pass)
+
+**Key files**:
+- `Services/Import/FoundationModelsExtractor.swift` — @Generable on-device LLM extraction
+- `Services/Import/OCRLineClassifier.swift` — Shared heuristic line scorer (text + photo paths)
+- `Services/Import/HeuristicTextExtractor.swift` — Thin adapter wrapping OCRLineClassifier
+- `forager/Views/Import/TextPasteImportView.swift` — Text input + classification review flow
+- `forager/Views/Import/SectionHighlightView.swift` — Color-coded line review with tap-to-reclassify
+- `foragerTests/Services/OCRLineClassifierTests.swift` — 21 tests
+- `foragerTests/Services/HeuristicTextExtractorTests.swift` — 10 tests
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):

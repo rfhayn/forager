@@ -103,6 +103,39 @@ class RecipeImportService: ObservableObject {
         state = .failed(lastError ?? .noRecipeFound)
     }
 
+    // MARK: - Import from Text
+
+    /// Extract recipe from pasted text. Tries Foundation Models first, falls back to heuristic.
+    /// Transitions: idle → extracting → needsReview or failed
+    func importFromText(_ text: String) async {
+        let input = RecipeExtractionInput.text(text)
+
+        // Try Foundation Models first (returns nil if unavailable)
+        let textExtractors: [RecipeExtractor] = [
+            FoundationModelsExtractor(),
+            HeuristicTextExtractor()
+        ]
+
+        var lastError: ImportError?
+
+        for extractor in textExtractors {
+            state = .extracting(method: extractor.extractorName)
+
+            do {
+                if let draft = try await extractor.extract(from: input) {
+                    state = .needsReview(draft)
+                    return
+                }
+            } catch let error as ImportError {
+                lastError = error
+            } catch {
+                lastError = .malformedData(error.localizedDescription)
+            }
+        }
+
+        state = .failed(lastError ?? .noRecipeFound)
+    }
+
     // MARK: - Save Import
 
     /// Atomically save a reviewed draft as a Recipe + Ingredients.

@@ -25,6 +25,8 @@
 		C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */; };
 		D4DB75CB66752D202B0B1B0B /* HybridParserRoutingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */; };
 		E4D6DEE7E01946BAB09AD618 /* RegexIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9DA9280DCE241D089E8A481 /* RegexIngredientParserTests.swift */; };
+		M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */; };
+		M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */; };
 		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
 		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
@@ -68,16 +70,17 @@
 		C225C423BCF440348D314FA3 /* HybridIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridIngredientParserTests.swift; sourceTree = "<group>"; };
 		D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HybridParserRoutingTests.swift; sourceTree = "<group>"; };
 		F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockIngredientParser.swift; sourceTree = "<group>"; };
+		M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRLineClassifierTests.swift; sourceTree = "<group>"; };
+		M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeuristicTextExtractorTests.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		9BM10900200020002000001 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		9BM10900200020002000001 /* Exceptions for "forager" folder in "forager" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/Info.plist,
-				App/forager.entitlements,
 			);
 			target = 9B731C282E535C3100CE26F0 /* forager */;
 		};
@@ -87,19 +90,19 @@
 		9B0555412EDB665C00A57B34 /* forager */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				9BM10900200020002000001 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				9BM10900200020002000001 /* Exceptions for "forager" folder in "forager" target */,
 			);
 			path = forager;
-			sourceTree = "<group>";
-		};
-		9BM10900100010001000001 /* Models */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Models;
 			sourceTree = "<group>";
 		};
 		9BADD71F2E64E79A00D677DC /* Services */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Services;
+			sourceTree = "<group>";
+		};
+		9BM10900100010001000001 /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -213,6 +216,8 @@
 				9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */,
 				9B75A0010001000100B24679 /* RecipeServiceTests.swift */,
 				9B75A0030002000200B24679 /* WeeklyListServiceTests.swift */,
+				M102T001OCRCLASS0000000B /* OCRLineClassifierTests.swift */,
+				M102T002HEURTEXT0000000B /* HeuristicTextExtractorTests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -234,8 +239,8 @@
 			);
 			fileSystemSynchronizedGroups = (
 				9B0555412EDB665C00A57B34 /* forager */,
-				9BM10900100010001000001 /* Models */,
 				9BADD71F2E64E79A00D677DC /* Services */,
+				9BM10900100010001000001 /* Models */,
 			);
 			name = forager;
 			packageProductDependencies = (
@@ -382,6 +387,8 @@
 				C3F6AF95B8B94FD3AA53BA1D /* HybridIngredientParserTests.swift in Sources */,
 				M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */,
 				M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */,
+				M102T001OCRCLASS0000000A /* OCRLineClassifierTests.swift in Sources */,
+				M102T002HEURTEXT0000000A /* HeuristicTextExtractorTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
