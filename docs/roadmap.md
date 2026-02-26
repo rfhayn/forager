@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 24, 2026
-**Current Phase**: **M8.4.1 ✅ COMPLETE** | **M8.4 ✅ COMPLETE** | **M15 ✅ COMPLETE** | **M7.5 ✅ COMPLETE** | **M10.1 ✅ COMPLETE** | **M10.2 NEXT**
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M8.4.1 normalization fix COMPLETE (282 tests), M15 COMPLETE, M7.5 COMPLETE, M9-prereqs COMPLETE
-**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: February 26, 2026
+**Current Phase**: **M10.5 ✅ COMPLETE** | **M10.6 📋 PLANNED** | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.5 pipeline spike COMPLETE, M10.6 PRD ready
+**Execution Order**: M10.3 → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -128,7 +128,21 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - **Clean**: Zero-warning build baseline established (M9.0)
 - **Live**: TestFlight build 10 (v1.1), external testers active
 
-**Next**: M10.2 (Text Paste Import) → M10.3 → M10.4 → M7.7 (App Store)
+**Next**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 (App Store)
+
+### **M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE**
+- Completed: February 26, 2026
+- FM evaluation, 12 pipeline fixes, OAuth research, LLM API design
+- Pipeline: 94.1% qty extraction (corpus 1), 92.9% (corpus 2, unseen data)
+- Remaining ~7-8% gaps are semantic — validates M10.6 LLM integration
+
+### **M10.6: Claude API Integration — 📋 PLANNED**
+- PRD: `docs/prds/active/m10.6-claude-api-integration.md`
+- Estimated: 8.5-12 hours (5 sub-phases)
+- Optional Claude API for import ingredient parsing (toggle OFF by default)
+- Sub-phases: M10.6.1 Protocol+Parser (2-3h) → M10.6.2 Keychain+Settings (1.5-2h) → M10.6.3 UI (1.5-2h) → M10.6.4 Integration (2-3h) → M10.6.5 Docs (1-2h)
+- Architecture: Separate `LLMIngredientParser` protocol, `ClaudeIngredientParser` adapter, silent pipeline fallback
+- Zero Core Data schema changes, ~20 new tests
 
 ### **M4 Component Summary:**
 

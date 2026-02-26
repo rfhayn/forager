@@ -1,12 +1,12 @@
 # Current Development Story
 
 **Last Updated**: February 26, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | **M10.5 Spike COMPLETE**
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | **M10.6 PRD READY**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.5-spike-pipeline-fixes`
-**Current Milestone**: M10.5 Spike: Pipeline Accuracy + LLM Eval — ✅ **COMPLETE** (FM eval, 10 pipeline fixes, PRD with OAuth findings + LLM API design)
+**Current Branch**: `main`
+**Current Milestone**: M10.6 PRD created — Claude API integration design complete
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -140,6 +140,24 @@
 - `foragerTests/Services/RecipeCorpus2Tests.swift` — Corpus 2 validation test (50 unseen recipes)
 - `foragerTests/TestData/RecipeCorpus2/` — 50 validation recipe files across 5 categories
 - `docs/test-corpus/fm-comparison.md` — Comparison results data
+
+### M10.6: Claude API Integration — PLANNED
+
+**Branch**: `feature/M10.6-claude-api-integration`
+**PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
+**Estimated**: 8.5-12 hours (5 sub-phases)
+**Depends on**: M10.2, M8.4, M10.5
+
+**What it does**: Optional Claude API integration for recipe import ingredient parsing. Fills the ~7-8% semantic gap the deterministic pipeline can't handle. App fully functional without it — toggle OFF by default, no nudges.
+
+**Sub-phases**:
+1. M10.6.1: Protocol + ClaudeIngredientParser + mock + ~8 tests (2-3h)
+2. M10.6.2: KeychainHelper extension + LLMSettingsService + ~5 tests (1.5-2h)
+3. M10.6.3: Settings UI — AI Import section (1.5-2h)
+4. M10.6.4: RecipeImportService integration + telemetry + ~7 tests (2-3h)
+5. M10.6.5: Documentation + full verification (1-2h)
+
+**Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. Zero Core Data schema changes.
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):
