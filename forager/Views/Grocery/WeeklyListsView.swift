@@ -13,6 +13,7 @@ struct WeeklyListsView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var syncMonitor: CloudKitSyncMonitor
 
     @Binding var popToRoot: Bool
 
@@ -33,8 +34,14 @@ struct WeeklyListsView: View {
         }
     }
 
+    /// True once we've received data or CloudKit confirms the store is current.
+    /// Prevents flashing "No Grocery Lists" empty state during cold launch
+    /// while @FetchRequest and CloudKit sync are still populating.
+    private var initialLoadComplete: Bool {
+        !allWeeklyLists.isEmpty || syncMonitor.syncEventCount > 0
+    }
+
     // State management
-    @State private var initialLoadComplete = false
     @State private var isGeneratingList = false
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -65,13 +72,6 @@ struct WeeklyListsView: View {
             }
             .onAppear {
                 viewContext.refreshAllObjects()
-                // Brief delay lets @FetchRequest populate from local SQLite
-                // before deciding to show empty state vs content
-                if !initialLoadComplete {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        initialLoadComplete = true
-                    }
-                }
             }
             .onChange(of: popToRoot) { _, _ in
                 if showingError { showingError = false }
