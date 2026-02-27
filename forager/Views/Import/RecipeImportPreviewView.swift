@@ -343,57 +343,42 @@ struct RecipeImportPreviewView: View {
     }
 
     /// Build category assignments keyed by parsed ingredient name and pass to save callback.
-    /// Also applies any user name edits to the draft's ingredient list.
+    /// Applies any user edits to the draft's ingredient list before saving.
     private func saveWithCategories() {
-        // Apply name edits to draft ingredient texts
-        for (index, editedName) in editedIngredientNames {
+        // Apply full-line edits to draft
+        for (index, editedText) in editedIngredientNames {
             guard index < draft.ingredients.value.count else { continue }
-            let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmed.isEmpty {
-                // Reconstruct: keep original qty portion, replace name
-                let originalText = draft.ingredients.value[index]
-                let parts = splitIngredientText(originalText)
-                if let qty = parts.qty {
-                    draft.ingredients.value[index] = "\(qty) \(trimmed)"
-                } else {
-                    draft.ingredients.value[index] = trimmed
-                }
+                draft.ingredients.value[index] = trimmed
             }
         }
 
         // Build category map keyed by parsed name
         var nameToCategory: [String: String] = [:]
         for (index, category) in categoryAssignments {
-            // Use edited name if available, otherwise the original match info
-            let parsedName: String
-            if let editedName = editedIngredientNames[index] {
-                let parsed = parsingService.parseIngredient(text: editedName)
-                parsedName = parsed.displayName.lowercased()
-            } else if let info = ingredientMatches[index] {
-                parsedName = info.parsedName.lowercased()
-            } else {
-                continue
-            }
-            nameToCategory[parsedName] = category
+            // Parse the current text to get the clean ingredient name
+            let text = editedIngredientNames[index] ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
+            let parsed = parsingService.parseIngredient(text: text)
+            nameToCategory[parsed.displayName.lowercased()] = category
         }
         onSave(draft, nameToCategory)
     }
 
-    // MARK: - Ingredient Name Editing
+    // MARK: - Ingredient Editing
 
-    /// Binding for editable ingredient name at a given index.
-    /// Lazily initializes from the original text's name portion.
-    private func ingredientNameBinding(index: Int, original: String) -> Binding<String> {
+    /// Binding for the full ingredient text at a given index.
+    private func ingredientTextBinding(index: Int, original: String) -> Binding<String> {
         Binding(
             get: { editedIngredientNames[index] ?? original },
             set: { editedIngredientNames[index] = $0 }
         )
     }
 
-    /// Re-run parsing + template matching for a single edited ingredient.
+    /// Re-run parsing + template matching after the user edits an ingredient line.
     private func reMatchIngredient(index: Int) {
-        guard let editedName = editedIngredientNames[index] else { return }
-        let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = editedIngredientNames[index] ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
         let parsed = parsingService.parseIngredient(text: trimmed)
@@ -493,24 +478,14 @@ struct RecipeImportPreviewView: View {
                 confidenceDot(confidence)
             }
 
-            // Ingredient name (editable) + category picker
+            // Full ingredient line (editable) + category picker
             VStack(alignment: .leading, spacing: 2) {
-                let parts = splitIngredientText(text)
-                HStack(spacing: ForagerTheme.Spacing.xs) {
-                    if let qty = parts.qty {
-                        Text(qty)
-                            .font(ForagerTheme.secondaryFont)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                            .monospacedDigit()
-                    }
-
-                    TextField("Ingredient name", text: ingredientNameBinding(index: index, original: parts.name))
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
-                        .autocorrectionDisabled()
-                        .submitLabel(.done)
-                        .onSubmit { reMatchIngredient(index: index) }
-                }
+                TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
+                    .onSubmit { reMatchIngredient(index: index) }
 
                 // Inline category picker
                 inlineCategoryPicker(index: index)
@@ -562,29 +537,6 @@ struct RecipeImportPreviewView: View {
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-    }
-
-    /// Split "2 1/4 cups all-purpose flour" → (qty: "2 1/4 cups", name: "all-purpose flour")
-    private func splitIngredientText(_ text: String) -> (qty: String?, name: String) {
-        // Match leading quantity: digits, fractions, spaces, and unit words
-        let pattern = #"^([\d½⅓⅔¼¾⅛⅜⅝⅞/\s]+(?:cups?|cup|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|kg|ml|l|liters?|quarts?|pints?|gallons?|cloves?|cans?|packages?|large|medium|small|whole|pinch(?:es)?)\b)\s*(.+)"#
-        if let match = text.range(of: pattern, options: .regularExpression, range: text.startIndex..<text.endIndex) {
-            let fullMatch = String(text[match])
-            if let nameRange = fullMatch.range(of: pattern, options: .regularExpression) {
-                // Use NSRegularExpression for capture groups
-                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                    let nsString = text as NSString
-                    if let result = regex.firstMatch(in: text, range: NSRange(location: 0, length: nsString.length)),
-                       result.numberOfRanges >= 3 {
-                        let qty = nsString.substring(with: result.range(at: 1)).trimmingCharacters(in: .whitespaces)
-                        let name = nsString.substring(with: result.range(at: 2)).trimmingCharacters(in: .whitespaces)
-                        return (qty, name)
-                    }
-                }
-                _ = nameRange // suppress warning
-            }
-        }
-        return (nil, text)
     }
 
     // MARK: - Instructions Section
