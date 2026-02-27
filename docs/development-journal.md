@@ -29,6 +29,18 @@ Rather than modifying `RecipeImportService.saveImport()` to accept category hint
 
 User noted: "categorization will become less burdensome over time as the library grows." This is exactly right — the inline category picker auto-fills from existing template matches. After a user categorizes "chicken breast" once, every future import that includes chicken breast will auto-fill "Deli & Meat". The M10.6 LLM integration will fill the gap for truly new ingredients.
 
+### Continued: Full-Line Editing + Parsed Feedback
+
+Two additional rounds of refinement driven by user testing:
+
+**Full-line editing**: Initially implemented split editing (qty as static Text + name as TextField). User immediately flagged this — "I want the whole ingredient line to be editable." Single TextField for the entire line is the right UX: users fix OCR errors holistically, not component-by-component. The app's job is to parse the corrected line, not force the user to do the parsing mentally.
+
+**Parsed name highlight**: After making lines fully editable, the user noticed the system's understanding was invisible — "I still want the line parsed and the ingredient highlighted." Added a secondary line below the TextField showing the parsed ingredient name in accent color with a dot separator before the category picker. This creates a feedback loop: edit → submit → see parsed name → confirm the system understood.
+
+### USDA FoodData Research
+
+User explored the idea of using USDA FoodData Central as a seed dictionary for ingredient categories. Pulled Foundation Foods samples via API — ~1,000 curated items with food groups that map well to Forager's 7 categories (e.g., "Vegetables and Vegetable Products" → "Fruits & Veg"). The mapping is feasible but implementation deferred — the inline category assignment + library growth pattern is the near-term solution.
+
 ---
 
 ## Session 53 — February 26, 2026
