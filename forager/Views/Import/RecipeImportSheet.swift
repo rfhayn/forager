@@ -109,6 +109,7 @@ struct RecipeImportSheet: View {
                             dismissAfterSave()
                         }
                     )
+                    .interactiveDismissDisabled()
                     .environment(\.managedObjectContext, viewContext)
                 }
             }
