@@ -31,6 +31,8 @@ struct RecipeImportPreviewView: View {
     @State private var ingredientMatches: [Int: IngredientMatchInfo] = [:]
     /// User's category selections per ingredient index (inline assignment)
     @State private var categoryAssignments: [Int: String] = [:]
+    /// User's ingredient name edits per index (nil = not edited, use original)
+    @State private var editedIngredientNames: [Int: String] = [:]
 
     @FetchRequest(
         sortDescriptors: [
@@ -341,14 +343,91 @@ struct RecipeImportPreviewView: View {
     }
 
     /// Build category assignments keyed by parsed ingredient name and pass to save callback.
+    /// Also applies any user name edits to the draft's ingredient list.
     private func saveWithCategories() {
-        var nameToCategory: [String: String] = [:]
-        for (index, category) in categoryAssignments {
-            if let info = ingredientMatches[index] {
-                nameToCategory[info.parsedName.lowercased()] = category
+        // Apply name edits to draft ingredient texts
+        for (index, editedName) in editedIngredientNames {
+            guard index < draft.ingredients.value.count else { continue }
+            let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                // Reconstruct: keep original qty portion, replace name
+                let originalText = draft.ingredients.value[index]
+                let parts = splitIngredientText(originalText)
+                if let qty = parts.qty {
+                    draft.ingredients.value[index] = "\(qty) \(trimmed)"
+                } else {
+                    draft.ingredients.value[index] = trimmed
+                }
             }
         }
+
+        // Build category map keyed by parsed name
+        var nameToCategory: [String: String] = [:]
+        for (index, category) in categoryAssignments {
+            // Use edited name if available, otherwise the original match info
+            let parsedName: String
+            if let editedName = editedIngredientNames[index] {
+                let parsed = parsingService.parseIngredient(text: editedName)
+                parsedName = parsed.displayName.lowercased()
+            } else if let info = ingredientMatches[index] {
+                parsedName = info.parsedName.lowercased()
+            } else {
+                continue
+            }
+            nameToCategory[parsedName] = category
+        }
         onSave(draft, nameToCategory)
+    }
+
+    // MARK: - Ingredient Name Editing
+
+    /// Binding for editable ingredient name at a given index.
+    /// Lazily initializes from the original text's name portion.
+    private func ingredientNameBinding(index: Int, original: String) -> Binding<String> {
+        Binding(
+            get: { editedIngredientNames[index] ?? original },
+            set: { editedIngredientNames[index] = $0 }
+        )
+    }
+
+    /// Re-run parsing + template matching for a single edited ingredient.
+    private func reMatchIngredient(index: Int) {
+        guard let editedName = editedIngredientNames[index] else { return }
+        let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let parsed = parsingService.parseIngredient(text: trimmed)
+        let cleanName = parsed.displayName
+
+        let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
+        let exactMatch = candidates.first(where: {
+            $0.name?.lowercased() == cleanName.lowercased()
+        })
+
+        let status: IngredientStatus
+        let categoryName: String?
+
+        if let template = exactMatch {
+            if let category = template.category, !category.isEmpty,
+               category.lowercased() != "uncategorized" {
+                status = .ready
+                categoryName = category
+                // Auto-fill category from match
+                categoryAssignments[index] = category
+            } else {
+                status = .needsCategory
+                categoryName = nil
+            }
+        } else {
+            status = .needsTemplate
+            categoryName = nil
+        }
+
+        ingredientMatches[index] = IngredientMatchInfo(
+            parsedName: cleanName,
+            status: status,
+            categoryName: categoryName
+        )
     }
 
     // MARK: - Ingredients Section
@@ -414,7 +493,7 @@ struct RecipeImportPreviewView: View {
                 confidenceDot(confidence)
             }
 
-            // Ingredient name + category picker
+            // Ingredient name (editable) + category picker
             VStack(alignment: .leading, spacing: 2) {
                 let parts = splitIngredientText(text)
                 HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -425,9 +504,12 @@ struct RecipeImportPreviewView: View {
                             .monospacedDigit()
                     }
 
-                    Text(parts.name)
+                    TextField("Ingredient name", text: ingredientNameBinding(index: index, original: parts.name))
                         .font(ForagerTheme.bodyFont)
                         .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit { reMatchIngredient(index: index) }
                 }
 
                 // Inline category picker
@@ -448,12 +530,17 @@ struct RecipeImportPreviewView: View {
     /// Compact inline Menu for category selection per ingredient
     private func inlineCategoryPicker(index: Int) -> some View {
         Menu {
-            Button("Uncategorized") {
-                categoryAssignments[index] = nil
+            Button(action: { categoryAssignments[index] = nil }) {
+                Label("Uncategorized", systemImage: "circle")
             }
             ForEach(realCategories, id: \.objectID) { category in
-                Button(category.displayName) {
-                    categoryAssignments[index] = category.displayName
+                Button(action: { categoryAssignments[index] = category.displayName }) {
+                    Label {
+                        Text(category.displayName)
+                    } icon: {
+                        Image(systemName: "circle.fill")
+                            .foregroundStyle(ForagerTheme.categoryColor(for: category.displayName))
+                    }
                 }
             }
         } label: {
