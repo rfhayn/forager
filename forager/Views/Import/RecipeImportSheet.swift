@@ -72,9 +72,9 @@ struct RecipeImportSheet: View {
                     savingView
 
                 case .saved:
-                    // Auto-dismiss — save already completed, category modal may be showing
+                    // Save completed — handleSave controls dismiss/category flow
+                    // Show nothing while post-save logic (category assignment or dismiss) runs
                     Color.clear
-                        .onAppear { dismissAfterSave() }
 
                 case .failed(let error):
                     errorView(error)
