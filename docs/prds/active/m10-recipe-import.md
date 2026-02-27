@@ -763,6 +763,34 @@ Deterministic contract for URL handoff between share extension and main app:
 | `ImageRecipeExtractorTests.swift` | ~8 | Full pipeline with mock OCR, empty image, no text, mixed content |
 | **Total M10.3** | **~8** | |
 
+#### Implementation Notes (from testing)
+
+**Bugs found and fixed during M10.3.5 testing:**
+
+1. **Review binding bug (PhotoImportView)**: `PhotoImportPhase` had a custom `Equatable` that returned `true` for all `.reviewing` states — SwiftUI never re-rendered when lines were edited via SectionHighlightView binding. Fix: return `false` for `.reviewing` comparison.
+
+2. **Save UX**: The "Recipe Saved!" success screen was unnecessary ceremony and obscured the CategoryAssignmentModal that should appear for uncategorized ingredients. Fix: removed success view, save now auto-dismisses (showing CategoryAssignmentModal first if needed). Toolbar button renamed "Save Recipe" → "Save" to match manual entry.
+
+3. **Category assignment flow**: `CategoryAssignmentModal` was wired up but the success view took over before the user could see it. Fix: save → category assignment (if uncategorized) → dismiss. Or save → dismiss directly (if all categorized). State reset to `.idle` on dismiss to prevent stale state on next import.
+
+4. **Cold launch blank grocery list**: `HouseholdService.init()` fired `loadCurrentHousehold()` before `PersistenceController` stores were loaded. The `.task` modifier in foragerApp now runs `loadCurrentHousehold()` immediately (stores guaranteed loaded by `isReady` gate), fixing the 4+ second blank screen.
+
+#### M10.3.8: Import Preview Ingredient Matching (1-2h)
+
+**Enhancement**: Parse and match imported ingredients against the user's existing template database during the preview step. Currently the preview shows raw ingredient text with no indication of categorization status. This addition provides:
+
+1. **Parse each ingredient line** at preview time via `IngredientParsingService.parseIngredient()` — extract name/qty/unit
+2. **Look up parsed name** against existing `IngredientTemplate` records (read-only, no template creation)
+3. **Display match status** per ingredient row:
+   - **✓ [Category]** — matched an existing template with a category assigned
+   - **? Needs category** — matched an existing template but uncategorized
+   - **○ New ingredient** — no template match, will be created on save
+4. **Highlight the ingredient name** portion within the raw line (qty/unit in secondary style, name in primary)
+
+**Implementation**: Modify `RecipeImportPreviewView.ingredientsSection` to run the parser on each line, search templates with `IngredientTemplateService.searchTemplates(query:)`, and display the `IngredientStatus` indicator + category label — mirroring `CreateRecipeView.ingredientRow()`.
+
+**Key constraint**: Preview is read-only — templates are NOT created until Save. This is a display-only enhancement using existing `parseIngredient()` (fast, <0.05s per ingredient) and `searchTemplates()` (simple fetch).
+
 #### Acceptance Criteria
 
 - OCR accuracy (clean printed text): ≥ 95% character accuracy
@@ -770,6 +798,8 @@ Deterministic contract for URL handoff between share extension and main app:
 - End-to-end scan → preview: < 8s
 - Camera permission: graceful handling if denied (settings redirect)
 - Handwriting: ≥ 80% OCR accuracy (neat handwriting)
+- **Import preview shows ingredient match status** (✓/? /○) for every ingredient line
+- **Existing categorized ingredients show their category** in preview
 
 ---
 

@@ -1,13 +1,13 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 26, 2026
-**For Milestone**: M10.3 Photo/Image Import — Testing & Refinement
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | **M10.3 ACTIVE (code complete, needs testing)** | M10.6 📋 **PRD READY**
+**For Milestone**: M10.3 Photo/Image Import — Testing & Ingredient Matching
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | **M10.3 ACTIVE (testing + M10.3.8 planned)** | M10.6 📋 **PRD READY**
 **Branch**: `feature/M10.3-photo-import`
 
 ---
 
-## **CURRENT: M10.3 — Testing & Refinement**
+## **CURRENT: M10.3 — Testing & M10.3.8 Ingredient Matching**
 
 ### What's Done
 - ✅ `ImageOCRService.swift` — VNRecognizeTextRequest wrapper → [OCRLine] with real boundingBox
@@ -17,19 +17,41 @@
 - ✅ "Import from Photo" menu button in RecipeListView
 - ✅ `NSCameraUsageDescription` in Info.plist
 - ✅ Build succeeds with zero warnings
+- ✅ Bug fix: PhotoImportPhase Equatable causing review binding to freeze
+- ✅ Bug fix: "Recipe Saved!" screen removed, save auto-dismisses
+- ✅ Bug fix: CategoryAssignmentModal appears properly before dismiss
+- ✅ Bug fix: Cold launch blank grocery list (HouseholdService timing)
+- ✅ Bug fix: "Templates" → "Ingredients" in HouseholdView shared data
 
-### What Needs Testing
-Manual testing with real recipe photos:
+### What Needs Doing: M10.3.8 — Import Preview Ingredient Matching
+
+Add ingredient parsing + template matching to `RecipeImportPreviewView`:
+
+1. **Parse** each ingredient line with `IngredientParsingService.parseIngredient()` at preview time
+2. **Lookup** parsed name against existing `IngredientTemplate` via `searchTemplates(query:)`
+3. **Display** per-ingredient row:
+   - **✓ [Category]** — matched template with category
+   - **? Needs category** — matched template, no category
+   - **○ New ingredient** — no template match
+4. **Highlight** ingredient name vs qty/unit within each row
+
+**Key files to modify**:
+- `forager/Views/Import/RecipeImportPreviewView.swift` — ingredientsSection + ingredientRow
+- Needs access to `IngredientParsingService` and `IngredientTemplateService` (via @EnvironmentObject)
+
+**Reuse from manual entry**:
+- `IngredientStatus` enum in `Services/RecipeFormModels.swift` — `.ready` / `.needsCategory` / `.needsTemplate`
+- Pattern in `CreateRecipeView.ingredientRow()` (lines 441-494)
+
+**Constraint**: Preview is read-only — no template creation, no Core Data writes. Only `parseIngredient()` + `searchTemplates()` lookups.
+
+### What Still Needs Manual Testing
 - Clean printed recipes (cookbooks, magazines)
 - Screenshot recipes from websites
 - Handwritten recipes (expect lower accuracy)
-- Multi-column layouts
-- Low-light / angled photos
 - Multi-page scans via document scanner
-- Empty OCR result → ImportError.noTextDetected
-- Camera permission denied → ImportError.cameraPermissionDenied
-- Scanner cancelled → graceful dismiss
-- FM path vs heuristic path (compare on FM-capable device)
+- Error paths: no text, camera denied, scanner cancelled
+- FM path vs heuristic path on FM-capable device
 
 ---
 
@@ -56,4 +78,4 @@ Manual testing with real recipe photos:
 
 ---
 
-**Dependencies**: M10.3 code complete, needs manual testing ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
+**Dependencies**: M10.3 bug fixes committed ✅ | M10.3.8 needs implementation | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)

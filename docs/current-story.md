@@ -98,7 +98,16 @@
 4. ✅ M10.3.2: Entry points — .photo ImportMode, RecipeListView menu button + sheet
 5. ✅ M10.3.3: Split-screen review — Image top + SectionHighlightView bottom + OCR stats bar
 6. ✅ M10.3.4: Foundation Models dual path — FM primary, heuristic fallback
-7. 🧪 M10.3.5: Manual testing with real recipe photos — PENDING
+7. 🧪 M10.3.5: Manual testing — IN PROGRESS
+   - ✅ Fix: PhotoImportPhase Equatable returning true for all .reviewing states (binding bug)
+   - ✅ Fix: Remove "Recipe Saved!" success screen, auto-dismiss after save
+   - ✅ Fix: CategoryAssignmentModal now appears properly before dismiss
+   - ✅ Fix: Cold launch blank grocery list (HouseholdService timing)
+   - ✅ Fix: "Templates" → "Ingredients" label in HouseholdView shared data
+8. 📋 M10.3.8: Import preview ingredient matching — PLANNED
+   - Parse imported ingredients at preview time
+   - Match against existing IngredientTemplate database (read-only)
+   - Show ✓/? /○ status + category per ingredient row
 
 **Key files**:
 - `Services/Import/ImageOCRService.swift` — Vision.framework OCR wrapper

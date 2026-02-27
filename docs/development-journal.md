@@ -6,6 +6,41 @@
 
 ---
 
+## Session 53 — February 26, 2026
+**Milestone**: M10.3 Photo/Image Import — Bug Fixes & Ingredient Matching Design
+**Focus**: Fix 3 bugs found during manual testing, design import preview ingredient matching
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+User testing on a flight surfaced three issues:
+
+**1. Review binding bug**: The SectionHighlightView review step froze after editing the first classified line. Root cause: `PhotoImportPhase`'s custom `Equatable` returned `true` for all `.reviewing` states — SwiftUI's diff saw "no change" and skipped re-rendering when lines were modified. One-character fix: `return true` → `return false`.
+
+**2. Save UX**: The big "Recipe Saved!" success screen was unnecessary and actually obscured the CategoryAssignmentModal that should appear for uncategorized ingredients. The user expected import to behave like manual entry — hit Save, optionally assign categories, done. Fix: removed the success view entirely, save now auto-dismisses. CategoryAssignmentModal appears first if there are uncategorized templates, then dismisses. State resets to `.idle` on dismiss to prevent stale state.
+
+**3. Import ingredient categorization**: The `CategoryAssignmentModal` was wired up and the parsing pipeline ran on save, but the user never saw it working because the success view took over. With the success view removed, the flow now works as intended: save → category assignment (if needed) → dismiss.
+
+Also fixed two small bugs from earlier testing: cold launch blank grocery list (HouseholdService timing — `loadCurrentHousehold()` was running before stores loaded) and "Templates" → "Ingredients" label in HouseholdView.
+
+### Key Decision: Import Preview Ingredient Matching (M10.3.8)
+
+User feedback: "we are not running the ingredient categorization step like what happens when a user manually enters in a recipe... matching it to the user's existing ingredient list would be helpful, that way the user knows what is already categorized."
+
+This led to designing M10.3.8 — a preview-time enhancement where each imported ingredient line gets parsed and matched against the user's existing template database. The preview will show ✓/? /○ status indicators per ingredient (matching CreateRecipeView's pattern), so the user knows exactly what's new vs existing before hitting Save. Key constraint: preview is read-only, no templates created until save.
+
+All infrastructure exists: `parseIngredient()` is fast (<0.05s), `searchTemplates()` is a simple fetch, and `IngredientStatus` enum already defines the three states. Just needs wiring in `RecipeImportPreviewView.ingredientsSection`.
+
+### What Was Learned
+
+Custom `Equatable` on `@State` enums is a footgun — if your `==` returns `true` when the actual data changed, SwiftUI silently stops updating. Either omit Equatable (SwiftUI handles it) or make it precise. Also: intermediate success screens that require user dismissal (like "Recipe Saved!" + "Done") break the flow when there's follow-up work (like category assignment). Just save and move on.
+
+### What's Next
+
+Implement M10.3.8 (ingredient matching in preview), continue manual testing with real photos, then merge to main.
+
+---
+
 ## Session 52 — February 26, 2026
 **Milestone**: M10.3 Photo/Image Import
 **Focus**: Add third recipe import source — camera scan and photo library via Vision.framework OCR
