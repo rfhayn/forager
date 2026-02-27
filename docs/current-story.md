@@ -104,10 +104,11 @@
    - ✅ Fix: CategoryAssignmentModal now appears properly before dismiss
    - ✅ Fix: Cold launch blank grocery list (HouseholdService timing)
    - ✅ Fix: "Templates" → "Ingredients" label in HouseholdView shared data
-8. 📋 M10.3.8: Import preview ingredient matching — PLANNED
-   - Parse imported ingredients at preview time
+8. ✅ M10.3.8: Import preview ingredient matching — COMPLETE
+   - Parse each ingredient with IngredientParsingService at preview time
    - Match against existing IngredientTemplate database (read-only)
-   - Show ✓/? /○ status + category per ingredient row
+   - Show ✓/?/○ status icons + category label per ingredient row
+   - Summary bar: "N matched · N need category · N new"
 
 **Key files**:
 - `Services/Import/ImageOCRService.swift` — Vision.framework OCR wrapper

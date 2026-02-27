@@ -35,9 +35,15 @@ All infrastructure exists: `parseIngredient()` is fast (<0.05s), `searchTemplate
 
 Custom `Equatable` on `@State` enums is a footgun — if your `==` returns `true` when the actual data changed, SwiftUI silently stops updating. Either omit Equatable (SwiftUI handles it) or make it precise. Also: intermediate success screens that require user dismissal (like "Recipe Saved!" + "Done") break the flow when there's follow-up work (like category assignment). Just save and move on.
 
+### Session 53b Update — M10.3.8 Implemented
+
+Implemented M10.3.8 ingredient matching in `RecipeImportPreviewView.swift`. Added `@EnvironmentObject` for `IngredientParsingService` and `IngredientTemplateService`, a private `IngredientMatchInfo` struct, and a `computeIngredientMatches()` method that runs in `.task {}`. Each ingredient line gets parsed via the 3-tier hybrid parser, then the parsed name is matched against existing templates via `searchTemplates()`. The ingredient row now shows SF Symbol status icons (checkmark.circle.fill / questionmark.circle.fill / circle) instead of confidence dots when matches are available, plus a category label or status description below the ingredient text. A summary bar at the top of the ingredients section shows counts: "N matched · N need category · N new".
+
+No new tests needed — this is view-layer glue connecting two already-tested services. M10.3 is now dev complete.
+
 ### What's Next
 
-Implement M10.3.8 (ingredient matching in preview), continue manual testing with real photos, then merge to main.
+Continue manual testing with real photos, verify M10.3.8 ingredient matching display works as expected, then merge to main.
 
 ---
 

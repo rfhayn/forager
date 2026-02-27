@@ -1,13 +1,13 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 26, 2026
-**For Milestone**: M10.3 Photo/Image Import — Testing & Ingredient Matching
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | **M10.3 ACTIVE (testing + M10.3.8 planned)** | M10.6 📋 **PRD READY**
-**Branch**: `feature/M10.3-photo-import`
+**For Milestone**: M10.3 Photo/Image Import — DEV COMPLETE
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY**
+**Branch**: `feature/M10.3-photo-import` (ready for PR)
 
 ---
 
-## **CURRENT: M10.3 — Testing & M10.3.8 Ingredient Matching**
+## **M10.3 — DEV COMPLETE**
 
 ### What's Done
 - ✅ `ImageOCRService.swift` — VNRecognizeTextRequest wrapper → [OCRLine] with real boundingBox
@@ -22,28 +22,7 @@
 - ✅ Bug fix: CategoryAssignmentModal appears properly before dismiss
 - ✅ Bug fix: Cold launch blank grocery list (HouseholdService timing)
 - ✅ Bug fix: "Templates" → "Ingredients" in HouseholdView shared data
-
-### What Needs Doing: M10.3.8 — Import Preview Ingredient Matching
-
-Add ingredient parsing + template matching to `RecipeImportPreviewView`:
-
-1. **Parse** each ingredient line with `IngredientParsingService.parseIngredient()` at preview time
-2. **Lookup** parsed name against existing `IngredientTemplate` via `searchTemplates(query:)`
-3. **Display** per-ingredient row:
-   - **✓ [Category]** — matched template with category
-   - **? Needs category** — matched template, no category
-   - **○ New ingredient** — no template match
-4. **Highlight** ingredient name vs qty/unit within each row
-
-**Key files to modify**:
-- `forager/Views/Import/RecipeImportPreviewView.swift` — ingredientsSection + ingredientRow
-- Needs access to `IngredientParsingService` and `IngredientTemplateService` (via @EnvironmentObject)
-
-**Reuse from manual entry**:
-- `IngredientStatus` enum in `Services/RecipeFormModels.swift` — `.ready` / `.needsCategory` / `.needsTemplate`
-- Pattern in `CreateRecipeView.ingredientRow()` (lines 441-494)
-
-**Constraint**: Preview is read-only — no template creation, no Core Data writes. Only `parseIngredient()` + `searchTemplates()` lookups.
+- ✅ M10.3.8: Import preview ingredient matching — parse + template lookup + status display
 
 ### What Still Needs Manual Testing
 - Clean printed recipes (cookbooks, magazines)
@@ -52,10 +31,16 @@ Add ingredient parsing + template matching to `RecipeImportPreviewView`:
 - Multi-page scans via document scanner
 - Error paths: no text, camera denied, scanner cancelled
 - FM path vs heuristic path on FM-capable device
+- M10.3.8 ingredient matching display (verify ✓/?/○ icons + category labels)
+
+### Tests
+- No new unit tests needed — M10.3.8 is view-layer glue connecting already-tested services
+- `IngredientParsingService.parseIngredient()` and `IngredientTemplateService.searchTemplates()` have existing coverage
+- All 267+ existing tests expected to pass (no schema changes)
 
 ---
 
-## **AFTER M10.3: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
+## **NEXT: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
 
 ### M10.4: Polish & Integration (11-16h)
 - Import history, household sharing, telemetry dashboard
@@ -78,4 +63,4 @@ Add ingredient parsing + template matching to `RecipeImportPreviewView`:
 
 ---
 
-**Dependencies**: M10.3 bug fixes committed ✅ | M10.3.8 needs implementation | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
+**Dependencies**: M10.3 dev complete ✅ | M10.3.8 implemented ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
