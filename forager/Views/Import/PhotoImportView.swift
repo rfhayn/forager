@@ -173,21 +173,23 @@ struct PhotoImportView: View {
             }
         )
 
-        return VStack(spacing: 0) {
-            // Image preview (top ~40%)
-            if let uiImage = UIImage(data: imageData) {
-                imagePreview(uiImage)
-                    .frame(maxHeight: UIScreen.main.bounds.height * 0.35)
-            }
+        return GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Image preview (top ~35%)
+                if let uiImage = UIImage(data: imageData) {
+                    imagePreview(uiImage)
+                        .frame(maxHeight: geometry.size.height * 0.35)
+                }
 
-            // OCR stats bar
-            statsBar
+                // OCR stats bar
+                statsBar
 
-            Divider()
+                Divider()
 
-            // Classified text review (bottom ~60%)
-            SectionHighlightView(classifiedLines: binding) { correctedLines in
-                assembleDraftAndContinue(from: correctedLines)
+                // Classified text review (bottom ~65%)
+                SectionHighlightView(classifiedLines: binding) { correctedLines in
+                    assembleDraftAndContinue(from: correctedLines)
+                }
             }
         }
     }
