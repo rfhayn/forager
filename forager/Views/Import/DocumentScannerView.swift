@@ -2,30 +2,30 @@
 //  DocumentScannerView.swift
 //  forager
 //
-//  Created for M10.3.1: Document camera scanner wrapper
-//  UIViewControllerRepresentable wrapping VNDocumentCameraViewController.
-//  Handles multi-page scans and delegates results back via callback.
+//  Created for M10.3.1: Camera capture wrapper
+//  UIViewControllerRepresentable wrapping UIImagePickerController in camera mode.
+//  Takes a single photo and returns it via callback.
 //
 
 import SwiftUI
-import VisionKit
 
 // MARK: - Document Scanner View
 
-/// SwiftUI wrapper for Apple's document scanner camera.
-/// Returns an array of scanned page images on completion.
+/// SwiftUI wrapper for the system camera (single photo capture).
+/// Returns the captured image on completion.
 struct DocumentScannerView: UIViewControllerRepresentable {
     let onScan: ([UIImage]) -> Void
     let onCancel: () -> Void
     let onError: (ImportError) -> Void
 
-    func makeUIViewController(context: Context) -> VNDocumentCameraViewController {
-        let scanner = VNDocumentCameraViewController()
-        scanner.delegate = context.coordinator
-        return scanner
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
     }
 
-    func updateUIViewController(_ uiViewController: VNDocumentCameraViewController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(onScan: onScan, onCancel: onCancel, onError: onError)
@@ -33,7 +33,7 @@ struct DocumentScannerView: UIViewControllerRepresentable {
 
     // MARK: - Coordinator
 
-    class Coordinator: NSObject, VNDocumentCameraViewControllerDelegate {
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
         let onScan: ([UIImage]) -> Void
         let onCancel: () -> Void
         let onError: (ImportError) -> Void
@@ -46,29 +46,19 @@ struct DocumentScannerView: UIViewControllerRepresentable {
             self.onError = onError
         }
 
-        func documentCameraViewController(
-            _ controller: VNDocumentCameraViewController,
-            didFinishWith scan: VNDocumentCameraScan
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
         ) {
-            let images = (0..<scan.pageCount).map { scan.imageOfPage(at: $0) }
-            onScan(images)
-        }
-
-        func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
-            onCancel()
-        }
-
-        func documentCameraViewController(
-            _ controller: VNDocumentCameraViewController,
-            didFailWithError error: Error
-        ) {
-            // Camera permission denial comes through as a specific error domain
-            let nsError = error as NSError
-            if nsError.domain == "com.apple.VisionKit" || nsError.code == 1 {
-                onError(.cameraPermissionDenied)
+            if let image = info[.originalImage] as? UIImage {
+                onScan([image])
             } else {
-                onError(.ocrFailed(error.localizedDescription))
+                onError(.ocrFailed("Could not capture image from camera."))
             }
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            onCancel()
         }
     }
 }
