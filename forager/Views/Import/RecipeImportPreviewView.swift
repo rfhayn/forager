@@ -377,13 +377,13 @@ struct RecipeImportPreviewView: View {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
                     if let qty = parts.qty {
                         Text(qty)
-                            .font(ForagerTheme.footnoteFont)
+                            .font(ForagerTheme.secondaryFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                             .monospacedDigit()
                     }
 
                     Text(parts.name)
-                        .font(ForagerTheme.secondaryFont)
+                        .font(ForagerTheme.bodyFont)
                         .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
                 }
 
