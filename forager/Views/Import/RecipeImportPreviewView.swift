@@ -468,50 +468,55 @@ struct RecipeImportPreviewView: View {
     }
 
     /// Per-ingredient bordered card row with display/edit toggle.
-    /// Display mode: qty + unit in regular text, parsed name bold/accent, category picker inline.
-    /// Edit mode (tap): full-line TextField, category picker inline.
+    /// Display mode: qty + unit in regular text, parsed name bold/accent.
+    /// Edit mode (tap): full-line TextField.
+    /// Category picker always on its own line below the ingredient.
     private func ingredientRow(index: Int, text: String, confidence: ImportConfidence, matchInfo: IngredientMatchInfo?) -> some View {
         let isLowConfidence = confidence == .low || confidence == .medium
         let hasCategory = categoryAssignments[index] != nil && !(categoryAssignments[index]?.isEmpty ?? true)
         let isEditing = editingIndex == index
         let currentText = editedIngredientNames[index] ?? text
 
-        return HStack(spacing: ForagerTheme.Spacing.sm) {
-            // Status indicator
-            if hasCategory {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-                    .font(.system(size: 14))
-            } else if matchInfo != nil {
-                Image(systemName: "circle")
-                    .foregroundStyle(ForagerTheme.textTertiary)
-                    .font(.system(size: 14))
-            } else {
-                confidenceDot(confidence)
+        return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+            // Top line: status icon + ingredient text
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                // Status indicator
+                if hasCategory {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        .font(.system(size: 14))
+                } else if matchInfo != nil {
+                    Image(systemName: "circle")
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .font(.system(size: 14))
+                } else {
+                    confidenceDot(confidence)
+                }
+
+                if isEditing {
+                    // Edit mode: full-line TextField
+                    TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .focused($editingIndex, equals: index)
+                        .onSubmit {
+                            reMatchIngredient(index: index)
+                            editingIndex = nil
+                        }
+                } else {
+                    // Display mode: formatted text with parsed name highlighted
+                    formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture { editingIndex = index }
+                }
             }
 
-            if isEditing {
-                // Edit mode: full-line TextField
-                TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                    .autocorrectionDisabled()
-                    .submitLabel(.done)
-                    .focused($editingIndex, equals: index)
-                    .onSubmit {
-                        reMatchIngredient(index: index)
-                        editingIndex = nil
-                    }
-            } else {
-                // Display mode: formatted text with parsed name highlighted
-                formattedIngredientText(text: currentText, matchInfo: matchInfo)
-                    .lineLimit(1)
-                    .onTapGesture { editingIndex = index }
-            }
-
-            Spacer(minLength: 0)
-
+            // Bottom line: category picker
             inlineCategoryPicker(index: index)
+                .padding(.leading, 22) // Align under text, past the status icon
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
@@ -540,40 +545,41 @@ struct RecipeImportPreviewView: View {
             + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
     }
 
-    /// Compact inline Menu for category selection per ingredient
-    private func inlineCategoryPicker(index: Int) -> some View {
-        Menu {
-            Button(action: { categoryAssignments[index] = nil }) {
-                Label("Uncategorized", systemImage: "circle")
+    /// Category selection binding for Picker at a given ingredient index
+    private func categoryPickerBinding(index: Int) -> Binding<String> {
+        Binding(
+            get: { categoryAssignments[index] ?? "" },
+            set: { newValue in
+                categoryAssignments[index] = newValue.isEmpty ? nil : newValue
             }
-            ForEach(realCategories, id: \.objectID) { category in
-                Button(action: { categoryAssignments[index] = category.displayName }) {
-                    Label {
-                        Text(category.displayName)
-                    } icon: {
+        )
+    }
+
+    /// Compact inline Picker (.menu style) for category selection per ingredient.
+    /// Picker renders colored labels more reliably than Menu buttons.
+    private func inlineCategoryPicker(index: Int) -> some View {
+        HStack(spacing: ForagerTheme.Spacing.xs) {
+            if let selected = categoryAssignments[index], !selected.isEmpty {
+                Circle()
+                    .fill(ForagerTheme.categoryColor(for: selected))
+                    .frame(width: 8, height: 8)
+            }
+
+            Picker("Category", selection: categoryPickerBinding(index: index)) {
+                Text("Choose Category")
+                    .tag("")
+                ForEach(realCategories, id: \.objectID) { category in
+                    HStack {
                         Image(systemName: "circle.fill")
                             .foregroundStyle(ForagerTheme.categoryColor(for: category.displayName))
+                        Text(category.displayName)
                     }
+                    .tag(category.displayName)
                 }
             }
-        } label: {
-            HStack(spacing: ForagerTheme.Spacing.xs) {
-                if let selected = categoryAssignments[index], !selected.isEmpty {
-                    Circle()
-                        .fill(ForagerTheme.categoryColor(for: selected))
-                        .frame(width: 8, height: 8)
-                    Text(selected)
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                } else {
-                    Text("Choose Category")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                }
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .tint(ForagerTheme.textSecondary)
         }
     }
 
