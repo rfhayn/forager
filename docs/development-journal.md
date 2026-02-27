@@ -6,6 +6,27 @@
 
 ---
 
+## Session 54 — February 27, 2026
+**Milestone**: M10.3.9 Category Assignment Editing
+**Focus**: Rewrite CategoryAssignmentModal from list-of-all to card-by-card review
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+Implemented M10.3.9 — the full rewrite of `CategoryAssignmentModal` from a scroll list of all ingredients to a card-by-card review stepper, matching the proven `IngredientReviewSheet` pattern from the Ingredients tab.
+
+**The rewrite**: The old modal was 520 lines across 4 structs (`CategoryAssignmentModal`, `IngredientAssignmentRow`, `CategorySelectionViewForAssignment`, `CategorySelectionRowForAssignment`). Each row used `NavigationLink` to push a separate category selection screen — clunky and confusing inside a sheet. The new version is ~280 lines in a single struct, using `Menu` for inline category selection and a simple `currentIndex`-based stepper.
+
+**Key additions beyond the base pattern**: (1) Name editing with re-parsing — when a user fixes "garlik powdr" → "garlic powder", `IngredientParsingService` cleans the name and `searchTemplates()` checks for an existing match. (2) Merge-on-rename — if the edited name matches an existing template (case-insensitive), the import template merges into it (same logic as `IngredientRowView.saveNameEdit()`). (3) Auto-fill category from match — if the matched template already has a category, the user skips manual assignment entirely.
+
+Also added `.interactiveDismissDisabled()` to all 4 callers of CategoryAssignmentModal, not just RecipeImportSheet. This prevents the swipe-to-dismiss bug that was reported in the previous session from affecting any entry point (import, create recipe, edit recipe, add to grocery list).
+
+### Key Decision: Skip Heuristic Prediction
+
+Category prediction was deliberately deferred to M10.6 (Claude API integration). The LLM will handle this far better than any heuristic word-matching approach. For now, the modal shows "New ingredient — assign a category" and lets the user pick manually. The M10.6 PRD already has §11 specifying the batch prediction API call.
+
+---
+
 ## Session 53 — February 26, 2026
 **Milestone**: M10.3 Photo/Image Import — Bug Fixes & Ingredient Matching Design
 **Focus**: Fix 3 bugs found during manual testing, design import preview ingredient matching

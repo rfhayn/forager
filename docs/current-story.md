@@ -1,6 +1,6 @@
 # Current Development Story
 
-**Last Updated**: February 26, 2026
+**Last Updated**: February 27, 2026
 **Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | **M10.3 ACTIVE** | **M10.6 PRD READY**
 **Total Progress**: ~253 hours | 89% planning accuracy
 **Current Branch**: `main`
@@ -109,6 +109,12 @@
    - Match against existing IngredientTemplate database (read-only)
    - Show ✓/?/○ status icons + category label per ingredient row
    - Summary bar: "N matched · N need category · N new"
+9. ✅ M10.3.9: Category assignment editing — COMPLETE
+   - Rewrite CategoryAssignmentModal from list-of-all to card-by-card review pattern
+   - Mirrors IngredientReviewSheet: progress bar, editable name, Menu category picker, Skip/Save & Next
+   - Name edit triggers re-parsing + template matching (merge-on-rename if match found)
+   - .interactiveDismissDisabled() on all 4 callers (RecipeImportSheet, AddIngredientsToListView, CreateRecipeView, EditRecipeView)
+   - 520 lines → 280 lines (removed 3 sub-views, replaced NavigationLink with Menu)
 
 **Key files**:
 - `Services/Import/ImageOCRService.swift` — Vision.framework OCR wrapper
