@@ -115,6 +115,14 @@
    - Name edit triggers re-parsing + template matching (merge-on-rename if match found)
    - .interactiveDismissDisabled() on all 4 callers (RecipeImportSheet, AddIngredientsToListView, CreateRecipeView, EditRecipeView)
    - 520 lines → 280 lines (removed 3 sub-views, replaced NavigationLink with Menu)
+10. ✅ Inline category assignment in import preview — COMPLETE
+    - Each ingredient row in RecipeImportPreviewView has a compact Menu category dropdown
+    - Pre-filled from template matches, user can override
+    - Post-save patch applies categories to templates — no service API changes
+    - CategoryAssignmentModal only appears as fallback for unassigned items
+11. ✅ Fixed-height recipe list cards — COMPLETE
+    - RecipeCardView always renders timing row (invisible spacer when no timing)
+    - Uniform card height regardless of prep/cook time presence
 
 **Key files**:
 - `Services/Import/ImageOCRService.swift` — Vision.framework OCR wrapper

@@ -891,9 +891,9 @@ struct RecipeCardView: View {
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .lineLimit(2)
 
-            // Timing pills row
-            if recipe.hasRecipeTiming {
-                HStack(spacing: ForagerTheme.Spacing.sm) {
+            // Timing pills row — always present for uniform card height
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                if recipe.hasRecipeTiming {
                     if recipe.prepTime > 0 {
                         timingPill(icon: "clock", text: recipe.recipeFormattedPrepTime)
                     }
@@ -903,6 +903,10 @@ struct RecipeCardView: View {
                     if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
                         timingPill(icon: "timer", text: recipe.recipeFormattedTotalTime)
                     }
+                } else {
+                    Text(" ")
+                        .font(ForagerTheme.captionFont)
+                        .padding(.vertical, ForagerTheme.Spacing.xs)
                 }
             }
 

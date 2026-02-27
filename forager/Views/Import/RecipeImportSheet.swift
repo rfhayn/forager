@@ -36,6 +36,8 @@ struct RecipeImportSheet: View {
     @State private var duplicateResult: DuplicateResult?
     @State private var showingCategoryAssignment = false
     @State private var uncategorizedTemplates: [IngredientTemplate] = []
+    /// Category assignments from inline preview pickers (parsed name → category)
+    @State private var pendingCategoryAssignments: [String: String] = [:]
     @FocusState private var urlFieldFocused: Bool
 
     init(importService: RecipeImportService, mode: ImportMode = .url) {
@@ -64,7 +66,7 @@ struct RecipeImportSheet: View {
                     RecipeImportPreviewView(
                         draft: draft,
                         importService: importService,
-                        onSave: { handleSave(draft: $0) },
+                        onSave: { handleSave(draft: $0, categoryAssignments: $1) },
                         onCancel: { handleCancel() }
                     )
 
@@ -367,16 +369,15 @@ struct RecipeImportSheet: View {
         Task { await importService.importFromURL(url) }
     }
 
-    private func handleSave(draft: ImportDraftRecipe) {
+    private func handleSave(draft: ImportDraftRecipe, categoryAssignments: [String: String]) {
+        pendingCategoryAssignments = categoryAssignments
         // Check for duplicates first
         if let duplicate = importService.checkDuplicate(for: draft) {
             duplicateResult = duplicate
             showingDuplicateSheet = true
         } else {
             if let result = importService.saveImport(from: draft) {
-                if !presentCategoryAssignmentIfNeeded(result) {
-                    dismissAfterSave()
-                }
+                applyCategoryAssignmentsAndFinish(result)
             }
         }
     }
@@ -385,9 +386,7 @@ struct RecipeImportSheet: View {
         showingDuplicateSheet = false
         if case .needsReview(let draft) = importService.state {
             if let result = importService.saveImport(from: draft) {
-                if !presentCategoryAssignmentIfNeeded(result) {
-                    dismissAfterSave()
-                }
+                applyCategoryAssignmentsAndFinish(result)
             }
         }
     }
@@ -406,9 +405,7 @@ struct RecipeImportSheet: View {
         }
 
         if let result = importService.replaceExistingRecipe(objectID: existingID, with: draft) {
-            if !presentCategoryAssignmentIfNeeded(result) {
-                dismissAfterSave()
-            }
+            applyCategoryAssignmentsAndFinish(result)
         }
     }
 
@@ -418,20 +415,41 @@ struct RecipeImportSheet: View {
         dismiss()
     }
 
-    /// Resolve uncategorized template object IDs to live objects and present modal if needed.
-    /// Returns true if the modal was presented, false otherwise.
-    @discardableResult
-    private func presentCategoryAssignmentIfNeeded(_ result: ImportSaveResult) -> Bool {
-        guard !result.uncategorizedTemplateIDs.isEmpty else { return false }
+    /// Apply user's inline category selections to templates, then show modal only for remaining uncategorized.
+    private func applyCategoryAssignmentsAndFinish(_ result: ImportSaveResult) {
+        guard !result.uncategorizedTemplateIDs.isEmpty else {
+            dismissAfterSave()
+            return
+        }
 
+        // Resolve templates and apply user's category picks from the preview
         let templates = result.uncategorizedTemplateIDs.compactMap { objectID in
             try? viewContext.existingObject(with: objectID) as? IngredientTemplate
         }
 
-        guard !templates.isEmpty else { return false }
-        uncategorizedTemplates = templates
-        showingCategoryAssignment = true
-        return true
+        var stillUncategorized: [IngredientTemplate] = []
+        for template in templates {
+            let lookupKey = (template.name ?? "").lowercased()
+            if let assignedCategory = pendingCategoryAssignments[lookupKey],
+               !assignedCategory.isEmpty {
+                template.category = assignedCategory
+            } else {
+                stillUncategorized.append(template)
+            }
+        }
+
+        // Save the applied categories
+        if viewContext.hasChanges {
+            try? viewContext.save()
+        }
+
+        // If some templates still need categories, show the modal; otherwise dismiss
+        if !stillUncategorized.isEmpty {
+            uncategorizedTemplates = stillUncategorized
+            showingCategoryAssignment = true
+        } else {
+            dismissAfterSave()
+        }
     }
 
     private func handleCancel() {

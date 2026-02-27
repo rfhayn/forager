@@ -18,14 +18,33 @@ import SwiftUI
 struct RecipeImportPreviewView: View {
     @State var draft: ImportDraftRecipe
     @ObservedObject var importService: RecipeImportService
-    let onSave: (ImportDraftRecipe) -> Void
+    /// Callback passes the draft + a dictionary of (parsed ingredient name → selected category)
+    let onSave: (ImportDraftRecipe, [String: String]) -> Void
     let onCancel: () -> Void
 
+    @Environment(\.managedObjectContext) private var viewContext
     @EnvironmentObject private var parsingService: IngredientParsingService
     @EnvironmentObject private var templateService: IngredientTemplateService
+    @EnvironmentObject private var householdService: HouseholdService
 
     @State private var showAllSteps = false
     @State private var ingredientMatches: [Int: IngredientMatchInfo] = [:]
+    /// User's category selections per ingredient index (inline assignment)
+    @State private var categoryAssignments: [Int: String] = [:]
+
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Category.name, ascending: true)
+        ]
+    ) private var allCategories: FetchedResults<Category>
+
+    /// Categories filtered by household, excluding "Uncategorized"
+    private var realCategories: [Category] {
+        let key = householdService.currentHouseholdKey
+        let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+    }
 
     // MARK: - Ingredient Match Model
 
@@ -109,7 +128,7 @@ struct RecipeImportPreviewView: View {
                 Button("Cancel") { onCancel() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") { onSave(draft) }
+                Button("Save") { saveWithCategories() }
                     .fontWeight(.semibold)
                     .disabled(draft.successLevel == .failure)
             }
@@ -272,9 +291,10 @@ struct RecipeImportPreviewView: View {
 
     // MARK: - Ingredient Matching (M10.3.8)
 
-    /// Parse each ingredient line and look up existing templates (read-only, no writes).
+    /// Parse each ingredient line, look up existing templates, and pre-fill category assignments.
     private func computeIngredientMatches() {
         var matches: [Int: IngredientMatchInfo] = [:]
+        var prefilledCategories: [Int: String] = [:]
 
         for (index, text) in draft.ingredients.value.enumerated() {
             let parsed = parsingService.parseIngredient(text: text)
@@ -290,9 +310,11 @@ struct RecipeImportPreviewView: View {
             let categoryName: String?
 
             if let template = exactMatch {
-                if let category = template.category, !category.isEmpty {
+                if let category = template.category, !category.isEmpty,
+                   category.lowercased() != "uncategorized" {
                     status = .ready
                     categoryName = category
+                    prefilledCategories[index] = category
                 } else {
                     status = .needsCategory
                     categoryName = nil
@@ -310,21 +332,39 @@ struct RecipeImportPreviewView: View {
         }
 
         ingredientMatches = matches
+        // Pre-fill category assignments from matched templates (don't overwrite user edits)
+        for (index, category) in prefilledCategories {
+            if categoryAssignments[index] == nil {
+                categoryAssignments[index] = category
+            }
+        }
+    }
+
+    /// Build category assignments keyed by parsed ingredient name and pass to save callback.
+    private func saveWithCategories() {
+        var nameToCategory: [String: String] = [:]
+        for (index, category) in categoryAssignments {
+            if let info = ingredientMatches[index] {
+                nameToCategory[info.parsedName.lowercased()] = category
+            }
+        }
+        onSave(draft, nameToCategory)
     }
 
     // MARK: - Ingredients Section
 
     private var ingredientsSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            sectionHeader(label: "Ingredients", showEditIcon: true)
+            sectionHeader(label: "Ingredients", showEditIcon: false)
 
-            // M10.3.8: Summary of ingredient match status
+            // Summary of ingredient match status
             if !ingredientMatches.isEmpty {
                 ingredientMatchSummary
             }
 
             ForEach(draft.ingredients.value.indices, id: \.self) { index in
                 ingredientRow(
+                    index: index,
                     text: draft.ingredients.value[index],
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
@@ -335,23 +375,19 @@ struct RecipeImportPreviewView: View {
 
     /// Summary bar: "N matched · N need category · N new"
     private var ingredientMatchSummary: some View {
-        let matched = ingredientMatches.values.filter { $0.status == .ready }.count
-        let needsCategory = ingredientMatches.values.filter { $0.status == .needsCategory }.count
-        let newIngredients = ingredientMatches.values.filter { $0.status == .needsTemplate }.count
+        // Count based on actual user assignments, not just initial match status
+        let categorized = categoryAssignments.values.filter { !$0.isEmpty }.count
+        let total = draft.ingredients.value.count
+        let uncategorized = total - categorized
 
         return HStack(spacing: ForagerTheme.Spacing.md) {
-            if matched > 0 {
-                Label("\(matched) matched", systemImage: "checkmark.circle.fill")
+            if categorized > 0 {
+                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.statusSuccessFG)
             }
-            if needsCategory > 0 {
-                Label("\(needsCategory) need category", systemImage: "questionmark.circle.fill")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusWarningFG)
-            }
-            if newIngredients > 0 {
-                Label("\(newIngredients) new", systemImage: "circle")
+            if uncategorized > 0 {
+                Label("\(uncategorized) need category", systemImage: "circle")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
@@ -359,19 +395,26 @@ struct RecipeImportPreviewView: View {
         .padding(.bottom, ForagerTheme.Spacing.xs)
     }
 
-    /// Per-ingredient bordered card row with template match status
-    private func ingredientRow(text: String, confidence: ImportConfidence, matchInfo: IngredientMatchInfo?) -> some View {
+    /// Per-ingredient bordered card row with inline category picker
+    private func ingredientRow(index: Int, text: String, confidence: ImportConfidence, matchInfo: IngredientMatchInfo?) -> some View {
         let isLowConfidence = confidence == .low || confidence == .medium
+        let hasCategory = categoryAssignments[index] != nil && !(categoryAssignments[index]?.isEmpty ?? true)
 
         return HStack(spacing: ForagerTheme.Spacing.sm) {
-            // M10.3.8: Show match status indicator instead of confidence dot when matches are available
-            if let info = matchInfo {
-                ingredientStatusIcon(info.status)
+            // Status indicator
+            if hasCategory {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(ForagerTheme.statusSuccessFG)
+                    .font(.system(size: 14))
+            } else if matchInfo != nil {
+                Image(systemName: "circle")
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .font(.system(size: 14))
             } else {
                 confidenceDot(confidence)
             }
 
-            // Split ingredient text into qty and name portions
+            // Ingredient name + category picker
             VStack(alignment: .leading, spacing: 2) {
                 let parts = splitIngredientText(text)
                 HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -387,12 +430,8 @@ struct RecipeImportPreviewView: View {
                         .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
                 }
 
-                // M10.3.8: Category label or status description
-                if let info = matchInfo {
-                    Text(info.categoryName ?? info.status.description)
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(info.status == .ready ? ForagerTheme.textTertiary : ForagerTheme.statusWarningFG)
-                }
+                // Inline category picker
+                inlineCategoryPicker(index: index)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -406,22 +445,36 @@ struct RecipeImportPreviewView: View {
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
     }
 
-    /// Status icon matching IngredientStatus: ✓ green, ? amber, ○ gray
-    private func ingredientStatusIcon(_ status: IngredientStatus) -> some View {
-        Group {
-            switch status {
-            case .ready:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-            case .needsCategory:
-                Image(systemName: "questionmark.circle.fill")
-                    .foregroundStyle(ForagerTheme.statusWarningFG)
-            case .needsTemplate:
-                Image(systemName: "circle")
+    /// Compact inline Menu for category selection per ingredient
+    private func inlineCategoryPicker(index: Int) -> some View {
+        Menu {
+            Button("Uncategorized") {
+                categoryAssignments[index] = nil
+            }
+            ForEach(realCategories, id: \.objectID) { category in
+                Button(category.displayName) {
+                    categoryAssignments[index] = category.displayName
+                }
+            }
+        } label: {
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                if let selected = categoryAssignments[index], !selected.isEmpty {
+                    Circle()
+                        .fill(ForagerTheme.categoryColor(for: selected))
+                        .frame(width: 8, height: 8)
+                    Text(selected)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                } else {
+                    Text("Choose Category")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        .font(.system(size: 14))
     }
 
     /// Split "2 1/4 cups all-purpose flour" → (qty: "2 1/4 cups", name: "all-purpose flour")

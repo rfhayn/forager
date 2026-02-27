@@ -7,23 +7,27 @@
 ---
 
 ## Session 54 — February 27, 2026
-**Milestone**: M10.3.9 Category Assignment Editing
-**Focus**: Rewrite CategoryAssignmentModal from list-of-all to card-by-card review
+**Milestone**: M10.3.9 Category Assignment + Import UX Improvements
+**Focus**: Rewrite CategoryAssignmentModal, inline categories in import preview, fix card heights
 **Branch**: `feature/M10.3-photo-import`
 
 ### What Happened
 
-Implemented M10.3.9 — the full rewrite of `CategoryAssignmentModal` from a scroll list of all ingredients to a card-by-card review stepper, matching the proven `IngredientReviewSheet` pattern from the Ingredients tab.
+Three UX improvements in one session:
 
-**The rewrite**: The old modal was 520 lines across 4 structs (`CategoryAssignmentModal`, `IngredientAssignmentRow`, `CategorySelectionViewForAssignment`, `CategorySelectionRowForAssignment`). Each row used `NavigationLink` to push a separate category selection screen — clunky and confusing inside a sheet. The new version is ~280 lines in a single struct, using `Menu` for inline category selection and a simple `currentIndex`-based stepper.
+**1. CategoryAssignmentModal rewrite (M10.3.9)**: Rewrote from a 520-line scroll list with NavigationLink pickers to a 280-line card-by-card stepper matching `IngredientReviewSheet`. Name editing with re-parsing + merge-on-rename. `.interactiveDismissDisabled()` on all 4 callers.
 
-**Key additions beyond the base pattern**: (1) Name editing with re-parsing — when a user fixes "garlik powdr" → "garlic powder", `IngredientParsingService` cleans the name and `searchTemplates()` checks for an existing match. (2) Merge-on-rename — if the edited name matches an existing template (case-insensitive), the import template merges into it (same logic as `IngredientRowView.saveNameEdit()`). (3) Auto-fill category from match — if the matched template already has a category, the user skips manual assignment entirely.
+**2. Inline category assignment in import preview**: User pointed out the two-step flow (preview → save → category modal) was unnecessary friction. Moved category assignment directly into `RecipeImportPreviewView` — each ingredient row now has a compact `Menu` category dropdown. Pre-filled from template matches, user can override. On save, categories are applied to templates via post-save patch (`applyCategoryAssignmentsAndFinish`). CategoryAssignmentModal only appears if the user left some unassigned (graceful fallback). No service API changes needed.
 
-Also added `.interactiveDismissDisabled()` to all 4 callers of CategoryAssignmentModal, not just RecipeImportSheet. This prevents the swipe-to-dismiss bug that was reported in the previous session from affecting any entry point (import, create recipe, edit recipe, add to grocery list).
+**3. Fixed-height recipe list cards**: Recipe cards without timing data were shorter than cards with prep/cook pills. Fixed by always rendering the timing row — empty cards get an invisible spacer that matches pill height.
 
-### Key Decision: Skip Heuristic Prediction
+### Key Decision: Post-Save Category Patch
 
-Category prediction was deliberately deferred to M10.6 (Claude API integration). The LLM will handle this far better than any heuristic word-matching approach. For now, the modal shows "New ingredient — assign a category" and lets the user pick manually. The M10.6 PRD already has §11 specifying the batch prediction API call.
+Rather than modifying `RecipeImportService.saveImport()` to accept category hints (which would change the API contract), categories are applied after save by matching template names. This keeps the service clean and maintains backward compatibility with all other callers. The `pendingCategoryAssignments` dictionary flows through the save pipeline as state on `RecipeImportSheet`, applied in `applyCategoryAssignmentsAndFinish()`.
+
+### Insight: Inline Assignment as Library Growth Strategy
+
+User noted: "categorization will become less burdensome over time as the library grows." This is exactly right — the inline category picker auto-fills from existing template matches. After a user categorizes "chicken breast" once, every future import that includes chicken breast will auto-fill "Deli & Meat". The M10.6 LLM integration will fill the gap for truly new ingredients.
 
 ---
 
