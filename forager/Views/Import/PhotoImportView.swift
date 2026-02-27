@@ -16,6 +16,7 @@ import PhotosUI
 /// Local state machine for the photo import flow
 private enum PhotoImportPhase: Equatable {
     case picking
+    case captured([UIImage])  // Post-camera review: accept or retake
     case processing(String)
     case reviewing([EditableClassifiedLine], Data)
     case error(ImportError)
@@ -23,6 +24,7 @@ private enum PhotoImportPhase: Equatable {
     static func == (lhs: PhotoImportPhase, rhs: PhotoImportPhase) -> Bool {
         switch (lhs, rhs) {
         case (.picking, .picking): return true
+        case (.captured, .captured): return true
         case (.processing(let a), .processing(let b)): return a == b
         case (.error(let a), .error(let b)): return a == b
         case (.reviewing, .reviewing): return false
@@ -53,6 +55,9 @@ struct PhotoImportView: View {
         switch phase {
         case .picking:
             sourcePickerView
+
+        case .captured(let images):
+            capturedReviewView(images: images)
 
         case .processing(let status):
             processingView(status: status)
@@ -119,10 +124,9 @@ struct PhotoImportView: View {
             DocumentScannerView(
                 onScan: { images in
                     showingScanner = false
-                    if let first = images.first {
-                        scannedImage = first
-                    }
-                    processImages(images)
+                    guard !images.isEmpty else { return }
+                    scannedImage = images.first
+                    phase = .captured(images)
                 },
                 onCancel: {
                     showingScanner = false
@@ -137,6 +141,51 @@ struct PhotoImportView: View {
         .onChange(of: selectedPhoto) { _, newValue in
             guard let item = newValue else { return }
             loadFromPhotoPicker(item)
+        }
+    }
+
+    // MARK: - Captured Image Review
+
+    private func capturedReviewView(images: [UIImage]) -> some View {
+        VStack(spacing: 0) {
+            // Show the captured image
+            if let image = images.first {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black.opacity(0.05))
+            }
+
+            Spacer()
+
+            // Accept / Retake buttons
+            VStack(spacing: ForagerTheme.Spacing.md) {
+                Button {
+                    processImages(images)
+                } label: {
+                    Label("Use Photo", systemImage: "checkmark.circle")
+                        .font(ForagerTheme.bodyFont.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, ForagerTheme.Spacing.md)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(ForagerTheme.accentPrimary)
+
+                Button {
+                    phase = .picking
+                    scannedImage = nil
+                    showingScanner = true
+                } label: {
+                    Label("Retake", systemImage: "camera")
+                        .font(ForagerTheme.bodyFont.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, ForagerTheme.Spacing.md)
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.bottom, ForagerTheme.Spacing.xl)
         }
     }
 
