@@ -33,6 +33,8 @@ struct RecipeImportPreviewView: View {
     @State private var categoryAssignments: [Int: String] = [:]
     /// User's ingredient name edits per index (nil = not edited, use original)
     @State private var editedIngredientNames: [Int: String] = [:]
+    /// Which ingredient row is currently being edited (nil = none)
+    @FocusState private var editingIndex: Int?
 
     @FetchRequest(
         sortDescriptors: [
@@ -125,6 +127,12 @@ struct RecipeImportPreviewView: View {
             .padding(ForagerTheme.Spacing.lg)
         }
         .task { computeIngredientMatches() }
+        .onChange(of: editingIndex) { oldValue, _ in
+            // Re-match when leaving an ingredient row (focus lost or moved to another row)
+            if let oldIndex = oldValue {
+                reMatchIngredient(index: oldIndex)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { onCancel() }
@@ -459,10 +467,14 @@ struct RecipeImportPreviewView: View {
         .padding(.bottom, ForagerTheme.Spacing.xs)
     }
 
-    /// Per-ingredient bordered card row with inline category picker
+    /// Per-ingredient bordered card row with display/edit toggle.
+    /// Display mode: qty + unit in regular text, parsed name bold/accent, category picker inline.
+    /// Edit mode (tap): full-line TextField, category picker inline.
     private func ingredientRow(index: Int, text: String, confidence: ImportConfidence, matchInfo: IngredientMatchInfo?) -> some View {
         let isLowConfidence = confidence == .low || confidence == .medium
         let hasCategory = categoryAssignments[index] != nil && !(categoryAssignments[index]?.isEmpty ?? true)
+        let isEditing = editingIndex == index
+        let currentText = editedIngredientNames[index] ?? text
 
         return HStack(spacing: ForagerTheme.Spacing.sm) {
             // Status indicator
@@ -478,42 +490,54 @@ struct RecipeImportPreviewView: View {
                 confidenceDot(confidence)
             }
 
-            // Full ingredient line (editable) + parsed name + category picker
-            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+            if isEditing {
+                // Edit mode: full-line TextField
                 TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
                     .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                     .autocorrectionDisabled()
                     .submitLabel(.done)
-                    .onSubmit { reMatchIngredient(index: index) }
-
-                // Parsed name highlight + category picker
-                if let info = matchInfo {
-                    HStack(spacing: ForagerTheme.Spacing.sm) {
-                        Text(info.parsedName)
-                            .font(ForagerTheme.captionFont.weight(.medium))
-                            .foregroundStyle(ForagerTheme.accentPrimary)
-
-                        Text("·")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.textDisabled)
-
-                        inlineCategoryPicker(index: index)
+                    .focused($editingIndex, equals: index)
+                    .onSubmit {
+                        reMatchIngredient(index: index)
+                        editingIndex = nil
                     }
-                } else {
-                    inlineCategoryPicker(index: index)
-                }
+            } else {
+                // Display mode: formatted text with parsed name highlighted
+                formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                    .lineLimit(1)
+                    .onTapGesture { editingIndex = index }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer(minLength: 0)
+
+            inlineCategoryPicker(index: index)
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
         .background(isLowConfidence ? ForagerTheme.surfaceWarning : ForagerTheme.surfacePrimary)
         .overlay(
             RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
-                .stroke(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle, lineWidth: 1)
+                .stroke(isEditing ? ForagerTheme.accentPrimary : (isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+    }
+
+    /// Format ingredient text with the parsed name highlighted in bold accent color.
+    /// Splits the text around the parsed ingredient name: prefix (qty+unit) in regular, name in bold accent.
+    private func formattedIngredientText(text: String, matchInfo: IngredientMatchInfo?) -> Text {
+        guard let info = matchInfo,
+              let range = text.range(of: info.parsedName, options: .caseInsensitive) else {
+            return Text(text)
+                .font(ForagerTheme.bodyFont)
+                .foregroundColor(ForagerTheme.textPrimary)
+        }
+        let prefix = String(text[text.startIndex..<range.lowerBound])
+        let name = String(text[range])
+        let suffix = String(text[range.upperBound...])
+        return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+            + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
+            + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
     }
 
     /// Compact inline Menu for category selection per ingredient
