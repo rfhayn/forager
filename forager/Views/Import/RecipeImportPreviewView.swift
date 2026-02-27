@@ -34,7 +34,10 @@ struct RecipeImportPreviewView: View {
     /// User's ingredient name edits per index (nil = not edited, use original)
     @State private var editedIngredientNames: [Int: String] = [:]
     /// Which ingredient row is currently being edited (nil = none)
-    @FocusState private var editingIndex: Int?
+    @State private var editingIndex: Int?
+    @FocusState private var focusedIngredient: Int?
+    /// Which ingredient row has its category picker open (nil = none)
+    @State private var categoryPickerIndex: Int?
 
     @FetchRequest(
         sortDescriptors: [
@@ -127,10 +130,29 @@ struct RecipeImportPreviewView: View {
             .padding(ForagerTheme.Spacing.lg)
         }
         .task { computeIngredientMatches() }
-        .onChange(of: editingIndex) { oldValue, _ in
-            // Re-match when leaving an ingredient row (focus lost or moved to another row)
-            if let oldIndex = oldValue {
+        .onChange(of: editingIndex) { oldValue, newValue in
+            // Re-match when leaving an ingredient row
+            if let oldIndex = oldValue, oldIndex != newValue {
                 reMatchIngredient(index: oldIndex)
+            }
+            // Sync focus to editing state
+            focusedIngredient = newValue
+        }
+        .onChange(of: focusedIngredient) { _, newValue in
+            // When keyboard focus is lost (tapped away), exit edit mode
+            if newValue == nil && editingIndex != nil {
+                if let idx = editingIndex { reMatchIngredient(index: idx) }
+                editingIndex = nil
+            }
+        }
+        // Category picker sheet
+        .sheet(isPresented: Binding(
+            get: { categoryPickerIndex != nil },
+            set: { if !$0 { categoryPickerIndex = nil } }
+        )) {
+            if let index = categoryPickerIndex {
+                categoryPickerSheet(index: index)
+                    .presentationDetents([.medium])
             }
         }
         .toolbar {
@@ -500,7 +522,7 @@ struct RecipeImportPreviewView: View {
                         .foregroundStyle(ForagerTheme.textPrimary)
                         .autocorrectionDisabled()
                         .submitLabel(.done)
-                        .focused($editingIndex, equals: index)
+                        .focused($focusedIngredient, equals: index)
                         .onSubmit {
                             reMatchIngredient(index: index)
                             editingIndex = nil
@@ -508,14 +530,16 @@ struct RecipeImportPreviewView: View {
                 } else {
                     // Display mode: formatted text with parsed name highlighted
                     formattedIngredientText(text: currentText, matchInfo: matchInfo)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
                         .contentShape(Rectangle())
-                        .onTapGesture { editingIndex = index }
+                        .onTapGesture {
+                            editingIndex = index
+                        }
                 }
             }
 
-            // Bottom line: category picker
-            inlineCategoryPicker(index: index)
+            // Bottom line: category picker button
+            categoryLabel(index: index)
                 .padding(.leading, 22) // Align under text, past the status icon
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
@@ -529,57 +553,104 @@ struct RecipeImportPreviewView: View {
     }
 
     /// Format ingredient text with the parsed name highlighted in bold accent color.
-    /// Splits the text around the parsed ingredient name: prefix (qty+unit) in regular, name in bold accent.
+    /// Splits the text around the parsed ingredient name: prefix (qty+unit) in secondary, name in bold accent.
+    /// If parsed name can't be found as substring, show full text in primary with bold.
     private func formattedIngredientText(text: String, matchInfo: IngredientMatchInfo?) -> Text {
-        guard let info = matchInfo,
-              let range = text.range(of: info.parsedName, options: .caseInsensitive) else {
+        guard let info = matchInfo else {
             return Text(text)
                 .font(ForagerTheme.bodyFont)
                 .foregroundColor(ForagerTheme.textPrimary)
         }
-        let prefix = String(text[text.startIndex..<range.lowerBound])
-        let name = String(text[range])
-        let suffix = String(text[range.upperBound...])
-        return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
-            + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
-            + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+
+        // Try to find parsed name in the text (case-insensitive)
+        if let range = text.range(of: info.parsedName, options: .caseInsensitive) {
+            let prefix = String(text[text.startIndex..<range.lowerBound])
+            let name = String(text[range])
+            let suffix = String(text[range.upperBound...])
+            return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+                + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
+                + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+        }
+
+        // Fallback: parsed name doesn't substring-match (OCR artifacts, normalization differences)
+        // Show the full text with the parsed name appended in accent for visibility
+        return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
+            + Text(" → ").font(ForagerTheme.captionFont).foregroundColor(ForagerTheme.textDisabled)
+            + Text(info.parsedName).font(ForagerTheme.captionFont).bold().foregroundColor(ForagerTheme.accentPrimary)
     }
 
-    /// Category selection binding for Picker at a given ingredient index
-    private func categoryPickerBinding(index: Int) -> Binding<String> {
-        Binding(
-            get: { categoryAssignments[index] ?? "" },
-            set: { newValue in
-                categoryAssignments[index] = newValue.isEmpty ? nil : newValue
+    /// Category label button that opens the category picker sheet.
+    /// Shows colored dot + category name when selected, "Choose Category" when empty.
+    private func categoryLabel(index: Int) -> some View {
+        Button {
+            categoryPickerIndex = index
+        } label: {
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                if let selected = categoryAssignments[index], !selected.isEmpty {
+                    Circle()
+                        .fill(ForagerTheme.categoryColor(for: selected))
+                        .frame(width: 8, height: 8)
+                    Text(selected)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                } else {
+                    Text("Choose Category")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
-        )
+        }
+        .buttonStyle(.plain)
     }
 
-    /// Compact inline Picker (.menu style) for category selection per ingredient.
-    /// Picker renders colored labels more reliably than Menu buttons.
-    private func inlineCategoryPicker(index: Int) -> some View {
-        HStack(spacing: ForagerTheme.Spacing.xs) {
-            if let selected = categoryAssignments[index], !selected.isEmpty {
-                Circle()
-                    .fill(ForagerTheme.categoryColor(for: selected))
-                    .frame(width: 8, height: 8)
-            }
+    /// Sheet with colored category options for a given ingredient index
+    private func categoryPickerSheet(index: Int) -> some View {
+        let currentText = editedIngredientNames[index]
+            ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
 
-            Picker("Category", selection: categoryPickerBinding(index: index)) {
-                Text("Choose Category")
-                    .tag("")
-                ForEach(realCategories, id: \.objectID) { category in
-                    HStack {
-                        Image(systemName: "circle.fill")
-                            .foregroundStyle(ForagerTheme.categoryColor(for: category.displayName))
-                        Text(category.displayName)
+        return NavigationStack {
+            List {
+                Section {
+                    // Show which ingredient we're categorizing
+                    Text(currentText)
+                        .font(ForagerTheme.bodyFont.weight(.medium))
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    ForEach(realCategories, id: \.objectID) { category in
+                        Button {
+                            categoryAssignments[index] = category.displayName
+                            categoryPickerIndex = nil
+                        } label: {
+                            HStack(spacing: ForagerTheme.Spacing.md) {
+                                Circle()
+                                    .fill(ForagerTheme.categoryColor(for: category.displayName))
+                                    .frame(width: 12, height: 12)
+                                Text(category.displayName)
+                                    .font(ForagerTheme.bodyFont)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                                Spacer()
+                                if categoryAssignments[index] == category.displayName {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
+                                }
+                            }
+                        }
                     }
-                    .tag(category.displayName)
                 }
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .tint(ForagerTheme.textSecondary)
+            .navigationTitle("Category")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { categoryPickerIndex = nil }
+                }
+            }
         }
     }
 
