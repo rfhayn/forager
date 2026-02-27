@@ -478,8 +478,8 @@ struct RecipeImportPreviewView: View {
                 confidenceDot(confidence)
             }
 
-            // Full ingredient line (editable) + category picker
-            VStack(alignment: .leading, spacing: 2) {
+            // Full ingredient line (editable) + parsed name + category picker
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
                 TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
                     .font(ForagerTheme.bodyFont)
                     .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
@@ -487,8 +487,22 @@ struct RecipeImportPreviewView: View {
                     .submitLabel(.done)
                     .onSubmit { reMatchIngredient(index: index) }
 
-                // Inline category picker
-                inlineCategoryPicker(index: index)
+                // Parsed name highlight + category picker
+                if let info = matchInfo {
+                    HStack(spacing: ForagerTheme.Spacing.sm) {
+                        Text(info.parsedName)
+                            .font(ForagerTheme.captionFont.weight(.medium))
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+
+                        Text("·")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textDisabled)
+
+                        inlineCategoryPicker(index: index)
+                    }
+                } else {
+                    inlineCategoryPicker(index: index)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
