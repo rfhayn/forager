@@ -72,7 +72,9 @@ struct RecipeImportSheet: View {
                     savingView
 
                 case .saved:
-                    successView
+                    // Auto-dismiss — save already completed, category modal may be showing
+                    Color.clear
+                        .onAppear { dismissAfterSave() }
 
                 case .failed(let error):
                     errorView(error)
@@ -104,6 +106,7 @@ struct RecipeImportSheet: View {
                         onAssignmentsComplete: {
                             showingCategoryAssignment = false
                             uncategorizedTemplates = []
+                            dismissAfterSave()
                         }
                     )
                     .environment(\.managedObjectContext, viewContext)
@@ -189,28 +192,6 @@ struct RecipeImportSheet: View {
             Text("Saving recipe...")
                 .font(ForagerTheme.bodyFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
-            Spacer()
-        }
-    }
-
-    // MARK: - Success View
-
-    private var successView: some View {
-        VStack(spacing: ForagerTheme.Spacing.lg) {
-            Spacer()
-
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(ForagerTheme.statusSuccessFG)
-
-            Text("Recipe Saved!")
-                .font(ForagerTheme.cardTitle)
-                .foregroundStyle(ForagerTheme.textPrimary)
-
-            Button("Done") { dismiss() }
-                .buttonStyle(.borderedProminent)
-                .tint(ForagerTheme.accentPrimary)
-
             Spacer()
         }
     }
@@ -392,7 +373,9 @@ struct RecipeImportSheet: View {
             showingDuplicateSheet = true
         } else {
             if let result = importService.saveImport(from: draft) {
-                presentCategoryAssignmentIfNeeded(result)
+                if !presentCategoryAssignmentIfNeeded(result) {
+                    dismissAfterSave()
+                }
             }
         }
     }
@@ -401,7 +384,9 @@ struct RecipeImportSheet: View {
         showingDuplicateSheet = false
         if case .needsReview(let draft) = importService.state {
             if let result = importService.saveImport(from: draft) {
-                presentCategoryAssignmentIfNeeded(result)
+                if !presentCategoryAssignmentIfNeeded(result) {
+                    dismissAfterSave()
+                }
             }
         }
     }
@@ -420,21 +405,32 @@ struct RecipeImportSheet: View {
         }
 
         if let result = importService.replaceExistingRecipe(objectID: existingID, with: draft) {
-            presentCategoryAssignmentIfNeeded(result)
+            if !presentCategoryAssignmentIfNeeded(result) {
+                dismissAfterSave()
+            }
         }
     }
 
+    /// Reset import state and dismiss the sheet
+    private func dismissAfterSave() {
+        importService.cancelImport()
+        dismiss()
+    }
+
     /// Resolve uncategorized template object IDs to live objects and present modal if needed.
-    private func presentCategoryAssignmentIfNeeded(_ result: ImportSaveResult) {
-        guard !result.uncategorizedTemplateIDs.isEmpty else { return }
+    /// Returns true if the modal was presented, false otherwise.
+    @discardableResult
+    private func presentCategoryAssignmentIfNeeded(_ result: ImportSaveResult) -> Bool {
+        guard !result.uncategorizedTemplateIDs.isEmpty else { return false }
 
         let templates = result.uncategorizedTemplateIDs.compactMap { objectID in
             try? viewContext.existingObject(with: objectID) as? IngredientTemplate
         }
 
-        guard !templates.isEmpty else { return }
+        guard !templates.isEmpty else { return false }
         uncategorizedTemplates = templates
         showingCategoryAssignment = true
+        return true
     }
 
     private func handleCancel() {

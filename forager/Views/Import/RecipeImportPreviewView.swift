@@ -95,7 +95,7 @@ struct RecipeImportPreviewView: View {
                 Button("Cancel") { onCancel() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save Recipe") { onSave(draft) }
+                Button("Save") { onSave(draft) }
                     .fontWeight(.semibold)
                     .disabled(draft.successLevel == .failure)
             }

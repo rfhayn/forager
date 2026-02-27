@@ -25,7 +25,7 @@ private enum PhotoImportPhase: Equatable {
         case (.picking, .picking): return true
         case (.processing(let a), .processing(let b)): return a == b
         case (.error(let a), .error(let b)): return a == b
-        case (.reviewing, .reviewing): return true
+        case (.reviewing, .reviewing): return false
         default: return false
         }
     }
