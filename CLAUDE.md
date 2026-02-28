@@ -4,14 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Session Startup (MANDATORY)
 
-Before ANY work, read these 4 documents in order:
-
-1. `docs/session-startup-checklist.md` - Complete 9-point checklist
-2. `docs/project-naming-standards.md` - M#.#.# naming conventions
-3. `docs/current-story.md` - Current project status
-4. `docs/next-prompt.md` - Implementation guidance (if developing)
-
-This prevents duplicate services, naming inconsistencies, architecture conflicts, and messy git history.
+Run `/session-start` at the beginning of every session. This reads the 4 mandatory context docs, checks git state, and reports current status. No exceptions.
 
 ## Build & Run
 
@@ -211,118 +204,43 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 
 ## Pre-Development Analysis
 
-Before implementing ANY feature, run these checks:
+Before implementing ANY feature, use these skills as needed:
 
-**1. Naming compliance:**
+- `/core-data-audit <EntityName>` — Required before schema changes (ADR 007)
+- `/service-check <functionality>` — Required before creating new services
+- `/prd-audit <path>` — Required if PRD is >2 weeks old
 - Verify correct M#.#.# format in current-story.md
-- Confirm status indicators match actual state
-
-**2. Core Data audit (if touching data model):**
-```
-Search: "Core Data entity [EntityName] properties relationships"
-Search: "[EntityName] codegen fetch indexes"
-```
-Document: existing properties/types, all relationships/inverses, codegen settings, fetch indexes, migration history.
-
-**3. Existing services check (before creating new ones):**
-```
-Search: "Service [functionality] implementation"
-Search: "Parse [data type] service"
-```
-Can an existing service be extended instead of creating a new one?
-
-**4. Architecture patterns:**
-```
-Search: "architecture decision [feature area]"
-Search: "service-layer-pattern"
-```
-Follow established patterns and ADR decisions.
-
-**5. PRD freshness check (if PRD exists for the feature):**
-- If PRD is >2 weeks old, audit against current codebase before implementation
-- Verify entity names match `+CoreDataProperties.swift` files
-- Confirm save counts, view structures, and API signatures are current
+- Follow established patterns and ADR decisions
 
 ## Git Workflow
 
 **One phase = one branch = one PR = one squash commit to main.**
 
-```bash
-# 1. Start phase
-git checkout main && git pull origin main
-git checkout -b feature/M#.#.#-brief-description
-git push -u origin feature/M#.#.#-brief-description
+Use these skills for git operations:
+- `/new-milestone <M#.#.# description>` — Set up new milestone (branch, docs)
+- `/forager-commit` — Commit with M#.#.# conventions (no Co-Authored-By)
+- `/forager-pr` — Create PR with project format
+- `/build` — Build with correct Xcode configuration
 
-# 2. During development - commit every 15-30 min
-git add <specific-files>
-git commit -m "M#.#.#: Brief description
-
-- Detail 1
-- Detail 2"
-git push
-
-# 3. Complete phase
-gh pr create --fill
-gh pr merge --squash --delete-branch
-
-# 4. Update local
-git checkout main && git pull origin main
-git branch -d feature/M#.#.#-description
-```
-
-**Branch naming**: `feature/M#.#.#-brief-kebab-case` (3-5 words max)
-
-**Commit message format**: Always prefix with `M#.#.#:` in imperative mood. **Do NOT add Co-Authored-By credits**.
-
-Good commits:
-```
-M7.1.1: Add CloudKit configuration to Persistence
-M7.2.2: Implement public link sharing for household invitations
-M7.1.1 COMPLETE: Update documentation and learning notes
-```
-
-Bad commits:
-```
-Fixed stuff
-WIP
-Update files
-Trying to make it work
-```
+**Key rules** (always in effect):
+- Branch naming: `feature/M#.#.#-brief-kebab-case` (3-5 words max)
+- Commit prefix: `M#.#.#:` in imperative mood. **No Co-Authored-By credits.**
+- Commit every 15-30 min, push after each commit
+- Squash merge PRs to main
 
 **GitHub issue integration:**
 - Create issue at milestone start: `gh issue create --title "M#.#.#: Title" --label "milestone,feature"`
-- Close with completion summary when done: `gh issue close <number> --comment "..."`
-- Update project board card as status changes
-
-**Emergency scenarios:**
-
-Switch computers mid-phase:
-```bash
-# Computer A
-git add . && git commit -m "M#.#.# WIP: Pausing at X" && git push
-# Computer B
-git fetch origin && git checkout feature/M#.#.#-description && git pull
-```
-
-Accidentally committed to main:
-```bash
-git branch feature/M#.#.#-description   # Save work to branch
-git checkout main && git reset --hard origin/main  # Reset main
-git checkout feature/M#.#.#-description  # Continue on branch
-```
-
-Abandon branch and start over:
-```bash
-git checkout main && git branch -D feature/M#.#.#-description
-git checkout -b feature/M#.#.#-description-v2
-```
+- Close with completion summary when done
 
 ## Documentation Updates (After Every Session)
 
-### Core Documentation Definition
+**7 core docs must stay synchronized.** Use these skills:
 
-**"Core documentation" refers to these 7 files that must stay synchronized:**
+- `/log-insight <topic> <insight>` — Log technical insights IMMEDIATELY (don't defer)
+- `/dev-journal` — Write/update session narrative (MANDATORY before every commit)
+- `/milestone-complete <M#.#.#>` — Update all 7 core docs after milestone completion
 
+**The 7 core documentation files:**
 1. `docs/current-story.md` - Current milestone status and progress
 2. `docs/next-prompt.md` - Implementation guidance for next milestone
 3. `docs/roadmap.md` - Milestone tracking and execution order
@@ -331,76 +249,28 @@ git checkout -b feature/M#.#.#-description-v2
 6. `docs/insights-log.md` - Technical insights discovered during session
 7. `docs/development-journal.md` - Narrative session entry (decisions, learning, AI tooling)
 
-These files form the single source of truth for project status and history. When one changes, the others likely need updates too.
+**Hard rules:**
+- Treat every commit as a potential last commit — insights and journal must be current
+- After completing ANY milestone, update ALL 7 files automatically (use `/milestone-complete`)
+- Do not defer documentation to end-of-session — sessions can be interrupted
 
-### Session Documentation Updates
+## Project Skills (`.claude/skills/`)
 
-1. Update `docs/current-story.md` with progress
-2. Create/update learning notes in `docs/learning-notes/`
-3. Mark completed phases with actual hours
-4. Update `docs/next-prompt.md` for next phase
-5. Log any technical insights shared to `docs/insights-log.md` **(MANDATORY — don't defer, sessions can clear)**
-6. Write narrative session entry in `docs/development-journal.md` **(MANDATORY — update before each commit, not at end of session)**
+Custom skills for forager workflows. Invoke with `/name` or let Claude auto-invoke.
 
-### Insights Logging (MANDATORY — During Every Session)
-
-**Whenever you share a technical insight with the user, IMMEDIATELY log it to `docs/insights-log.md`.** Do not defer this to end-of-session — sessions can be interrupted or run out of context. Treat every commit as a potential last commit: insights and journal entries must be current before each commit.
-
-Insights are non-obvious technical observations discovered during implementation — gotchas, platform behaviors, architectural trade-offs, or patterns worth remembering. Each entry must include:
-
-| Column | Description |
-|--------|-------------|
-| Date | Session date |
-| Milestone | Current M#.#.# being worked on |
-| Topic | Hierarchical tag (e.g., `iOS/LaunchScreen`, `Swift/Release`, `CoreData/Schema`) |
-| Insight | The observation — what was learned |
-| Verification | How to test or confirm the insight |
-| Status | `Raw` for new entries, `→ ADR ###` or `→ LN ##` when promoted |
-
-**Promotion rules** — periodically review the log:
-- **3+ insights on same topic** → Write a Learning Note
-- **Architectural decision with trade-offs** → Write an ADR
-- **Recurring gotcha** → Add to CLAUDE.md or development-guidelines.md
-
-### Milestone Completion Documentation (MANDATORY)
-
-**After completing ANY milestone (M#.#.#), automatically update ALL 7 core documentation files.**
-
-**Do this automatically without being asked.** The user should not need to request documentation updates after milestone completion.
-
-### Documentation File Structure
-
-```
-docs/
-├── session-startup-checklist.md    # START HERE every session
-├── project-naming-standards.md     # M#.#.# naming conventions
-├── current-story.md                # Current milestone status
-├── next-prompt.md                  # Implementation guidance
-├── development-guidelines.md       # Code standards & patterns
-├── git-workflow-for-milestones.md  # Complete git workflow
-├── requirements.md                 # Functional requirements
-├── roadmap.md                      # Milestone tracking
-├── project-index.md                # Central navigation hub
-├── insights-log.md                 # Technical insights triage inbox
-├── development-journal.md          # Narrative development chronicle
-├── prds/                           # Product Requirements Documents
-│   ├── active/                     # Current milestone PRDs
-│   └── complete/                   # Completed feature PRDs
-├── learning-notes/                 # Implementation journey (37 notes)
-│   ├── 01-09: M1 phases
-│   ├── 10-13: M2 (recipes)
-│   ├── 14-15: M3 (quantities)
-│   ├── 16-19: M4 (meal planning)
-│   ├── 20-21: M5 (app renaming)
-│   ├── 22-29: M7 (CloudKit sync)
-│   ├── 30-31: M8 (parsing intelligence)
-│   └── 32-37: M15 (UX design system)
-├── mockups/                        # Visual design references
-│   └── forager-design-system.html  # 16 phone-frame mockups (M15)
-└── architecture/                   # Architecture Decision Records
-    ├── 001-012: ADRs
-    └── service-layer-pattern.md    # M7.5+ standard
-```
+| Skill | Purpose | When to Use |
+|-------|---------|-------------|
+| `/session-start` | 9-point startup checklist | Every session start |
+| `/forager-commit` | Commit with M#.#.# conventions | Every commit |
+| `/dev-journal` | Write session narrative entry | Before every commit |
+| `/log-insight` | Log technical insight | When discoveries are made |
+| `/milestone-complete` | Update all 7 core docs | After milestone completion |
+| `/forager-pr` | Create PR with project format | End of each milestone phase |
+| `/new-milestone` | Set up new milestone (branch + docs) | Starting new work |
+| `/core-data-audit` | Schema impact analysis (ADR 007) | Before schema changes |
+| `/service-check` | Duplicate service prevention | Before creating new services |
+| `/build` | Build with correct Xcode config | During development |
+| `/prd-audit` | Verify PRD against current code | Before implementing old PRDs |
 
 ## Architecture Decision Records
 
