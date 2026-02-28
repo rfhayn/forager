@@ -6,6 +6,29 @@
 
 ---
 
+## Session 55 — February 28, 2026
+**Milestone**: M10.8 PRD + M10.3 Wrap-Up
+**Focus**: Create PRD for inline ingredient editing, finalize M10.3 documentation
+**Branch**: `main` (PRD commit) + `feature/M10.3-photo-import` (doc updates)
+
+### What Happened
+
+Two tasks in one session:
+
+**1. M10.8 PRD — Inline Ingredient Editing**: Created a PRD for porting the `RecipeImportPreviewView` display/edit toggle pattern to `EditRecipeView` and `CreateRecipeView`. The import preview (built during M10.3) already has a polished tap-to-edit pattern with formatted display (qty+unit secondary, parsed name bold accent), `@FocusState`-driven keyboard management, and commit-on-exit re-parsing. The recipe editing views still use always-visible TextFields with no visual distinction between reading and editing. The PRD documents the exact state variables, rendering logic, and `.onChange` handlers needed — all proven patterns from the import preview, adapted to use UUID-based tracking instead of index-based (since recipe ingredient lists support reorder/delete).
+
+**2. M10.3 Documentation Wrap-Up**: The M10.3 branch had a status inconsistency — `current-story.md` said "ACTIVE" while `next-prompt.md` and `roadmap.md` said "DEV COMPLETE." Aligned all 5 core docs to reflect M10.3 dev-complete status. Build verified clean on the branch.
+
+### Key Decision: UUID vs Index Tracking
+
+The import preview uses `@State editingIndex: Int?` because the ingredient list is read from `ImportDraftRecipe` and indices are stable. The recipe editing views use `IngredientInput.id: UUID` because the list supports reorder and swipe-to-delete — indices shift, UUIDs don't. This is the only architectural difference from the source pattern.
+
+### What's Next
+
+M10.3 is ready for PR creation and merge. After that: M10.4 (polish & integration) → M10.6 (Claude API) → M10.8 (inline editing).
+
+---
+
 ## Session 54 — February 27, 2026
 **Milestone**: M10.3.9 Category Assignment + Import UX Improvements
 **Focus**: Rewrite CategoryAssignmentModal, inline categories in import preview, fix card heights

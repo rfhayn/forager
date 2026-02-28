@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: February 27, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | **M10.3 ACTIVE** | **M10.6 PRD READY**
+**Last Updated**: February 28, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 PRD READY** | **M10.8 PRD READY**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M10.6 PRD created — Claude API integration design complete
+**Current Branch**: `feature/M10.3-photo-import` (ready for PR)
+**Current Milestone**: M10.3 dev complete — ready for manual testing + merge
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -98,7 +98,7 @@
 4. ✅ M10.3.2: Entry points — .photo ImportMode, RecipeListView menu button + sheet
 5. ✅ M10.3.3: Split-screen review — Image top + SectionHighlightView bottom + OCR stats bar
 6. ✅ M10.3.4: Foundation Models dual path — FM primary, heuristic fallback
-7. 🧪 M10.3.5: Manual testing — IN PROGRESS
+7. ✅ M10.3.5: Manual testing + bug fixes — COMPLETE
    - ✅ Fix: PhotoImportPhase Equatable returning true for all .reviewing states (binding bug)
    - ✅ Fix: Remove "Recipe Saved!" success screen, auto-dismiss after save
    - ✅ Fix: CategoryAssignmentModal now appears properly before dismiss

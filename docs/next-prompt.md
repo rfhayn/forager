@@ -1,8 +1,8 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 26, 2026
+**Last Updated**: February 28, 2026
 **For Milestone**: M10.3 Photo/Image Import — DEV COMPLETE
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY**
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY** | M10.8 📋 **PRD READY**
 **Branch**: `feature/M10.3-photo-import` (ready for PR)
 
 ---
@@ -51,6 +51,12 @@
 - 5 sub-phases: Protocol → Keychain → Settings UI → Integration → Docs
 - Zero Core Data schema changes, ~20 new tests
 - App fully functional without it — toggle OFF by default
+
+### M10.8: Inline Ingredient Editing (3-5h) — PRD READY
+- **PRD**: `docs/prds/active/m10.8-inline-ingredient-editing.md`
+- Display/edit toggle for EditRecipeView and CreateRecipeView
+- Ports RecipeImportPreviewView pattern (tap-to-edit, formatted display)
+- 2 files modified, zero model/service changes
 
 ### M7.7: App Store Submission (3-5h)
 - **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
