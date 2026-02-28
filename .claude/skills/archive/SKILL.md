@@ -297,19 +297,96 @@ curl -s -X POST \
 echo "Build $NEW_BUILD added to beta group: $GROUP_NAME"
 ```
 
-## Step 11: Final Report
+## Step 11: Set "What to Test" & Submit for Beta Review
+
+Set the "What to Test" notes from the latest git commit message, then submit for beta app review (required for external groups).
+
+```bash
+# Get latest commit message, escaped for JSON
+WHATS_NEW=$(git log -1 --pretty=%B | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip()))")
+
+# Get (or create) the beta build localization for en-US
+LOCALIZATION_ID=$(curl -s -H "Authorization: Bearer $JWT" \
+  "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID/betaBuildLocalizations" \
+  | jq -r '.data[] | select(.attributes.locale == "en-US") | .id')
+
+if [ -n "$LOCALIZATION_ID" ]; then
+  # Update existing localization
+  curl -s -X PATCH \
+    -H "Authorization: Bearer $JWT" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"data\": {
+        \"id\": \"$LOCALIZATION_ID\",
+        \"type\": \"betaBuildLocalizations\",
+        \"attributes\": {
+          \"whatsNew\": $WHATS_NEW
+        }
+      }
+    }" \
+    "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations/$LOCALIZATION_ID" > /dev/null
+else
+  # Create new localization
+  curl -s -X POST \
+    -H "Authorization: Bearer $JWT" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"data\": {
+        \"type\": \"betaBuildLocalizations\",
+        \"attributes\": {
+          \"whatsNew\": $WHATS_NEW,
+          \"locale\": \"en-US\"
+        },
+        \"relationships\": {
+          \"build\": {
+            \"data\": {
+              \"id\": \"$BUILD_ID\",
+              \"type\": \"builds\"
+            }
+          }
+        }
+      }
+    }" \
+    "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations" > /dev/null
+fi
+
+echo "What to Test: set from latest commit"
+
+# Submit for beta app review (required for external test groups)
+curl -s -X POST \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"data\": {
+      \"type\": \"betaAppReviewSubmissions\",
+      \"relationships\": {
+        \"build\": {
+          \"data\": {
+            \"id\": \"$BUILD_ID\",
+            \"type\": \"builds\"
+          }
+        }
+      }
+    }
+  }" \
+  "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions" > /dev/null
+
+echo "Submitted for beta app review"
+```
+
+## Step 12: Final Report
 
 ```
 ✅ Archive & TestFlight Distribution Complete
 
-Version:     $MARKETING_VERSION (build $NEW_BUILD)
-Archive:     ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive
-Processing:  VALID
-Compliance:  No non-exempt encryption
-Beta Group:  $GROUP_NAME
-Status:      Available for testing
-
-TestFlight testers will receive a notification automatically.
+Version:       $MARKETING_VERSION (build $NEW_BUILD)
+Archive:       ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive
+Processing:    VALID
+Compliance:    No non-exempt encryption
+Beta Group:    $GROUP_NAME
+What to Test:  (from latest commit)
+Review Status: WAITING_FOR_REVIEW
+Status:        Submitted — testers notified once review completes
 ```
 
 ## Arguments
