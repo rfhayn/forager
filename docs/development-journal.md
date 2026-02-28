@@ -6,6 +6,47 @@
 
 ---
 
+## Session 56 — February 28, 2026
+**Milestone**: Claude Code Skills Infrastructure
+**Focus**: Extract workflow procedures from CLAUDE.md into 11 custom skills
+**Branch**: `main` (PR #54, squash merged)
+
+### What Happened
+
+Refactored the project's AI tooling configuration by extracting procedural workflow instructions from CLAUDE.md into Claude Code's custom skills system (`.claude/skills/`).
+
+**The problem**: CLAUDE.md had grown to 518 lines — a mix of declarative rules (architecture, naming, code standards) and procedural instructions (how to commit, how to start a session, how to audit Core Data). All 518 lines loaded into every turn of every conversation, whether the session needed the git workflow or not.
+
+**The solution**: Created 11 custom skills, each a self-contained SKILL.md with step-by-step instructions for a specific workflow. CLAUDE.md was slimmed to 388 lines of pure rules and references, with a skills table pointing to the procedures.
+
+### Skills Created (by Priority)
+
+- **P0 (every session)**: `/session-start`, `/forager-commit`, `/dev-journal`, `/milestone-complete`
+- **P1 (most sessions)**: `/log-insight`, `/forager-pr`, `/core-data-audit`
+- **P2 (as needed)**: `/service-check`, `/new-milestone`, `/build`, `/prd-audit`
+
+### Key Design Decision: Declarative vs. Procedural Split
+
+CLAUDE.md retained the *what* — architecture overview, naming rules, quality gates, code standards. Skills contain the *how* — step-by-step checklists, bash commands, file update procedures. This mirrors the distinction between a team's engineering handbook (always relevant) and its runbooks (relevant only when running a specific procedure).
+
+### Context Savings Analysis
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| CLAUDE.md lines | 518 | 388 | -130 (25%) |
+| CLAUDE.md bytes | 20,297 | 15,905 | -4,392 (21.6%) |
+| Total knowledge base | 518 lines | 1,059 lines | +104% |
+
+The total instructions doubled, but context cost per turn dropped 25%. Skills are lazy-loaded — `/forager-commit` (64 lines) only enters the context window when invoked. Over a 50-turn session, the always-loaded savings compound to ~55K tokens that never need processing.
+
+### What Was Learned
+
+1. **Skills are lazy-loaded, CLAUDE.md is not.** This is the fundamental insight. Moving procedures to skills doesn't just organize them — it changes *when* they consume context window budget.
+2. **Separation of concerns applies to AI config too.** Declarative rules (always needed) vs. procedural runbooks (on-demand) is the same split you'd make in any well-structured system.
+3. **The knowledge base can grow without growing cost.** By moving to on-demand loading, you can add more skills without increasing per-turn overhead.
+
+---
+
 ## Session 55 — February 28, 2026
 **Milestone**: M10.8 PRD + M10.3 Wrap-Up
 **Focus**: Create PRD for inline ingredient editing, finalize M10.3 documentation
