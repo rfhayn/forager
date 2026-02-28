@@ -153,6 +153,7 @@ struct CreateRecipeView: View {
                                 completeSave()
                             }
                         )
+                        .interactiveDismissDisabled()
                         .environment(\.managedObjectContext, viewContext)
                     }
                 case .prepTimePicker:

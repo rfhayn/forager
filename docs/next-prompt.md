@@ -1,66 +1,46 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 26, 2026
-**For Milestone**: M10.3 Photo/Image Import (21-28h)
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.6 📋 **PRD READY** | **M10.3 NEXT**
-**Branch**: Create `feature/M10.3-photo-import`
+**Last Updated**: February 28, 2026
+**For Milestone**: M10.3 Photo/Image Import — DEV COMPLETE
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY** | M10.8 📋 **PRD READY**
+**Branch**: `feature/M10.3-photo-import` (ready for PR)
 
 ---
 
-## **NEXT: M10.3 — Photo/Image Import (21-28h)**
+## **M10.3 — DEV COMPLETE**
 
-**PRD**: `docs/prds/active/m10-recipe-import.md` (full implementation blueprint — §7 M10.3)
-**Spike Research**: `docs/import-research/` (7 supporting documents)
-**Wireframes**: `docs/import-research/import-wireframes.html` (open in browser)
-**Core Data Impact**: NONE — no schema changes
+### What's Done
+- ✅ `ImageOCRService.swift` — VNRecognizeTextRequest wrapper → [OCRLine] with real boundingBox
+- ✅ `DocumentScannerView.swift` — VNDocumentCameraViewController UIViewControllerRepresentable
+- ✅ `PhotoImportView.swift` — Full local phase state machine with dual extraction path
+- ✅ `.photo` ImportMode added to RecipeImportSheet
+- ✅ "Import from Photo" menu button in RecipeListView
+- ✅ `NSCameraUsageDescription` in Info.plist
+- ✅ Build succeeds with zero warnings
+- ✅ Bug fix: PhotoImportPhase Equatable causing review binding to freeze
+- ✅ Bug fix: "Recipe Saved!" screen removed, save auto-dismisses
+- ✅ Bug fix: CategoryAssignmentModal appears properly before dismiss
+- ✅ Bug fix: Cold launch blank grocery list (HouseholdService timing)
+- ✅ Bug fix: "Templates" → "Ingredients" in HouseholdView shared data
+- ✅ M10.3.8: Import preview ingredient matching — parse + template lookup + status display
 
-### What's Already Done (M10.1 + M10.2 Complete)
-- ✅ M10.1: URL Import — JSON-LD + WKWebView extraction, in-app browser, preview/save, duplicate detection
-- ✅ M10.2: Text Paste Import — Foundation Models `@Generable` + heuristic fallback, SectionHighlightView review
-- ✅ `OCRLineClassifier` — Shared between text paste and photo OCR (line scoring, section context boosting)
-- ✅ `SectionHighlightView` — Color-coded line classification review (tap-to-reclassify)
-- ✅ Import preview UI with per-field confidence dots, wireframe-aligned
-- ✅ Error handling with type-specific views
-- ✅ Duplicate detection with Replace Existing support
-- ✅ CategoryAssignmentModal wired into import save flow
+### What Still Needs Manual Testing
+- Clean printed recipes (cookbooks, magazines)
+- Screenshot recipes from websites
+- Handwritten recipes (expect lower accuracy)
+- Multi-page scans via document scanner
+- Error paths: no text, camera denied, scanner cancelled
+- FM path vs heuristic path on FM-capable device
+- M10.3.8 ingredient matching display (verify ✓/?/○ icons + category labels)
 
-### Reusable Infrastructure from M10.1 + M10.2
-- `ImportDraftRecipe` + `ImportField<T>` confidence model
-- `ImportJobState` state machine
-- `RecipeImportService` orchestrator (save, replace, duplicate check, text import)
-- `RecipeImportSheet` + `RecipeImportPreviewView` (preview/save flow)
-- `RecipeExtractor` protocol + strategy pattern
-- `OCRLineClassifier` — Heuristic line classification (shared with M10.3)
-- `SectionHighlightView` — Classification review UI (shared with M10.3)
-- `HeuristicTextExtractor` — Text → ImportDraftRecipe adapter
-- `FoundationModelsExtractor` — On-device LLM structured extraction
-
-### M10.3 Sub-phase Breakdown
-
-| # | Sub-phase | Hours | Depends On |
-|---|-----------|-------|------------|
-| M10.3.1 | Document scanner + VNDocumentCameraViewController | 2-3h | — |
-| M10.3.2 | OCR pipeline (VNRecognizeTextRequest) | 3-4h | M10.3.1 |
-| M10.3.3 | Photo import view + camera/library picker | 3-4h | — |
-| M10.3.4 | OCR → line classification → SectionHighlightView integration | 3-4h | M10.3.2, M10.3.3 |
-| M10.3.5 | Foundation Models extraction from OCR text | 2-3h | M10.3.4 |
-| M10.3.6 | Mela-style split-screen UI (image + classified text) | 4-5h | M10.3.4 |
-| M10.3.7 | Testing & refinement | 4-5h | M10.3.6 |
-
-### Key Architecture Decisions
-- **VNRecognizeTextRequest .accurate** — 100% character accuracy on clean printed text (validated in spike)
-- **OCRLineClassifier reuse** — Same classifier used for text paste, now with real boundingBox data from OCR
-- **SectionHighlightView reuse** — Same review UI, but M10.3 adds split-screen with image alongside
-- **Foundation Models as enhancement** — OCR text → FM structured extraction for higher confidence
-- **Mela-style UI** — Side-by-side image and classified text, similar to Mela app's photo import
-
-### Entry Point
-- RecipeListView import Menu gets a third option: "Scan Recipe" or "Import from Photo"
-- Camera/library → OCR → classification → SectionHighlightView → preview/save
+### Tests
+- No new unit tests needed — M10.3.8 is view-layer glue connecting already-tested services
+- `IngredientParsingService.parseIngredient()` and `IngredientTemplateService.searchTemplates()` have existing coverage
+- All 267+ existing tests expected to pass (no schema changes)
 
 ---
 
-## **AFTER M10.3: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
+## **NEXT: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
 
 ### M10.4: Polish & Integration (11-16h)
 - Import history, household sharing, telemetry dashboard
@@ -71,6 +51,12 @@
 - 5 sub-phases: Protocol → Keychain → Settings UI → Integration → Docs
 - Zero Core Data schema changes, ~20 new tests
 - App fully functional without it — toggle OFF by default
+
+### M10.8: Inline Ingredient Editing (3-5h) — PRD READY
+- **PRD**: `docs/prds/active/m10.8-inline-ingredient-editing.md`
+- Display/edit toggle for EditRecipeView and CreateRecipeView
+- Ports RecipeImportPreviewView pattern (tap-to-edit, formatted display)
+- 2 files modified, zero model/service changes
 
 ### M7.7: App Store Submission (3-5h)
 - **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
@@ -83,4 +69,4 @@
 
 ---
 
-**Dependencies**: M10.2 merged to main ✅ | M10.5 merged to main ✅ | OCRLineClassifier + SectionHighlightView ready for reuse ✅ | Foundation Models requires iOS 26+ ✅ | M10.6 PRD ready ✅
+**Dependencies**: M10.3 dev complete ✅ | M10.3.8 implemented ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)

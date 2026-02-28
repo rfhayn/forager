@@ -173,14 +173,23 @@ struct foragerApp: App {
                     .environmentObject(ingredientParsingService)
                     .environmentObject(importService)
                     .task {
+                        // Reload household now that stores are loaded (isReady gate
+                        // ensures stores are ready before TabView renders).
+                        // The init-time loadCurrentHousehold() fires before stores
+                        // load, so it finds nothing — this is the real load.
+                        await householdService.loadCurrentHousehold()
+                        await householdService.refreshCurrentMemberDisplayName()
+
+                        // Check for new invitations after a delay (not urgent)
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         if householdService.currentHousehold == nil {
                             #if DEBUG
                             print("🔍 App launch: Checking for existing households...")
                             #endif
                             await householdService.checkForAcceptedInvitations()
+                            // Refresh display name if invitation check loaded a household
+                            await householdService.refreshCurrentMemberDisplayName()
                         }
-                        await householdService.refreshCurrentMemberDisplayName()
                     }
                     .onAppear {
                         if !hasCompletedOnboarding {

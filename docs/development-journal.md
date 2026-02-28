@@ -6,6 +6,182 @@
 
 ---
 
+## Session 56 — February 28, 2026
+**Milestone**: Claude Code Skills Infrastructure
+**Focus**: Extract workflow procedures from CLAUDE.md into 11 custom skills
+**Branch**: `main` (PR #54, squash merged)
+
+### What Happened
+
+Refactored the project's AI tooling configuration by extracting procedural workflow instructions from CLAUDE.md into Claude Code's custom skills system (`.claude/skills/`).
+
+**The problem**: CLAUDE.md had grown to 518 lines — a mix of declarative rules (architecture, naming, code standards) and procedural instructions (how to commit, how to start a session, how to audit Core Data). All 518 lines loaded into every turn of every conversation, whether the session needed the git workflow or not.
+
+**The solution**: Created 11 custom skills, each a self-contained SKILL.md with step-by-step instructions for a specific workflow. CLAUDE.md was slimmed to 388 lines of pure rules and references, with a skills table pointing to the procedures.
+
+### Skills Created (by Priority)
+
+- **P0 (every session)**: `/session-start`, `/forager-commit`, `/dev-journal`, `/milestone-complete`
+- **P1 (most sessions)**: `/log-insight`, `/forager-pr`, `/core-data-audit`
+- **P2 (as needed)**: `/service-check`, `/new-milestone`, `/build`, `/prd-audit`
+
+### Key Design Decision: Declarative vs. Procedural Split
+
+CLAUDE.md retained the *what* — architecture overview, naming rules, quality gates, code standards. Skills contain the *how* — step-by-step checklists, bash commands, file update procedures. This mirrors the distinction between a team's engineering handbook (always relevant) and its runbooks (relevant only when running a specific procedure).
+
+### Context Savings Analysis
+
+| Metric | Before | After | Change |
+|--------|--------|-------|--------|
+| CLAUDE.md lines | 518 | 388 | -130 (25%) |
+| CLAUDE.md bytes | 20,297 | 15,905 | -4,392 (21.6%) |
+| Total knowledge base | 518 lines | 1,059 lines | +104% |
+
+The total instructions doubled, but context cost per turn dropped 25%. Skills are lazy-loaded — `/forager-commit` (64 lines) only enters the context window when invoked. Over a 50-turn session, the always-loaded savings compound to ~55K tokens that never need processing.
+
+### What Was Learned
+
+1. **Skills are lazy-loaded, CLAUDE.md is not.** This is the fundamental insight. Moving procedures to skills doesn't just organize them — it changes *when* they consume context window budget.
+2. **Separation of concerns applies to AI config too.** Declarative rules (always needed) vs. procedural runbooks (on-demand) is the same split you'd make in any well-structured system.
+3. **The knowledge base can grow without growing cost.** By moving to on-demand loading, you can add more skills without increasing per-turn overhead.
+
+---
+
+## Session 55 — February 28, 2026
+**Milestone**: M10.8 PRD + M10.3 Wrap-Up
+**Focus**: Create PRD for inline ingredient editing, finalize M10.3 documentation
+**Branch**: `main` (PRD commit) + `feature/M10.3-photo-import` (doc updates)
+
+### What Happened
+
+Two tasks in one session:
+
+**1. M10.8 PRD — Inline Ingredient Editing**: Created a PRD for porting the `RecipeImportPreviewView` display/edit toggle pattern to `EditRecipeView` and `CreateRecipeView`. The import preview (built during M10.3) already has a polished tap-to-edit pattern with formatted display (qty+unit secondary, parsed name bold accent), `@FocusState`-driven keyboard management, and commit-on-exit re-parsing. The recipe editing views still use always-visible TextFields with no visual distinction between reading and editing. The PRD documents the exact state variables, rendering logic, and `.onChange` handlers needed — all proven patterns from the import preview, adapted to use UUID-based tracking instead of index-based (since recipe ingredient lists support reorder/delete).
+
+**2. M10.3 Documentation Wrap-Up**: The M10.3 branch had a status inconsistency — `current-story.md` said "ACTIVE" while `next-prompt.md` and `roadmap.md` said "DEV COMPLETE." Aligned all 5 core docs to reflect M10.3 dev-complete status. Build verified clean on the branch.
+
+### Key Decision: UUID vs Index Tracking
+
+The import preview uses `@State editingIndex: Int?` because the ingredient list is read from `ImportDraftRecipe` and indices are stable. The recipe editing views use `IngredientInput.id: UUID` because the list supports reorder and swipe-to-delete — indices shift, UUIDs don't. This is the only architectural difference from the source pattern.
+
+### What's Next
+
+M10.3 is ready for PR creation and merge. After that: M10.4 (polish & integration) → M10.6 (Claude API) → M10.8 (inline editing).
+
+---
+
+## Session 54 — February 27, 2026
+**Milestone**: M10.3.9 Category Assignment + Import UX Improvements
+**Focus**: Rewrite CategoryAssignmentModal, inline categories in import preview, fix card heights
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+Three UX improvements in one session:
+
+**1. CategoryAssignmentModal rewrite (M10.3.9)**: Rewrote from a 520-line scroll list with NavigationLink pickers to a 280-line card-by-card stepper matching `IngredientReviewSheet`. Name editing with re-parsing + merge-on-rename. `.interactiveDismissDisabled()` on all 4 callers.
+
+**2. Inline category assignment in import preview**: User pointed out the two-step flow (preview → save → category modal) was unnecessary friction. Moved category assignment directly into `RecipeImportPreviewView` — each ingredient row now has a compact `Menu` category dropdown. Pre-filled from template matches, user can override. On save, categories are applied to templates via post-save patch (`applyCategoryAssignmentsAndFinish`). CategoryAssignmentModal only appears if the user left some unassigned (graceful fallback). No service API changes needed.
+
+**3. Fixed-height recipe list cards**: Recipe cards without timing data were shorter than cards with prep/cook pills. Fixed by always rendering the timing row — empty cards get an invisible spacer that matches pill height.
+
+### Key Decision: Post-Save Category Patch
+
+Rather than modifying `RecipeImportService.saveImport()` to accept category hints (which would change the API contract), categories are applied after save by matching template names. This keeps the service clean and maintains backward compatibility with all other callers. The `pendingCategoryAssignments` dictionary flows through the save pipeline as state on `RecipeImportSheet`, applied in `applyCategoryAssignmentsAndFinish()`.
+
+### Insight: Inline Assignment as Library Growth Strategy
+
+User noted: "categorization will become less burdensome over time as the library grows." This is exactly right — the inline category picker auto-fills from existing template matches. After a user categorizes "chicken breast" once, every future import that includes chicken breast will auto-fill "Deli & Meat". The M10.6 LLM integration will fill the gap for truly new ingredients.
+
+### Continued: Full-Line Editing + Parsed Feedback
+
+Two additional rounds of refinement driven by user testing:
+
+**Full-line editing**: Initially implemented split editing (qty as static Text + name as TextField). User immediately flagged this — "I want the whole ingredient line to be editable." Single TextField for the entire line is the right UX: users fix OCR errors holistically, not component-by-component. The app's job is to parse the corrected line, not force the user to do the parsing mentally.
+
+**Parsed name highlight**: After making lines fully editable, the user noticed the system's understanding was invisible — "I still want the line parsed and the ingredient highlighted." Added a secondary line below the TextField showing the parsed ingredient name in accent color with a dot separator before the category picker. This creates a feedback loop: edit → submit → see parsed name → confirm the system understood.
+
+### USDA FoodData Research
+
+User explored the idea of using USDA FoodData Central as a seed dictionary for ingredient categories. Pulled Foundation Foods samples via API — ~1,000 curated items with food groups that map well to Forager's 7 categories (e.g., "Vegetables and Vegetable Products" → "Fruits & Veg"). The mapping is feasible but implementation deferred — the inline category assignment + library growth pattern is the near-term solution.
+
+---
+
+## Session 53 — February 26, 2026
+**Milestone**: M10.3 Photo/Image Import — Bug Fixes & Ingredient Matching Design
+**Focus**: Fix 3 bugs found during manual testing, design import preview ingredient matching
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+User testing on a flight surfaced three issues:
+
+**1. Review binding bug**: The SectionHighlightView review step froze after editing the first classified line. Root cause: `PhotoImportPhase`'s custom `Equatable` returned `true` for all `.reviewing` states — SwiftUI's diff saw "no change" and skipped re-rendering when lines were modified. One-character fix: `return true` → `return false`.
+
+**2. Save UX**: The big "Recipe Saved!" success screen was unnecessary and actually obscured the CategoryAssignmentModal that should appear for uncategorized ingredients. The user expected import to behave like manual entry — hit Save, optionally assign categories, done. Fix: removed the success view entirely, save now auto-dismisses. CategoryAssignmentModal appears first if there are uncategorized templates, then dismisses. State resets to `.idle` on dismiss to prevent stale state.
+
+**3. Import ingredient categorization**: The `CategoryAssignmentModal` was wired up and the parsing pipeline ran on save, but the user never saw it working because the success view took over. With the success view removed, the flow now works as intended: save → category assignment (if needed) → dismiss.
+
+Also fixed two small bugs from earlier testing: cold launch blank grocery list (HouseholdService timing — `loadCurrentHousehold()` was running before stores loaded) and "Templates" → "Ingredients" label in HouseholdView.
+
+### Key Decision: Import Preview Ingredient Matching (M10.3.8)
+
+User feedback: "we are not running the ingredient categorization step like what happens when a user manually enters in a recipe... matching it to the user's existing ingredient list would be helpful, that way the user knows what is already categorized."
+
+This led to designing M10.3.8 — a preview-time enhancement where each imported ingredient line gets parsed and matched against the user's existing template database. The preview will show ✓/? /○ status indicators per ingredient (matching CreateRecipeView's pattern), so the user knows exactly what's new vs existing before hitting Save. Key constraint: preview is read-only, no templates created until save.
+
+All infrastructure exists: `parseIngredient()` is fast (<0.05s), `searchTemplates()` is a simple fetch, and `IngredientStatus` enum already defines the three states. Just needs wiring in `RecipeImportPreviewView.ingredientsSection`.
+
+### What Was Learned
+
+Custom `Equatable` on `@State` enums is a footgun — if your `==` returns `true` when the actual data changed, SwiftUI silently stops updating. Either omit Equatable (SwiftUI handles it) or make it precise. Also: intermediate success screens that require user dismissal (like "Recipe Saved!" + "Done") break the flow when there's follow-up work (like category assignment). Just save and move on.
+
+### Session 53b Update — M10.3.8 Implemented
+
+Implemented M10.3.8 ingredient matching in `RecipeImportPreviewView.swift`. Added `@EnvironmentObject` for `IngredientParsingService` and `IngredientTemplateService`, a private `IngredientMatchInfo` struct, and a `computeIngredientMatches()` method that runs in `.task {}`. Each ingredient line gets parsed via the 3-tier hybrid parser, then the parsed name is matched against existing templates via `searchTemplates()`. The ingredient row now shows SF Symbol status icons (checkmark.circle.fill / questionmark.circle.fill / circle) instead of confidence dots when matches are available, plus a category label or status description below the ingredient text. A summary bar at the top of the ingredients section shows counts: "N matched · N need category · N new".
+
+No new tests needed — this is view-layer glue connecting two already-tested services. M10.3 is now dev complete.
+
+### What's Next
+
+Continue manual testing with real photos, verify M10.3.8 ingredient matching display works as expected, then merge to main.
+
+---
+
+## Session 52 — February 26, 2026
+**Milestone**: M10.3 Photo/Image Import
+**Focus**: Add third recipe import source — camera scan and photo library via Vision.framework OCR
+**Branch**: `feature/M10.3-photo-import`
+
+### What Happened
+
+Implemented M10.3 in a single focused session. Three new files created:
+1. `ImageOCRService.swift` — Vision.framework VNRecognizeTextRequest wrapper producing `[OCRLine]` with real boundingBox data
+2. `DocumentScannerView.swift` — UIViewControllerRepresentable for VNDocumentCameraViewController (multi-page scan support)
+3. `PhotoImportView.swift` — Full local phase state machine: pick → process → review → preview
+
+Modified `RecipeImportSheet` (`.photo` mode), `RecipeListView` (new menu button + sheet), `Info.plist` (`NSCameraUsageDescription`).
+
+### Key Decisions and Why
+
+**1. Single-pass implementation over sub-phase splits**: The plan broke PhotoImportView into M10.3.2 (entry points), M10.3.3 (review wiring), M10.3.4 (FM enhancement) — but all three live in one file following TextPasteImportView's proven pattern. Building them separately would create throwaway intermediate states.
+
+**2. View-driven flow, not extractor**: Like TextPasteImportView, PhotoImportView manages its own local phase enum rather than fitting into the RecipeExtractor protocol. The split-screen review step (image alongside classified text) doesn't fit the extractor's `input → draft` contract. The local state machine pattern is clean and proven.
+
+**3. Dual extraction path**: FM as primary with heuristic fallback mirrors M10.2. On FM-capable devices, OCR text goes to FoundationModelsExtractor first — if it produces a valid draft, the user skips the review step entirely. Only when FM fails/is unavailable does the heuristic classification → SectionHighlightView path activate. This gives the best UX on capable devices while maintaining full functionality everywhere.
+
+**4. Image data for review via JPEG compression**: Rather than holding a UIImage in state (which doesn't conform to Equatable), the review phase stores `Data` from JPEG compression at 0.5 quality. This keeps the enum Equatable and reduces memory for large photos.
+
+### What Was Learned
+
+Vision.framework's coordinate system (bottom-left origin) requires explicit sort for reading order — observations come back in arbitrary order. PhotosPicker's out-of-process design is elegant — no permission needed for library access. VNDocumentCameraViewController returns already-processed images (deskewed, contrast-enhanced), so no preprocessing is needed before OCR.
+
+### What's Next
+
+Manual testing with real recipe photos is the critical next step — the code compiles and follows the proven TextPasteImportView pattern, but real-world OCR accuracy on cookbook photos, screenshots, and handwritten recipes needs validation. After that, M10.4 (Polish & Integration) or M10.6 (Claude API) depending on priority.
+
+---
+
 ## Session 51 — February 26, 2026
 **Milestone**: M10.6 PRD Creation
 **Focus**: Formalize the LLM integration design into a standalone, implementation-ready PRD

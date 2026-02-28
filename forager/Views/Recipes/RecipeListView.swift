@@ -16,6 +16,7 @@ struct RecipeListView: View {
     @State private var showingAddRecipe = false
     @State private var showingImport = false
     @State private var showingTextImport = false
+    @State private var showingPhotoImport = false
     @State private var showingBrowser = false
     @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
@@ -219,8 +220,8 @@ struct RecipeListView: View {
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: 12) {
-                    Menu {
+                Menu {
+                    Section("Import") {
                         Button { showingBrowser = true } label: {
                             Label("Browse for Recipe", systemImage: "globe")
                         }
@@ -230,12 +231,17 @@ struct RecipeListView: View {
                         Button { showingTextImport = true } label: {
                             Label("Paste Recipe Text", systemImage: "doc.text")
                         }
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
+                        Button { showingPhotoImport = true } label: {
+                            Label("Import from Photo", systemImage: "camera")
+                        }
                     }
-                    Button { showingAddRecipe = true } label: {
-                        Image(systemName: "plus")
+                    Section {
+                        Button { showingAddRecipe = true } label: {
+                            Label("Create Manually", systemImage: "pencil.line")
+                        }
                     }
+                } label: {
+                    Image(systemName: "plus")
                 }
             }
         }
@@ -247,6 +253,9 @@ struct RecipeListView: View {
         }
         .sheet(isPresented: $showingTextImport) {
             RecipeImportSheet(importService: importService, mode: .text)
+        }
+        .sheet(isPresented: $showingPhotoImport) {
+            RecipeImportSheet(importService: importService, mode: .photo)
         }
         .fullScreenCover(isPresented: $showingBrowser) {
             RecipeBrowserView()
@@ -292,7 +301,7 @@ struct RecipeListView: View {
             ContentUnavailableView {
                 Label("No Recipes Yet", systemImage: "book.closed.fill")
             } description: {
-                Text("Add your favorite recipes to plan meals and generate grocery lists")
+                Text("Import a recipe from a website, photo, or text — or create one from scratch")
             } actions: {
                 #if DEBUG
                 Button("Generate Test Recipes", systemImage: "plus.circle.fill") {
@@ -300,13 +309,16 @@ struct RecipeListView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(ForagerTheme.accentPrimary)
-                #else
-                Button("Create Recipe", systemImage: "plus.circle.fill") {
-                    showingAddRecipe = true
+                #endif
+                Button("Browse for Recipe", systemImage: "globe") {
+                    showingBrowser = true
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(ForagerTheme.accentPrimary)
-                #endif
+                Button("Create Manually", systemImage: "pencil.line") {
+                    showingAddRecipe = true
+                }
+                .buttonStyle(.bordered)
             }
         } else if !searchText.isEmpty {
             ContentUnavailableView.search(text: searchText)
@@ -879,9 +891,9 @@ struct RecipeCardView: View {
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .lineLimit(2)
 
-            // Timing pills row
-            if recipe.hasRecipeTiming {
-                HStack(spacing: ForagerTheme.Spacing.sm) {
+            // Timing pills row — always present for uniform card height
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                if recipe.hasRecipeTiming {
                     if recipe.prepTime > 0 {
                         timingPill(icon: "clock", text: recipe.recipeFormattedPrepTime)
                     }
@@ -891,6 +903,10 @@ struct RecipeCardView: View {
                     if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
                         timingPill(icon: "timer", text: recipe.recipeFormattedTotalTime)
                     }
+                } else {
+                    Text(" ")
+                        .font(ForagerTheme.captionFont)
+                        .padding(.vertical, ForagerTheme.Spacing.xs)
                 }
             }
 

@@ -1,23 +1,28 @@
+// M10.3.9: Category Assignment — Card-by-Card Review Pattern
+// Mirrors IngredientReviewSheet: step through uncategorized templates one at a time,
+// edit name, pick category, save & advance. Name edits trigger re-parsing + template matching.
+
 import SwiftUI
 import CoreData
 
 struct CategoryAssignmentModal: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
+    @EnvironmentObject private var parsingService: IngredientParsingService
 
     // Data
     let uncategorizedTemplates: [IngredientTemplate]
     let onAssignmentsComplete: () -> Void
 
-    // State - FIXED: Optional String assignments to support "Choose Category" state
-    @State private var categoryAssignments: [UUID: String?] = [:]
-    @State private var showingAddCategory = false
-    @State private var isLoading = false
+    // Card-by-card state (mirrors IngredientReviewSheet)
+    @State private var currentIndex = 0
+    @State private var editedName = ""
+    @State private var selectedCategory: String = ""
     @State private var errorMessage: String?
 
-    // Fetch existing categories
     @FetchRequest(
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
@@ -25,495 +30,314 @@ struct CategoryAssignmentModal: View {
         ]
     ) private var allCategories: FetchedResults<Category>
 
-    // M7.6.8: Filter by household scope, then exclude "Uncategorized"
-    private var categories: [Category] {
+    // Filter by household scope, exclude "Uncategorized"
+    private var realCategories: [Category] {
         let key = householdService.currentHouseholdKey
-        return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+        let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
     }
 
-    private var realCategories: [Category] {
-        categories.filter { $0.displayName.lowercased() != "uncategorized" }
-    }
-    
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Header Section
-                headerSection
-                
-                // Ingredient Assignment List
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(uncategorizedTemplates, id: \.objectID) { template in
-                            IngredientAssignmentRow(
-                                template: template,
-                                categories: realCategories,
-                                selectedCategoryName: categoryAssignments[template.id ?? UUID()] ?? nil,
-                                onCategorySelected: { categoryName in
-                                    categoryAssignments[template.id ?? UUID()] = categoryName
-                                }
-                            )
-                        }
-                        
-                        // Add New Category Option
-                        addNewCategoryButton
-                    }
-                    .padding(.horizontal, 16) // Consistent padding
-                    .padding(.vertical, 12)
-                }
-                .background(Color(.systemBackground))
-                
-                // Action Buttons
-                actionButtons
-            }
-            .navigationBarHidden(true)
-        }
-        .sheet(isPresented: $showingAddCategory) {
-            AddCategoryView()
-                .environment(\.managedObjectContext, viewContext)
-        }
-        .onAppear {
-            initializeAssignments()
-        }
-        .alert("Assignment Error", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") {
-                errorMessage = nil
-            }
-        } message: {
-            if let error = errorMessage {
-                Text(error)
-            }
-        }
-    }
-    
-    // MARK: - View Components
-    
-    // IMPROVED: Simplified header with better spacing
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                // Progress bar
+                ProgressView(value: Double(currentIndex), total: Double(uncategorizedTemplates.count))
+                    .tint(ForagerTheme.accentPrimary)
+
+                // Progress text
+                HStack {
                     Text("Assign Categories")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                    Text("\(uncategorizedTemplates.count) ingredients need categories")
-                        .font(.subheadline)
+                        .font(ForagerTheme.captionFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
+                    Spacer()
+                    Text("\(currentIndex + 1) of \(uncategorizedTemplates.count)")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
+
+                // Current ingredient card
+                if currentIndex < uncategorizedTemplates.count {
+                    ingredientCard(uncategorizedTemplates[currentIndex])
+                }
+
                 Spacer()
+
+                // Action buttons
+                HStack(spacing: ForagerTheme.Spacing.md) {
+                    Button {
+                        skipCurrent()
+                    } label: {
+                        Text("Skip")
+                            .font(ForagerTheme.bodyFont)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                                    .strokeBorder(ForagerTheme.borderDefault)
+                            )
+                    }
+
+                    Button {
+                        saveAndAdvance()
+                    } label: {
+                        Text(currentIndex < uncategorizedTemplates.count - 1 ? "Save & Next" : "Save & Done")
+                            .font(ForagerTheme.bodyFont.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                            .foregroundStyle(.white)
+                            .background(ForagerTheme.accentPrimary)
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    }
+                }
             }
-            
-            Text("Assign categories to organize ingredients.")
-                .font(.callout)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-        .background(Color(.systemGroupedBackground))
-    }
-    
-    private var addNewCategoryButton: some View {
-        Button(action: {
-            showingAddCategory = true
-        }) {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Add New Category")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                    Text("Create a custom category for these ingredients")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.textSecondary)
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.backgroundCanvas)
+            .navigationTitle("New Ingredients")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Skip All") { skipAll() }
+                        .font(ForagerTheme.captionFont)
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
+            }
+            .onAppear { loadCurrentIngredient() }
+            .alert("Error", isPresented: .constant(errorMessage != nil)) {
+                Button("OK") { errorMessage = nil }
+            } message: {
+                if let error = errorMessage {
+                    Text(error)
+                }
+            }
+        }
+    }
+
+    // MARK: - Ingredient Card
+
+    private func ingredientCard(_ template: IngredientTemplate) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+            // Info badge
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                Image(systemName: "sparkles")
                     .font(.caption)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                Text("New ingredient — assign a category")
+                    .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
-            .padding()
-            .background(Color(.systemBackground))
-            .cornerRadius(ForagerTheme.Radius.md)
-            .overlay(
-                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
-                    .stroke(ForagerTheme.accentPrimary.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .padding(.top, 8)
-    }
-    
-    // IMPROVED: Better spaced action buttons section
-    private var actionButtons: some View {
-        VStack(spacing: 16) {
-            // Assign Categories Button
-            Button(action: assignCategories) {
-                HStack {
-                    if isLoading {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                    }
-                    Text(isLoading ? "Assigning..." : "Assign Categories")
-                        .fontWeight(.medium)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(properlyAssignedCount > 0 ? ForagerTheme.accentPrimary : ForagerTheme.accentPrimary.opacity(0.6))
-                .foregroundStyle(.white)
-                .cornerRadius(ForagerTheme.Radius.md)
+            .padding(.horizontal, ForagerTheme.Spacing.sm)
+            .padding(.vertical, ForagerTheme.Spacing.xs)
+            .background(ForagerTheme.surfaceAccent)
+            .clipShape(Capsule())
+
+            // Editable name
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text("Name")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                TextField("Ingredient name", text: $editedName)
+                    .font(ForagerTheme.bodyFont)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                    .submitLabel(.done)
             }
-            .disabled(isLoading)
-            
-            // Skip Assignment Button
-            Button(action: skipAssignment) {
-                HStack {
-                    Image(systemName: "arrow.right")
-                    Text("Keep in Uncategorized")
-                        .fontWeight(.medium)
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
-                .background(Color(.systemGray5))
-                .foregroundStyle(.primary)
-                .cornerRadius(ForagerTheme.Radius.md)
-            }
-            .disabled(isLoading)
-            
-            // IMPROVED: Conditional assignment summary with better layout
-            if uncategorizedTemplates.count > 1 {
-                VStack(spacing: 4) {
-                    HStack {
-                        Text("\(properlyAssignedCount) of \(uncategorizedTemplates.count) assigned")
-                            .font(.footnote)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                        Spacer()
+
+            // Category picker (Menu — not NavigationLink)
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text("Category")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+
+                Menu {
+                    Button("Uncategorized") {
+                        selectedCategory = ""
                     }
-                    
-                    if properlyAssignedCount < uncategorizedTemplates.count {
-                        HStack {
-                            Text("\(uncategorizedTemplates.count - properlyAssignedCount) will remain uncategorized")
-                                .font(.footnote)
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                            Spacer()
+                    ForEach(realCategories, id: \.objectID) { category in
+                        Button(category.displayName) {
+                            selectedCategory = category.displayName
                         }
                     }
+                } label: {
+                    HStack {
+                        if selectedCategory.isEmpty {
+                            Text("Choose Category")
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                        } else {
+                            HStack(spacing: ForagerTheme.Spacing.sm) {
+                                Circle()
+                                    .fill(ForagerTheme.categoryColor(for: selectedCategory))
+                                    .frame(width: 12, height: 12)
+                                Text(selectedCategory)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                    .font(ForagerTheme.bodyFont)
+                    .padding(ForagerTheme.Spacing.md)
+                    .background(ForagerTheme.surfacePrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                            .strokeBorder(ForagerTheme.borderDefault)
+                    )
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .background(Color(.systemGroupedBackground))
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
     }
-    
-    // MARK: - Computed Properties
-    
-    private var assignedCount: Int {
-        categoryAssignments.values.compactMap { $0 }.count
+
+    // MARK: - Actions
+
+    private func loadCurrentIngredient() {
+        guard currentIndex < uncategorizedTemplates.count else { return }
+        let template = uncategorizedTemplates[currentIndex]
+        editedName = template.name ?? ""
+        selectedCategory = template.category ?? ""
     }
-    
-    // FIXED: Handle optional String values properly
-    private var properlyAssignedCount: Int {
-        categoryAssignments.values.compactMap { $0 }.filter { categoryName in
-            return categoryName.lowercased() != "uncategorized" && !categoryName.isEmpty
-        }.count
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func initializeAssignments() {
-        // FIXED: Initialize with nil so all ingredients show "Choose Category"
-        for template in uncategorizedTemplates {
-            categoryAssignments[template.id ?? UUID()] = nil
-        }
-    }
-    
-    private func assignCategories() {
-        isLoading = true
-        errorMessage = nil
-        
-        // Assign categories to templates
-        for template in uncategorizedTemplates {
-            guard let templateID = template.id else { continue }
-            
-            // Assign selected category string, or leave as "Uncategorized" if none selected
-            if let selectedCategoryName = categoryAssignments[templateID],
-               let categoryName = selectedCategoryName,
-               !categoryName.isEmpty,
-               categoryName.lowercased() != "uncategorized" {
-                template.category = categoryName
-            } else {
-                // If no category was selected, keep as "Uncategorized"
-                template.category = "Uncategorized"
+
+    private func advance() {
+        if currentIndex < uncategorizedTemplates.count - 1 {
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                currentIndex += 1
             }
-        }
-        
-        // Save changes
-        ingredientTemplateService.saveContext()
-        DispatchQueue.main.async {
-            self.isLoading = false
-            if let error = self.ingredientTemplateService.errorMessage {
-                self.errorMessage = error
-            } else {
-                self.onAssignmentsComplete()
-                self.dismiss()
-            }
+            loadCurrentIngredient()
+        } else {
+            onAssignmentsComplete()
         }
     }
 
-    private func skipAssignment() {
-        for template in uncategorizedTemplates {
-            template.category = "Uncategorized"
+    private func skipCurrent() {
+        // Assign "Uncategorized" to the current template and advance
+        guard currentIndex < uncategorizedTemplates.count else { return }
+        let template = uncategorizedTemplates[currentIndex]
+        template.category = "Uncategorized"
+        ingredientTemplateService.saveContext()
+        advance()
+    }
+
+    private func skipAll() {
+        // Assign "Uncategorized" to all remaining templates
+        for i in currentIndex..<uncategorizedTemplates.count {
+            uncategorizedTemplates[i].category = "Uncategorized"
         }
         ingredientTemplateService.saveContext()
+        onAssignmentsComplete()
+    }
+
+    private func saveAndAdvance() {
+        guard currentIndex < uncategorizedTemplates.count else { return }
+        let template = uncategorizedTemplates[currentIndex]
+        let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Ingredient name cannot be empty"
+            return
+        }
+
+        let nameChanged = trimmedName.lowercased() != (template.name ?? "").lowercased()
+
+        if nameChanged {
+            // Re-parse the edited name to get a clean display name
+            let parsed = parsingService.parseIngredient(text: trimmedName)
+            let cleanName = parsed.displayName
+
+            // Check if the new name matches an existing template (merge-on-rename)
+            if let existingTemplate = findExistingTemplate(named: cleanName, excluding: template) {
+                mergeTemplate(template, into: existingTemplate)
+
+                // If the existing template already has a category, auto-fill it
+                if let existingCategory = existingTemplate.category,
+                   !existingCategory.isEmpty,
+                   existingCategory.lowercased() != "uncategorized" {
+                    // Template merged + already categorized — advance
+                    advance()
+                    return
+                } else {
+                    // Template merged but still needs category — apply selected
+                    let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
+                    existingTemplate.category = categoryToUse
+                    ingredientTemplateService.saveContext()
+                    advance()
+                    return
+                }
+            } else {
+                // No match — rename the template and search for category hint
+                let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
+                ingredientTemplateService.updateTemplate(template, name: cleanName,
+                    category: categoryToUse, isStaple: template.isStaple)
+            }
+        } else {
+            // Name unchanged — just assign the category
+            let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
+            ingredientTemplateService.updateTemplate(template, name: trimmedName,
+                category: categoryToUse, isStaple: template.isStaple)
+        }
+
         if let error = ingredientTemplateService.errorMessage {
             errorMessage = error
         } else {
-            onAssignmentsComplete()
-            dismiss()
+            advance()
         }
     }
-}
 
-// MARK: - Ingredient Assignment Row - IMPROVED Layout
-struct IngredientAssignmentRow: View {
-    let template: IngredientTemplate
-    let categories: [Category]
-    let selectedCategoryName: String?
-    let onCategorySelected: (String?) -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // IMPROVED: Ingredient Info without usage line
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(template.name ?? "Unknown ingredient")
-                        .font(.body)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    // REMOVED: Usage line since these are new ingredients being categorized
-                }
-                
-                Spacer()
-                
-                // Category Assignment Status
-                categoryStatusView
-            }
-            
-            // IMPROVED: Category Selection Button with better padding
-            NavigationLink(destination: CategorySelectionViewForAssignment(
-                categories: categories,
-                selectedCategoryName: selectedCategoryName,
-                onCategorySelected: onCategorySelected
-            )) {
-                HStack {
-                    if let categoryName = selectedCategoryName,
-                       !categoryName.isEmpty,
-                       categoryName.lowercased() != "uncategorized" {
-                        HStack(spacing: 8) {
-                            // Find the category to get its color
-                            let category = categories.first { $0.name == categoryName }
-                            Circle()
-                                .fill(colorFromHex(category?.color ?? "#4CAF50"))
-                                .frame(width: 16, height: 16)
-                            Text(categoryName)
-                                .foregroundStyle(.primary)
-                        }
-                    } else {
-                        Text("Choose Category")
-                            .foregroundStyle(ForagerTheme.accentPrimary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12) // Increased for better touch target
-                .background(Color(.systemGray6))
-                .cornerRadius(ForagerTheme.Radius.sm)
-            }
-            .buttonStyle(PlainButtonStyle())
+    // MARK: - Template Matching
+
+    /// Find an existing template with the same name (case-insensitive), excluding the current one.
+    /// Mirrors the merge-on-rename logic from IngredientRowView.saveNameEdit()
+    private func findExistingTemplate(named name: String, excluding template: IngredientTemplate) -> IngredientTemplate? {
+        let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        if let householdKey = householdService.currentHouseholdKey {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == %@",
+                                            name, template, householdKey)
+        } else {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND self != %@ AND householdKey == nil",
+                                            name, template)
         }
-        .padding(.horizontal, 16) // Consistent horizontal padding
-        .padding(.vertical, 12)    // Reduced vertical padding
-        .background(Color(.systemBackground))
-        .cornerRadius(ForagerTheme.Radius.md)
-        .overlay(
-            RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
-                .stroke(isProperlyAssigned ? ForagerTheme.statusSuccessFG.opacity(0.3) : Color(.systemGray4), lineWidth: 1)
-        )
+        return try? viewContext.fetch(request).first
     }
-    
-    private var isProperlyAssigned: Bool {
-        guard let categoryName = selectedCategoryName else { return false }
-        return categoryName.lowercased() != "uncategorized" && !categoryName.isEmpty
-    }
-    
-    private var categoryStatusView: some View {
-        Group {
-            if isProperlyAssigned, let categoryName = selectedCategoryName {
-                // Find the category to get its color
-                let category = categories.first { $0.name == categoryName }
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(colorFromHex(category?.color ?? "#4CAF50"))
-                        .frame(width: 16, height: 16)
-                    Text(categoryName)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.statusSuccessFG)
-                }
-            } else {
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color(.systemGray4))
-                        .frame(width: 16, height: 16)
-                    Text("Needs category")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                    Image(systemName: "exclamationmark.circle")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.statusWarningFG)
-                }
+
+    /// Merge the source template into the target: move ingredient relationships, sum usage, delete source.
+    /// Same logic as IngredientRowView.saveNameEdit() merge path.
+    private func mergeTemplate(_ source: IngredientTemplate, into target: IngredientTemplate) {
+        #if DEBUG
+        print("📝 M10.3.9: Merging '\(source.name ?? "nil")' into '\(target.name ?? "nil")'")
+        #endif
+
+        // Move all ingredient relationships to the target template
+        if let ingredientsToMove = source.ingredients as? Set<Ingredient> {
+            for ing in ingredientsToMove {
+                ing.ingredientTemplate = target
             }
-        }
-    }
-    
-    // Helper function for color conversion
-    private func colorFromHex(_ hex: String) -> Color {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
         }
 
-        return Color(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
-    }
-}
+        // Sum usage counts and preserve staple status
+        target.usageCount += source.usageCount
+        if source.isStaple { target.isStaple = true }
+        target.updatedAt = Date()
 
-// MARK: - Category Selection View for Assignment
-struct CategorySelectionViewForAssignment: View {
-    let categories: [Category]
-    let selectedCategoryName: String?
-    let onCategorySelected: (String?) -> Void
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        List {
-            ForEach(categories, id: \.objectID) { category in
-                CategorySelectionRowForAssignment(
-                    category: category,
-                    isSelected: selectedCategoryName == category.name,
-                    onTap: {
-                        onCategorySelected(category.name)
-                        dismiss()
-                    }
-                )
-            }
-            
-            // Option to leave uncategorized
-            Button("Leave Uncategorized") {
-                onCategorySelected(nil)
-                dismiss()
-            }
-            .foregroundStyle(ForagerTheme.textSecondary)
-        }
-        .navigationTitle("Select Category")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
-                    dismiss()
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Category Selection Row for Assignment
-struct CategorySelectionRowForAssignment: View {
-    let category: Category
-    let isSelected: Bool
-    let onTap: () -> Void
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 16) {
-                // Category color and name
-                Circle()
-                    .fill(colorFromHex(category.color ?? "#4CAF50"))
-                    .frame(width: 24, height: 24)
-                
-                Text(category.name ?? "Unknown")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                
-                Spacer()
-                
-                // Selection indicator
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .font(.title3)
-                }
-            }
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    // Helper function for color conversion
-    private func colorFromHex(_ hex: String) -> Color {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
+        // Log correction for ML training
+        let originalName = source.name ?? ""
+        let correctedName = target.name ?? ""
+        if originalName.lowercased() != correctedName.lowercased() {
+            ParsingTelemetryService.shared.logCorrection(
+                originalName: originalName,
+                originalQuantity: nil,
+                originalUnit: nil,
+                originalConfidence: 0,
+                correctedName: correctedName,
+                correctedQuantity: nil,
+                correctedUnit: nil,
+                source: .templateRename
+            )
         }
 
-        return Color(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        // Delete the old (now-empty) template
+        ingredientTemplateService.deleteTemplate(source)
     }
 }

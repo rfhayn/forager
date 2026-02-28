@@ -271,7 +271,7 @@ struct HouseholdView: View {
                 HStack {
                     statItem("Categories", count: sharedCategoryCount, icon: "folder")
                     Spacer()
-                    statItem("Templates", count: sharedTemplateCount, icon: "text.badge.checkmark")
+                    statItem("Ingredients", count: sharedTemplateCount, icon: "text.badge.checkmark")
                     Spacer()
                     // Empty spacer to balance the 3-column grid
                     Color.clear.frame(maxWidth: .infinity)

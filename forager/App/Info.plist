@@ -21,6 +21,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Forager uses the camera to scan recipe pages for import</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -18,10 +18,49 @@ import SwiftUI
 struct RecipeImportPreviewView: View {
     @State var draft: ImportDraftRecipe
     @ObservedObject var importService: RecipeImportService
-    let onSave: (ImportDraftRecipe) -> Void
+    /// Callback passes the draft + a dictionary of (parsed ingredient name → selected category)
+    let onSave: (ImportDraftRecipe, [String: String]) -> Void
     let onCancel: () -> Void
 
+    @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var parsingService: IngredientParsingService
+    @EnvironmentObject private var templateService: IngredientTemplateService
+    @EnvironmentObject private var householdService: HouseholdService
+
     @State private var showAllSteps = false
+    @State private var ingredientMatches: [Int: IngredientMatchInfo] = [:]
+    /// User's category selections per ingredient index (inline assignment)
+    @State private var categoryAssignments: [Int: String] = [:]
+    /// User's ingredient name edits per index (nil = not edited, use original)
+    @State private var editedIngredientNames: [Int: String] = [:]
+    /// Which ingredient row is currently being edited (nil = none)
+    @State private var editingIndex: Int?
+    @FocusState private var focusedIngredient: Int?
+    /// Which ingredient row has its category picker open (nil = none)
+    @State private var categoryPickerIndex: Int?
+
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Category.name, ascending: true)
+        ]
+    ) private var allCategories: FetchedResults<Category>
+
+    /// Categories filtered by household, excluding "Uncategorized"
+    private var realCategories: [Category] {
+        let key = householdService.currentHouseholdKey
+        let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+    }
+
+    // MARK: - Ingredient Match Model
+
+    /// Per-ingredient match result computed at preview time (read-only lookup)
+    private struct IngredientMatchInfo {
+        let parsedName: String
+        let status: IngredientStatus
+        let categoryName: String?
+    }
 
     // MARK: - Instruction Steps (computed)
 
@@ -90,12 +129,38 @@ struct RecipeImportPreviewView: View {
             }
             .padding(ForagerTheme.Spacing.lg)
         }
+        .task { computeIngredientMatches() }
+        .onChange(of: editingIndex) { oldValue, newValue in
+            // Re-match when leaving an ingredient row
+            if let oldIndex = oldValue, oldIndex != newValue {
+                reMatchIngredient(index: oldIndex)
+            }
+            // Sync focus to editing state
+            focusedIngredient = newValue
+        }
+        .onChange(of: focusedIngredient) { _, newValue in
+            // When keyboard focus is lost (tapped away), exit edit mode
+            if newValue == nil && editingIndex != nil {
+                if let idx = editingIndex { reMatchIngredient(index: idx) }
+                editingIndex = nil
+            }
+        }
+        // Category picker sheet
+        .sheet(isPresented: Binding(
+            get: { categoryPickerIndex != nil },
+            set: { if !$0 { categoryPickerIndex = nil } }
+        )) {
+            if let index = categoryPickerIndex {
+                categoryPickerSheet(index: index)
+                    .presentationDetents([.medium])
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { onCancel() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save Recipe") { onSave(draft) }
+                Button("Save") { saveWithCategories() }
                     .fontWeight(.semibold)
                     .disabled(draft.successLevel == .failure)
             }
@@ -256,71 +321,337 @@ struct RecipeImportPreviewView: View {
             .foregroundStyle(ForagerTheme.borderSubtle)
     }
 
-    // MARK: - Ingredients Section
+    // MARK: - Ingredient Matching (M10.3.8)
 
-    private var ingredientsSection: some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            sectionHeader(label: "Ingredients", showEditIcon: true)
+    /// Parse each ingredient line, look up existing templates, and pre-fill category assignments.
+    private func computeIngredientMatches() {
+        var matches: [Int: IngredientMatchInfo] = [:]
+        var prefilledCategories: [Int: String] = [:]
 
-            ForEach(draft.ingredients.value.indices, id: \.self) { index in
-                ingredientRow(text: draft.ingredients.value[index], confidence: draft.ingredients.confidence)
+        for (index, text) in draft.ingredients.value.enumerated() {
+            let parsed = parsingService.parseIngredient(text: text)
+            let cleanName = parsed.displayName
+
+            // Look for exact match against existing templates
+            let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
+            let exactMatch = candidates.first(where: {
+                $0.name?.lowercased() == cleanName.lowercased()
+            })
+
+            let status: IngredientStatus
+            let categoryName: String?
+
+            if let template = exactMatch {
+                if let category = template.category, !category.isEmpty,
+                   category.lowercased() != "uncategorized" {
+                    status = .ready
+                    categoryName = category
+                    prefilledCategories[index] = category
+                } else {
+                    status = .needsCategory
+                    categoryName = nil
+                }
+            } else {
+                status = .needsTemplate
+                categoryName = nil
+            }
+
+            matches[index] = IngredientMatchInfo(
+                parsedName: cleanName,
+                status: status,
+                categoryName: categoryName
+            )
+        }
+
+        ingredientMatches = matches
+        // Pre-fill category assignments from matched templates (don't overwrite user edits)
+        for (index, category) in prefilledCategories {
+            if categoryAssignments[index] == nil {
+                categoryAssignments[index] = category
             }
         }
     }
 
-    /// Per-ingredient bordered card row: [confidence dot] [qty] [name]
-    private func ingredientRow(text: String, confidence: ImportConfidence) -> some View {
-        let isLowConfidence = confidence == .low || confidence == .medium
+    /// Build category assignments keyed by parsed ingredient name and pass to save callback.
+    /// Applies any user edits to the draft's ingredient list before saving.
+    private func saveWithCategories() {
+        // Apply full-line edits to draft
+        for (index, editedText) in editedIngredientNames {
+            guard index < draft.ingredients.value.count else { continue }
+            let trimmed = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                draft.ingredients.value[index] = trimmed
+            }
+        }
 
-        return HStack(spacing: ForagerTheme.Spacing.sm) {
-            confidenceDot(confidence)
+        // Build category map keyed by parsed name
+        var nameToCategory: [String: String] = [:]
+        for (index, category) in categoryAssignments {
+            // Parse the current text to get the clean ingredient name
+            let text = editedIngredientNames[index] ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
+            let parsed = parsingService.parseIngredient(text: text)
+            nameToCategory[parsed.displayName.lowercased()] = category
+        }
+        onSave(draft, nameToCategory)
+    }
 
-            // Split ingredient text into qty and name portions
-            let parts = splitIngredientText(text)
-            if let qty = parts.qty {
-                Text(qty)
-                    .font(ForagerTheme.footnoteFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                    .monospacedDigit()
-                    .frame(minWidth: 48, alignment: .leading)
+    // MARK: - Ingredient Editing
+
+    /// Binding for the full ingredient text at a given index.
+    private func ingredientTextBinding(index: Int, original: String) -> Binding<String> {
+        Binding(
+            get: { editedIngredientNames[index] ?? original },
+            set: { editedIngredientNames[index] = $0 }
+        )
+    }
+
+    /// Re-run parsing + template matching after the user edits an ingredient line.
+    private func reMatchIngredient(index: Int) {
+        let text = editedIngredientNames[index] ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let parsed = parsingService.parseIngredient(text: trimmed)
+        let cleanName = parsed.displayName
+
+        let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
+        let exactMatch = candidates.first(where: {
+            $0.name?.lowercased() == cleanName.lowercased()
+        })
+
+        let status: IngredientStatus
+        let categoryName: String?
+
+        if let template = exactMatch {
+            if let category = template.category, !category.isEmpty,
+               category.lowercased() != "uncategorized" {
+                status = .ready
+                categoryName = category
+                // Auto-fill category from match
+                categoryAssignments[index] = category
+            } else {
+                status = .needsCategory
+                categoryName = nil
+            }
+        } else {
+            status = .needsTemplate
+            categoryName = nil
+        }
+
+        ingredientMatches[index] = IngredientMatchInfo(
+            parsedName: cleanName,
+            status: status,
+            categoryName: categoryName
+        )
+    }
+
+    // MARK: - Ingredients Section
+
+    private var ingredientsSection: some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            sectionHeader(label: "Ingredients", showEditIcon: false)
+
+            // Summary of ingredient match status
+            if !ingredientMatches.isEmpty {
+                ingredientMatchSummary
             }
 
-            Text(parts.name)
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            ForEach(draft.ingredients.value.indices, id: \.self) { index in
+                ingredientRow(
+                    index: index,
+                    text: draft.ingredients.value[index],
+                    confidence: draft.ingredients.confidence,
+                    matchInfo: ingredientMatches[index]
+                )
+            }
+        }
+    }
+
+    /// Summary bar: "N matched · N need category · N new"
+    private var ingredientMatchSummary: some View {
+        // Count based on actual user assignments, not just initial match status
+        let categorized = categoryAssignments.values.filter { !$0.isEmpty }.count
+        let total = draft.ingredients.value.count
+        let uncategorized = total - categorized
+
+        return HStack(spacing: ForagerTheme.Spacing.md) {
+            if categorized > 0 {
+                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusSuccessFG)
+            }
+            if uncategorized > 0 {
+                Label("\(uncategorized) need category", systemImage: "circle")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
+        }
+        .padding(.bottom, ForagerTheme.Spacing.xs)
+    }
+
+    /// Per-ingredient bordered card row with display/edit toggle.
+    /// Display mode: qty + unit in regular text, parsed name bold/accent.
+    /// Edit mode (tap): full-line TextField.
+    /// Category picker always on its own line below the ingredient.
+    private func ingredientRow(index: Int, text: String, confidence: ImportConfidence, matchInfo: IngredientMatchInfo?) -> some View {
+        let isLowConfidence = confidence == .low || confidence == .medium
+        let hasCategory = categoryAssignments[index] != nil && !(categoryAssignments[index]?.isEmpty ?? true)
+        let isEditing = editingIndex == index
+        let currentText = editedIngredientNames[index] ?? text
+
+        return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+            // Top line: status icon + ingredient text
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                // Status indicator
+                if hasCategory {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        .font(.system(size: 14))
+                } else if matchInfo != nil {
+                    Image(systemName: "circle")
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .font(.system(size: 14))
+                } else {
+                    confidenceDot(confidence)
+                }
+
+                if isEditing {
+                    // Edit mode: full-line TextField
+                    TextField("Ingredient", text: ingredientTextBinding(index: index, original: text))
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .focused($focusedIngredient, equals: index)
+                        .onSubmit {
+                            reMatchIngredient(index: index)
+                            editingIndex = nil
+                        }
+                } else {
+                    // Display mode: formatted text with parsed name highlighted
+                    formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editingIndex = index
+                        }
+                }
+            }
+
+            // Bottom line: category picker button
+            categoryLabel(index: index)
+                .padding(.leading, 22) // Align under text, past the status icon
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
         .background(isLowConfidence ? ForagerTheme.surfaceWarning : ForagerTheme.surfacePrimary)
         .overlay(
             RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
-                .stroke(isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle, lineWidth: 1)
+                .stroke(isEditing ? ForagerTheme.accentPrimary : (isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
     }
 
-    /// Split "2 1/4 cups all-purpose flour" → (qty: "2 1/4 cups", name: "all-purpose flour")
-    private func splitIngredientText(_ text: String) -> (qty: String?, name: String) {
-        // Match leading quantity: digits, fractions, spaces, and unit words
-        let pattern = #"^([\d½⅓⅔¼¾⅛⅜⅝⅞/\s]+(?:cups?|cup|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lbs?|pounds?|g|kg|ml|l|liters?|quarts?|pints?|gallons?|cloves?|cans?|packages?|large|medium|small|whole|pinch(?:es)?)\b)\s*(.+)"#
-        if let match = text.range(of: pattern, options: .regularExpression, range: text.startIndex..<text.endIndex) {
-            let fullMatch = String(text[match])
-            if let nameRange = fullMatch.range(of: pattern, options: .regularExpression) {
-                // Use NSRegularExpression for capture groups
-                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
-                    let nsString = text as NSString
-                    if let result = regex.firstMatch(in: text, range: NSRange(location: 0, length: nsString.length)),
-                       result.numberOfRanges >= 3 {
-                        let qty = nsString.substring(with: result.range(at: 1)).trimmingCharacters(in: .whitespaces)
-                        let name = nsString.substring(with: result.range(at: 2)).trimmingCharacters(in: .whitespaces)
-                        return (qty, name)
-                    }
+    /// Format ingredient text with the parsed name highlighted in bold accent color.
+    /// Splits the text around the parsed ingredient name: prefix (qty+unit) in secondary, name in bold accent.
+    /// If parsed name can't be found as substring, show full text in primary with bold.
+    private func formattedIngredientText(text: String, matchInfo: IngredientMatchInfo?) -> Text {
+        guard let info = matchInfo else {
+            return Text(text)
+                .font(ForagerTheme.bodyFont)
+                .foregroundColor(ForagerTheme.textPrimary)
+        }
+
+        // Try to find parsed name in the text (case-insensitive)
+        if let range = text.range(of: info.parsedName, options: .caseInsensitive) {
+            let prefix = String(text[text.startIndex..<range.lowerBound])
+            let name = String(text[range])
+            let suffix = String(text[range.upperBound...])
+            return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+                + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
+                + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+        }
+
+        // Fallback: parsed name doesn't substring-match (OCR artifacts, normalization differences)
+        // Show the full text with the parsed name appended in accent for visibility
+        return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
+            + Text(" → ").font(ForagerTheme.captionFont).foregroundColor(ForagerTheme.textDisabled)
+            + Text(info.parsedName).font(ForagerTheme.captionFont).bold().foregroundColor(ForagerTheme.accentPrimary)
+    }
+
+    /// Category label button that opens the category picker sheet.
+    /// Shows colored dot + category name when selected, "Choose Category" when empty.
+    private func categoryLabel(index: Int) -> some View {
+        Button {
+            categoryPickerIndex = index
+        } label: {
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                if let selected = categoryAssignments[index], !selected.isEmpty {
+                    Circle()
+                        .fill(ForagerTheme.categoryColor(for: selected))
+                        .frame(width: 8, height: 8)
+                    Text(selected)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                } else {
+                    Text("Choose Category")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
-                _ = nameRange // suppress warning
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        return (nil, text)
+        .buttonStyle(.plain)
+    }
+
+    /// Sheet with colored category options for a given ingredient index
+    private func categoryPickerSheet(index: Int) -> some View {
+        let currentText = editedIngredientNames[index]
+            ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
+
+        return NavigationStack {
+            List {
+                Section {
+                    // Show which ingredient we're categorizing
+                    Text(currentText)
+                        .font(ForagerTheme.bodyFont.weight(.medium))
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    ForEach(realCategories, id: \.objectID) { category in
+                        Button {
+                            categoryAssignments[index] = category.displayName
+                            categoryPickerIndex = nil
+                        } label: {
+                            HStack(spacing: ForagerTheme.Spacing.md) {
+                                Circle()
+                                    .fill(ForagerTheme.categoryColor(for: category.displayName))
+                                    .frame(width: 12, height: 12)
+                                Text(category.displayName)
+                                    .font(ForagerTheme.bodyFont)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                                Spacer()
+                                if categoryAssignments[index] == category.displayName {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Category")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { categoryPickerIndex = nil }
+                }
+            }
+        }
     }
 
     // MARK: - Instructions Section

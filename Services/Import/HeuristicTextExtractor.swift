@@ -174,7 +174,7 @@ class HeuristicTextExtractor: RecipeExtractor {
     /// Extract minutes from a time string like "30 min" or "1 hour"
     private func extractMinutes(from text: String) -> Int? {
         let lower = text.lowercased()
-        guard let numStr = lower.first(where: \.isNumber).map(String.init) else { return nil }
+        guard lower.contains(where: \.isNumber) else { return nil }
 
         // Find all digits
         let digits = lower.filter(\.isNumber)

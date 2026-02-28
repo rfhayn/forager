@@ -226,10 +226,11 @@ struct AddIngredientsToListView: View {
                     }
                 }
             )
+            .interactiveDismissDisabled()
             .environment(\.managedObjectContext, viewContext)
         }
     }
-    
+
     // MARK: - Enhanced Add to List Process with Category Assignment
     
     private func addSelectedToGroceryListWithCategoryCheck() {

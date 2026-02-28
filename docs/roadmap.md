@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 26, 2026
-**Current Phase**: **M10.5 ✅ COMPLETE** | **M10.6 📋 PLANNED** | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.5 pipeline spike COMPLETE, M10.6 PRD ready
-**Execution Order**: M10.3 → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: February 28, 2026
+**Current Phase**: **M10.3 ✅ DEV COMPLETE** | **M10.6 📋 PLANNED** | **M10.8 📋 PLANNED** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.3 photo import dev complete (ready for merge)
+**Execution Order**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M10.8 (3-5h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -1087,14 +1087,15 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - M10.2.6: Testing & refinement (2-3h)
 - New files: 2 services, 2 views | Modified: 2 files | Tests: 2 files
 
-**Phase 3: Photo/Image Import (M10.3)** — 23-30 hours (7 sub-phases, ~23 tests)
-- M10.3.1: Document scanner integration (3-4h)
-- M10.3.2: OCR pipeline — VNRecognizeTextRequest (4-5h)
-- M10.3.3: Section-aware classification — port spike (4-5h)
-- M10.3.4: Semi-automated section assignment UI (5-6h)
-- M10.3.5: AI-assisted extraction (4-5h)
-- M10.3.6: Photo library picker (2-3h)
-- M10.3.7: Testing & refinement (2-3h)
+**Phase 3: Photo/Image Import (M10.3)** — 23-30 hours (8 sub-phases, ~23 tests)
+- ✅ M10.3.1: Document scanner integration (3-4h)
+- ✅ M10.3.2: OCR pipeline — VNRecognizeTextRequest (4-5h)
+- ✅ M10.3.3: Section-aware classification — port spike (4-5h)
+- ✅ M10.3.4: Semi-automated section assignment UI (5-6h)
+- ✅ M10.3.5: AI-assisted extraction (4-5h)
+- ✅ M10.3.6: Photo library picker (2-3h)
+- ✅ M10.3.7: Testing & refinement — bug fixes complete, manual testing in progress (2-3h)
+- ✅ M10.3.8: Import preview ingredient matching — parse + template lookup + status display (1-2h)
 - New files: 3 services, 4 views | Modified: 3 files | Tests: 2 files
 
 **Phase 4: Polish & Integration (M10.4)** — 11-16 hours (6 sub-phases, ~8 tests)

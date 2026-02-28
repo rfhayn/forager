@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: February 26, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | **M10.6 PRD READY**
+**Last Updated**: February 28, 2026
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 PRD READY** | **M10.8 PRD READY**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M10.6 PRD created — Claude API integration design complete
+**Current Branch**: `feature/M10.3-photo-import` (ready for PR)
+**Current Milestone**: M10.3 dev complete — ready for manual testing + merge
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (Photo Import) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -90,6 +90,44 @@
 - `forager/Views/Import/SectionHighlightView.swift` — Color-coded line review with tap-to-reclassify
 - `foragerTests/Services/OCRLineClassifierTests.swift` — 21 tests
 - `foragerTests/Services/HeuristicTextExtractorTests.swift` — 10 tests
+
+### M10.3 Implementation Progress
+1. ✅ M10.3.1: ImageOCRService — VNRecognizeTextRequest → [OCRLine] with real boundingBox
+2. ✅ M10.3.1: DocumentScannerView — VNDocumentCameraViewController UIViewControllerRepresentable
+3. ✅ M10.3.2: PhotoImportView — Local phase state machine (pick → process → review → preview)
+4. ✅ M10.3.2: Entry points — .photo ImportMode, RecipeListView menu button + sheet
+5. ✅ M10.3.3: Split-screen review — Image top + SectionHighlightView bottom + OCR stats bar
+6. ✅ M10.3.4: Foundation Models dual path — FM primary, heuristic fallback
+7. ✅ M10.3.5: Manual testing + bug fixes — COMPLETE
+   - ✅ Fix: PhotoImportPhase Equatable returning true for all .reviewing states (binding bug)
+   - ✅ Fix: Remove "Recipe Saved!" success screen, auto-dismiss after save
+   - ✅ Fix: CategoryAssignmentModal now appears properly before dismiss
+   - ✅ Fix: Cold launch blank grocery list (HouseholdService timing)
+   - ✅ Fix: "Templates" → "Ingredients" label in HouseholdView shared data
+8. ✅ M10.3.8: Import preview ingredient matching — COMPLETE
+   - Parse each ingredient with IngredientParsingService at preview time
+   - Match against existing IngredientTemplate database (read-only)
+   - Show ✓/?/○ status icons + category label per ingredient row
+   - Summary bar: "N matched · N need category · N new"
+9. ✅ M10.3.9: Category assignment editing — COMPLETE
+   - Rewrite CategoryAssignmentModal from list-of-all to card-by-card review pattern
+   - Mirrors IngredientReviewSheet: progress bar, editable name, Menu category picker, Skip/Save & Next
+   - Name edit triggers re-parsing + template matching (merge-on-rename if match found)
+   - .interactiveDismissDisabled() on all 4 callers (RecipeImportSheet, AddIngredientsToListView, CreateRecipeView, EditRecipeView)
+   - 520 lines → 280 lines (removed 3 sub-views, replaced NavigationLink with Menu)
+10. ✅ Inline category assignment in import preview — COMPLETE
+    - Each ingredient row in RecipeImportPreviewView has a compact Menu category dropdown
+    - Pre-filled from template matches, user can override
+    - Post-save patch applies categories to templates — no service API changes
+    - CategoryAssignmentModal only appears as fallback for unassigned items
+11. ✅ Fixed-height recipe list cards — COMPLETE
+    - RecipeCardView always renders timing row (invisible spacer when no timing)
+    - Uniform card height regardless of prep/cook time presence
+
+**Key files**:
+- `Services/Import/ImageOCRService.swift` — Vision.framework OCR wrapper
+- `forager/Views/Import/DocumentScannerView.swift` — Camera scanner wrapper
+- `forager/Views/Import/PhotoImportView.swift` — Full photo import flow with dual extraction path
 
 ### M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE
 
