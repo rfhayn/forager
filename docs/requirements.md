@@ -685,6 +685,28 @@ _Note: Full requirements for M9 are detailed in the dedicated PRD. This mileston
 
 ---
 
+## ✅ **M10.8: INLINE INGREDIENT EDITING - COMPLETE**
+
+**Status**: ✅ Complete — February 28, 2026 (~5 hours, 2 phases)
+**Summary**: Tap-to-edit ingredients, instructions, and metadata across all recipe views. Edit Recipe modal eliminated.
+
+### **Functional Requirements - Inline Editing (M10.8)**
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-IE-001** | **Ingredient display/edit toggle** | ✅ Formatted read-only display (qty+unit secondary, name accent), tap → inline TextField | M10.8 P1 | 🎯 **Consistent editing** |
+| **FR-IE-002** | **Instruction display/edit toggle** | ✅ Bordered card per step, tap → vertical TextField, submit/blur → save | M10.8 P2 | 🎯 **Inline instructions** |
+| **FR-IE-003** | **Metadata inline editing** | ✅ Tap title/timing/servings → inline TextField, save-on-blur | M10.8 P2 | 🎯 **No modal needed** |
+| **FR-IE-004** | **Favorite toggle** | ✅ Always-visible heart icon, tap → `toggleFavorite()` | M10.8 P2 | 🎯 **Quick access** |
+| **FR-IE-005** | **Add/delete steps** | ✅ "+ Add Step" button, long-press context menu delete | M10.8 P2 | 🎯 **Step management** |
+| **FR-IE-006** | **Import instruction editing** | ✅ Same bordered card pattern in RecipeImportPreviewView, writes to draft buffer | M10.8 P2 | 🎯 **Import consistency** |
+| **FR-IE-007** | **Edit Recipe modal removed** | ✅ `showingEditSheet` state, sheet, menu item all removed | M10.8 P2 | 🎯 **Simplified UX** |
+| **FR-IE-008** | **Category picker height** | ✅ `.presentationDetents([.medium, .large])` on both views | M10.8 P2 | 🎯 **Accessibility** |
+
+**M10.8 Summary**: 8 requirements complete. Zero model/service changes, 3 view files modified (RecipeListView, RecipeImportPreviewView, EditRecipeView + CreateRecipeView in Phase 1). Three `@FocusState` properties provide native mutual exclusion across ingredient, instruction, and metadata editing modes.
+
+---
+
 ## 🔮 **M11: ANALYTICS & INSIGHTS - PLANNED** 📊
 
 **Status**: ⏳ Planned

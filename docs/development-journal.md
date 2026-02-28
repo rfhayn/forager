@@ -6,6 +6,83 @@
 
 ---
 
+## Session 58 — February 28, 2026
+**Milestone**: M10.8 Phase 2 — Fully Inline RecipeDetailView + Import Instructions Editing
+**Focus**: Eliminate Edit Recipe modal, inline everything, TestFlight build 29
+**Branch**: `feature/M10.8-inline-ingredient-editing`
+
+### What Happened
+
+Implemented M10.8 Phase 2 — making RecipeDetailView fully inline-editable and adding instruction editing to RecipeImportPreviewView. This is the natural extension of Phase 1 (which added tap-to-edit ingredients): if ingredients are already inline, instructions and metadata should be too. The Edit Recipe modal is now gone entirely.
+
+Five changes in two files:
+1. **Inline instruction editing** (RecipeDetailView) — bordered card per step matching the ingredient pattern. Tap to edit, submit/blur to save, long-press context menu to delete, "+ Add Step" button at bottom.
+2. **Inline instruction editing** (RecipeImportPreviewView) — same visual pattern but writes to draft buffer instead of Core Data.
+3. **Inline metadata editing** (RecipeDetailView) — tap-to-edit title, prep/cook time with `.numberPad`, servings row, always-visible favorite heart toggle.
+4. **Edit Recipe modal removal** — deleted `showingEditSheet` state, sheet presentation, and menu item. EditRecipeView.swift left as dead code for future cleanup.
+5. **Category picker height fix** — both views get `.presentationDetents([.medium, .large])` so users can drag the sheet taller.
+
+Also ran the full TestFlight pipeline for build 29 (archive → upload → App Store Connect API → beta group → review submission). Build 28 was an oops — archived before committing the Phase 2 code. Caught it immediately and re-archived with build 29.
+
+### Key Decisions
+
+- **Three `@FocusState` properties for mutual exclusion**: `focusedIngredientId: UUID?`, `focusedStepIndex: Int?`, `focusedMetadata: MetadataFocus?`. SwiftUI only allows one focused field at a time, so moving focus between these automatically triggers `onChange` handlers that commit pending edits from the previous mode. No explicit state machine needed.
+- **Vertical-axis TextField with `.submitLabel(.done)`**: `TextField("", text:, axis: .vertical)` wraps text naturally. The Done key fires `.onSubmit` instead of inserting a newline — perfect for multi-sentence instruction steps that still need a clean submit action.
+- **Save-on-blur for metadata**: Each metadata field saves independently when focus leaves it, same pattern as ingredients. No "Save All" button needed — the recipe updates as you edit.
+
+### Learning
+
+- `@FocusState` is SwiftUI's built-in mutual exclusion mechanism. Multiple `@FocusState` properties across different types naturally enforce single-active-editor since only one field can hold keyboard focus at a time. The `onChange(of:)` handlers become the commit triggers.
+- `TextField("", text:, axis: .vertical)` combined with `.submitLabel(.done)` is the right pattern for editable content that can wrap. Without `.submitLabel(.done)`, the return key inserts newlines and there's no submit action.
+- Conditional view + `@FocusState` requires `.onAppear { focusedField = .value }` to reliably gain focus after the TextField view is inserted into the hierarchy. Setting focus before the view exists is a no-op.
+- Always commit code changes before archiving. Build 28 was a wasted archive because the Phase 2 changes were still uncommitted. The `/archive` skill doesn't check for uncommitted changes — it should warn.
+
+### AI Tooling Observations
+
+Second session using the `/archive` skill. The full TestFlight pipeline (archive → upload → API polling → compliance → beta group → review submission) completed successfully for build 29. The JWT-based App Store Connect API automation saves significant time vs the Xcode Organizer GUI workflow.
+
+One improvement needed: the archive skill should warn when there are uncommitted changes, since the archive only includes committed code. The build 28 mistake was entirely avoidable.
+
+### What's Next
+
+Manual testing of build 29 on device (inline instructions + metadata editing in both RecipeDetailView and import preview). Then merge M10.8 to main.
+
+---
+
+## Session 57 — February 28, 2026
+**Milestone**: M10.8 Inline Ingredient Editing
+**Focus**: Display/edit toggle for recipe ingredient rows
+**Branch**: `feature/M10.8-inline-ingredient-editing`
+
+### What Happened
+
+Implemented M10.8 — porting the proven `RecipeImportPreviewView` display/edit toggle pattern to `EditRecipeView` and `CreateRecipeView`. This replaces always-visible TextFields with formatted read-only display (qty+unit in secondary color, parsed name bold in accent), where tapping a row opens an inline TextField for editing.
+
+Two files changed, zero model/service changes, exactly as the PRD specified. The PRD audit confirmed every reference was accurate — entity properties, line numbers, service APIs, theme tokens all matched.
+
+### Key Decisions
+
+- **UUID-based tracking over index-based**: The import preview uses `editingIndex: Int?` because its ingredient list is static. Recipe views support drag-to-reorder and swipe-to-delete, so we use `editingIngredientId: UUID?` via `IngredientInput.id` to survive list mutations.
+- **iOS 26 Text interpolation**: Used `Text("\(Text(a))\(Text(b))")` instead of the deprecated `Text + Text` pattern, clearing warnings that still exist in the import preview source.
+- **No save-path changes needed**: The existing `saveRecipe()` already re-parses all ingredients with nil templates, so our `commitIngredientEdit()` provides earlier visual feedback without being a required step.
+
+### Learning
+
+- PRD-first workflow pays off: the M10.8 PRD was created earlier today and every reference checked out perfectly against the codebase. Zero surprises during implementation.
+- The new Claude Code skills system (`/session-start`, `/service-check`, `/build`) streamlined the pre-development checks — ran the PRD audit and service check as part of the session startup flow rather than doing them ad hoc.
+- `xcodebuild archive` works from CLI with `-destination 'generic/platform=iOS'` and defaults to Release config. Combined with the App Store Connect API for TestFlight distribution, the entire release pipeline can be scripted.
+- Version bumping in pbxproj requires targeting only the app target's entries (first 2 of 6 `CURRENT_PROJECT_VERSION` occurrences) — test targets stay at `1`.
+
+### AI Tooling Observations
+
+First session using the new skills infrastructure (Session 56 created the skills). The `/session-start` skill loaded context docs efficiently. The PRD audit and service check were done manually this time (skills are `disable-model-invocation: true` for those), but the structured approach from having the skill definitions kept the process systematic. Also created a 12th skill (`/archive`) during this session — the skills system is proving easy to extend organically as workflow needs emerge.
+
+### What's Next
+
+Manual testing of the display/edit toggle in simulator, then PR. The RecipeImportPreviewView's `+` deprecation warnings should be addressed in a future cleanup pass. The `/archive` skill needs real-world testing when M7.7 (App Store Submission) begins — will need an App Store Connect API key for full TestFlight automation.
+
+---
+
 ## Session 56 — February 28, 2026
 **Milestone**: Claude Code Skills Infrastructure
 **Focus**: Extract workflow procedures from CLAUDE.md into 11 custom skills

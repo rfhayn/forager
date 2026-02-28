@@ -23,6 +23,8 @@
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Forager uses the camera to scan recipe pages for import</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

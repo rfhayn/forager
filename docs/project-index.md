@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 24, 2026
+**Last Updated**: February 28, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M8.4.1 ✅ **COMPLETE** | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M7.5 ✅ COMPLETE | **M10 NEXT**
-**Current Phase**: M8.4.1 ✅ **COMPLETE** (282 tests, 0 failures)
-**Next Priority**: M10 Recipe Import (70-95h, 4 phases, 27 sub-phases — implementation blueprint ready)
-**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Current Milestone**: M10.8 ✅ **COMPLETE** | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
+**Current Phase**: M10.8 ✅ **COMPLETE** — Inline editing across all recipe views
+**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Execution Order**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -50,6 +50,17 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **February 28, 2026** - M10.8 ✅ COMPLETE — Inline Ingredient, Instruction & Metadata Editing
+- **Completed**: Two phases — Phase 1 (ingredient display/edit toggle), Phase 2 (fully inline RecipeDetailView)
+- **Phase 1**: Tap-to-edit ingredients in EditRecipeView + CreateRecipeView, ported from RecipeImportPreviewView pattern
+- **Phase 2**: Inline instruction editing (bordered card per step), inline metadata editing (title, timing, servings, favorite), Edit Recipe modal removed
+- **Import preview**: Instruction editing added to RecipeImportPreviewView with mutual exclusion vs ingredient editing
+- **Architecture**: Three `@FocusState` properties for mutual exclusion — SwiftUI enforces single-active-editor natively
+- **Category picker**: `.presentationDetents([.medium, .large])` on both views
+- **TestFlight**: Build 29 deployed, submitted for beta review
+- **PRD**: `docs/prds/complete/m10.8-inline-ingredient-editing.md`
+- **Next**: M10.3 merge → M10.4 → M10.6
 
 ### **February 24, 2026** - M8.4.1 ✅ COMPLETE — Normalization Qualifier Reclassification
 - **Completed**: Fixed identity qualifier stripping bug — "ground beef" was being normalized to "beef"

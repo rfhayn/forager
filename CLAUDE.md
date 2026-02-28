@@ -270,6 +270,7 @@ Custom skills for forager workflows. Invoke with `/name` or let Claude auto-invo
 | `/core-data-audit` | Schema impact analysis (ADR 007) | Before schema changes |
 | `/service-check` | Duplicate service prevention | Before creating new services |
 | `/build` | Build with correct Xcode config | During development |
+| `/archive` | Archive, bump build #, upload to TestFlight | Release distribution |
 | `/prd-audit` | Verify PRD against current code | Before implementing old PRDs |
 
 ## Architecture Decision Records
