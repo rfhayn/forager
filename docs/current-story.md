@@ -1,12 +1,12 @@
 # Current Development Story
 
 **Last Updated**: February 28, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.8 🔄 ACTIVE** | **M10.6 PRD READY**
-**Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.8-inline-ingredient-editing`
-**Current Milestone**: M10.8 Inline Ingredient Editing — display/edit toggle for recipe views
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.8 ✅ **COMPLETE** | **M10.6 PRD READY**
+**Total Progress**: ~258 hours | 89% planning accuracy
+**Current Branch**: `main`
+**Current Milestone**: M10.8 ✅ COMPLETE — Inline ingredient + instruction + metadata editing
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.8 (active) → M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -129,24 +129,31 @@
 - `forager/Views/Import/DocumentScannerView.swift` — Camera scanner wrapper
 - `forager/Views/Import/PhotoImportView.swift` — Full photo import flow with dual extraction path
 
-### M10.8: Inline Ingredient Editing — 🔄 ACTIVE
+### M10.8: Inline Ingredient Editing — ✅ COMPLETE
 
 **Branch**: `feature/M10.8-inline-ingredient-editing`
-**PRD**: `docs/prds/active/m10.8-inline-ingredient-editing.md`
-**Estimated**: 3-5 hours
+**PRD**: `docs/prds/complete/m10.8-inline-ingredient-editing.md`
+**Estimated**: 3-5 hours | **Actual**: ~5 hours (2 phases)
 
-**Implementation Progress**:
+**Phase 1 — Ingredient display/edit toggle**:
 1. ✅ Display/edit toggle in EditRecipeView — formatted read-only display with tap-to-edit
 2. ✅ Display/edit toggle in CreateRecipeView — same pattern applied
 3. ✅ iOS 26 Text interpolation — no deprecation warnings
-4. ✅ Build succeeds with zero warnings
-5. ✅ `/archive` skill created — CLI archive, auto-increment build #, TestFlight upload
-6. ⏳ Manual testing — 9 test cases (PRD §5.1)
+4. ✅ `/archive` skill created — CLI archive, auto-increment build #, TestFlight upload
+
+**Phase 2 — Fully inline RecipeDetailView + import instructions**:
+5. ✅ Inline instruction editing in RecipeDetailView — bordered card per step, tap-to-edit
+6. ✅ Inline instruction editing in RecipeImportPreviewView — same pattern, draft buffer
+7. ✅ Inline metadata editing — title, prep/cook time, servings, favorite toggle
+8. ✅ Edit Recipe modal removed — no more sheet, menu item, or showingEditSheet state
+9. ✅ Category picker detent fix — `.medium, .large` on both views
+10. ✅ TestFlight build 29 — full pipeline, submitted for beta review
 
 **Key files**:
-- `forager/Views/Recipes/EditRecipeView.swift` — `ingredientRow()` replaced with display/edit toggle
-- `forager/Views/Recipes/CreateRecipeView.swift` — same pattern
-- `.claude/skills/archive/SKILL.md` — new release distribution skill
+- `forager/Views/Recipes/RecipeListView.swift` — RecipeDetailView: inline instructions, metadata, no modal
+- `forager/Views/Import/RecipeImportPreviewView.swift` — inline instruction editing
+- `forager/Views/Recipes/EditRecipeView.swift` — Phase 1 ingredient toggle (now dead code for modal)
+- `forager/Views/Recipes/CreateRecipeView.swift` — Phase 1 ingredient toggle
 
 ### M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE
 

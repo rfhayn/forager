@@ -1,30 +1,20 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 28, 2026
-**For Milestone**: M10.8 Inline Ingredient Editing — ACTIVE
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.8 🔄 **ACTIVE** | M10.6 📋 **PRD READY**
-**Branch**: `feature/M10.8-inline-ingredient-editing`
+**For Milestone**: M10.3 merge + M10.4 next
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY**
 
 ---
 
-## **M10.8 — ACTIVE: Inline Ingredient Editing**
+## **M10.8 — ✅ COMPLETE**
 
-### What to Build
-- Display/edit toggle for ingredient rows in `EditRecipeView` and `CreateRecipeView`
-- Port the proven `RecipeImportPreviewView` pattern (tap-to-edit, formatted display)
-- 2 files modified, zero model/service changes
+Inline ingredient + instruction + metadata editing across RecipeDetailView, CreateRecipeView, EditRecipeView, and RecipeImportPreviewView. Edit Recipe modal removed. TestFlight build 29 deployed.
 
-### PRD
-- `docs/prds/active/m10.8-inline-ingredient-editing.md`
-
-### Key Files
-- `forager/Views/Recipes/EditRecipeView.swift` — Replace `ingredientRow()` (~line 456)
-- `forager/Views/Recipes/CreateRecipeView.swift` — Replace `ingredientRow()` (~line 442)
-- `forager/Views/Import/RecipeImportPreviewView.swift` — Pattern source (read-only reference)
+**PRD**: `docs/prds/complete/m10.8-inline-ingredient-editing.md`
 
 ---
 
-## **M10.3 — DEV COMPLETE**
+## **M10.3 — DEV COMPLETE (Ready to Merge)**
 
 ### What's Done
 - ✅ `ImageOCRService.swift` — VNRecognizeTextRequest wrapper → [OCRLine] with real boundingBox
@@ -34,11 +24,7 @@
 - ✅ "Import from Photo" menu button in RecipeListView
 - ✅ `NSCameraUsageDescription` in Info.plist
 - ✅ Build succeeds with zero warnings
-- ✅ Bug fix: PhotoImportPhase Equatable causing review binding to freeze
-- ✅ Bug fix: "Recipe Saved!" screen removed, save auto-dismisses
-- ✅ Bug fix: CategoryAssignmentModal appears properly before dismiss
-- ✅ Bug fix: Cold launch blank grocery list (HouseholdService timing)
-- ✅ Bug fix: "Templates" → "Ingredients" in HouseholdView shared data
+- ✅ Bug fixes: PhotoImportPhase Equatable, auto-dismiss, CategoryAssignmentModal, cold launch, label fix
 - ✅ M10.3.8: Import preview ingredient matching — parse + template lookup + status display
 
 ### What Still Needs Manual Testing
@@ -50,14 +36,9 @@
 - FM path vs heuristic path on FM-capable device
 - M10.3.8 ingredient matching display (verify ✓/?/○ icons + category labels)
 
-### Tests
-- No new unit tests needed — M10.3.8 is view-layer glue connecting already-tested services
-- `IngredientParsingService.parseIngredient()` and `IngredientTemplateService.searchTemplates()` have existing coverage
-- All 267+ existing tests expected to pass (no schema changes)
-
 ---
 
-## **NEXT: M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
+## **NEXT: M10.3 (merge) → M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
 
 ### M10.4: Polish & Integration (11-16h)
 - Import history, household sharing, telemetry dashboard
@@ -68,12 +49,6 @@
 - 5 sub-phases: Protocol → Keychain → Settings UI → Integration → Docs
 - Zero Core Data schema changes, ~20 new tests
 - App fully functional without it — toggle OFF by default
-
-### M10.8: Inline Ingredient Editing (3-5h) — PRD READY
-- **PRD**: `docs/prds/active/m10.8-inline-ingredient-editing.md`
-- Display/edit toggle for EditRecipeView and CreateRecipeView
-- Ports RecipeImportPreviewView pattern (tap-to-edit, formatted display)
-- 2 files modified, zero model/service changes
 
 ### M7.7: App Store Submission (3-5h)
 - **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
@@ -86,4 +61,4 @@
 
 ---
 
-**Dependencies**: M10.3 dev complete ✅ | M10.3.8 implemented ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
+**Dependencies**: M10.3 dev complete ✅ | M10.8 complete ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
