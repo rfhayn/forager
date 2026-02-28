@@ -1,12 +1,12 @@
 # Current Development Story
 
 **Last Updated**: February 28, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 PRD READY** | **M10.8 PRD READY**
+**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.8 🔄 ACTIVE** | **M10.6 PRD READY**
 **Total Progress**: ~253 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.3-photo-import` (ready for PR)
-**Current Milestone**: M10.3 dev complete — ready for manual testing + merge
+**Current Branch**: `feature/M10.8-inline-ingredient-editing`
+**Current Milestone**: M10.8 Inline Ingredient Editing — display/edit toggle for recipe views
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.8 (active) → M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
 
 ---
 

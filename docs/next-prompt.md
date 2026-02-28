@@ -1,9 +1,26 @@
 # Next Implementation Prompt
 
 **Last Updated**: February 28, 2026
-**For Milestone**: M10.3 Photo/Image Import — DEV COMPLETE
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY** | M10.8 📋 **PRD READY**
-**Branch**: `feature/M10.3-photo-import` (ready for PR)
+**For Milestone**: M10.8 Inline Ingredient Editing — ACTIVE
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.8 🔄 **ACTIVE** | M10.6 📋 **PRD READY**
+**Branch**: `feature/M10.8-inline-ingredient-editing`
+
+---
+
+## **M10.8 — ACTIVE: Inline Ingredient Editing**
+
+### What to Build
+- Display/edit toggle for ingredient rows in `EditRecipeView` and `CreateRecipeView`
+- Port the proven `RecipeImportPreviewView` pattern (tap-to-edit, formatted display)
+- 2 files modified, zero model/service changes
+
+### PRD
+- `docs/prds/active/m10.8-inline-ingredient-editing.md`
+
+### Key Files
+- `forager/Views/Recipes/EditRecipeView.swift` — Replace `ingredientRow()` (~line 456)
+- `forager/Views/Recipes/CreateRecipeView.swift` — Replace `ingredientRow()` (~line 442)
+- `forager/Views/Import/RecipeImportPreviewView.swift` — Pattern source (read-only reference)
 
 ---
 
