@@ -68,6 +68,10 @@ struct EditRecipeView: View {
     // UI state
     @State private var hasUnsavedChanges = false
     @State private var isSaving = false
+
+    // M10.8: Inline ingredient editing — display/edit toggle
+    @State private var editingIngredientId: UUID?
+    @FocusState private var focusedIngredientId: UUID?
     
     init(recipe: Recipe, context: NSManagedObjectContext) {
         self.recipe = recipe
@@ -93,6 +97,21 @@ struct EditRecipeView: View {
                     Spacer(minLength: 100)
                 }
                 .padding()
+            }
+            // M10.8: Sync editing state and focus for inline ingredient editing
+            .onChange(of: editingIngredientId) { oldValue, newValue in
+                if let oldId = oldValue, oldId != newValue,
+                   let ingredient = formData.ingredients.first(where: { $0.id == oldId }) {
+                    commitIngredientEdit(for: ingredient)
+                }
+                focusedIngredientId = newValue
+            }
+            .onChange(of: focusedIngredientId) { _, newValue in
+                if newValue == nil, let editingId = editingIngredientId,
+                   let ingredient = formData.ingredients.first(where: { $0.id == editingId }) {
+                    commitIngredientEdit(for: ingredient)
+                    editingIngredientId = nil
+                }
             }
             .navigationTitle("Edit Recipe")
             .navigationBarTitleDisplayMode(.inline)
@@ -453,33 +472,46 @@ struct EditRecipeView: View {
         }
     }
     
+    // M10.8: Ingredient row with display/edit toggle
+    // Default: formatted read-only text (qty+unit secondary, name bold accent)
+    // Tap: switches to TextField for inline editing
     private func ingredientRow(ingredient: IngredientInput, index: Int) -> some View {
-        HStack(alignment: .center, spacing: 12) {
+        let isEditing = editingIngredientId == ingredient.id
+
+        return HStack(alignment: .center, spacing: 12) {
             Text(ingredient.statusIndicator.indicator)
                 .font(.caption)
                 .foregroundStyle(statusColor(ingredient.statusIndicator))
                 .frame(width: 20)
-            
+
             VStack(alignment: .leading, spacing: 2) {
-                TextField("Ingredient", text: Binding(
-                    get: { ingredient.fullText },
-                    set: { newValue in
-                        if let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) {
-                            formData.ingredients[index].fullText = newValue
-                            hasUnsavedChanges = true
-                            
-                            if newValue.count >= 2 {
-                                let parsed = parsingService.parseIngredient(text: newValue)
-                                let existingTemplate = templateService.searchTemplates(query: parsed.name, limit: 1)
-                                    .first(where: { $0.name?.lowercased() == parsed.name.lowercased() })
-                                formData.ingredients[index].template = existingTemplate
+                if isEditing {
+                    TextField("Ingredient", text: Binding(
+                        get: { ingredient.fullText },
+                        set: { newValue in
+                            if let idx = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) {
+                                formData.ingredients[idx].fullText = newValue
+                                hasUnsavedChanges = true
                             }
                         }
+                    ))
+                    .font(.body)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .focused($focusedIngredientId, equals: ingredient.id)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        commitIngredientEdit(for: ingredient)
+                        editingIngredientId = nil
                     }
-                ))
-                .font(.body)
-                .textFieldStyle(PlainTextFieldStyle())
-                
+                } else {
+                    formattedIngredientText(for: ingredient)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editingIngredientId = ingredient.id
+                        }
+                }
+
                 if let template = ingredient.template {
                     HStack(spacing: 4) {
                         if let category = template.category, !category.isEmpty {
@@ -498,11 +530,45 @@ struct EditRecipeView: View {
                         .foregroundStyle(ForagerTheme.statusWarningFG)
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
+    }
+
+    // M10.8: Formatted ingredient text — qty+unit in secondary, parsed name bold in accent
+    private func formattedIngredientText(for ingredient: IngredientInput) -> Text {
+        let text = ingredient.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard text.count >= 2 else {
+            return Text(text).font(.body).foregroundColor(ForagerTheme.textPrimary)
+        }
+
+        let parsed = parsingService.parseIngredient(text: text)
+        let name = parsed.displayName
+
+        if let range = text.range(of: name, options: .caseInsensitive) {
+            let prefix = String(text[text.startIndex..<range.lowerBound])
+            let matched = String(text[range])
+            let suffix = String(text[range.upperBound...])
+
+            return Text("\(Text(prefix).font(.body).foregroundColor(ForagerTheme.textSecondary))\(Text(matched).font(.body).bold().foregroundColor(ForagerTheme.accentPrimary))\(Text(suffix).font(.body).foregroundColor(ForagerTheme.textSecondary))")
+        }
+
+        return Text(text).font(.body).foregroundColor(ForagerTheme.textPrimary)
+    }
+
+    // M10.8: Re-parse and template-match when exiting edit mode
+    private func commitIngredientEdit(for ingredient: IngredientInput) {
+        guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
+        let text = formData.ingredients[index].fullText
+        guard text.count >= 2 else { return }
+
+        let parsed = parsingService.parseIngredient(text: text)
+        let existingTemplate = templateService.searchTemplates(query: parsed.name, limit: 1)
+            .first(where: { $0.name?.lowercased() == parsed.name.lowercased() })
+        formData.ingredients[index].template = existingTemplate
+        hasUnsavedChanges = true
     }
     
     private var instructionsSection: some View {

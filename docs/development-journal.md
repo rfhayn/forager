@@ -6,6 +6,38 @@
 
 ---
 
+## Session 57 — February 28, 2026
+**Milestone**: M10.8 Inline Ingredient Editing
+**Focus**: Display/edit toggle for recipe ingredient rows
+**Branch**: `feature/M10.8-inline-ingredient-editing`
+
+### What Happened
+
+Implemented M10.8 — porting the proven `RecipeImportPreviewView` display/edit toggle pattern to `EditRecipeView` and `CreateRecipeView`. This replaces always-visible TextFields with formatted read-only display (qty+unit in secondary color, parsed name bold in accent), where tapping a row opens an inline TextField for editing.
+
+Two files changed, zero model/service changes, exactly as the PRD specified. The PRD audit confirmed every reference was accurate — entity properties, line numbers, service APIs, theme tokens all matched.
+
+### Key Decisions
+
+- **UUID-based tracking over index-based**: The import preview uses `editingIndex: Int?` because its ingredient list is static. Recipe views support drag-to-reorder and swipe-to-delete, so we use `editingIngredientId: UUID?` via `IngredientInput.id` to survive list mutations.
+- **iOS 26 Text interpolation**: Used `Text("\(Text(a))\(Text(b))")` instead of the deprecated `Text + Text` pattern, clearing warnings that still exist in the import preview source.
+- **No save-path changes needed**: The existing `saveRecipe()` already re-parses all ingredients with nil templates, so our `commitIngredientEdit()` provides earlier visual feedback without being a required step.
+
+### Learning
+
+- PRD-first workflow pays off: the M10.8 PRD was created earlier today and every reference checked out perfectly against the codebase. Zero surprises during implementation.
+- The new Claude Code skills system (`/session-start`, `/service-check`, `/build`) streamlined the pre-development checks — ran the PRD audit and service check as part of the session startup flow rather than doing them ad hoc.
+
+### AI Tooling Observations
+
+First session using the new skills infrastructure (Session 56 created the skills). The `/session-start` skill loaded context docs efficiently. The PRD audit and service check were done manually this time (skills are `disable-model-invocation: true` for those), but the structured approach from having the skill definitions kept the process systematic.
+
+### What's Next
+
+Manual testing of the display/edit toggle in simulator, then commit and PR. The RecipeImportPreviewView's `+` deprecation warnings should be addressed in a future cleanup pass.
+
+---
+
 ## Session 56 — February 28, 2026
 **Milestone**: Claude Code Skills Infrastructure
 **Focus**: Extract workflow procedures from CLAUDE.md into 11 custom skills
