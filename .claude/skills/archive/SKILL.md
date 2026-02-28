@@ -7,6 +7,8 @@ description: Archive and distribute forager to TestFlight. Auto-increments build
 
 Full pipeline: version bump → archive → upload → wait for processing → export compliance → add to beta group.
 
+**CRITICAL: Permission-safe execution.** Run each operation as a SEPARATE Bash tool call. Never chain commands with `&&`, `||`, or pipes. Never combine multiple operations in one Bash call. One command per call. This ensures all commands match pre-approved permission patterns.
+
 ## Current State
 
 - Marketing version: !`grep -m1 'MARKETING_VERSION' forager.xcodeproj/project.pbxproj`
@@ -72,25 +74,20 @@ If not on main or there are uncommitted changes, warn the user and ask whether t
 
 The build number (`CURRENT_PROJECT_VERSION`) auto-increments on every archive.
 
-**Read current value** from `project.pbxproj` (the app target has two entries — Debug and Release):
+**Read current value** — run as separate calls:
 ```bash
-# Extract current build number (app target only — first two occurrences)
-CURRENT_BUILD=$(grep -m1 'CURRENT_PROJECT_VERSION = ' forager.xcodeproj/project.pbxproj | sed 's/[^0-9]//g')
-NEW_BUILD=$((CURRENT_BUILD + 1))
-echo "Build number: $CURRENT_BUILD → $NEW_BUILD"
+grep -m1 'CURRENT_PROJECT_VERSION = ' forager.xcodeproj/project.pbxproj
 ```
+Parse the number from output. Compute NEW_BUILD = CURRENT_BUILD + 1.
 
-**Update both Debug and Release** configurations for the app target only:
+**Update both Debug and Release** — run as two separate calls:
 ```bash
-# Replace the first two occurrences (app target Debug + Release)
-# Test targets have CURRENT_PROJECT_VERSION = 1 — leave those alone
-awk -v old="$CURRENT_BUILD" -v new="$NEW_BUILD" '
-  /CURRENT_PROJECT_VERSION = / && count < 2 {
-    sub("CURRENT_PROJECT_VERSION = " old, "CURRENT_PROJECT_VERSION = " new)
-    count++
-  }
-  { print }
-' forager.xcodeproj/project.pbxproj > /tmp/pbxproj_tmp && mv /tmp/pbxproj_tmp forager.xcodeproj/project.pbxproj
+# Call 1: awk to create temp file
+awk -v old="CURRENT_BUILD" -v new="NEW_BUILD" '/CURRENT_PROJECT_VERSION = / && count < 2 { sub("CURRENT_PROJECT_VERSION = " old, "CURRENT_PROJECT_VERSION = " new); count++ } { print }' forager.xcodeproj/project.pbxproj > /tmp/pbxproj_tmp
+```
+```bash
+# Call 2: move temp file back
+mv /tmp/pbxproj_tmp forager.xcodeproj/project.pbxproj
 ```
 
 **Show result** and confirm with user:
@@ -113,9 +110,14 @@ Marketing version format: `MAJOR.MINOR` (e.g., 1.2, 1.3, 2.0). Validate format b
 
 Use the current milestone from `docs/current-story.md` for the commit prefix. If no active milestone, use a generic prefix.
 
+Run as three separate calls:
 ```bash
 git add forager.xcodeproj/project.pbxproj
+```
+```bash
 git commit -m "Bump build number to $NEW_BUILD for TestFlight"
+```
+```bash
 git push
 ```
 
@@ -143,9 +145,8 @@ On failure:
 
 ## Step 6: Export & Upload to App Store Connect
 
-```bash
-# Create ExportOptions.plist
-cat > /tmp/ForagerExportOptions.plist << 'PLIST'
+Use the Write tool to create `/tmp/ForagerExportOptions.plist` with this content:
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -160,14 +161,11 @@ cat > /tmp/ForagerExportOptions.plist << 'PLIST'
     <string>automatic</string>
 </dict>
 </plist>
-PLIST
+```
 
-xcodebuild -exportArchive \
-  -archivePath ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive \
-  -exportOptionsPlist /tmp/ForagerExportOptions.plist \
-  -exportPath ~/Desktop/forager-export \
-  -allowProvisioningUpdates \
-  2>&1 | tail -10
+Then run export as a separate call:
+```bash
+xcodebuild -exportArchive -archivePath ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive -exportOptionsPlist /tmp/ForagerExportOptions.plist -exportPath ~/Desktop/forager-export -allowProvisioningUpdates
 ```
 
 The `destination: upload` auto-uploads to App Store Connect. If upload fails, fall back to:
@@ -179,61 +177,41 @@ xcrun notarytool submit ... # or Transporter.app / Xcode Organizer
 
 All remaining steps use the App Store Connect API. Generate a JWT:
 
+Run as separate calls. Read the config first:
 ```bash
-source ~/.appstoreconnect/config
-JWT=$(swift Tools/appstore-connect/generate-jwt.swift \
-  ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
-  "$KEY_ID" "$ISSUER_ID")
-
-# Get the app's App Store Connect numeric ID (cache this — it doesn't change)
-APP_ID=$(curl -s -H "Authorization: Bearer $JWT" \
-  "https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]=com.richhayn.forager" \
-  | jq -r '.data[0].id')
-echo "App Store Connect App ID: $APP_ID"
+cat ~/.appstoreconnect/config
 ```
+Note the KEY_ID and ISSUER_ID. Then generate the JWT:
+```bash
+swift Tools/appstore-connect/generate-jwt.swift ~/.appstoreconnect/private_keys/AuthKey_QBAG38ZPZR.p8 QBAG38ZPZR fbdd459e-6ae5-4dc5-82d0-c2bf095392e4
+```
+Save the output as JWT for subsequent calls. The App ID is always `6756034827`.
 
-**Note**: The JWT expires after 20 minutes. If later steps take longer, regenerate it.
+**Note**: The JWT expires after 20 minutes. If later steps take longer, regenerate it by re-running the swift command above.
 
 ## Step 8: Wait for Build Processing
 
-After upload, App Store Connect processes the build (typically 5-15 minutes). Poll until ready:
+After upload, App Store Connect processes the build (typically 5-15 minutes). Poll until ready.
 
+Run this single curl call, check the `processingState` in the output:
 ```bash
-# Poll every 60 seconds, max 15 minutes
-for i in $(seq 1 15); do
-  RESULT=$(curl -s -H "Authorization: Bearer $JWT" \
-    "https://api.appstoreconnect.apple.com/v1/builds?filter[app]=$APP_ID&filter[version]=$NEW_BUILD&sort=-uploadedDate&limit=1")
-
-  STATE=$(echo "$RESULT" | jq -r '.data[0].attributes.processingState // "NOT_FOUND"')
-  BUILD_ID=$(echo "$RESULT" | jq -r '.data[0].id // "null"')
-
-  echo "[$i/15] Processing state: $STATE"
-
-  if [ "$STATE" = "VALID" ]; then
-    echo "Build $NEW_BUILD is ready! (Build ID: $BUILD_ID)"
-    break
-  elif [ "$STATE" = "FAILED" ] || [ "$STATE" = "INVALID" ]; then
-    echo "ERROR: Build processing failed with state: $STATE"
-    echo "Check App Store Connect for details."
-    # Stop here — don't proceed to compliance/beta group
-    break
-  fi
-
-  if [ "$i" -eq 15 ]; then
-    echo "Timeout: build still processing after 15 minutes."
-    echo "Check App Store Connect manually. You can re-run steps 9-11 later."
-    break
-  fi
-
-  sleep 60
-done
+curl -s -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/builds?filter%5Bapp%5D=6756034827&filter%5Bversion%5D=$NEW_BUILD&sort=-uploadedDate&limit=1"
 ```
 
-**If the build is not found** (STATE = NOT_FOUND), the upload may still be propagating. Wait 2 minutes and try again.
+Parse the JSON response for:
+- `.data[0].attributes.processingState` — look for `"VALID"`
+- `.data[0].id` — this is the BUILD_ID for subsequent steps
 
-**If processing fails**, stop and report. Do not proceed to steps 9-11.
+If state is NOT `VALID`, wait 60 seconds then re-run the curl call. Repeat up to 15 times:
+```bash
+sleep 60
+```
 
-**Only proceed to Step 9 if STATE = VALID.**
+**If the build is not found** (empty data array), the upload may still be propagating. Wait 2 minutes and try again.
+
+**If processing fails** (state = `FAILED` or `INVALID`), stop and report. Do not proceed to steps 9-12.
+
+**Only proceed to Step 9 if state = `VALID`.** Save the BUILD_ID for use in steps 9-11.
 
 ## Step 9: Export Compliance (Automatic)
 
@@ -241,28 +219,13 @@ Export compliance is handled automatically via `ITSAppUsesNonExemptEncryption = 
 
 Verify it was picked up:
 ```bash
-# Should show false (meaning: no non-exempt encryption, compliance auto-cleared)
-curl -s -H "Authorization: Bearer $JWT" \
-  "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID" \
-  | jq '.data.attributes.usesNonExemptEncryption'
+curl -s -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID"
 ```
+Check `.data.attributes.usesNonExemptEncryption` in the response — should be `false`.
 
-If it shows `null`, the build may still be finalizing. Wait 30 seconds and retry. If it stays null, fall back to the API:
+If it shows `null`, wait 30 seconds and retry. If it stays null, set it via API:
 ```bash
-curl -s -X PATCH \
-  -H "Authorization: Bearer $JWT" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"data\": {
-      \"id\": \"$BUILD_ID\",
-      \"type\": \"builds\",
-      \"attributes\": {
-        \"usesNonExemptEncryption\": false
-      }
-    }
-  }" \
-  "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID" | jq '.data.attributes.usesNonExemptEncryption'
-echo "Export compliance: set via API fallback"
+curl -s -X PATCH -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" -d '{"data":{"id":"BUILD_ID_HERE","type":"builds","attributes":{"usesNonExemptEncryption":false}}}' "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID"
 ```
 
 ## Step 10: Add Build to Beta Test Group
@@ -271,108 +234,47 @@ Default group: **Public Beta Testers** (`46d19222-23de-4578-954a-ed0457239949`).
 
 Override with `--group "Group Name"` argument (see Arguments section).
 
+Default GROUP_ID = `46d19222-23de-4578-954a-ed0457239949`. If `--group` was passed, look up the ID first:
 ```bash
-# Default to "Public Beta Testers" unless --group argument provided
-GROUP_ID="46d19222-23de-4578-954a-ed0457239949"
-GROUP_NAME="Public Beta Testers"
-
-# If --group "Some Name" was passed, look up the group ID:
-# curl -s -H "Authorization: Bearer $JWT" \
-#   "https://api.appstoreconnect.apple.com/v1/betaGroups?filter%5Bapp%5D=6756034827" \
-#   | jq -r '.data[] | select(.attributes.name == "REQUESTED_NAME") | .id'
-
-curl -s -X POST \
-  -H "Authorization: Bearer $JWT" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"data\": [
-      {
-        \"id\": \"$BUILD_ID\",
-        \"type\": \"builds\"
-      }
-    ]
-  }" \
-  "https://api.appstoreconnect.apple.com/v1/betaGroups/$GROUP_ID/relationships/builds"
-
-echo "Build $NEW_BUILD added to beta group: $GROUP_NAME"
+curl -s -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/betaGroups?filter%5Bapp%5D=6756034827"
 ```
+
+Add build to the group:
+```bash
+curl -s -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" -d '{"data":[{"id":"BUILD_ID_HERE","type":"builds"}]}' "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/relationships/builds"
+```
+Replace `BUILD_ID_HERE` with the actual build ID. HTTP 204 = success.
 
 ## Step 11: Set "What to Test" & Submit for Beta Review
 
-Set the "What to Test" notes from the latest git commit message, then submit for beta app review (required for external groups).
+Set the "What to Test" notes from the latest git commit message, then submit for beta app review (required for external groups). Run each as a separate call.
 
+**Get the commit message:**
 ```bash
-# Get latest commit message, escaped for JSON
-WHATS_NEW=$(git log -1 --pretty=%B | python3 -c "import sys,json; print(json.dumps(sys.stdin.read().strip()))")
-
-# Get (or create) the beta build localization for en-US
-LOCALIZATION_ID=$(curl -s -H "Authorization: Bearer $JWT" \
-  "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID/betaBuildLocalizations" \
-  | jq -r '.data[] | select(.attributes.locale == "en-US") | .id')
-
-if [ -n "$LOCALIZATION_ID" ]; then
-  # Update existing localization
-  curl -s -X PATCH \
-    -H "Authorization: Bearer $JWT" \
-    -H "Content-Type: application/json" \
-    -d "{
-      \"data\": {
-        \"id\": \"$LOCALIZATION_ID\",
-        \"type\": \"betaBuildLocalizations\",
-        \"attributes\": {
-          \"whatsNew\": $WHATS_NEW
-        }
-      }
-    }" \
-    "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations/$LOCALIZATION_ID" > /dev/null
-else
-  # Create new localization
-  curl -s -X POST \
-    -H "Authorization: Bearer $JWT" \
-    -H "Content-Type: application/json" \
-    -d "{
-      \"data\": {
-        \"type\": \"betaBuildLocalizations\",
-        \"attributes\": {
-          \"whatsNew\": $WHATS_NEW,
-          \"locale\": \"en-US\"
-        },
-        \"relationships\": {
-          \"build\": {
-            \"data\": {
-              \"id\": \"$BUILD_ID\",
-              \"type\": \"builds\"
-            }
-          }
-        }
-      }
-    }" \
-    "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations" > /dev/null
-fi
-
-echo "What to Test: set from latest commit"
-
-# Submit for beta app review (required for external test groups)
-curl -s -X POST \
-  -H "Authorization: Bearer $JWT" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"data\": {
-      \"type\": \"betaAppReviewSubmissions\",
-      \"relationships\": {
-        \"build\": {
-          \"data\": {
-            \"id\": \"$BUILD_ID\",
-            \"type\": \"builds\"
-          }
-        }
-      }
-    }
-  }" \
-  "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions" > /dev/null
-
-echo "Submitted for beta app review"
+git log -1 --pretty=%B
 ```
+
+**Get the localization ID:**
+```bash
+curl -s -H "Authorization: Bearer $JWT" "https://api.appstoreconnect.apple.com/v1/builds/$BUILD_ID/betaBuildLocalizations"
+```
+Find the `en-US` localization's `id` in the response.
+
+**Update "What to Test"** — use the localization ID from above. Escape the commit message for JSON (replace newlines with `\n`, escape quotes). If a localization exists, PATCH it:
+```bash
+curl -s -X PATCH -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" -d '{"data":{"id":"LOCALIZATION_ID","type":"betaBuildLocalizations","attributes":{"whatsNew":"ESCAPED_COMMIT_MSG"}}}' "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations/LOCALIZATION_ID"
+```
+
+If no localization exists, POST to create one:
+```bash
+curl -s -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" -d '{"data":{"type":"betaBuildLocalizations","attributes":{"whatsNew":"ESCAPED_COMMIT_MSG","locale":"en-US"},"relationships":{"build":{"data":{"id":"BUILD_ID","type":"builds"}}}}}' "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations"
+```
+
+**Submit for beta app review** (required for external test groups):
+```bash
+curl -s -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" -d '{"data":{"type":"betaAppReviewSubmissions","relationships":{"build":{"data":{"id":"BUILD_ID","type":"builds"}}}}}' "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions"
+```
+HTTP 201 = submitted. HTTP 422 with `INVALID_QC_STATE` = already approved (success, skip).
 
 ## Step 12: Final Report
 
