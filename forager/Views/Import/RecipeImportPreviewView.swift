@@ -36,6 +36,11 @@ struct RecipeImportPreviewView: View {
     /// Which ingredient row is currently being edited (nil = none)
     @State private var editingIndex: Int?
     @FocusState private var focusedIngredient: Int?
+
+    // M10.8 Phase 2: Inline instruction editing state
+    @State private var editingStepIndex: Int?
+    @State private var editedSteps: [Int: String] = [:]
+    @FocusState private var focusedStep: Int?
     /// Which ingredient row has its category picker open (nil = none)
     @State private var categoryPickerIndex: Int?
 
@@ -137,12 +142,35 @@ struct RecipeImportPreviewView: View {
             }
             // Sync focus to editing state
             focusedIngredient = newValue
+            // M10.8 Phase 2: Mutual exclusion — exit step editing when ingredient editing starts
+            if newValue != nil && editingStepIndex != nil {
+                commitImportStepEdit(index: editingStepIndex!)
+                editingStepIndex = nil
+            }
         }
         .onChange(of: focusedIngredient) { _, newValue in
             // When keyboard focus is lost (tapped away), exit edit mode
             if newValue == nil && editingIndex != nil {
                 if let idx = editingIndex { reMatchIngredient(index: idx) }
                 editingIndex = nil
+            }
+        }
+        // M10.8 Phase 2: Sync focus and commit for instruction step editing
+        .onChange(of: editingStepIndex) { oldValue, newValue in
+            if let oldIdx = oldValue, oldIdx != newValue {
+                commitImportStepEdit(index: oldIdx)
+            }
+            focusedStep = newValue
+            // Mutual exclusion — exit ingredient editing when step editing starts
+            if newValue != nil && editingIndex != nil {
+                if let idx = editingIndex { reMatchIngredient(index: idx) }
+                editingIndex = nil
+            }
+        }
+        .onChange(of: focusedStep) { _, newValue in
+            if newValue == nil, let idx = editingStepIndex {
+                commitImportStepEdit(index: idx)
+                editingStepIndex = nil
             }
         }
         // Category picker sheet
@@ -152,7 +180,7 @@ struct RecipeImportPreviewView: View {
         )) {
             if let index = categoryPickerIndex {
                 categoryPickerSheet(index: index)
-                    .presentationDetents([.medium])
+                    .presentationDetents([.medium, .large])
             }
         }
         .toolbar {
@@ -654,11 +682,11 @@ struct RecipeImportPreviewView: View {
         }
     }
 
-    // MARK: - Instructions Section
+    // MARK: - Instructions Section (M10.8 Phase 2: Inline-Editable)
 
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            sectionHeader(label: "Instructions", showEditIcon: true)
+            sectionHeader(label: "Instructions", showEditIcon: false)
 
             if instructionSteps.isEmpty {
                 Text("No instructions extracted")
@@ -666,16 +694,17 @@ struct RecipeImportPreviewView: View {
                     .foregroundStyle(ForagerTheme.textTertiary)
                     .italic()
             } else {
-                let stepsToShow = showAllSteps
+                // Auto-expand when editing a step
+                let stepsToShow = (showAllSteps || editingStepIndex != nil)
                     ? instructionSteps
                     : Array(instructionSteps.prefix(collapsedStepCount))
 
                 ForEach(Array(stepsToShow.enumerated()), id: \.offset) { index, step in
-                    instructionStep(number: index + 1, text: step)
+                    importInstructionStepRow(index: index, step: step)
                 }
 
                 // "Show all N steps" collapse link
-                if instructionSteps.count > collapsedStepCount {
+                if instructionSteps.count > collapsedStepCount && editingStepIndex == nil {
                     Button(action: { withAnimation { showAllSteps.toggle() } }) {
                         Text(showAllSteps
                              ? "Show fewer steps"
@@ -687,25 +716,121 @@ struct RecipeImportPreviewView: View {
                     .padding(.top, ForagerTheme.Spacing.xs)
                 }
             }
+
+            // Add step button
+            Button { addImportStep() } label: {
+                Label("Add Step", systemImage: "plus.circle")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+            }
+            .padding(.top, ForagerTheme.Spacing.xs)
         }
     }
 
-    /// Numbered step circle (24px accent tint) + step text
-    private func instructionStep(number: Int, text: String) -> some View {
-        HStack(alignment: .top, spacing: ForagerTheme.Spacing.md) {
-            Text("\(number)")
+    /// Bordered card per instruction step with display/edit toggle (import version)
+    private func importInstructionStepRow(index: Int, step: String) -> some View {
+        let isEditing = editingStepIndex == index
+        let currentText = editedSteps[index] ?? step
+
+        return HStack(alignment: .top, spacing: ForagerTheme.Spacing.md) {
+            Text("\(index + 1)")
                 .font(ForagerTheme.captionFont)
                 .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(width: 24, height: 24)
                 .background(ForagerTheme.accentTint)
                 .clipShape(Circle())
 
-            Text(text)
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
-                .fixedSize(horizontal: false, vertical: true)
+            if isEditing {
+                TextField("Step \(index + 1)", text: importStepTextBinding(index: index, original: step), axis: .vertical)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .focused($focusedStep, equals: index)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        commitImportStepEdit(index: index)
+                        editingStepIndex = nil
+                    }
+            } else {
+                Text(currentText)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        editingStepIndex = index
+                    }
+            }
         }
-        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                .stroke(isEditing ? ForagerTheme.accentPrimary : ForagerTheme.borderSubtle, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .contextMenu {
+            Button(role: .destructive) {
+                deleteImportStep(at: index)
+            } label: {
+                Label("Delete Step", systemImage: "trash")
+            }
+        }
+    }
+
+    // MARK: - M10.8 Phase 2: Import Step Editing Helpers
+
+    /// Binding for buffered step text edits (import view)
+    private func importStepTextBinding(index: Int, original: String) -> Binding<String> {
+        Binding(
+            get: { editedSteps[index] ?? original },
+            set: { editedSteps[index] = $0 }
+        )
+    }
+
+    /// Commit a single step edit to the draft's instructions
+    private func commitImportStepEdit(index: Int) {
+        guard let editedText = editedSteps[index] else { return }
+        let trimmed = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var steps = instructionSteps
+        guard index < steps.count else { return }
+
+        if trimmed.isEmpty {
+            steps.remove(at: index)
+        } else {
+            steps[index] = trimmed
+        }
+
+        draft.instructions.value = steps.joined(separator: "\n")
+        draft.instructions.wasEdited = true
+        editedSteps.removeValue(forKey: index)
+    }
+
+    /// Add a new step to the draft instructions
+    private func addImportStep() {
+        let placeholder = "New step"
+        var steps = instructionSteps
+        steps.append(placeholder)
+        draft.instructions.value = steps.joined(separator: "\n")
+        draft.instructions.wasEdited = true
+
+        let newIndex = steps.count - 1
+        editedSteps[newIndex] = ""
+        showAllSteps = true
+        editingStepIndex = newIndex
+    }
+
+    /// Delete a step from the draft instructions
+    private func deleteImportStep(at index: Int) {
+        var steps = instructionSteps
+        guard index < steps.count else { return }
+        steps.remove(at: index)
+        draft.instructions.value = steps.joined(separator: "\n")
+        draft.instructions.wasEdited = true
+        editedSteps.removeAll()
+        editingStepIndex = nil
     }
 
     // MARK: - Image Preview

@@ -125,11 +125,7 @@ class IngredientParsingService: ObservableObject {
     /// Used for intermediate operations (autocomplete, typing previews, template lookup).
     /// For final parse operations that need telemetry, use parseUnified() or parseToStructured().
     func parseIngredient(text: String) -> ParsedIngredient {
-        let startTime = CFAbsoluteTimeGetCurrent()
         let result = parser.parse(text)
-        let duration = CFAbsoluteTimeGetCurrent() - startTime
-        self.lastParsingDuration = duration
-
         return Self.mapToParsedIngredient(result)
     }
 

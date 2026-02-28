@@ -954,10 +954,12 @@ struct RecipeDetailView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var recipeServiceM75: RecipeService
+    @EnvironmentObject private var parsingService: IngredientParsingService
+    @EnvironmentObject private var templateService: IngredientTemplateService
+    @EnvironmentObject private var householdService: HouseholdService
 
     @State private var showingAddToListSheet = false
     @State private var showingMarkUsedConfirmation = false
-    @State private var showingEditSheet = false
     @State private var showingMealPlanSheet = false
     @State private var showingDeleteConfirmation = false
     @State private var showingError = false
@@ -968,6 +970,55 @@ struct RecipeDetailView: View {
     @State private var showCustomScalePicker = false
     @State private var customWhole = 1
     @State private var customFraction = 0.0
+
+    // M10.8: Inline ingredient editing state
+    @State private var ingredientMatches: [UUID: IngredientMatchInfo] = [:]
+    @State private var editingIngredientId: UUID?
+    @State private var editedTexts: [UUID: String] = [:]
+    @State private var categoryPickerIngredientId: UUID?
+    @FocusState private var focusedIngredientId: UUID?
+
+    // M10.8 Phase 2: Inline instruction editing state
+    @State private var editingStepIndex: Int?
+    @State private var editedSteps: [Int: String] = [:]
+    @FocusState private var focusedStepIndex: Int?
+
+    // M10.8 Phase 2: Inline metadata editing state
+    @State private var editingTitle = false
+    @State private var editedTitle = ""
+    @State private var editingPrepTime = false
+    @State private var editedPrepTime = ""
+    @State private var editingCookTime = false
+    @State private var editedCookTime = ""
+    @State private var editingServings = false
+    @State private var editedServings = ""
+
+    // M10.8 Phase 2: Focus tracking for inline metadata editing
+    private enum MetadataFocus: Hashable {
+        case title, prepTime, cookTime, servings
+    }
+    @FocusState private var focusedMetadata: MetadataFocus?
+
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Category.name, ascending: true)
+        ]
+    ) private var allCategories: FetchedResults<Category>
+
+    // M10.8: Match info model for pre-computed ingredient state
+    private struct IngredientMatchInfo {
+        let parsedName: String
+        let status: IngredientStatus
+        let categoryName: String?
+    }
+
+    /// Categories filtered by household, excluding "Uncategorized"
+    private var realCategories: [Category] {
+        let key = householdService.currentHouseholdKey
+        let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+    }
 
     private let scalingService: RecipeScalingService
     private let presetScales: [Double] = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
@@ -1003,11 +1054,71 @@ struct RecipeDetailView: View {
         Int(Double(recipe.servings) * scaleFactor)
     }
 
+    // M10.8 Phase 2: Instruction steps from recipe.instructions (cleaned, no numbering)
+    private var currentInstructionSteps: [String] {
+        guard let instructions = recipe.instructions, !instructions.isEmpty else { return [] }
+        return instructions.components(separatedBy: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            .map { cleanStepText($0) }
+    }
+
     private var ctaLabel: String {
         if scaleFactor == 1.0 {
             return "Add to Grocery List"
         } else {
             return "Add to Grocery List · \(dynamicServings) servings"
+        }
+    }
+
+    // MARK: - M10.8: Ingredient Matching
+
+    /// Parse ingredient text, look up template, and determine match status.
+    /// Shared logic for both initial computation and single-ingredient re-matching.
+    private func matchIngredient(text: String) -> IngredientMatchInfo? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return nil }
+
+        let parsed = parsingService.parseIngredient(text: trimmed)
+        let cleanName = parsed.displayName
+
+        let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
+        let exactMatch = candidates.first(where: {
+            $0.name?.lowercased() == cleanName.lowercased()
+        })
+
+        if let template = exactMatch,
+           let category = template.category, !category.isEmpty,
+           category.lowercased() != "uncategorized" {
+            return IngredientMatchInfo(parsedName: cleanName, status: .ready, categoryName: category)
+        } else if exactMatch != nil {
+            return IngredientMatchInfo(parsedName: cleanName, status: .needsCategory, categoryName: nil)
+        } else {
+            return IngredientMatchInfo(parsedName: cleanName, status: .needsTemplate, categoryName: nil)
+        }
+    }
+
+    /// Pre-compute matches for all ingredients. Called on .task{} — never during body evaluation.
+    private func computeIngredientMatches() {
+        var matches: [UUID: IngredientMatchInfo] = [:]
+
+        for ingredient in sortedIngredients {
+            guard let id = ingredient.id else { continue }
+            if let info = matchIngredient(text: ingredient.name ?? "") {
+                matches[id] = info
+            }
+        }
+
+        ingredientMatches = matches
+    }
+
+    /// Re-parse and template-match a single ingredient after edit.
+    private func reMatchIngredient(id: UUID) {
+        let text = editedTexts[id]
+            ?? sortedIngredients.first(where: { $0.id == id })?.name
+            ?? ""
+
+        if let info = matchIngredient(text: text) {
+            ingredientMatches[id] = info
         }
     }
 
@@ -1020,9 +1131,7 @@ struct RecipeDetailView: View {
 
                 ingredientsSection
 
-                if let instructions = recipe.instructions, !instructions.isEmpty {
-                    instructionsSection(instructions)
-                }
+                instructionsSection
 
                 usageFooter
             }
@@ -1032,25 +1141,20 @@ struct RecipeDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                HStack(spacing: ForagerTheme.Spacing.md) {
-                    Button { showingEditSheet = true } label: {
-                        Text("Edit")
-                            .font(ForagerTheme.secondaryFont)
+                // M10.8 Phase 2: Edit Recipe removed — all editing is inline
+                Menu {
+                    Button { showingMealPlanSheet = true } label: {
+                        Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
                     }
-                    Menu {
-                        Button { showingMealPlanSheet = true } label: {
-                            Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
-                        }
-                        Button { showingMarkUsedConfirmation = true } label: {
-                            Label("Mark as Made", systemImage: "checkmark.circle")
-                        }
-                        Divider()
-                        Button(role: .destructive) { showingDeleteConfirmation = true } label: {
-                            Label("Delete Recipe", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                    Button { showingMarkUsedConfirmation = true } label: {
+                        Label("Mark as Made", systemImage: "checkmark.circle")
                     }
+                    Divider()
+                    Button(role: .destructive) { showingDeleteConfirmation = true } label: {
+                        Label("Delete Recipe", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
             }
         }
@@ -1089,9 +1193,6 @@ struct RecipeDetailView: View {
                 AddIngredientsToListView(recipe: recipe, context: viewContext)
             }
         }
-        .sheet(isPresented: $showingEditSheet) {
-            EditRecipeView(recipe: recipe, context: viewContext)
-        }
         .sheet(isPresented: $showingMealPlanSheet) {
             SelectMealPlanSheet(recipe: recipe) { plan, date in
                 if let _ = MealPlanService.shared.addRecipeToMealPlan(
@@ -1108,47 +1209,192 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $showCustomScalePicker) {
             customScalePickerSheet
         }
+        // M10.8: Category picker sheet
+        .sheet(isPresented: Binding(
+            get: { categoryPickerIngredientId != nil },
+            set: { if !$0 { categoryPickerIngredientId = nil } }
+        )) {
+            if let ingredientId = categoryPickerIngredientId {
+                categoryPickerSheet(ingredientId: ingredientId)
+                    .presentationDetents([.medium, .large])
+            }
+        }
+        // M10.8: Pre-compute ingredient matches on appear
+        .task { computeIngredientMatches() }
+        // M10.8: Sync focus and commit on blur
+        .onChange(of: editingIngredientId) { oldValue, newValue in
+            // Commit when leaving an ingredient row
+            if let oldId = oldValue, oldId != newValue,
+               let ingredient = sortedIngredients.first(where: { $0.id == oldId }) {
+                commitIngredientEdit(ingredient: ingredient)
+            }
+            // Sync focus to editing state
+            focusedIngredientId = newValue
+        }
+        .onChange(of: focusedIngredientId) { _, newValue in
+            // When keyboard focus is lost (tapped away), exit edit mode
+            if newValue == nil, let editingId = editingIngredientId,
+               let ingredient = sortedIngredients.first(where: { $0.id == editingId }) {
+                commitIngredientEdit(ingredient: ingredient)
+                editingIngredientId = nil
+            }
+        }
+        // M10.8 Phase 2: Sync focus and commit for instruction step editing
+        .onChange(of: editingStepIndex) { oldValue, newValue in
+            // Commit old step when switching
+            if let oldIdx = oldValue, oldIdx != newValue {
+                commitSingleStepEdit(index: oldIdx)
+            }
+            focusedStepIndex = newValue
+        }
+        .onChange(of: focusedStepIndex) { _, newValue in
+            if newValue == nil, let idx = editingStepIndex {
+                commitSingleStepEdit(index: idx)
+                editingStepIndex = nil
+            }
+        }
+        // M10.8 Phase 2: Commit metadata edits on focus loss
+        .onChange(of: focusedMetadata) { oldValue, newValue in
+            if oldValue != nil && newValue == nil {
+                commitAllMetadataEdits()
+            }
+        }
     }
 
-    // MARK: - Hero Header
+    // MARK: - Hero Header (M10.8 Phase 2: Inline-Editable)
 
     private var recipeHeaderSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Title + Favorite
             HStack {
-                Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.detailTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                    .lineLimit(3)
+                if editingTitle {
+                    TextField("Recipe title", text: $editedTitle)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .focused($focusedMetadata, equals: .title)
+                        .submitLabel(.done)
+                        .onSubmit { commitAllMetadataEdits() }
+                        .onAppear { focusedMetadata = .title }
+                } else {
+                    Text(recipe.recipeDisplayTitle)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineLimit(3)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editedTitle = recipe.title ?? ""
+                            editingTitle = true
+                        }
+                }
 
                 Spacer()
 
-                if recipe.isFavorite {
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(ForagerTheme.statusDangerFG)
+                // Favorite toggle — always visible
+                Button {
+                    recipeServiceM75.toggleFavorite(recipe)
+                } label: {
+                    Image(systemName: recipe.isFavorite ? "heart.fill" : "heart")
+                        .foregroundStyle(recipe.isFavorite ? ForagerTheme.statusDangerFG : ForagerTheme.textTertiary)
                         .font(.title3)
                 }
+                .buttonStyle(.plain)
             }
 
-            // Compact timing row
-            if recipe.hasRecipeTiming {
-                HStack(spacing: ForagerTheme.Spacing.md) {
+            // Compact timing row — tappable for inline editing
+            timingRow
+
+            // Servings — tappable for inline editing
+            servingsRow
+        }
+    }
+
+    private var timingRow: some View {
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            // Prep time
+            if editingPrepTime {
+                HStack(spacing: 4) {
+                    Image(systemName: "clock")
+                    TextField("0", text: $editedPrepTime)
+                        .keyboardType(.numberPad)
+                        .frame(width: 36)
+                        .focused($focusedMetadata, equals: .prepTime)
+                        .onAppear { focusedMetadata = .prepTime }
+                    Text("min")
+                }
+            } else {
+                Button {
+                    editedPrepTime = recipe.prepTime > 0 ? "\(recipe.prepTime)" : ""
+                    editingPrepTime = true
+                } label: {
                     if recipe.prepTime > 0 {
                         Label(recipe.recipeFormattedPrepTime, systemImage: "clock")
-                    }
-                    if recipe.cookTime > 0 {
-                        Label(recipe.recipeFormattedCookTime, systemImage: "flame")
-                    }
-                    if recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
-                        Label(recipe.recipeFormattedTotalTime, systemImage: "timer")
+                    } else {
+                        Label("Prep", systemImage: "clock")
+                            .foregroundStyle(ForagerTheme.textTertiary)
                     }
                 }
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
+                .buttonStyle(.plain)
             }
 
-            Text(recipe.recipeServingsDescription)
+            // Cook time
+            if editingCookTime {
+                HStack(spacing: 4) {
+                    Image(systemName: "flame")
+                    TextField("0", text: $editedCookTime)
+                        .keyboardType(.numberPad)
+                        .frame(width: 36)
+                        .focused($focusedMetadata, equals: .cookTime)
+                        .onAppear { focusedMetadata = .cookTime }
+                    Text("min")
+                }
+            } else {
+                Button {
+                    editedCookTime = recipe.cookTime > 0 ? "\(recipe.cookTime)" : ""
+                    editingCookTime = true
+                } label: {
+                    if recipe.cookTime > 0 {
+                        Label(recipe.recipeFormattedCookTime, systemImage: "flame")
+                    } else {
+                        Label("Cook", systemImage: "flame")
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Total time (read-only, only shown when both times exist)
+            if !editingPrepTime && !editingCookTime
+                && recipe.totalTime > 0 && recipe.prepTime > 0 && recipe.cookTime > 0 {
+                Label(recipe.recipeFormattedTotalTime, systemImage: "timer")
+            }
+        }
+        .font(ForagerTheme.secondaryFont)
+        .foregroundStyle(ForagerTheme.textSecondary)
+    }
+
+    private var servingsRow: some View {
+        Group {
+            if editingServings {
+                HStack(spacing: 4) {
+                    TextField("1", text: $editedServings)
+                        .keyboardType(.numberPad)
+                        .frame(width: 36)
+                        .focused($focusedMetadata, equals: .servings)
+                        .onAppear { focusedMetadata = .servings }
+                    Text("servings")
+                }
                 .font(ForagerTheme.secondaryFont)
                 .foregroundStyle(ForagerTheme.textTertiary)
+            } else {
+                Text(recipe.recipeServingsDescription)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        editedServings = "\(recipe.servings)"
+                        editingServings = true
+                    }
+            }
         }
     }
 
@@ -1174,6 +1420,11 @@ struct RecipeDetailView: View {
 
             // Inline scale pills
             scalePillRow
+
+            // M10.8: Ingredient match summary (only at 1x scale)
+            if scaleFactor == 1.0 && !ingredientMatches.isEmpty {
+                ingredientMatchSummary
+            }
 
             // Flat ingredient list
             if !hasIngredients {
@@ -1280,24 +1531,91 @@ struct RecipeDetailView: View {
         .presentationDetents([.medium])
     }
 
-    // MARK: - Ingredient Row
+    // MARK: - M10.8: Ingredient Row — Bordered Card with Display/Edit Toggle
 
+    /// Per-ingredient bordered card row with display/edit toggle.
+    /// At 1x scale: tap to edit, category picker, context menu delete.
+    /// At non-1x scale: read-only with scaled quantities.
     private func ingredientRow(_ ingredient: Ingredient) -> some View {
+        let id = ingredient.id ?? UUID()
+        let matchInfo = ingredientMatches[id]
+        let isEditing = editingIngredientId == id && scaleFactor == 1.0
+        let hasCategory = matchInfo?.categoryName != nil
         let displayName = ingredientDisplayName(for: ingredient)
-        return HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.sm) {
-            // Confidence bullet: green for high, amber for low
-            Circle()
-                .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
-                .frame(width: 4, height: 4)
-                .padding(.top, 8)
+        let currentText = editedTexts[id] ?? (ingredient.name ?? "")
 
-            Text(displayName)
-                .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
+        return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+            // Top line: status icon + ingredient text
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                // Status indicator
+                if hasCategory {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        .font(.system(size: 14))
+                } else if matchInfo != nil {
+                    Image(systemName: "circle")
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .font(.system(size: 14))
+                } else {
+                    Circle()
+                        .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
+                        .frame(width: 8, height: 8)
+                }
 
-            Spacer()
+                if isEditing {
+                    // Edit mode: full-line TextField
+                    TextField("Ingredient", text: ingredientTextBinding(id: id, original: ingredient.name ?? ""))
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .focused($focusedIngredientId, equals: id)
+                        .onSubmit {
+                            commitIngredientEdit(ingredient: ingredient)
+                            editingIngredientId = nil
+                        }
+                } else if scaleFactor != 1.0 {
+                    // Scaled display mode: show scaled quantities, no editing
+                    Text(displayName)
+                        .font(ForagerTheme.bodyFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                } else {
+                    // Display mode: formatted text with parsed name highlighted
+                    formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editingIngredientId = id
+                        }
+                }
+            }
+
+            // Bottom line: category picker (only at 1x scale)
+            if scaleFactor == 1.0 {
+                categoryLabel(ingredientId: id)
+                    .padding(.leading, 22) // Align under text, past the status icon
+            }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                .stroke(isEditing ? ForagerTheme.accentPrimary : ForagerTheme.borderSubtle, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .contextMenu {
+            if scaleFactor == 1.0 {
+                Button(role: .destructive) {
+                    recipeServiceM75.removeIngredient(ingredient)
+                    ingredientMatches.removeValue(forKey: id)
+                    editedTexts.removeValue(forKey: id)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(displayName)
     }
@@ -1314,6 +1632,194 @@ struct RecipeDetailView: View {
             return templateName
         }
         return "\(scaled.displayText) \(templateName)"
+    }
+
+    // MARK: - M10.8: Ingredient Text Binding + Commit
+
+    /// Binding for buffered ingredient text edits
+    private func ingredientTextBinding(id: UUID, original: String) -> Binding<String> {
+        Binding(
+            get: { editedTexts[id] ?? original },
+            set: { editedTexts[id] = $0 }
+        )
+    }
+
+    /// Save ingredient edit to Core Data on blur/submit.
+    /// Re-parses with telemetry, updates template, saves via RecipeService.
+    private func commitIngredientEdit(ingredient: Ingredient) {
+        guard let id = ingredient.id else { return }
+        let text = editedTexts[id] ?? (ingredient.name ?? "")
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else { return }
+
+        // Re-parse with full telemetry
+        let (parsed, structured) = parsingService.parseUnified(text: trimmed, source: .recipeIngredient)
+
+        // Find or create template for the parsed name
+        let template = templateService.findOrCreateTemplate(
+            name: parsed.displayName,
+            category: ingredientMatches[id]?.categoryName
+        )
+
+        // Update ingredient via service (single save)
+        recipeServiceM75.updateIngredient(
+            ingredient,
+            name: trimmed,
+            numericValue: structured.numericValue,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: structured.parseConfidence,
+            template: template
+        )
+
+        // Clear the edit buffer for this ingredient
+        editedTexts.removeValue(forKey: id)
+
+        // Update match info
+        reMatchIngredient(id: id)
+    }
+
+    // MARK: - M10.8: Formatted Ingredient Text
+
+    /// Format ingredient text with parsed name highlighted in bold accent color.
+    /// Reads from pre-computed match — never calls parser during render.
+    private func formattedIngredientText(text: String, matchInfo: IngredientMatchInfo?) -> Text {
+        guard let info = matchInfo else {
+            return Text(text)
+                .font(ForagerTheme.bodyFont)
+                .foregroundColor(ForagerTheme.textPrimary)
+        }
+
+        // Try to find parsed name in the text (case-insensitive)
+        if let range = text.range(of: info.parsedName, options: .caseInsensitive) {
+            let prefix = String(text[text.startIndex..<range.lowerBound])
+            let name = String(text[range])
+            let suffix = String(text[range.upperBound...])
+            return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+                + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
+                + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+        }
+
+        // Fallback: full text in primary
+        return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
+    }
+
+    // MARK: - M10.8: Ingredient Match Summary
+
+    /// Summary bar: "N categorized · N need category"
+    private var ingredientMatchSummary: some View {
+        let categorized = ingredientMatches.values.filter { $0.categoryName != nil }.count
+        let total = sortedIngredients.count
+        let uncategorized = total - categorized
+
+        return HStack(spacing: ForagerTheme.Spacing.md) {
+            if categorized > 0 {
+                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusSuccessFG)
+            }
+            if uncategorized > 0 {
+                Label("\(uncategorized) need category", systemImage: "circle")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
+        }
+        .padding(.bottom, ForagerTheme.Spacing.xs)
+    }
+
+    // MARK: - M10.8: Category Label + Picker
+
+    /// Category label button that opens the category picker sheet.
+    /// Shows colored dot + category name when assigned, "Choose Category" when empty.
+    private func categoryLabel(ingredientId: UUID) -> some View {
+        Button {
+            categoryPickerIngredientId = ingredientId
+        } label: {
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                if let categoryName = ingredientMatches[ingredientId]?.categoryName {
+                    Circle()
+                        .fill(ForagerTheme.categoryColor(for: categoryName))
+                        .frame(width: 8, height: 8)
+                    Text(categoryName)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                } else {
+                    Text("Choose Category")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 8))
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Sheet with colored category options for a given ingredient
+    private func categoryPickerSheet(ingredientId: UUID) -> some View {
+        let ingredient = sortedIngredients.first(where: { $0.id == ingredientId })
+        let ingredientName = ingredient?.name ?? "Unknown"
+
+        return NavigationStack {
+            List {
+                Section {
+                    Text(ingredientName)
+                        .font(ForagerTheme.bodyFont.weight(.medium))
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
+                    ForEach(realCategories, id: \.objectID) { category in
+                        Button {
+                            assignCategory(category.displayName, to: ingredientId)
+                            categoryPickerIngredientId = nil
+                        } label: {
+                            HStack(spacing: ForagerTheme.Spacing.md) {
+                                Circle()
+                                    .fill(ForagerTheme.categoryColor(for: category.displayName))
+                                    .frame(width: 12, height: 12)
+                                Text(category.displayName)
+                                    .font(ForagerTheme.bodyFont)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                                Spacer()
+                                if ingredientMatches[ingredientId]?.categoryName == category.displayName {
+                                    Image(systemName: "checkmark")
+                                        .foregroundStyle(ForagerTheme.accentPrimary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Category")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { categoryPickerIngredientId = nil }
+                }
+            }
+        }
+    }
+
+    /// Assign a category to an ingredient's template and update match info
+    private func assignCategory(_ categoryName: String, to ingredientId: UUID) {
+        // Update match info
+        if let existing = ingredientMatches[ingredientId] {
+            ingredientMatches[ingredientId] = IngredientMatchInfo(
+                parsedName: existing.parsedName,
+                status: .ready,
+                categoryName: categoryName
+            )
+        }
+
+        // Update the template's category via service
+        if let ingredient = sortedIngredients.first(where: { $0.id == ingredientId }),
+           let template = ingredient.ingredientTemplate {
+            templateService.updateCategory(template, category: categoryName)
+        }
     }
 
     // MARK: - CTA Button
@@ -1333,31 +1839,170 @@ struct RecipeDetailView: View {
         .padding(.top, ForagerTheme.Spacing.md)
     }
 
-    // MARK: - Instructions
+    // MARK: - Instructions (M10.8 Phase 2: Inline-Editable)
 
-    private func instructionsSection(_ instructions: String) -> some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+    private var instructionsSection: some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
             Text("INSTRUCTIONS")
                 .font(ForagerTheme.footnoteFont)
                 .tracking(0.5)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
-            let steps = instructions.components(separatedBy: "\n")
-                .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-
-            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.md) {
-                    Text("\(index + 1)")
-                        .font(ForagerTheme.bodyFont.bold().monospacedDigit())
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .frame(width: 24, alignment: .trailing)
-
-                    Text(cleanStepText(step))
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
-                        .lineSpacing(6)
+            let steps = currentInstructionSteps
+            if steps.isEmpty {
+                Text("No instructions")
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .italic()
+            } else {
+                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                    instructionStepRow(index: index, step: step)
                 }
             }
+
+            // Add step button
+            Button { addStep() } label: {
+                Label("Add Step", systemImage: "plus.circle")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+            }
+            .padding(.top, ForagerTheme.Spacing.xs)
+        }
+    }
+
+    /// Bordered card per instruction step with display/edit toggle
+    private func instructionStepRow(index: Int, step: String) -> some View {
+        let isEditing = editingStepIndex == index
+        let currentText = editedSteps[index] ?? step
+
+        return HStack(alignment: .firstTextBaseline, spacing: ForagerTheme.Spacing.md) {
+            Text("\(index + 1)")
+                .font(ForagerTheme.bodyFont.bold().monospacedDigit())
+                .foregroundStyle(ForagerTheme.accentPrimary)
+                .frame(width: 24, alignment: .trailing)
+
+            if isEditing {
+                TextField("Step \(index + 1)", text: stepTextBinding(index: index, original: step), axis: .vertical)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineSpacing(6)
+                    .focused($focusedStepIndex, equals: index)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        commitSingleStepEdit(index: index)
+                        editingStepIndex = nil
+                    }
+            } else {
+                Text(currentText)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineSpacing(6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        editingStepIndex = index
+                    }
+            }
+        }
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                .stroke(isEditing ? ForagerTheme.accentPrimary : ForagerTheme.borderSubtle, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .contextMenu {
+            Button(role: .destructive) {
+                deleteStep(at: index)
+            } label: {
+                Label("Delete Step", systemImage: "trash")
+            }
+        }
+    }
+
+    // MARK: - M10.8 Phase 2: Instruction Step Helpers
+
+    /// Binding for buffered step text edits
+    private func stepTextBinding(index: Int, original: String) -> Binding<String> {
+        Binding(
+            get: { editedSteps[index] ?? original },
+            set: { editedSteps[index] = $0 }
+        )
+    }
+
+    /// Save a single step edit to Core Data
+    private func commitSingleStepEdit(index: Int) {
+        guard let editedText = editedSteps[index] else { return }
+        let trimmed = editedText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var steps = currentInstructionSteps
+        guard index < steps.count else { return }
+
+        if trimmed.isEmpty {
+            steps.remove(at: index)
+        } else {
+            steps[index] = trimmed
+        }
+
+        let rebuilt = steps.joined(separator: "\n")
+        recipeServiceM75.updateRecipe(recipe, instructions: rebuilt)
+        editedSteps.removeValue(forKey: index)
+    }
+
+    /// Add a new empty step at the end and enter edit mode
+    private func addStep() {
+        let placeholder = "New step"
+        var steps = currentInstructionSteps
+        steps.append(placeholder)
+        let rebuilt = steps.joined(separator: "\n")
+        recipeServiceM75.updateRecipe(recipe, instructions: rebuilt)
+
+        // Enter edit mode for the new step with empty text
+        let newIndex = steps.count - 1
+        editedSteps[newIndex] = ""
+        editingStepIndex = newIndex
+    }
+
+    /// Delete a step and rebuild instructions
+    private func deleteStep(at index: Int) {
+        var steps = currentInstructionSteps
+        guard index < steps.count else { return }
+        steps.remove(at: index)
+        let rebuilt = steps.joined(separator: "\n")
+        recipeServiceM75.updateRecipe(recipe, instructions: rebuilt)
+        editedSteps.removeAll()
+        editingStepIndex = nil
+    }
+
+    // MARK: - M10.8 Phase 2: Metadata Commit Helpers
+
+    /// Commit all pending metadata edits (title, prep time, cook time, servings)
+    private func commitAllMetadataEdits() {
+        if editingTitle {
+            let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && trimmed != recipe.title {
+                recipeServiceM75.updateRecipe(recipe, title: trimmed)
+            }
+            editingTitle = false
+        }
+        if editingPrepTime {
+            if let value = Int16(editedPrepTime), value >= 0 {
+                recipeServiceM75.updateRecipe(recipe, prepTime: value)
+            }
+            editingPrepTime = false
+        }
+        if editingCookTime {
+            if let value = Int16(editedCookTime), value >= 0 {
+                recipeServiceM75.updateRecipe(recipe, cookTime: value)
+            }
+            editingCookTime = false
+        }
+        if editingServings {
+            if let value = Int16(editedServings), value > 0 {
+                recipeServiceM75.updateRecipe(recipe, servings: value)
+            }
+            editingServings = false
         }
     }
 
