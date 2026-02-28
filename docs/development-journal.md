@@ -27,14 +27,16 @@ Two files changed, zero model/service changes, exactly as the PRD specified. The
 
 - PRD-first workflow pays off: the M10.8 PRD was created earlier today and every reference checked out perfectly against the codebase. Zero surprises during implementation.
 - The new Claude Code skills system (`/session-start`, `/service-check`, `/build`) streamlined the pre-development checks — ran the PRD audit and service check as part of the session startup flow rather than doing them ad hoc.
+- `xcodebuild archive` works from CLI with `-destination 'generic/platform=iOS'` and defaults to Release config. Combined with the App Store Connect API for TestFlight distribution, the entire release pipeline can be scripted.
+- Version bumping in pbxproj requires targeting only the app target's entries (first 2 of 6 `CURRENT_PROJECT_VERSION` occurrences) — test targets stay at `1`.
 
 ### AI Tooling Observations
 
-First session using the new skills infrastructure (Session 56 created the skills). The `/session-start` skill loaded context docs efficiently. The PRD audit and service check were done manually this time (skills are `disable-model-invocation: true` for those), but the structured approach from having the skill definitions kept the process systematic.
+First session using the new skills infrastructure (Session 56 created the skills). The `/session-start` skill loaded context docs efficiently. The PRD audit and service check were done manually this time (skills are `disable-model-invocation: true` for those), but the structured approach from having the skill definitions kept the process systematic. Also created a 12th skill (`/archive`) during this session — the skills system is proving easy to extend organically as workflow needs emerge.
 
 ### What's Next
 
-Manual testing of the display/edit toggle in simulator, then commit and PR. The RecipeImportPreviewView's `+` deprecation warnings should be addressed in a future cleanup pass.
+Manual testing of the display/edit toggle in simulator, then PR. The RecipeImportPreviewView's `+` deprecation warnings should be addressed in a future cleanup pass. The `/archive` skill needs real-world testing when M7.7 (App Store Submission) begins — will need an App Store Connect API key for full TestFlight automation.
 
 ---
 

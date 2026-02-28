@@ -129,6 +129,25 @@
 - `forager/Views/Import/DocumentScannerView.swift` — Camera scanner wrapper
 - `forager/Views/Import/PhotoImportView.swift` — Full photo import flow with dual extraction path
 
+### M10.8: Inline Ingredient Editing — 🔄 ACTIVE
+
+**Branch**: `feature/M10.8-inline-ingredient-editing`
+**PRD**: `docs/prds/active/m10.8-inline-ingredient-editing.md`
+**Estimated**: 3-5 hours
+
+**Implementation Progress**:
+1. ✅ Display/edit toggle in EditRecipeView — formatted read-only display with tap-to-edit
+2. ✅ Display/edit toggle in CreateRecipeView — same pattern applied
+3. ✅ iOS 26 Text interpolation — no deprecation warnings
+4. ✅ Build succeeds with zero warnings
+5. ✅ `/archive` skill created — CLI archive, auto-increment build #, TestFlight upload
+6. ⏳ Manual testing — 9 test cases (PRD §5.1)
+
+**Key files**:
+- `forager/Views/Recipes/EditRecipeView.swift` — `ingredientRow()` replaced with display/edit toggle
+- `forager/Views/Recipes/CreateRecipeView.swift` — same pattern
+- `.claude/skills/archive/SKILL.md` — new release distribution skill
+
 ### M10.5 Spike: Pipeline Accuracy + LLM Evaluation — ✅ COMPLETE
 
 **Branch**: `feature/M10.5-spike-pipeline-fixes`
