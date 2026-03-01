@@ -6,6 +6,44 @@
 
 ---
 
+## Session 61 — March 1, 2026
+**Milestone**: M10.6.5 — Manual Testing Fixes + AI Parse UX Improvements
+**Focus**: Diagnose "AI parsing unavailable" regression, improve error reporting, add AI re-parse to RecipeDetailView and IngredientsView
+**Branch**: `feature/M10.6.5-manual-testing-fixes`
+
+### What Happened
+
+Continued from a previous session that ran out of context. The prior session had implemented M10.6.7 (household-shared API key), replaced wand icons with Claude logos, archived to TestFlight, and then hit an "AI parsing unavailable" regression on the import screen.
+
+This session focused on three areas:
+
+1. **Root cause analysis of "AI parsing unavailable"**: Traced the error through the full call chain — `RecipeImportPreviewView` → `parseBatchWithLLM()` → `activeParser()` → `resolvedAPIKey`. Discovered that `parseBatchWithLLM()` returned `nil` for TWO different reasons (not configured vs API failure) but the toast always showed the same misleading "unavailable" message. Added `@Published var lastLLMError: String?` to `IngredientParsingService` so callers can show the real error. The user confirmed they're not in a household, ruling out CloudKit key issues.
+
+2. **API connectivity verification**: Tested the user's API key both with a basic curl call (200) and with the exact same tool_use request format the app sends (200, correctly structured response). The key and API are working. The regression is likely `isEnabled` being false or the Keychain key being missing after a device rebuild — the improved error messages will surface the exact cause.
+
+3. **New "Parse with AI" buttons**: Replaced tiny `ClaudeLogo` icons with `ClaudeParseLabel()` (Claude logo + text) across all 5 views. Added AI re-parse to `RecipeDetailView` (for ingredients with `parseConfidence < 0.7` or `needsReview` templates) and `IngredientsView` (for `needsReview` templates in the review banner).
+
+### Key Decisions
+
+- **`lastLLMError` property over error return types**: Rather than changing `parseBatchWithLLM()` from `-> Result?` to `-> Result<T, Error>` (which would require updating all 7+ callers), added a `@Published var lastLLMError` that callers read after a nil return. Minimal change surface.
+- **Selective commit staging**: The `project.pbxproj` has version/build number changes (31→4, 1.2→2) from Xcode that aren't from this session. Committing only the 7 actual code files to avoid mixing concerns.
+- **Count validation preserved despite split risk**: The system prompt tells Claude to split "salt and pepper" into separate items, but `parseBatchWithLLM` requires `llmResults.count == texts.count`. Kept this strict validation since it worked before and prevents data misalignment.
+
+### Learning
+
+- `parseBatchWithLLM` conflating "not configured" with "API call failed" as `nil` is a classic sentinel value problem. A proper `Result` type would be better, but the `lastLLMError` approach is pragmatic for the existing codebase.
+- Testing API connectivity from the CLI with the exact same request body/headers/tool schema the app uses is a fast way to isolate client-side vs server-side issues.
+
+### AI Tooling Observations
+
+Context compaction across sessions is the main challenge — this session started from a summary of the prior one. The summary captured all code changes and file locations accurately, enabling a smooth continuation. Testing API calls via curl from Claude Code is effective for network debugging without needing to build and deploy.
+
+### What's Next
+
+Build and test on device — the improved error messages should reveal the exact cause of the "AI parsing unavailable" issue. If it's `isEnabled == false` or missing Keychain key, the fix is just toggling/re-entering in Settings. Commit the current changes, then potentially archive and test.
+
+---
+
 ## Session 60 — March 1, 2026
 **Milestone**: M10.6.6 — User-Triggered AI Parsing Across All Views
 **Focus**: Add sparkle button + context menu AI Parse to all ingredient editing surfaces

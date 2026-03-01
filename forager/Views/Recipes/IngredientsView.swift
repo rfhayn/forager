@@ -9,6 +9,7 @@ struct IngredientsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
+    @EnvironmentObject private var parsingService: IngredientParsingService
 
     @Binding var popToRoot: Bool
 
@@ -108,6 +109,10 @@ struct IngredientsView: View {
     @State private var showDuplicatesOnly = false
     @State private var activeSheet: ActiveSheet?
     @State private var errorMessage: String?
+
+    // M10.6.7: LLM re-parse state
+    @State private var isLLMBatchParsing = false
+    @State private var llmToastMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -227,6 +232,7 @@ struct IngredientsView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .llmParsingToast(message: $llmToastMessage)
         .onChange(of: popToRoot) { _, _ in
             activeSheet = nil
             errorMessage = nil
@@ -338,6 +344,20 @@ struct IngredientsView: View {
                 .font(ForagerTheme.secondaryFont)
                 .foregroundStyle(ForagerTheme.textPrimary)
             Spacer()
+            // M10.6.7: AI re-parse for needsReview templates
+            if parsingService.isLLMAvailable {
+                if isLLMBatchParsing {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button {
+                        Task { await batchLLMReparseTemplates() }
+                    } label: {
+                        ClaudeParseLabel()
+                            .font(ForagerTheme.footnoteFont)
+                    }
+                }
+            }
             Button("Review Now") {
                 activeSheet = .review
             }
@@ -599,6 +619,39 @@ struct IngredientsView: View {
         if let error = ingredientTemplateService.errorMessage {
             errorMessage = error
         }
+    }
+
+    // MARK: - M10.6.7: LLM Re-Parse for Needs Review Templates
+
+    /// Re-parse needsReview templates via LLM to extract clean ingredient names.
+    /// Updates template names in place, preserving categories and staple status.
+    private func batchLLMReparseTemplates() async {
+        let reviewTemplates = ingredients.filter { $0.needsReview }
+        guard !reviewTemplates.isEmpty else { return }
+
+        isLLMBatchParsing = true
+
+        let texts = reviewTemplates.map { $0.name ?? "" }
+        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
+            for (index, (parsed, _)) in results.enumerated() {
+                guard index < reviewTemplates.count else { break }
+                let template = reviewTemplates[index]
+                let cleanName = parsed.displayName
+
+                // Only update if the parsed name is different and non-empty
+                if !cleanName.isEmpty && cleanName != template.name {
+                    ingredientTemplateService.updateTemplate(
+                        template, name: cleanName,
+                        category: template.category, isStaple: template.isStaple
+                    )
+                }
+            }
+            llmToastMessage = "AI cleaned \(results.count) ingredient names"
+        } else {
+            llmToastMessage = parsingService.lastLLMError ?? "AI parsing failed"
+        }
+
+        isLLMBatchParsing = false
     }
     
     private func applySorting(to ingredients: [IngredientTemplate]) -> [IngredientTemplate] {

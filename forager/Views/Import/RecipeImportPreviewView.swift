@@ -395,7 +395,7 @@ struct RecipeImportPreviewView: View {
             }
             llmToastMessage = "AI parsed \(results.count) ingredients"
         } else {
-            llmToastMessage = "AI parsing unavailable"
+            llmToastMessage = parsingService.lastLLMError ?? "AI parsing failed"
         }
 
         isLLMBatchParsing = false
@@ -576,7 +576,8 @@ struct RecipeImportPreviewView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            ClaudeLogo(size: 20)
+                            ClaudeParseLabel()
+                                .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(draft.ingredients.value.isEmpty)
                     }

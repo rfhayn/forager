@@ -404,7 +404,8 @@ struct CreateRecipeView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            ClaudeLogo(size: 20)
+                            ClaudeParseLabel()
+                                .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(formData.ingredients.isEmpty)
                     }
@@ -815,7 +816,7 @@ struct CreateRecipeView: View {
             hasUnsavedChanges = true
             llmToastMessage = "AI parsed \(results.count) ingredients"
         } else {
-            llmToastMessage = "AI parsing unavailable"
+            llmToastMessage = parsingService.lastLLMError ?? "AI parsing failed"
         }
 
         isLLMBatchParsing = false

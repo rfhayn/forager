@@ -978,6 +978,10 @@ struct RecipeDetailView: View {
     @State private var categoryPickerIngredientId: UUID?
     @FocusState private var focusedIngredientId: UUID?
 
+    // M10.6.7: LLM re-parse state
+    @State private var isLLMBatchParsing = false
+    @State private var llmToastMessage: String?
+
     // M10.8 Phase 2: Inline instruction editing state
     @State private var editingStepIndex: Int?
     @State private var editedSteps: [Int: String] = [:]
@@ -1122,6 +1126,61 @@ struct RecipeDetailView: View {
         }
     }
 
+    // MARK: - M10.6.7: LLM Re-Parse for Low Confidence / Needs Review
+
+    /// Whether any ingredients qualify for AI re-parsing
+    private var hasLLMCandidates: Bool {
+        sortedIngredients.contains { ingredient in
+            ingredient.parseConfidence < 0.7
+                || (ingredient.ingredientTemplate?.needsReview == true)
+        }
+    }
+
+    /// Re-parse ingredients with low confidence or needsReview templates via LLM.
+    /// Updates ingredient text, re-links template, and refreshes match info.
+    private func batchLLMReparse() async {
+        let candidates = sortedIngredients.filter { ingredient in
+            ingredient.parseConfidence < 0.7
+                || (ingredient.ingredientTemplate?.needsReview == true)
+        }
+        guard !candidates.isEmpty else { return }
+
+        isLLMBatchParsing = true
+
+        let texts = candidates.map { $0.name ?? "" }
+        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
+            for (index, (parsed, structured)) in results.enumerated() {
+                guard index < candidates.count else { break }
+                let ingredient = candidates[index]
+
+                let template = templateService.findOrCreateTemplate(
+                    name: parsed.displayName,
+                    category: nil
+                )
+
+                recipeServiceM75.updateIngredient(
+                    ingredient,
+                    name: ingredient.name ?? "",
+                    numericValue: structured.numericValue,
+                    standardUnit: structured.standardUnit,
+                    displayText: structured.displayText,
+                    isParseable: structured.isParseable,
+                    parseConfidence: structured.parseConfidence,
+                    template: template
+                )
+
+                if let id = ingredient.id {
+                    reMatchIngredient(id: id)
+                }
+            }
+            llmToastMessage = "AI re-parsed \(results.count) ingredients"
+        } else {
+            llmToastMessage = parsingService.lastLLMError ?? "AI parsing failed"
+        }
+
+        isLLMBatchParsing = false
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -1219,6 +1278,7 @@ struct RecipeDetailView: View {
                     .presentationDetents([.medium, .large])
             }
         }
+        .llmParsingToast(message: $llmToastMessage)
         // M10.8: Pre-compute ingredient matches on appear
         .task { computeIngredientMatches() }
         // M10.8: Sync focus and commit on blur
@@ -1402,7 +1462,7 @@ struct RecipeDetailView: View {
 
     private var ingredientsSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            // Section header with dynamic servings
+            // Section header with dynamic servings + AI parse
             HStack {
                 Text("INGREDIENTS")
                     .font(ForagerTheme.footnoteFont)
@@ -1415,6 +1475,21 @@ struct RecipeDetailView: View {
                     Text("\(dynamicServings) servings")
                         .font(ForagerTheme.captionFont)
                         .foregroundStyle(ForagerTheme.textTertiary)
+                }
+
+                // M10.6.7: AI re-parse for low confidence / needsReview ingredients
+                if scaleFactor == 1.0 && parsingService.isLLMAvailable && hasLLMCandidates {
+                    if isLLMBatchParsing {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task { await batchLLMReparse() }
+                        } label: {
+                            ClaudeParseLabel()
+                                .font(ForagerTheme.secondaryFont)
+                        }
+                    }
                 }
             }
 

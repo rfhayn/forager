@@ -50,6 +50,9 @@ class IngredientParsingService: ObservableObject {
     @Published var lastParsingDuration: TimeInterval = 0
     @Published var parseSuccessRate: Double = 0.0
 
+    // M10.6.7: Surface LLM errors to callers for better toast messages
+    @Published var lastLLMError: String?
+
     init(context: NSManagedObjectContext,
          templateService: IngredientTemplateService,
          parser: IngredientParser = HybridIngredientParser()) {
@@ -199,12 +202,16 @@ class IngredientParsingService: ObservableObject {
 
     /// Parse a batch of ingredients via LLM. Returns nil on any failure or count mismatch.
     /// Caller should keep existing local results on nil return.
+    /// Sets `lastLLMError` with a descriptive message on failure.
     func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [(ParsedIngredient, StructuredQuantity)]? {
         guard !texts.isEmpty else { return nil }
 
         let parser: any LLMIngredientParser
         do {
-            guard let p = await LLMSettingsService.shared.activeParser() else { return nil }
+            guard let p = await LLMSettingsService.shared.activeParser() else {
+                await MainActor.run { lastLLMError = "AI parsing not configured" }
+                return nil
+            }
             parser = p
         }
 
@@ -212,7 +219,10 @@ class IngredientParsingService: ObservableObject {
             let llmResults = try await parser.parseBatch(texts)
 
             // Strict validation: count must match input
-            guard llmResults.count == texts.count else { return nil }
+            guard llmResults.count == texts.count else {
+                await MainActor.run { lastLLMError = "AI returned unexpected results" }
+                return nil
+            }
 
             var output: [(ParsedIngredient, StructuredQuantity)] = []
 
@@ -237,11 +247,20 @@ class IngredientParsingService: ObservableObject {
                 output.append((parsed, structured))
             }
 
+            await MainActor.run { lastLLMError = nil }
             return output
+        } catch let error as LLMParserError {
+            let message = error.errorDescription ?? error.localizedDescription
+            #if DEBUG
+            print("🤖 [LLM Parse] Batch failed: \(message)")
+            #endif
+            await MainActor.run { lastLLMError = message }
+            return nil
         } catch {
             #if DEBUG
             print("🤖 [LLM Parse] Batch failed: \(error.localizedDescription)")
             #endif
+            await MainActor.run { lastLLMError = error.localizedDescription }
             return nil
         }
     }

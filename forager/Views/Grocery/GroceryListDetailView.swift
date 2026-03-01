@@ -241,7 +241,8 @@ struct GroceryListDetailView: View {
                         Button {
                             Task { await quickAddItemWithLLM() }
                         } label: {
-                            ClaudeLogo(size: 24)
+                            ClaudeParseLabel(text: "AI Add")
+                                .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(quickAddText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
