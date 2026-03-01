@@ -209,19 +209,25 @@
 
 **Branch**: `feature/M10.6-claude-api-integration`
 **PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
-**Estimated**: 8.5-12 hours (5 sub-phases)
+**Estimated**: 17.5-24 hours (6 sub-phases + M10.6.6 user-triggered parsing)
 **Depends on**: M10.2, M8.4, M10.5
 
-**What it does**: Optional Claude API integration for recipe import ingredient parsing. Fills the ~7-8% semantic gap the deterministic pipeline can't handle. App fully functional without it — toggle OFF by default, no nudges.
+**What it does**: Optional Claude API integration for ingredient parsing. Fills the ~7-8% semantic gap the deterministic pipeline can't handle. M10.6.6 adds user-triggered AI parsing across all ingredient editing surfaces. App fully functional without it — toggle OFF by default, no nudges.
 
 **Sub-phases**:
-1. M10.6.1: Protocol + ClaudeIngredientParser + mock + ~8 tests (2-3h)
-2. M10.6.2: KeychainHelper extension + LLMSettingsService + ~5 tests (1.5-2h)
-3. M10.6.3: Settings UI — AI Import section (1.5-2h)
-4. M10.6.4: RecipeImportService integration + telemetry + ~7 tests (2-3h)
+1. ✅ M10.6.1: Protocol + ClaudeIngredientParser + mock + 10 tests (2-3h)
+2. ✅ M10.6.2: KeychainHelper extension + LLMSettingsService + 9 tests (1.5-2h)
+3. ✅ M10.6.3: Settings UI — AI Import section (1.5-2h)
+4. ✅ M10.6.4: RecipeImportService integration + telemetry + 5 tests (2-3h)
 5. M10.6.5: Documentation + full verification (1-2h)
+6. ✅ M10.6.6: User-triggered AI parsing across all views (9-12h)
+   - ✅ M10.6.6a: IngredientParsingService LLM API
+   - ✅ M10.6.6b: CreateRecipeView + EditRecipeView AI UI
+   - ✅ M10.6.6c: RecipeImportPreviewView AI UI
+   - ✅ M10.6.6d: Grocery views AI UI (GroceryListDetailView + AddListItemView)
+   - ✅ M10.6.6e: LLMParsingToast reusable component
 
-**Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. Zero Core Data schema changes.
+**Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. User-triggered via sparkle button (batch) and "AI Parse" context menu (per-item). Zero Core Data schema changes.
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):

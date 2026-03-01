@@ -38,26 +38,36 @@ Inline ingredient + instruction + metadata editing across RecipeDetailView, Crea
 
 ---
 
-## **M10.6 — 🔄 ACTIVE: Claude API Integration (8.5-12h)**
+## **M10.6 — 🔄 ACTIVE: Claude API Integration (17.5-24h)**
 
 **PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
 **Branch**: `feature/M10.6-claude-api-integration`
 
-Optional Claude API for import ingredient parsing (fills ~7-8% semantic gap). App fully functional without it — toggle OFF by default. Zero Core Data schema changes.
+Optional Claude API for ingredient parsing (fills ~7-8% semantic gap). M10.6.6 adds user-triggered AI parsing across all views. App fully functional without it — toggle OFF by default. Zero Core Data schema changes.
 
 ### Sub-phases
 
-| Sub-phase | Scope | Hours |
-|-----------|-------|-------|
-| M10.6.1 | Protocol + ClaudeIngredientParser + mock + tests | 2-3h |
-| M10.6.2 | KeychainHelper extension + LLMSettingsService + tests | 1.5-2h |
-| M10.6.3 | Settings UI — AI Import section | 1.5-2h |
-| M10.6.4 | RecipeImportService integration + telemetry + tests | 2-3h |
-| M10.6.5 | Documentation + full verification | 1-2h |
+| Sub-phase | Scope | Hours | Status |
+|-----------|-------|-------|--------|
+| M10.6.1 | Protocol + ClaudeIngredientParser + mock + tests | 2-3h | ✅ |
+| M10.6.2 | KeychainHelper extension + LLMSettingsService + tests | 1.5-2h | ✅ |
+| M10.6.3 | Settings UI — AI Import section | 1.5-2h | ✅ |
+| M10.6.4 | RecipeImportService integration + telemetry + tests | 2-3h | ✅ |
+| M10.6.5 | Documentation + full verification | 1-2h | READY |
+| M10.6.6 | User-triggered AI parsing across all views | 9-12h | ✅ |
 
-### Key Implementation Notes (from PRD audit)
-- `KeychainHelper.read`/`write` are `private static` — add LLM methods inside the enum body, not as an extension
-- `RecipeImportService.saveImport(from:)` is sync (line 144) — needs async conversion
+### What's Done (M10.6.6)
+- `IngredientParsingService` LLM public API: `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()`
+- `LLMParsingToast` reusable view modifier (capsule, auto-dismiss 2s)
+- CreateRecipeView + EditRecipeView: batch sparkle + per-ingredient context menu
+- RecipeImportPreviewView: batch sparkle + per-ingredient context menu (index-keyed)
+- GroceryListDetailView: sparkle quick-add with local-parse fallback
+- AddListItemView: "AI Add" sparkle with local-parse fallback
+
+### What's Next (M10.6.5)
+- Update all 7 core docs with M10.6.6 completion status
+- Final build verification
+- Create PR for squash merge to main
 - `parserUsed` is already `String?` — add `"claude"` with zero schema change
 - ~20 new tests across 3 test files, 7 new production files, 10 modified files
 

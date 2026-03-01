@@ -42,7 +42,7 @@ Context window management is critical for large multi-view implementations. The 
 
 ### What's Next
 
-Complete M10.6.6c (RecipeImportPreviewView — index-keyed matches), M10.6.6d (Grocery views — per-item only), build verification, commit, and push. Then documentation updates and PR.
+M10.6.5: Final documentation pass, full verification, create PR for squash merge to main. All code changes for M10.6.6 are complete and building cleanly.
 
 ---
 
