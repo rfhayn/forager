@@ -16,6 +16,7 @@ extension Household {
     }
 
     @NSManaged public var id: UUID?
+    @NSManaged public var llmAPIKey: String?
     @NSManaged public var name: String?
     @NSManaged public var createdDate: Date?
     @NSManaged public var ownerEmail: String?      // Repurposed M7.6.8: stores owner display name (was redundant copy of ownerRecordName)

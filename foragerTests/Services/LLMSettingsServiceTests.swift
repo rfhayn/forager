@@ -20,9 +20,11 @@ final class LLMSettingsServiceTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
         service = LLMSettingsService()
+        service.householdAPIKeyProvider = nil
     }
 
     override func tearDown() {
+        service.householdAPIKeyProvider = nil
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
         super.tearDown()
@@ -103,5 +105,51 @@ final class LLMSettingsServiceTests: XCTestCase {
         await service.testConnection()
         XCTAssertEqual(service.connectionTestResult, .failure("No API key configured"))
         XCTAssertFalse(service.isTestingConnection)
+    }
+
+    // MARK: - 5. M10.6.7: Household Key Resolution
+
+    func testResolvedAPIKeyPrefersHouseholdKey() {
+        // Local key in Keychain
+        service.saveAPIKey("sk-ant-api03-local-key1234")
+        // Household key via provider
+        service.householdAPIKeyProvider = { "sk-ant-api03-household-key5678" }
+
+        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-household-key5678",
+                       "Household key should take priority over local Keychain key")
+    }
+
+    func testResolvedAPIKeyFallsBackToLocalWhenNoHouseholdKey() {
+        service.saveAPIKey("sk-ant-api03-local-key1234")
+        // Provider returns nil (no household key set)
+        service.householdAPIKeyProvider = { nil }
+
+        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-local-key1234",
+                       "Should fall back to local key when household key is nil")
+    }
+
+    func testResolvedAPIKeyFallsBackToLocalWhenNotInHousehold() {
+        service.saveAPIKey("sk-ant-api03-local-key1234")
+        // No provider at all (solo user)
+        service.householdAPIKeyProvider = nil
+
+        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-local-key1234",
+                       "Should use local key when no household provider is set")
+    }
+
+    func testIsUsingHouseholdKeyWhenHouseholdKeySet() {
+        service.householdAPIKeyProvider = { "sk-ant-api03-household-key5678" }
+        XCTAssertTrue(service.isUsingHouseholdKey)
+    }
+
+    func testIsUsingHouseholdKeyFalseWhenNoProvider() {
+        service.householdAPIKeyProvider = nil
+        XCTAssertFalse(service.isUsingHouseholdKey)
+    }
+
+    func testIsUsingHouseholdKeyFalseWhenProviderReturnsEmpty() {
+        service.householdAPIKeyProvider = { "" }
+        XCTAssertFalse(service.isUsingHouseholdKey,
+                       "Empty string from provider should not count as a household key")
     }
 }

@@ -103,6 +103,12 @@ struct foragerApp: App {
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
         _importService = StateObject(wrappedValue: importSvc)
 
+        // M10.6.7: Wire household API key into LLM settings
+        // Reads currentHousehold.llmAPIKey live — CloudKit keeps it in sync
+        LLMSettingsService.shared.householdAPIKeyProvider = { [weak household] in
+            household?.currentHousehold?.llmAPIKey
+        }
+
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
         DispatchQueue.global(qos: .utility).async {
