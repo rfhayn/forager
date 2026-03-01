@@ -24,6 +24,12 @@ struct SettingsView: View {
     // Access to Core Data context for migration service
     @Environment(\.managedObjectContext) private var viewContext
     
+    // M10.6: LLM settings for AI import
+    @StateObject private var llmSettings = LLMSettingsService.shared
+
+    // M10.6.3: API key entry state
+    @State private var apiKeyInput = ""
+
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
 
@@ -41,6 +47,9 @@ struct SettingsView: View {
 
             // M4.3.1: Display Options
             displayOptionsSection
+
+            // M10.6: AI Import (optional Claude API)
+            aiImportSection
 
             // M7.1.2: Developer Tools (hidden in production)
             #if DEBUG
@@ -169,9 +178,113 @@ struct SettingsView: View {
         }
     }
     
+    // MARK: - M10.6: AI Import Section
+
+    private var aiImportSection: some View {
+        Section {
+            Toggle("Use AI for Imports", isOn: $llmSettings.isEnabled)
+                .tint(ForagerTheme.accentPrimary)
+
+            if llmSettings.isEnabled {
+                // Provider (disabled — Claude only in M10.6)
+                HStack {
+                    Text("Provider")
+                    Spacer()
+                    Text("Claude (API Key)")
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+
+                // API Key row
+                if llmSettings.hasAPIKey {
+                    HStack {
+                        Text("API Key")
+                        Spacer()
+                        Text(llmSettings.maskedAPIKey ?? "")
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .font(.system(.body, design: .monospaced))
+                        Button("Clear") {
+                            llmSettings.deleteAPIKey()
+                            apiKeyInput = ""
+                        }
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                    }
+                } else {
+                    SecureField("Paste API key", text: $apiKeyInput)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .onSubmit {
+                            llmSettings.saveAPIKey(apiKeyInput)
+                            apiKeyInput = ""
+                        }
+                }
+
+                // Action buttons
+                HStack {
+                    Link(destination: URL(string: "https://console.anthropic.com/settings/keys")!) {
+                        Label("Get API Key", systemImage: "arrow.up.right.square")
+                            .font(.caption)
+                    }
+                    Spacer()
+                    Button {
+                        Task { await llmSettings.testConnection() }
+                    } label: {
+                        if llmSettings.isTestingConnection {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
+                                .font(.caption)
+                        }
+                    }
+                    .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
+                }
+
+                // Connection status
+                connectionStatusRow
+            }
+        } header: {
+            Text("AI Import")
+        } footer: {
+            if llmSettings.isEnabled {
+                Text("Only ingredient text is sent to the API. Estimated cost: ~$0.0005/recipe. Your key is stored securely in iOS Keychain and never shared.")
+                    .font(.caption)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var connectionStatusRow: some View {
+        if let result = llmSettings.connectionTestResult {
+            HStack {
+                Text("Status")
+                Spacer()
+                switch result {
+                case .success:
+                    Label("Connected", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .font(.caption)
+                case .failure(let message):
+                    Label(message, systemImage: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+            }
+        } else if !llmSettings.hasAPIKey {
+            HStack {
+                Text("Status")
+                Spacer()
+                Label("Not configured", systemImage: "circle")
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .font(.caption)
+            }
+        }
+    }
+
     // M7.1.2: Developer Tools Section
     // M7.2.3 Phase 3.5: Added CloudKit Test Harness
-    
+
     // Developer tools for CloudKit sync testing and debugging
     // Provides access to sync status monitoring and validation
     private var developerToolsSection: some View {

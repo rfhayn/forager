@@ -15,13 +15,20 @@
 
 Set up M10.6 milestone (PRD audit, service check, branch, core docs) and implemented M10.6.1 — the protocol layer, Claude API adapter, mock, and 10 unit tests.
 
-Four files created:
+**M10.6.1** — Four files created:
 1. **`LLMIngredientParser.swift`** — Protocol (`parseBatch`, `providerName`, `isConfigured`), `LLMParserResult` struct with `toParserResult()` bridge, `LLMParserError` enum with `isRetryable` for retry routing.
 2. **`ClaudeIngredientParser.swift`** — Anthropic Messages API adapter using `tool_use` for structured output. Model: `claude-haiku-4-5-20251001`. Exponential backoff (1s, 2s, 4s) on 429/529, immediate throw on 401/5xx. Accepts injectable `URLSession` for testability.
 3. **`MockLLMIngredientParser.swift`** — Test double with `stubbedResults`, `stubbedError`, call tracking.
 4. **`ClaudeIngredientParserTests.swift`** — 10 tests: batch parse, empty input, single ingredient, multi-ingredient split, 401 no-retry, 429 retry+backoff, malformed response, validation (empty name), `toParserResult` bridge, request header verification.
 
 All 10 tests pass. The `MockURLProtocol` pattern intercepts all network calls via `URLSessionConfiguration.ephemeral` — zero live API calls in tests.
+
+**M10.6.2** — Three files touched:
+1. **`KeychainHelper.swift`** — Added `saveLLMAPIKey`, `getLLMAPIKey`, `deleteLLMAPIKey` inside the enum body (private `read`/`write` require internal access).
+2. **`LLMSettingsService.swift`** — `@MainActor` singleton with `@Published isEnabled` (UserDefaults-backed), Keychain API key CRUD, masked key display, `testConnection()` async method, `activeParser()` factory.
+3. **`LLMSettingsServiceTests.swift`** — 9 tests covering toggle persistence, key save/retrieve/delete, whitespace trimming, empty key rejection, factory nil/configured states, connection test without key.
+
+All 9 tests pass in 0.034s.
 
 ### Key Decisions
 
