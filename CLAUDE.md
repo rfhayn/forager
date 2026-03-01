@@ -4,19 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Session Startup (MANDATORY)
 
-Run `/session-start` at the beginning of every session. This reads the 4 mandatory context docs, checks git state, and reports current status. No exceptions.
+Run `/forager-session-start` at the beginning of every session. This reads the 4 mandatory context docs, checks git state, and reports current status. No exceptions.
 
 ## Build & Run
 
 ```bash
 open forager.xcodeproj
 # Press Cmd+R in Xcode to build and run
+# CLI build:
+xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
 - **Current**: iOS 26+ (Liquid Glass, raised in M15.1)
 - Xcode 26.0+, macOS 26.0+
 - No external dependencies (pure Swift/iOS frameworks)
-- 267 unit tests across 19 test files (M8.4 parsing/ML/telemetry, merge, validation, normalization, integration). Formal test infrastructure planned for M6.
+- 267 unit tests across 19 test files (M8.4 parsing/ML/telemetry, merge, validation, normalization, integration)
 - Debug builds: CloudKit DISABLED (faster local development)
 - Release builds: CloudKit ENABLED
 - CloudKit container: `iCloud.com.richhayn.forager`
@@ -145,7 +147,7 @@ Input → RegexParser (≥0.9 confidence → return)
 - `MLIngredientParser.init?()` returns nil if model unavailable (graceful degradation)
 - Telemetry logs `parserUsed` as winner-only attribution (`"regex"`, `"ml"`, or `"nlp"`)
 - Correction feedback: `ParsingTelemetryService.exportCorrectionsAsTrainingData()` → JSONL
-- 267 tests across 7 test files cover the full parsing pipeline
+- 267 tests across 19 test files cover the full parsing pipeline
 
 ### Core Data Model (10 Entities)
 
@@ -182,8 +184,6 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 - SwiftUI with `@FetchRequest` for live Core Data updates
 - `NavigationStack` with sheet-based modals
 - Native Liquid Glass TabView with 5 tabs: Lists, Recipes, Meals, Settings, Search (ADR 011)
-- `ForagerTheme` semantic color tokens — never hardcode colors
-- `ContentUnavailableView` for all empty states (not custom empty state views)
 - App entry: `forager/App/foragerApp.swift`, CloudKit share handling: `forager/App/SceneDelegate.swift`
 - Views organized by feature: `forager/Views/{Grocery,Recipes,Import,MealPlanning,Household,Settings,Search}/`
 - Core Data models: `Models/` (36 entity files, auto-synced)
@@ -206,9 +206,9 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 
 Before implementing ANY feature, use these skills as needed:
 
-- `/core-data-audit <EntityName>` — Required before schema changes (ADR 007)
-- `/service-check <functionality>` — Required before creating new services
-- `/prd-audit <path>` — Required if PRD is >2 weeks old
+- `/forager-core-data-audit <EntityName>` — Required before schema changes (ADR 007)
+- `/forager-service-check <functionality>` — Required before creating new services
+- `/forager-prd-audit <path>` — Required if PRD is >2 weeks old
 - Verify correct M#.#.# format in current-story.md
 - Follow established patterns and ADR decisions
 
@@ -217,10 +217,10 @@ Before implementing ANY feature, use these skills as needed:
 **One phase = one branch = one PR = one squash commit to main.**
 
 Use these skills for git operations:
-- `/new-milestone <M#.#.# description>` — Set up new milestone (branch, docs)
+- `/forager-new-milestone <M#.#.# description>` — Set up new milestone (branch, docs)
 - `/forager-commit` — Commit with M#.#.# conventions (no Co-Authored-By)
 - `/forager-pr` — Create PR with project format
-- `/build` — Build with correct Xcode configuration
+- `/forager-build` — Build with correct Xcode configuration
 
 **Key rules** (always in effect):
 - Branch naming: `feature/M#.#.#-brief-kebab-case` (3-5 words max)
@@ -236,9 +236,9 @@ Use these skills for git operations:
 
 **7 core docs must stay synchronized.** Use these skills:
 
-- `/log-insight <topic> <insight>` — Log technical insights IMMEDIATELY (don't defer)
-- `/dev-journal` — Write/update session narrative (MANDATORY before every commit)
-- `/milestone-complete <M#.#.#>` — Update all 7 core docs after milestone completion
+- `/forager-log-insight <topic> <insight>` — Log technical insights IMMEDIATELY (don't defer)
+- `/forager-dev-journal` — Write/update session narrative (MANDATORY before every commit)
+- `/forager-milestone-complete <M#.#.#>` — Update all 7 core docs after milestone completion
 
 **The 7 core documentation files:**
 1. `docs/current-story.md` - Current milestone status and progress
@@ -251,7 +251,7 @@ Use these skills for git operations:
 
 **Hard rules:**
 - Treat every commit as a potential last commit — insights and journal must be current
-- After completing ANY milestone, update ALL 7 files automatically (use `/milestone-complete`)
+- After completing ANY milestone, update ALL 7 files automatically (use `/forager-milestone-complete`)
 - Do not defer documentation to end-of-session — sessions can be interrupted
 
 ## Project Skills (`.claude/skills/`)
@@ -260,18 +260,18 @@ Custom skills for forager workflows. Invoke with `/name` or let Claude auto-invo
 
 | Skill | Purpose | When to Use |
 |-------|---------|-------------|
-| `/session-start` | 9-point startup checklist | Every session start |
+| `/forager-session-start` | 9-point startup checklist | Every session start |
 | `/forager-commit` | Commit with M#.#.# conventions | Every commit |
-| `/dev-journal` | Write session narrative entry | Before every commit |
-| `/log-insight` | Log technical insight | When discoveries are made |
-| `/milestone-complete` | Update all 7 core docs | After milestone completion |
+| `/forager-dev-journal` | Write session narrative entry | Before every commit |
+| `/forager-log-insight` | Log technical insight | When discoveries are made |
+| `/forager-milestone-complete` | Update all 7 core docs | After milestone completion |
 | `/forager-pr` | Create PR with project format | End of each milestone phase |
-| `/new-milestone` | Set up new milestone (branch + docs) | Starting new work |
-| `/core-data-audit` | Schema impact analysis (ADR 007) | Before schema changes |
-| `/service-check` | Duplicate service prevention | Before creating new services |
-| `/build` | Build with correct Xcode config | During development |
-| `/archive` | Archive, bump build #, upload to TestFlight | Release distribution |
-| `/prd-audit` | Verify PRD against current code | Before implementing old PRDs |
+| `/forager-new-milestone` | Set up new milestone (branch + docs) | Starting new work |
+| `/forager-core-data-audit` | Schema impact analysis (ADR 007) | Before schema changes |
+| `/forager-service-check` | Duplicate service prevention | Before creating new services |
+| `/forager-build` | Build with correct Xcode config | During development |
+| `/forager-archive` | Archive, bump build #, upload to TestFlight | Release distribution |
+| `/forager-prd-audit` | Verify PRD against current code | Before implementing old PRDs |
 
 ## Architecture Decision Records
 
@@ -291,43 +291,23 @@ Custom skills for forager workflows. Invoke with `/name` or let Claude auto-invo
 ```swift
 // MARK: - Section Name
 // MARK: - M7: CloudKit Sync Functions
-
-// Function headers: explain WHY and context
-// Analyzes the current grocery list for consolidation opportunities
-// Updates consolidationOpportunities count which drives badge display
-// Called on view appear and whenever list items change
-private func updateConsolidationAnalysis() {
-    // ...
-}
-
-// State management: document purpose and behavior
-// M7.1.2: CloudKit sync monitor
-// Observes NSPersistentStoreRemoteChange notifications
-// Tracks sync state, event count, last sync date
-@StateObject private var syncMonitor: CloudKitSyncMonitor
 ```
 
-**Good comments** explain why and provide context:
+**Comments should explain WHY, not WHAT:**
 ```swift
-// Use parsed name to ensure consistency with template matching
-// This enables fuzzy search to work correctly
+// GOOD: Use parsed name to ensure consistency with template matching
+listItem.name = parsed.name
+
+// BAD: Set name to parsed name
 listItem.name = parsed.name
 ```
 
-**Bad comments** restate the code:
+**TODOs must include context:**
 ```swift
-// Set name to parsed name
-listItem.name = parsed.name
-```
-
-**Actionable TODOs** include context:
-```swift
+// GOOD:
 // TODO (M4): Integrate with meal planning service
-// TODO (Performance): Consider caching for lists > 100 items
-```
 
-**Not this:**
-```swift
+// BAD:
 // TODO: fix this
 ```
 
@@ -376,14 +356,3 @@ Break work into phases with clear deliverables:
 - Documentation updated per checklist
 - On feature branch with frequent commits
 
-## Key Principles
-
-1. **Session startup discipline** - Follow checklist EVERY session
-2. **Naming consistency** - M#.#.# format everywhere
-3. **Search before creating** - Check for existing services/patterns
-4. **Document as you go** - Don't defer documentation
-5. **Leverage proven patterns** - M1-M7 established excellent patterns
-6. **Performance matters** - Maintain targets for all operations
-7. **Zero regressions** - Never break existing features
-8. **Feature branch workflow** - One phase = one branch = one PR
-9. **Service Layer Standard** - All writes through services (M7.5+)
