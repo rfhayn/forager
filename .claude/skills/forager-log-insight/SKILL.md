@@ -1,5 +1,5 @@
 ---
-name: log-insight
+name: forager-log-insight
 description: Log a technical insight to docs/insights-log.md immediately. Use whenever a non-obvious discovery is made during implementation. Do not defer — sessions can clear.
 argument-hint: <topic> <insight text>
 ---

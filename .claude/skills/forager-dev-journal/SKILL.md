@@ -1,5 +1,5 @@
 ---
-name: dev-journal
+name: forager-dev-journal
 description: Write or update the narrative session entry in docs/development-journal.md. Captures decisions, learning, and AI tooling observations. MANDATORY before every commit.
 ---
 

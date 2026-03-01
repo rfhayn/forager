@@ -1,5 +1,5 @@
 ---
-name: archive
+name: forager-archive
 description: Archive and distribute forager to TestFlight. Auto-increments build number, archives for Release, uploads to App Store Connect, waits for processing, sets export compliance, and adds to beta test group.
 ---
 

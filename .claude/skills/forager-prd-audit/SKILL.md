@@ -1,5 +1,5 @@
 ---
-name: prd-audit
+name: forager-prd-audit
 description: Audit a PRD against the current codebase before implementation. Verifies entity names, property names, save counts, and API signatures are still accurate.
 argument-hint: <path to PRD>
 ---

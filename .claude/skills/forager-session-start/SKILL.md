@@ -1,5 +1,5 @@
 ---
-name: session-start
+name: forager-session-start
 description: Run the mandatory session startup checklist. Reads context docs, checks git status, reports current milestone and branch. Use at the start of every Claude Code session.
 ---
 

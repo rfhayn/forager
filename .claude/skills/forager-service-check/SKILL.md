@@ -1,5 +1,5 @@
 ---
-name: service-check
+name: forager-service-check
 description: Search for existing services before creating new infrastructure. Prevents duplicate services. Use before creating any new service class.
 argument-hint: <functionality description>
 ---

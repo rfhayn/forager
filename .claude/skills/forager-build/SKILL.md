@@ -1,5 +1,5 @@
 ---
-name: build
+name: forager-build
 description: Build forager with the correct Xcode configuration. Uses iPhone 17 Pro simulator. Filters output for errors and warnings.
 ---
 

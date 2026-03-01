@@ -1,5 +1,5 @@
 ---
-name: new-milestone
+name: forager-new-milestone
 description: Set up a new milestone for development. Creates feature branch, updates current-story.md and next-prompt.md with implementation guidance.
 argument-hint: <M#.#.# brief description>
 ---
