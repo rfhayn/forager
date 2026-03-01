@@ -1,7 +1,6 @@
 ---
 name: forager-pr
 description: Create a pull request following forager conventions. M#.#.# title, structured body with summary/changes/testing/time, squash merge target.
-disable-model-invocation: true
 ---
 
 # Create Forager Pull Request
