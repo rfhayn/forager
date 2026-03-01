@@ -576,8 +576,7 @@ struct RecipeImportPreviewView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundStyle(ForagerTheme.accentPrimary)
+                            ClaudeLogo(size: 20)
                         }
                         .disabled(draft.ingredients.value.isEmpty)
                     }
@@ -693,7 +692,7 @@ struct RecipeImportPreviewView: View {
                 Button {
                     Task { await singleLLMParse(index: index) }
                 } label: {
-                    Label("AI Parse", systemImage: "wand.and.stars")
+                    ClaudeParseLabel()
                 }
             }
         }

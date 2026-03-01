@@ -423,8 +423,7 @@ struct EditRecipeView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundStyle(ForagerTheme.accentPrimary)
+                            ClaudeLogo(size: 20)
                         }
                         .disabled(formData.ingredients.isEmpty)
                     }
@@ -575,7 +574,7 @@ struct EditRecipeView: View {
                 Button {
                     Task { await singleLLMParse(ingredient: ingredient) }
                 } label: {
-                    Label("AI Parse", systemImage: "wand.and.stars")
+                    ClaudeParseLabel()
                 }
             }
             Button(role: .destructive) {

@@ -191,7 +191,7 @@ struct AddListItemView: View {
                                 Button {
                                     Task { await addItemWithLLM() }
                                 } label: {
-                                    Label("AI Add", systemImage: "wand.and.stars")
+                                    ClaudeParseLabel(text: "AI Add")
                                         .font(ForagerTheme.secondaryFont)
                                 }
                                 .disabled(!isFormValid)
