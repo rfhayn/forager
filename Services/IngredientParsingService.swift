@@ -190,7 +190,11 @@ class IngredientParsingService: ObservableObject {
     /// Whether an LLM parser is configured and available (enabled + API key present)
     @MainActor
     var isLLMAvailable: Bool {
-        LLMSettingsService.shared.activeParser() != nil
+        let available = LLMSettingsService.shared.activeParser() != nil
+        #if DEBUG
+        DebugLogService.shared.log("isLLMAvailable = \(available)", category: "LLM")
+        #endif
+        return available
     }
 
     /// Parse a single ingredient via LLM. Returns nil on any failure.
@@ -206,9 +210,20 @@ class IngredientParsingService: ObservableObject {
     func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [(ParsedIngredient, StructuredQuantity)]? {
         guard !texts.isEmpty else { return nil }
 
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatchWithLLM: \(texts.count) texts, source=\(source)", category: "LLM")
+        }
+        #endif
+
         let parser: any LLMIngredientParser
         do {
             guard let p = await LLMSettingsService.shared.activeParser() else {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: activeParser() returned nil — not configured", category: "LLM")
+                }
+                #endif
                 await MainActor.run { lastLLMError = "AI parsing not configured" }
                 return nil
             }
@@ -220,6 +235,11 @@ class IngredientParsingService: ObservableObject {
 
             // Strict validation: count must match input
             guard llmResults.count == texts.count else {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: count mismatch — got \(llmResults.count) results for \(texts.count) inputs", category: "LLM")
+                }
+                #endif
                 await MainActor.run { lastLLMError = "AI returned unexpected results" }
                 return nil
             }
@@ -247,18 +267,29 @@ class IngredientParsingService: ObservableObject {
                 output.append((parsed, structured))
             }
 
+            #if DEBUG
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: success — \(output.count) results", category: "LLM")
+            }
+            #endif
             await MainActor.run { lastLLMError = nil }
             return output
         } catch let error as LLMParserError {
             let message = error.errorDescription ?? error.localizedDescription
             #if DEBUG
             print("🤖 [LLM Parse] Batch failed: \(message)")
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: LLMParserError — \(message)", category: "LLM")
+            }
             #endif
             await MainActor.run { lastLLMError = message }
             return nil
         } catch {
             #if DEBUG
             print("🤖 [LLM Parse] Batch failed: \(error.localizedDescription)")
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: error — \(error.localizedDescription)", category: "LLM")
+            }
             #endif
             await MainActor.run { lastLLMError = error.localizedDescription }
             return nil

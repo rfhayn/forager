@@ -65,11 +65,17 @@ class LLMSettingsService: ObservableObject {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         KeychainHelper.saveLLMAPIKey(trimmed)
+        #if DEBUG
+        DebugLogService.shared.log("saveAPIKey: saved \(trimmed.count)-char key to Keychain", category: "Settings")
+        #endif
         objectWillChange.send()
     }
 
     func deleteAPIKey() {
         KeychainHelper.deleteLLMAPIKey()
+        #if DEBUG
+        DebugLogService.shared.log("deleteAPIKey: cleared Keychain", category: "Settings")
+        #endif
         objectWillChange.send()
     }
 
@@ -114,9 +120,22 @@ class LLMSettingsService: ObservableObject {
 
     /// Returns a configured parser when enabled + API key present, nil otherwise
     func activeParser() -> (any LLMIngredientParser)? {
+        #if DEBUG
+        DebugLogService.shared.log(
+            "activeParser() — isEnabled=\(isEnabled), hasKey=\(resolvedAPIKey != nil), "
+            + "keyLength=\(resolvedAPIKey?.count ?? 0), isHouseholdKey=\(isUsingHouseholdKey)",
+            category: "Settings"
+        )
+        #endif
         guard isEnabled,
               let apiKey = resolvedAPIKey,
               !apiKey.isEmpty else {
+            #if DEBUG
+            DebugLogService.shared.log(
+                "activeParser() → nil (isEnabled=\(isEnabled), keyPresent=\(resolvedAPIKey != nil))",
+                category: "Settings"
+            )
+            #endif
             return nil
         }
         return ClaudeIngredientParser(apiKey: apiKey)

@@ -407,6 +407,32 @@ struct SettingsView: View {
     // Provides access to sync status monitoring and validation
     private var developerToolsSection: some View {
         Section {
+            // M10.6.5: Debug log toggle + viewer
+            #if DEBUG
+            Toggle("Debug Mode", isOn: Binding(
+                get: { DebugLogService.shared.isEnabled },
+                set: { DebugLogService.shared.isEnabled = $0 }
+            ))
+
+            if DebugLogService.shared.isEnabled {
+                NavigationLink {
+                    DebugLogView()
+                } label: {
+                    HStack {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading) {
+                            Text("Debug Log")
+                                .font(.headline)
+                            Text("\(DebugLogService.shared.entries.count) entries")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                    }
+                }
+            }
+            #endif
+
             // CloudKit Sync Status link
             // Opens test interface for monitoring CloudKit sync events
             NavigationLink {

@@ -31,14 +31,50 @@ class ClaudeIngredientParser: LLMIngredientParser {
 
     func parseBatch(_ lines: [String]) async throws -> [LLMParserResult] {
         guard !lines.isEmpty else { return [] }
-        guard isConfigured else { throw LLMParserError.invalidAPIKey }
+        guard isConfigured else {
+            #if DEBUG
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatch: API key is empty — throwing invalidAPIKey", category: "LLM")
+            }
+            #endif
+            throw LLMParserError.invalidAPIKey
+        }
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: sending \(lines.count) lines to \(model)", category: "LLM")
+        }
+        #endif
 
         let requestBody = buildRequestBody(lines: lines)
         let request = buildURLRequest(body: requestBody)
 
-        let data = try await executeWithRetry(request: request)
+        let data: Data
+        do {
+            data = try await executeWithRetry(request: request)
+        } catch {
+            #if DEBUG
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatch: request failed — \(error)", category: "LLM")
+            }
+            #endif
+            throw error
+        }
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: got \(data.count) bytes response", category: "LLM")
+        }
+        #endif
+
         let results = try parseResponse(data: data)
         try validateResults(results)
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: parsed \(results.count) results OK", category: "LLM")
+        }
+        #endif
 
         return results
     }
