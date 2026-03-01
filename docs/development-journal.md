@@ -6,6 +6,46 @@
 
 ---
 
+## Session 60 — March 1, 2026
+**Milestone**: M10.6.6 — User-Triggered AI Parsing Across All Views
+**Focus**: Add sparkle button + context menu AI Parse to all ingredient editing surfaces
+**Branch**: `feature/M10.6-claude-api-integration`
+
+### What Happened
+
+Continuing M10.6 implementation. Session 59 completed M10.6.1-M10.6.4. This session picks up M10.6.6 — the user-facing AI parsing integration across all views.
+
+First fixed a blocking issue: all 8 project skills had `disable-model-invocation: true` in their SKILL.md frontmatter, preventing Claude from auto-invoking them. Removed the flag from all 8 files.
+
+Updated the M10.6 PRD with full M10.6.6 scope (architecture, UI design, view integration matrix, sub-phases, acceptance criteria, test plans). Then implemented in order:
+
+1. **M10.6.6a** — Added `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()` to `IngredientParsingService`. These are the public API — views never call LLM parsers directly. Batch returns nil on count mismatch (strict validation). Telemetry logged per-ingredient.
+2. **M10.6.6e** — Created `LLMParsingToast.swift` reusable view modifier (capsule at bottom, auto-dismiss 2s, fade animation).
+3. **M10.6.6b** — Added AI parsing UI to CreateRecipeView and EditRecipeView: sparkle button in ingredients section header (batch), context menu "AI Parse" per ingredient (single), per-row spinner during parse, toast for batch results/errors.
+
+Build passes after each phase. Moving to M10.6.6c (RecipeImportPreviewView) and M10.6.6d (Grocery views).
+
+### Key Decisions
+
+- **No RecipeDetailView integration**: The plan referenced RecipeDetailView but M10.8 Phase 2 already removed the edit modal — all editing happens inline in RecipeDetailView via EditRecipeView's patterns. The actual editing surfaces are CreateRecipeView and EditRecipeView.
+- **Toast extracted early (M10.6.6e before M10.6.6b)**: Built the reusable toast component first so both recipe views and later views share the same component. Avoids duplicate inline toast code.
+- **Identical LLM parse methods across Create/Edit**: Both views use the same `batchLLMParse()` and `singleLLMParse()` patterns since they share the same `IngredientInput` data model and `IngredientMatchInfo` cache.
+
+### Learning
+
+- `disable-model-invocation: true` in SKILL.md frontmatter prevents Claude from auto-invoking skills — only manual `/skill-name` works. This was silently blocking all 8 project skills.
+- `ForagerTheme.textOnAccent` doesn't exist — used `.white` directly for toast text on accent background.
+
+### AI Tooling Observations
+
+Context window management is critical for large multi-view implementations. The session planned all sub-phases upfront with a task list, which helped maintain focus across context compaction. Reading CreateRecipeView first and using it as the template for EditRecipeView was efficient — identical patterns meant fast replication.
+
+### What's Next
+
+Complete M10.6.6c (RecipeImportPreviewView — index-keyed matches), M10.6.6d (Grocery views — per-item only), build verification, commit, and push. Then documentation updates and PR.
+
+---
+
 ## Session 59 — March 1, 2026
 **Milestone**: M10.6.1 — LLM Parser Protocol + Claude Adapter + Tests
 **Focus**: Build the foundational layer for optional Claude API ingredient parsing
