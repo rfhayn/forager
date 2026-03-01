@@ -1,6 +1,7 @@
 ---
 name: forager-archive
 description: Archive and distribute forager to TestFlight. Auto-increments build number, archives for Release, uploads to App Store Connect, waits for processing, sets export compliance, and adds to beta test group.
+allowed-tools: Read, Write, Bash(grep:*), Bash(awk:*), Bash(mv:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(xcodebuild:*), Bash(cat:*), Bash(swift:*), Bash(curl:*), Bash(jq:*), Bash(sleep:*), Bash(test:*)
 ---
 
 # Archive & Distribute to TestFlight
@@ -15,11 +16,15 @@ Full pipeline: version bump → archive → upload → wait for processing → e
 - Build number: !`grep -m1 'CURRENT_PROJECT_VERSION' forager.xcodeproj/project.pbxproj`
 - Branch: !`git branch --show-current`
 - Uncommitted changes: !`git status --short`
-- API key configured: !`ls ~/.appstoreconnect/config`
+
+**API key check** — Run this as your first step (do NOT use `!` backtick for this since it's outside the project dir):
+```bash
+test -f ~/.appstoreconnect/config && echo "API KEY CONFIGURED" || echo "NOT CONFIGURED"
+```
 
 ## Prerequisites: App Store Connect API Key
 
-The TestFlight automation steps (8-11) require an App Store Connect API key. Check if configured:
+The TestFlight automation steps (8-11) require an App Store Connect API key. Check if configured (run as a Bash call):
 
 ```bash
 test -f ~/.appstoreconnect/config && cat ~/.appstoreconnect/config || echo "NOT CONFIGURED"
