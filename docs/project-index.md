@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: February 28, 2026
+**Last Updated**: March 1, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M10.8 ✅ **COMPLETE** | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
-**Current Phase**: M10.8 ✅ **COMPLETE** — Inline editing across all recipe views
-**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
-**Execution Order**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Current Milestone**: M10.6 🔄 **ACTIVE** | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
+**Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration for Import Parsing
+**Next Priority**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -50,6 +50,13 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **March 1, 2026** - M10.6 🔄 ACTIVE — Claude API Integration
+- **Started**: Optional Claude API for import ingredient parsing (fills ~7-8% semantic gap)
+- **Branch**: `feature/M10.6-claude-api-integration`
+- **PRD**: `docs/prds/active/m10.6-claude-api-integration.md` (audited — accurate against codebase)
+- **Scope**: 5 sub-phases (M10.6.1-M10.6.5), 8.5-12h, 7 new files, ~20 new tests, zero schema changes
+- **Also**: Renamed all 12 project skills to `forager-*` prefix, CLAUDE.md audit/cleanup
 
 ### **February 28, 2026** - M10.8 ✅ COMPLETE — Inline Ingredient, Instruction & Metadata Editing
 - **Completed**: Two phases — Phase 1 (ingredient display/edit toggle), Phase 2 (fully inline RecipeDetailView)

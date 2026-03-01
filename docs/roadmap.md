@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: February 28, 2026
-**Current Phase**: **M10.3 ✅ DEV COMPLETE** | **M10.8 ✅ COMPLETE** | **M10.6 📋 PLANNED** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M10.3 photo import dev complete (ready for merge)
-**Execution Order**: M10.3 (merge) → M10.4 → M10.6 (8.5-12h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: March 1, 2026
+**Current Phase**: **M10.6 🔄 ACTIVE** | **M10.8 ✅ COMPLETE** | **M10.3 ✅ DEV COMPLETE** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M10.6 Claude API integration in progress
+**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
