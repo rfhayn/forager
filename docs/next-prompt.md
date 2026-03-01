@@ -1,8 +1,8 @@
 # Next Implementation Prompt
 
-**Last Updated**: February 28, 2026
-**For Milestone**: M10.3 merge + M10.4 next
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 📋 **PRD READY**
+**Last Updated**: March 1, 2026
+**For Milestone**: M10.6 Claude API Integration
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 ✅)
 
 ---
 
@@ -38,27 +38,46 @@ Inline ingredient + instruction + metadata editing across RecipeDetailView, Crea
 
 ---
 
-## **NEXT: M10.3 (merge) → M10.4 → M10.6 → M7.7 → M6 → M9 → M11+**
+## **M10.6 — 🔄 ACTIVE: Claude API Integration (17.5-24h)**
 
-### M10.4: Polish & Integration (11-16h)
-- Import history, household sharing, telemetry dashboard
+**PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
+**Branch**: `feature/M10.6-claude-api-integration`
 
-### M10.6: Claude API Integration (8.5-12h) — PRD READY
-- **PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
-- Optional Claude API for import ingredient parsing (fills ~7-8% semantic gap)
-- 5 sub-phases: Protocol → Keychain → Settings UI → Integration → Docs
-- Zero Core Data schema changes, ~20 new tests
-- App fully functional without it — toggle OFF by default
+Optional Claude API for ingredient parsing (fills ~7-8% semantic gap). M10.6.6 adds user-triggered AI parsing across all views. App fully functional without it — toggle OFF by default. Zero Core Data schema changes.
 
-### M7.7: App Store Submission (3-5h)
-- **PRD**: `docs/prds/active/m7.7-app-store-submission.md`
+### Sub-phases
 
-### M6: Testing Foundation (20-30h)
-- 50%+ test coverage on critical services
+| Sub-phase | Scope | Hours | Status |
+|-----------|-------|-------|--------|
+| M10.6.1 | Protocol + ClaudeIngredientParser + mock + tests | 2-3h | ✅ |
+| M10.6.2 | KeychainHelper extension + LLMSettingsService + tests | 1.5-2h | ✅ |
+| M10.6.3 | Settings UI — AI Import section | 1.5-2h | ✅ |
+| M10.6.4 | RecipeImportService integration + telemetry + tests | 2-3h | ✅ |
+| M10.6.5 | Documentation + full verification | 1-2h | READY |
+| M10.6.6 | User-triggered AI parsing across all views | 9-12h | ✅ |
 
-### M9 Remaining (~120h)
-- Technical debt and codebase optimization
+### What's Done (M10.6.6)
+- `IngredientParsingService` LLM public API: `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()`
+- `LLMParsingToast` reusable view modifier (capsule, auto-dismiss 2s)
+- CreateRecipeView + EditRecipeView: batch sparkle + per-ingredient context menu
+- RecipeImportPreviewView: batch sparkle + per-ingredient context menu (index-keyed)
+- GroceryListDetailView: sparkle quick-add with local-parse fallback
+- AddListItemView: "AI Add" sparkle with local-parse fallback
+
+### What's Next (M10.6.5)
+- Update all 7 core docs with M10.6.6 completion status
+- Final build verification
+- Create PR for squash merge to main
+- `parserUsed` is already `String?` — add `"claude"` with zero schema change
+- ~20 new tests across 3 test files, 7 new production files, 10 modified files
+
+### After M10.6
+
+- M10.4: Polish & Integration (11-16h)
+- M7.7: App Store Submission (3-5h)
+- M6: Testing Foundation (20-30h)
+- M9 Remaining (~120h)
 
 ---
 
-**Dependencies**: M10.3 dev complete ✅ | M10.8 complete ✅ | M10.6 PRD ready ✅ | All 267+ existing tests expected to pass (no schema changes)
+**Dependencies**: M10.3 dev complete ✅ | M10.8 complete ✅ | M10.6 PRD audited ✅ | All 267+ existing tests expected to pass (no schema changes)

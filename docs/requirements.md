@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: February 22, 2026
-**Version**: 6.9
-**Current Milestone**: M8.4.1 ✅ COMPLETE | M8.4 ✅ COMPLETE | M15 ✅ COMPLETE | M10 NEXT
-**Execution Order**: M10 (70-95h) → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: March 1, 2026
+**Version**: 7.0
+**Current Milestone**: M10.6 🔄 ACTIVE | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M8.4.1 ✅ | M15 ✅
+**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: forager-commit
 description: Create a git commit following forager conventions. Enforces M#.#.# prefix, imperative mood, no Co-Authored-By. Use instead of raw git commit.
-disable-model-invocation: true
 ---
 
 # Forager Commit

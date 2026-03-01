@@ -1,7 +1,6 @@
 ---
 name: milestone-complete
 description: Update all 7 core documentation files after completing a milestone. Use when marking any M#.#.# as COMPLETE. Ensures documentation stays synchronized.
-disable-model-invocation: true
 argument-hint: <M#.#.#>
 ---
 

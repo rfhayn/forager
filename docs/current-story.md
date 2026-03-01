@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: February 28, 2026
-**Status**: M8.4 ✅ **COMPLETE** | M8.4.1 ✅ **COMPLETE** | M9.5-partial ✅ **COMPLETE** | M15 ✅ **COMPLETE** | M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 Spike ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.8 ✅ **COMPLETE** | **M10.6 PRD READY**
-**Total Progress**: ~258 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Current Milestone**: M10.8 ✅ COMPLETE — Inline ingredient + instruction + metadata editing
+**Last Updated**: March 1, 2026
+**Status**: M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 🔄 ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
+**Total Progress**: ~261 hours | 89% planning accuracy
+**Current Branch**: `feature/M10.6-claude-api-integration`
+**Current Milestone**: M10.6 🔄 ACTIVE — Claude API Integration for Import Parsing
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.3 (merge) → M10.4 → M10.6 (Claude API, 8.5-12h) → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.6 (Claude API) → M10.4 → M7.7 → M6 → M9 → M11+
 
 ---
 
@@ -209,19 +209,25 @@
 
 **Branch**: `feature/M10.6-claude-api-integration`
 **PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
-**Estimated**: 8.5-12 hours (5 sub-phases)
+**Estimated**: 17.5-24 hours (6 sub-phases + M10.6.6 user-triggered parsing)
 **Depends on**: M10.2, M8.4, M10.5
 
-**What it does**: Optional Claude API integration for recipe import ingredient parsing. Fills the ~7-8% semantic gap the deterministic pipeline can't handle. App fully functional without it — toggle OFF by default, no nudges.
+**What it does**: Optional Claude API integration for ingredient parsing. Fills the ~7-8% semantic gap the deterministic pipeline can't handle. M10.6.6 adds user-triggered AI parsing across all ingredient editing surfaces. App fully functional without it — toggle OFF by default, no nudges.
 
 **Sub-phases**:
-1. M10.6.1: Protocol + ClaudeIngredientParser + mock + ~8 tests (2-3h)
-2. M10.6.2: KeychainHelper extension + LLMSettingsService + ~5 tests (1.5-2h)
-3. M10.6.3: Settings UI — AI Import section (1.5-2h)
-4. M10.6.4: RecipeImportService integration + telemetry + ~7 tests (2-3h)
+1. ✅ M10.6.1: Protocol + ClaudeIngredientParser + mock + 10 tests (2-3h)
+2. ✅ M10.6.2: KeychainHelper extension + LLMSettingsService + 9 tests (1.5-2h)
+3. ✅ M10.6.3: Settings UI — AI Import section (1.5-2h)
+4. ✅ M10.6.4: RecipeImportService integration + telemetry + 5 tests (2-3h)
 5. M10.6.5: Documentation + full verification (1-2h)
+6. ✅ M10.6.6: User-triggered AI parsing across all views (9-12h)
+   - ✅ M10.6.6a: IngredientParsingService LLM API
+   - ✅ M10.6.6b: CreateRecipeView + EditRecipeView AI UI
+   - ✅ M10.6.6c: RecipeImportPreviewView AI UI
+   - ✅ M10.6.6d: Grocery views AI UI (GroceryListDetailView + AddListItemView)
+   - ✅ M10.6.6e: LLMParsingToast reusable component
 
-**Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. Zero Core Data schema changes.
+**Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. User-triggered via sparkle button (batch) and "AI Parse" context menu (per-item). Zero Core Data schema changes.
 
 ### Files Created/Modified Across Sessions
 **Services/Import/** (auto-detected):

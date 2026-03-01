@@ -106,6 +106,32 @@ enum KeychainHelper {
         return leftHouseholdIDs().contains(householdID)
     }
 
+    // MARK: - LLM API Key (M10.6.2)
+
+    private static let llmAPIKeyKey = "llmAPIKey"
+
+    /// Saves the LLM API key to Keychain
+    static func saveLLMAPIKey(_ key: String) {
+        guard let data = key.data(using: .utf8) else { return }
+        write(key: llmAPIKeyKey, data: data)
+    }
+
+    /// Retrieves the LLM API key from Keychain
+    static func getLLMAPIKey() -> String? {
+        guard let data = read(key: llmAPIKeyKey) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    /// Deletes the LLM API key from Keychain
+    static func deleteLLMAPIKey() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: llmAPIKeyKey
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
     // MARK: - Private Keychain Operations
 
     private static func save(ids: Set<String>) {

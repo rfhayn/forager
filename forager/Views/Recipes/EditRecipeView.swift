@@ -82,6 +82,11 @@ struct EditRecipeView: View {
     @State private var ingredientMatches: [UUID: IngredientMatchInfo] = [:]
     @State private var categoryPickerIngredientId: UUID?
 
+    // M10.6.6: LLM parsing state
+    @State private var isLLMBatchParsing = false
+    @State private var llmParsingIngredients: Set<UUID> = []
+    @State private var llmToastMessage: String?
+
     // M10.8: Category fetch for inline category picker (matches import view)
     @FetchRequest(
         sortDescriptors: [
@@ -242,6 +247,7 @@ struct EditRecipeView: View {
                 // M10.8: Pre-compute matches after loading recipe data
                 computeIngredientMatches()
             }
+            .llmParsingToast(message: $llmToastMessage)
         }
     }
     
@@ -404,8 +410,26 @@ struct EditRecipeView: View {
     
     private var ingredientsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Ingredients")
-                .font(.headline)
+            HStack {
+                Text("Ingredients")
+                    .font(.headline)
+                Spacer()
+                // M10.6.6: Batch LLM parse sparkle button
+                if parsingService.isLLMAvailable {
+                    if isLLMBatchParsing {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task { await batchLLMParse() }
+                        } label: {
+                            Image(systemName: "wand.and.stars")
+                                .foregroundStyle(ForagerTheme.accentPrimary)
+                        }
+                        .disabled(formData.ingredients.isEmpty)
+                    }
+                }
+            }
 
             VStack(spacing: 12) {
                 // Add ingredient field with autocomplete
@@ -546,6 +570,14 @@ struct EditRecipeView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
         .contextMenu {
+            // M10.6.6: Per-ingredient LLM parse
+            if parsingService.isLLMAvailable {
+                Button {
+                    Task { await singleLLMParse(ingredient: ingredient) }
+                } label: {
+                    Label("AI Parse", systemImage: "wand.and.stars")
+                }
+            }
             Button(role: .destructive) {
                 formData.ingredients.removeAll(where: { $0.id == ingredient.id })
                 ingredientMatches.removeValue(forKey: ingredient.id)
@@ -559,7 +591,10 @@ struct EditRecipeView: View {
     // M10.8: Status icon matching import view pattern
     private func statusIcon(for ingredient: IngredientInput, matchInfo: IngredientMatchInfo?) -> some View {
         Group {
-            if let info = matchInfo, info.categoryName != nil {
+            if llmParsingIngredients.contains(ingredient.id) {
+                ProgressView()
+                    .controlSize(.mini)
+            } else if let info = matchInfo, info.categoryName != nil {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(ForagerTheme.statusSuccessFG)
             } else if matchInfo != nil {
@@ -755,6 +790,88 @@ struct EditRecipeView: View {
         ingredientMatches[ingredient.id] = IngredientMatchInfo(
             parsedName: cleanName, status: status, categoryName: categoryName
         )
+    }
+
+    // MARK: - M10.6.6: LLM Parsing Methods
+
+    private func batchLLMParse() async {
+        let ingredients = formData.ingredients
+        guard !ingredients.isEmpty else { return }
+
+        isLLMBatchParsing = true
+        let texts = ingredients.map { $0.fullText }
+
+        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
+            for (index, (parsed, _)) in results.enumerated() {
+                guard index < formData.ingredients.count else { break }
+                let ingredient = formData.ingredients[index]
+
+                let cleanName = parsed.displayName
+                let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
+                    .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+                formData.ingredients[index].template = existingTemplate
+
+                let status: IngredientStatus
+                let categoryName: String?
+                if let template = existingTemplate {
+                    if let category = template.category, !category.isEmpty,
+                       category.lowercased() != "uncategorized" {
+                        status = .ready
+                        categoryName = category
+                    } else {
+                        status = .needsCategory
+                        categoryName = nil
+                    }
+                } else {
+                    status = .needsTemplate
+                    categoryName = nil
+                }
+                ingredientMatches[ingredient.id] = IngredientMatchInfo(
+                    parsedName: cleanName, status: status, categoryName: categoryName
+                )
+            }
+            hasUnsavedChanges = true
+            llmToastMessage = "AI parsed \(results.count) ingredients"
+        } else {
+            llmToastMessage = "AI parsing unavailable"
+        }
+
+        isLLMBatchParsing = false
+    }
+
+    private func singleLLMParse(ingredient: IngredientInput) async {
+        guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
+
+        llmParsingIngredients.insert(ingredient.id)
+
+        if let (parsed, _) = await parsingService.parseSingleWithLLM(text: ingredient.fullText, source: .recipeIngredient) {
+            let cleanName = parsed.displayName
+            let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
+                .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+            formData.ingredients[index].template = existingTemplate
+
+            let status: IngredientStatus
+            let categoryName: String?
+            if let template = existingTemplate {
+                if let category = template.category, !category.isEmpty,
+                   category.lowercased() != "uncategorized" {
+                    status = .ready
+                    categoryName = category
+                } else {
+                    status = .needsCategory
+                    categoryName = nil
+                }
+            } else {
+                status = .needsTemplate
+                categoryName = nil
+            }
+            ingredientMatches[ingredient.id] = IngredientMatchInfo(
+                parsedName: cleanName, status: status, categoryName: categoryName
+            )
+            hasUnsavedChanges = true
+        }
+
+        llmParsingIngredients.remove(ingredient.id)
     }
 
     // M10.8: Pre-compute ingredient matches on appear — never during body evaluation

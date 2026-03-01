@@ -182,6 +182,70 @@ class IngredientParsingService: ObservableObject {
         return createdIngredients
     }
 
+    // MARK: - M10.6.6: User-Triggered LLM Parsing
+
+    /// Whether an LLM parser is configured and available (enabled + API key present)
+    @MainActor
+    var isLLMAvailable: Bool {
+        LLMSettingsService.shared.activeParser() != nil
+    }
+
+    /// Parse a single ingredient via LLM. Returns nil on any failure.
+    /// Caller should keep existing local result on nil return.
+    func parseSingleWithLLM(text: String, source: ParsingTelemetryEvent.ParsingSource) async -> (ParsedIngredient, StructuredQuantity)? {
+        let results = await parseBatchWithLLM(texts: [text], source: source)
+        return results?.first
+    }
+
+    /// Parse a batch of ingredients via LLM. Returns nil on any failure or count mismatch.
+    /// Caller should keep existing local results on nil return.
+    func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [(ParsedIngredient, StructuredQuantity)]? {
+        guard !texts.isEmpty else { return nil }
+
+        let parser: any LLMIngredientParser
+        do {
+            guard let p = await LLMSettingsService.shared.activeParser() else { return nil }
+            parser = p
+        }
+
+        do {
+            let llmResults = try await parser.parseBatch(texts)
+
+            // Strict validation: count must match input
+            guard llmResults.count == texts.count else { return nil }
+
+            var output: [(ParsedIngredient, StructuredQuantity)] = []
+
+            for (index, llmResult) in llmResults.enumerated() {
+                let originalText = texts[index]
+                let parserResult = llmResult.toParserResult(originalText: originalText, provider: parser.providerName)
+
+                let parsed = Self.mapToParsedIngredient(parserResult)
+                let structured = Self.mapToStructuredQuantity(parserResult, text: originalText)
+
+                // Log telemetry per ingredient
+                _ = ParsingTelemetryService.shared.logParsingEvent(
+                    rawInput: originalText,
+                    parsedName: parserResult.name,
+                    parsedQuantity: parserResult.quantity,
+                    parsedUnit: parserResult.unit,
+                    parseConfidence: parserResult.confidence,
+                    parserUsed: parser.providerName,
+                    source: source
+                )
+
+                output.append((parsed, structured))
+            }
+
+            return output
+        } catch {
+            #if DEBUG
+            print("🤖 [LLM Parse] Batch failed: \(error.localizedDescription)")
+            #endif
+            return nil
+        }
+    }
+
     // MARK: - M9.1.2: Centralized Clean Name Extraction
 
     private static let sharedParser = HybridIngredientParser()

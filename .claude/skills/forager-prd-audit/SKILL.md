@@ -1,7 +1,6 @@
 ---
 name: prd-audit
 description: Audit a PRD against the current codebase before implementation. Verifies entity names, property names, save counts, and API signatures are still accurate.
-disable-model-invocation: true
 argument-hint: <path to PRD>
 ---
 

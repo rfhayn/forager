@@ -376,8 +376,10 @@ struct RecipeImportSheet: View {
             duplicateResult = duplicate
             showingDuplicateSheet = true
         } else {
-            if let result = importService.saveImport(from: draft) {
-                applyCategoryAssignmentsAndFinish(result)
+            Task {
+                if let result = await importService.saveImport(from: draft) {
+                    applyCategoryAssignmentsAndFinish(result)
+                }
             }
         }
     }
@@ -385,8 +387,10 @@ struct RecipeImportSheet: View {
     private func saveWithoutDuplicateCheck() {
         showingDuplicateSheet = false
         if case .needsReview(let draft) = importService.state {
-            if let result = importService.saveImport(from: draft) {
-                applyCategoryAssignmentsAndFinish(result)
+            Task {
+                if let result = await importService.saveImport(from: draft) {
+                    applyCategoryAssignmentsAndFinish(result)
+                }
             }
         }
     }
@@ -404,8 +408,10 @@ struct RecipeImportSheet: View {
             existingID = objectID
         }
 
-        if let result = importService.replaceExistingRecipe(objectID: existingID, with: draft) {
-            applyCategoryAssignmentsAndFinish(result)
+        Task {
+            if let result = await importService.replaceExistingRecipe(objectID: existingID, with: draft) {
+                applyCategoryAssignmentsAndFinish(result)
+            }
         }
     }
 

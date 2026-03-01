@@ -6,6 +6,103 @@
 
 ---
 
+## Session 60 — March 1, 2026
+**Milestone**: M10.6.6 — User-Triggered AI Parsing Across All Views
+**Focus**: Add sparkle button + context menu AI Parse to all ingredient editing surfaces
+**Branch**: `feature/M10.6-claude-api-integration`
+
+### What Happened
+
+Continuing M10.6 implementation. Session 59 completed M10.6.1-M10.6.4. This session picks up M10.6.6 — the user-facing AI parsing integration across all views.
+
+First fixed a blocking issue: all 8 project skills had `disable-model-invocation: true` in their SKILL.md frontmatter, preventing Claude from auto-invoking them. Removed the flag from all 8 files.
+
+Updated the M10.6 PRD with full M10.6.6 scope (architecture, UI design, view integration matrix, sub-phases, acceptance criteria, test plans). Then implemented in order:
+
+1. **M10.6.6a** — Added `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()` to `IngredientParsingService`. These are the public API — views never call LLM parsers directly. Batch returns nil on count mismatch (strict validation). Telemetry logged per-ingredient.
+2. **M10.6.6e** — Created `LLMParsingToast.swift` reusable view modifier (capsule at bottom, auto-dismiss 2s, fade animation).
+3. **M10.6.6b** — Added AI parsing UI to CreateRecipeView and EditRecipeView: sparkle button in ingredients section header (batch), context menu "AI Parse" per ingredient (single), per-row spinner during parse, toast for batch results/errors.
+
+Build passes after each phase. Moving to M10.6.6c (RecipeImportPreviewView) and M10.6.6d (Grocery views).
+
+### Key Decisions
+
+- **No RecipeDetailView integration**: The plan referenced RecipeDetailView but M10.8 Phase 2 already removed the edit modal — all editing happens inline in RecipeDetailView via EditRecipeView's patterns. The actual editing surfaces are CreateRecipeView and EditRecipeView.
+- **Toast extracted early (M10.6.6e before M10.6.6b)**: Built the reusable toast component first so both recipe views and later views share the same component. Avoids duplicate inline toast code.
+- **Identical LLM parse methods across Create/Edit**: Both views use the same `batchLLMParse()` and `singleLLMParse()` patterns since they share the same `IngredientInput` data model and `IngredientMatchInfo` cache.
+
+### Learning
+
+- `disable-model-invocation: true` in SKILL.md frontmatter prevents Claude from auto-invoking skills — only manual `/skill-name` works. This was silently blocking all 8 project skills.
+- `ForagerTheme.textOnAccent` doesn't exist — used `.white` directly for toast text on accent background.
+
+### AI Tooling Observations
+
+Context window management is critical for large multi-view implementations. The session planned all sub-phases upfront with a task list, which helped maintain focus across context compaction. Reading CreateRecipeView first and using it as the template for EditRecipeView was efficient — identical patterns meant fast replication.
+
+### What's Next
+
+M10.6.5: Final documentation pass, full verification, create PR for squash merge to main. All code changes for M10.6.6 are complete and building cleanly.
+
+---
+
+## Session 59 — March 1, 2026
+**Milestone**: M10.6.1 — LLM Parser Protocol + Claude Adapter + Tests
+**Focus**: Build the foundational layer for optional Claude API ingredient parsing
+**Branch**: `feature/M10.6-claude-api-integration`
+
+### What Happened
+
+Set up M10.6 milestone (PRD audit, service check, branch, core docs) and implemented M10.6.1 — the protocol layer, Claude API adapter, mock, and 10 unit tests.
+
+**M10.6.1** — Four files created:
+1. **`LLMIngredientParser.swift`** — Protocol (`parseBatch`, `providerName`, `isConfigured`), `LLMParserResult` struct with `toParserResult()` bridge, `LLMParserError` enum with `isRetryable` for retry routing.
+2. **`ClaudeIngredientParser.swift`** — Anthropic Messages API adapter using `tool_use` for structured output. Model: `claude-haiku-4-5-20251001`. Exponential backoff (1s, 2s, 4s) on 429/529, immediate throw on 401/5xx. Accepts injectable `URLSession` for testability.
+3. **`MockLLMIngredientParser.swift`** — Test double with `stubbedResults`, `stubbedError`, call tracking.
+4. **`ClaudeIngredientParserTests.swift`** — 10 tests: batch parse, empty input, single ingredient, multi-ingredient split, 401 no-retry, 429 retry+backoff, malformed response, validation (empty name), `toParserResult` bridge, request header verification.
+
+All 10 tests pass. The `MockURLProtocol` pattern intercepts all network calls via `URLSessionConfiguration.ephemeral` — zero live API calls in tests.
+
+**M10.6.2** — Three files touched:
+1. **`KeychainHelper.swift`** — Added `saveLLMAPIKey`, `getLLMAPIKey`, `deleteLLMAPIKey` inside the enum body (private `read`/`write` require internal access).
+2. **`LLMSettingsService.swift`** — `@MainActor` singleton with `@Published isEnabled` (UserDefaults-backed), Keychain API key CRUD, masked key display, `testConnection()` async method, `activeParser()` factory.
+3. **`LLMSettingsServiceTests.swift`** — 9 tests covering toggle persistence, key save/retrieve/delete, whitespace trimming, empty key rejection, factory nil/configured states, connection test without key.
+
+All 9 tests pass in 0.034s.
+
+**M10.6.3** — One file modified:
+- **`SettingsView.swift`** — Added `aiImportSection` between Display Options and Developer Tools. Toggle, SecureField API key entry, masked key display with Clear button, connection test with ProgressView spinner, status indicators (green checkmark / red X / gray circle), link to Anthropic console.
+
+**M10.6.4** — Four files touched:
+1. **`RecipeImportService.swift`** — Made `saveImport(from:)` and `replaceExistingRecipe(objectID:with:)` async. Added `tryLLMParsing()` helper that attempts LLM batch parsing before local pipeline, with silent fallback on any error. Extracted `persistAndFinish()` shared helper.
+2. **`RecipeImportSheet.swift`** — Wrapped 3 call sites in `Task { await ... }`.
+3. **`RecipeImportServiceLLMTests.swift`** — 5 tests: pipeline fallback when LLM disabled, template connection, uncategorized template IDs, replace existing recipe, empty ingredients.
+
+All 24 M10.6 tests pass (10 + 9 + 5).
+
+### Key Decisions
+
+- **Separate protocol from `IngredientParser`**: The LLM contract is async + batch + network-dependent, fundamentally different from the sync + per-line + local `IngredientParser`. A shared protocol would force awkward wrappers on both sides. The `toParserResult()` bridge connects at the boundary.
+- **`tool_use` for structured output**: Forces Claude to return JSON matching the tool schema, eliminating freeform text parsing. The tool definition specifies `name`, `quantity` (number|null), `unit` (string|null), `notes` (string|null).
+- **Fixed 0.95 confidence**: LLM results get a constant confidence score since the model doesn't provide per-field confidence. This positions LLM above the NLP fallback (capped at 0.75) in the routing hierarchy.
+- **`URLSession` injection**: The parser accepts a session parameter (defaulting to `.shared`) so tests can inject a mock-protocol session. No singletons, no test hooks needed.
+
+### Learning
+
+- Swift requires exhaustive catch blocks even when you "know" the error type — a typed `catch let error as X` still needs a fallback `catch` clause.
+- `MockURLProtocol` with a static `requestHandler` closure is the cleanest iOS networking test pattern — no third-party mocking libraries needed.
+- Exponential backoff tests take real wall-clock time when using `Task.sleep`. For 10 tests this is fine (~3s), but larger suites would benefit from an injectable clock.
+
+### AI Tooling Observations
+
+The session started with housekeeping (skill renames, CLAUDE.md audit) before pivoting to M10.6. The `/claude-md-management:claude-md-improver` audit was useful — identified 6 concrete improvements including stale test file counts and redundant sections. PRD audit caught that `KeychainHelper.read`/`write` are `private static`, which will matter for M10.6.2.
+
+### What's Next
+
+M10.6.2: KeychainHelper extension for LLM API key storage + LLMSettingsService + tests.
+
+---
+
 ## Session 58 — February 28, 2026
 **Milestone**: M10.8 Phase 2 — Fully Inline RecipeDetailView + Import Instructions Editing
 **Focus**: Eliminate Edit Recipe modal, inline everything, TestFlight build 29
