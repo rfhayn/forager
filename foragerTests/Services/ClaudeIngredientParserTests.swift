@@ -173,6 +173,8 @@ final class ClaudeIngredientParserTests: XCTestCase {
             XCTFail("Expected LLMParserError.invalidAPIKey")
         } catch let error as LLMParserError {
             XCTAssertEqual(error.errorDescription, "Invalid API key")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
         }
 
         XCTAssertEqual(requestCount, 1, "401 should not retry")
@@ -198,6 +200,8 @@ final class ClaudeIngredientParserTests: XCTestCase {
             XCTFail("Expected LLMParserError.rateLimited")
         } catch let error as LLMParserError {
             XCTAssertEqual(error.errorDescription, "Rate limited — try again shortly")
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
         }
 
         XCTAssertEqual(requestCount, 3, "Should retry 3 times on 429")
@@ -214,6 +218,8 @@ final class ClaudeIngredientParserTests: XCTestCase {
             XCTFail("Expected LLMParserError.malformedResponse")
         } catch let error as LLMParserError {
             XCTAssertTrue(error.errorDescription?.contains("Malformed") == true)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
         }
     }
 
@@ -230,6 +236,8 @@ final class ClaudeIngredientParserTests: XCTestCase {
             XCTFail("Expected LLMParserError.validationFailed")
         } catch let error as LLMParserError {
             XCTAssertTrue(error.errorDescription?.contains("Empty") == true)
+        } catch {
+            XCTFail("Unexpected error type: \(error)")
         }
     }
 
