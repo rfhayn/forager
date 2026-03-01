@@ -2,11 +2,11 @@
 
 **Last Updated**: March 1, 2026
 **Status**: M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 🔄 ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
-**Total Progress**: ~258 hours | 89% planning accuracy
+**Total Progress**: ~261 hours | 89% planning accuracy
 **Current Branch**: `feature/M10.6-claude-api-integration`
 **Current Milestone**: M10.6 🔄 ACTIVE — Claude API Integration for Import Parsing
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.6 (Claude API, 8.5-12h) → M10.4 → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.6 (Claude API) → M10.4 → M7.7 → M6 → M9 → M11+
 
 ---
 

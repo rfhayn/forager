@@ -30,6 +30,16 @@ All 10 tests pass. The `MockURLProtocol` pattern intercepts all network calls vi
 
 All 9 tests pass in 0.034s.
 
+**M10.6.3** — One file modified:
+- **`SettingsView.swift`** — Added `aiImportSection` between Display Options and Developer Tools. Toggle, SecureField API key entry, masked key display with Clear button, connection test with ProgressView spinner, status indicators (green checkmark / red X / gray circle), link to Anthropic console.
+
+**M10.6.4** — Four files touched:
+1. **`RecipeImportService.swift`** — Made `saveImport(from:)` and `replaceExistingRecipe(objectID:with:)` async. Added `tryLLMParsing()` helper that attempts LLM batch parsing before local pipeline, with silent fallback on any error. Extracted `persistAndFinish()` shared helper.
+2. **`RecipeImportSheet.swift`** — Wrapped 3 call sites in `Task { await ... }`.
+3. **`RecipeImportServiceLLMTests.swift`** — 5 tests: pipeline fallback when LLM disabled, template connection, uncategorized template IDs, replace existing recipe, empty ingredients.
+
+All 24 M10.6 tests pass (10 + 9 + 5).
+
 ### Key Decisions
 
 - **Separate protocol from `IngredientParser`**: The LLM contract is async + batch + network-dependent, fundamentally different from the sync + per-line + local `IngredientParser`. A shared protocol would force awkward wrappers on both sides. The `toParserResult()` bridge connects at the boundary.
