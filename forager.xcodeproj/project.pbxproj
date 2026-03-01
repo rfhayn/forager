@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		M106T001MOCKLLMPARSER000A /* MockLLMIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */; };
 		M106T002CLAUDETESTS0000A /* ClaudeIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */; };
+		M106T003LLMSETTINGS0000A /* LLMSettingsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */; };
 		09CF86D193C34F728A3916E4 /* NLPIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */; };
 		2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CF2DF120A08DEF84DD9B24 /* MockIngredientParser.swift */; };
 		9B0555732EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B0555712EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift */; };
@@ -56,6 +57,7 @@
 /* Begin PBXFileReference section */
 		M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockLLMIngredientParser.swift; sourceTree = "<group>"; };
 		M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeIngredientParserTests.swift; sourceTree = "<group>"; };
+		M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsServiceTests.swift; sourceTree = "<group>"; };
 		25484B6E3C18485695BE861C /* NLPIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLPIngredientParserTests.swift; sourceTree = "<group>"; };
 		9B0555702EDB6A0D00A57B34 /* GroceryRecipeManagerUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITests.swift; sourceTree = "<group>"; };
 		9B0555712EDB6A0D00A57B34 /* GroceryRecipeManagerUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryRecipeManagerUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -233,6 +235,7 @@
 				M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */,
 				M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */,
 				M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */,
+				M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -409,6 +412,7 @@
 				M105T003CORPUS2TEST0000A /* RecipeCorpus2Tests.swift in Sources */,
 				M106T001MOCKLLMPARSER000A /* MockLLMIngredientParser.swift in Sources */,
 				M106T002CLAUDETESTS0000A /* ClaudeIngredientParserTests.swift in Sources */,
+				M106T003LLMSETTINGS0000A /* LLMSettingsServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
