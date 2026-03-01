@@ -44,6 +44,11 @@ struct RecipeImportPreviewView: View {
     /// Which ingredient row has its category picker open (nil = none)
     @State private var categoryPickerIndex: Int?
 
+    // M10.6.6: LLM parsing state
+    @State private var isLLMBatchParsing = false
+    @State private var llmParsingIngredients: Set<Int> = []
+    @State private var llmToastMessage: String?
+
     @FetchRequest(
         sortDescriptors: [
             NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true),
@@ -193,6 +198,7 @@ struct RecipeImportPreviewView: View {
                     .disabled(draft.successLevel == .failure)
             }
         }
+        .llmParsingToast(message: $llmToastMessage)
     }
 
     // MARK: - Source Attribution
@@ -351,6 +357,85 @@ struct RecipeImportPreviewView: View {
 
     // MARK: - Ingredient Matching (M10.3.8)
 
+    // MARK: - M10.6.6: LLM Parsing Methods
+
+    private func batchLLMParse() async {
+        let texts = draft.ingredients.value
+        guard !texts.isEmpty else { return }
+
+        isLLMBatchParsing = true
+
+        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .import_) {
+            for (index, (parsed, _)) in results.enumerated() {
+                guard index < draft.ingredients.value.count else { break }
+
+                let cleanName = parsed.displayName
+                let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
+                    .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+
+                let status: IngredientStatus
+                let categoryName: String?
+                if let template = existingTemplate {
+                    if let category = template.category, !category.isEmpty,
+                       category.lowercased() != "uncategorized" {
+                        status = .ready
+                        categoryName = category
+                        categoryAssignments[index] = category
+                    } else {
+                        status = .needsCategory
+                        categoryName = nil
+                    }
+                } else {
+                    status = .needsTemplate
+                    categoryName = nil
+                }
+                ingredientMatches[index] = IngredientMatchInfo(
+                    parsedName: cleanName, status: status, categoryName: categoryName
+                )
+            }
+            llmToastMessage = "AI parsed \(results.count) ingredients"
+        } else {
+            llmToastMessage = "AI parsing unavailable"
+        }
+
+        isLLMBatchParsing = false
+    }
+
+    private func singleLLMParse(index: Int) async {
+        guard index < draft.ingredients.value.count else { return }
+
+        llmParsingIngredients.insert(index)
+
+        let text = editedIngredientNames[index] ?? draft.ingredients.value[index]
+        if let (parsed, _) = await parsingService.parseSingleWithLLM(text: text, source: .import_) {
+            let cleanName = parsed.displayName
+            let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
+                .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+
+            let status: IngredientStatus
+            let categoryName: String?
+            if let template = existingTemplate {
+                if let category = template.category, !category.isEmpty,
+                   category.lowercased() != "uncategorized" {
+                    status = .ready
+                    categoryName = category
+                    categoryAssignments[index] = category
+                } else {
+                    status = .needsCategory
+                    categoryName = nil
+                }
+            } else {
+                status = .needsTemplate
+                categoryName = nil
+            }
+            ingredientMatches[index] = IngredientMatchInfo(
+                parsedName: cleanName, status: status, categoryName: categoryName
+            )
+        }
+
+        llmParsingIngredients.remove(index)
+    }
+
     /// Parse each ingredient line, look up existing templates, and pre-fill category assignments.
     private func computeIngredientMatches() {
         var matches: [Int: IngredientMatchInfo] = [:]
@@ -477,7 +562,28 @@ struct RecipeImportPreviewView: View {
 
     private var ingredientsSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            sectionHeader(label: "Ingredients", showEditIcon: false)
+            // M10.6.6: Section header with batch LLM parse sparkle button
+            HStack {
+                Text("Ingredients")
+                    .font(ForagerTheme.bodyFont.weight(.bold))
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                Spacer()
+                if parsingService.isLLMAvailable {
+                    if isLLMBatchParsing {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task { await batchLLMParse() }
+                        } label: {
+                            Image(systemName: "wand.and.stars")
+                                .foregroundStyle(ForagerTheme.accentPrimary)
+                        }
+                        .disabled(draft.ingredients.value.isEmpty)
+                    }
+                }
+            }
+            .padding(.top, ForagerTheme.Spacing.sm)
 
             // Summary of ingredient match status
             if !ingredientMatches.isEmpty {
@@ -530,8 +636,11 @@ struct RecipeImportPreviewView: View {
         return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
             // Top line: status icon + ingredient text
             HStack(spacing: ForagerTheme.Spacing.sm) {
-                // Status indicator
-                if hasCategory {
+                // Status indicator (M10.6.6: spinner during LLM parse)
+                if llmParsingIngredients.contains(index) {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else if hasCategory {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(ForagerTheme.statusSuccessFG)
                         .font(.system(size: 14))
@@ -578,6 +687,16 @@ struct RecipeImportPreviewView: View {
                 .stroke(isEditing ? ForagerTheme.accentPrimary : (isLowConfidence ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .contextMenu {
+            // M10.6.6: Per-ingredient LLM parse
+            if parsingService.isLLMAvailable {
+                Button {
+                    Task { await singleLLMParse(index: index) }
+                } label: {
+                    Label("AI Parse", systemImage: "wand.and.stars")
+                }
+            }
+        }
     }
 
     /// Format ingredient text with the parsed name highlighted in bold accent color.

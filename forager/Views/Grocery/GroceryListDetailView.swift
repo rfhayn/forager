@@ -44,6 +44,10 @@ struct GroceryListDetailView: View {
     // Track last-added item so saveToTemplates can update its category
     @State private var lastAddedItem: GroceryListItem?
 
+    // M10.6.6: LLM parsing state
+    @State private var isLLMQuickAdding = false
+    @State private var llmToastMessage: String?
+
     // Error feedback
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -120,6 +124,7 @@ struct GroceryListDetailView: View {
         } message: {
             Text(errorMessage)
         }
+        .llmParsingToast(message: $llmToastMessage)
         .onAppear {
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
             if let firstCategory = categories.first {
@@ -226,6 +231,23 @@ struct GroceryListDetailView: View {
                         }
                     }
                     .onSubmit { quickAddItem() }
+
+                // M10.6.6: LLM sparkle button for AI-enhanced quick add
+                if parsingService.isLLMAvailable {
+                    if isLLMQuickAdding {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Button {
+                            Task { await quickAddItemWithLLM() }
+                        } label: {
+                            Image(systemName: "wand.and.stars")
+                                .font(.title2)
+                                .foregroundStyle(ForagerTheme.accentPrimary)
+                        }
+                        .disabled(quickAddText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
 
                 Button(action: quickAddItem) {
                     Image(systemName: "plus.circle.fill")
@@ -450,6 +472,66 @@ struct GroceryListDetailView: View {
         if let category = template.category, !category.isEmpty {
             defaultCategory = category
         }
+    }
+
+    // MARK: - M10.6.6: LLM-Enhanced Quick Add
+
+    private func quickAddItemWithLLM() async {
+        let trimmedText = quickAddText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return }
+
+        isLLMQuickAdding = true
+
+        if let (parsed, structured) = await parsingService.parseSingleWithLLM(text: trimmedText, source: .groceryListItem) {
+            let cleanName = parsed.displayName
+            let matchedTemplate = selectedTemplate ?? templateService.searchTemplates(query: cleanName, limit: 1)
+                .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+
+            let categoryToUse: String
+            if let template = matchedTemplate, let category = template.category, !category.isEmpty {
+                categoryToUse = category
+            } else {
+                categoryToUse = defaultCategory
+            }
+
+            let confidence = matchedTemplate != nil
+                ? max(structured.parseConfidence, 0.8)
+                : structured.parseConfidence
+
+            let listItem = weeklyListService.addItem(
+                to: weeklyList, name: trimmedText, categoryName: categoryToUse,
+                numericValue: structured.numericValue ?? 0.0,
+                standardUnit: structured.standardUnit,
+                displayText: structured.displayText,
+                isParseable: structured.isParseable,
+                parseConfidence: confidence, source: "manual"
+            )
+
+            if let listItem = listItem {
+                if matchedTemplate == nil {
+                    lastAddedItem = listItem
+                    newIngredientName = cleanName
+                    newIngredientCategory = categoryToUse
+                    markAsStaple = false
+                    DispatchQueue.main.async {
+                        self.showingAddToTemplates = true
+                    }
+                }
+                quickAddText = ""
+                selectedTemplate = nil
+                showingAutocomplete = false
+            } else {
+                errorMessage = weeklyListService.errorMessage ?? "Failed to add item"
+                showingError = true
+            }
+        } else {
+            // LLM failed — fall through to local parse
+            isLLMQuickAdding = false
+            quickAddItem()
+            return
+        }
+
+        isLLMQuickAdding = false
     }
 
     private func quickAddItem() {

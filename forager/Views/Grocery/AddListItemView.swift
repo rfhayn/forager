@@ -46,6 +46,10 @@ struct AddListItemView: View {
     @State private var showingAutocomplete = false
     @State private var selectedTemplate: IngredientTemplate? = nil
     
+    // M10.6.6: LLM parsing state
+    @State private var isLLMAdding = false
+    @State private var llmToastMessage: String?
+
     // PHASE 3: New ingredient tracking
     @State private var showingAddToTemplates = false
     @State private var newIngredientName = ""
@@ -170,11 +174,30 @@ struct AddListItemView: View {
                 }
                 
                 Section {
-                    Button("Add to List") {
-                        addItemToList()
+                    HStack {
+                        Button("Add to List") {
+                            addItemToList()
+                        }
+                        .disabled(!isFormValid)
+
+                        Spacer()
+
+                        // M10.6.6: LLM-enhanced add button
+                        if parsingService.isLLMAvailable {
+                            if isLLMAdding {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Button {
+                                    Task { await addItemWithLLM() }
+                                } label: {
+                                    Label("AI Add", systemImage: "wand.and.stars")
+                                        .font(ForagerTheme.secondaryFont)
+                                }
+                                .disabled(!isFormValid)
+                            }
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .disabled(!isFormValid)
                 }
                 
                 Section {
@@ -209,6 +232,7 @@ struct AddListItemView: View {
                     selectedCategory = firstCategory.displayName
                 }
             }
+            .llmParsingToast(message: $llmToastMessage)
         }
     }
     
@@ -296,6 +320,64 @@ struct AddListItemView: View {
     // MARK: - Helper Functions
     
     
+    // MARK: - M10.6.6: LLM-Enhanced Add
+
+    private func addItemWithLLM() async {
+        let trimmedText = ingredientText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return }
+
+        isLLMAdding = true
+
+        if let (parsed, structured) = await parsingService.parseSingleWithLLM(text: trimmedText, source: .groceryListItem) {
+            let cleanName = parsed.displayName
+            let matchedTemplate = selectedTemplate ?? templateService.searchTemplates(query: cleanName, limit: 1)
+                .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+
+            let categoryToUse: String
+            if let template = matchedTemplate, let category = template.category, !category.isEmpty {
+                categoryToUse = category
+            } else {
+                categoryToUse = selectedCategory
+            }
+
+            let confidence = matchedTemplate != nil
+                ? max(structured.parseConfidence, 0.8)
+                : structured.parseConfidence
+
+            let listItem = weeklyListService.addItem(
+                to: weeklyList, name: parsed.displayName,
+                categoryName: categoryToUse,
+                numericValue: structured.numericValue ?? 0.0,
+                standardUnit: structured.standardUnit,
+                displayText: structured.displayText,
+                isParseable: structured.isParseable,
+                parseConfidence: confidence, source: "manual"
+            )
+
+            if let listItem = listItem {
+                if matchedTemplate == nil {
+                    lastAddedItem = listItem
+                    newIngredientName = cleanName
+                    newIngredientCategory = categoryToUse
+                    markAsStaple = false
+                    showingAddToTemplates = true
+                } else {
+                    dismiss()
+                }
+            } else {
+                errorMessage = weeklyListService.errorMessage ?? "Failed to add item"
+                showingError = true
+            }
+        } else {
+            // LLM failed — fall through to local parse
+            isLLMAdding = false
+            addItemToList()
+            return
+        }
+
+        isLLMAdding = false
+    }
+
     private func addItemToList() {
         let trimmedText = ingredientText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedText.isEmpty else { return }
