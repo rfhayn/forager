@@ -268,8 +268,9 @@ class IngredientParsingService: ObservableObject {
             }
 
             #if DEBUG
+            let resultCount = output.count
             await MainActor.run {
-                DebugLogService.shared.log("parseBatchWithLLM: success — \(output.count) results", category: "LLM")
+                DebugLogService.shared.log("parseBatchWithLLM: success — \(resultCount) results", category: "LLM")
             }
             #endif
             await MainActor.run { lastLLMError = nil }

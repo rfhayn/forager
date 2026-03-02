@@ -23,8 +23,9 @@ struct EditRecipeView: View {
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
     @StateObject private var templateService: IngredientTemplateService
+    @StateObject private var matchService: IngredientMatchService
     
-    // MARK: - Enum-Based Sheet/Alert Routing (M7.5 Phase 2)
+    // MARK: - Enum-Based Sheet/Alert Routing (M7.5)
     private enum ActiveSheet: Identifiable {
         case categoryModal
         case prepTimePicker
@@ -71,15 +72,8 @@ struct EditRecipeView: View {
 
     // M10.8: Inline ingredient editing — display/edit toggle
     @State private var editingIngredientId: UUID?
-    @FocusState private var focusedIngredientId: UUID?
-
-    // M10.8: Pre-computed ingredient match info (avoids parsing during render)
-    private struct IngredientMatchInfo {
-        let parsedName: String
-        let status: IngredientStatus
-        let categoryName: String?
-    }
-    @State private var ingredientMatches: [UUID: IngredientMatchInfo] = [:]
+    // M10.6.8: Uses shared IngredientMatchResult via IngredientMatchService
+    @State private var ingredientMatches: [UUID: IngredientMatchResult] = [:]
     @State private var categoryPickerIngredientId: UUID?
 
     // M10.6.6: LLM parsing state
@@ -104,14 +98,16 @@ struct EditRecipeView: View {
 
     init(recipe: Recipe, context: NSManagedObjectContext) {
         self.recipe = recipe
-        
+
         let templateSvc = IngredientTemplateService(context: context)
         let parsingSvc = IngredientParsingService(context: context, templateService: templateSvc)
         let autocompleteSvc = IngredientAutocompleteService(context: context, parsingService: parsingSvc)
-        
+        let matchSvc = IngredientMatchService(parsingService: parsingSvc, templateService: templateSvc)
+
         _templateService = StateObject(wrappedValue: templateSvc)
         _parsingService = StateObject(wrappedValue: parsingSvc)
         _autocompleteService = StateObject(wrappedValue: autocompleteSvc)
+        _matchService = StateObject(wrappedValue: matchSvc)
     }
     
     var body: some View {
@@ -132,14 +128,6 @@ struct EditRecipeView: View {
                 if let oldId = oldValue, oldId != newValue,
                    let ingredient = formData.ingredients.first(where: { $0.id == oldId }) {
                     commitIngredientEdit(for: ingredient)
-                }
-                focusedIngredientId = newValue
-            }
-            .onChange(of: focusedIngredientId) { _, newValue in
-                if newValue == nil, let editingId = editingIngredientId,
-                   let ingredient = formData.ingredients.first(where: { $0.id == editingId }) {
-                    commitIngredientEdit(for: ingredient)
-                    editingIngredientId = nil
                 }
             }
             .navigationTitle("Edit Recipe")
@@ -271,7 +259,7 @@ struct EditRecipeView: View {
                     fullText: ingredient.name ?? "",
                     template: ingredient.ingredientTemplate,
                     matchedViaAutocomplete: ingredient.ingredientTemplate != nil,
-                    // M8.4 Phase 7: Capture original state for correction telemetry
+                    // M8.4: Capture original state for correction telemetry
                     originalFullText: ingredient.name,
                     originalNumericValue: ingredient.numericValue != 0 ? ingredient.numericValue : nil,
                     originalStandardUnit: ingredient.standardUnit,
@@ -317,11 +305,11 @@ struct EditRecipeView: View {
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
+            .background(ForagerTheme.backgroundSecondary)
             .cornerRadius(ForagerTheme.Radius.md)
         }
     }
-    
+
     private var timingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Timing")
@@ -334,7 +322,7 @@ struct EditRecipeView: View {
                             .foregroundStyle(ForagerTheme.accentPrimary)
                             .frame(width: 24)
                         Text("Prep Time")
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.prepTime))
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -353,7 +341,7 @@ struct EditRecipeView: View {
                             .foregroundStyle(ForagerTheme.statusWarningFG)
                             .frame(width: 24)
                         Text("Cook Time")
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.cookTime))
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -380,7 +368,7 @@ struct EditRecipeView: View {
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
+            .background(ForagerTheme.backgroundSecondary)
             .cornerRadius(ForagerTheme.Radius.md)
         }
         .onChange(of: formData.prepTime) { oldValue, newValue in
@@ -467,7 +455,7 @@ struct EditRecipeView: View {
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text(template.name ?? "")
                                                 .font(.body)
-                                                .foregroundStyle(.primary)
+                                                .foregroundStyle(ForagerTheme.textPrimary)
 
                                             if let category = template.category, !category.isEmpty {
                                                 Text(category)
@@ -484,7 +472,7 @@ struct EditRecipeView: View {
                                                 .foregroundStyle(ForagerTheme.textSecondary)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
-                                                .background(Color(.systemGray5))
+                                                .background(ForagerTheme.backgroundTertiary)
                                                 .cornerRadius(ForagerTheme.Radius.xs)
                                         }
                                     }
@@ -499,7 +487,7 @@ struct EditRecipeView: View {
                                 }
                             }
                         }
-                        .background(Color(.systemBackground))
+                        .background(ForagerTheme.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                         .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                         .padding(.top, 4)
@@ -521,46 +509,31 @@ struct EditRecipeView: View {
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
+            .background(ForagerTheme.backgroundSecondary)
             .cornerRadius(ForagerTheme.Radius.md)
         }
     }
-    
-    // M10.8: Bordered card ingredient row with display/edit toggle
-    // Matches RecipeImportPreviewView pattern exactly
+
+    // M10.6.8: Ingredient row using shared IngredientMatchRow component
     private func ingredientRow(ingredient: IngredientInput, index: Int) -> some View {
         let isEditing = editingIngredientId == ingredient.id
         let matchInfo = ingredientMatches[ingredient.id]
 
-        return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-            // Top line: status icon + ingredient text
-            HStack(spacing: ForagerTheme.Spacing.sm) {
-                statusIcon(for: ingredient, matchInfo: matchInfo)
-
-                if isEditing {
-                    TextField("Ingredient", text: ingredientBinding(for: ingredient))
-                        .font(ForagerTheme.bodyFont)
-                        .autocorrectionDisabled()
-                        .submitLabel(.done)
-                        .focused($focusedIngredientId, equals: ingredient.id)
-                        .onSubmit {
-                            commitIngredientEdit(for: ingredient)
-                            editingIngredientId = nil
-                        }
-                } else {
-                    formattedIngredientText(for: ingredient, matchInfo: matchInfo)
-                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            editingIngredientId = ingredient.id
-                        }
-                }
+        return IngredientMatchRow(
+            matchResult: matchInfo,
+            rawText: ingredient.fullText.trimmingCharacters(in: .whitespacesAndNewlines),
+            isEditing: isEditing,
+            isAIParsing: llmParsingIngredients.contains(ingredient.id),
+            showRawText: false,
+            categoryName: matchInfo?.categoryName,
+            onTapEdit: { editingIngredientId = ingredient.id },
+            onCategoryTap: { categoryPickerIngredientId = ingredient.id },
+            editText: ingredientBinding(for: ingredient),
+            onSubmitEdit: {
+                commitIngredientEdit(for: ingredient)
+                editingIngredientId = nil
             }
-
-            // Bottom line: category picker button (matches import view)
-            categoryLabel(for: ingredient)
-                .padding(.leading, 22)
-        }
+        )
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
         .background(ForagerTheme.surfacePrimary)
@@ -570,7 +543,6 @@ struct EditRecipeView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
         .contextMenu {
-            // M10.6.6: Per-ingredient LLM parse
             if parsingService.isLLMAvailable {
                 Button {
                     Task { await singleLLMParse(ingredient: ingredient) }
@@ -588,26 +560,6 @@ struct EditRecipeView: View {
         }
     }
 
-    // M10.8: Status icon matching import view pattern
-    private func statusIcon(for ingredient: IngredientInput, matchInfo: IngredientMatchInfo?) -> some View {
-        Group {
-            if llmParsingIngredients.contains(ingredient.id) {
-                ProgressView()
-                    .controlSize(.mini)
-            } else if let info = matchInfo, info.categoryName != nil {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-            } else if matchInfo != nil {
-                Image(systemName: "circle")
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            } else {
-                Image(systemName: "circle")
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
-        }
-        .font(.system(size: 14))
-    }
-
     // M10.8: Binding for ingredient text in edit mode
     private func ingredientBinding(for ingredient: IngredientInput) -> Binding<String> {
         Binding(
@@ -619,32 +571,6 @@ struct EditRecipeView: View {
                 }
             }
         )
-    }
-
-    // M10.8: Category label button — colored dot + name + chevron (matches import view)
-    private func categoryLabel(for ingredient: IngredientInput) -> some View {
-        Button {
-            categoryPickerIngredientId = ingredient.id
-        } label: {
-            HStack(spacing: ForagerTheme.Spacing.xs) {
-                if let matchInfo = ingredientMatches[ingredient.id], let category = matchInfo.categoryName {
-                    Circle()
-                        .fill(ForagerTheme.categoryColor(for: category))
-                        .frame(width: 8, height: 8)
-                    Text(category)
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                } else {
-                    Text("Choose Category")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                }
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     // M10.8: Category picker sheet (matches import view)
@@ -709,90 +635,34 @@ struct EditRecipeView: View {
         hasUnsavedChanges = true
 
         // Update match cache
-        if let matchInfo = ingredientMatches[ingredientId] {
-            ingredientMatches[ingredientId] = IngredientMatchInfo(
-                parsedName: matchInfo.parsedName,
-                status: .ready,
-                categoryName: categoryName
-            )
+        if let existing = ingredientMatches[ingredientId] {
+            ingredientMatches[ingredientId] = existing.withCategory(categoryName)
+        } else if let result = matchService.matchIngredient(text: formData.ingredients[index].fullText) {
+            ingredientMatches[ingredientId] = result.withCategory(categoryName)
         }
     }
 
-    // M10.8: Summary bar — "N categorized · N need category"
+    // M10.6.8: Summary bar uses shared component
     private var ingredientMatchSummary: some View {
-        let categorized = ingredientMatches.values.filter { $0.categoryName != nil }.count
-        let total = formData.ingredients.count
-        let uncategorized = total - categorized
-
-        return HStack(spacing: ForagerTheme.Spacing.md) {
-            if categorized > 0 {
-                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-            }
-            if uncategorized > 0 {
-                Label("\(uncategorized) need category", systemImage: "circle")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
-        }
-        .padding(.bottom, ForagerTheme.Spacing.xs)
+        let summary = matchService.matchSummary(from: Array(ingredientMatches.values.map { Optional($0) }))
+        return IngredientMatchSummaryView(categorized: summary.categorized, uncategorized: summary.uncategorized)
     }
 
-    // M10.8: Formatted ingredient text — reads from pre-computed match, never calls parser
-    private func formattedIngredientText(for ingredient: IngredientInput, matchInfo: IngredientMatchInfo?) -> Text {
-        let text = ingredient.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let info = matchInfo else {
-            return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
-        }
-
-        if let range = text.range(of: info.parsedName, options: .caseInsensitive) {
-            let prefix = String(text[text.startIndex..<range.lowerBound])
-            let name = String(text[range])
-            let suffix = String(text[range.upperBound...])
-            return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
-                + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
-                + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
-        }
-
-        return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
-    }
-
-    // M10.8: Re-parse and template-match when exiting edit mode, update match cache
+    // M10.6.8: Re-match using shared service when exiting edit mode
     private func commitIngredientEdit(for ingredient: IngredientInput) {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
         let text = formData.ingredients[index].fullText
-        guard text.count >= 2 else { return }
 
-        let parsed = parsingService.parseIngredient(text: text)
-        let cleanName = parsed.displayName
-        let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
-            .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
-        formData.ingredients[index].template = existingTemplate
-        hasUnsavedChanges = true
-
-        // Update pre-computed match cache
-        let status: IngredientStatus
-        let categoryName: String?
-        if let template = existingTemplate {
-            if let category = template.category, !category.isEmpty,
-               category.lowercased() != "uncategorized" {
-                status = .ready
-                categoryName = category
-            } else {
-                status = .needsCategory
-                categoryName = nil
-            }
-        } else {
-            status = .needsTemplate
-            categoryName = nil
+        if let result = matchService.matchIngredient(text: text) {
+            ingredientMatches[ingredient.id] = result
+            let existingTemplate = templateService.searchTemplates(query: result.parsedName, limit: 1)
+                .first(where: { $0.name?.lowercased() == result.parsedName.lowercased() })
+            formData.ingredients[index].template = existingTemplate
         }
-        ingredientMatches[ingredient.id] = IngredientMatchInfo(
-            parsedName: cleanName, status: status, categoryName: categoryName
-        )
+        hasUnsavedChanges = true
     }
 
-    // MARK: - M10.6.6: LLM Parsing Methods
+    // MARK: - M10.6.8: LLM Parsing (delegates to shared service)
 
     private func batchLLMParse() async {
         let ingredients = formData.ingredients
@@ -801,34 +671,14 @@ struct EditRecipeView: View {
         isLLMBatchParsing = true
         let texts = ingredients.map { $0.fullText }
 
-        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
-            for (index, (parsed, _)) in results.enumerated() {
+        if let results = await matchService.aiParseBatch(texts: texts, source: .recipeIngredient) {
+            for (index, result) in results.enumerated() {
                 guard index < formData.ingredients.count else { break }
                 let ingredient = formData.ingredients[index]
-
-                let cleanName = parsed.displayName
-                let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
-                    .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+                ingredientMatches[ingredient.id] = result
+                let existingTemplate = templateService.searchTemplates(query: result.parsedName, limit: 1)
+                    .first(where: { $0.name?.lowercased() == result.parsedName.lowercased() })
                 formData.ingredients[index].template = existingTemplate
-
-                let status: IngredientStatus
-                let categoryName: String?
-                if let template = existingTemplate {
-                    if let category = template.category, !category.isEmpty,
-                       category.lowercased() != "uncategorized" {
-                        status = .ready
-                        categoryName = category
-                    } else {
-                        status = .needsCategory
-                        categoryName = nil
-                    }
-                } else {
-                    status = .needsTemplate
-                    categoryName = nil
-                }
-                ingredientMatches[ingredient.id] = IngredientMatchInfo(
-                    parsedName: cleanName, status: status, categoryName: categoryName
-                )
             }
             hasUnsavedChanges = true
             llmToastMessage = "AI parsed \(results.count) ingredients"
@@ -844,69 +694,26 @@ struct EditRecipeView: View {
 
         llmParsingIngredients.insert(ingredient.id)
 
-        if let (parsed, _) = await parsingService.parseSingleWithLLM(text: ingredient.fullText, source: .recipeIngredient) {
-            let cleanName = parsed.displayName
-            let existingTemplate = templateService.searchTemplates(query: cleanName, limit: 1)
-                .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
+        if let result = await matchService.aiParseSingle(text: ingredient.fullText, source: .recipeIngredient) {
+            ingredientMatches[ingredient.id] = result
+            let existingTemplate = templateService.searchTemplates(query: result.parsedName, limit: 1)
+                .first(where: { $0.name?.lowercased() == result.parsedName.lowercased() })
             formData.ingredients[index].template = existingTemplate
-
-            let status: IngredientStatus
-            let categoryName: String?
-            if let template = existingTemplate {
-                if let category = template.category, !category.isEmpty,
-                   category.lowercased() != "uncategorized" {
-                    status = .ready
-                    categoryName = category
-                } else {
-                    status = .needsCategory
-                    categoryName = nil
-                }
-            } else {
-                status = .needsTemplate
-                categoryName = nil
-            }
-            ingredientMatches[ingredient.id] = IngredientMatchInfo(
-                parsedName: cleanName, status: status, categoryName: categoryName
-            )
             hasUnsavedChanges = true
         }
 
         llmParsingIngredients.remove(ingredient.id)
     }
 
-    // M10.8: Pre-compute ingredient matches on appear — never during body evaluation
+    // M10.6.8: Pre-compute ingredient matches via shared service
     private func computeIngredientMatches() {
-        var matches: [UUID: IngredientMatchInfo] = [:]
-        for ingredient in formData.ingredients {
-            let text = ingredient.fullText.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard text.count >= 2 else { continue }
+        let texts = formData.ingredients.map { $0.fullText }
+        let results = matchService.matchBatch(texts: texts)
+        var matches: [UUID: IngredientMatchResult] = [:]
 
-            let parsed = parsingService.parseIngredient(text: text)
-            let cleanName = parsed.displayName
-            let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
-            let exactMatch = candidates.first(where: {
-                $0.name?.lowercased() == cleanName.lowercased()
-            })
-
-            let status: IngredientStatus
-            let categoryName: String?
-            if let template = exactMatch {
-                if let category = template.category, !category.isEmpty,
-                   category.lowercased() != "uncategorized" {
-                    status = .ready
-                    categoryName = category
-                } else {
-                    status = .needsCategory
-                    categoryName = nil
-                }
-            } else {
-                status = .needsTemplate
-                categoryName = nil
-            }
-
-            matches[ingredient.id] = IngredientMatchInfo(
-                parsedName: cleanName, status: status, categoryName: categoryName
-            )
+        for (index, result) in results.enumerated() {
+            guard index < formData.ingredients.count, let result else { continue }
+            matches[formData.ingredients[index].id] = result
         }
         ingredientMatches = matches
     }
@@ -919,11 +726,11 @@ struct EditRecipeView: View {
             TextEditor(text: $formData.instructions)
                 .frame(minHeight: 150)
                 .padding(8)
-                .background(Color(.systemBackground))
+                .background(ForagerTheme.surfacePrimary)
                 .cornerRadius(ForagerTheme.Radius.sm)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(.systemGray4), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                        .stroke(ForagerTheme.borderDefault, lineWidth: 1)
                 )
                 .onChange(of: formData.instructions) { oldValue, newValue in
                     hasUnsavedChanges = true
@@ -976,14 +783,10 @@ struct EditRecipeView: View {
 
         formData.ingredients.append(ingredientInput)
 
-        // M10.8: Pre-compute match for the new ingredient
-        let categoryName = template.category
-        let hasCategory = categoryName != nil && !(categoryName?.isEmpty ?? true) && categoryName?.lowercased() != "uncategorized"
-        ingredientMatches[ingredientInput.id] = IngredientMatchInfo(
-            parsedName: template.name ?? parsed.displayName,
-            status: hasCategory ? .ready : .needsCategory,
-            categoryName: hasCategory ? categoryName : nil
-        )
+        // M10.6.8: Pre-compute match via shared service
+        if let result = matchService.matchIngredient(text: rebuiltText) {
+            ingredientMatches[ingredientInput.id] = result
+        }
 
         currentIngredientText = ""
         showingAutocomplete = false
@@ -1007,25 +810,10 @@ struct EditRecipeView: View {
 
         formData.ingredients.append(ingredientInput)
 
-        // M10.8: Pre-compute match for the new ingredient
-        let status: IngredientStatus
-        let categoryName: String?
-        if let template = existingTemplate {
-            if let category = template.category, !category.isEmpty,
-               category.lowercased() != "uncategorized" {
-                status = .ready
-                categoryName = category
-            } else {
-                status = .needsCategory
-                categoryName = nil
-            }
-        } else {
-            status = .needsTemplate
-            categoryName = nil
+        // M10.6.8: Pre-compute match via shared service
+        if let result = matchService.matchIngredient(text: trimmed) {
+            ingredientMatches[ingredientInput.id] = result
         }
-        ingredientMatches[ingredientInput.id] = IngredientMatchInfo(
-            parsedName: cleanName, status: status, categoryName: categoryName
-        )
 
         currentIngredientText = ""
         showingAutocomplete = false
@@ -1091,7 +879,7 @@ struct EditRecipeView: View {
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
 
-            // M8.4 Phase 7: Use parseUnified for both structured fields + correction detection
+            // M8.4: Use parseUnified for both structured fields + correction detection
             let (parsedIngredient, structured) = parsingService.parseUnified(text: trimmed)
             ingredient.displayText = structured.displayText
             ingredient.numericValue = structured.numericValue ?? 0.0
@@ -1103,7 +891,7 @@ struct EditRecipeView: View {
                 ingredient.ingredientTemplate = template
             }
 
-            // M8.4 Phase 7: Log correction if user edited the ingredient text
+            // M8.4: Log correction if user edited the ingredient text
             if let originalText = ingredientInput.originalFullText, trimmed != originalText {
                 let originalParsed = parsingService.parseIngredient(text: originalText)
                 let nameChanged = originalParsed.name.lowercased() != parsedIngredient.name.lowercased()

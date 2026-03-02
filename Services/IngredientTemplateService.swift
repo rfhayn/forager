@@ -61,48 +61,13 @@ class IngredientTemplateService: ObservableObject {
             }
         }
         
-        // Items where the plural form is the natural grocery name.
-        // Maps both singular and plural inputs to the preferred plural form.
-        // "grape" → "grapes", "strawberries" → "strawberries"
-        let preferPlural: [String: String] = [
-            "grape": "grapes", "grapes": "grapes",
-            "strawberry": "strawberries", "strawberries": "strawberries",
-            "blueberry": "blueberries", "blueberries": "blueberries",
-            "raspberry": "raspberries", "raspberries": "raspberries",
-            "blackberry": "blackberries", "blackberries": "blackberries",
-            "cranberry": "cranberries", "cranberries": "cranberries",
-            "cherry": "cherries", "cherries": "cherries",
-            "olive": "olives", "olives": "olives",
-            "cracker": "crackers", "crackers": "crackers",
-            "pretzel": "pretzels", "pretzels": "pretzels",
-            "marshmallow": "marshmallows", "marshmallows": "marshmallows",
-            "raisin": "raisins", "raisins": "raisins",
-            "mushroom": "mushrooms", "mushrooms": "mushrooms",
-            "pepper": "peppers", "peppers": "peppers",
-            "banana": "bananas", "bananas": "bananas",
-            "avocado": "avocados", "avocados": "avocados",
-            "tomato": "tomatoes", "tomatoes": "tomatoes",
-            "potato": "potatoes", "potatoes": "potatoes",
-            "onion": "onions", "onions": "onions",
-            "carrot": "carrots", "carrots": "carrots",
-            "noodle": "noodles", "noodles": "noodles",
-            "egg": "eggs", "eggs": "eggs",
-            "shrimp": "shrimp", // uncountable
-            "scallop": "scallops", "scallops": "scallops",
-            "baby carrot": "baby carrots", "baby carrots": "baby carrots",
-            "baby potato": "baby potatoes", "baby potatoes": "baby potatoes",
-            "baby spinach": "baby spinach", // uncountable
-            "baby corn": "baby corn", // uncountable
-            "baby bella": "baby bellas", "baby bellas": "baby bellas",
-        ]
-        // Exact match in preferPlural (handles single-word and known compounds)
-        if let preferred = preferPlural[checkName] {
-            return preferred
-        }
+        // M10.6.5: Template names use SINGULAR form. The quantity handles plurality.
+        // "2 avocados" → template="avocado", qty=2.
+        // Only genuinely plural items (beans, oats, chips, peas) stay plural.
 
         // Check if this ingredient (after stripping qualifiers) should stay plural
         if alwaysPlural.contains(checkName) {
-            return checkName  // Return the stripped version in plural form
+            return checkName
         }
 
         // If the original (with qualifiers) is in the list, use that
@@ -112,40 +77,16 @@ class IngredientTemplateService: ObservableObject {
 
         let words = checkName.split(separator: " ").map(String.init)
 
-        // For compound names (e.g., "dried cranberries", "frozen peas"), check the
-        // LAST word against preferPlural. This handles identity-qualifier + plural combos
-        // that don't have exact entries in the map.
-        if words.count > 1, let lastWord = words.last,
-           let preferred = preferPlural[lastWord] {
-            var result = words
-            result[result.count - 1] = preferred
-            return result.joined(separator: " ")
-        }
-
         // M8.3.1: Check if the LAST WORD is inherently plural
         // Handles compound names like "black beans", "red pepper flakes", "tortilla strips"
         let alwaysPluralSuffixes: Set<String> = [
             "beans", "chickpeas", "chips", "croutons", "crumbs",
             "flakes", "greens", "lentils", "noodles", "oats",
-            "peas", "seeds", "sprinkles", "strips",
-            "snacks", "berries", "grapes", "crackers"
+            "peas", "seeds", "sprinkles", "strips"
         ]
         if words.count > 1, let lastWord = words.last,
            alwaysPluralSuffixes.contains(lastWord) {
             return checkName
-        }
-
-        // Compound items where the singular suffix should become plural
-        // "fruit snack" → "fruit snacks"
-        let singularSuffixToPlural: [String: String] = [
-            "snack": "snacks", "berry": "berries",
-            "grape": "grapes", "cracker": "crackers",
-        ]
-        if words.count > 1, let lastWord = words.last,
-           let pluralLast = singularSuffixToPlural[lastWord] {
-            var pluralized = words
-            pluralized[pluralized.count - 1] = pluralLast
-            return pluralized.joined(separator: " ")
         }
         
         // Irregular plurals mapping (check these next)

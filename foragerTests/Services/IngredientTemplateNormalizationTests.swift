@@ -96,14 +96,14 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     // MARK: - Regular Plurals (Should Singularize)
 
-    func testEggsPreferPlural() {
+    func testEggsSingularizes() {
         let result = service.normalize(name: "Eggs")
-        XCTAssertEqual(result, "eggs", "'Eggs' should stay plural via preferPlural for natural grocery naming")
+        XCTAssertEqual(result, "egg", "'Eggs' should singularize — qty handles plurality")
     }
 
-    func testTomatoesPreferPlural() {
+    func testTomatoesSingularizes() {
         let result = service.normalize(name: "Tomatoes")
-        XCTAssertEqual(result, "tomatoes", "'Tomatoes' should stay plural via preferPlural for natural grocery naming")
+        XCTAssertEqual(result, "tomato", "'Tomatoes' should singularize — qty handles plurality")
     }
 
     func testBerriesSingularizes() {
@@ -118,13 +118,13 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
         XCTAssertEqual(result, "frozen peas", "'Frozen Peas' preserves identity qualifier — different aisle from fresh peas")
     }
 
-    func testDicedTomatoesPreferPlural() {
+    func testDicedTomatoesSingularizes() {
         let result = service.normalize(name: "Diced Tomatoes")
         // normalize order: case → plural → abbreviation → variation
-        // "Diced Tomatoes" → "diced tomatoes" (case) → preferPlural keeps "tomatoes"
-        // → variation removal strips "diced " → "tomatoes"
-        let expected = "tomatoes"
-        XCTAssertEqual(result, expected, "'Diced Tomatoes' should normalize to 'tomatoes' via preferPlural")
+        // "Diced Tomatoes" → "diced tomatoes" (case) → singularize → "diced tomato"
+        // → variation removal strips "diced " → "tomato"
+        let expected = "tomato"
+        XCTAssertEqual(result, expected, "'Diced Tomatoes' should normalize to 'tomato' (singular, qualifier stripped)")
     }
 
     // MARK: - Case Normalization

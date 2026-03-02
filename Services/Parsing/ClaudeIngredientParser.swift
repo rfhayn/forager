@@ -224,7 +224,9 @@ class ClaudeIngredientParser: LLMIngredientParser {
         - Count items (2 eggs) have quantity but null unit
         - Bare names (salt, pepper) have null quantity and null unit
         - "X to taste/to serve" → quantity null, notes: "to taste"/"to serve"
-        - Preserve the original ingredient name casing
+        - Use SINGULAR form for ingredient names (e.g., "avocado" not "avocados", \
+        "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
+        - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
         - If a line contains multiple ingredients ("salt and pepper"), split into separate items
         """

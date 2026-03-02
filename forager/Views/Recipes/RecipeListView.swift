@@ -22,7 +22,7 @@ struct RecipeListView: View {
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
 
-    // M4.2.4 PHASE 7: Updated to use SelectMealPlanSheet for multi-plan support
+    // M4.2.4: Updated to use SelectMealPlanSheet for multi-plan support
     @State private var showingMealPlanSheet = false
     @State private var selectedRecipeForMealPlan: Recipe?
 
@@ -600,7 +600,7 @@ struct RecipeListView: View {
                 ]
             )
             
-            // M4.3.5 PHASE 3: Recipe 7 - Tests abbreviation expansion
+            // M4.3.5: Recipe 7 - Tests abbreviation expansion
             createRecipe(
                 title: "Guacamole",
                 instructions: """
@@ -623,7 +623,7 @@ struct RecipeListView: View {
                 ]
             )
             
-            // M4.3.5 PHASE 3: Recipe 8 - Tests more abbreviations
+            // M4.3.5: Recipe 8 - Tests more abbreviations
             createRecipe(
                 title: "Chocolate Milk",
                 instructions: """
@@ -641,7 +641,7 @@ struct RecipeListView: View {
                 ]
             )
             
-            // M4.3.5 PHASE 4: Recipe 9 - Tests preparation & freshness descriptors
+            // M4.3.5: Recipe 9 - Tests preparation & freshness descriptors
             createRecipe(
                 title: "Pasta Primavera",
                 instructions: """
@@ -667,7 +667,7 @@ struct RecipeListView: View {
                 ]
             )
             
-            // M4.3.5 PHASE 4: Recipe 10 - Tests type/variety & size descriptors
+            // M4.3.5: Recipe 10 - Tests type/variety & size descriptors
             createRecipe(
                 title: "Chicken Pot Pie",
                 instructions: """
@@ -695,7 +695,7 @@ struct RecipeListView: View {
                 ]
             )
             
-            // M4.3.5 PHASE 4: Recipe 11 - Tests quality & additional descriptors
+            // M4.3.5: Recipe 11 - Tests quality & additional descriptors
             createRecipe(
                 title: "Garden Salad",
                 instructions: """
@@ -815,7 +815,7 @@ struct RecipeListView: View {
             )
 
         #if DEBUG
-        print("✅ Created 15 test recipes with comprehensive variation coverage (M4.3.5 Phase 4 + M8.1 + M8.3)")
+        print("✅ Created 15 test recipes with comprehensive variation coverage (M4.3.5 + M8.1 + M8.3)")
         #endif
     }
     
@@ -956,6 +956,7 @@ struct RecipeDetailView: View {
     @EnvironmentObject private var recipeServiceM75: RecipeService
     @EnvironmentObject private var parsingService: IngredientParsingService
     @EnvironmentObject private var templateService: IngredientTemplateService
+    @EnvironmentObject private var matchService: IngredientMatchService
     @EnvironmentObject private var householdService: HouseholdService
 
     @State private var showingAddToListSheet = false
@@ -972,7 +973,7 @@ struct RecipeDetailView: View {
     @State private var customFraction = 0.0
 
     // M10.8: Inline ingredient editing state
-    @State private var ingredientMatches: [UUID: IngredientMatchInfo] = [:]
+    @State private var ingredientMatches: [UUID: IngredientMatchResult] = [:]
     @State private var editingIngredientId: UUID?
     @State private var editedTexts: [UUID: String] = [:]
     @State private var categoryPickerIngredientId: UUID?
@@ -982,12 +983,12 @@ struct RecipeDetailView: View {
     @State private var isLLMBatchParsing = false
     @State private var llmToastMessage: String?
 
-    // M10.8 Phase 2: Inline instruction editing state
+    // M10.8: Inline instruction editing state
     @State private var editingStepIndex: Int?
     @State private var editedSteps: [Int: String] = [:]
     @FocusState private var focusedStepIndex: Int?
 
-    // M10.8 Phase 2: Inline metadata editing state
+    // M10.8: Inline metadata editing state
     @State private var editingTitle = false
     @State private var editedTitle = ""
     @State private var editingPrepTime = false
@@ -997,7 +998,7 @@ struct RecipeDetailView: View {
     @State private var editingServings = false
     @State private var editedServings = ""
 
-    // M10.8 Phase 2: Focus tracking for inline metadata editing
+    // M10.8: Focus tracking for inline metadata editing
     private enum MetadataFocus: Hashable {
         case title, prepTime, cookTime, servings
     }
@@ -1010,12 +1011,7 @@ struct RecipeDetailView: View {
         ]
     ) private var allCategories: FetchedResults<Category>
 
-    // M10.8: Match info model for pre-computed ingredient state
-    private struct IngredientMatchInfo {
-        let parsedName: String
-        let status: IngredientStatus
-        let categoryName: String?
-    }
+    // M10.6.8: Uses shared IngredientMatchResult via IngredientMatchService
 
     /// Categories filtered by household, excluding "Uncategorized"
     private var realCategories: [Category] {
@@ -1058,7 +1054,7 @@ struct RecipeDetailView: View {
         Int(Double(recipe.servings) * scaleFactor)
     }
 
-    // M10.8 Phase 2: Instruction steps from recipe.instructions (cleaned, no numbering)
+    // M10.8: Instruction steps from recipe.instructions (cleaned, no numbering)
     private var currentInstructionSteps: [String] {
         guard let instructions = recipe.instructions, !instructions.isEmpty else { return [] }
         return instructions.components(separatedBy: "\n")
@@ -1076,40 +1072,19 @@ struct RecipeDetailView: View {
 
     // MARK: - M10.8: Ingredient Matching
 
-    /// Parse ingredient text, look up template, and determine match status.
-    /// Shared logic for both initial computation and single-ingredient re-matching.
-    private func matchIngredient(text: String) -> IngredientMatchInfo? {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count >= 2 else { return nil }
-
-        let parsed = parsingService.parseIngredient(text: trimmed)
-        let cleanName = parsed.displayName
-
-        let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
-        let exactMatch = candidates.first(where: {
-            $0.name?.lowercased() == cleanName.lowercased()
-        })
-
-        if let template = exactMatch,
-           let category = template.category, !category.isEmpty,
-           category.lowercased() != "uncategorized" {
-            return IngredientMatchInfo(parsedName: cleanName, status: .ready, categoryName: category)
-        } else if exactMatch != nil {
-            return IngredientMatchInfo(parsedName: cleanName, status: .needsCategory, categoryName: nil)
-        } else {
-            return IngredientMatchInfo(parsedName: cleanName, status: .needsTemplate, categoryName: nil)
-        }
-    }
+    // M10.6.8: Delegates to shared IngredientMatchService
 
     /// Pre-compute matches for all ingredients. Called on .task{} — never during body evaluation.
     private func computeIngredientMatches() {
-        var matches: [UUID: IngredientMatchInfo] = [:]
+        let texts = sortedIngredients.map { $0.name ?? "" }
+        let results = matchService.matchBatch(texts: texts)
+        var matches: [UUID: IngredientMatchResult] = [:]
 
-        for ingredient in sortedIngredients {
-            guard let id = ingredient.id else { continue }
-            if let info = matchIngredient(text: ingredient.name ?? "") {
-                matches[id] = info
-            }
+        for (index, result) in results.enumerated() {
+            guard index < sortedIngredients.count,
+                  let id = sortedIngredients[index].id,
+                  let result else { continue }
+            matches[id] = result
         }
 
         ingredientMatches = matches
@@ -1121,8 +1096,8 @@ struct RecipeDetailView: View {
             ?? sortedIngredients.first(where: { $0.id == id })?.name
             ?? ""
 
-        if let info = matchIngredient(text: text) {
-            ingredientMatches[id] = info
+        if let result = matchService.matchIngredient(text: text) {
+            ingredientMatches[id] = result
         }
     }
 
@@ -1200,7 +1175,7 @@ struct RecipeDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                // M10.8 Phase 2: Edit Recipe removed — all editing is inline
+                // M10.8: Edit Recipe removed — all editing is inline
                 Menu {
                     Button { showingMealPlanSheet = true } label: {
                         Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
@@ -1299,7 +1274,7 @@ struct RecipeDetailView: View {
                 editingIngredientId = nil
             }
         }
-        // M10.8 Phase 2: Sync focus and commit for instruction step editing
+        // M10.8: Sync focus and commit for instruction step editing
         .onChange(of: editingStepIndex) { oldValue, newValue in
             // Commit old step when switching
             if let oldIdx = oldValue, oldIdx != newValue {
@@ -1313,7 +1288,7 @@ struct RecipeDetailView: View {
                 editingStepIndex = nil
             }
         }
-        // M10.8 Phase 2: Commit metadata edits on focus loss
+        // M10.8: Commit metadata edits on focus loss
         .onChange(of: focusedMetadata) { oldValue, newValue in
             if oldValue != nil && newValue == nil {
                 commitAllMetadataEdits()
@@ -1321,7 +1296,7 @@ struct RecipeDetailView: View {
         }
     }
 
-    // MARK: - Hero Header (M10.8 Phase 2: Inline-Editable)
+    // MARK: - Hero Header (M10.8: Inline-Editable)
 
     private var recipeHeaderSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
@@ -1757,50 +1732,38 @@ struct RecipeDetailView: View {
 
     // MARK: - M10.8: Formatted Ingredient Text
 
-    /// Format ingredient text with parsed name highlighted in bold accent color.
-    /// Reads from pre-computed match — never calls parser during render.
-    private func formattedIngredientText(text: String, matchInfo: IngredientMatchInfo?) -> Text {
-        guard let info = matchInfo else {
-            return Text(text)
-                .font(ForagerTheme.bodyFont)
-                .foregroundColor(ForagerTheme.textPrimary)
-        }
-
-        // Try to find parsed name in the text (case-insensitive)
-        if let range = text.range(of: info.parsedName, options: .caseInsensitive) {
+    /// Format ingredient text with parsed name in bold accent. Uses shared IngredientMatchResult.
+    @ViewBuilder
+    private func formattedIngredientText(text: String, matchInfo: IngredientMatchResult?) -> some View {
+        if let info = matchInfo,
+           let range = text.range(of: info.parsedName, options: .caseInsensitive) {
             let prefix = String(text[text.startIndex..<range.lowerBound])
             let name = String(text[range])
             let suffix = String(text[range.upperBound...])
-            return Text(prefix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
-                + Text(name).font(ForagerTheme.bodyFont).bold().foregroundColor(ForagerTheme.accentPrimary)
-                + Text(suffix).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textSecondary)
+            HStack(spacing: 0) {
+                Text(prefix)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                Text(name)
+                    .font(ForagerTheme.bodyFont)
+                    .bold()
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                Text(suffix)
+                    .font(ForagerTheme.bodyFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
+        } else {
+            Text(text)
+                .font(ForagerTheme.bodyFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
         }
-
-        // Fallback: full text in primary
-        return Text(text).font(ForagerTheme.bodyFont).foregroundColor(ForagerTheme.textPrimary)
     }
 
-    // MARK: - M10.8: Ingredient Match Summary
+    // MARK: - M10.6.8: Ingredient Match Summary (shared component)
 
-    /// Summary bar: "N categorized · N need category"
     private var ingredientMatchSummary: some View {
-        let categorized = ingredientMatches.values.filter { $0.categoryName != nil }.count
-        let total = sortedIngredients.count
-        let uncategorized = total - categorized
-
-        return HStack(spacing: ForagerTheme.Spacing.md) {
-            if categorized > 0 {
-                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-            }
-            if uncategorized > 0 {
-                Label("\(uncategorized) need category", systemImage: "circle")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
-        }
-        .padding(.bottom, ForagerTheme.Spacing.xs)
+        let summary = matchService.matchSummary(from: Array(ingredientMatches.values.map { Optional($0) }))
+        return IngredientMatchSummaryView(categorized: summary.categorized, uncategorized: summary.uncategorized)
     }
 
     // MARK: - M10.8: Category Label + Picker
@@ -1883,11 +1846,7 @@ struct RecipeDetailView: View {
     private func assignCategory(_ categoryName: String, to ingredientId: UUID) {
         // Update match info
         if let existing = ingredientMatches[ingredientId] {
-            ingredientMatches[ingredientId] = IngredientMatchInfo(
-                parsedName: existing.parsedName,
-                status: .ready,
-                categoryName: categoryName
-            )
+            ingredientMatches[ingredientId] = existing.withCategory(categoryName)
         }
 
         // Update the template's category via service
@@ -1914,7 +1873,7 @@ struct RecipeDetailView: View {
         .padding(.top, ForagerTheme.Spacing.md)
     }
 
-    // MARK: - Instructions (M10.8 Phase 2: Inline-Editable)
+    // MARK: - Instructions (M10.8: Inline-Editable)
 
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
@@ -1996,7 +1955,7 @@ struct RecipeDetailView: View {
         }
     }
 
-    // MARK: - M10.8 Phase 2: Instruction Step Helpers
+    // MARK: - M10.8: Instruction Step Helpers
 
     /// Binding for buffered step text edits
     private func stepTextBinding(index: Int, original: String) -> Binding<String> {
@@ -2050,7 +2009,7 @@ struct RecipeDetailView: View {
         editingStepIndex = nil
     }
 
-    // MARK: - M10.8 Phase 2: Metadata Commit Helpers
+    // MARK: - M10.8: Metadata Commit Helpers
 
     /// Commit all pending metadata edits (title, prep time, cook time, servings)
     private func commitAllMetadataEdits() {

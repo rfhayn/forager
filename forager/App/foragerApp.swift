@@ -66,6 +66,9 @@ struct foragerApp: App {
     @StateObject private var ingredientTemplateService: IngredientTemplateService
     @StateObject private var ingredientParsingService: IngredientParsingService
 
+    // M10.6.8: Shared ingredient matching service
+    @StateObject private var ingredientMatchService: IngredientMatchService
+
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
@@ -96,6 +99,7 @@ struct foragerApp: App {
 
         _ingredientTemplateService = StateObject(wrappedValue: templateService)
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
+        _ingredientMatchService = StateObject(wrappedValue: IngredientMatchService(parsingService: parsingService, templateService: templateService))
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
 
@@ -177,6 +181,7 @@ struct foragerApp: App {
                     .environmentObject(weeklyListService)
                     .environmentObject(ingredientTemplateService)
                     .environmentObject(ingredientParsingService)
+                    .environmentObject(ingredientMatchService)
                     .environmentObject(importService)
                     .task {
                         // Reload household now that stores are loaded (isReady gate

@@ -253,7 +253,7 @@ final class ParsingIntegrationTests: XCTestCase {
         XCTAssertTrue(parsed.name.lowercased().contains("banana"),
                        "Name should contain 'banana'")
 
-        // Template normalization with preferPlural
+        // Template normalization singularizes: "bananas" → "banana"
         let template = templateService.findOrCreateTemplate(name: "bananas")
         XCTAssertNotNil(template)
     }
