@@ -192,17 +192,19 @@ final class IngredientMatchServiceTests: XCTestCase {
 
     @MainActor
     func testWithCategoryFromNeedsCategoryState() {
-        // Template exists but has no category
-        _ = templateService.findOrCreateTemplate(name: "onion")
+        // Template exists but has no category — use "2 cups flour" so parsed name
+        // is "flour" which matches the template exactly
+        _ = templateService.findOrCreateTemplate(name: "flour")
 
-        let result = matchService.matchIngredient(text: "1 large onion")
-        XCTAssertEqual(result?.status, .needsCategory)
+        let result = matchService.matchIngredient(text: "2 cups flour")
+        XCTAssertEqual(result?.status, .needsCategory,
+                       "Template exists without category → needsCategory")
 
-        let updated = result?.withCategory("Produce")
+        let updated = result?.withCategory("Baking")
         XCTAssertEqual(updated?.status, .ready)
-        XCTAssertEqual(updated?.categoryName, "Produce")
+        XCTAssertEqual(updated?.categoryName, "Baking")
         // Template name should be preserved
-        XCTAssertEqual(updated?.templateName, "onion")
+        XCTAssertEqual(updated?.templateName, "flour")
     }
 
     // MARK: - Boundary: Minimum Valid Text
