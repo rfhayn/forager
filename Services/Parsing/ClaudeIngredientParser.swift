@@ -29,7 +29,7 @@ class ClaudeIngredientParser: LLMIngredientParser {
 
     // MARK: - LLMIngredientParser
 
-    func parseBatch(_ lines: [String]) async throws -> [LLMParserResult] {
+    func parseBatch(_ lines: [String], categories: [String]) async throws -> [LLMParserResult] {
         guard !lines.isEmpty else { return [] }
         guard isConfigured else {
             #if DEBUG
@@ -46,7 +46,7 @@ class ClaudeIngredientParser: LLMIngredientParser {
         }
         #endif
 
-        let requestBody = buildRequestBody(lines: lines)
+        let requestBody = buildRequestBody(lines: lines, categories: categories)
         let request = buildURLRequest(body: requestBody)
 
         let data: Data
@@ -81,15 +81,23 @@ class ClaudeIngredientParser: LLMIngredientParser {
 
     // MARK: - Request Building
 
-    private func buildRequestBody(lines: [String]) -> [String: Any] {
+    private func buildRequestBody(lines: [String], categories: [String]) -> [String: Any] {
         let numberedLines = lines.enumerated().map { "\($0.offset + 1). \($0.element)" }
         let userMessage = "Parse these ingredient lines:\n" + numberedLines.joined(separator: "\n")
+
+        var prompt = systemPrompt
+        if !categories.isEmpty {
+            let categoryList = categories.joined(separator: ", ")
+            prompt += "\n\nThe user has these grocery categories: [\(categoryList)]. " +
+                "For each ingredient, assign the most appropriate category from this list. " +
+                "Use null if no category fits well."
+        }
 
         return [
             "model": model,
             "max_tokens": 1024,
-            "system": systemPrompt,
-            "tools": [toolDefinition],
+            "system": prompt,
+            "tools": [categories.isEmpty ? toolDefinition : toolDefinitionWithCategory],
             "tool_choice": ["type": "tool", "name": "parse_ingredients"],
             "messages": [
                 ["role": "user", "content": userMessage]
@@ -177,13 +185,15 @@ class ClaudeIngredientParser: LLMIngredientParser {
             let quantity = item["quantity"] as? Double
             let unit = item["unit"] as? String
             let notes = item["notes"] as? String
+            let category = item["category"] as? String
 
             return LLMParserResult(
                 name: name,
                 quantity: quantity,
                 unit: unit,
                 notes: notes,
-                confidence: 0.95
+                confidence: 0.95,
+                category: category
             )
         }
     }
@@ -228,7 +238,7 @@ class ClaudeIngredientParser: LLMIngredientParser {
         "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
         - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
-        - If a line contains multiple ingredients ("salt and pepper"), split into separate items
+        - Return EXACTLY one result per input line — never split or merge lines
         """
 
     private let toolDefinition: [String: Any] = [
@@ -246,6 +256,32 @@ class ClaudeIngredientParser: LLMIngredientParser {
                             "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
                             "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
                             "notes": ["type": ["string", "null"], "description": "Preparation notes or null"]
+                        ],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ] as [String: Any],
+            "required": ["ingredients"]
+        ] as [String: Any]
+    ]
+
+    /// Tool definition with category field — used when user's categories are available
+    private let toolDefinitionWithCategory: [String: Any] = [
+        "name": "parse_ingredients",
+        "description": "Parse ingredient lines into structured components with category assignment",
+        "input_schema": [
+            "type": "object",
+            "properties": [
+                "ingredients": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Ingredient name"],
+                            "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
+                            "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
+                            "notes": ["type": ["string", "null"], "description": "Preparation notes or null"],
+                            "category": ["type": ["string", "null"], "description": "Grocery category from the provided list, or null"]
                         ],
                         "required": ["name"]
                     ] as [String: Any]

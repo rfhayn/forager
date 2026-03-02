@@ -670,8 +670,9 @@ struct EditRecipeView: View {
 
         isLLMBatchParsing = true
         let texts = ingredients.map { $0.fullText }
+        let categoryNames = realCategories.map { $0.displayName }
 
-        if let results = await matchService.aiParseBatch(texts: texts, source: .recipeIngredient) {
+        if let results = await matchService.aiParseBatch(texts: texts, source: .recipeIngredient, categories: categoryNames) {
             for (index, result) in results.enumerated() {
                 guard index < formData.ingredients.count else { break }
                 let ingredient = formData.ingredients[index]
@@ -693,8 +694,9 @@ struct EditRecipeView: View {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
 
         llmParsingIngredients.insert(ingredient.id)
+        let categoryNames = realCategories.map { $0.displayName }
 
-        if let result = await matchService.aiParseSingle(text: ingredient.fullText, source: .recipeIngredient) {
+        if let result = await matchService.aiParseSingle(text: ingredient.fullText, source: .recipeIngredient, categories: categoryNames) {
             ingredientMatches[ingredient.id] = result
             let existingTemplate = templateService.searchTemplates(query: result.parsedName, limit: 1)
                 .first(where: { $0.name?.lowercased() == result.parsedName.lowercased() })

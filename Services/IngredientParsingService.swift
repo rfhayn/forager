@@ -199,15 +199,17 @@ class IngredientParsingService: ObservableObject {
 
     /// Parse a single ingredient via LLM. Returns nil on any failure.
     /// Caller should keep existing local result on nil return.
-    func parseSingleWithLLM(text: String, source: ParsingTelemetryEvent.ParsingSource) async -> (ParsedIngredient, StructuredQuantity)? {
-        let results = await parseBatchWithLLM(texts: [text], source: source)
+    /// Tuple: (parsed, structured, aiCategory)
+    func parseSingleWithLLM(text: String, source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> (ParsedIngredient, StructuredQuantity, String?)? {
+        let results = await parseBatchWithLLM(texts: [text], source: source, categories: categories)
         return results?.first
     }
 
     /// Parse a batch of ingredients via LLM. Returns nil on any failure or count mismatch.
     /// Caller should keep existing local results on nil return.
     /// Sets `lastLLMError` with a descriptive message on failure.
-    func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [(ParsedIngredient, StructuredQuantity)]? {
+    /// Tuple per result: (parsed, structured, aiCategory)
+    func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> [(ParsedIngredient, StructuredQuantity, String?)]? {
         guard !texts.isEmpty else { return nil }
 
         #if DEBUG
@@ -231,7 +233,7 @@ class IngredientParsingService: ObservableObject {
         }
 
         do {
-            let llmResults = try await parser.parseBatch(texts)
+            let llmResults = try await parser.parseBatch(texts, categories: categories)
 
             // Strict validation: count must match input
             guard llmResults.count == texts.count else {
@@ -244,7 +246,7 @@ class IngredientParsingService: ObservableObject {
                 return nil
             }
 
-            var output: [(ParsedIngredient, StructuredQuantity)] = []
+            var output: [(ParsedIngredient, StructuredQuantity, String?)] = []
 
             for (index, llmResult) in llmResults.enumerated() {
                 let originalText = texts[index]
@@ -264,7 +266,7 @@ class IngredientParsingService: ObservableObject {
                     source: source
                 )
 
-                output.append((parsed, structured))
+                output.append((parsed, structured, llmResult.category))
             }
 
             #if DEBUG

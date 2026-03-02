@@ -82,14 +82,15 @@ class IngredientMatchService: ObservableObject {
 
     /// Parse a single ingredient via LLM and return enriched match result.
     /// Returns nil on failure — caller should keep existing local result.
-    func aiParseSingle(text: String, source: ParsingTelemetryEvent.ParsingSource) async -> IngredientMatchResult? {
+    /// Pass user's category names to enable AI category assignment.
+    func aiParseSingle(text: String, source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> IngredientMatchResult? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed.count >= 2 else { return nil }
 
         // Get deterministic parse for comparison
         let localParsed = parsingService.parseIngredient(text: trimmed)
 
-        guard let (parsed, _) = await parsingService.parseSingleWithLLM(text: trimmed, source: source) else {
+        guard let (parsed, _, aiCategory) = await parsingService.parseSingleWithLLM(text: trimmed, source: source, categories: categories) else {
             return nil
         }
 
@@ -101,7 +102,8 @@ class IngredientMatchService: ObservableObject {
             rawText: trimmed,
             parsed: parsed,
             wasAIParsed: true,
-            aiParsedName: nameChanged ? aiName : nil
+            aiParsedName: nameChanged ? aiName : nil,
+            aiCategory: aiCategory
         )
     }
 
@@ -109,19 +111,20 @@ class IngredientMatchService: ObservableObject {
 
     /// Parse a batch of ingredients via LLM and return enriched match results.
     /// Returns nil on failure — caller should keep existing local results.
-    func aiParseBatch(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [IngredientMatchResult]? {
+    /// Pass user's category names to enable AI category assignment.
+    func aiParseBatch(texts: [String], source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> [IngredientMatchResult]? {
         let trimmedTexts = texts.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
         guard !trimmedTexts.isEmpty else { return nil }
 
         // Get deterministic parses for comparison
         let localParses = trimmedTexts.map { parsingService.parseIngredient(text: $0) }
 
-        guard let results = await parsingService.parseBatchWithLLM(texts: trimmedTexts, source: source) else {
+        guard let results = await parsingService.parseBatchWithLLM(texts: trimmedTexts, source: source, categories: categories) else {
             return nil
         }
 
         var matchResults: [IngredientMatchResult] = []
-        for (index, (parsed, _)) in results.enumerated() {
+        for (index, (parsed, _, aiCategory)) in results.enumerated() {
             guard index < trimmedTexts.count else { break }
 
             let aiName = parsed.displayName
@@ -132,7 +135,8 @@ class IngredientMatchService: ObservableObject {
                 rawText: trimmedTexts[index],
                 parsed: parsed,
                 wasAIParsed: true,
-                aiParsedName: nameChanged ? aiName : nil
+                aiParsedName: nameChanged ? aiName : nil,
+                aiCategory: aiCategory
             )
             matchResults.append(result)
         }
@@ -152,11 +156,13 @@ class IngredientMatchService: ObservableObject {
     // MARK: - Private
 
     /// Shared logic: look up template by parsed name and determine status.
+    /// AI-suggested category is used when the template has no category.
     private func buildResult(
         rawText: String,
         parsed: ParsedIngredient,
         wasAIParsed: Bool,
-        aiParsedName: String?
+        aiParsedName: String?,
+        aiCategory: String? = nil
     ) -> IngredientMatchResult {
         let cleanName = parsed.displayName
         let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
@@ -172,12 +178,22 @@ class IngredientMatchService: ObservableObject {
             templateName = template.name
             if let category = template.category, !category.isEmpty,
                category.lowercased() != "uncategorized" {
+                // Template already has a real category — use it
                 status = .ready
                 categoryName = category
+            } else if let ai = aiCategory, !ai.isEmpty {
+                // No template category, but AI suggested one
+                status = .ready
+                categoryName = ai
             } else {
                 status = .needsCategory
                 categoryName = nil
             }
+        } else if let ai = aiCategory, !ai.isEmpty {
+            // No template found, but AI suggested a category
+            status = .needsTemplate
+            categoryName = ai
+            templateName = nil
         } else {
             status = .needsTemplate
             categoryName = nil

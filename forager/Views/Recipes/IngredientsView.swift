@@ -633,7 +633,7 @@ struct IngredientsView: View {
 
         let texts = reviewTemplates.map { $0.name ?? "" }
         if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
-            for (index, (parsed, _)) in results.enumerated() {
+            for (index, (parsed, _, _)) in results.enumerated() {
                 guard index < reviewTemplates.count else { break }
                 let template = reviewTemplates[index]
                 let cleanName = parsed.displayName

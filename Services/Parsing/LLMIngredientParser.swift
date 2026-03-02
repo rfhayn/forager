@@ -14,14 +14,22 @@ import Foundation
 /// Protocol for LLM-based ingredient parsing with provider abstraction.
 /// Unlike IngredientParser (sync, per-line), this is async and batch-oriented.
 protocol LLMIngredientParser {
-    /// Parse a batch of ingredient lines in a single API call
-    func parseBatch(_ lines: [String]) async throws -> [LLMParserResult]
+    /// Parse a batch of ingredient lines in a single API call.
+    /// Categories are the user's existing grocery categories for AI assignment.
+    func parseBatch(_ lines: [String], categories: [String]) async throws -> [LLMParserResult]
 
     /// Provider identifier for telemetry ("claude", "gpt", "gemini")
     var providerName: String { get }
 
     /// Check if this provider is configured and available
     var isConfigured: Bool { get }
+}
+
+extension LLMIngredientParser {
+    /// Convenience overload without categories for backward compatibility
+    func parseBatch(_ lines: [String]) async throws -> [LLMParserResult] {
+        try await parseBatch(lines, categories: [])
+    }
 }
 
 // MARK: - LLM Parser Result
@@ -33,6 +41,7 @@ struct LLMParserResult {
     let unit: String?
     let notes: String?
     let confidence: Float
+    let category: String?
 
     /// Bridge to existing ParserResult used by Ingredient entity creation
     func toParserResult(originalText: String, provider: String) -> ParserResult {

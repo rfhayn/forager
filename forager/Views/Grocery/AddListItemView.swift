@@ -328,7 +328,7 @@ struct AddListItemView: View {
 
         isLLMAdding = true
 
-        if let (parsed, structured) = await parsingService.parseSingleWithLLM(text: trimmedText, source: .groceryListItem) {
+        if let (parsed, structured, _) = await parsingService.parseSingleWithLLM(text: trimmedText, source: .groceryListItem) {
             let cleanName = parsed.displayName
             let matchedTemplate = selectedTemplate ?? templateService.searchTemplates(query: cleanName, limit: 1)
                 .first(where: { $0.name?.lowercased() == cleanName.lowercased() })

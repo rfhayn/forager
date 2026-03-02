@@ -1124,7 +1124,7 @@ struct RecipeDetailView: View {
 
         let texts = candidates.map { $0.name ?? "" }
         if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
-            for (index, (parsed, structured)) in results.enumerated() {
+            for (index, (parsed, structured, _)) in results.enumerated() {
                 guard index < candidates.count else { break }
                 let ingredient = candidates[index]
 

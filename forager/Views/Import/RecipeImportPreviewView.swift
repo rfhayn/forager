@@ -345,8 +345,9 @@ struct RecipeImportPreviewView: View {
         guard !texts.isEmpty else { return }
 
         isLLMBatchParsing = true
+        let categoryNames = realCategories.map { $0.displayName }
 
-        if let results = await matchService.aiParseBatch(texts: texts, source: .import_) {
+        if let results = await matchService.aiParseBatch(texts: texts, source: .import_, categories: categoryNames) {
             for (index, result) in results.enumerated() {
                 guard index < draft.ingredients.value.count else { break }
                 ingredientMatches[index] = result
@@ -366,9 +367,10 @@ struct RecipeImportPreviewView: View {
         guard index < draft.ingredients.value.count else { return }
 
         llmParsingIngredients.insert(index)
+        let categoryNames = realCategories.map { $0.displayName }
 
         let text = editedIngredientNames[index] ?? draft.ingredients.value[index]
-        if let result = await matchService.aiParseSingle(text: text, source: .import_) {
+        if let result = await matchService.aiParseSingle(text: text, source: .import_, categories: categoryNames) {
             ingredientMatches[index] = result
             if let category = result.categoryName {
                 categoryAssignments[index] = category
@@ -508,7 +510,7 @@ struct RecipeImportPreviewView: View {
             rawText: currentText,
             isEditing: isEditing,
             isAIParsing: llmParsingIngredients.contains(index),
-            showRawText: matchInfo?.wasAIParsed == true,
+            showRawText: true,
             categoryName: effectiveCategory,
             onTapEdit: { editingIndex = index },
             onCategoryTap: { categoryPickerIndex = index },
