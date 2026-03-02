@@ -233,17 +233,30 @@ class IngredientParsingService: ObservableObject {
         }
 
         do {
-            let llmResults = try await parser.parseBatch(texts, categories: categories)
+            let rawResults = try await parser.parseBatch(texts, categories: categories)
+            let rawCount = rawResults.count
+            let inputCount = texts.count
 
-            // Strict validation: count must match input
-            guard llmResults.count == texts.count else {
+            // Tolerant validation: truncate if AI returned extra (e.g., split a compound line),
+            // but fail if it returned too few (something went wrong).
+            let llmResults: [LLMParserResult]
+            if rawCount > inputCount {
                 #if DEBUG
                 await MainActor.run {
-                    DebugLogService.shared.log("parseBatchWithLLM: count mismatch — got \(llmResults.count) results for \(texts.count) inputs", category: "LLM")
+                    DebugLogService.shared.log("parseBatchWithLLM: AI returned \(rawCount) results for \(inputCount) inputs — truncating extras", category: "LLM")
                 }
                 #endif
-                await MainActor.run { lastLLMError = "AI returned unexpected results" }
+                llmResults = Array(rawResults.prefix(inputCount))
+            } else if rawCount < inputCount {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: count mismatch — got \(rawCount) results for \(inputCount) inputs", category: "LLM")
+                }
+                #endif
+                await MainActor.run { lastLLMError = "AI returned fewer results than expected" }
                 return nil
+            } else {
+                llmResults = rawResults
             }
 
             var output: [(ParsedIngredient, StructuredQuantity, String?)] = []

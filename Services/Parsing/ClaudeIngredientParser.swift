@@ -238,7 +238,10 @@ class ClaudeIngredientParser: LLMIngredientParser {
         "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
         - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
-        - Return EXACTLY one result per input line — never split or merge lines
+        - CRITICAL: Return EXACTLY one result per numbered input line. Never split a line \
+        into multiple results. Lines like "2 teaspoons each chili powder and cumin" are ONE \
+        ingredient (name: "chili powder and cumin", quantity: 2, unit: "tsp"). \
+        Lines like "salt and pepper" are ONE ingredient (name: "salt and pepper").
         """
 
     private let toolDefinition: [String: Any] = [
