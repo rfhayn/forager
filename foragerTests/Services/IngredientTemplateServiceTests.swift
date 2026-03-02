@@ -152,9 +152,9 @@ final class IngredientTemplateServiceTests: XCTestCase {
     }
 
     @MainActor
-    func testDriedCranberriesPreserved() {
+    func testDriedCranberriesSingularizes() {
         let normalized = service.normalize(name: "dried cranberries")
-        XCTAssertEqual(normalized, "dried cranberries")
+        XCTAssertEqual(normalized, "dried cranberry", "'dried cranberries' singularizes — qty handles plurality")
     }
 
     @MainActor
