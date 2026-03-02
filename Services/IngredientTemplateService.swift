@@ -526,6 +526,9 @@ class IngredientTemplateService: ObservableObject {
                 .map { (name: $0.key, templates: $0.value) }
                 .sorted { $0.name < $1.name }
         } catch {
+            #if DEBUG
+            print("Error finding duplicate templates: \(error)")
+            #endif
             return []
         }
     }

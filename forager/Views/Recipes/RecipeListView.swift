@@ -1123,14 +1123,15 @@ struct RecipeDetailView: View {
         isLLMBatchParsing = true
 
         let texts = candidates.map { $0.name ?? "" }
-        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient) {
-            for (index, (parsed, structured, _)) in results.enumerated() {
+        let categoryNames = realCategories.map { $0.displayName }
+        if let results = await parsingService.parseBatchWithLLM(texts: texts, source: .recipeIngredient, categories: categoryNames) {
+            for (index, (parsed, structured, aiCategory)) in results.enumerated() {
                 guard index < candidates.count else { break }
                 let ingredient = candidates[index]
 
                 let template = templateService.findOrCreateTemplate(
                     name: parsed.displayName,
-                    category: nil
+                    category: aiCategory
                 )
 
                 recipeServiceM75.updateIngredient(

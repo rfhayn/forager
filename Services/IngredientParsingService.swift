@@ -190,11 +190,7 @@ class IngredientParsingService: ObservableObject {
     /// Whether an LLM parser is configured and available (enabled + API key present)
     @MainActor
     var isLLMAvailable: Bool {
-        let available = LLMSettingsService.shared.activeParser() != nil
-        #if DEBUG
-        DebugLogService.shared.log("isLLMAvailable = \(available)", category: "LLM")
-        #endif
-        return available
+        LLMSettingsService.shared.activeParser() != nil
     }
 
     /// Parse a single ingredient via LLM. Returns nil on any failure.
@@ -210,7 +206,10 @@ class IngredientParsingService: ObservableObject {
     /// Sets `lastLLMError` with a descriptive message on failure.
     /// Tuple per result: (parsed, structured, aiCategory)
     func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> [(ParsedIngredient, StructuredQuantity, String?)]? {
-        guard !texts.isEmpty else { return nil }
+        guard !texts.isEmpty else {
+            await MainActor.run { lastLLMError = nil }
+            return nil
+        }
 
         #if DEBUG
         await MainActor.run {

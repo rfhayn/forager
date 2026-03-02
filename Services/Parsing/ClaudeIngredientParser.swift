@@ -47,7 +47,7 @@ class ClaudeIngredientParser: LLMIngredientParser {
         #endif
 
         let requestBody = buildRequestBody(lines: lines, categories: categories)
-        let request = buildURLRequest(body: requestBody)
+        let request = try buildURLRequest(body: requestBody)
 
         let data: Data
         do {
@@ -105,14 +105,18 @@ class ClaudeIngredientParser: LLMIngredientParser {
         ]
     }
 
-    private func buildURLRequest(body: [String: Any]) -> URLRequest {
+    private func buildURLRequest(body: [String: Any]) throws -> URLRequest {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.timeoutInterval = requestTimeout
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            throw LLMParserError.malformedResponse("Failed to serialize request: \(error.localizedDescription)")
+        }
         return request
     }
 
@@ -148,8 +152,6 @@ class ClaudeIngredientParser: LLMIngredientParser {
                 lastError = error
             } catch let error as URLError where error.code == .timedOut {
                 throw LLMParserError.timeout
-            } catch let error as LLMParserError {
-                throw error
             } catch {
                 throw LLMParserError.networkError(error)
             }
@@ -179,8 +181,12 @@ class ClaudeIngredientParser: LLMIngredientParser {
             throw LLMParserError.malformedResponse("Missing tool_use with parse_ingredients")
         }
 
-        return ingredients.compactMap { item -> LLMParserResult? in
-            guard let name = item["name"] as? String, !name.isEmpty else { return nil }
+        var droppedCount = 0
+        let results = ingredients.compactMap { item -> LLMParserResult? in
+            guard let name = item["name"] as? String, !name.isEmpty else {
+                droppedCount += 1
+                return nil
+            }
 
             let quantity = item["quantity"] as? Double
             let unit = item["unit"] as? String
@@ -196,6 +202,12 @@ class ClaudeIngredientParser: LLMIngredientParser {
                 category: category
             )
         }
+
+        if droppedCount > 0 {
+            throw LLMParserError.validationFailed("Dropped \(droppedCount) items with missing/empty name")
+        }
+
+        return results
     }
 
     // MARK: - Validation

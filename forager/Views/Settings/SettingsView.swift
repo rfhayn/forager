@@ -356,7 +356,13 @@ struct SettingsView: View {
         // Dual-write to household if owner
         if isHouseholdOwner, let household = householdService.currentHousehold {
             Task {
-                try? await householdService.saveLLMAPIKey(key, to: household)
+                do {
+                    try await householdService.saveLLMAPIKey(key, to: household)
+                } catch {
+                    #if DEBUG
+                    print("Failed to sync API key to household: \(error)")
+                    #endif
+                }
             }
         }
     }
@@ -367,7 +373,13 @@ struct SettingsView: View {
         // Dual-clear from household if owner
         if isHouseholdOwner, let household = householdService.currentHousehold {
             Task {
-                try? await householdService.saveLLMAPIKey(nil, to: household)
+                do {
+                    try await householdService.saveLLMAPIKey(nil, to: household)
+                } catch {
+                    #if DEBUG
+                    print("Failed to clear API key from household: \(error)")
+                    #endif
+                }
             }
         }
     }

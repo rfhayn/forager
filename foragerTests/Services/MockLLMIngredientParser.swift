@@ -26,9 +26,13 @@ class MockLLMIngredientParser: LLMIngredientParser {
     /// Tracks the last input passed to parseBatch
     var lastInput: [String]?
 
-    func parseBatch(_ lines: [String]) async throws -> [LLMParserResult] {
+    /// Tracks the last categories passed to parseBatch
+    var lastCategories: [String]?
+
+    func parseBatch(_ lines: [String], categories: [String]) async throws -> [LLMParserResult] {
         parseBatchCallCount += 1
         lastInput = lines
+        lastCategories = categories
 
         if let error = stubbedError {
             throw error
