@@ -30,11 +30,11 @@
 		M105T001CORPUSTEST000000A /* RecipeCorpusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */; };
 		M105T002FMCOMPARE000000A /* RecipeCorpusFMComparisonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */; };
 		M105T003CORPUS2TEST0000A /* RecipeCorpus2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */; };
+		M1068T01MATCHSVC00000A /* IngredientMatchServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M1068T01MATCHSVC00000B /* IngredientMatchServiceTests.swift */; };
 		M106T001MOCKLLMPARSER000A /* MockLLMIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */; };
 		M106T002CLAUDETESTS0000A /* ClaudeIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */; };
 		M106T003LLMSETTINGS0000A /* LLMSettingsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */; };
 		M106T004IMPORTLLMTEST0A /* RecipeImportServiceLLMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */; };
-		M1068T01MATCHSVC00000A /* IngredientMatchServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M1068T01MATCHSVC00000B /* IngredientMatchServiceTests.swift */; };
 		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
 		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
 /* End PBXBuildFile section */
@@ -83,11 +83,11 @@
 		M105T001CORPUSTEST000000B /* RecipeCorpusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusTests.swift; sourceTree = "<group>"; };
 		M105T002FMCOMPARE000000B /* RecipeCorpusFMComparisonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpusFMComparisonTests.swift; sourceTree = "<group>"; };
 		M105T003CORPUS2TEST0000B /* RecipeCorpus2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeCorpus2Tests.swift; sourceTree = "<group>"; };
+		M1068T01MATCHSVC00000B /* IngredientMatchServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientMatchServiceTests.swift; sourceTree = "<group>"; };
 		M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockLLMIngredientParser.swift; sourceTree = "<group>"; };
 		M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeIngredientParserTests.swift; sourceTree = "<group>"; };
 		M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsServiceTests.swift; sourceTree = "<group>"; };
 		M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeImportServiceLLMTests.swift; sourceTree = "<group>"; };
-		M1068T01MATCHSVC00000B /* IngredientMatchServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientMatchServiceTests.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -457,7 +457,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/App/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
@@ -496,7 +496,7 @@
 				CODE_SIGN_ENTITLEMENTS = forager/App/forager.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = 93FT2PT9NM;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
