@@ -37,6 +37,9 @@ class RecipeImportService: ObservableObject {
     private let viewContext: NSManagedObjectContext
     private let parsingService: IngredientParsingService
 
+    // M10.6.11: Household key for scoping templates created during import
+    var householdKeyProvider: (() -> String?)?
+
     // Extractors (strategy pattern — tried in priority order)
     private let extractors: [RecipeExtractor] = [
         RecipeJSONLDExtractor(),
@@ -152,6 +155,8 @@ class RecipeImportService: ObservableObject {
 
         // Create services scoped to child context
         let childTemplateService = IngredientTemplateService(context: childContext)
+        // M10.6.11: Propagate household key so templates are visible in IngredientsView
+        childTemplateService.householdKey = householdKeyProvider?()
         let childParsingService = IngredientParsingService(
             context: childContext,
             templateService: childTemplateService
@@ -170,6 +175,8 @@ class RecipeImportService: ObservableObject {
         recipe.dateCreated = Date()
         recipe.usageCount = 0
         recipe.isFavorite = false
+        // M10.6.11: Scope recipe to current household
+        recipe.householdKey = householdKeyProvider?()
 
         // M10.6.4: LLM-first path — try batch parsing before local pipeline
         let createdIngredients: [Ingredient]
@@ -213,6 +220,8 @@ class RecipeImportService: ObservableObject {
 
         // Services scoped to child context
         let childTemplateService = IngredientTemplateService(context: childContext)
+        // M10.6.11: Propagate household key so templates are visible in IngredientsView
+        childTemplateService.householdKey = householdKeyProvider?()
         let childParsingService = IngredientParsingService(
             context: childContext,
             templateService: childTemplateService

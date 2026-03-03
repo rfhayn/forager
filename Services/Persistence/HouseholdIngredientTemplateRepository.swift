@@ -44,7 +44,8 @@ final class HouseholdIngredientTemplateRepository {
     func findOrCreate(
         name: String,
         category: String?,
-        isStaple: Bool
+        isStaple: Bool,
+        householdKey: String? = nil
     ) throws -> IngredientTemplate {
         // Query using semantic uniqueness (canonicalName)
         let canonicalName = IngredientTemplate.canonicalName(from: name)
@@ -85,9 +86,11 @@ final class HouseholdIngredientTemplateRepository {
         template.usageCount = 0
         template.dateCreated = Date()
         template.updatedAt = Date()
-        
+        // M10.6.11: Scope to current household so IngredientsView filter sees it
+        template.householdKey = householdKey
+
         #if DEBUG
-        print("✅ M7.2.3: Created template '\(name)' (canonical: '\(canonicalName)')")
+        print("✅ M7.2.3: Created template '\(name)' (canonical: '\(canonicalName)', householdKey: \(householdKey ?? "nil"))")
         #endif
         
         return template

@@ -8,6 +8,16 @@ class IngredientTemplateService: ObservableObject {
     @Published var popularIngredients: [IngredientTemplate] = []
     @Published var errorMessage: String?
 
+    // M10.6.11: Household key for scoping newly created templates.
+    // Set via provider closure (app-level) or direct property (child contexts).
+    var householdKey: String?
+    var householdKeyProvider: (() -> String?)?
+
+    /// Resolved household key: direct value takes priority, then provider closure.
+    private var resolvedHouseholdKey: String? {
+        householdKey ?? householdKeyProvider?()
+    }
+
     init(context: NSManagedObjectContext) {
         self.context = context
     }
@@ -358,10 +368,12 @@ class IngredientTemplateService: ObservableObject {
         
         do {
             // Use repository's findOrCreate (handles semantic uniqueness + category/staple)
+            // M10.6.11: Pass household key so new templates are scoped correctly
             let template = try repository.findOrCreate(
                 name: normalizedName,
                 category: category,
-                isStaple: false  // Default to non-staple
+                isStaple: false,
+                householdKey: resolvedHouseholdKey
             )
             
             // Increment usage count

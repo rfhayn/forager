@@ -113,6 +113,15 @@ struct foragerApp: App {
             household?.currentHousehold?.llmAPIKey
         }
 
+        // M10.6.11: Wire household key into template and import services so new
+        // templates are scoped to the current household (fixes invisible templates bug)
+        templateService.householdKeyProvider = { [weak household] in
+            household?.currentHouseholdKey
+        }
+        importSvc.householdKeyProvider = { [weak household] in
+            household?.currentHouseholdKey
+        }
+
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
         DispatchQueue.global(qos: .utility).async {
