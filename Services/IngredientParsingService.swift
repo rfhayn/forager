@@ -145,7 +145,8 @@ class IngredientParsingService: ObservableObject {
 
     /// Parse ingredient list and connect to templates using structured quantities.
     /// M8.4: Refactored to single-parse via parseUnified().
-    func parseAndConnectIngredients(for recipe: Recipe, ingredientTexts: [String]) -> [Ingredient] {
+    /// M10.6.9: Accepts index-based category assignments to set on templates.
+    func parseAndConnectIngredients(for recipe: Recipe, ingredientTexts: [String], categoryAssignments: [Int: String] = [:]) -> [Ingredient] {
         var createdIngredients: [Ingredient] = []
         var successfulParses = 0
 
@@ -164,9 +165,10 @@ class IngredientParsingService: ObservableObject {
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
 
+            // M10.6.9: Use category from preview assignments if available
             let template = templateService.findOrCreateTemplate(
                 name: parsed.displayName,
-                category: nil
+                category: categoryAssignments[index]
             )
             ingredient.ingredientTemplate = template
             templateService.incrementUsage(template: template)

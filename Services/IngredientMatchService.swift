@@ -98,12 +98,15 @@ class IngredientMatchService: ObservableObject {
         let localName = localParsed.displayName
         let nameChanged = aiName.lowercased() != localName.lowercased()
 
+        // Validate AI category against user's actual category list
+        let validatedCategory = Self.validateCategory(aiCategory, against: categories)
+
         return buildResult(
             rawText: trimmed,
             parsed: parsed,
             wasAIParsed: true,
             aiParsedName: nameChanged ? aiName : nil,
-            aiCategory: aiCategory
+            aiCategory: validatedCategory
         )
     }
 
@@ -131,12 +134,15 @@ class IngredientMatchService: ObservableObject {
             let localName = localParses[index].displayName
             let nameChanged = aiName.lowercased() != localName.lowercased()
 
+            // Validate AI category against user's actual category list
+            let validatedCategory = Self.validateCategory(aiCategory, against: categories)
+
             let result = buildResult(
                 rawText: trimmedTexts[index],
                 parsed: parsed,
                 wasAIParsed: true,
                 aiParsedName: nameChanged ? aiName : nil,
-                aiCategory: aiCategory
+                aiCategory: validatedCategory
             )
             matchResults.append(result)
         }
@@ -153,7 +159,24 @@ class IngredientMatchService: ObservableObject {
         return (categorized: categorized, uncategorized: nonNil.count - categorized)
     }
 
+    // MARK: - Normalization
+
+    /// Expose template normalization for callers that need consistent name keys.
+    func normalizedName(_ name: String) -> String {
+        templateService.normalize(name: name)
+    }
+
     // MARK: - Private
+
+    /// Validate that an AI-returned category actually exists in the user's category list.
+    /// Returns the matched category name (preserving user's casing) or nil if no match.
+    private static func validateCategory(_ aiCategory: String?, against validCategories: [String]) -> String? {
+        guard let ai = aiCategory, !ai.isEmpty else { return nil }
+        // If no valid categories provided, accept as-is (non-import contexts)
+        guard !validCategories.isEmpty else { return ai }
+        // Case-insensitive match against user's actual category list
+        return validCategories.first(where: { $0.lowercased() == ai.lowercased() })
+    }
 
     /// Shared logic: look up template by parsed name and determine status.
     /// AI-suggested category is used when the template has no category.

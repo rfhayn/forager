@@ -89,8 +89,9 @@ class ClaudeIngredientParser: LLMIngredientParser {
         if !categories.isEmpty {
             let categoryList = categories.joined(separator: ", ")
             prompt += "\n\nThe user has these grocery categories: [\(categoryList)]. " +
-                "For each ingredient, assign the most appropriate category from this list. " +
-                "Use null if no category fits well."
+                "For each ingredient, assign the most appropriate category from this exact list. " +
+                "You MUST only use category names that appear in this list — do not invent or modify category names. " +
+                "Use null if no category from the list fits well."
         }
 
         return [

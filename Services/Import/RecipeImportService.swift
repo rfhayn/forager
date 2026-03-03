@@ -141,8 +141,9 @@ class RecipeImportService: ObservableObject {
     /// Atomically save a reviewed draft as a Recipe + Ingredients.
     /// Uses a child context so template service saves stay in-memory until final persist.
     /// M10.6.4: Now async — attempts LLM parsing first, falls back to local pipeline.
+    /// M10.6.9: Accepts index-based category assignments from preview to set on templates.
     /// Returns ImportSaveResult with recipe ID and uncategorized template IDs, or nil on failure.
-    func saveImport(from draft: ImportDraftRecipe) async -> ImportSaveResult? {
+    func saveImport(from draft: ImportDraftRecipe, categoryAssignments: [Int: String] = [:]) async -> ImportSaveResult? {
         state = .saving
 
         // Child context for atomic save — template service saves push to parent in memory
@@ -176,14 +177,16 @@ class RecipeImportService: ObservableObject {
             texts: draft.ingredients.value,
             recipe: recipe,
             context: childContext,
-            templateService: childTemplateService
+            templateService: childTemplateService,
+            categoryAssignments: categoryAssignments
         ) {
             createdIngredients = llmResult
         } else {
             // Fallback: existing local pipeline (unchanged)
             createdIngredients = childParsingService.parseAndConnectIngredients(
                 for: recipe,
-                ingredientTexts: draft.ingredients.value
+                ingredientTexts: draft.ingredients.value,
+                categoryAssignments: categoryAssignments
             )
         }
 
@@ -200,7 +203,8 @@ class RecipeImportService: ObservableObject {
     /// In-place update of an existing Recipe with data from the import draft.
     /// Preserves PlannedMeal references and CloudKit object identity (ADR 012).
     /// M10.6.4: Now async — attempts LLM parsing first, falls back to local pipeline.
-    func replaceExistingRecipe(objectID: NSManagedObjectID, with draft: ImportDraftRecipe) async -> ImportSaveResult? {
+    /// M10.6.9: Accepts index-based category assignments from preview to set on templates.
+    func replaceExistingRecipe(objectID: NSManagedObjectID, with draft: ImportDraftRecipe, categoryAssignments: [Int: String] = [:]) async -> ImportSaveResult? {
         state = .saving
 
         // Child context for atomic replace
@@ -241,13 +245,15 @@ class RecipeImportService: ObservableObject {
             texts: draft.ingredients.value,
             recipe: recipe,
             context: childContext,
-            templateService: childTemplateService
+            templateService: childTemplateService,
+            categoryAssignments: categoryAssignments
         ) {
             createdIngredients = llmResult
         } else {
             createdIngredients = childParsingService.parseAndConnectIngredients(
                 for: recipe,
-                ingredientTexts: draft.ingredients.value
+                ingredientTexts: draft.ingredients.value,
+                categoryAssignments: categoryAssignments
             )
         }
 
@@ -263,11 +269,13 @@ class RecipeImportService: ObservableObject {
 
     /// Attempt LLM batch parsing for ingredient texts.
     /// Returns created Ingredient entities on success, nil on any failure (silent fallback).
+    /// M10.6.9: Accepts category assignments to set on templates during creation.
     private func tryLLMParsing(
         texts: [String],
         recipe: Recipe,
         context: NSManagedObjectContext,
-        templateService: IngredientTemplateService
+        templateService: IngredientTemplateService,
+        categoryAssignments: [Int: String] = [:]
     ) async -> [Ingredient]? {
         guard let parser = LLMSettingsService.shared.activeParser() else { return nil }
 
@@ -293,9 +301,10 @@ class RecipeImportService: ObservableObject {
                 ingredient.sortOrder = Int16(index)
                 ingredient.recipe = recipe
 
+                // M10.6.9: Use category from preview assignments if available
                 let template = templateService.findOrCreateTemplate(
                     name: llmResult.name,
-                    category: nil
+                    category: categoryAssignments[index]
                 )
                 ingredient.ingredientTemplate = template
                 templateService.incrementUsage(template: template)

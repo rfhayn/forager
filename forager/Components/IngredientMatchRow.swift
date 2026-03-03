@@ -164,6 +164,11 @@ struct IngredientMatchRow: View {
 
     // MARK: - Category Label
 
+    private var isUncategorized: Bool {
+        guard let name = categoryName else { return true }
+        return name.isEmpty || name.lowercased() == "uncategorized"
+    }
+
     private var categoryLabel: some View {
         Button { onCategoryTap() } label: {
             HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -173,11 +178,11 @@ struct IngredientMatchRow: View {
                         .frame(width: 8, height: 8)
                     Text(name)
                         .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .foregroundStyle(isUncategorized ? ForagerTheme.statusDangerFG : ForagerTheme.textSecondary)
                 } else {
                     Text("Choose Category")
                         .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                 }
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 8))

@@ -18,8 +18,8 @@ import SwiftUI
 struct RecipeImportPreviewView: View {
     @State var draft: ImportDraftRecipe
     @ObservedObject var importService: RecipeImportService
-    /// Callback passes the draft + a dictionary of (parsed ingredient name → selected category)
-    let onSave: (ImportDraftRecipe, [String: String]) -> Void
+    /// Callback passes the draft + a dictionary of (ingredient index → selected category)
+    let onSave: (ImportDraftRecipe, [Int: String]) -> Void
     let onCancel: () -> Void
 
     @Environment(\.managedObjectContext) private var viewContext
@@ -398,8 +398,7 @@ struct RecipeImportPreviewView: View {
         ingredientMatches = matches
     }
 
-    /// Build category assignments keyed by parsed ingredient name and pass to save callback.
-    /// Applies any user edits to the draft's ingredient list before saving.
+    /// Apply user edits and pass index-keyed category assignments to save callback.
     private func saveWithCategories() {
         // Apply full-line edits to draft
         for (index, editedText) in editedIngredientNames {
@@ -410,18 +409,7 @@ struct RecipeImportPreviewView: View {
             }
         }
 
-        // Build category map keyed by parsed name (use cached match results when available)
-        var nameToCategory: [String: String] = [:]
-        for (index, category) in categoryAssignments {
-            if let match = ingredientMatches[index] {
-                nameToCategory[match.parsedName.lowercased()] = category
-            } else {
-                let text = editedIngredientNames[index] ?? (index < draft.ingredients.value.count ? draft.ingredients.value[index] : "")
-                let parsed = parsingService.parseIngredient(text: text)
-                nameToCategory[parsed.displayName.lowercased()] = category
-            }
-        }
-        onSave(draft, nameToCategory)
+        onSave(draft, categoryAssignments)
     }
 
     // MARK: - Ingredient Editing

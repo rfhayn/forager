@@ -6,6 +6,59 @@
 
 ---
 
+## Session 63 — March 2, 2026
+**Milestone**: M10.6.9 — AI Category Validation + Import Category Persistence
+**Focus**: Fix AI category validation against user's list, fix category persistence through import save pipeline
+**Branch**: `feature/M10.6.7-household-api-key`
+
+### What Happened
+
+User tested build 9 on TestFlight and reported two bugs:
+
+1. **AI returns invalid categories**: The Claude API was returning category names like "Other" that don't exist in the user's actual category list. Root cause: the prompt said "Use null if no category fits well" but didn't strictly constrain to ONLY the provided categories. The `IngredientMatchService.buildResult()` also blindly accepted whatever the AI returned without validation.
+
+2. **Categories lost on import save**: Categories assigned in the import preview weren't persisting to the saved recipe. Root cause: a subtle name-key mismatch in the save pipeline. The preview keyed `nameToCategory` by `parsedName.lowercased()` (e.g., "diced tomatoes"), but `findOrCreateTemplate()` normalizes names through the full pipeline (e.g., "tomato"). When `applyCategoryAssignmentsAndFinish()` tried to look up `template.name` ("tomato") in a dict keyed by "diced tomatoes" — no match. Categories were silently dropped.
+
+### The Fix
+
+**Bug 1**: Two-layer defense:
+- Strengthened the Claude API prompt: "You MUST only use category names that appear in this list — do not invent or modify category names."
+- Added `validateCategory()` in `IngredientMatchService` that case-insensitively checks AI-returned categories against the user's actual category list, falling back to `nil` on mismatch.
+
+**Bug 2**: Eliminated name-matching fragility entirely by switching from name-keyed (`[String: String]`) to index-keyed (`[Int: String]`) category passing. The flow is now:
+1. Preview assigns category to ingredient at index N → `categoryAssignments[N] = "Produce"`
+2. `onSave` passes `categoryAssignments: [Int: String]` directly (no name key conversion)
+3. `saveImport()` accepts `categoryAssignments: [Int: String]` and passes it to `tryLLMParsing()` and `parseAndConnectIngredients()`
+4. Template creation uses `findOrCreateTemplate(name: llmResult.name, category: categoryAssignments[index])` — category set at creation time
+5. `applyCategoryAssignmentsAndFinish()` simplified — only handles truly uncategorized templates
+
+**Visual**: "Choose Category" and "Uncategorized" labels now display in red (`ForagerTheme.statusDangerFG`) to call attention to ingredients needing category assignment.
+
+### Key Insight
+
+Index-based data passing between pipeline stages is fundamentally more robust than name-based when any stage applies transformations. The normalization pipeline (lowercase → singularize → strip qualifiers) is exactly the kind of transformation that breaks name-key matching silently. This is a general architectural pattern worth remembering: when data flows through transformation stages, use stable identifiers (indices, UUIDs) not derived keys (processed names).
+
+### Files Changed (8 files)
+
+| File | Change |
+|------|--------|
+| `Services/Parsing/ClaudeIngredientParser.swift` | Strengthened category constraint in prompt |
+| `Services/IngredientMatchService.swift` | Added `validateCategory()` + `normalizedName()`, validate AI categories in batch/single |
+| `Services/Import/RecipeImportService.swift` | Accept `categoryAssignments: [Int: String]` in `saveImport()` and `replaceExistingRecipe()`, pass to template creation |
+| `Services/IngredientParsingService.swift` | Accept `categoryAssignments: [Int: String]` in `parseAndConnectIngredients()` |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Changed `onSave` to `(ImportDraftRecipe, [Int: String])`, simplified `saveWithCategories()` |
+| `forager/Views/Import/RecipeImportSheet.swift` | Changed `pendingCategoryAssignments` to `[Int: String]`, simplified `applyCategoryAssignmentsAndFinish()` |
+| `forager/Components/IngredientMatchRow.swift` | Red text for uncategorized/missing categories |
+| `docs/insights-log.md` | 3 new entries |
+
+### Status
+
+- **Build**: Succeeds
+- **Tests**: 363 passing, 0 failures
+- **Bugs fixed**: 2 (AI category validation, category persistence)
+
+---
+
 ## Session 62 — March 2, 2026
 **Milestone**: M10.6.8 — IngredientMatchService + Code Review Fixes
 **Focus**: Code review remediation, test cleanup, normalization design decision
