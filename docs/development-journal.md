@@ -6,6 +6,52 @@
 
 ---
 
+## Session 66 — March 3, 2026
+**Milestone**: M10.6.12 — Recipe Import Bug Fixes
+**Focus**: Fix 6 user-reported bugs in recipe import flow discovered during device testing
+**Branch**: `feature/M10.6.12-import-bug-fixes`
+
+### What Happened
+
+Implemented all 6 fixes from the plan that came out of device testing with the Pinch of Yum "Spicy Shrimp Tacos" recipe. The bugs fell into three categories: data pipeline issues (template visibility in household context — 3 sub-bugs), UI flow issues (browser not dismissing, scroll-to-new-step, missing Add Ingredient button), and UX polish (confusing status icons, inaccurate match counts).
+
+### Key Decisions
+
+- **Remove redundant `incrementUsage()` rather than fix it**: The double-count bug could have been fixed by removing the increment inside `findOrCreateTemplate()` instead. Chose to remove the caller-side `incrementUsage()` because it also eliminates unnecessary `context.save()` calls per ingredient during import — those child-context saves are fragile and unnecessary since the atomic persist at the end handles everything.
+
+- **Index-based filtering for empty ingredients on save**: When users add an ingredient via the new button but leave it blank, we filter empties at save time rather than preventing empty additions. This lets users add multiple rows before typing, which is more natural than forcing immediate input.
+
+- **Silent status for ready ingredients**: Rather than using a subtle/muted indicator for `.ready` status, chose to show nothing at all (clear spacer for alignment). User explicitly said the green checkmarks looked like checkboxes — any visible icon in that position invites confusion about interactivity.
+
+### Learning
+
+- Child-context error paths are a recurring source of silent data bugs. `findOrCreateTemplate()` has a catch block fallback that creates templates directly — it wasn't copying all the setup from the happy path (specifically `householdKey`). This is the same class of bug as M10.6.11 but in a different code path.
+- SwiftUI `ScrollViewReader` requires a layout pass before `scrollTo` works on newly inserted views. A 0.1s `DispatchQueue.main.asyncAfter` delay is the standard workaround — without it, the scroll target doesn't exist in the layout yet.
+
+### AI Tooling Observations
+
+Claude Code's plan mode produced a well-structured implementation plan from the user's bug reports. All 6 fixes implemented cleanly from the plan with no deviations needed. The parallel file reads at session start saved significant time. The task list tracked all 9 sub-tasks (6 fixes + PRD + build + docs).
+
+### Files Changed (8 files, +114/-34 lines)
+
+| File | Change |
+|------|--------|
+| `Services/IngredientTemplateService.swift` | Added householdKey to fallback template path |
+| `Services/Import/RecipeImportService.swift` | Removed redundant incrementUsage call |
+| `Services/IngredientParsingService.swift` | Removed redundant incrementUsage call |
+| `Models/IngredientTemplate+Extensions.swift` | Guard nil householdKey in awakeFromInsert |
+| `forager/Views/Import/RecipeBrowserView.swift` | Auto-dismiss browser after import save |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | ScrollViewReader, Add Ingredient button, match count fix |
+| `forager/Components/IngredientMatchRow.swift` | Simplified status indicators |
+| `docs/prds/active/m10.6.12-import-bug-fixes.md` | NEW: PRD documenting all fixes |
+
+### Status
+
+- **Build**: Succeeds (0 errors, 0 warnings)
+- **Insights logged**: 1 (CoreData/ChildContext)
+
+---
+
 ## Session 65 — March 3, 2026
 **Milestone**: M10.6.11 — Fix Invisible Ingredient Templates in Household Context
 **Focus**: Debug and fix templates not appearing in IngredientsView after recipe import on device

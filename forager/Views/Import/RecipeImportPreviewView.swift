@@ -105,7 +105,11 @@ struct RecipeImportPreviewView: View {
 
     // MARK: - Body
 
+    // M10.6.12: ScrollViewReader for programmatic scroll to new steps/ingredients
+    @State private var scrollProxy: ScrollViewProxy?
+
     var body: some View {
+        ScrollViewReader { proxy in
         ScrollView {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
                 // Source attribution
@@ -150,6 +154,8 @@ struct RecipeImportPreviewView: View {
             }
             .padding(ForagerTheme.Spacing.lg)
         }
+        .onAppear { scrollProxy = proxy }
+        } // ScrollViewReader
         .task { computeIngredientMatches() }
         // M10.6.10: Configure autocomplete with current household
         .onAppear {
@@ -413,10 +419,23 @@ struct RecipeImportPreviewView: View {
         var matches: [Int: IngredientMatchResult] = [:]
 
         for (index, result) in results.enumerated() {
-            guard let result else { continue }
-            matches[index] = result
+            let text = index < draft.ingredients.value.count ? draft.ingredients.value[index] : ""
+            // M10.6.12: Create fallback for nil results so every ingredient is accounted for
+            let match = result ?? IngredientMatchResult(
+                rawText: text,
+                parsedName: text,
+                parsedQuantity: nil,
+                parsedUnit: nil,
+                parsedNotes: nil,
+                status: .needsTemplate,
+                categoryName: nil,
+                templateName: nil,
+                wasAIParsed: false,
+                aiParsedName: nil
+            )
+            matches[index] = match
             // Pre-fill category assignments from matched templates (don't overwrite user edits)
-            if let category = result.categoryName, categoryAssignments[index] == nil {
+            if let category = match.categoryName, categoryAssignments[index] == nil {
                 categoryAssignments[index] = category
             }
         }
@@ -435,7 +454,21 @@ struct RecipeImportPreviewView: View {
             }
         }
 
-        onSave(draft, categoryAssignments)
+        // M10.6.12: Filter out empty ingredient lines (from Add Ingredient that user left blank)
+        let nonEmptyIngredients = draft.ingredients.value.enumerated().filter {
+            !$0.element.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        draft.ingredients.value = nonEmptyIngredients.map { $0.element }
+
+        // Remap category assignments to new indices
+        var remappedCategories: [Int: String] = [:]
+        for (newIndex, original) in nonEmptyIngredients.enumerated() {
+            if let category = categoryAssignments[original.offset] {
+                remappedCategories[newIndex] = category
+            }
+        }
+
+        onSave(draft, remappedCategories)
     }
 
     // MARK: - Ingredient Editing
@@ -574,10 +607,8 @@ struct RecipeImportPreviewView: View {
             }
             .padding(.top, ForagerTheme.Spacing.sm)
 
-            // Summary of ingredient match status
-            if !ingredientMatches.isEmpty {
-                ingredientMatchSummary
-            }
+            // M10.6.12: Only show summary when items need attention
+            ingredientMatchSummary
 
             ForEach(draft.ingredients.value.indices, id: \.self) { index in
                 ingredientRow(
@@ -591,6 +622,15 @@ struct RecipeImportPreviewView: View {
                     importAutocompleteDropdown(index: index)
                 }
             }
+
+            // M10.6.12: Add Ingredient button
+            Button { addImportIngredient() } label: {
+                Label("Add Ingredient", systemImage: "plus.circle")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+            }
+            .id("addIngredientButton")
+            .padding(.top, ForagerTheme.Spacing.xs)
         }
     }
 
@@ -747,6 +787,7 @@ struct RecipeImportPreviewView: View {
                     .font(ForagerTheme.secondaryFont)
                     .foregroundStyle(ForagerTheme.accentPrimary)
             }
+            .id("addStepButton")
             .padding(.top, ForagerTheme.Spacing.xs)
         }
     }
@@ -832,6 +873,18 @@ struct RecipeImportPreviewView: View {
         editedSteps.removeValue(forKey: index)
     }
 
+    /// M10.6.12: Add a new ingredient row to the draft
+    private func addImportIngredient() {
+        draft.ingredients.value.append("")
+        let newIndex = draft.ingredients.value.count - 1
+        editedIngredientNames[newIndex] = ""
+        editingIndex = newIndex
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation { scrollProxy?.scrollTo("addIngredientButton", anchor: .bottom) }
+        }
+    }
+
     /// Add a new step to the draft instructions
     private func addImportStep() {
         let placeholder = "New step"
@@ -844,6 +897,11 @@ struct RecipeImportPreviewView: View {
         editedSteps[newIndex] = ""
         showAllSteps = true
         editingStepIndex = newIndex
+
+        // M10.6.12: Scroll to show the new step
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation { scrollProxy?.scrollTo("addStepButton", anchor: .bottom) }
+        }
     }
 
     /// Delete a step from the draft instructions

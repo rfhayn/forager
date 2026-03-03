@@ -22,6 +22,8 @@ struct RecipeBrowserView: View {
     @State private var viewModel = RecipeBrowserViewModel()
     @State private var showingImportSheet = false
     @State private var extractionFailed = false
+    // M10.6.12: Track save success so browser auto-dismisses after import sheet closes
+    @State private var didSaveRecipe = false
 
     var body: some View {
         NavigationStack {
@@ -53,8 +55,18 @@ struct RecipeBrowserView: View {
                     .disabled(viewModel.isExtracting || viewModel.currentURL == nil)
                 }
             }
-            .sheet(isPresented: $showingImportSheet) {
+            .sheet(isPresented: $showingImportSheet, onDismiss: {
+                // M10.6.12: When import sheet closes after a successful save, dismiss browser too
+                if didSaveRecipe {
+                    dismiss()
+                }
+            }) {
                 RecipeImportSheet(importService: importService)
+            }
+            .onChange(of: importService.state) { _, newState in
+                if case .saved = newState {
+                    didSaveRecipe = true
+                }
             }
             .alert("No Recipe Found", isPresented: $extractionFailed) {
                 Button("OK", role: .cancel) { }

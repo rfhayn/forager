@@ -171,7 +171,7 @@ class IngredientParsingService: ObservableObject {
                 category: categoryAssignments[index]
             )
             ingredient.ingredientTemplate = template
-            templateService.incrementUsage(template: template)
+            // M10.6.12: Removed redundant incrementUsage — findOrCreateTemplate already increments
 
             createdIngredients.append(ingredient)
 
