@@ -6,6 +6,48 @@
 
 ---
 
+## Session 65 — March 3, 2026
+**Milestone**: M10.6.11 — Fix Invisible Ingredient Templates in Household Context
+**Focus**: Debug and fix templates not appearing in IngredientsView after recipe import on device
+**Branch**: `main`
+
+### What Happened
+
+User reported that recipe import worked fine in the simulator (without AI parsing) but ingredients didn't show up in the Ingredients view after importing on their phone. Initial hypothesis was an AI vs non-AI parsing difference, but investigation revealed the real issue was **household scoping**: the simulator had no household configured, while the phone did.
+
+### Key Decisions
+
+- **Provider closure pattern over parameter threading**: Rather than adding `householdKey` parameters to every `findOrCreateTemplate()` callsite (30+ locations), added a `householdKeyProvider: (() -> String?)?` closure on `IngredientTemplateService`. This mirrors the existing `LLMSettingsService.householdAPIKeyProvider` pattern — lazy resolution means the key is always current even when the household changes after app launch.
+
+- **Dual resolution (direct + provider)**: `IngredientTemplateService` supports both a direct `householdKey` property (for child context services during import) and the closure provider (for app-level singleton). `resolvedHouseholdKey` prefers the direct value, falling back to the closure. This cleanly separates short-lived child services from the long-lived app service.
+
+- **Also fixed recipe householdKey**: Imported recipes were also missing householdKey, which would make them invisible in RecipeListView's household filter. Added `recipe.householdKey = householdKeyProvider?()` in `saveImport()`.
+
+### Learning
+
+- The sim-vs-device behavioral difference was a classic "works on my machine" — nil==nil passes the filter, but UUID!=nil doesn't. Household-scoped features must be tested with an active household.
+- `HouseholdIngredientTemplateRepository.findOrCreate()` bypasses `ManagedObjectFactory` (which correctly sets householdKey), so it needs its own householdKey parameter. Any code path that creates Core Data entities outside the factory needs to handle scoping manually.
+
+### AI Tooling Observations
+
+The Explore agent correctly identified the root cause on the first pass — traced through the full save pipeline and pinpointed `findOrCreate()` never setting `householdKey`. Direct verification of the agent's findings against IngredientsView's filter code confirmed the diagnosis. The fix was surgical: 4 files, 37 lines added.
+
+### Files Changed (4 files, +37/-4 lines)
+
+| File | Change |
+|------|--------|
+| `Services/IngredientTemplateService.swift` | Added `householdKey`, `householdKeyProvider`, `resolvedHouseholdKey`; pass to repository |
+| `Services/Persistence/HouseholdIngredientTemplateRepository.swift` | `findOrCreate()` accepts and sets `householdKey` on new templates |
+| `Services/Import/RecipeImportService.swift` | Added `householdKeyProvider`; configure child template services + recipe householdKey |
+| `forager/App/foragerApp.swift` | Wire `householdKeyProvider` on template service and import service |
+
+### Status
+
+- **Build**: Succeeds (0 errors, 0 warnings)
+- **Insights logged**: 2 (Architecture/HouseholdScoping, Testing/SimVsDevice)
+
+---
+
 ## Session 64 — March 3, 2026
 **Milestone**: M10.6.10 — Ingredient Template Autocomplete + Visual Match Distinction
 **Focus**: Add autocomplete to ingredient editing across RecipeDetailView and RecipeImportPreviewView; distinguish match states visually
