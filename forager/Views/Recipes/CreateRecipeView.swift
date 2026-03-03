@@ -623,10 +623,13 @@ struct CreateRecipeView: View {
         }
     }
 
-    // M10.6.8: Summary bar uses shared component
+    // M10.6.10: Three-state summary using IngredientStatus
     private var ingredientMatchSummary: some View {
-        let summary = matchService.matchSummary(from: Array(ingredientMatches.values.map { Optional($0) }))
-        return IngredientMatchSummaryView(categorized: summary.categorized, uncategorized: summary.uncategorized)
+        let values = Array(ingredientMatches.values)
+        let ready = values.filter { $0.status == .ready }.count
+        let needsCategory = values.filter { $0.status == .needsCategory }.count
+        let needsTemplate = values.filter { $0.status == .needsTemplate }.count
+        return IngredientMatchSummaryView(ready: ready, needsCategory: needsCategory, needsTemplate: needsTemplate)
     }
 
     // M10.6.8: Re-match using shared service when exiting edit mode

@@ -983,6 +983,10 @@ struct RecipeDetailView: View {
     @State private var isLLMBatchParsing = false
     @State private var llmToastMessage: String?
 
+    // M10.6.10: Autocomplete service for ingredient editing
+    @StateObject private var autocompleteService: IngredientAutocompleteService
+    @State private var showingIngredientAutocomplete = false
+
     // M10.6.9: Inline add ingredient state
     @State private var isAddingIngredient = false
     @State private var newIngredientText = ""
@@ -1033,9 +1037,12 @@ struct RecipeDetailView: View {
 
     init(recipe: Recipe) {
         self.recipe = recipe
-        self.scalingService = RecipeScalingService(
-            context: PersistenceController.shared.container.viewContext
-        )
+        let context = PersistenceController.shared.container.viewContext
+        self.scalingService = RecipeScalingService(context: context)
+        // M10.6.10: Create autocomplete service for ingredient editing
+        let templateSvc = IngredientTemplateService(context: context)
+        let parsingSvc = IngredientParsingService(context: context, templateService: templateSvc)
+        _autocompleteService = StateObject(wrappedValue: IngredientAutocompleteService(context: context, parsingService: parsingSvc))
     }
 
     // MARK: - Computed Properties
@@ -1262,6 +1269,10 @@ struct RecipeDetailView: View {
         .llmParsingToast(message: $llmToastMessage)
         // M10.8: Pre-compute ingredient matches on appear
         .task { computeIngredientMatches() }
+        // M10.6.10: Configure autocomplete with current household
+        .onAppear {
+            autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
+        }
         // M10.8: Sync focus and commit on blur
         .onChange(of: editingIngredientId) { oldValue, newValue in
             // Commit when leaving an ingredient row
@@ -1271,6 +1282,9 @@ struct RecipeDetailView: View {
             }
             // Sync focus to editing state
             focusedIngredientId = newValue
+            // M10.6.10: Clear autocomplete when changing editing target
+            showingIngredientAutocomplete = false
+            autocompleteService.clearSuggestions()
         }
         .onChange(of: focusedIngredientId) { _, newValue in
             // When keyboard focus is lost (tapped away), exit edit mode
@@ -1492,6 +1506,10 @@ struct RecipeDetailView: View {
             } else {
                 ForEach(sortedIngredients, id: \.objectID) { ingredient in
                     ingredientRow(ingredient)
+                    // M10.6.10: Autocomplete dropdown after editing row
+                    if let iid = ingredient.id, editingIngredientId == iid {
+                        autocompleteDropdown(for: ingredient)
+                    }
                 }
             }
 
@@ -1499,9 +1517,15 @@ struct RecipeDetailView: View {
             if scaleFactor == 1.0 {
                 if isAddingIngredient {
                     addIngredientField
+                    // M10.6.10: Autocomplete dropdown for add-ingredient field
+                    if editingIngredientId == nil {
+                        autocompleteDropdown(for: nil)
+                    }
                 } else {
                     Button {
                         isAddingIngredient = true
+                        showingIngredientAutocomplete = false
+                        autocompleteService.clearSuggestions()
                     } label: {
                         Label("Add Ingredient", systemImage: "plus")
                             .font(ForagerTheme.bodyFont)
@@ -1612,22 +1636,37 @@ struct RecipeDetailView: View {
         let id = ingredient.id ?? UUID()
         let matchInfo = ingredientMatches[id]
         let isEditing = editingIngredientId == id && scaleFactor == 1.0
-        let hasCategory = matchInfo?.categoryName != nil
         let displayName = ingredientDisplayName(for: ingredient)
         let currentText = editedTexts[id] ?? (ingredient.name ?? "")
 
         return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
             // Top line: status icon + ingredient text
             HStack(spacing: ForagerTheme.Spacing.sm) {
-                // Status indicator
-                if hasCategory {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(ForagerTheme.statusSuccessFG)
-                        .font(.system(size: 14))
-                } else if matchInfo != nil {
-                    Image(systemName: "circle")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .font(.system(size: 14))
+                // M10.6.10: Three-state status indicator
+                if let status = matchInfo?.status {
+                    switch status {
+                    case .ready:
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                            .font(.system(size: 14))
+                    case .needsCategory:
+                        Image(systemName: "circle.dashed")
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
+                            .font(.system(size: 14))
+                    case .needsTemplate:
+                        HStack(spacing: ForagerTheme.Spacing.xs) {
+                            Image(systemName: "plus.circle")
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                                .font(.system(size: 14))
+                            Text("NEW")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1)
+                                .background(ForagerTheme.backgroundTertiary)
+                                .clipShape(RoundedRectangle(cornerRadius: 3))
+                        }
+                    }
                 } else {
                     Circle()
                         .fill(ingredient.parseConfidence < 0.7 ? ForagerTheme.statusWarningFG : ForagerTheme.accentSecondary)
@@ -1635,7 +1674,7 @@ struct RecipeDetailView: View {
                 }
 
                 if isEditing {
-                    // Edit mode: full-line TextField
+                    // Edit mode: full-line TextField with M10.6.10 autocomplete
                     TextField("Ingredient", text: ingredientTextBinding(id: id, original: ingredient.name ?? ""))
                         .font(ForagerTheme.bodyFont)
                         .foregroundStyle(ForagerTheme.textPrimary)
@@ -1645,6 +1684,16 @@ struct RecipeDetailView: View {
                         .onSubmit {
                             commitIngredientEdit(ingredient: ingredient)
                             editingIngredientId = nil
+                        }
+                        .onChange(of: editedTexts[id] ?? "") { _, newValue in
+                            let text = newValue.isEmpty ? (ingredient.name ?? "") : newValue
+                            if text.count >= 2 {
+                                autocompleteService.debouncedSearch(fullText: text)
+                                showingIngredientAutocomplete = true
+                            } else {
+                                showingIngredientAutocomplete = false
+                                autocompleteService.clearSuggestions()
+                            }
                         }
                 } else if scaleFactor != 1.0 {
                     // Scaled display mode: show scaled quantities, no editing
@@ -1767,6 +1816,16 @@ struct RecipeDetailView: View {
                 .focused($newIngredientFocused)
                 .onSubmit { commitNewIngredient() }
                 .onAppear { newIngredientFocused = true }
+                // M10.6.10: Trigger autocomplete while typing
+                .onChange(of: newIngredientText) { _, newValue in
+                    if newValue.count >= 2 {
+                        autocompleteService.debouncedSearch(fullText: newValue)
+                        showingIngredientAutocomplete = true
+                    } else {
+                        showingIngredientAutocomplete = false
+                        autocompleteService.clearSuggestions()
+                    }
+                }
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
@@ -1809,6 +1868,135 @@ struct RecipeDetailView: View {
 
         newIngredientText = ""
         isAddingIngredient = false
+        showingIngredientAutocomplete = false
+        autocompleteService.clearSuggestions()
+    }
+
+    // MARK: - M10.6.10: Autocomplete Dropdown + Selection
+
+    /// Autocomplete dropdown showing template suggestions.
+    /// Pass an ingredient for edit mode, or nil for add-ingredient mode.
+    @ViewBuilder
+    private func autocompleteDropdown(for ingredient: Ingredient?) -> some View {
+        if showingIngredientAutocomplete && !autocompleteService.suggestions.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(autocompleteService.suggestions, id: \.objectID) { template in
+                    Button {
+                        if let ingredient {
+                            selectAutocompleteForEdit(ingredient: ingredient, template: template)
+                        } else {
+                            selectAutocompleteForAdd(template: template)
+                        }
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(template.name ?? "")
+                                    .font(ForagerTheme.bodyFont)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                                if let category = template.category, !category.isEmpty {
+                                    Text(category)
+                                        .font(ForagerTheme.captionFont)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
+                                }
+                            }
+                            Spacer()
+                            if template.usageCount > 0 {
+                                Text("\(template.usageCount)")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(ForagerTheme.backgroundTertiary)
+                                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
+                            }
+                        }
+                        .padding(.horizontal, ForagerTheme.Spacing.md)
+                        .padding(.vertical, ForagerTheme.Spacing.sm)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+
+                    if template != autocompleteService.suggestions.last {
+                        Divider()
+                    }
+                }
+            }
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        }
+    }
+
+    /// Select an autocomplete template while editing an existing ingredient.
+    /// Rebuilds the ingredient text with the template name, preserving quantity/unit.
+    private func selectAutocompleteForEdit(ingredient: Ingredient, template: IngredientTemplate) {
+        guard let id = ingredient.id else { return }
+        let currentText = editedTexts[id] ?? (ingredient.name ?? "")
+        let parsed = parsingService.parseIngredient(text: currentText)
+
+        // Rebuild text as "quantity unit templateName"
+        var rebuiltText = ""
+        if let quantity = parsed.quantity { rebuiltText += quantity + " " }
+        if let unit = parsed.unit { rebuiltText += unit + " " }
+        rebuiltText += template.name ?? ""
+
+        let (_, structured) = parsingService.parseUnified(text: rebuiltText, source: .recipeIngredient)
+
+        // Update ingredient via service
+        recipeServiceM75.updateIngredient(
+            ingredient,
+            name: rebuiltText,
+            numericValue: structured.numericValue,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: structured.parseConfidence,
+            template: template
+        )
+
+        // Clear edit buffer and autocomplete state
+        editedTexts.removeValue(forKey: id)
+        editingIngredientId = nil
+        showingIngredientAutocomplete = false
+        autocompleteService.clearSuggestions()
+
+        // Refresh match info
+        reMatchIngredient(id: id)
+    }
+
+    /// Select an autocomplete template while adding a new ingredient.
+    /// Creates the ingredient with the template pre-linked.
+    private func selectAutocompleteForAdd(template: IngredientTemplate) {
+        let parsed = parsingService.parseIngredient(text: newIngredientText)
+
+        var rebuiltText = ""
+        if let quantity = parsed.quantity { rebuiltText += quantity + " " }
+        if let unit = parsed.unit { rebuiltText += unit + " " }
+        rebuiltText += template.name ?? ""
+
+        let (_, structured) = parsingService.parseUnified(text: rebuiltText, source: .recipeIngredient)
+
+        if let ingredient = recipeServiceM75.addIngredient(
+            to: recipe,
+            name: rebuiltText,
+            numericValue: structured.numericValue ?? 0,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: structured.parseConfidence,
+            template: template
+        ) {
+            if let id = ingredient.id {
+                if let result = matchService.matchIngredient(text: rebuiltText) {
+                    ingredientMatches[id] = result
+                }
+            }
+        }
+
+        newIngredientText = ""
+        isAddingIngredient = false
+        showingIngredientAutocomplete = false
+        autocompleteService.clearSuggestions()
     }
 
     // MARK: - M10.8: Formatted Ingredient Text
@@ -1842,9 +2030,13 @@ struct RecipeDetailView: View {
 
     // MARK: - M10.6.8: Ingredient Match Summary (shared component)
 
+    // M10.6.10: Three-state summary using IngredientStatus
     private var ingredientMatchSummary: some View {
-        let summary = matchService.matchSummary(from: Array(ingredientMatches.values.map { Optional($0) }))
-        return IngredientMatchSummaryView(categorized: summary.categorized, uncategorized: summary.uncategorized)
+        let values = Array(ingredientMatches.values)
+        let ready = values.filter { $0.status == .ready }.count
+        let needsCategory = values.filter { $0.status == .needsCategory }.count
+        let needsTemplate = values.filter { $0.status == .needsTemplate }.count
+        return IngredientMatchSummaryView(ready: ready, needsCategory: needsCategory, needsTemplate: needsTemplate)
     }
 
     // MARK: - M10.8: Category Label + Picker

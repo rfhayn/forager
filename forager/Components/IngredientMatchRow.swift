@@ -55,23 +55,43 @@ struct IngredientMatchRow: View {
 
     // MARK: - Status Icon
 
+    // M10.6.10: Three-state status icon using IngredientMatchResult.status
     private var statusIcon: some View {
-        Group {
-            if isAIParsing {
-                ProgressView()
-                    .controlSize(.mini)
-            } else if categoryName != nil {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
-            } else if matchResult != nil {
-                Image(systemName: "circle")
+        HStack(spacing: ForagerTheme.Spacing.xs) {
+            Group {
+                if isAIParsing {
+                    ProgressView()
+                        .controlSize(.mini)
+                } else if let status = matchResult?.status {
+                    switch status {
+                    case .ready:
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                    case .needsCategory:
+                        Image(systemName: "circle.dashed")
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
+                    case .needsTemplate:
+                        Image(systemName: "plus.circle")
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                } else {
+                    Image(systemName: "circle")
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            }
+            .font(.system(size: 14))
+
+            // "NEW" badge for unmatched ingredients
+            if !isAIParsing, matchResult?.status == .needsTemplate {
+                Text("NEW")
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(ForagerTheme.textTertiary)
-            } else {
-                Image(systemName: "circle")
-                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(ForagerTheme.backgroundTertiary)
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
             }
         }
-        .font(.system(size: 14))
     }
 
     // MARK: - Edit Field
@@ -195,20 +215,39 @@ struct IngredientMatchRow: View {
 
 // MARK: - Match Summary View
 
-/// Shared summary bar: "N categorized · N need category"
+/// M10.6.10: Three-state summary bar: "N ready · N need category · N new"
 struct IngredientMatchSummaryView: View {
-    let categorized: Int
-    let uncategorized: Int
+    let ready: Int
+    let needsCategory: Int
+    let needsTemplate: Int
+
+    // Legacy initializer for callers using the old 2-param API
+    init(categorized: Int, uncategorized: Int) {
+        self.ready = categorized
+        self.needsCategory = uncategorized
+        self.needsTemplate = 0
+    }
+
+    init(ready: Int, needsCategory: Int, needsTemplate: Int) {
+        self.ready = ready
+        self.needsCategory = needsCategory
+        self.needsTemplate = needsTemplate
+    }
 
     var body: some View {
         HStack(spacing: ForagerTheme.Spacing.md) {
-            if categorized > 0 {
-                Label("\(categorized) categorized", systemImage: "checkmark.circle.fill")
+            if ready > 0 {
+                Label("\(ready) ready", systemImage: "checkmark.circle.fill")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.statusSuccessFG)
             }
-            if uncategorized > 0 {
-                Label("\(uncategorized) need category", systemImage: "circle")
+            if needsCategory > 0 {
+                Label("\(needsCategory) need category", systemImage: "circle.dashed")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusWarningFG)
+            }
+            if needsTemplate > 0 {
+                Label("\(needsTemplate) new", systemImage: "plus.circle")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
             }

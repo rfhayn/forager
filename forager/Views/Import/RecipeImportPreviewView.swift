@@ -43,6 +43,10 @@ struct RecipeImportPreviewView: View {
     /// Which ingredient row has its category picker open (nil = none)
     @State private var categoryPickerIndex: Int?
 
+    // M10.6.10: Autocomplete service for ingredient editing
+    @StateObject private var autocompleteService: IngredientAutocompleteService
+    @State private var showingIngredientAutocomplete = false
+
     // M10.6.6: LLM parsing state
     @State private var isLLMBatchParsing = false
     @State private var llmParsingIngredients: Set<Int> = []
@@ -60,6 +64,21 @@ struct RecipeImportPreviewView: View {
         let key = householdService.currentHouseholdKey
         let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
         return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+    }
+
+    // M10.6.10: Custom init to create autocomplete service
+    init(draft: ImportDraftRecipe, importService: RecipeImportService,
+         onSave: @escaping (ImportDraftRecipe, [Int: String]) -> Void,
+         onCancel: @escaping () -> Void) {
+        _draft = State(initialValue: draft)
+        self.importService = importService
+        self.onSave = onSave
+        self.onCancel = onCancel
+
+        let context = PersistenceController.shared.container.viewContext
+        let templateSvc = IngredientTemplateService(context: context)
+        let parsingSvc = IngredientParsingService(context: context, templateService: templateSvc)
+        _autocompleteService = StateObject(wrappedValue: IngredientAutocompleteService(context: context, parsingService: parsingSvc))
     }
 
     // MARK: - Ingredient Match (M10.6.8: Uses shared IngredientMatchResult)
@@ -132,6 +151,10 @@ struct RecipeImportPreviewView: View {
             .padding(ForagerTheme.Spacing.lg)
         }
         .task { computeIngredientMatches() }
+        // M10.6.10: Configure autocomplete with current household
+        .onAppear {
+            autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
+        }
         .onChange(of: editingIndex) { oldValue, newValue in
             // Re-match when leaving an ingredient row
             if let oldIndex = oldValue, oldIndex != newValue {
@@ -142,6 +165,9 @@ struct RecipeImportPreviewView: View {
                 commitImportStepEdit(index: editingStepIndex!)
                 editingStepIndex = nil
             }
+            // M10.6.10: Clear autocomplete when changing editing target
+            showingIngredientAutocomplete = false
+            autocompleteService.clearSuggestions()
         }
         // M10.8: Sync focus and commit for instruction step editing
         .onChange(of: editingStepIndex) { oldValue, newValue in
@@ -436,6 +462,91 @@ struct RecipeImportPreviewView: View {
         }
     }
 
+    // MARK: - M10.6.10: Import Autocomplete Dropdown + Selection
+
+    /// Autocomplete dropdown for import ingredient editing.
+    @ViewBuilder
+    private func importAutocompleteDropdown(index: Int) -> some View {
+        if showingIngredientAutocomplete && !autocompleteService.suggestions.isEmpty {
+            VStack(spacing: 0) {
+                ForEach(autocompleteService.suggestions, id: \.objectID) { template in
+                    Button {
+                        selectAutocompleteForImport(index: index, template: template)
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(template.name ?? "")
+                                    .font(ForagerTheme.bodyFont)
+                                    .foregroundStyle(ForagerTheme.textPrimary)
+                                if let category = template.category, !category.isEmpty {
+                                    Text(category)
+                                        .font(ForagerTheme.captionFont)
+                                        .foregroundStyle(ForagerTheme.textSecondary)
+                                }
+                            }
+                            Spacer()
+                            if template.usageCount > 0 {
+                                Text("\(template.usageCount)")
+                                    .font(.caption2)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(ForagerTheme.backgroundTertiary)
+                                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
+                            }
+                        }
+                        .padding(.horizontal, ForagerTheme.Spacing.md)
+                        .padding(.vertical, ForagerTheme.Spacing.sm)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+
+                    if template != autocompleteService.suggestions.last {
+                        Divider()
+                    }
+                }
+            }
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        }
+    }
+
+    /// Select an autocomplete template during import ingredient editing.
+    /// Rebuilds the text with template name, updates match and category.
+    private func selectAutocompleteForImport(index: Int, template: IngredientTemplate) {
+        let original = index < draft.ingredients.value.count ? draft.ingredients.value[index] : ""
+        let currentText = editedIngredientNames[index] ?? original
+        let parsed = parsingService.parseIngredient(text: currentText)
+
+        // Rebuild text as "quantity unit templateName"
+        var rebuiltText = ""
+        if let quantity = parsed.quantity { rebuiltText += quantity + " " }
+        if let unit = parsed.unit { rebuiltText += unit + " " }
+        rebuiltText += template.name ?? ""
+
+        // Update the edited text
+        editedIngredientNames[index] = rebuiltText
+
+        // Re-match with the template name — should now be .ready or .needsCategory
+        if let result = matchService.matchIngredient(text: rebuiltText) {
+            ingredientMatches[index] = result
+            if let category = result.categoryName {
+                categoryAssignments[index] = category
+            }
+        }
+
+        // Pre-fill category from template if available
+        if let templateCategory = template.category, !templateCategory.isEmpty {
+            categoryAssignments[index] = templateCategory
+        }
+
+        // Dismiss autocomplete and editing
+        editingIndex = nil
+        showingIngredientAutocomplete = false
+        autocompleteService.clearSuggestions()
+    }
+
     // MARK: - Ingredients Section
 
     private var ingredientsSection: some View {
@@ -475,15 +586,21 @@ struct RecipeImportPreviewView: View {
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
+                // M10.6.10: Autocomplete dropdown after editing row
+                if editingIndex == index {
+                    importAutocompleteDropdown(index: index)
+                }
             }
         }
     }
 
-    /// M10.6.8: Summary bar uses shared component
+    /// M10.6.10: Three-state summary using IngredientStatus
     private var ingredientMatchSummary: some View {
-        let categorized = categoryAssignments.values.filter { !$0.isEmpty }.count
-        let total = draft.ingredients.value.count
-        return IngredientMatchSummaryView(categorized: categorized, uncategorized: total - categorized)
+        let values = Array(ingredientMatches.values)
+        let ready = values.filter { $0.status == .ready }.count
+        let needsCategory = values.filter { $0.status == .needsCategory }.count
+        let needsTemplate = values.filter { $0.status == .needsTemplate }.count
+        return IngredientMatchSummaryView(ready: ready, needsCategory: needsCategory, needsTemplate: needsTemplate)
     }
 
     /// M10.6.8: Per-ingredient row using shared IngredientMatchRow component
@@ -508,6 +625,18 @@ struct RecipeImportPreviewView: View {
                 editingIndex = nil
             }
         )
+        // M10.6.10: Trigger autocomplete when editing text changes
+        .onChange(of: editedIngredientNames[index] ?? "") { _, newValue in
+            guard editingIndex == index else { return }
+            let searchText = newValue.isEmpty ? text : newValue
+            if searchText.count >= 2 {
+                autocompleteService.debouncedSearch(fullText: searchText)
+                showingIngredientAutocomplete = true
+            } else {
+                showingIngredientAutocomplete = false
+                autocompleteService.clearSuggestions()
+            }
+        }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .padding(.horizontal, ForagerTheme.Spacing.md)
         .background(isLowConfidence ? ForagerTheme.surfaceWarning : ForagerTheme.surfacePrimary)

@@ -37,6 +37,11 @@ class IngredientAutocompleteService: ObservableObject {
     func configure(householdKey: String?) {
         self.householdKey = householdKey
     }
+
+    // M10.6.10: Clear suggestions when editing is dismissed or template is selected
+    func clearSuggestions() {
+        suggestions = []
+    }
     
     // MARK: - Parse-Then-Autocomplete (Core Pattern)
     
