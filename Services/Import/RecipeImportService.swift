@@ -281,12 +281,26 @@ class RecipeImportService: ObservableObject {
 
         do {
             let llmResults = try await parser.parseBatch(texts)
-            guard !llmResults.isEmpty else { return nil }
+
+            // M10.6.9: Validate count — if LLM returned fewer results than inputs,
+            // fall back to local pipeline so no ingredients are silently dropped.
+            // Truncate extras (LLM sometimes splits compound lines).
+            let validResults: [LLMParserResult]
+            if llmResults.count < texts.count {
+                #if DEBUG
+                print("⚠️ M10.6.9: LLM returned \(llmResults.count) results for \(texts.count) inputs — falling back to local pipeline")
+                #endif
+                return nil
+            } else if llmResults.count > texts.count {
+                validResults = Array(llmResults.prefix(texts.count))
+            } else {
+                validResults = llmResults
+            }
 
             var createdIngredients: [Ingredient] = []
 
-            for (index, llmResult) in llmResults.enumerated() {
-                let originalText = index < texts.count ? texts[index] : llmResult.name
+            for (index, llmResult) in validResults.enumerated() {
+                let originalText = texts[index]
                 let parserResult = llmResult.toParserResult(originalText: originalText, provider: parser.providerName)
 
                 let ingredient = Ingredient(context: context)

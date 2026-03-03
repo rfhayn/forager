@@ -65,13 +65,14 @@ Two more issues surfaced during testing:
 |------|--------|
 | `forager/Views/Grocery/AddIngredientsToListView.swift` | Skip completed items in `findExistingItem()` |
 | `forager/Views/Recipes/RecipeListView.swift` | Add inline ingredient field + `commitNewIngredient()` |
-| `docs/insights-log.md` | 1 new entry (Grocery/MergeLogic) |
+| `Services/Import/RecipeImportService.swift` | Add LLM result count validation in `tryLLMParsing()` — fall back to local pipeline if count mismatch |
+| `docs/insights-log.md` | 2 new entries (Grocery/MergeLogic, Import/CountValidation) |
 
 ### Status
 
 - **Build**: Succeeds
 - **Tests**: 363 passing, 0 failures
-- **Bugs fixed**: 4 (AI category validation, category persistence, grocery merge, add ingredient)
+- **Bugs fixed**: 5 (AI category validation, category persistence, grocery merge, add ingredient, import count validation)
 
 ---
 
