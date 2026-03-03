@@ -1,8 +1,8 @@
 # Forager - Development Roadmap
 
-**Last Updated**: March 1, 2026
+**Last Updated**: March 3, 2026
 **Current Phase**: **M10.6 🔄 ACTIVE** | **M10.8 ✅ COMPLETE** | **M10.3 ✅ DEV COMPLETE** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M10.6 Claude API integration in progress
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M10.6 Claude API integration in progress (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 COMPLETE)
 **Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
@@ -136,13 +136,18 @@ With M15, M7.5, and M9.0 all complete and merged to main:
 - Pipeline: 94.1% qty extraction (corpus 1), 92.9% (corpus 2, unseen data)
 - Remaining ~7-8% gaps are semantic — validates M10.6 LLM integration
 
-### **M10.6: Claude API Integration — 📋 PLANNED**
+### **M10.6: Claude API Integration — 🔄 ACTIVE**
 - PRD: `docs/prds/active/m10.6-claude-api-integration.md`
-- Estimated: 8.5-12 hours (5 sub-phases)
+- Estimated: 22-33 hours (10 sub-phases) | **Actual**: ~22h so far
 - Optional Claude API for import ingredient parsing (toggle OFF by default)
-- Sub-phases: M10.6.1 Protocol+Parser (2-3h) → M10.6.2 Keychain+Settings (1.5-2h) → M10.6.3 UI (1.5-2h) → M10.6.4 Integration (2-3h) → M10.6.5 Docs (1-2h)
+- ✅ M10.6.1-M10.6.4: Protocol, keychain, settings UI, import integration
+- ✅ M10.6.6: User-triggered AI parsing across all views
+- ✅ M10.6.7: Household-shared API key via CloudKit (v7 schema)
+- ✅ M10.6.8: Shared IngredientMatchService + IngredientMatchRow
+- ✅ M10.6.9: AI category validation, import persistence, grocery merge, add ingredient
+- ✅ M10.6.10: Ingredient autocomplete + three-state match icons
+- Remaining: M10.6.5 (documentation + verification, 1-2h)
 - Architecture: Separate `LLMIngredientParser` protocol, `ClaudeIngredientParser` adapter, silent pipeline fallback
-- Zero Core Data schema changes, ~20 new tests
 
 ### **M4 Component Summary:**
 

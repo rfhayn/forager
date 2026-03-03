@@ -6,6 +6,54 @@
 
 ---
 
+## Session 64 — March 3, 2026
+**Milestone**: M10.6.10 — Ingredient Template Autocomplete + Visual Match Distinction
+**Focus**: Add autocomplete to ingredient editing across RecipeDetailView and RecipeImportPreviewView; distinguish match states visually
+**Branch**: `feature/M10.6.7-household-api-key`
+
+### What Happened
+
+The previous sessions (M10.6.8–M10.6.9) built out shared ingredient matching, inline editing, and category assignment. But two gaps remained: (1) when editing an ingredient, there was no autocomplete to help the user find existing templates — they had to type the exact name and hope the re-parse matched, and (2) the status icon only showed two states (green checkmark or gray circle), hiding the important distinction between "template matched but needs category" and "no template match at all."
+
+This session added autocomplete dropdowns to RecipeDetailView (both ingredient editing and the `+ Add Ingredient` field) and RecipeImportPreviewView (ingredient editing). It also upgraded the status icon to three distinct states with clear visual language.
+
+### Key Decisions
+
+- **Create `IngredientAutocompleteService` via `PersistenceController.shared` in `init()`**: Both RecipeDetailView and RecipeImportPreviewView receive `IngredientParsingService` as `@EnvironmentObject`, which isn't available at init time. Rather than complex lazy initialization, I created a separate `IngredientParsingService` instance in each view's `init()` from the shared persistence context. Since parsing is stateless, a separate instance works identically. This matches the existing CreateRecipeView pattern.
+
+- **RecipeImportPreviewView needed a custom `init()`**: Unlike RecipeDetailView (which already had one for the scaling service), the import view relied on the default memberwise init. Adding the custom init was necessary to wire up `@StateObject` for the autocomplete service. Only one callsite needed no changes since the parameter list is identical.
+
+- **Three-state icon in both shared component AND RecipeDetailView**: `IngredientMatchRow` (used by import) got the three-state icon update, but RecipeDetailView has its own inline status icon code rather than using the shared component. Updated both to ensure visual consistency. The three states are: green checkmark (`.ready`), amber dashed circle (`.needsCategory`), and gray plus with "NEW" badge (`.needsTemplate`).
+
+- **Single `showingIngredientAutocomplete` boolean**: Works for both ingredient editing and add-ingredient since only one editing context is active at a time. Cleared on every editing target change to prevent stale dropdown state.
+
+### Learning
+
+- `IngredientMatchSummaryView` needed a backward-compatible init: the legacy 2-param `(categorized:, uncategorized:)` initializer maps to the new 3-param version with `needsTemplate: 0`, ensuring no breakage at callsites that haven't been updated yet.
+- The autocomplete dropdown follows a "same UI, different handler" pattern across 3 views — the visual template is identical (name + category + usage count badge) but the selection action varies by context (append to form array / update Core Data / update in-memory dict).
+
+### AI Tooling Observations
+
+Claude Code handled this well as a plan-then-execute flow. The plan was detailed enough to implement directly without back-and-forth. Parallel file reads at the start saved time. The main complexity was reasoning about `@StateObject` initialization patterns — knowing the `PersistenceController.shared` escape hatch for views that can't access environment objects in `init()`.
+
+### Files Changed (6 files, +498/-43 lines)
+
+| File | Change |
+|------|--------|
+| `forager/Components/IngredientMatchRow.swift` | Three-state status icon, "NEW" badge, three-state `IngredientMatchSummaryView` |
+| `forager/Views/Recipes/RecipeListView.swift` | `@StateObject autocompleteService`, three-state icons, autocomplete dropdown + selection methods for edit and add |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Custom `init()`, `@StateObject autocompleteService`, autocomplete dropdown + selection method |
+| `forager/Views/Recipes/CreateRecipeView.swift` | Updated `ingredientMatchSummary` to three-state API |
+| `Services/IngredientAutocompleteService.swift` | Added `clearSuggestions()` method |
+| `docs/prds/active/m10.6.10-ingredient-autocomplete.md` | New PRD |
+
+### Status
+
+- **Build**: Succeeds (0 errors, 0 warnings)
+- **Insights logged**: 3 (SwiftUI/StateObject, SwiftUI/VisualFeedback, Architecture/AutocompleteReuse)
+
+---
+
 ## Session 63 — March 2, 2026
 **Milestone**: M10.6.9 — AI Category Validation + Import Category Persistence
 **Focus**: Fix AI category validation against user's list, fix category persistence through import save pipeline
