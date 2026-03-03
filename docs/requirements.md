@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: March 1, 2026
-**Version**: 7.0
-**Current Milestone**: M10.6 🔄 ACTIVE | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M8.4.1 ✅ | M15 ✅
-**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: March 3, 2026
+**Version**: 7.1
+**Current Milestone**: M10.6 🔄 ACTIVE (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 ✅) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M8.4.1 ✅ | M15 ✅
+**Execution Order**: M10.6 (remaining: M10.6.5 docs) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -99,7 +99,7 @@ This document defines all functional and non-functional requirements for the For
 | **FR-RM-013** | **Enhanced recipe search** | ✅ **Multi-field search across names, ingredients, tags, instructions** | ✅ M2.2.7 | 🎯 **Comprehensive recipe discovery** |
 | **FR-RM-031** | **Recipe creation form** | ✅ **Professional multi-step form with comprehensive validation** | ✅ M2.3 | 🎯 **Complete recipe input** |
 | **FR-RM-032** | **Ingredient management** | ✅ **Add/edit/remove/reorder ingredients with template integration** | ✅ M2.3 | 🎯 **Flexible ingredient handling** |
-| **FR-RM-033** | **Parse-then-autocomplete** | ✅ **Intelligent parsing with fuzzy matching autocomplete** | ✅ M2.3 | 🎯 **Efficient ingredient entry** |
+| **FR-RM-033** | **Parse-then-autocomplete** | ✅ **Intelligent parsing with fuzzy matching autocomplete** (extended to RecipeDetailView + RecipeImportPreviewView in M10.6.10) | ✅ M2.3, M10.6.10 | 🎯 **Efficient ingredient entry** |
 | **FR-RM-034** | **Template alignment** | ✅ **Automatic ingredient normalization with template linking** | ✅ M2.3 | 🎯 **Data consistency** |
 | **FR-RM-035** | **Category assignment** | ✅ **Batch category assignment modal for uncategorized ingredients** | ✅ M2.3 | 🎯 **Category management** |
 | **FR-RM-036** | **Recipe editing** | ✅ **Seamless editing workflow maintaining data integrity** | ✅ M2.3 | 🎯 **Recipe updates** |

@@ -346,6 +346,27 @@ class HouseholdService: ObservableObject {
         #endif
     }
 
+    /// M10.6.7: Saves or clears the shared LLM API key for the household
+    /// Only the household owner can set this — the key syncs to all members via CloudKit
+    /// - Parameters:
+    ///   - key: The API key to save, or nil/empty to clear
+    ///   - household: The household to update
+    /// - Throws: HouseholdError if not owner
+    func saveLLMAPIKey(_ key: String?, to household: Household) async throws {
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
+        household.llmAPIKey = (trimmed?.isEmpty == false) ? trimmed : nil
+        try viewContext.save()
+
+        // CloudKit syncs automatically via NSPersistentCloudKitContainer
+        #if DEBUG
+        print("✅ M10.6.7: Household LLM API key \(household.llmAPIKey != nil ? "saved" : "cleared")")
+        #endif
+    }
+
     /// M7.3.2: Allows a member to leave a household
     /// M7.2.2 Refactor: Now uses CKShare.participants instead of HouseholdMember records
     /// - Parameters:

@@ -1,8 +1,8 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 1, 2026
+**Last Updated**: March 3, 2026
 **For Milestone**: M10.6 Claude API Integration
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 ✅)
+**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 ✅, M10.6.6-M10.6.10 ✅)
 
 ---
 
@@ -55,21 +55,27 @@ Optional Claude API for ingredient parsing (fills ~7-8% semantic gap). M10.6.6 a
 | M10.6.4 | RecipeImportService integration + telemetry + tests | 2-3h | ✅ |
 | M10.6.5 | Documentation + full verification | 1-2h | READY |
 | M10.6.6 | User-triggered AI parsing across all views | 9-12h | ✅ |
+| M10.6.7 | Household-shared API key via CloudKit | 3-4h | ✅ |
+| M10.6.8 | Shared IngredientMatchService + IngredientMatchRow | 4-5h | ✅ |
+| M10.6.9 | AI category validation + import persistence fixes | 2-3h | ✅ |
+| M10.6.10 | Ingredient autocomplete + three-state match icons | 1-2h | ✅ |
 
-### What's Done (M10.6.6)
+### What's Done (M10.6.6-M10.6.10)
 - `IngredientParsingService` LLM public API: `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()`
 - `LLMParsingToast` reusable view modifier (capsule, auto-dismiss 2s)
 - CreateRecipeView + EditRecipeView: batch sparkle + per-ingredient context menu
 - RecipeImportPreviewView: batch sparkle + per-ingredient context menu (index-keyed)
 - GroceryListDetailView: sparkle quick-add with local-parse fallback
 - AddListItemView: "AI Add" sparkle with local-parse fallback
+- M10.6.7: Household-shared API key stored in CloudKit Household entity (`llmAPIKey` field, v7 schema)
+- M10.6.8: Shared `IngredientMatchService` + `IngredientMatchRow` components across all 4 ingredient views
+- M10.6.9: AI category validation, index-based category persistence, grocery merge fix, inline add ingredient
+- M10.6.10: Autocomplete dropdowns in RecipeDetailView + RecipeImportPreviewView, three-state status icons (ready/needsCategory/needsTemplate)
 
 ### What's Next (M10.6.5)
-- Update all 7 core docs with M10.6.6 completion status
+- Update all 7 core docs with completion status
 - Final build verification
 - Create PR for squash merge to main
-- `parserUsed` is already `String?` — add `"claude"` with zero schema change
-- ~20 new tests across 3 test files, 7 new production files, 10 modified files
 
 ### After M10.6
 

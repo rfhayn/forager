@@ -137,20 +137,19 @@ final class ClaudeIngredientParserTests: XCTestCase {
         XCTAssertNil(results[0].unit)
     }
 
-    // MARK: - 4. Multi-Ingredient Split
+    // MARK: - 4. Compound Ingredient (No Split)
 
-    func testMultiIngredientLineSplitting() async throws {
+    func testCompoundIngredientKeptAsOne() async throws {
         let responseData = makeToolUseResponse(ingredients: [
-            ["name": "salt", "quantity": NSNull(), "unit": NSNull(), "notes": "to taste"],
-            ["name": "pepper", "quantity": NSNull(), "unit": NSNull(), "notes": "to taste"]
+            ["name": "salt and pepper", "quantity": NSNull(), "unit": NSNull(), "notes": "to taste"]
         ])
         stubResponse(data: responseData)
 
         let results = try await parser.parseBatch(["salt and pepper to taste"])
 
-        XCTAssertEqual(results.count, 2)
-        XCTAssertEqual(results[0].name, "salt")
-        XCTAssertEqual(results[1].name, "pepper")
+        XCTAssertEqual(results.count, 1)
+        XCTAssertEqual(results[0].name, "salt and pepper")
+        XCTAssertEqual(results[0].notes, "to taste")
     }
 
     // MARK: - 5. 401 Error (No Retry)
@@ -223,9 +222,9 @@ final class ClaudeIngredientParserTests: XCTestCase {
         }
     }
 
-    // MARK: - 8. Validation: Empty Name Filtered Out → Empty Results Throws
+    // MARK: - 8. Validation: Empty Name Ingredients Throw
 
-    func testEmptyNameIngredientsFilteredOutThrowsValidation() async {
+    func testEmptyNameIngredientsThrowsValidation() async {
         let responseData = makeToolUseResponse(ingredients: [
             ["name": "", "quantity": 1, "unit": "cup"]
         ])
@@ -235,7 +234,9 @@ final class ClaudeIngredientParserTests: XCTestCase {
             _ = try await parser.parseBatch(["1 cup ???"])
             XCTFail("Expected LLMParserError.validationFailed")
         } catch let error as LLMParserError {
-            XCTAssertTrue(error.errorDescription?.contains("Empty") == true)
+            XCTAssertTrue(error.errorDescription?.contains("Dropped") == true ||
+                          error.errorDescription?.contains("empty name") == true,
+                          "Expected validation error about dropped/empty items, got: \(error.errorDescription ?? "nil")")
         } catch {
             XCTFail("Unexpected error type: \(error)")
         }
@@ -249,7 +250,8 @@ final class ClaudeIngredientParserTests: XCTestCase {
             quantity: 2.0,
             unit: "cups",
             notes: "sifted",
-            confidence: 0.95
+            confidence: 0.95,
+            category: nil
         )
 
         let parserResult = llmResult.toParserResult(originalText: "2 cups flour, sifted", provider: "claude")

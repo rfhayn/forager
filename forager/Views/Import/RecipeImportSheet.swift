@@ -36,8 +36,8 @@ struct RecipeImportSheet: View {
     @State private var duplicateResult: DuplicateResult?
     @State private var showingCategoryAssignment = false
     @State private var uncategorizedTemplates: [IngredientTemplate] = []
-    /// Category assignments from inline preview pickers (parsed name → category)
-    @State private var pendingCategoryAssignments: [String: String] = [:]
+    /// Category assignments from inline preview pickers (ingredient index → category)
+    @State private var pendingCategoryAssignments: [Int: String] = [:]
     @FocusState private var urlFieldFocused: Bool
 
     init(importService: RecipeImportService, mode: ImportMode = .url) {
@@ -369,7 +369,7 @@ struct RecipeImportSheet: View {
         Task { await importService.importFromURL(url) }
     }
 
-    private func handleSave(draft: ImportDraftRecipe, categoryAssignments: [String: String]) {
+    private func handleSave(draft: ImportDraftRecipe, categoryAssignments: [Int: String]) {
         pendingCategoryAssignments = categoryAssignments
         // Check for duplicates first
         if let duplicate = importService.checkDuplicate(for: draft) {
@@ -377,7 +377,7 @@ struct RecipeImportSheet: View {
             showingDuplicateSheet = true
         } else {
             Task {
-                if let result = await importService.saveImport(from: draft) {
+                if let result = await importService.saveImport(from: draft, categoryAssignments: pendingCategoryAssignments) {
                     applyCategoryAssignmentsAndFinish(result)
                 }
             }
@@ -388,7 +388,7 @@ struct RecipeImportSheet: View {
         showingDuplicateSheet = false
         if case .needsReview(let draft) = importService.state {
             Task {
-                if let result = await importService.saveImport(from: draft) {
+                if let result = await importService.saveImport(from: draft, categoryAssignments: pendingCategoryAssignments) {
                     applyCategoryAssignmentsAndFinish(result)
                 }
             }
@@ -409,7 +409,7 @@ struct RecipeImportSheet: View {
         }
 
         Task {
-            if let result = await importService.replaceExistingRecipe(objectID: existingID, with: draft) {
+            if let result = await importService.replaceExistingRecipe(objectID: existingID, with: draft, categoryAssignments: pendingCategoryAssignments) {
                 applyCategoryAssignmentsAndFinish(result)
             }
         }
@@ -421,32 +421,17 @@ struct RecipeImportSheet: View {
         dismiss()
     }
 
-    /// Apply user's inline category selections to templates, then show modal only for remaining uncategorized.
+    /// M10.6.9: Categories are now applied during save via index-based assignments.
+    /// This method handles any remaining uncategorized templates by showing the modal.
     private func applyCategoryAssignmentsAndFinish(_ result: ImportSaveResult) {
         guard !result.uncategorizedTemplateIDs.isEmpty else {
             dismissAfterSave()
             return
         }
 
-        // Resolve templates and apply user's category picks from the preview
-        let templates = result.uncategorizedTemplateIDs.compactMap { objectID in
+        // Resolve templates that still have no category after save
+        let stillUncategorized = result.uncategorizedTemplateIDs.compactMap { objectID in
             try? viewContext.existingObject(with: objectID) as? IngredientTemplate
-        }
-
-        var stillUncategorized: [IngredientTemplate] = []
-        for template in templates {
-            let lookupKey = (template.name ?? "").lowercased()
-            if let assignedCategory = pendingCategoryAssignments[lookupKey],
-               !assignedCategory.isEmpty {
-                template.category = assignedCategory
-            } else {
-                stillUncategorized.append(template)
-            }
-        }
-
-        // Save the applied categories
-        if viewContext.hasChanges {
-            try? viewContext.save()
         }
 
         // If some templates still need categories, show the modal; otherwise dismiss

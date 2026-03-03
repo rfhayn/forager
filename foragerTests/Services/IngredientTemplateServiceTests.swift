@@ -84,9 +84,9 @@ final class IngredientTemplateServiceTests: XCTestCase {
 
         service.updateTemplate(template, name: "Diced Tomatoes", category: nil, isStaple: false)
 
-        // normalize() strips qualifiers and pluralizes: "Diced Tomatoes" → "tomatoes"
-        XCTAssertEqual(template.name, "tomatoes",
-                       "Name should go through full normalization pipeline (case + plural + qualifier removal)")
+        // normalize() strips qualifiers and singularizes: "Diced Tomatoes" → "tomato"
+        XCTAssertEqual(template.name, "tomato",
+                       "Name should go through full normalization pipeline (case + singular + qualifier removal)")
     }
 
     // MARK: - Idempotency
@@ -152,9 +152,9 @@ final class IngredientTemplateServiceTests: XCTestCase {
     }
 
     @MainActor
-    func testDriedCranberriesPreserved() {
+    func testDriedCranberriesSingularizes() {
         let normalized = service.normalize(name: "dried cranberries")
-        XCTAssertEqual(normalized, "dried cranberries")
+        XCTAssertEqual(normalized, "dried cranberry", "'dried cranberries' singularizes — qty handles plurality")
     }
 
     @MainActor
@@ -168,21 +168,21 @@ final class IngredientTemplateServiceTests: XCTestCase {
     @MainActor
     func testDicedTomatoStillStripped() {
         let normalized = service.normalize(name: "diced tomato")
-        XCTAssertEqual(normalized, "tomatoes",
+        XCTAssertEqual(normalized, "tomato",
                        "\"diced\" is a preparation qualifier — should be stripped")
     }
 
     @MainActor
     func testChoppedOnionStillStripped() {
         let normalized = service.normalize(name: "chopped onion")
-        XCTAssertEqual(normalized, "onions",
+        XCTAssertEqual(normalized, "onion",
                        "\"chopped\" is a preparation qualifier — should be stripped")
     }
 
     @MainActor
     func testSlicedMushroomsStillStripped() {
         let normalized = service.normalize(name: "sliced mushrooms")
-        XCTAssertEqual(normalized, "mushrooms",
+        XCTAssertEqual(normalized, "mushroom",
                        "\"sliced\" is a preparation qualifier — should be stripped")
     }
 

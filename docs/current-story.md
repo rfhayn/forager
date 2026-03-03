@@ -1,9 +1,9 @@
 # Current Development Story
 
-**Last Updated**: March 1, 2026
+**Last Updated**: March 3, 2026
 **Status**: M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 🔄 ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
-**Total Progress**: ~261 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.6-claude-api-integration`
+**Total Progress**: ~263 hours | 89% planning accuracy
+**Current Branch**: `feature/M10.6.7-household-api-key`
 **Current Milestone**: M10.6 🔄 ACTIVE — Claude API Integration for Import Parsing
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M10.6 (Claude API) → M10.4 → M7.7 → M6 → M9 → M11+
@@ -226,6 +226,10 @@
    - ✅ M10.6.6c: RecipeImportPreviewView AI UI
    - ✅ M10.6.6d: Grocery views AI UI (GroceryListDetailView + AddListItemView)
    - ✅ M10.6.6e: LLMParsingToast reusable component
+7. ✅ M10.6.7: Household-shared API key via CloudKit (~3h)
+8. ✅ M10.6.8: Shared IngredientMatchService + IngredientMatchRow (~4h)
+9. ✅ M10.6.9: AI category validation, import category persistence, grocery merge fix, add ingredient button (~3h)
+10. ✅ M10.6.10: Ingredient autocomplete in RecipeDetailView + RecipeImportPreviewView, three-state match icons (~2h)
 
 **Architecture**: Separate `LLMIngredientParser` protocol (async + batch) bypasses the existing `IngredientParser` pipeline. `ClaudeIngredientParser` uses Anthropic Messages API with `tool_use` for structured output. Silent fallback to deterministic pipeline on any failure. User-triggered via sparkle button (batch) and "AI Parse" context menu (per-item). Zero Core Data schema changes.
 

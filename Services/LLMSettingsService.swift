@@ -23,6 +23,28 @@ class LLMSettingsService: ObservableObject {
     @Published var isTestingConnection = false
     @Published var connectionTestResult: ConnectionTestResult?
 
+    // MARK: - M10.6.7: Household Key Provider
+
+    /// Closure that reads the household's shared API key.
+    /// Wired in foragerApp.init() to avoid coupling to HouseholdService.
+    var householdAPIKeyProvider: (() -> String?)?
+
+    /// Resolves the active API key: household key takes priority over local Keychain.
+    var resolvedAPIKey: String? {
+        if let householdKey = householdAPIKeyProvider?(), !householdKey.isEmpty {
+            return householdKey
+        }
+        return KeychainHelper.getLLMAPIKey()
+    }
+
+    /// Whether the currently resolved key comes from the household (vs local Keychain)
+    var isUsingHouseholdKey: Bool {
+        guard let householdKey = householdAPIKeyProvider?(), !householdKey.isEmpty else {
+            return false
+        }
+        return true
+    }
+
     // MARK: - Constants
 
     private static let enabledKey = "llmParsingEnabled"
@@ -36,24 +58,30 @@ class LLMSettingsService: ObservableObject {
     // MARK: - API Key Management
 
     var hasAPIKey: Bool {
-        KeychainHelper.getLLMAPIKey() != nil
+        resolvedAPIKey != nil
     }
 
     func saveAPIKey(_ key: String) {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         KeychainHelper.saveLLMAPIKey(trimmed)
+        #if DEBUG
+        DebugLogService.shared.log("saveAPIKey: saved \(trimmed.count)-char key to Keychain", category: "Settings")
+        #endif
         objectWillChange.send()
     }
 
     func deleteAPIKey() {
         KeychainHelper.deleteLLMAPIKey()
+        #if DEBUG
+        DebugLogService.shared.log("deleteAPIKey: cleared Keychain", category: "Settings")
+        #endif
         objectWillChange.send()
     }
 
-    /// Returns a masked version of the stored key for display (e.g., "sk-ant-...xyz")
+    /// Returns a masked version of the active key for display (e.g., "sk-ant-...xyz")
     var maskedAPIKey: String? {
-        guard let key = KeychainHelper.getLLMAPIKey(), key.count > 10 else { return nil }
+        guard let key = resolvedAPIKey, key.count > 10 else { return nil }
         let prefix = String(key.prefix(7))
         let suffix = String(key.suffix(3))
         return "\(prefix)...\(suffix)"
@@ -62,7 +90,7 @@ class LLMSettingsService: ObservableObject {
     // MARK: - Connection Test
 
     func testConnection() async {
-        guard let apiKey = KeychainHelper.getLLMAPIKey() else {
+        guard let apiKey = resolvedAPIKey else {
             connectionTestResult = .failure("No API key configured")
             return
         }
@@ -92,9 +120,22 @@ class LLMSettingsService: ObservableObject {
 
     /// Returns a configured parser when enabled + API key present, nil otherwise
     func activeParser() -> (any LLMIngredientParser)? {
+        #if DEBUG
+        DebugLogService.shared.log(
+            "activeParser() — isEnabled=\(isEnabled), hasKey=\(resolvedAPIKey != nil), "
+            + "keyLength=\(resolvedAPIKey?.count ?? 0), isHouseholdKey=\(isUsingHouseholdKey)",
+            category: "Settings"
+        )
+        #endif
         guard isEnabled,
-              let apiKey = KeychainHelper.getLLMAPIKey(),
+              let apiKey = resolvedAPIKey,
               !apiKey.isEmpty else {
+            #if DEBUG
+            DebugLogService.shared.log(
+                "activeParser() → nil (isEnabled=\(isEnabled), keyPresent=\(resolvedAPIKey != nil))",
+                category: "Settings"
+            )
+            #endif
             return nil
         }
         return ClaudeIngredientParser(apiKey: apiKey)

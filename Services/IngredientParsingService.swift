@@ -50,6 +50,9 @@ class IngredientParsingService: ObservableObject {
     @Published var lastParsingDuration: TimeInterval = 0
     @Published var parseSuccessRate: Double = 0.0
 
+    // M10.6.7: Surface LLM errors to callers for better toast messages
+    @Published var lastLLMError: String?
+
     init(context: NSManagedObjectContext,
          templateService: IngredientTemplateService,
          parser: IngredientParser = HybridIngredientParser()) {
@@ -142,7 +145,8 @@ class IngredientParsingService: ObservableObject {
 
     /// Parse ingredient list and connect to templates using structured quantities.
     /// M8.4: Refactored to single-parse via parseUnified().
-    func parseAndConnectIngredients(for recipe: Recipe, ingredientTexts: [String]) -> [Ingredient] {
+    /// M10.6.9: Accepts index-based category assignments to set on templates.
+    func parseAndConnectIngredients(for recipe: Recipe, ingredientTexts: [String], categoryAssignments: [Int: String] = [:]) -> [Ingredient] {
         var createdIngredients: [Ingredient] = []
         var successfulParses = 0
 
@@ -161,9 +165,10 @@ class IngredientParsingService: ObservableObject {
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
 
+            // M10.6.9: Use category from preview assignments if available
             let template = templateService.findOrCreateTemplate(
                 name: parsed.displayName,
-                category: nil
+                category: categoryAssignments[index]
             )
             ingredient.ingredientTemplate = template
             templateService.incrementUsage(template: template)
@@ -192,29 +197,70 @@ class IngredientParsingService: ObservableObject {
 
     /// Parse a single ingredient via LLM. Returns nil on any failure.
     /// Caller should keep existing local result on nil return.
-    func parseSingleWithLLM(text: String, source: ParsingTelemetryEvent.ParsingSource) async -> (ParsedIngredient, StructuredQuantity)? {
-        let results = await parseBatchWithLLM(texts: [text], source: source)
+    /// Tuple: (parsed, structured, aiCategory)
+    func parseSingleWithLLM(text: String, source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> (ParsedIngredient, StructuredQuantity, String?)? {
+        let results = await parseBatchWithLLM(texts: [text], source: source, categories: categories)
         return results?.first
     }
 
     /// Parse a batch of ingredients via LLM. Returns nil on any failure or count mismatch.
     /// Caller should keep existing local results on nil return.
-    func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource) async -> [(ParsedIngredient, StructuredQuantity)]? {
-        guard !texts.isEmpty else { return nil }
+    /// Sets `lastLLMError` with a descriptive message on failure.
+    /// Tuple per result: (parsed, structured, aiCategory)
+    func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> [(ParsedIngredient, StructuredQuantity, String?)]? {
+        guard !texts.isEmpty else {
+            await MainActor.run { lastLLMError = nil }
+            return nil
+        }
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatchWithLLM: \(texts.count) texts, source=\(source)", category: "LLM")
+        }
+        #endif
 
         let parser: any LLMIngredientParser
         do {
-            guard let p = await LLMSettingsService.shared.activeParser() else { return nil }
+            guard let p = await LLMSettingsService.shared.activeParser() else {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: activeParser() returned nil — not configured", category: "LLM")
+                }
+                #endif
+                await MainActor.run { lastLLMError = "AI parsing not configured" }
+                return nil
+            }
             parser = p
         }
 
         do {
-            let llmResults = try await parser.parseBatch(texts)
+            let rawResults = try await parser.parseBatch(texts, categories: categories)
+            let rawCount = rawResults.count
+            let inputCount = texts.count
 
-            // Strict validation: count must match input
-            guard llmResults.count == texts.count else { return nil }
+            // Tolerant validation: truncate if AI returned extra (e.g., split a compound line),
+            // but fail if it returned too few (something went wrong).
+            let llmResults: [LLMParserResult]
+            if rawCount > inputCount {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: AI returned \(rawCount) results for \(inputCount) inputs — truncating extras", category: "LLM")
+                }
+                #endif
+                llmResults = Array(rawResults.prefix(inputCount))
+            } else if rawCount < inputCount {
+                #if DEBUG
+                await MainActor.run {
+                    DebugLogService.shared.log("parseBatchWithLLM: count mismatch — got \(rawCount) results for \(inputCount) inputs", category: "LLM")
+                }
+                #endif
+                await MainActor.run { lastLLMError = "AI returned fewer results than expected" }
+                return nil
+            } else {
+                llmResults = rawResults
+            }
 
-            var output: [(ParsedIngredient, StructuredQuantity)] = []
+            var output: [(ParsedIngredient, StructuredQuantity, String?)] = []
 
             for (index, llmResult) in llmResults.enumerated() {
                 let originalText = texts[index]
@@ -234,14 +280,35 @@ class IngredientParsingService: ObservableObject {
                     source: source
                 )
 
-                output.append((parsed, structured))
+                output.append((parsed, structured, llmResult.category))
             }
 
+            #if DEBUG
+            let resultCount = output.count
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: success — \(resultCount) results", category: "LLM")
+            }
+            #endif
+            await MainActor.run { lastLLMError = nil }
             return output
+        } catch let error as LLMParserError {
+            let message = error.errorDescription ?? error.localizedDescription
+            #if DEBUG
+            print("🤖 [LLM Parse] Batch failed: \(message)")
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: LLMParserError — \(message)", category: "LLM")
+            }
+            #endif
+            await MainActor.run { lastLLMError = message }
+            return nil
         } catch {
             #if DEBUG
             print("🤖 [LLM Parse] Batch failed: \(error.localizedDescription)")
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatchWithLLM: error — \(error.localizedDescription)", category: "LLM")
+            }
             #endif
+            await MainActor.run { lastLLMError = error.localizedDescription }
             return nil
         }
     }

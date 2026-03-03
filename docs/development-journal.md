@@ -6,6 +6,196 @@
 
 ---
 
+## Session 64 — March 3, 2026
+**Milestone**: M10.6.10 — Ingredient Template Autocomplete + Visual Match Distinction
+**Focus**: Add autocomplete to ingredient editing across RecipeDetailView and RecipeImportPreviewView; distinguish match states visually
+**Branch**: `feature/M10.6.7-household-api-key`
+
+### What Happened
+
+The previous sessions (M10.6.8–M10.6.9) built out shared ingredient matching, inline editing, and category assignment. But two gaps remained: (1) when editing an ingredient, there was no autocomplete to help the user find existing templates — they had to type the exact name and hope the re-parse matched, and (2) the status icon only showed two states (green checkmark or gray circle), hiding the important distinction between "template matched but needs category" and "no template match at all."
+
+This session added autocomplete dropdowns to RecipeDetailView (both ingredient editing and the `+ Add Ingredient` field) and RecipeImportPreviewView (ingredient editing). It also upgraded the status icon to three distinct states with clear visual language.
+
+### Key Decisions
+
+- **Create `IngredientAutocompleteService` via `PersistenceController.shared` in `init()`**: Both RecipeDetailView and RecipeImportPreviewView receive `IngredientParsingService` as `@EnvironmentObject`, which isn't available at init time. Rather than complex lazy initialization, I created a separate `IngredientParsingService` instance in each view's `init()` from the shared persistence context. Since parsing is stateless, a separate instance works identically. This matches the existing CreateRecipeView pattern.
+
+- **RecipeImportPreviewView needed a custom `init()`**: Unlike RecipeDetailView (which already had one for the scaling service), the import view relied on the default memberwise init. Adding the custom init was necessary to wire up `@StateObject` for the autocomplete service. Only one callsite needed no changes since the parameter list is identical.
+
+- **Three-state icon in both shared component AND RecipeDetailView**: `IngredientMatchRow` (used by import) got the three-state icon update, but RecipeDetailView has its own inline status icon code rather than using the shared component. Updated both to ensure visual consistency. The three states are: green checkmark (`.ready`), amber dashed circle (`.needsCategory`), and gray plus with "NEW" badge (`.needsTemplate`).
+
+- **Single `showingIngredientAutocomplete` boolean**: Works for both ingredient editing and add-ingredient since only one editing context is active at a time. Cleared on every editing target change to prevent stale dropdown state.
+
+### Learning
+
+- `IngredientMatchSummaryView` needed a backward-compatible init: the legacy 2-param `(categorized:, uncategorized:)` initializer maps to the new 3-param version with `needsTemplate: 0`, ensuring no breakage at callsites that haven't been updated yet.
+- The autocomplete dropdown follows a "same UI, different handler" pattern across 3 views — the visual template is identical (name + category + usage count badge) but the selection action varies by context (append to form array / update Core Data / update in-memory dict).
+
+### AI Tooling Observations
+
+Claude Code handled this well as a plan-then-execute flow. The plan was detailed enough to implement directly without back-and-forth. Parallel file reads at the start saved time. The main complexity was reasoning about `@StateObject` initialization patterns — knowing the `PersistenceController.shared` escape hatch for views that can't access environment objects in `init()`.
+
+### Files Changed (6 files, +498/-43 lines)
+
+| File | Change |
+|------|--------|
+| `forager/Components/IngredientMatchRow.swift` | Three-state status icon, "NEW" badge, three-state `IngredientMatchSummaryView` |
+| `forager/Views/Recipes/RecipeListView.swift` | `@StateObject autocompleteService`, three-state icons, autocomplete dropdown + selection methods for edit and add |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Custom `init()`, `@StateObject autocompleteService`, autocomplete dropdown + selection method |
+| `forager/Views/Recipes/CreateRecipeView.swift` | Updated `ingredientMatchSummary` to three-state API |
+| `Services/IngredientAutocompleteService.swift` | Added `clearSuggestions()` method |
+| `docs/prds/active/m10.6.10-ingredient-autocomplete.md` | New PRD |
+
+### Status
+
+- **Build**: Succeeds (0 errors, 0 warnings)
+- **Insights logged**: 3 (SwiftUI/StateObject, SwiftUI/VisualFeedback, Architecture/AutocompleteReuse)
+
+---
+
+## Session 63 — March 2, 2026
+**Milestone**: M10.6.9 — AI Category Validation + Import Category Persistence
+**Focus**: Fix AI category validation against user's list, fix category persistence through import save pipeline
+**Branch**: `feature/M10.6.7-household-api-key`
+
+### What Happened
+
+User tested build 9 on TestFlight and reported two bugs:
+
+1. **AI returns invalid categories**: The Claude API was returning category names like "Other" that don't exist in the user's actual category list. Root cause: the prompt said "Use null if no category fits well" but didn't strictly constrain to ONLY the provided categories. The `IngredientMatchService.buildResult()` also blindly accepted whatever the AI returned without validation.
+
+2. **Categories lost on import save**: Categories assigned in the import preview weren't persisting to the saved recipe. Root cause: a subtle name-key mismatch in the save pipeline. The preview keyed `nameToCategory` by `parsedName.lowercased()` (e.g., "diced tomatoes"), but `findOrCreateTemplate()` normalizes names through the full pipeline (e.g., "tomato"). When `applyCategoryAssignmentsAndFinish()` tried to look up `template.name` ("tomato") in a dict keyed by "diced tomatoes" — no match. Categories were silently dropped.
+
+### The Fix
+
+**Bug 1**: Two-layer defense:
+- Strengthened the Claude API prompt: "You MUST only use category names that appear in this list — do not invent or modify category names."
+- Added `validateCategory()` in `IngredientMatchService` that case-insensitively checks AI-returned categories against the user's actual category list, falling back to `nil` on mismatch.
+
+**Bug 2**: Eliminated name-matching fragility entirely by switching from name-keyed (`[String: String]`) to index-keyed (`[Int: String]`) category passing. The flow is now:
+1. Preview assigns category to ingredient at index N → `categoryAssignments[N] = "Produce"`
+2. `onSave` passes `categoryAssignments: [Int: String]` directly (no name key conversion)
+3. `saveImport()` accepts `categoryAssignments: [Int: String]` and passes it to `tryLLMParsing()` and `parseAndConnectIngredients()`
+4. Template creation uses `findOrCreateTemplate(name: llmResult.name, category: categoryAssignments[index])` — category set at creation time
+5. `applyCategoryAssignmentsAndFinish()` simplified — only handles truly uncategorized templates
+
+**Visual**: "Choose Category" and "Uncategorized" labels now display in red (`ForagerTheme.statusDangerFG`) to call attention to ingredients needing category assignment.
+
+### Key Insight
+
+Index-based data passing between pipeline stages is fundamentally more robust than name-based when any stage applies transformations. The normalization pipeline (lowercase → singularize → strip qualifiers) is exactly the kind of transformation that breaks name-key matching silently. This is a general architectural pattern worth remembering: when data flows through transformation stages, use stable identifiers (indices, UUIDs) not derived keys (processed names).
+
+### Files Changed (8 files)
+
+| File | Change |
+|------|--------|
+| `Services/Parsing/ClaudeIngredientParser.swift` | Strengthened category constraint in prompt |
+| `Services/IngredientMatchService.swift` | Added `validateCategory()` + `normalizedName()`, validate AI categories in batch/single |
+| `Services/Import/RecipeImportService.swift` | Accept `categoryAssignments: [Int: String]` in `saveImport()` and `replaceExistingRecipe()`, pass to template creation |
+| `Services/IngredientParsingService.swift` | Accept `categoryAssignments: [Int: String]` in `parseAndConnectIngredients()` |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Changed `onSave` to `(ImportDraftRecipe, [Int: String])`, simplified `saveWithCategories()` |
+| `forager/Views/Import/RecipeImportSheet.swift` | Changed `pendingCategoryAssignments` to `[Int: String]`, simplified `applyCategoryAssignmentsAndFinish()` |
+| `forager/Components/IngredientMatchRow.swift` | Red text for uncategorized/missing categories |
+| `docs/insights-log.md` | 3 new entries |
+
+### Continuation: Grocery Merge Fix + Add Ingredient Button
+
+Two more issues surfaced during testing:
+
+1. **Grocery list merge with completed items**: When adding recipe ingredients to the grocery list, `findExistingItem()` was matching completed (checked-off) items. If the user had previously added "flour" and checked it off, adding a new recipe with flour would silently merge into the completed item — user saw no visible change. Fix: added `guard !item.isCompleted` to skip completed items, ensuring fresh entries appear in the active list.
+
+2. **Missing "Add Ingredient" button**: After M10.8 removed the Edit Recipe button in favor of inline editing, there was no way to ADD new ingredients to an existing recipe from the detail view. Added inline `+ Add Ingredient` button below the ingredient list (visible at 1x scale). Tapping reveals a focused text field; on submit, the ingredient is parsed, template-linked, and saved via `RecipeService.addIngredient()`.
+
+**Additional files changed**:
+
+| File | Change |
+|------|--------|
+| `forager/Views/Grocery/AddIngredientsToListView.swift` | Skip completed items in `findExistingItem()` |
+| `forager/Views/Recipes/RecipeListView.swift` | Add inline ingredient field + `commitNewIngredient()` |
+| `Services/Import/RecipeImportService.swift` | Add LLM result count validation in `tryLLMParsing()` — fall back to local pipeline if count mismatch |
+| `docs/insights-log.md` | 2 new entries (Grocery/MergeLogic, Import/CountValidation) |
+
+### Status
+
+- **Build**: Succeeds
+- **Tests**: 363 passing, 0 failures
+- **Bugs fixed**: 5 (AI category validation, category persistence, grocery merge, add ingredient, import count validation)
+
+---
+
+## Session 62 — March 2, 2026
+**Milestone**: M10.6.8 — IngredientMatchService + Code Review Fixes
+**Focus**: Code review remediation, test cleanup, normalization design decision
+**Branch**: `feature/M10.6.7-household-api-key`
+
+### What Happened
+
+Continuation of M10.6.8 work from Session 61. This session focused on three areas:
+
+1. **Code review remediation**: 10 issues were identified by automated code review agents (5 CRITICAL/HIGH, 5 MEDIUM/LOW). Fixed all 10 across 8 files in one commit: updated MockLLMIngredientParser protocol conformance, fixed ClaudeIngredientParserTests compilation, replaced `try?` with `do/catch` in production paths, made `buildURLRequest` throw, removed dead catch block, added category passthrough in RecipeListView.batchLLMReparse, and added debug logging to empty catch blocks.
+
+2. **Test suite validation**: Ran full 363-test suite. Found 1 new failure (`testWithCategoryFromNeedsCategoryState` — test input "1 large onion" didn't match expected parser behavior because "large" is preserved as an identity qualifier). Fixed by using "2 cups flour" which produces parsed name "flour" matching the template. Also found 5 pre-existing normalization test failures.
+
+3. **Normalization design decision**: Investigated the tension between hardcoded pluralization exceptions and AI parsing. The normalizer had tests expecting plural forms ("baby carrots", "large eggs", "dried cranberries") but the pipeline consistently singularizes. Presented 3 options: (1) fix tests to expect singular, (2) add more exceptions, (3) let AI override. User chose option 1 — keep the normalizer simple and consistent. The principle: normalizer's job is deduplication (singular form), AI adds value in other areas (categories, typos, abbreviations).
+
+### Key Decisions
+
+- **Consistent singularization over growing exception lists**: Rather than maintaining a `preferPlural` dictionary or `alwaysPluralSuffixes` set that grows with every new edge case, the normalizer now has one simple rule: singularize everything unless the BASE WORD is in `alwaysPlural` (beans, oats, peas, etc.). This keeps the pipeline predictable and testable.
+- **`try?` → `do/catch` for production paths**: Silent error swallowing via `try?` was found in 3 places where errors matter (JSON serialization, CloudKit sync, AI result validation). The fix adds specific error messages without changing call signatures. Rule of thumb: `try?` is fine for "don't care" paths, dangerous for "should care but forgot" paths.
+- **Test input awareness**: Tests that assert downstream behavior must understand the upstream pipeline. "1 large onion" seems like it should parse to "onion" but the parser preserves "large" as an identity qualifier. This is a recurring pattern — always debug-print the actual parsed output before writing assertions.
+
+### AI Tooling Observations
+
+- The `pr-review-toolkit:code-reviewer` and `pr-review-toolkit:silent-failure-hunter` agents ran in parallel and identified genuinely impactful issues. The `try?` findings and protocol cascade issues would have been hard to catch manually.
+- The 3-option framing for the normalization design decision worked well — presenting concrete trade-offs instead of an open question led to a fast, confident user decision.
+
+### Status
+
+- **Tests**: 363 passing, 0 failures
+- **Commits**: 3 new commits (code review fixes, test input fix, normalization test fixes)
+- **Remaining**: PRD update, documentation sync, potential PR creation
+
+---
+
+## Session 61 — March 1, 2026
+**Milestone**: M10.6.5 — Manual Testing Fixes + AI Parse UX Improvements
+**Focus**: Diagnose "AI parsing unavailable" regression, improve error reporting, add AI re-parse to RecipeDetailView and IngredientsView
+**Branch**: `feature/M10.6.5-manual-testing-fixes`
+
+### What Happened
+
+Continued from a previous session that ran out of context. The prior session had implemented M10.6.7 (household-shared API key), replaced wand icons with Claude logos, archived to TestFlight, and then hit an "AI parsing unavailable" regression on the import screen.
+
+This session focused on three areas:
+
+1. **Root cause analysis of "AI parsing unavailable"**: Traced the error through the full call chain — `RecipeImportPreviewView` → `parseBatchWithLLM()` → `activeParser()` → `resolvedAPIKey`. Discovered that `parseBatchWithLLM()` returned `nil` for TWO different reasons (not configured vs API failure) but the toast always showed the same misleading "unavailable" message. Added `@Published var lastLLMError: String?` to `IngredientParsingService` so callers can show the real error. The user confirmed they're not in a household, ruling out CloudKit key issues.
+
+2. **API connectivity verification**: Tested the user's API key both with a basic curl call (200) and with the exact same tool_use request format the app sends (200, correctly structured response). The key and API are working. The regression is likely `isEnabled` being false or the Keychain key being missing after a device rebuild — the improved error messages will surface the exact cause.
+
+3. **New "Parse with AI" buttons**: Replaced tiny `ClaudeLogo` icons with `ClaudeParseLabel()` (Claude logo + text) across all 5 views. Added AI re-parse to `RecipeDetailView` (for ingredients with `parseConfidence < 0.7` or `needsReview` templates) and `IngredientsView` (for `needsReview` templates in the review banner).
+
+### Key Decisions
+
+- **`lastLLMError` property over error return types**: Rather than changing `parseBatchWithLLM()` from `-> Result?` to `-> Result<T, Error>` (which would require updating all 7+ callers), added a `@Published var lastLLMError` that callers read after a nil return. Minimal change surface.
+- **Selective commit staging**: The `project.pbxproj` has version/build number changes (31→4, 1.2→2) from Xcode that aren't from this session. Committing only the 7 actual code files to avoid mixing concerns.
+- **Count validation preserved despite split risk**: The system prompt tells Claude to split "salt and pepper" into separate items, but `parseBatchWithLLM` requires `llmResults.count == texts.count`. Kept this strict validation since it worked before and prevents data misalignment.
+
+### Learning
+
+- `parseBatchWithLLM` conflating "not configured" with "API call failed" as `nil` is a classic sentinel value problem. A proper `Result` type would be better, but the `lastLLMError` approach is pragmatic for the existing codebase.
+- Testing API connectivity from the CLI with the exact same request body/headers/tool schema the app uses is a fast way to isolate client-side vs server-side issues.
+
+### AI Tooling Observations
+
+Context compaction across sessions is the main challenge — this session started from a summary of the prior one. The summary captured all code changes and file locations accurately, enabling a smooth continuation. Testing API calls via curl from Claude Code is effective for network debugging without needing to build and deploy.
+
+### What's Next
+
+Build and test on device — the improved error messages should reveal the exact cause of the "AI parsing unavailable" issue. If it's `isEnabled == false` or missing Keychain key, the fix is just toggling/re-entering in Settings. Commit the current changes, then potentially archive and test.
+
+---
+
 ## Session 60 — March 1, 2026
 **Milestone**: M10.6.6 — User-Triggered AI Parsing Across All Views
 **Focus**: Add sparkle button + context menu AI Parse to all ingredient editing surfaces

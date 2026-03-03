@@ -29,31 +29,76 @@ class ClaudeIngredientParser: LLMIngredientParser {
 
     // MARK: - LLMIngredientParser
 
-    func parseBatch(_ lines: [String]) async throws -> [LLMParserResult] {
+    func parseBatch(_ lines: [String], categories: [String]) async throws -> [LLMParserResult] {
         guard !lines.isEmpty else { return [] }
-        guard isConfigured else { throw LLMParserError.invalidAPIKey }
+        guard isConfigured else {
+            #if DEBUG
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatch: API key is empty — throwing invalidAPIKey", category: "LLM")
+            }
+            #endif
+            throw LLMParserError.invalidAPIKey
+        }
 
-        let requestBody = buildRequestBody(lines: lines)
-        let request = buildURLRequest(body: requestBody)
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: sending \(lines.count) lines to \(model)", category: "LLM")
+        }
+        #endif
 
-        let data = try await executeWithRetry(request: request)
+        let requestBody = buildRequestBody(lines: lines, categories: categories)
+        let request = try buildURLRequest(body: requestBody)
+
+        let data: Data
+        do {
+            data = try await executeWithRetry(request: request)
+        } catch {
+            #if DEBUG
+            await MainActor.run {
+                DebugLogService.shared.log("parseBatch: request failed — \(error)", category: "LLM")
+            }
+            #endif
+            throw error
+        }
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: got \(data.count) bytes response", category: "LLM")
+        }
+        #endif
+
         let results = try parseResponse(data: data)
         try validateResults(results)
+
+        #if DEBUG
+        await MainActor.run {
+            DebugLogService.shared.log("parseBatch: parsed \(results.count) results OK", category: "LLM")
+        }
+        #endif
 
         return results
     }
 
     // MARK: - Request Building
 
-    private func buildRequestBody(lines: [String]) -> [String: Any] {
+    private func buildRequestBody(lines: [String], categories: [String]) -> [String: Any] {
         let numberedLines = lines.enumerated().map { "\($0.offset + 1). \($0.element)" }
         let userMessage = "Parse these ingredient lines:\n" + numberedLines.joined(separator: "\n")
+
+        var prompt = systemPrompt
+        if !categories.isEmpty {
+            let categoryList = categories.joined(separator: ", ")
+            prompt += "\n\nThe user has these grocery categories: [\(categoryList)]. " +
+                "For each ingredient, assign the most appropriate category from this exact list. " +
+                "You MUST only use category names that appear in this list — do not invent or modify category names. " +
+                "Use null if no category from the list fits well."
+        }
 
         return [
             "model": model,
             "max_tokens": 1024,
-            "system": systemPrompt,
-            "tools": [toolDefinition],
+            "system": prompt,
+            "tools": [categories.isEmpty ? toolDefinition : toolDefinitionWithCategory],
             "tool_choice": ["type": "tool", "name": "parse_ingredients"],
             "messages": [
                 ["role": "user", "content": userMessage]
@@ -61,14 +106,18 @@ class ClaudeIngredientParser: LLMIngredientParser {
         ]
     }
 
-    private func buildURLRequest(body: [String: Any]) -> URLRequest {
+    private func buildURLRequest(body: [String: Any]) throws -> URLRequest {
         var request = URLRequest(url: baseURL)
         request.httpMethod = "POST"
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "content-type")
         request.timeoutInterval = requestTimeout
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            throw LLMParserError.malformedResponse("Failed to serialize request: \(error.localizedDescription)")
+        }
         return request
     }
 
@@ -104,8 +153,6 @@ class ClaudeIngredientParser: LLMIngredientParser {
                 lastError = error
             } catch let error as URLError where error.code == .timedOut {
                 throw LLMParserError.timeout
-            } catch let error as LLMParserError {
-                throw error
             } catch {
                 throw LLMParserError.networkError(error)
             }
@@ -135,21 +182,33 @@ class ClaudeIngredientParser: LLMIngredientParser {
             throw LLMParserError.malformedResponse("Missing tool_use with parse_ingredients")
         }
 
-        return ingredients.compactMap { item -> LLMParserResult? in
-            guard let name = item["name"] as? String, !name.isEmpty else { return nil }
+        var droppedCount = 0
+        let results = ingredients.compactMap { item -> LLMParserResult? in
+            guard let name = item["name"] as? String, !name.isEmpty else {
+                droppedCount += 1
+                return nil
+            }
 
             let quantity = item["quantity"] as? Double
             let unit = item["unit"] as? String
             let notes = item["notes"] as? String
+            let category = item["category"] as? String
 
             return LLMParserResult(
                 name: name,
                 quantity: quantity,
                 unit: unit,
                 notes: notes,
-                confidence: 0.95
+                confidence: 0.95,
+                category: category
             )
         }
+
+        if droppedCount > 0 {
+            throw LLMParserError.validationFailed("Dropped \(droppedCount) items with missing/empty name")
+        }
+
+        return results
     }
 
     // MARK: - Validation
@@ -188,9 +247,14 @@ class ClaudeIngredientParser: LLMIngredientParser {
         - Count items (2 eggs) have quantity but null unit
         - Bare names (salt, pepper) have null quantity and null unit
         - "X to taste/to serve" → quantity null, notes: "to taste"/"to serve"
-        - Preserve the original ingredient name casing
+        - Use SINGULAR form for ingredient names (e.g., "avocado" not "avocados", \
+        "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
+        - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
-        - If a line contains multiple ingredients ("salt and pepper"), split into separate items
+        - CRITICAL: Return EXACTLY one result per numbered input line. Never split a line \
+        into multiple results. Lines like "2 teaspoons each chili powder and cumin" are ONE \
+        ingredient (name: "chili powder and cumin", quantity: 2, unit: "tsp"). \
+        Lines like "salt and pepper" are ONE ingredient (name: "salt and pepper").
         """
 
     private let toolDefinition: [String: Any] = [
@@ -208,6 +272,32 @@ class ClaudeIngredientParser: LLMIngredientParser {
                             "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
                             "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
                             "notes": ["type": ["string", "null"], "description": "Preparation notes or null"]
+                        ],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ] as [String: Any],
+            "required": ["ingredients"]
+        ] as [String: Any]
+    ]
+
+    /// Tool definition with category field — used when user's categories are available
+    private let toolDefinitionWithCategory: [String: Any] = [
+        "name": "parse_ingredients",
+        "description": "Parse ingredient lines into structured components with category assignment",
+        "input_schema": [
+            "type": "object",
+            "properties": [
+                "ingredients": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Ingredient name"],
+                            "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
+                            "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
+                            "notes": ["type": ["string", "null"], "description": "Preparation notes or null"],
+                            "category": ["type": ["string", "null"], "description": "Grocery category from the provided list, or null"]
                         ],
                         "required": ["name"]
                     ] as [String: Any]

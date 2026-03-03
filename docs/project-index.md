@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: March 1, 2026
+**Last Updated**: March 3, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M10.6 🔄 **ACTIVE** | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
-**Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration for Import Parsing
-**Next Priority**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
-**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Current Milestone**: M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 ✅) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
+**Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration (near complete, M10.6.5 docs remaining)
+**Next Priority**: M10.6.5 (docs) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Execution Order**: M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -51,11 +51,17 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
+### **March 3, 2026** - M10.6.10 ✅ COMPLETE — Ingredient Autocomplete + Three-State Match Icons
+- **Completed**: Autocomplete dropdowns in RecipeDetailView + RecipeImportPreviewView ingredient editing
+- **Three-state icons**: ready (green checkmark), needsCategory (amber dashed), needsTemplate (gray plus + NEW badge)
+- **Also completed in prior sessions**: M10.6.7 (household API key), M10.6.8 (shared match service), M10.6.9 (category validation + persistence fixes)
+- **Remaining**: M10.6.5 (documentation + final verification)
+
 ### **March 1, 2026** - M10.6 🔄 ACTIVE — Claude API Integration
 - **Started**: Optional Claude API for import ingredient parsing (fills ~7-8% semantic gap)
 - **Branch**: `feature/M10.6-claude-api-integration`
 - **PRD**: `docs/prds/active/m10.6-claude-api-integration.md` (audited — accurate against codebase)
-- **Scope**: 5 sub-phases (M10.6.1-M10.6.5), 8.5-12h, 7 new files, ~20 new tests, zero schema changes
+- **Scope**: 10 sub-phases (M10.6.1-M10.6.10), ~22h actual, 7+ new files, ~20 new tests
 - **Also**: Renamed all 12 project skills to `forager-*` prefix, CLAUDE.md audit/cleanup
 
 ### **February 28, 2026** - M10.8 ✅ COMPLETE — Inline Ingredient, Instruction & Metadata Editing

@@ -66,6 +66,9 @@ struct foragerApp: App {
     @StateObject private var ingredientTemplateService: IngredientTemplateService
     @StateObject private var ingredientParsingService: IngredientParsingService
 
+    // M10.6.8: Shared ingredient matching service
+    @StateObject private var ingredientMatchService: IngredientMatchService
+
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
@@ -96,12 +99,19 @@ struct foragerApp: App {
 
         _ingredientTemplateService = StateObject(wrappedValue: templateService)
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
+        _ingredientMatchService = StateObject(wrappedValue: IngredientMatchService(parsingService: parsingService, templateService: templateService))
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
 
         // M10.1: Import service for browser and URL import
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
         _importService = StateObject(wrappedValue: importSvc)
+
+        // M10.6.7: Wire household API key into LLM settings
+        // Reads currentHousehold.llmAPIKey live — CloudKit keeps it in sync
+        LLMSettingsService.shared.householdAPIKeyProvider = { [weak household] in
+            household?.currentHousehold?.llmAPIKey
+        }
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
@@ -171,6 +181,7 @@ struct foragerApp: App {
                     .environmentObject(weeklyListService)
                     .environmentObject(ingredientTemplateService)
                     .environmentObject(ingredientParsingService)
+                    .environmentObject(ingredientMatchService)
                     .environmentObject(importService)
                     .task {
                         // Reload household now that stores are loaded (isReady gate
