@@ -51,11 +51,27 @@ Index-based data passing between pipeline stages is fundamentally more robust th
 | `forager/Components/IngredientMatchRow.swift` | Red text for uncategorized/missing categories |
 | `docs/insights-log.md` | 3 new entries |
 
+### Continuation: Grocery Merge Fix + Add Ingredient Button
+
+Two more issues surfaced during testing:
+
+1. **Grocery list merge with completed items**: When adding recipe ingredients to the grocery list, `findExistingItem()` was matching completed (checked-off) items. If the user had previously added "flour" and checked it off, adding a new recipe with flour would silently merge into the completed item — user saw no visible change. Fix: added `guard !item.isCompleted` to skip completed items, ensuring fresh entries appear in the active list.
+
+2. **Missing "Add Ingredient" button**: After M10.8 removed the Edit Recipe button in favor of inline editing, there was no way to ADD new ingredients to an existing recipe from the detail view. Added inline `+ Add Ingredient` button below the ingredient list (visible at 1x scale). Tapping reveals a focused text field; on submit, the ingredient is parsed, template-linked, and saved via `RecipeService.addIngredient()`.
+
+**Additional files changed**:
+
+| File | Change |
+|------|--------|
+| `forager/Views/Grocery/AddIngredientsToListView.swift` | Skip completed items in `findExistingItem()` |
+| `forager/Views/Recipes/RecipeListView.swift` | Add inline ingredient field + `commitNewIngredient()` |
+| `docs/insights-log.md` | 1 new entry (Grocery/MergeLogic) |
+
 ### Status
 
 - **Build**: Succeeds
 - **Tests**: 363 passing, 0 failures
-- **Bugs fixed**: 2 (AI category validation, category persistence)
+- **Bugs fixed**: 4 (AI category validation, category persistence, grocery merge, add ingredient)
 
 ---
 

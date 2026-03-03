@@ -554,6 +554,9 @@ struct AddIngredientsToListView: View {
     private func findExistingItem(named targetName: String, in items: [GroceryListItem]) -> GroceryListItem? {
         let normalizedTarget = templateService.normalize(name: targetName)
         return items.first { item in
+            // M10.6.9: Only merge with uncompleted items — completed items are "done"
+            // and adding the same ingredient again should create a fresh entry
+            guard !item.isCompleted else { return false }
             guard let itemName = item.name else { return false }
             let cleanItemName = IngredientParsingService.extractCleanIngredientName(from: itemName)
             let normalizedItem = templateService.normalize(name: cleanItemName)

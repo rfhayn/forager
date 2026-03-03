@@ -983,6 +983,11 @@ struct RecipeDetailView: View {
     @State private var isLLMBatchParsing = false
     @State private var llmToastMessage: String?
 
+    // M10.6.9: Inline add ingredient state
+    @State private var isAddingIngredient = false
+    @State private var newIngredientText = ""
+    @FocusState private var newIngredientFocused: Bool
+
     // M10.8: Inline instruction editing state
     @State private var editingStepIndex: Int?
     @State private var editedSteps: [Int: String] = [:]
@@ -1490,6 +1495,22 @@ struct RecipeDetailView: View {
                 }
             }
 
+            // M10.6.9: Inline add ingredient (only at 1x scale)
+            if scaleFactor == 1.0 {
+                if isAddingIngredient {
+                    addIngredientField
+                } else {
+                    Button {
+                        isAddingIngredient = true
+                    } label: {
+                        Label("Add Ingredient", systemImage: "plus")
+                            .font(ForagerTheme.bodyFont)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+                    }
+                    .padding(.vertical, ForagerTheme.Spacing.xs)
+                }
+            }
+
             // Full-width CTA button
             if hasIngredients {
                 addToListButton
@@ -1729,6 +1750,65 @@ struct RecipeDetailView: View {
 
         // Update match info
         reMatchIngredient(id: id)
+    }
+
+    // MARK: - M10.6.9: Add Ingredient Inline
+
+    private var addIngredientField: some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            Image(systemName: "plus.circle.fill")
+                .foregroundStyle(ForagerTheme.accentPrimary)
+                .font(.system(size: 14))
+
+            TextField("e.g. 2 cups flour", text: $newIngredientText)
+                .font(ForagerTheme.bodyFont)
+                .autocorrectionDisabled()
+                .submitLabel(.done)
+                .focused($newIngredientFocused)
+                .onSubmit { commitNewIngredient() }
+                .onAppear { newIngredientFocused = true }
+        }
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                .stroke(ForagerTheme.accentPrimary, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+    }
+
+    private func commitNewIngredient() {
+        let trimmed = newIngredientText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 2 else {
+            isAddingIngredient = false
+            newIngredientText = ""
+            return
+        }
+
+        let (parsed, structured) = parsingService.parseUnified(text: trimmed, source: .recipeIngredient)
+        let template = templateService.findOrCreateTemplate(name: parsed.displayName)
+
+        if let ingredient = recipeServiceM75.addIngredient(
+            to: recipe,
+            name: trimmed,
+            numericValue: structured.numericValue ?? 0,
+            standardUnit: structured.standardUnit,
+            displayText: structured.displayText,
+            isParseable: structured.isParseable,
+            parseConfidence: structured.parseConfidence,
+            template: template
+        ) {
+            // Update match for the new ingredient
+            if let id = ingredient.id {
+                if let result = matchService.matchIngredient(text: trimmed) {
+                    ingredientMatches[id] = result
+                }
+            }
+        }
+
+        newIngredientText = ""
+        isAddingIngredient = false
     }
 
     // MARK: - M10.8: Formatted Ingredient Text
