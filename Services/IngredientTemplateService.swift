@@ -413,6 +413,9 @@ class IngredientTemplateService: ObservableObject {
             template.name = normalizedName
             template.canonicalName = canonical
             template.category = category
+            // M10.6.12: Fallback path must set householdKey — without it, templates
+            // created during import are invisible in household-scoped IngredientsView
+            template.householdKey = resolvedHouseholdKey
             template.usageCount = 1
             template.dateCreated = Date()
             template.updatedAt = Date()

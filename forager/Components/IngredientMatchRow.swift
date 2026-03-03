@@ -65,8 +65,9 @@ struct IngredientMatchRow: View {
                 } else if let status = matchResult?.status {
                     switch status {
                     case .ready:
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        // M10.6.12: No icon for ready items — only show indicators that need attention
+                        Color.clear
+                            .frame(width: 14, height: 14)
                     case .needsCategory:
                         Image(systemName: "circle.dashed")
                             .foregroundStyle(ForagerTheme.statusWarningFG)
@@ -75,8 +76,8 @@ struct IngredientMatchRow: View {
                             .foregroundStyle(ForagerTheme.textTertiary)
                     }
                 } else {
-                    Image(systemName: "circle")
-                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Color.clear
+                        .frame(width: 14, height: 14)
                 }
             }
             .font(.system(size: 14))
@@ -234,24 +235,26 @@ struct IngredientMatchSummaryView: View {
         self.needsTemplate = needsTemplate
     }
 
+    // M10.6.12: Only show items needing attention — hide entirely when all ready
+    private var hasItemsNeedingAttention: Bool {
+        needsCategory > 0 || needsTemplate > 0
+    }
+
     var body: some View {
-        HStack(spacing: ForagerTheme.Spacing.md) {
-            if ready > 0 {
-                Label("\(ready) ready", systemImage: "checkmark.circle.fill")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusSuccessFG)
+        if hasItemsNeedingAttention {
+            HStack(spacing: ForagerTheme.Spacing.md) {
+                if needsCategory > 0 {
+                    Label("\(needsCategory) need category", systemImage: "circle.dashed")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.statusWarningFG)
+                }
+                if needsTemplate > 0 {
+                    Label("\(needsTemplate) new", systemImage: "plus.circle")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
             }
-            if needsCategory > 0 {
-                Label("\(needsCategory) need category", systemImage: "circle.dashed")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusWarningFG)
-            }
-            if needsTemplate > 0 {
-                Label("\(needsTemplate) new", systemImage: "plus.circle")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
+            .padding(.bottom, ForagerTheme.Spacing.xs)
         }
-        .padding(.bottom, ForagerTheme.Spacing.xs)
     }
 }
