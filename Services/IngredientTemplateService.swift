@@ -362,10 +362,12 @@ class IngredientTemplateService: ObservableObject {
     func findOrCreateTemplate(name: String, category: String? = nil) -> IngredientTemplate {
         // M4.3.5: Normalize ingredient name before lookup/creation
         let normalizedName = normalize(name: name)
-        
+
+        Task { @MainActor in DebugLogService.shared.log("findOrCreate: name=\(normalizedName), resolvedHouseholdKey=\(self.resolvedHouseholdKey ?? "nil")", category: "Template") }
+
         // M7.2.3 Phase 3.3: Use HouseholdIngredientTemplateRepository for semantic uniqueness
         let repository = HouseholdIngredientTemplateRepository(context: context)
-        
+
         do {
             // Use repository's findOrCreate (handles semantic uniqueness + category/staple)
             // M10.6.11: Pass household key so new templates are scoped correctly
@@ -375,24 +377,32 @@ class IngredientTemplateService: ObservableObject {
                 isStaple: false,
                 householdKey: resolvedHouseholdKey
             )
-            
+
+            Task { @MainActor in DebugLogService.shared.log("repository returned: existing=\(template.dateCreated != nil && template.usageCount > 0 ? "yes" : "new"), template.householdKey=\(template.householdKey ?? "nil")", category: "Template") }
+
+            // M10.6.13: Ensure householdKey is correct regardless of found vs created path
+            if let key = resolvedHouseholdKey, template.householdKey != key {
+                template.householdKey = key
+            }
+
             // Increment usage count
             template.usageCount += 1
             template.updatedAt = Date()
-            
+
             // Ensure UUID is set
             if template.id == nil {
                 template.id = UUID()
             }
-            
+
             // Save changes
             if context.hasChanges {
                 try context.save()
             }
-            
+
             return template
-            
+
         } catch {
+            Task { @MainActor in DebugLogService.shared.log("catch fallback: creating manual template, householdKey=\(self.resolvedHouseholdKey ?? "nil")", category: "Template") }
             #if DEBUG
             print("❌ M7.2.3 Phase 3.3: Error creating template: \(error)")
             #endif

@@ -54,10 +54,9 @@ struct SettingsView: View {
             // M10.6: AI Integration (optional Claude API)
             aiImportSection
 
-            // M7.1.2: Developer Tools (hidden in production)
-            #if DEBUG
+            // M7.1.2: Developer Tools
+            // M10.6.13: Ungated for Release — debug toggle + log viewer always available
             developerToolsSection
-            #endif
 
             // M7.0.2: About & Privacy
             aboutSection
@@ -420,7 +419,7 @@ struct SettingsView: View {
     private var developerToolsSection: some View {
         Section {
             // M10.6.5: Debug log toggle + viewer
-            #if DEBUG
+            // M10.6.13: Ungated for Release builds
             Toggle("Debug Mode", isOn: Binding(
                 get: { DebugLogService.shared.isEnabled },
                 set: { DebugLogService.shared.isEnabled = $0 }
@@ -443,7 +442,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            #endif
 
             // CloudKit Sync Status link
             // Opens test interface for monitoring CloudKit sync events

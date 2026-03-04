@@ -30,6 +30,9 @@ struct RecipeImportSheet: View {
     @ObservedObject var importService: RecipeImportService
 
     let mode: ImportMode
+    // M10.6.13: Callback invoked when save completes — used by RecipeBrowserView
+    // to track save success before the sheet dismisses
+    var onSaveComplete: (() -> Void)?
 
     @State private var urlText = ""
     @State private var showingDuplicateSheet = false
@@ -40,9 +43,10 @@ struct RecipeImportSheet: View {
     @State private var pendingCategoryAssignments: [Int: String] = [:]
     @FocusState private var urlFieldFocused: Bool
 
-    init(importService: RecipeImportService, mode: ImportMode = .url) {
+    init(importService: RecipeImportService, mode: ImportMode = .url, onSaveComplete: (() -> Void)? = nil) {
         self.importService = importService
         self.mode = mode
+        self.onSaveComplete = onSaveComplete
     }
 
     var body: some View {
@@ -417,6 +421,8 @@ struct RecipeImportSheet: View {
 
     /// Reset import state and dismiss the sheet
     private func dismissAfterSave() {
+        // M10.6.13: Notify caller (e.g. RecipeBrowserView) before state reset
+        onSaveComplete?()
         importService.cancelImport()
         dismiss()
     }

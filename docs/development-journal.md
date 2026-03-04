@@ -6,6 +6,57 @@
 
 ---
 
+## Session 67 — March 3, 2026
+**Milestone**: M10.6.13 — Release Logging + Import Pipeline Root Cause Fixes
+**Focus**: Ungate debug logging for Release builds, fix template householdKey repair + browser dismiss race
+**Branch**: `feature/M10.6.13-release-logging-import-fixes`
+
+### What Happened
+
+Build 13 (M10.6.12) went to TestFlight but the three persistent bugs — browser not auto-dismissing, category assignments not persisting, and only 3 of ~20 templates visible — couldn't be reproduced in the simulator because they require a household context. This session took two approaches: (1) ungate `DebugLogService` and its UI for Release builds so device logs can be captured, and (2) trace the import pipeline in code to find root causes.
+
+Found two distinct root causes. First, `HouseholdIngredientTemplateRepository.findByCanonicalName()` queries across all scopes (no householdKey filter) but never updates householdKey on found templates — so templates created before M10.6.11 retain `householdKey=nil` forever, invisible in household-scoped `IngredientsView`. Second, the browser dismiss relied on `onChange(of: importService.state)` catching `.saved`, but `dismissAfterSave()` resets state to `.idle` in the same MainActor turn — SwiftUI batches both changes and only fires onChange for the final `.idle` state.
+
+### Key Decisions
+
+- **Ungate DebugLogService entirely rather than adding os_log**: The service already has a 500-entry cap and a toggle guard (`isEnabled`). It's safer and more useful to let device testers see the in-app log viewer than to ask them to connect to Xcode console. The alternative — `os_log` with subsystem filtering — requires Mac access and can't be shared via copy-paste.
+
+- **Belt-and-suspenders householdKey repair in both repository AND service**: The repository fix (updating householdKey on found templates) is the primary fix. The service-layer check (`if template.householdKey != key`) is redundant but cheap — it catches any future code path that bypasses the repository. Given that this is the third session (M10.6.11, M10.6.12, M10.6.13) fixing householdKey bugs, defense in depth is warranted.
+
+- **Callback instead of onChange for browser dismiss**: The `onSaveComplete` closure is invoked synchronously before `cancelImport()` resets state, guaranteeing the browser knows a save occurred. This is more reliable than any state-watching approach because it's not subject to SwiftUI's change coalescing.
+
+### Learning
+
+- **SwiftUI onChange coalescing**: When two `@Published` state changes happen in the same MainActor turn (e.g., `.saved` then `.idle`), `onChange` may only fire for the final value. This is a fundamental SwiftUI behavior, not a timing bug — it's how Combine/observation batching works. Callbacks or completion handlers are the correct pattern when you need to observe transient states.
+
+- **`@MainActor` isolation in non-isolated contexts**: `DebugLogService.shared.log()` can't be called synchronously from code that isn't `@MainActor`. The `Task { @MainActor in }` wrapper is the standard fire-and-forget pattern. This affected `HouseholdIngredientTemplateRepository`, `IngredientTemplateService`, and `IngredientTemplate+Extensions` — none are `@MainActor` annotated.
+
+### AI Tooling Observations
+
+The detailed plan from plan mode was accurate and implementable with no deviations. The plan correctly identified the transient-state race condition in the browser dismiss flow and proposed the callback solution. Build failed twice due to `@MainActor` isolation errors that weren't anticipated in the plan — these were straightforward to fix with `Task` wrappers but highlight that concurrency annotations need to be checked when adding cross-service logging.
+
+### Files Changed (10 files, +66/-35 lines)
+
+| File | Change |
+|------|--------|
+| `Services/DebugLogService.swift` | Removed `#if DEBUG` wrapper |
+| `forager/Debug/DebugLogView.swift` | Removed `#if DEBUG` wrapper |
+| `forager/Views/Settings/SettingsView.swift` | Ungated developer tools section + debug toggle/log viewer |
+| `Services/Import/RecipeImportService.swift` | Added 4 log calls to save pipeline |
+| `Services/IngredientTemplateService.swift` | Added 3 log calls + Fix B (belt-and-suspenders householdKey) |
+| `Services/Persistence/HouseholdIngredientTemplateRepository.swift` | Added 4 log calls + Fix A (update householdKey on found templates) |
+| `Models/IngredientTemplate+Extensions.swift` | Added log call in awakeFromInsert |
+| `forager/Views/Import/RecipeImportSheet.swift` | Added `onSaveComplete` callback |
+| `forager/Views/Import/RecipeBrowserView.swift` | Wired callback, removed broken onChange |
+| `docs/insights-log.md` | 3 new insights (householdKey, state race, concurrency) |
+
+### Status
+
+- **Build**: Succeeds (0 errors, 0 warnings)
+- **Insights logged**: 3 (CoreData/HouseholdKey, SwiftUI/StateRace, Swift/Concurrency)
+
+---
+
 ## Session 66 — March 3, 2026
 **Milestone**: M10.6.12 — Recipe Import Bug Fixes
 **Focus**: Fix 6 user-reported bugs in recipe import flow discovered during device testing

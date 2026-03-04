@@ -3,13 +3,11 @@
 //  forager
 //
 //  M10.6.5: In-memory debug log for testing AI parsing flow.
-//  Gated behind #if DEBUG — compiles out of Release builds entirely.
+//  M10.6.13: Ungated for Release builds — safe with 500-entry cap + toggle guard.
 //  Toggle on in Settings > Developer Tools, copy logs to share.
 //
 
 import Foundation
-
-#if DEBUG
 
 @MainActor
 class DebugLogService: ObservableObject {
@@ -51,5 +49,3 @@ class DebugLogService: ObservableObject {
         entries.joined(separator: "\n")
     }
 }
-
-#endif

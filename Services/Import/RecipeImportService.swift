@@ -149,6 +149,9 @@ class RecipeImportService: ObservableObject {
     func saveImport(from draft: ImportDraftRecipe, categoryAssignments: [Int: String] = [:]) async -> ImportSaveResult? {
         state = .saving
 
+        let resolvedHouseholdKey = householdKeyProvider?()
+        DebugLogService.shared.log("saveImport: householdKey=\(resolvedHouseholdKey ?? "nil"), ingredients=\(draft.ingredients.value.count)", category: "Import")
+
         // Child context for atomic save — template service saves push to parent in memory
         let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
         childContext.parent = viewContext
@@ -156,7 +159,7 @@ class RecipeImportService: ObservableObject {
         // Create services scoped to child context
         let childTemplateService = IngredientTemplateService(context: childContext)
         // M10.6.11: Propagate household key so templates are visible in IngredientsView
-        childTemplateService.householdKey = householdKeyProvider?()
+        childTemplateService.householdKey = resolvedHouseholdKey
         let childParsingService = IngredientParsingService(
             context: childContext,
             templateService: childTemplateService
@@ -187,8 +190,10 @@ class RecipeImportService: ObservableObject {
             templateService: childTemplateService,
             categoryAssignments: categoryAssignments
         ) {
+            DebugLogService.shared.log("tryLLMParsing: \(llmResult.count) results, falling back=no", category: "Import")
             createdIngredients = llmResult
         } else {
+            DebugLogService.shared.log("tryLLMParsing: falling back=yes, using local pipeline", category: "Import")
             // Fallback: existing local pipeline (unchanged)
             createdIngredients = childParsingService.parseAndConnectIngredients(
                 for: recipe,
@@ -374,7 +379,9 @@ class RecipeImportService: ObservableObject {
     ) -> ImportSaveResult? {
         do {
             try childContext.save()
+            DebugLogService.shared.log("persistAndFinish: child save=ok", category: "Import")
             try viewContext.save()
+            DebugLogService.shared.log("persistAndFinish: parent save=ok", category: "Import")
 
             let uncategorizedIDs = createdIngredients.compactMap { ingredient -> NSManagedObjectID? in
                 guard let template = ingredient.ingredientTemplate else { return nil }
@@ -389,6 +396,7 @@ class RecipeImportService: ObservableObject {
             state = .saved(objectID)
             return ImportSaveResult(recipeObjectID: objectID, uncategorizedTemplateIDs: uniqueIDs)
         } catch {
+            DebugLogService.shared.log("persistAndFinish: FAILED — \(error.localizedDescription)", category: "Import")
             viewContext.rollback()
             state = .failed(.saveError(error.localizedDescription))
             return nil
