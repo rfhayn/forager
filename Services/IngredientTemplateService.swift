@@ -285,6 +285,18 @@ class IngredientTemplateService: ObservableObject {
                 break
             }
         }
+        // M10.6.14: Strip trailing unit words (belt-and-suspenders for LLM artifacts like "garlic clove")
+        let words = normalized.split(separator: " ").map(String.init)
+        if words.count >= 2 {
+            let unitSuffixWords: Set<String> = [
+                "clove", "cloves", "slice", "slices", "piece", "pieces",
+                "sprig", "sprigs", "stick", "sticks", "stalk", "stalks",
+                "bunch", "bunches", "wedge", "wedges"
+            ]
+            if let lastWord = words.last?.lowercased(), unitSuffixWords.contains(lastWord) {
+                normalized = words.dropLast().joined(separator: " ")
+            }
+        }
         normalized = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Phase 1: Case normalization

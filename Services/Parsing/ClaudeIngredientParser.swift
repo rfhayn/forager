@@ -249,6 +249,14 @@ class ClaudeIngredientParser: LLMIngredientParser {
         - "X to taste/to serve" → quantity null, notes: "to taste"/"to serve"
         - Use SINGULAR form for ingredient names (e.g., "avocado" not "avocados", \
         "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
+        - The ingredient name must be ONLY the food item — never include count/unit \
+        words like "clove", "slice", "piece", "wedge", "head", "stalk", "sprig", \
+        "bunch", "ear" in the name. Examples: "2 cloves garlic" → name: "garlic" \
+        (not "garlic clove"), "3 stalks celery" → name: "celery" (not "celery stalk"), \
+        "1 head cauliflower" → name: "cauliflower" (not "cauliflower head")
+        - For "juice of" or "zest of" patterns, the ingredient is the fruit: \
+        "juice of 2 limes" → name: "lime", notes: "juice of". \
+        "zest of 1 lemon" → name: "lemon", notes: "zest of"
         - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
         - CRITICAL: Return EXACTLY one result per numbered input line. Never split a line \

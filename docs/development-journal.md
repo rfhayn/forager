@@ -6,6 +6,46 @@
 
 ---
 
+## Session 68 — March 4, 2026
+**Milestone**: M10.6.14 — Fix Category Display + LLM Template Naming
+**Focus**: Fix recipe detail showing "Choose Category" on categorized ingredients, improve LLM ingredient name quality
+**Branch**: `feature/M10.6.14-category-display-llm-naming`
+
+### What Happened
+
+Build 14 (M10.6.13) device testing confirmed the householdKey fix worked — all 20 templates visible with correct categories in Ingredients list. But the recipe detail view showed "Choose Category" on 11/20 ingredients despite categories being set. Screenshot analysis revealed two issues: (1) `EditRecipeView` re-parses ingredients instead of using the existing template relationship, and (2) the LLM produces template names like "garlic clove" and "lime juice" that don't match what the local parser produces on re-parse.
+
+### Key Decisions
+
+- **Fallback to template category rather than fixing the re-parse matching**: The re-parse architecture exists for a reason (ingredients can be edited after import). Rather than trying to make the re-parse always match LLM-named templates, we nil-coalesce to `ingredient.template?.category` as a fallback. This is a one-line fix that preserves both code paths.
+
+- **LLM prompt + normalization suffix stripping (defense in depth)**: The LLM prompt now explicitly forbids unit words in ingredient names and specifies "juice of"/"zest of" handling. The suffix stripping in normalization catches any remaining artifacts. Neither fix alone is sufficient — the LLM can ignore instructions, and normalization can't handle all reinterpretation patterns.
+
+### Learning
+
+- **Re-parse vs relationship**: `EditRecipeView` computes ingredient matches by re-parsing raw text through `IngredientMatchService`, which searches templates by the re-parsed name. This is independent of the `ingredient.ingredientTemplate` Core Data relationship set during import. When the LLM and local parser disagree on names, the relationship is correct but the re-parse match fails. This is the 4th session (M10.6.11-14) where the gap between "data is correct in Core Data" and "view doesn't show it" has been the bug.
+
+- **LLM prompt/normalizer interface contract**: The LLM prompt and normalization pipeline must agree on what a "clean ingredient name" looks like. The prompt said "singular" but didn't say "no unit words." The normalizer stripped unit prefixes but not suffixes. Both sides had blind spots that compounded.
+
+### AI Tooling Observations
+
+Parallel explore agents traced both issues efficiently — one traced the normalization pipeline for "garlic clove" and "lime juice", the other traced the category display chain from EditRecipeView → IngredientMatchService → IngredientMatchRow. The screenshot analysis correctly identified the pattern (simple names matched, complex ones didn't) which pointed to the re-parse vs LLM name mismatch. Plan was straightforward once root causes were clear.
+
+### Files Changed (4 files)
+
+| File | Change |
+|------|--------|
+| `forager/Views/Recipes/EditRecipeView.swift` | Fix A: category fallback to template |
+| `Services/Parsing/ClaudeIngredientParser.swift` | Fix B: LLM prompt — exclude unit words, handle juice/zest patterns |
+| `Services/IngredientTemplateService.swift` | Fix C: suffix unit-word stripping in normalization |
+| `docs/prds/active/m10.6.14-category-display-llm-naming.md` | PRD for this milestone |
+
+### What's Next
+
+Deploy build 15 to TestFlight, verify on device that: (1) all ingredients show green category dots in recipe detail, (2) new imports produce clean template names like "garlic" not "garlic clove."
+
+---
+
 ## Session 67 — March 3, 2026
 **Milestone**: M10.6.13 — Release Logging + Import Pipeline Root Cause Fixes
 **Focus**: Ungate debug logging for Release builds, fix template householdKey repair + browser dismiss race
