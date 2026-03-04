@@ -93,7 +93,7 @@ struct EditRecipeView: View {
     private var realCategories: [Category] {
         let key = householdService.currentHouseholdKey
         let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
-        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+        return scoped
     }
 
     init(recipe: Recipe, context: NSManagedObjectContext) {
@@ -225,7 +225,7 @@ struct EditRecipeView: View {
             )) {
                 if let ingredientId = categoryPickerIngredientId {
                     categoryPickerSheet(ingredientId: ingredientId)
-                        .presentationDetents([.medium])
+                        .presentationDetents([.medium, .large])
                 }
             }
             .onAppear {
@@ -650,12 +650,18 @@ struct EditRecipeView: View {
     }
 
     // M10.6.8: Re-match using shared service when exiting edit mode
+    // M10.6.15: Preserve previous template category if re-match doesn't find one
     private func commitIngredientEdit(for ingredient: IngredientInput) {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
         let text = formData.ingredients[index].fullText
+        let previousCategory = formData.ingredients[index].template?.category
 
         if let result = matchService.matchIngredient(text: text) {
-            ingredientMatches[ingredient.id] = result
+            // Carry over old template's category if re-match has no category
+            let effectiveResult = result.categoryName == nil && previousCategory != nil
+                ? result.withCategory(previousCategory!)
+                : result
+            ingredientMatches[ingredient.id] = effectiveResult
             let existingTemplate = templateService.searchTemplates(query: result.parsedName, limit: 1)
                 .first(where: { $0.name?.lowercased() == result.parsedName.lowercased() })
             formData.ingredients[index].template = existingTemplate

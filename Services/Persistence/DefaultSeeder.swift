@@ -63,7 +63,7 @@ final class DefaultSeeder {
         ("Deli & Meat", "#F44336", 1, false),                // Red - Back perimeter
         ("Dairy & Fridge", "#2196F3", 2, false),            // Blue - Back wall
         ("Bread & Frozen", "#FF9800", 3, false),            // Orange - Side aisles
-        ("Boxed & Canned", "#795548", 4, false),            // Brown - Center aisles
+        ("Pantry", "#795548", 4, false),                      // Brown - Center aisles
         ("Snacks, Drinks, & Other", "#9C27B0", 5, false),   // Purple - Checkout area
         ("Uncategorized", "#9E9E9E", 999, true)             // PROTECTED: Gray - Default for unassigned
     ]
@@ -132,9 +132,18 @@ final class DefaultSeeder {
         print("🏷️ M7.2.3 Phase 3.1: Seeding default categories via repository...")
         #endif
         
+        // M10.6.15: Rename "Boxed & Canned" → "Pantry" for existing users
+        let renameRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        renameRequest.predicate = NSPredicate(format: "name == %@", "Boxed & Canned")
+        if let oldCategories = try? context.fetch(renameRequest) {
+            for cat in oldCategories {
+                cat.name = "Pantry"
+            }
+        }
+
         // Create repository instance
         let repository = HouseholdCategoryRepository(context: context)
-        
+
         var createdCount = 0
         var existingCount = 0
         

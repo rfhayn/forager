@@ -91,7 +91,11 @@ class ClaudeIngredientParser: LLMIngredientParser {
             prompt += "\n\nThe user has these grocery categories: [\(categoryList)]. " +
                 "For each ingredient, assign the most appropriate category from this exact list. " +
                 "You MUST only use category names that appear in this list — do not invent or modify category names. " +
-                "Use null if no category from the list fits well."
+                "Use null if no category from the list fits well.\n\n" +
+                "Common category guidance: cooking oils, vinegars, soy sauce, hot sauce, honey, sugar, " +
+                "flour, cornstarch, broth/stock, and canned goods are typically \"Pantry\" (or equivalent). " +
+                "Spices and dried herbs are typically \"Spices & Seasonings\" (or equivalent). " +
+                "Salt and pepper are \"Spices & Seasonings\". Do not leave common items uncategorized."
         }
 
         return [
@@ -257,6 +261,10 @@ class ClaudeIngredientParser: LLMIngredientParser {
         - For "juice of" or "zest of" patterns, the ingredient is the fruit: \
         "juice of 2 limes" → name: "lime", notes: "juice of". \
         "zest of 1 lemon" → name: "lemon", notes: "zest of"
+        - Strip any parenthetical qualifiers from the ingredient name and move them to notes. \
+        "shrimp (peeled and deveined, tails removed)" → name: "shrimp", notes: "peeled and deveined, tails removed". \
+        "Greek yogurt or sour cream (if needed, to thin sauce)" → name: "greek yogurt or sour cream", \
+        notes: "if needed, to thin sauce"
         - Fix obvious spelling errors in ingredient names
         - Do NOT convert between unit systems (keep grams as grams, cups as cups)
         - CRITICAL: Return EXACTLY one result per numbered input line. Never split a line \

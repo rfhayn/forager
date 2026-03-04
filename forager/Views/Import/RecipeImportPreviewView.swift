@@ -63,7 +63,7 @@ struct RecipeImportPreviewView: View {
     private var realCategories: [Category] {
         let key = householdService.currentHouseholdKey
         let scoped = allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
-        return scoped.filter { $0.displayName.lowercased() != "uncategorized" }
+        return scoped
     }
 
     // M10.6.10: Custom init to create autocomplete service
@@ -488,10 +488,9 @@ struct RecipeImportPreviewView: View {
             ingredientMatches[index] = result
             if let category = result.categoryName {
                 categoryAssignments[index] = category
-            } else {
-                // M10.6.8: Clear stale category when edited ingredient has no matching template
-                categoryAssignments.removeValue(forKey: index)
             }
+            // M10.6.15: If re-match has no category, keep existing assignment
+            // (user may have set it explicitly via picker)
         }
     }
 

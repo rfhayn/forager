@@ -299,6 +299,17 @@ class IngredientTemplateService: ObservableObject {
         }
         normalized = normalized.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        // M10.6.15 Phase 0c: Strip parenthetical qualifiers — "(peeled and deveined)" etc.
+        normalized = normalized.replacingOccurrences(
+            of: #"\s*\([^)]*\)\s*"#, with: " ", options: .regularExpression
+        ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // M10.6.15 Phase 0d: Strip trailing single-character words (artifacts like "avocado s")
+        let trimWords = normalized.split(separator: " ").map(String.init)
+        if trimWords.count >= 2, let last = trimWords.last, last.count == 1, last.lowercased() != "a" {
+            normalized = trimWords.dropLast().joined(separator: " ")
+        }
+
         // Phase 1: Case normalization
         normalized = normalizeCase(normalized)
         

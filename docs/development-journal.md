@@ -6,6 +6,47 @@
 
 ---
 
+## Session 69 — March 4, 2026
+**Milestone**: M10.6.15 — Import Category Preservation + Polish
+**Focus**: Fix categories lost during import, normalization polish, rename "Boxed & Canned" → "Pantry"
+**Branch**: `feature/M10.6.15-import-category-preservation`
+
+### What Happened
+
+Build 15 device testing revealed the critical bug: categories assigned during import preview were silently removed when the user edited an ingredient's text. The root cause was `reMatchIngredient()` calling `categoryAssignments.removeValue(forKey: index)` on nil category — treating absence-of-data from re-parse as "user wants no category." Fixed this in both RecipeImportPreviewView and EditRecipeView. Also shipped 6 additional polish fixes: parenthetical stripping in template names, single-char artifact removal ("avocado s"), category picker improvements, LLM pantry categorization guidance, and the "Boxed & Canned" → "Pantry" rename with migration.
+
+### Key Decisions
+
+- **Positive-signal-only category updates**: Rather than trying to make re-match always return a category, the fix only updates `categoryAssignments` when re-match finds a positive category, and never removes existing assignments. This respects user intent — if they explicitly chose a category, automated re-parsing shouldn't override that choice. This is a design principle worth codifying.
+
+- **Migration placement before creation loop**: The "Boxed & Canned" → "Pantry" rename runs before the default category creation loop in DefaultSeeder. This way, if a user already has "Boxed & Canned", it gets renamed first, and the loop's `findOrCreate("Pantry")` finds the renamed category instead of creating a duplicate.
+
+- **Phase ordering in normalization**: Parenthetical stripping (Phase 0c) placed before case normalization (Phase 1) and pluralization (Phase 2) because parenthetical content can confuse plural detection patterns.
+
+### Learning
+
+- **User-explicit vs system-inferred state**: This is the 5th session (M10.6.9-15) dealing with category persistence. The pattern: system-inferred categories (from parsing/matching) are fragile, user-explicit categories (from picker) are authoritative. Code should distinguish between these — never overwrite explicit with inferred absence.
+
+- **Normalization is a pipeline, not a function**: Each phase has prerequisites about what earlier phases have cleaned. Adding Phase 0c/0d required understanding the full pipeline order to place them correctly.
+
+### AI Tooling Observations
+
+The plan was comprehensive and pre-validated — all 7 fixes with exact file locations, line numbers, and code snippets. Implementation was mechanical: read files, apply edits, build, done. The plan even caught the `withCategory` dependency needed for Fix 2. This is the ideal AI workflow: thorough planning in one session, fast execution in the next.
+
+### Files Changed (7 files)
+
+| File | Change |
+|------|--------|
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Fix 1: stop removing categories on nil re-match; Fix 3b: show "Uncategorized" |
+| `forager/Views/Recipes/EditRecipeView.swift` | Fix 2: preserve template category via `withCategory()`; Fix 3a: picker detent; Fix 3b: show "Uncategorized" |
+| `Services/IngredientTemplateService.swift` | Fix 4: Phase 0c parenthetical stripping; Fix 6: Phase 0d single-char artifact removal |
+| `Services/Parsing/ClaudeIngredientParser.swift` | Fix 4: parenthetical prompt rule; Fix 5: pantry categorization guidance |
+| `Services/Persistence/DefaultSeeder.swift` | Fix 7a: rename default; Fix 7c: migration |
+| `Services/Persistence/SampleDataSeeder.swift` | Fix 7b: rename all 44 occurrences |
+| `docs/prds/active/m10.6.15-import-category-preservation.md` | New PRD |
+
+---
+
 ## Session 68 — March 4, 2026
 **Milestone**: M10.6.14 — Fix Category Display + LLM Template Naming
 **Focus**: Fix recipe detail showing "Choose Category" on categorized ingredients, improve LLM ingredient name quality

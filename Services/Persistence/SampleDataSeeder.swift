@@ -115,8 +115,8 @@ final class SampleDataSeeder {
             ("butter", "Dairy & Fridge"),
             ("eggs", "Dairy & Fridge"),
             ("milk", "Dairy & Fridge"),
-            ("salt", "Boxed & Canned"),
-            ("olive oil", "Boxed & Canned")
+            ("salt", "Pantry"),
+            ("olive oil", "Pantry")
         ]
 
         var templates: [String: IngredientTemplate] = [:]
@@ -162,11 +162,11 @@ final class SampleDataSeeder {
             """,
             ingredients: [
                 ("1 lb chicken breast", 1.0, "lb", "chicken breast", "Deli & Meat"),
-                ("3 tbsp soy sauce", 3.0, "tbsp", "soy sauce", "Boxed & Canned"),
+                ("3 tbsp soy sauce", 3.0, "tbsp", "soy sauce", "Pantry"),
                 ("3 cloves garlic", 3.0, nil, "garlic", "Produce"),
                 ("2 cups broccoli florets", 2.0, "cup", "broccoli", "Produce"),
-                ("1 cup rice", 1.0, "cup", "rice", "Boxed & Canned"),
-                ("1 tbsp sesame oil", 1.0, "tbsp", "sesame oil", "Boxed & Canned")
+                ("1 cup rice", 1.0, "cup", "rice", "Pantry"),
+                ("1 tbsp sesame oil", 1.0, "tbsp", "sesame oil", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -187,11 +187,11 @@ final class SampleDataSeeder {
             5. Toss pasta with vegetables, drizzle with olive oil, and top with parmesan.
             """,
             ingredients: [
-                ("8 oz penne pasta", 8.0, "oz", "penne pasta", "Boxed & Canned"),
+                ("8 oz penne pasta", 8.0, "oz", "penne pasta", "Pantry"),
                 ("1 medium zucchini", 1.0, nil, "zucchini", "Produce"),
                 ("1 bell pepper", 1.0, nil, "bell pepper", "Produce"),
                 ("1 cup cherry tomatoes", 1.0, "cup", "cherry tomatoes", "Produce"),
-                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Boxed & Canned"),
+                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Pantry"),
                 ("1/4 cup parmesan", 0.25, "cup", "parmesan", "Dairy & Fridge")
             ],
             stapleTemplates: stapleTemplates
@@ -217,7 +217,7 @@ final class SampleDataSeeder {
                 ("1 cucumber", 1.0, nil, "cucumber", "Produce"),
                 ("1/2 cup cherry tomatoes", 0.5, "cup", "cherry tomatoes", "Produce"),
                 ("1/4 red onion", 0.25, nil, "red onion", "Produce"),
-                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Boxed & Canned"),
+                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Pantry"),
                 ("1 lemon", 1.0, nil, "lemon", "Produce")
             ],
             stapleTemplates: stapleTemplates
@@ -242,10 +242,10 @@ final class SampleDataSeeder {
             """,
             ingredients: [
                 ("4 salmon fillets", 4.0, nil, "salmon fillets", "Deli & Meat"),
-                ("3 tbsp honey", 3.0, "tbsp", "honey", "Boxed & Canned"),
-                ("2 tbsp soy sauce", 2.0, "tbsp", "soy sauce", "Boxed & Canned"),
+                ("3 tbsp honey", 3.0, "tbsp", "honey", "Pantry"),
+                ("2 tbsp soy sauce", 2.0, "tbsp", "soy sauce", "Pantry"),
                 ("4 cloves garlic", 4.0, nil, "garlic", "Produce"),
-                ("1 tbsp sesame seeds", 1.0, "tbsp", "sesame seeds", "Boxed & Canned"),
+                ("1 tbsp sesame seeds", 1.0, "tbsp", "sesame seeds", "Pantry"),
                 ("2 green onions", 2.0, nil, "green onions", "Produce")
             ],
             stapleTemplates: stapleTemplates
@@ -271,14 +271,14 @@ final class SampleDataSeeder {
             9. Cool on pan 5 minutes, then transfer to wire rack.
             """,
             ingredients: [
-                ("2 1/4 cups all-purpose flour", 2.25, "cup", "all-purpose flour", "Boxed & Canned"),
+                ("2 1/4 cups all-purpose flour", 2.25, "cup", "all-purpose flour", "Pantry"),
                 ("1 cup butter", 1.0, "cup", "butter", "Dairy & Fridge"),
-                ("3/4 cup granulated sugar", 0.75, "cup", "granulated sugar", "Boxed & Canned"),
-                ("3/4 cup brown sugar", 0.75, "cup", "brown sugar", "Boxed & Canned"),
+                ("3/4 cup granulated sugar", 0.75, "cup", "granulated sugar", "Pantry"),
+                ("3/4 cup brown sugar", 0.75, "cup", "brown sugar", "Pantry"),
                 ("2 eggs", 2.0, nil, "eggs", "Dairy & Fridge"),
-                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Boxed & Canned"),
-                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Boxed & Canned"),
-                ("2 cups chocolate chips", 2.0, "cup", "chocolate chips", "Boxed & Canned")
+                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Pantry"),
+                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Pantry"),
+                ("2 cups chocolate chips", 2.0, "cup", "chocolate chips", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -301,11 +301,11 @@ final class SampleDataSeeder {
             """,
             ingredients: [
                 ("1 lb ground beef", 1.0, "lb", "ground beef", "Deli & Meat"),
-                ("1 packet taco seasoning", 1.0, nil, "taco seasoning", "Boxed & Canned"),
+                ("1 packet taco seasoning", 1.0, nil, "taco seasoning", "Pantry"),
                 ("8 small flour tortillas", 8.0, nil, "flour tortillas", "Bakery & Bread"),
                 ("1 cup shredded cheddar", 1.0, "cup", "shredded cheddar", "Dairy & Fridge"),
                 ("2 cups shredded lettuce", 2.0, "cup", "shredded lettuce", "Produce"),
-                ("1/2 cup salsa", 0.5, "cup", "salsa", "Boxed & Canned"),
+                ("1/2 cup salsa", 0.5, "cup", "salsa", "Pantry"),
                 ("2 limes", 2.0, nil, "limes", "Produce")
             ],
             stapleTemplates: stapleTemplates
@@ -329,13 +329,13 @@ final class SampleDataSeeder {
             7. Blend with an immersion blender until smooth. Season with salt and pepper.
             """,
             ingredients: [
-                ("2 cans crushed tomatoes", 2.0, nil, "crushed tomatoes", "Boxed & Canned"),
-                ("2 cups vegetable broth", 2.0, "cup", "vegetable broth", "Boxed & Canned"),
+                ("2 cans crushed tomatoes", 2.0, nil, "crushed tomatoes", "Pantry"),
+                ("2 cups vegetable broth", 2.0, "cup", "vegetable broth", "Pantry"),
                 ("1 medium onion", 1.0, nil, "onion", "Produce"),
                 ("3 cloves garlic", 3.0, nil, "garlic", "Produce"),
                 ("1/2 cup heavy cream", 0.5, "cup", "heavy cream", "Dairy & Fridge"),
                 ("1/4 cup fresh basil", 0.25, "cup", "fresh basil", "Produce"),
-                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Boxed & Canned")
+                ("2 tbsp olive oil", 2.0, "tbsp", "olive oil", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -362,8 +362,8 @@ final class SampleDataSeeder {
                 ("8 oz green beans", 8.0, "oz", "green beans", "Produce"),
                 ("2 lemons", 2.0, nil, "lemons", "Produce"),
                 ("6 cloves garlic", 6.0, nil, "garlic", "Produce"),
-                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Boxed & Canned"),
-                ("3 tbsp olive oil", 3.0, "tbsp", "olive oil", "Boxed & Canned")
+                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Pantry"),
+                ("3 tbsp olive oil", 3.0, "tbsp", "olive oil", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -386,14 +386,14 @@ final class SampleDataSeeder {
             7. Cut into wedges. Serve with sour cream and salsa.
             """,
             ingredients: [
-                ("1 can black beans", 1.0, nil, "black beans", "Boxed & Canned"),
+                ("1 can black beans", 1.0, nil, "black beans", "Pantry"),
                 ("4 large flour tortillas", 4.0, nil, "flour tortillas", "Bakery & Bread"),
                 ("2 cups shredded Mexican cheese", 2.0, "cup", "shredded Mexican cheese", "Dairy & Fridge"),
                 ("1 jalapeño", 1.0, nil, "jalapeño", "Produce"),
-                ("1 tsp cumin", 1.0, "tsp", "cumin", "Boxed & Canned"),
-                ("1/2 tsp chili powder", 0.5, "tsp", "chili powder", "Boxed & Canned"),
+                ("1 tsp cumin", 1.0, "tsp", "cumin", "Pantry"),
+                ("1/2 tsp chili powder", 0.5, "tsp", "chili powder", "Pantry"),
                 ("1/2 cup sour cream", 0.5, "cup", "sour cream", "Dairy & Fridge"),
-                ("1/2 cup salsa", 0.5, "cup", "salsa", "Boxed & Canned")
+                ("1/2 cup salsa", 0.5, "cup", "salsa", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -419,12 +419,12 @@ final class SampleDataSeeder {
             ingredients: [
                 ("3 ripe bananas", 3.0, nil, "bananas", "Produce"),
                 ("1/3 cup melted butter", 0.33, "cup", "butter", "Dairy & Fridge"),
-                ("3/4 cup sugar", 0.75, "cup", "granulated sugar", "Boxed & Canned"),
+                ("3/4 cup sugar", 0.75, "cup", "granulated sugar", "Pantry"),
                 ("1 egg", 1.0, nil, "eggs", "Dairy & Fridge"),
-                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Boxed & Canned"),
-                ("1 1/2 cups all-purpose flour", 1.5, "cup", "all-purpose flour", "Boxed & Canned"),
-                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Boxed & Canned"),
-                ("1/2 cup chopped walnuts", 0.5, "cup", "walnuts", "Boxed & Canned")
+                ("1 tsp vanilla extract", 1.0, "tsp", "vanilla extract", "Pantry"),
+                ("1 1/2 cups all-purpose flour", 1.5, "cup", "all-purpose flour", "Pantry"),
+                ("1 tsp baking soda", 1.0, "tsp", "baking soda", "Pantry"),
+                ("1/2 cup chopped walnuts", 0.5, "cup", "walnuts", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -448,14 +448,14 @@ final class SampleDataSeeder {
             """,
             ingredients: [
                 ("1.5 lbs chicken breast", 1.5, "lb", "chicken breast", "Deli & Meat"),
-                ("1 cup rice", 1.0, "cup", "rice", "Boxed & Canned"),
+                ("1 cup rice", 1.0, "cup", "rice", "Pantry"),
                 ("1 cucumber", 1.0, nil, "cucumber", "Produce"),
                 ("1 cup cherry tomatoes", 1.0, "cup", "cherry tomatoes", "Produce"),
                 ("1/4 red onion", 0.25, nil, "red onion", "Produce"),
                 ("1/2 cup crumbled feta", 0.5, "cup", "feta cheese", "Dairy & Fridge"),
-                ("1/4 cup kalamata olives", 0.25, "cup", "kalamata olives", "Boxed & Canned"),
+                ("1/4 cup kalamata olives", 0.25, "cup", "kalamata olives", "Pantry"),
                 ("1/2 cup tzatziki", 0.5, "cup", "tzatziki", "Dairy & Fridge"),
-                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Boxed & Canned")
+                ("1 tsp dried oregano", 1.0, "tsp", "dried oregano", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -482,14 +482,14 @@ final class SampleDataSeeder {
                 ("2 lbs ground beef", 2.0, "lb", "ground beef", "Deli & Meat"),
                 ("1 large onion", 1.0, nil, "onion", "Produce"),
                 ("4 cloves garlic", 4.0, nil, "garlic", "Produce"),
-                ("1 can diced tomatoes", 1.0, nil, "diced tomatoes", "Boxed & Canned"),
-                ("2 tbsp tomato paste", 2.0, "tbsp", "tomato paste", "Boxed & Canned"),
-                ("1 cup beef broth", 1.0, "cup", "beef broth", "Boxed & Canned"),
-                ("1 can kidney beans", 1.0, nil, "kidney beans", "Boxed & Canned"),
-                ("1 can black beans", 1.0, nil, "black beans", "Boxed & Canned"),
-                ("2 tbsp chili powder", 2.0, "tbsp", "chili powder", "Boxed & Canned"),
-                ("1 tsp cumin", 1.0, "tsp", "cumin", "Boxed & Canned"),
-                ("1 tsp paprika", 1.0, "tsp", "paprika", "Boxed & Canned")
+                ("1 can diced tomatoes", 1.0, nil, "diced tomatoes", "Pantry"),
+                ("2 tbsp tomato paste", 2.0, "tbsp", "tomato paste", "Pantry"),
+                ("1 cup beef broth", 1.0, "cup", "beef broth", "Pantry"),
+                ("1 can kidney beans", 1.0, nil, "kidney beans", "Pantry"),
+                ("1 can black beans", 1.0, nil, "black beans", "Pantry"),
+                ("2 tbsp chili powder", 2.0, "tbsp", "chili powder", "Pantry"),
+                ("1 tsp cumin", 1.0, "tsp", "cumin", "Pantry"),
+                ("1 tsp paprika", 1.0, "tsp", "paprika", "Pantry")
             ],
             stapleTemplates: stapleTemplates
         )
@@ -598,9 +598,9 @@ final class SampleDataSeeder {
             ("baby potatoes",     "1 lb baby potatoes",       1.0, "lb",   "Produce",         false),
             ("bananas",           "3 ripe bananas",           3.0, nil,    "Produce",         false),
             ("lemons",            "2 lemons",                 2.0, nil,    "Produce",         false),
-            ("penne pasta",       "8 oz penne pasta",         8.0, "oz",   "Boxed & Canned",  false),
-            ("crushed tomatoes",  "2 cans crushed tomatoes",  2.0, nil,    "Boxed & Canned",  false),
-            ("chocolate chips",   "2 cups chocolate chips",   2.0, "cup",  "Boxed & Canned",  false),
+            ("penne pasta",       "8 oz penne pasta",         8.0, "oz",   "Pantry",  false),
+            ("crushed tomatoes",  "2 cans crushed tomatoes",  2.0, nil,    "Pantry",  false),
+            ("chocolate chips",   "2 cups chocolate chips",   2.0, "cup",  "Pantry",  false),
             ("shredded cheddar",  "1 cup shredded cheddar",   1.0, "cup",  "Dairy & Fridge",  false),
             ("heavy cream",       "1/2 cup heavy cream",      0.5, "cup",  "Dairy & Fridge",  false),
             ("flour tortillas",   "8 flour tortillas",        8.0, nil,    "Bakery & Bread",  false),
