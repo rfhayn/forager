@@ -3,12 +3,10 @@
 //  forager
 //
 //  M10.6.5: View for displaying and copying debug logs.
-//  Accessible from Settings > Developer Tools when debug mode is on.
+//  M10.6.13: Ungated for Release builds — accessible via Settings > Developer Tools.
 //
 
 import SwiftUI
-
-#if DEBUG
 
 struct DebugLogView: View {
 
@@ -97,5 +95,3 @@ struct DebugLogView: View {
         return .primary
     }
 }
-
-#endif

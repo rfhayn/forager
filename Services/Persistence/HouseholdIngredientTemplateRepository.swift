@@ -51,10 +51,14 @@ final class HouseholdIngredientTemplateRepository {
         let canonicalName = IngredientTemplate.canonicalName(from: name)
         
         if let existing = try findByCanonicalName(canonicalName) {
+            Task { @MainActor in
+                DebugLogService.shared.log("findOrCreate: canonical=\(canonicalName), found existing=yes, householdKey param=\(householdKey ?? "nil")", category: "Repo")
+                DebugLogService.shared.log("existing template: householdKey=\(existing.householdKey ?? "nil"), category=\(existing.category ?? "nil")", category: "Repo")
+            }
             #if DEBUG
             print("ℹ️ M7.2.3: Template '\(name)' already exists (canonical: '\(canonicalName)')")
             #endif
-            
+
             // Update category if provided and different
             if let newCategory = category, newCategory != existing.category {
                 existing.category = newCategory
@@ -63,7 +67,7 @@ final class HouseholdIngredientTemplateRepository {
                 print("   Updated category: '\(existing.category ?? "nil")' → '\(newCategory)'")
                 #endif
             }
-            
+
             // Update staple status if different
             if isStaple != existing.isStaple {
                 existing.isStaple = isStaple
@@ -72,11 +76,18 @@ final class HouseholdIngredientTemplateRepository {
                 print("   Updated staple status: \(isStaple)")
                 #endif
             }
-            
+
+            // M10.6.13: Ensure found templates have correct householdKey
+            if let key = householdKey, existing.householdKey != key {
+                existing.householdKey = key
+                existing.updatedAt = Date()
+            }
+
             return existing
         }
         
         // Create new template
+        Task { @MainActor in DebugLogService.shared.log("findOrCreate: canonical=\(canonicalName), found existing=no, creating new, householdKey param=\(householdKey ?? "nil")", category: "Repo") }
         let template = IngredientTemplate(context: context)
         template.id = UUID()
         template.name = name
@@ -89,6 +100,7 @@ final class HouseholdIngredientTemplateRepository {
         // M10.6.11: Scope to current household so IngredientsView filter sees it
         template.householdKey = householdKey
 
+        Task { @MainActor in DebugLogService.shared.log("template created: name=\(name), householdKey=\(householdKey ?? "nil"), usageCount=0", category: "Import") }
         #if DEBUG
         print("✅ M7.2.3: Created template '\(name)' (canonical: '\(canonicalName)', householdKey: \(householdKey ?? "nil"))")
         #endif

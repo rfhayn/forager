@@ -56,17 +56,16 @@ struct RecipeBrowserView: View {
                 }
             }
             .sheet(isPresented: $showingImportSheet, onDismiss: {
-                // M10.6.12: When import sheet closes after a successful save, dismiss browser too
+                // M10.6.13: When import sheet closes after a successful save, dismiss browser too
                 if didSaveRecipe {
                     dismiss()
                 }
             }) {
-                RecipeImportSheet(importService: importService)
-            }
-            .onChange(of: importService.state) { _, newState in
-                if case .saved = newState {
+                // M10.6.13: Use callback instead of onChange — avoids race where
+                // cancelImport() resets state to .idle before onChange catches .saved
+                RecipeImportSheet(importService: importService, onSaveComplete: {
                     didSaveRecipe = true
-                }
+                })
             }
             .alert("No Recipe Found", isPresented: $extractionFailed) {
                 Button("OK", role: .cancel) { }
