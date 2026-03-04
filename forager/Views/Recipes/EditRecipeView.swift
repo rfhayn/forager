@@ -525,7 +525,8 @@ struct EditRecipeView: View {
             isEditing: isEditing,
             isAIParsing: llmParsingIngredients.contains(ingredient.id),
             showRawText: false,
-            categoryName: matchInfo?.categoryName,
+            // M10.6.14: Fall back to existing template category when re-parse match fails
+            categoryName: matchInfo?.categoryName ?? ingredient.template?.category,
             onTapEdit: { editingIngredientId = ingredient.id },
             onCategoryTap: { categoryPickerIngredientId = ingredient.id },
             editText: ingredientBinding(for: ingredient),
