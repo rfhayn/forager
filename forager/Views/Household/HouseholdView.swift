@@ -54,7 +54,9 @@ struct HouseholdView: View {
         }
         .navigationTitle("Household")
         .navigationBarTitleDisplayMode(.large)
-        .task {
+        // M10.6.16: Re-run when currentHousehold changes (e.g., after accepting invitation)
+        .task(id: householdService.currentHousehold?.id) {
+            isLoadingParticipants = true
             await loadHouseholdData()
         }
         .sheet(isPresented: $showCreateSheet) {

@@ -30,8 +30,6 @@ struct SettingsView: View {
     // M10.6.3: API key entry state
     @State private var apiKeyInput = ""
 
-    // M10.6.7: Household ownership state for API key section
-    @State private var isHouseholdOwner = false
 
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
@@ -213,12 +211,6 @@ struct SettingsView: View {
     @State private var showingRecipeSourcesInfo = false
     @State private var showingAIInfo = false
 
-    /// M10.6.7: Whether the current user is a non-owner household member
-    /// (has a household but is not the owner — gets read-only API key view)
-    private var isNonOwnerMember: Bool {
-        householdService.currentHousehold != nil && !isHouseholdOwner
-    }
-
     private var aiImportSection: some View {
         Section {
             HStack {
@@ -235,7 +227,7 @@ struct SettingsView: View {
             .alert("AI for Ingredients", isPresented: $showingAIInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Uses Claude AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an Anthropic API key. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain and shared with household members.\n\nThe app works fully without this — it's an optional enhancement.")
+                Text("Uses Claude AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an Anthropic API key. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain on your device.\n\nThe app works fully without this — it's an optional enhancement.")
             }
 
             if llmSettings.isEnabled {
@@ -247,34 +239,13 @@ struct SettingsView: View {
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
-                // M10.6.7: API Key row — three states
-                if isNonOwnerMember {
-                    // Non-owner member: read-only view
-                    if llmSettings.hasAPIKey {
-                        HStack {
-                            Text("API Key")
-                            Spacer()
-                            Text(llmSettings.maskedAPIKey ?? "")
-                                .foregroundStyle(ForagerTheme.textSecondary)
-                                .font(.system(.body, design: .monospaced))
-                        }
-                        // Provenance indicator
-                        Label("Shared by household", systemImage: "person.3.fill")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.accentSecondary)
-                    } else {
-                        Label("Ask the household owner to set up an API key", systemImage: "person.fill.questionmark")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                } else if llmSettings.hasAPIKey {
-                    // Solo user or owner: editable with clear button
+                // M10.6.16: API Key row — per-user, stored in Keychain
+                if llmSettings.hasAPIKey {
                     HStack {
                         Text("API Key")
                         Spacer()
                         Text(llmSettings.maskedAPIKey ?? "")
                             .foregroundStyle(ForagerTheme.textSecondary)
-                            .font(.system(.body, design: .monospaced))
                         Button("Clear") {
                             clearAPIKey()
                             apiKeyInput = ""
@@ -282,14 +253,7 @@ struct SettingsView: View {
                         .foregroundStyle(.red)
                         .font(.caption)
                     }
-                    // M10.6.7: Show provenance if using household key
-                    if llmSettings.isUsingHouseholdKey {
-                        Label("Shared by household", systemImage: "person.3.fill")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.accentSecondary)
-                    }
                 } else {
-                    // No key: show input field
                     SecureField("Paste API key", text: $apiKeyInput)
                         .textContentType(.password)
                         .autocorrectionDisabled()
@@ -300,27 +264,24 @@ struct SettingsView: View {
                         }
                 }
 
-                // Action buttons (hide for non-owner members who can't edit)
-                if !isNonOwnerMember {
-                    HStack {
-                        Link(destination: URL(string: "https://console.anthropic.com/settings/keys")!) {
-                            Label("Get API Key", systemImage: "arrow.up.right.square")
+                HStack {
+                    Link(destination: URL(string: "https://console.anthropic.com/settings/keys")!) {
+                        Label("Get API Key", systemImage: "arrow.up.right.square")
+                            .font(.caption)
+                    }
+                    Spacer()
+                    Button {
+                        Task { await llmSettings.testConnection() }
+                    } label: {
+                        if llmSettings.isTestingConnection {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
                                 .font(.caption)
                         }
-                        Spacer()
-                        Button {
-                            Task { await llmSettings.testConnection() }
-                        } label: {
-                            if llmSettings.isTestingConnection {
-                                ProgressView()
-                                    .controlSize(.small)
-                            } else {
-                                Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
-                                    .font(.caption)
-                            }
-                        }
-                        .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
                     }
+                    .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
                 }
 
                 // Connection status
@@ -330,57 +291,20 @@ struct SettingsView: View {
             Text("AI Integration")
         } footer: {
             if llmSettings.isEnabled {
-                if isNonOwnerMember {
-                    Text("Your household owner manages the API key. Ingredient text is sent to the API for parsing.")
-                        .font(.caption)
-                } else {
-                    Text("Only ingredient text is sent to the API. Estimated cost: ~$0.0005/recipe. Your key is stored in iOS Keychain and shared with household members.")
-                        .font(.caption)
-                }
-            }
-        }
-        .task {
-            // M10.6.7: Check ownership on appear
-            if let household = householdService.currentHousehold {
-                isHouseholdOwner = await householdService.isOwner(household: household)
+                Text("Only ingredient text is sent to the API. Estimated cost: ~$0.0005/recipe. Your key is stored securely in iOS Keychain on this device.")
+                    .font(.caption)
             }
         }
     }
 
-    // MARK: - M10.6.7: API Key Save/Clear Helpers
+    // MARK: - M10.6.16: API Key Helpers (per-user, Keychain only)
 
-    /// Saves API key to both household (if owner) and local Keychain
     private func saveAPIKey(_ key: String) {
         llmSettings.saveAPIKey(key)
-        // Dual-write to household if owner
-        if isHouseholdOwner, let household = householdService.currentHousehold {
-            Task {
-                do {
-                    try await householdService.saveLLMAPIKey(key, to: household)
-                } catch {
-                    #if DEBUG
-                    print("Failed to sync API key to household: \(error)")
-                    #endif
-                }
-            }
-        }
     }
 
-    /// Clears API key from both household (if owner) and local Keychain
     private func clearAPIKey() {
         llmSettings.deleteAPIKey()
-        // Dual-clear from household if owner
-        if isHouseholdOwner, let household = householdService.currentHousehold {
-            Task {
-                do {
-                    try await householdService.saveLLMAPIKey(nil, to: household)
-                } catch {
-                    #if DEBUG
-                    print("Failed to clear API key from household: \(error)")
-                    #endif
-                }
-            }
-        }
     }
 
     @ViewBuilder

@@ -23,26 +23,11 @@ class LLMSettingsService: ObservableObject {
     @Published var isTestingConnection = false
     @Published var connectionTestResult: ConnectionTestResult?
 
-    // MARK: - M10.6.7: Household Key Provider
+    // MARK: - API Key Resolution
 
-    /// Closure that reads the household's shared API key.
-    /// Wired in foragerApp.init() to avoid coupling to HouseholdService.
-    var householdAPIKeyProvider: (() -> String?)?
-
-    /// Resolves the active API key: household key takes priority over local Keychain.
+    /// M10.6.16: API key is always per-user, stored in iOS Keychain.
     var resolvedAPIKey: String? {
-        if let householdKey = householdAPIKeyProvider?(), !householdKey.isEmpty {
-            return householdKey
-        }
-        return KeychainHelper.getLLMAPIKey()
-    }
-
-    /// Whether the currently resolved key comes from the household (vs local Keychain)
-    var isUsingHouseholdKey: Bool {
-        guard let householdKey = householdAPIKeyProvider?(), !householdKey.isEmpty else {
-            return false
-        }
-        return true
+        KeychainHelper.getLLMAPIKey()
     }
 
     // MARK: - Constants
@@ -79,12 +64,10 @@ class LLMSettingsService: ObservableObject {
         objectWillChange.send()
     }
 
-    /// Returns a masked version of the active key for display (e.g., "sk-ant-...xyz")
+    /// Returns a masked indicator that a key is configured (no key content revealed)
     var maskedAPIKey: String? {
-        guard let key = resolvedAPIKey, key.count > 10 else { return nil }
-        let prefix = String(key.prefix(7))
-        let suffix = String(key.suffix(3))
-        return "\(prefix)...\(suffix)"
+        guard resolvedAPIKey != nil else { return nil }
+        return "••••••••••••"
     }
 
     // MARK: - Connection Test
@@ -123,7 +106,7 @@ class LLMSettingsService: ObservableObject {
         #if DEBUG
         DebugLogService.shared.log(
             "activeParser() — isEnabled=\(isEnabled), hasKey=\(resolvedAPIKey != nil), "
-            + "keyLength=\(resolvedAPIKey?.count ?? 0), isHouseholdKey=\(isUsingHouseholdKey)",
+            + "keyLength=\(resolvedAPIKey?.count ?? 0)",
             category: "Settings"
         )
         #endif

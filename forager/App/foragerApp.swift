@@ -107,12 +107,6 @@ struct foragerApp: App {
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
         _importService = StateObject(wrappedValue: importSvc)
 
-        // M10.6.7: Wire household API key into LLM settings
-        // Reads currentHousehold.llmAPIKey live — CloudKit keeps it in sync
-        LLMSettingsService.shared.householdAPIKeyProvider = { [weak household] in
-            household?.currentHousehold?.llmAPIKey
-        }
-
         // M10.6.11: Wire household key into template and import services so new
         // templates are scoped to the current household (fixes invisible templates bug)
         templateService.householdKeyProvider = { [weak household] in

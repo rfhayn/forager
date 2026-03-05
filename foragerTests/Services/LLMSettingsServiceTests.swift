@@ -4,6 +4,7 @@
 //
 //  M10.6.2: Tests for LLMSettingsService — toggle persistence,
 //  API key management, connection test, parser factory.
+//  M10.6.16: Simplified to per-user Keychain only (removed household key sharing).
 //
 
 import XCTest
@@ -16,15 +17,12 @@ final class LLMSettingsServiceTests: XCTestCase {
 
     override func setUp() {
         super.setUp()
-        // Clean slate for each test
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
         service = LLMSettingsService()
-        service.householdAPIKeyProvider = nil
     }
 
     override func tearDown() {
-        service.householdAPIKeyProvider = nil
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
         super.tearDown()
@@ -56,7 +54,7 @@ final class LLMSettingsServiceTests: XCTestCase {
 
         service.saveAPIKey("sk-ant-api03-testkey123456")
         XCTAssertTrue(service.hasAPIKey)
-        XCTAssertEqual(service.maskedAPIKey, "sk-ant-...456")
+        XCTAssertEqual(service.maskedAPIKey, "••••••••••••")
 
         service.deleteAPIKey()
         XCTAssertFalse(service.hasAPIKey)
@@ -66,14 +64,12 @@ final class LLMSettingsServiceTests: XCTestCase {
     func testSaveAPIKeyTrimsWhitespace() {
         service.saveAPIKey("  sk-ant-api03-padded  \n")
         XCTAssertTrue(service.hasAPIKey)
-        // Verify the stored key was trimmed
         XCTAssertEqual(KeychainHelper.getLLMAPIKey(), "sk-ant-api03-padded")
     }
 
     func testSaveEmptyAPIKeyIsIgnored() {
         service.saveAPIKey("sk-ant-api03-original")
         service.saveAPIKey("   ")
-        // Original key should still be there
         XCTAssertTrue(service.hasAPIKey)
     }
 
@@ -107,49 +103,14 @@ final class LLMSettingsServiceTests: XCTestCase {
         XCTAssertFalse(service.isTestingConnection)
     }
 
-    // MARK: - 5. M10.6.7: Household Key Resolution
+    // MARK: - 5. Per-User Key Resolution
 
-    func testResolvedAPIKeyPrefersHouseholdKey() {
-        // Local key in Keychain
+    func testResolvedAPIKeyReturnsKeychainKey() {
         service.saveAPIKey("sk-ant-api03-local-key1234")
-        // Household key via provider
-        service.householdAPIKeyProvider = { "sk-ant-api03-household-key5678" }
-
-        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-household-key5678",
-                       "Household key should take priority over local Keychain key")
+        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-local-key1234")
     }
 
-    func testResolvedAPIKeyFallsBackToLocalWhenNoHouseholdKey() {
-        service.saveAPIKey("sk-ant-api03-local-key1234")
-        // Provider returns nil (no household key set)
-        service.householdAPIKeyProvider = { nil }
-
-        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-local-key1234",
-                       "Should fall back to local key when household key is nil")
-    }
-
-    func testResolvedAPIKeyFallsBackToLocalWhenNotInHousehold() {
-        service.saveAPIKey("sk-ant-api03-local-key1234")
-        // No provider at all (solo user)
-        service.householdAPIKeyProvider = nil
-
-        XCTAssertEqual(service.resolvedAPIKey, "sk-ant-api03-local-key1234",
-                       "Should use local key when no household provider is set")
-    }
-
-    func testIsUsingHouseholdKeyWhenHouseholdKeySet() {
-        service.householdAPIKeyProvider = { "sk-ant-api03-household-key5678" }
-        XCTAssertTrue(service.isUsingHouseholdKey)
-    }
-
-    func testIsUsingHouseholdKeyFalseWhenNoProvider() {
-        service.householdAPIKeyProvider = nil
-        XCTAssertFalse(service.isUsingHouseholdKey)
-    }
-
-    func testIsUsingHouseholdKeyFalseWhenProviderReturnsEmpty() {
-        service.householdAPIKeyProvider = { "" }
-        XCTAssertFalse(service.isUsingHouseholdKey,
-                       "Empty string from provider should not count as a household key")
+    func testResolvedAPIKeyReturnsNilWithNoKey() {
+        XCTAssertNil(service.resolvedAPIKey)
     }
 }

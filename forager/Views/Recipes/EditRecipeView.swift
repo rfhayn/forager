@@ -226,6 +226,7 @@ struct EditRecipeView: View {
                 if let ingredientId = categoryPickerIngredientId {
                     categoryPickerSheet(ingredientId: ingredientId)
                         .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
                 }
             }
             .onAppear {

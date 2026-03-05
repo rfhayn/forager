@@ -1282,6 +1282,15 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - Family preference learning
 - Advanced sharing controls
 
+### **💡 Feature Ideas (Backlog)**
+
+**M10.7: Alternative Ingredient Splitting** — IDEA
+- Parse "X or Y" ingredient text into two separate ingredients (e.g., "sour cream or fat free yogurt" → "sour cream" + "fat free yogurt")
+- LLM prompt change is trivial; main work is breaking the 1:1 assumption (1 input line = 1 parsed ingredient) in the import pipeline
+- Affected: `parseBatch()` response mapping, `RecipeImportPreviewView` index-based rendering, category assignment indexing, save flow
+- Estimated: 3-4 hours (moderate complexity)
+- Prerequisite: M10.6 complete
+
 ---
 
 ## ⏱️ **TIME TRACKING & ESTIMATES**
