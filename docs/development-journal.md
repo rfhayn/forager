@@ -6,33 +6,53 @@
 
 ---
 
-## Session 70 — March 4, 2026
-**Milestone**: M10.6.16 — Build 16 Bug Fixes (Category Display + Modal Height)
-**Focus**: Fix category display regression in recipe detail view, add drag indicators to category pickers
+## Session 70 — March 4-5, 2026
+**Milestone**: M10.6.16 — Build 16 Bug Fixes + API Key Security + Household Spinner
+**Focus**: Category display fixes, per-user API key, household spinner, drag indicators, M10.7 idea
 **Branch**: `main` (hotfix)
 
 ### What Happened
 
-Device testing of build 16 found two more bugs. The big one: recipe detail view showed "Choose Category" for ingredients that were correctly categorized during import. The `computeIngredientMatches()` method re-parses ingredient text through the local regex pipeline, which produces different normalized names than the AI parser used during import (e.g., "chopped green onion" vs "green onion"). The template lookup fails on the different name, even though the `Ingredient` entity already has a direct Core Data relationship to the correct `IngredientTemplate` with a valid category. Fix: after re-matching, if the result has no category but the ingredient's linked template does, carry it forward via `withCategory()`. Also added `.presentationDragIndicator(.visible)` to the two category picker sheets that were missing it.
+Extended bug-fix session driven by device testing of build 16. Started with two targeted fixes from plan mode (category display fallback, drag indicators), then expanded into four additional issues the user raised: (1) API key should be per-user not household-shared, (2) masked key display should show dots not prefix/suffix, (3) HouseholdView spinner never stops after joining, (4) EditRecipeView missing drag indicator. Also discussed ingredient-recipe relationship behavior ("sour cream or fat free yogurt" → should it split into two ingredients?) and documented the idea as M10.7 in the roadmap.
+
+The API key change was a net deletion of 125 lines — removed the household key provider, dual-write logic, non-owner member UI, and provenance indicators. Simplified from 3 API key states (non-owner, owner, solo) to 1 (per-user Keychain). The `Household.llmAPIKey` Core Data property stays in schema (CloudKit append-only) but is no longer read or written.
+
+The household spinner root cause: `.task {}` runs once on view appear. If HouseholdView appeared before the user had a household, the task exited early at the guard. When `currentHousehold` changed to non-nil, SwiftUI re-rendered the body showing the members section with `isLoadingParticipants = true`, but `.task` never re-ran. Fix: `.task(id: householdService.currentHousehold?.id)`.
 
 ### Key Decisions
 
-- **Trust relationships over re-derivation**: The ingredient's `ingredientTemplate` relationship is the ground truth set during import. When re-parsing text produces a different normalized name and template lookup fails, the relationship still points to the correct template. Using `ingredientTemplate?.category` as fallback is more reliable than trying to make local parsing match AI parsing output exactly.
+- **Per-user API keys only**: Removed household key sharing entirely. Each user enters their own Anthropic key. Simpler model, eliminates the security concern of one user's key being synced to all household members via CloudKit. The `Household.llmAPIKey` property can't be deleted from Core Data (CloudKit schema is append-only) but is now inert.
+
+- **Dots-only masking**: Changed from `sk-ant-...xyz` to `••••••••••••`. No key content should ever be visible, even partially. The key is a secret — the UI should only confirm its presence/absence.
+
+- **Defer alternative ingredient splitting**: "sour cream or fat free yogurt" → two ingredients is a real feature, not a quick fix. The import pipeline assumes 1:1 (input line → parsed result) in 4+ layers. LLM prompt change is trivial; plumbing is 3-4 hours. Documented as M10.7.
 
 ### Learning
 
-- **Same bug class, different location**: This is the exact same pattern as M10.6.15 Fix 2 (EditRecipeView), but in RecipeListView's `computeIngredientMatches()`. The recipe detail view and edit view both re-derive categories from text, and both need the template relationship fallback. When fixing a re-derivation bug, check ALL code paths that re-derive the same data.
+- **`.task` vs `.task(id:)`**: Plain `.task {}` runs once on appear and cancels on disappear. `.task(id:)` re-runs when the id changes. Critical distinction for views that depend on `@Published` state from `@EnvironmentObject` — if the state changes while the view is visible, plain `.task` won't re-fire.
+
+- **Removing CloudKit-synced features**: Can't delete Core Data properties from CloudKit Production schema (append-only). To "remove" a feature: stop writing, stop reading, remove UI. The property becomes inert. Existing CloudKit values are harmless.
+
+- **iOS Keychain persistence**: Keychain data survives app deletion and reinstall (by Apple's design). This is consistent with Core Data + CloudKit persistence — all user data comes back on reinstall. The one inconsistency: UserDefaults (like "AI enabled" toggle) gets wiped, so the user has a key but AI is toggled off. This is actually reasonable — opt-in behavior.
 
 ### AI Tooling Observations
 
-Plan mode identified the exact root cause and code fix before implementation started. The three edits (one logic fix, two one-liners) were applied and built in under 2 minutes. Quick targeted fixes benefit hugely from thorough upfront diagnosis in plan mode.
+Plan mode was invaluable for the initial category fix — exact root cause, exact code, applied in 2 minutes. The broader bug discussion was more conversational: the user described 4 issues, I investigated in parallel using Explore agents, then implemented sequentially. The API key discussion required understanding the user's mental model (they thought the key was embedded in source code) before I could address their actual concern (household sharing).
 
-### Files Changed (3 files)
+### Files Changed (11 files across 2 commits)
 
 | File | Change |
 |------|--------|
-| `forager/Views/Recipes/RecipeListView.swift` | Fix 1: template category fallback in `computeIngredientMatches()`; Fix 2a: drag indicator |
-| `forager/Views/Import/RecipeImportPreviewView.swift` | Fix 2b: drag indicator |
+| `forager/Views/Recipes/RecipeListView.swift` | Template category fallback in `computeIngredientMatches()`; drag indicator |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Drag indicator |
+| `forager/Views/Recipes/EditRecipeView.swift` | Drag indicator |
+| `forager/Views/Household/HouseholdView.swift` | `.task(id:)` fix for spinner |
+| `forager/Views/Settings/SettingsView.swift` | Simplified AI section, per-user key only (-118 lines) |
+| `Services/LLMSettingsService.swift` | Removed household key provider, dots masking |
+| `forager/App/foragerApp.swift` | Removed household API key wiring |
+| `foragerTests/Services/LLMSettingsServiceTests.swift` | Updated for per-user model |
+| `docs/roadmap.md` | M10.7 alternative ingredient splitting idea |
+| `docs/insights-log.md` | 2 new insights |
 | `docs/prds/active/m10.6.16-category-display-modal-fixes.md` | New PRD |
 
 ---
