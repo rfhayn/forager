@@ -6,6 +6,37 @@
 
 ---
 
+## Session 70 — March 4, 2026
+**Milestone**: M10.6.16 — Build 16 Bug Fixes (Category Display + Modal Height)
+**Focus**: Fix category display regression in recipe detail view, add drag indicators to category pickers
+**Branch**: `main` (hotfix)
+
+### What Happened
+
+Device testing of build 16 found two more bugs. The big one: recipe detail view showed "Choose Category" for ingredients that were correctly categorized during import. The `computeIngredientMatches()` method re-parses ingredient text through the local regex pipeline, which produces different normalized names than the AI parser used during import (e.g., "chopped green onion" vs "green onion"). The template lookup fails on the different name, even though the `Ingredient` entity already has a direct Core Data relationship to the correct `IngredientTemplate` with a valid category. Fix: after re-matching, if the result has no category but the ingredient's linked template does, carry it forward via `withCategory()`. Also added `.presentationDragIndicator(.visible)` to the two category picker sheets that were missing it.
+
+### Key Decisions
+
+- **Trust relationships over re-derivation**: The ingredient's `ingredientTemplate` relationship is the ground truth set during import. When re-parsing text produces a different normalized name and template lookup fails, the relationship still points to the correct template. Using `ingredientTemplate?.category` as fallback is more reliable than trying to make local parsing match AI parsing output exactly.
+
+### Learning
+
+- **Same bug class, different location**: This is the exact same pattern as M10.6.15 Fix 2 (EditRecipeView), but in RecipeListView's `computeIngredientMatches()`. The recipe detail view and edit view both re-derive categories from text, and both need the template relationship fallback. When fixing a re-derivation bug, check ALL code paths that re-derive the same data.
+
+### AI Tooling Observations
+
+Plan mode identified the exact root cause and code fix before implementation started. The three edits (one logic fix, two one-liners) were applied and built in under 2 minutes. Quick targeted fixes benefit hugely from thorough upfront diagnosis in plan mode.
+
+### Files Changed (3 files)
+
+| File | Change |
+|------|--------|
+| `forager/Views/Recipes/RecipeListView.swift` | Fix 1: template category fallback in `computeIngredientMatches()`; Fix 2a: drag indicator |
+| `forager/Views/Import/RecipeImportPreviewView.swift` | Fix 2b: drag indicator |
+| `docs/prds/active/m10.6.16-category-display-modal-fixes.md` | New PRD |
+
+---
+
 ## Session 69 — March 4, 2026
 **Milestone**: M10.6.15 — Import Category Preservation + Polish
 **Focus**: Fix categories lost during import, normalization polish, rename "Boxed & Canned" → "Pantry"

@@ -1094,9 +1094,18 @@ struct RecipeDetailView: View {
 
         for (index, result) in results.enumerated() {
             guard index < sortedIngredients.count,
-                  let id = sortedIngredients[index].id,
-                  let result else { continue }
-            matches[id] = result
+                  let id = sortedIngredients[index].id else { continue }
+
+            if var result {
+                // M10.6.16: If re-match lost the category, use ingredient's linked template category
+                if result.categoryName == nil,
+                   let templateCategory = sortedIngredients[index].ingredientTemplate?.category,
+                   !templateCategory.isEmpty,
+                   templateCategory.lowercased() != "uncategorized" {
+                    result = result.withCategory(templateCategory)
+                }
+                matches[id] = result
+            }
         }
 
         ingredientMatches = matches
@@ -1264,6 +1273,7 @@ struct RecipeDetailView: View {
             if let ingredientId = categoryPickerIngredientId {
                 categoryPickerSheet(ingredientId: ingredientId)
                     .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
         }
         .llmParsingToast(message: $llmToastMessage)
