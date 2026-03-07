@@ -1,8 +1,60 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 3, 2026
-**For Milestone**: M10.6 Claude API Integration
-**Status**: M10.1 ✅ **COMPLETE** | M10.2 ✅ **COMPLETE** | M10.5 ✅ **COMPLETE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 ✅, M10.6.6-M10.6.10 ✅)
+**Last Updated**: March 7, 2026
+**For Milestone**: M16 Knowledge MCP Server
+**Status**: **M16 🔄 ACTIVE** (M16.1 in progress) | M10.6 🔄 ACTIVE (M10.6.5 remaining)
+
+---
+
+## **M16 — 🔄 ACTIVE: Knowledge MCP Server (6-10h)**
+
+**PRD**: `docs/prds/active/m16-knowledge-mcp-server.md`
+**Branch**: `feature/M16-knowledge-mcp-server`
+**Location**: `Tools/mcp-knowledge/`
+
+Python MCP server that indexes all project knowledge (185+ docs, 5.3 MB) for search/retrieval in Claude Desktop. Includes newsletter drafting with .docx generation.
+
+### M16.1: Foundation (2-3h) — ACTIVE
+
+**Build order:**
+1. `pyproject.toml` — dependencies: `mcp`, `python-docx`, `rank-bm25`
+2. `src/documents.py` — load .md and .docx files, extract text
+3. `src/indexer.py` — chunk documents by H2 headers, categorize by type
+4. `src/search.py` — BM25 index over all chunks
+5. `src/server.py` — MCP server with `search_knowledge`, `read_document`, `list_documents`
+6. Move newsletters from `~/Desktop/forager/Newsletter/Articles/` to `docs/newsletters/`
+7. Test: start server, verify tools respond in Claude Desktop
+
+**Key files to create:**
+- `Tools/mcp-knowledge/pyproject.toml`
+- `Tools/mcp-knowledge/src/__init__.py`
+- `Tools/mcp-knowledge/src/server.py`
+- `Tools/mcp-knowledge/src/indexer.py`
+- `Tools/mcp-knowledge/src/search.py`
+- `Tools/mcp-knowledge/src/documents.py`
+
+**Categories for indexing:**
+- `core-doc` — current-story, roadmap, requirements, project-index, insights-log, development-journal, next-prompt
+- `learning-note` — docs/learning-notes/*.md
+- `adr` — docs/architecture/*.md
+- `prd` — docs/prds/**/*.md
+- `newsletter` — docs/newsletters/*.docx
+- `research` — docs/import-research/*.md, docs/ux-research/*.md
+- `guideline` — development-guidelines, session-startup-checklist, etc.
+
+### M16.2: Newsletter + Status Tools (2-3h) — READY
+
+- `get_project_status` — curated current-story + next-prompt summary
+- `get_newsletter_context` — search project docs for a topic + pull style from recent newsletters
+- `draft_newsletter_section` — context bundle + outline for drafting
+- `create_newsletter_draft` — generate .docx from content (markdown → docx conversion)
+- `src/newsletter.py` — newsletter-specific helpers
+
+### M16.3: Polish (1-2h) — PLANNED
+
+- README.md with setup instructions
+- Tune chunking/search quality
+- Test with real newsletter writing session
 
 ---
 

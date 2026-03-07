@@ -6,6 +6,56 @@
 
 ---
 
+## Session 71 — March 7, 2026
+**Milestone**: M16 — Knowledge MCP Server
+**Focus**: Building an MCP server to make project knowledge searchable from Claude Desktop
+**Branch**: `feature/M16-knowledge-mcp-server`
+
+### What Happened
+
+New milestone: M16 Knowledge MCP Server. The problem was clear — 185+ docs (5.3 MB) across learning notes, ADRs, PRDs, newsletters, and journals are too large to load into Claude Desktop's context window. The user had been manually creating "context bundles" to export knowledge to Gemini and other tools for newsletter writing. An MCP server that indexes everything and serves it on-demand replaces that entire workflow.
+
+Wrote the PRD first (`docs/prds/active/m16-knowledge-mcp-server.md`), then built the full M16.1 foundation in one push: document loader (markdown + docx), BM25 search engine via `rank_bm25`, chunking by H2 headers, and a FastMCP server with 7 tools. Moved 6 newsletter .docx files from `~/Desktop/forager/Newsletter/Articles/` into `docs/newsletters/` in the repo.
+
+The server indexes 182 documents into 2,472 searchable chunks in 0.18 seconds. Search results for "CloudKit sharing household" correctly surface the ADR and learning note 29. Newsletter search for "vibe coding" finds the right article. All 7 tools built in one pass: `search_knowledge`, `read_document`, `list_documents`, `get_project_status`, `get_newsletter_context`, `draft_newsletter_section`, `create_newsletter_draft` (generates .docx files).
+
+Hit one deployment snag: Claude Desktop launches MCP servers with a minimal PATH that doesn't include `~/.local/bin` where `uv` lives. Fixed by using the absolute path `/Users/rich/.local/bin/uv` in the config.
+
+Also audited the insights log — 60+ raw insights since Feb 22 (last learning note 38) have never been promoted. Identified 5 candidate learning notes (39-43) covering import pipeline, LLM integration, data integrity, SwiftUI patterns, and Xcode gotchas. Deferred to after merge.
+
+### Key Decisions
+
+- **In-repo at `Tools/mcp-knowledge/`**: Keeps knowledge tooling versioned with the project. The `Tools/` directory already has ml-training, import-spike, etc. Standalone repo would create symlink/sync headaches since the content is all about this project.
+
+- **BM25 over vector search**: At 5.3 MB, BM25 (via `rank_bm25`) is fast, accurate, and needs no external services or API keys. Vector embeddings would add complexity for marginal benefit at this scale.
+
+- **Newsletter .docx generation**: The `create_newsletter_draft` tool converts markdown to .docx with proper formatting (headings, bold, italic, lists). Follows the existing naming convention (`YYYY.MM.DD - NNN - Title.docx`).
+
+- **Skip context bundles**: The existing manually-curated context bundles at `~/Desktop/forager/Newsletter/Context Bundles/` are obsolete — the MCP's `get_newsletter_context` tool replaces that workflow entirely.
+
+### Learning
+
+- **MCP PATH gotcha**: Claude Desktop uses a minimal PATH (`/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin`). Tools installed to `~/.local/bin` (like `uv`) aren't found. Always use absolute paths in MCP server configs.
+
+- **BM25 at small scale is impressive**: 0.18s to index 5.3 MB into 2,472 chunks, sub-millisecond search. No database, no embeddings, no cloud service. The entire knowledge base fits comfortably in memory.
+
+- **Hatch packaging**: `hatchling` build backend needs explicit `packages = ["src"]` in `pyproject.toml` when the package directory doesn't match the project name.
+
+### AI Tooling Observations
+
+This session was a good example of the PRD-first workflow paying off. Writing the PRD forced clarity on the 7 tools, their parameters, and the indexing strategy before any code was written. The implementation then went smoothly — all 7 tools built and tested in roughly an hour.
+
+The MCP server itself is a meta-observation: building tooling so that AI tools can better access project knowledge. The newsletter context bundles were a manual workaround for context window limits. The MCP replaces manual curation with on-demand search.
+
+### What's Next
+
+- Merge M16 to main
+- Test MCP in Claude Desktop with real queries
+- Come back to write learning notes 39-43 from the 60+ raw insights
+- Resume M10.6.5 documentation wrap-up
+
+---
+
 ## Session 70 — March 4-5, 2026
 **Milestone**: M10.6.16 — Build 16 Bug Fixes + API Key Security + Household Spinner
 **Focus**: Category display fixes, per-user API key, household spinner, drag indicators, M10.7 idea
