@@ -1,6 +1,6 @@
 ---
 name: forager-dev-journal
-description: Write or update the narrative session entry in docs/development-journal.md. Captures decisions, learning, and AI tooling observations. MANDATORY before every commit.
+description: Write or update the narrative session entry in docs/development-journal.md. Captures decisions, learning, and AI tooling observations. MANDATORY before every commit. TRIGGER when the user says "update the journal", "write a journal entry", "log the session", or when preparing to commit (should auto-check if journal is current).
 ---
 
 # Development Journal Entry

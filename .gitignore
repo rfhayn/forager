@@ -65,9 +65,10 @@ fastlane/test_output
 .DS_Store
 .AppleDouble
 .LSOverride 
-# Claude AI assistant context (except skills, which are version-controlled)
+# Claude AI assistant context (except skills and agents, which are version-controlled)
 .claude/*
 !.claude/skills/
+!.claude/agents/
 
 # ML training data and model artifacts (large files)
 Tools/ml-training/data/*.sqlite

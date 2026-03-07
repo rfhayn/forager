@@ -1,6 +1,6 @@
 ---
 name: forager-pr
-description: Create a pull request following forager conventions. M#.#.# title, structured body with summary/changes/testing/time, squash merge target.
+description: Create a pull request following forager conventions. M#.#.# title, structured body with summary/changes/testing/time, squash merge target. TRIGGER when the user says "create a PR", "make a pull request", "open a PR", "let's PR this", or any request to create or submit a pull request.
 ---
 
 # Create Forager Pull Request

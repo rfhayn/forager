@@ -1,6 +1,6 @@
 ---
 name: forager-commit
-description: Create a git commit following forager conventions. Enforces M#.#.# prefix, imperative mood, no Co-Authored-By. Use instead of raw git commit.
+description: Create a git commit following forager conventions. Enforces M#.#.# prefix, imperative mood, no Co-Authored-By. Use instead of raw git commit. TRIGGER when the user says "commit this", "commit the changes", "let's commit", "make a commit", "save this progress", or any request to create a git commit.
 ---
 
 # Forager Commit

@@ -1,6 +1,6 @@
 ---
 name: forager-milestone-complete
-description: Update all 7 core documentation files after completing a milestone. Use when marking any M#.#.# as COMPLETE. Ensures documentation stays synchronized.
+description: Update all 7 core documentation files after completing a milestone. Use when marking any M#.#.# as COMPLETE. Ensures documentation stays synchronized. TRIGGER when the user says "milestone is done", "mark it complete", "this milestone is finished", "wrap up the milestone", or any indication that a milestone has been completed.
 argument-hint: <M#.#.#>
 ---
 

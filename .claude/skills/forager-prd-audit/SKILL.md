@@ -1,6 +1,6 @@
 ---
 name: forager-prd-audit
-description: Audit a PRD against the current codebase before implementation. Verifies entity names, property names, save counts, and API signatures are still accurate.
+description: Audit a PRD against the current codebase before implementation. Verifies entity names, property names, save counts, and API signatures are still accurate. TRIGGER when the user says "audit the PRD", "check the PRD", "is the PRD still accurate", or when starting implementation of a PRD that is more than 2 weeks old.
 argument-hint: <path to PRD>
 ---
 

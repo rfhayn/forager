@@ -7,9 +7,9 @@
 ---
 
 ## Session 71 — March 7, 2026
-**Milestone**: M16 — Knowledge MCP Server
-**Focus**: Building an MCP server to make project knowledge searchable from Claude Desktop
-**Branch**: `feature/M16-knowledge-mcp-server`
+**Milestone**: M16 — Knowledge MCP Server + Skills Improvements
+**Focus**: MCP server, learning notes 39-43, skill auto-triggering + sub-agents
+**Branch**: `feature/M16-knowledge-mcp-server` → `feature/M16-learning-notes-39-43` → `feature/M16-skill-improvements`
 
 ### What Happened
 
@@ -47,11 +47,20 @@ This session was a good example of the PRD-first workflow paying off. Writing th
 
 The MCP server itself is a meta-observation: building tooling so that AI tools can better access project knowledge. The newsletter context bundles were a manual workaround for context window limits. The MCP replaces manual curation with on-demand search.
 
+Also wrote learning notes 39-43 in parallel using 5 background agents — promoting 60+ raw insights into structured knowledge. Then analyzed YouTube skill video transcripts and identified 4 improvements to the existing skill setup:
+
+1. **Auto-trigger descriptions**: Added TRIGGER phrases to 8 skills so they activate automatically from natural language ("commit this" triggers forager-commit without needing /forager-commit). The description field is what Claude matches against — explicit trigger phrases bridge the gap between how the skill is named vs how the user asks.
+
+2. **Custom sub-agents**: Created `pre-implementation` (service-check + prd-audit + core-data-audit) and `session-wrap` (dev-journal + log-insight + commit) agents in `.claude/agents/`. Key learning: sub-agents don't inherit skills — they must be explicitly listed in the agent.md `skills:` field.
+
+3. **Build script**: Moved xcodebuild command to `scripts/build.sh` — the script executes without loading its source into context, saving tokens.
+
+4. **3 new insights logged** about skill architecture (auto-triggering, sub-agents, progressive disclosure).
+
 ### What's Next
 
-- Merge M16 to main
-- Test MCP in Claude Desktop with real queries
-- Come back to write learning notes 39-43 from the 60+ raw insights
+- Test skill auto-triggering in a new session (requires restart)
+- Test sub-agents with delegation
 - Resume M10.6.5 documentation wrap-up
 
 ---
