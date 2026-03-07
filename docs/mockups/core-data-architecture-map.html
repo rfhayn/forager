@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager - Core Data Architecture Map</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --accent-green: #3fb950;
+    --accent-blue: #58a6ff;
+    --accent-purple: #bc8cff;
+    --accent-orange: #d29922;
+    --accent-red: #f85149;
+    --accent-cyan: #39d2c0;
+    --accent-pink: #f778ba;
+    --entity-bg: #1a2332;
+    --service-bg: #1a2a1a;
+    --view-bg: #2a1a2a;
+    --persist-bg: #2a2a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+  .header h1 span { color: var(--accent-green); }
+
+  .header-controls { display: flex; gap: 8px; align-items: center; }
+
+  .layer-toggle {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--text-dim); font-size: 12px;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+
+  .layer-toggle.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(88,166,255,0.1); }
+  .layer-toggle:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .scope-toggle {
+    padding: 6px 14px; border-radius: 20px; border: 2px solid var(--accent-cyan);
+    background: rgba(57,210,192,0.1); color: var(--accent-cyan); font-size: 12px;
+    cursor: pointer; transition: all 0.2s; font-family: inherit; font-weight: 600;
+  }
+
+  .scope-toggle.personal { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(88,166,255,0.1); }
+
+  .legend {
+    display: flex; gap: 20px; padding: 12px 32px;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+    font-size: 12px; flex-wrap: wrap;
+  }
+
+  .legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-dim); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 24px; height: 2px; border-radius: 1px; }
+
+  .container { display: flex; height: calc(100vh - 90px); }
+
+  /* Sidebar */
+  .sidebar {
+    width: 320px; min-width: 320px; border-right: 1px solid var(--border);
+    overflow-y: auto; background: var(--surface);
+  }
+
+  .sidebar-section { border-bottom: 1px solid var(--border); }
+
+  .sidebar-section-header {
+    padding: 12px 16px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim);
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    user-select: none;
+  }
+
+  .sidebar-section-header:hover { color: var(--text); }
+
+  .sidebar-section-header .count {
+    background: var(--surface2); padding: 2px 8px; border-radius: 10px; font-size: 10px;
+  }
+
+  .sidebar-items { padding: 0 8px 8px; }
+
+  .sidebar-item {
+    padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; gap: 8px; transition: background 0.15s;
+  }
+
+  .sidebar-item:hover { background: var(--surface2); }
+  .sidebar-item.selected { background: rgba(88,166,255,0.15); }
+
+  .sidebar-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .sidebar-item .label { flex: 1; }
+  .sidebar-item .badge {
+    font-size: 10px; color: var(--text-dim); background: var(--surface2);
+    padding: 2px 6px; border-radius: 8px;
+  }
+
+  /* Canvas */
+  .canvas { flex: 1; position: relative; overflow: hidden; }
+
+  .canvas-inner {
+    position: absolute; top: 0; left: 0;
+    width: 2800px; height: 1700px;
+    transform-origin: 0 0;
+    padding: 60px;
+  }
+
+  /* Zoom controls */
+  .zoom-controls {
+    position: absolute; bottom: 16px; right: 16px; z-index: 50;
+    display: flex; flex-direction: column; gap: 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  .zoom-btn {
+    width: 36px; height: 36px; border: none; border-radius: 8px;
+    background: transparent; color: var(--text); font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-family: inherit; transition: background 0.15s;
+  }
+
+  .zoom-btn:hover { background: var(--surface2); }
+
+  .zoom-label {
+    text-align: center; font-size: 10px; color: var(--text-dim);
+    padding: 2px 0; user-select: none;
+  }
+
+  /* Nodes */
+  .node {
+    position: absolute; border-radius: 12px; border: 1px solid var(--border);
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s; user-select: none;
+  }
+
+  .node:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 10; }
+  .node.dimmed { opacity: 0.15; }
+  .node.highlighted { box-shadow: 0 0 0 2px var(--accent-blue), 0 8px 24px rgba(88,166,255,0.2); z-index: 10; }
+  .node.inactive-scope { opacity: 0.25; border-style: dashed; }
+
+  .node-header {
+    padding: 10px 14px; border-bottom: 1px solid rgba(48,54,61,0.5);
+    display: flex; align-items: center; gap: 8px; border-radius: 12px 12px 0 0;
+  }
+
+  .node-header .icon {
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+  }
+
+  .node-header .name { font-size: 13px; font-weight: 600; letter-spacing: -0.2px; }
+
+  .node-header .store-badge {
+    font-size: 9px; padding: 2px 6px; border-radius: 8px;
+    margin-left: auto; font-weight: 500;
+  }
+
+  .node-body { padding: 8px 14px 10px; font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .node-body .prop { display: flex; gap: 6px; align-items: baseline; }
+  .node-body .prop-name { color: var(--accent-cyan); font-family: 'SF Mono', monospace; font-size: 10px; }
+  .node-body .prop-type { color: var(--text-dim); font-size: 10px; }
+  .node-body .rel { display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+  .node-body .rel-arrow { color: var(--accent-orange); font-size: 10px; }
+  .node-body .rel-name { font-family: 'SF Mono', monospace; font-size: 10px; }
+  .node-body .rel-dest { color: var(--accent-purple); font-size: 10px; }
+  .node-body .section-label {
+    font-size: 9px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-dim); margin-top: 6px; margin-bottom: 2px; opacity: 0.7;
+  }
+
+  /* Service / View / Persist nodes */
+  .service-node, .view-node, .persist-node {
+    position: absolute; border-radius: 10px; padding: 8px 14px; cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.3s; user-select: none;
+  }
+
+  .service-node { border: 1px solid rgba(63,185,80,0.3); background: var(--service-bg); }
+  .service-node:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(63,185,80,0.15); z-index: 10; }
+  .service-node.dimmed, .view-node.dimmed, .persist-node.dimmed { opacity: 0.15; }
+  .service-node.highlighted { box-shadow: 0 0 0 2px var(--accent-green); z-index: 10; }
+  .service-node .name { font-size: 12px; font-weight: 600; color: var(--accent-green); }
+  .service-node .desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .service-node.inactive-scope { opacity: 0.25; border-style: dashed; }
+
+  .view-node { border: 1px solid rgba(247,120,186,0.3); background: var(--view-bg); }
+  .view-node:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(247,120,186,0.15); z-index: 10; }
+  .view-node.highlighted { box-shadow: 0 0 0 2px var(--accent-pink); z-index: 10; }
+  .view-node .name { font-size: 12px; font-weight: 600; color: var(--accent-pink); }
+  .view-node .fetch-tag { font-size: 9px; color: var(--accent-purple); font-family: 'SF Mono', monospace; margin-top: 2px; }
+  .view-node.inactive-scope { opacity: 0.25; border-style: dashed; }
+
+  .persist-node { border: 1px solid rgba(210,153,34,0.3); background: var(--persist-bg); }
+  .persist-node:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(210,153,34,0.15); z-index: 10; }
+  .persist-node.highlighted { box-shadow: 0 0 0 2px var(--accent-orange); z-index: 10; }
+  .persist-node .name { font-size: 12px; font-weight: 600; color: var(--accent-orange); }
+  .persist-node .desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  /* SVG */
+  svg.connections { position: absolute; top: 0; left: 0; width: 2800px; height: 1700px; pointer-events: none; z-index: 1; }
+
+  /* Detail Panel */
+  .detail-panel {
+    width: 380px; min-width: 380px; border-left: 1px solid var(--border);
+    background: var(--surface); overflow-y: auto; transition: transform 0.3s;
+  }
+  .detail-panel.hidden { display: none; }
+
+  .detail-header { padding: 20px; border-bottom: 1px solid var(--border); }
+  .detail-header .type-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .detail-header .title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+
+  .detail-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .detail-section h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-dim); margin-bottom: 10px; }
+
+  .detail-section .prop-row {
+    display: flex; justify-content: space-between; padding: 4px 0;
+    font-size: 12px; border-bottom: 1px solid rgba(48,54,61,0.3);
+  }
+  .detail-section .prop-row:last-child { border-bottom: none; }
+  .detail-section .prop-row .key { color: var(--accent-cyan); font-family: 'SF Mono', monospace; font-size: 11px; }
+  .detail-section .prop-row .val { color: var(--text-dim); font-size: 11px; }
+
+  .detail-section .connection-item {
+    padding: 6px 10px; margin: 4px 0; border-radius: 6px;
+    background: var(--surface2); font-size: 12px; cursor: pointer; transition: background 0.15s;
+  }
+  .detail-section .connection-item:hover { background: rgba(88,166,255,0.1); }
+  .detail-section .connection-item .arrow { font-size: 10px; margin: 0 4px; }
+  .connection-item .conn-type { font-size: 9px; color: var(--text-dim); margin-left: 4px; }
+
+  /* Store Architecture in sidebar */
+  .store-diagram {
+    margin: 12px 0; padding: 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(0,0,0,0.2);
+  }
+  .store-diagram .store-label { font-size: 11px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .store-diagram .store-entities { display: flex; flex-wrap: wrap; gap: 4px; }
+  .store-diagram .entity-chip {
+    font-size: 10px; padding: 3px 8px; border-radius: 12px;
+    background: var(--surface2); color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+  }
+  .store-diagram .entity-chip:hover { background: rgba(88,166,255,0.15); color: var(--accent-blue); }
+
+  /* Scope Flow Panel */
+  .scope-flow {
+    margin: 12px 0; padding: 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(0,0,0,0.2);
+    font-size: 11px; line-height: 1.6;
+  }
+  .scope-flow .flow-title {
+    font-size: 12px; font-weight: 700; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .scope-flow .flow-step {
+    padding: 4px 0 4px 12px; border-left: 2px solid var(--border);
+    margin-left: 4px; color: var(--text-dim);
+  }
+  .scope-flow .flow-step strong { color: var(--text); font-weight: 600; }
+  .scope-flow .flow-step code {
+    font-family: 'SF Mono', monospace; font-size: 10px;
+    background: var(--surface2); padding: 1px 4px; border-radius: 3px;
+    color: var(--accent-cyan);
+  }
+
+  .scope-indicator {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 20px; font-size: 13px;
+    z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .scope-indicator .mode-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  @media (max-width: 1200px) {
+    .detail-panel { width: 300px; min-width: 300px; }
+    .sidebar { width: 260px; min-width: 260px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>Forager</span> Core Data Architecture</h1>
+  <div class="header-controls">
+    <button class="scope-toggle" id="scope-btn" onclick="toggleScope()">Household Mode</button>
+    <button class="layer-toggle active" data-layer="entities" onclick="toggleLayer('entities')">Entities</button>
+    <button class="layer-toggle active" data-layer="services" onclick="toggleLayer('services')">Services</button>
+    <button class="layer-toggle active" data-layer="views" onclick="toggleLayer('views')">Views</button>
+    <button class="layer-toggle active" data-layer="persistence" onclick="toggleLayer('persistence')">Infrastructure</button>
+    <button class="layer-toggle" onclick="resetView()" style="border-color: var(--accent-red); color: var(--accent-red);">Reset</button>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent-blue)"></div> Entity</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent-green)"></div> Service</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent-pink)"></div> View</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent-orange)"></div> Infrastructure</div>
+  <div class="legend-item"><div class="legend-line" style="background: var(--accent-purple)"></div> Relationship</div>
+  <div class="legend-item"><div class="legend-line" style="background: var(--accent-green); opacity:0.5"></div> Writes</div>
+  <div class="legend-item"><div class="legend-line" style="background: var(--accent-blue); opacity:0.5"></div> Reads</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--accent-cyan); width: 8px; height: 8px;"></div> HouseholdScoped</div>
+</div>
+
+<div class="container">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" onclick="toggleSection(this)">
+        Entities <span class="count">12</span>
+      </div>
+      <div class="sidebar-items" id="entity-list"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" onclick="toggleSection(this)">
+        Services <span class="count">14</span>
+      </div>
+      <div class="sidebar-items" id="service-list"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" onclick="toggleSection(this)">
+        Views <span class="count">6 groups</span>
+      </div>
+      <div class="sidebar-items" id="view-list"></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" onclick="toggleSection(this)">
+        Infrastructure <span class="count">8</span>
+      </div>
+      <div class="sidebar-items" id="persist-list"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-header">Store Architecture</div>
+      <div style="padding: 0 16px 16px;">
+        <div class="store-diagram" id="private-store-diagram">
+          <div class="store-label" style="color: var(--accent-blue)">
+            <div class="legend-dot" style="background: var(--accent-blue)"></div>
+            Private Store (forager.sqlite)
+          </div>
+          <div class="store-entities" id="private-store-entities"></div>
+        </div>
+        <div class="store-diagram" id="shared-store-diagram">
+          <div class="store-label" style="color: var(--accent-cyan)">
+            <div class="legend-dot" style="background: var(--accent-cyan)"></div>
+            Shared Store (forager_shared.sqlite)
+          </div>
+          <div class="store-entities" id="shared-store-entities"></div>
+        </div>
+        <div id="store-notes" style="font-size: 10px; color: var(--text-dim); margin-top: 8px; line-height: 1.4;"></div>
+      </div>
+    </div>
+
+    <!-- Scope-dependent data flow -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-header" id="scope-flow-header">Data Flow</div>
+      <div style="padding: 0 16px 16px;" id="scope-flow-content"></div>
+    </div>
+  </div>
+
+  <div class="canvas" id="canvas">
+    <div class="canvas-inner" id="canvas-inner">
+      <svg class="connections" id="connections"></svg>
+    </div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" onclick="zoomIn()" title="Zoom in">+</button>
+      <div class="zoom-label" id="zoom-label">100%</div>
+      <button class="zoom-btn" onclick="zoomOut()" title="Zoom out">&minus;</button>
+      <button class="zoom-btn" onclick="zoomFit()" title="Fit to view" style="font-size:13px">Fit</button>
+      <button class="zoom-btn" onclick="zoomReset()" title="Reset zoom" style="font-size:13px">1:1</button>
+    </div>
+  </div>
+
+  <div class="detail-panel hidden" id="detail-panel">
+    <div class="detail-header" id="detail-header"></div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- Scope indicator -->
+<div class="scope-indicator" id="scope-indicator">
+  <div class="mode-dot" id="scope-dot" style="background: var(--accent-cyan)"></div>
+  <span id="scope-label">Household Mode: Data routes through shared store, scoped by householdKey</span>
+</div>
+
+<script>
+// NOTE: All data below is hardcoded project metadata - no user input is rendered.
+// innerHTML usage is safe since all values are static constants defined in this file.
+
+// ── Data Model ──────────────────────────────────────────
+const entities = {
+  Household: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'shared', icon: 'H',
+    desc: 'Root aggregate for CloudKit dual-store. Central hub for all shared data.',
+    personalBehavior: 'Does not exist in personal mode. Created when user forms/joins a household.',
+    householdBehavior: 'Lives in shared store. All HouseholdScoped entities link to it. CKShare root object.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'ownerEmail', type: 'String' }, { name: 'ownerRecordName', type: 'String' },
+      { name: 'shareRecord', type: 'Data' }, { name: 'llmAPIKey', type: 'String' },
+      { name: 'createdDate', type: 'Date' }
+    ],
+    relationships: [
+      { name: 'members', dest: 'HouseholdMember', card: '0..*', rule: 'Cascade' },
+      { name: 'categories', dest: 'Category', card: '0..*', rule: 'Cascade' },
+      { name: 'recipes', dest: 'Recipe', card: '0..*', rule: 'Cascade' },
+      { name: 'ingredientTemplates', dest: 'IngredientTemplate', card: '0..*', rule: 'Cascade' },
+      { name: 'mealPlans', dest: 'MealPlan', card: '0..*', rule: 'Cascade' },
+      { name: 'plannedMeals', dest: 'PlannedMeal', card: '0..*', rule: 'Cascade' },
+      { name: 'weeklyLists', dest: 'WeeklyList', card: '0..*', rule: 'Cascade' },
+      { name: 'preferences', dest: 'UserPreferences', card: '0..1', rule: 'Cascade' },
+    ],
+    services: ['HouseholdService'],
+    views: ['Household'],
+    activeInPersonal: false, activeInHousehold: true,
+    x: 1200, y: 480, w: 220
+  },
+  HouseholdMember: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'shared', icon: 'HM',
+    desc: 'Member of a household with role and invitation status.',
+    personalBehavior: 'Does not exist. No household means no members.',
+    householdBehavior: 'Tracks all members. Owner creates, members join via invitation. Status: pending/accepted/declined.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'email', type: 'String' },
+      { name: 'displayName', type: 'String' }, { name: 'role', type: 'String' },
+      { name: 'status', type: 'String' }, { name: 'joinedDate', type: 'Date' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+    ],
+    services: ['HouseholdService'],
+    views: ['Household'],
+    activeInPersonal: false, activeInHousehold: true,
+    x: 1520, y: 400, w: 200
+  },
+  Category: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'C',
+    desc: 'Grocery item categorization. HouseholdScoped with normalizedName semantic key.',
+    personalBehavior: 'Stored in private store. household=nil, householdKey=nil. Seeded by DefaultSeeder. No dedup needed.',
+    householdBehavior: 'Stored in shared store. household set, householdKey populated. CategoryDeduplicator handles cross-device sync conflicts. Shared across all household members.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'normalizedName', type: 'String' }, { name: 'color', type: 'String' },
+      { name: 'sortOrder', type: 'Int16' }, { name: 'isDefault', type: 'Bool' },
+      { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+      { name: 'groceryItems', dest: 'GroceryItem', card: '0..*', rule: 'Nullify' },
+    ],
+    services: ['DefaultSeeder', 'CategoryDeduplicator'],
+    views: ['Grocery', 'Recipes'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 680, y: 420, w: 200
+  },
+  GroceryItem: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'private', icon: 'GI',
+    desc: 'Master grocery item template. Always private store.',
+    personalBehavior: 'Personal item templates. Standard behavior.',
+    householdBehavior: 'Still private store only. Not shared with household. Per-device item history.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'category', type: 'String' }, { name: 'isStaple', type: 'Bool' },
+      { name: 'lastPurchased', type: 'Date' }
+    ],
+    relationships: [
+      { name: 'categoryEntity', dest: 'Category', card: '0..1', rule: 'Nullify' },
+    ],
+    services: [],
+    views: ['Grocery'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 420, y: 420, w: 180
+  },
+  Recipe: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'R',
+    desc: 'Recipe master. HouseholdScoped. Migrates from private to shared on household join.',
+    personalBehavior: 'Stored in private store. household=nil. Only visible to this device/iCloud account.',
+    householdBehavior: 'Stored in shared store. Visible to all household members. householdKey used for filtering. Created via ManagedObjectFactory for correct store assignment.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'title', type: 'String' },
+      { name: 'instructions', type: 'String' }, { name: 'servings', type: 'Int16' },
+      { name: 'prepTime', type: 'Int16' }, { name: 'cookTime', type: 'Int16' },
+      { name: 'tags', type: 'String' }, { name: 'isFavorite', type: 'Bool' },
+      { name: 'usageCount', type: 'Int32' }, { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+      { name: 'ingredients', dest: 'Ingredient', card: '0..*', rule: 'Cascade' },
+      { name: 'plannedMeals', dest: 'PlannedMeal', card: '0..*', rule: 'Nullify' },
+      { name: 'groceryListItems', dest: 'GroceryListItem', card: '0..*', rule: 'Nullify' },
+    ],
+    services: ['RecipeService', 'RecipeImportService', 'OptimizedRecipeDataService'],
+    views: ['Recipes', 'Import', 'MealPlanning'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 880, y: 800, w: 220
+  },
+  Ingredient: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'both', icon: 'I',
+    desc: 'Individual ingredient in a recipe with parsed quantity data.',
+    personalBehavior: 'Follows parent Recipe to private store.',
+    householdBehavior: 'Follows parent Recipe to shared store. Cascade delete from Recipe.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'displayText', type: 'String' }, { name: 'numericValue', type: 'Double' },
+      { name: 'standardUnit', type: 'String' }, { name: 'parseConfidence', type: 'Float' },
+      { name: 'sortOrder', type: 'Int16' }
+    ],
+    relationships: [
+      { name: 'recipe', dest: 'Recipe', card: '0..1', rule: 'Nullify' },
+      { name: 'ingredientTemplate', dest: 'IngredientTemplate', card: '0..1', rule: 'Nullify' },
+    ],
+    services: ['RecipeService', 'RecipeImportService'],
+    views: ['Recipes'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 580, y: 1000, w: 200
+  },
+  IngredientTemplate: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'IT',
+    desc: 'Normalized ingredient master. Single source of truth. HouseholdScoped.',
+    personalBehavior: 'Private store. Personal ingredient library. Dedup via canonicalName.',
+    householdBehavior: 'Shared store. Household-wide ingredient library. All members see same templates. householdKey scoping.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'canonicalName', type: 'String' }, { name: 'category', type: 'String' },
+      { name: 'usageCount', type: 'Int32' }, { name: 'isStaple', type: 'Bool' },
+      { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+      { name: 'ingredients', dest: 'Ingredient', card: '0..*', rule: 'Nullify', note: 'READ-ONLY' },
+    ],
+    services: ['IngredientTemplateService', 'IngredientAutocompleteService', 'IngredientMatchService'],
+    views: ['Grocery', 'Recipes', 'Search'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 240, y: 820, w: 200
+  },
+  WeeklyList: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'WL',
+    desc: 'Grocery shopping list container. HouseholdScoped.',
+    personalBehavior: 'Private store. Personal grocery lists.',
+    householdBehavior: 'Shared store. All household members see and edit the same lists. Real-time sync via CloudKit.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'notes', type: 'String' }, { name: 'isCompleted', type: 'Bool' },
+      { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+      { name: 'items', dest: 'GroceryListItem', card: '0..*', rule: 'Cascade' },
+    ],
+    services: ['WeeklyListService'],
+    views: ['Grocery', 'Search'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 80, y: 500, w: 190
+  },
+  GroceryListItem: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'both', icon: 'GL',
+    desc: 'Item on a WeeklyList. Flat string snapshots (ADR 012).',
+    personalBehavior: 'Follows parent WeeklyList to private store.',
+    householdBehavior: 'Follows parent WeeklyList to shared store. Cascade delete from WeeklyList.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'displayText', type: 'String' },
+      { name: 'name', type: 'String' }, { name: 'categoryName', type: 'String' },
+      { name: 'numericValue', type: 'Double' }, { name: 'standardUnit', type: 'String' },
+      { name: 'parseConfidence', type: 'Float' }, { name: 'isCompleted', type: 'Bool' },
+      { name: 'source', type: 'String' }
+    ],
+    relationships: [
+      { name: 'weeklyList', dest: 'WeeklyList', card: '0..1', rule: 'Nullify' },
+      { name: 'sourceRecipes', dest: 'Recipe', card: '0..*', rule: 'Nullify' },
+    ],
+    services: ['WeeklyListService'],
+    views: ['Grocery'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 60, y: 780, w: 200
+  },
+  MealPlan: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'MP',
+    desc: 'Meal planning container. HouseholdScoped.',
+    personalBehavior: 'Private store. Personal meal plans.',
+    householdBehavior: 'Shared store. Household meal plans visible to all members.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
+      { name: 'startDate', type: 'Date' }, { name: 'duration', type: 'Int16' },
+      { name: 'isActive', type: 'Bool' }, { name: 'isCompleted', type: 'Bool' },
+      { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+      { name: 'plannedMeals', dest: 'PlannedMeal', card: '0..*', rule: 'Cascade' },
+    ],
+    services: ['MealPlanService'],
+    views: ['MealPlanning', 'Search'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 1600, y: 760, w: 200
+  },
+  PlannedMeal: {
+    type: 'entity', color: '#58a6ff', householdScoped: true,
+    store: 'both', icon: 'PM',
+    desc: 'Individual meal in a plan. HouseholdScoped.',
+    personalBehavior: 'Private store. Follows parent MealPlan.',
+    householdBehavior: 'Shared store. All household members can assign recipes to meal slots.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'date', type: 'Date' },
+      { name: 'mealType', type: 'String' }, { name: 'servings', type: 'Int16' },
+      { name: 'scaleFactor', type: 'Double' }, { name: 'quickOption', type: 'String' },
+      { name: 'slotKey', type: 'String' }, { name: 'householdKey', type: 'String' }
+    ],
+    relationships: [
+      { name: 'mealPlan', dest: 'MealPlan', card: '0..1', rule: 'Nullify' },
+      { name: 'recipe', dest: 'Recipe', card: '0..1', rule: 'Nullify' },
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+    ],
+    services: ['MealPlanService'],
+    views: ['MealPlanning'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 1360, y: 1000, w: 200
+  },
+  UserPreferences: {
+    type: 'entity', color: '#58a6ff', householdScoped: false,
+    store: 'private', icon: 'UP',
+    desc: 'User preferences for meal planning and UI.',
+    personalBehavior: 'Private store. Personal preferences.',
+    householdBehavior: 'Still private store. Preferences are per-user, not shared with household.',
+    props: [
+      { name: 'id', type: 'UUID' }, { name: 'autoNameMealPlans', type: 'Bool' },
+      { name: 'mealPlanDuration', type: 'Int16' }, { name: 'mealPlanStartDay', type: 'Int16' },
+      { name: 'showRecipeSources', type: 'Bool' }
+    ],
+    relationships: [
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
+    ],
+    services: ['UserPreferencesService'],
+    views: ['Settings'],
+    activeInPersonal: true, activeInHousehold: true,
+    x: 1820, y: 560, w: 200
+  },
+};
+
+const services = {
+  HouseholdService: {
+    type: 'service', desc: 'Household mgmt, CloudKit sharing, invitations',
+    entities: { writes: ['Household', 'HouseholdMember'], reads: ['Household', 'HouseholdMember'] },
+    activeInPersonal: false, activeInHousehold: true,
+    personalNote: 'Inactive. No household exists.',
+    householdNote: 'Central service: create household, invite members, manage CKShare, leave/delete.',
+    x: 1520, y: 200, w: 200
+  },
+  WeeklyListService: {
+    type: 'service', desc: 'Grocery list CRUD + item management',
+    entities: { writes: ['WeeklyList', 'GroceryListItem'], reads: ['WeeklyList', 'GroceryListItem'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Creates lists in private store. No householdKey set.',
+    householdNote: 'Creates lists via ManagedObjectFactory. Auto-assigns to shared store with householdKey.',
+    x: 60, y: 260, w: 200
+  },
+  RecipeService: {
+    type: 'service', desc: 'Recipe + ingredient CRUD',
+    entities: { writes: ['Recipe', 'Ingredient'], reads: ['Recipe', 'Ingredient'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Creates recipes in private store.',
+    householdNote: 'Creates recipes via factory in shared store. Visible to all members.',
+    x: 620, y: 1200, w: 190
+  },
+  RecipeImportService: {
+    type: 'service', desc: 'Import recipes via URL/text/photo',
+    entities: { writes: ['Recipe', 'Ingredient', 'IngredientTemplate'], reads: ['Recipe'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Imports to private store via child context.',
+    householdNote: 'Imports to shared store. Child context with explicit scope.',
+    x: 340, y: 1200, w: 200
+  },
+  OptimizedRecipeDataService: {
+    type: 'service', desc: 'Recipe queries (read-only)',
+    entities: { writes: [], reads: ['Recipe'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Reads personal recipes.',
+    householdNote: 'Reads household-scoped recipes filtered by householdKey.',
+    x: 920, y: 1200, w: 230
+  },
+  MealPlanService: {
+    type: 'service', desc: 'Meal plan lifecycle + meals',
+    entities: { writes: ['MealPlan', 'PlannedMeal'], reads: ['MealPlan', 'PlannedMeal'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Personal meal plans in private store.',
+    householdNote: 'Shared meal plans. All members can add/remove meals.',
+    x: 1520, y: 1200, w: 200
+  },
+  IngredientTemplateService: {
+    type: 'service', desc: 'Template search + updates',
+    entities: { writes: ['IngredientTemplate'], reads: ['IngredientTemplate'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Personal ingredient library.',
+    householdNote: 'Shared ingredient library. All members contribute.',
+    x: 60, y: 1100, w: 210
+  },
+  IngredientAutocompleteService: {
+    type: 'service', desc: 'Autocomplete searches',
+    entities: { writes: [], reads: ['IngredientTemplate'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Searches personal templates.',
+    householdNote: 'Searches household templates by householdKey.',
+    x: 60, y: 1200, w: 220
+  },
+  IngredientMatchService: {
+    type: 'service', desc: 'Template lookups + matching',
+    entities: { writes: [], reads: ['IngredientTemplate'] },
+    activeInPersonal: true, activeInHousehold: true,
+    x: 60, y: 1300, w: 200
+  },
+  UserPreferencesService: {
+    type: 'service', desc: 'Preferences CRUD (singleton)',
+    entities: { writes: ['UserPreferences'], reads: ['UserPreferences'] },
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Personal preferences.',
+    householdNote: 'Still personal preferences. Not shared.',
+    x: 1820, y: 260, w: 210
+  },
+  IngredientParsingService: {
+    type: 'service', desc: '3-tier hybrid parser API',
+    entities: { writes: [], reads: [] },
+    activeInPersonal: true, activeInHousehold: true,
+    x: 480, y: 1400, w: 210
+  },
+  RecipeScalingService: {
+    type: 'service', desc: 'Recipe scaling (0.25x-4x)',
+    entities: { writes: [], reads: ['Recipe', 'Ingredient'] },
+    activeInPersonal: true, activeInHousehold: true,
+    x: 780, y: 1400, w: 200
+  },
+  QuantityMergeService: {
+    type: 'service', desc: 'Quantity consolidation (analysis)',
+    entities: { writes: [], reads: ['GroceryListItem'] },
+    activeInPersonal: true, activeInHousehold: true,
+    x: 1080, y: 1400, w: 210
+  },
+  UnitConversionService: {
+    type: 'service', desc: 'Unit conversions (cups/tbsp/oz)',
+    entities: { writes: [], reads: [] },
+    activeInPersonal: true, activeInHousehold: true,
+    x: 1380, y: 1400, w: 200
+  },
+};
+
+const viewGroups = {
+  Grocery: {
+    type: 'view-group', desc: '10 views',
+    views: ['WeeklyListsView', 'GroceryListDetailView', 'AddListItemView', 'ManageCategoriesView', 'AddCategoryView', 'CategoryAssignmentModal', 'CategoryChangeModal', 'AddIngredientsToListView', 'AddStapleView', 'EditStapleView'],
+    fetchRequests: ['WeeklyList', 'GroceryListItem', 'Category', 'IngredientTemplate', 'Recipe'],
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Fetches unscoped data (householdKey == nil).',
+    householdNote: 'Filters all @FetchRequest results by householdService.currentHouseholdKey.',
+    x: 80, y: 60, w: 150
+  },
+  Recipes: {
+    type: 'view-group', desc: '6 views',
+    views: ['RecipeListView', 'CreateRecipeView', 'EditRecipeView', 'IngredientsView', 'RecipeScalingView', 'AddIngredientView'],
+    fetchRequests: ['Recipe', 'Category', 'IngredientTemplate', 'Ingredient'],
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Shows personal recipes only.',
+    householdNote: 'Shows household recipes. All members see same recipe list.',
+    x: 480, y: 60, w: 150
+  },
+  Import: {
+    type: 'view-group', desc: '4+ views',
+    views: ['RecipeImportPreviewView', 'RecipeImportSheet', 'RecipeBrowserView', 'TextPasteImportView'],
+    fetchRequests: ['Category'],
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Imports to private store.',
+    householdNote: 'Imports to shared store via scoped factory.',
+    x: 780, y: 60, w: 150
+  },
+  MealPlanning: {
+    type: 'view-group', desc: '8 views',
+    views: ['MealPlanListView', 'MealPlanDetailView', 'CreateMealPlanSheet', 'RecipePickerSheet', 'SelectMealPlanSheet', 'MealPlanRowView', 'EmptyMealPlanView', 'DatePickerSheet'],
+    fetchRequests: ['MealPlan', 'PlannedMeal', 'Recipe'],
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Personal meal plans.',
+    householdNote: 'Shared meal plans. Collaborative planning.',
+    x: 1260, y: 60, w: 170
+  },
+  Household: {
+    type: 'view-group', desc: '7 views',
+    views: ['HouseholdView', 'InviteMemberSheet', 'AcceptInvitationSheet', 'PasteInvitationSheet', 'PreHouseholdDataMigrationSheet', 'ShareSheet', 'HouseholdMembersView'],
+    fetchRequests: ['Household', 'HouseholdMember'],
+    activeInPersonal: false, activeInHousehold: true,
+    personalNote: 'Only shows "Create Household" option.',
+    householdNote: 'Full household management: members, invitations, sharing, data migration.',
+    x: 1600, y: 60, w: 160
+  },
+  Search: {
+    type: 'view-group', desc: '1 view',
+    views: ['UnifiedSearchView'],
+    fetchRequests: ['WeeklyList', 'IngredientTemplate', 'Recipe', 'MealPlan'],
+    activeInPersonal: true, activeInHousehold: true,
+    personalNote: 'Searches personal data.',
+    householdNote: 'Searches household data filtered by householdKey.',
+    x: 1000, y: 60, w: 150
+  },
+};
+
+const infrastructure = {
+  PersistenceController: {
+    type: 'persist', desc: 'NSPersistentCloudKitContainer + dual stores',
+    entities: ['all'],
+    personalNote: 'Only private store active. Shared store exists but empty.',
+    householdNote: 'Both stores active. CloudKit syncs shared store across devices.',
+    x: 2200, y: 200, w: 240
+  },
+  ManagedObjectFactory: {
+    type: 'persist', desc: 'Single creation path for HouseholdScoped',
+    entities: ['Recipe', 'Category', 'WeeklyList', 'PlannedMeal', 'IngredientTemplate'],
+    personalNote: 'Scope = .personal. Objects go to private store, household = nil.',
+    householdNote: 'Scope = .household(id, .shared). Objects go to shared store, household auto-set.',
+    x: 2200, y: 340, w: 240
+  },
+  DataScope: {
+    type: 'persist', desc: '.personal | .household(id, storeID)',
+    entities: [],
+    personalNote: 'Always returns .personal.',
+    householdNote: 'Returns .household(objectID, .shared) with resolved store.',
+    x: 2200, y: 480, w: 240
+  },
+  HouseholdScopeProvider: {
+    type: 'persist', desc: 'Resolves active scope from household state',
+    entities: ['Household'],
+    personalNote: 'activeScope = .personal (no household).',
+    householdNote: 'activeScope = .household(...). Resolves store from household.objectID.persistentStore.',
+    x: 2200, y: 620, w: 250
+  },
+  DefaultSeeder: {
+    type: 'persist', desc: '7 default categories, idempotent',
+    entities: ['Category'],
+    personalNote: 'Seeds categories with householdKey = nil.',
+    householdNote: 'Seeds household categories with householdKey set. Dedup handles cross-device.',
+    x: 2200, y: 760, w: 240
+  },
+  CategoryDeduplicator: {
+    type: 'persist', desc: 'Cross-device dedup (<60s convergence)',
+    entities: ['Category'],
+    personalNote: 'Rarely needed. Single device, no sync conflicts.',
+    householdNote: 'Critical. Multiple devices may seed simultaneously. Groups by (normalizedName, householdKey).',
+    x: 2200, y: 900, w: 250
+  },
+  CloudKitSyncMonitor: {
+    type: 'persist', desc: 'Real-time sync tracking + events',
+    entities: [],
+    personalNote: 'Monitors private database sync only.',
+    householdNote: 'Monitors both private and shared database syncs.',
+    x: 2200, y: 1040, w: 240
+  },
+  CloudKitDiagnostics: {
+    type: 'persist', desc: 'Sync monitoring + error mapping',
+    entities: [],
+    x: 2200, y: 1180, w: 240
+  },
+};
+
+// ── State ──────────────────────────────────────────────
+let selectedNode = null;
+let activeLayers = { entities: true, services: true, views: true, persistence: true };
+let scopeMode = 'household'; // 'personal' or 'household'
+
+// ── Zoom & Pan ─────────────────────────────────────────
+let zoom = 0.55;
+let panX = 0;
+let panY = 0;
+let isPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+
+function applyTransform() {
+  const inner = document.getElementById('canvas-inner');
+  inner.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')';
+  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+}
+
+function zoomIn() {
+  zoom = Math.min(2.0, zoom + 0.1);
+  applyTransform();
+  renderConnections();
+}
+
+function zoomOut() {
+  zoom = Math.max(0.15, zoom - 0.1);
+  applyTransform();
+  renderConnections();
+}
+
+function zoomReset() {
+  zoom = 1.0;
+  panX = 0;
+  panY = 0;
+  applyTransform();
+  renderConnections();
+}
+
+function zoomFit() {
+  const canvas = document.getElementById('canvas');
+  const cw = canvas.clientWidth;
+  const ch = canvas.clientHeight;
+  // Find bounds of all nodes
+  let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0;
+  const allItems = { ...entities, ...services, ...viewGroups, ...infrastructure };
+  Object.values(allItems).forEach(n => {
+    if (n.x < minX) minX = n.x;
+    if (n.y < minY) minY = n.y;
+    if (n.x + (n.w || 200) > maxX) maxX = n.x + (n.w || 200);
+    if (n.y + 120 > maxY) maxY = n.y + 120;
+  });
+  const contentW = maxX - minX + 120;
+  const contentH = maxY - minY + 120;
+  zoom = Math.min(cw / contentW, ch / contentH, 1.0);
+  panX = (cw - contentW * zoom) / 2 - minX * zoom + 30;
+  panY = (ch - contentH * zoom) / 2 - minY * zoom + 30;
+  applyTransform();
+  renderConnections();
+}
+
+// Mouse wheel zoom
+document.getElementById('canvas').addEventListener('wheel', function(e) {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.05 : 0.05;
+  const oldZoom = zoom;
+  zoom = Math.min(2.0, Math.max(0.15, zoom + delta));
+
+  // Zoom toward mouse position
+  const rect = this.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  panX = mx - (mx - panX) * (zoom / oldZoom);
+  panY = my - (my - panY) * (zoom / oldZoom);
+
+  applyTransform();
+  renderConnections();
+}, { passive: false });
+
+// Pan with middle-click or alt+click
+document.getElementById('canvas').addEventListener('mousedown', function(e) {
+  if (e.button === 1 || (e.button === 0 && e.altKey)) {
+    e.preventDefault();
+    isPanning = true;
+    panStartX = e.clientX - panX;
+    panStartY = e.clientY - panY;
+    this.style.cursor = 'grabbing';
+  }
+});
+
+document.addEventListener('mousemove', function(e) {
+  if (!isPanning) return;
+  panX = e.clientX - panStartX;
+  panY = e.clientY - panStartY;
+  applyTransform();
+  renderConnections();
+});
+
+document.addEventListener('mouseup', function() {
+  if (isPanning) {
+    isPanning = false;
+    document.getElementById('canvas').style.cursor = '';
+  }
+});
+
+// ── Scope Toggle ───────────────────────────────────────
+function toggleScope() {
+  scopeMode = scopeMode === 'household' ? 'personal' : 'household';
+  const btn = document.getElementById('scope-btn');
+  const dot = document.getElementById('scope-dot');
+  const label = document.getElementById('scope-label');
+
+  if (scopeMode === 'personal') {
+    btn.textContent = 'Personal Mode';
+    btn.classList.add('personal');
+    dot.style.background = 'var(--accent-blue)';
+    label.textContent = 'Personal Mode: All data in private store, no household scoping';
+  } else {
+    btn.textContent = 'Household Mode';
+    btn.classList.remove('personal');
+    dot.style.background = 'var(--accent-cyan)';
+    label.textContent = 'Household Mode: Data routes through shared store, scoped by householdKey';
+  }
+
+  render();
+  if (selectedNode) updateDetailPanel();
+}
+
+// ── Render ─────────────────────────────────────────────
+function render() {
+  renderSidebar();
+  renderCanvas();
+  renderConnections();
+  renderScopeFlow();
+  renderStoreArchitecture();
+}
+
+function renderStoreArchitecture() {
+  const privateEntities = document.getElementById('private-store-entities');
+  const sharedEntities = document.getElementById('shared-store-entities');
+  const notes = document.getElementById('store-notes');
+
+  if (scopeMode === 'personal') {
+    privateEntities.textContent = '';
+    const allPersonal = ['GroceryItem', 'UserPreferences', 'Category', 'Recipe', 'Ingredient',
+      'IngredientTemplate', 'WeeklyList', 'GroceryListItem', 'MealPlan', 'PlannedMeal'];
+    allPersonal.forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'entity-chip';
+      chip.textContent = name;
+      chip.onclick = () => selectNode(name);
+      privateEntities.appendChild(chip);
+    });
+
+    sharedEntities.textContent = '';
+    const emptyNote = document.createElement('span');
+    emptyNote.style.cssText = 'font-size:10px;color:var(--text-dim);font-style:italic';
+    emptyNote.textContent = 'Empty - no household exists';
+    sharedEntities.appendChild(emptyNote);
+
+    notes.textContent = 'In personal mode, ALL data lives in the private store. The shared store exists but contains no data. HouseholdScoped entities have household=nil and householdKey=nil.';
+  } else {
+    privateEntities.textContent = '';
+    ['GroceryItem', 'UserPreferences'].forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'entity-chip';
+      chip.textContent = name;
+      chip.onclick = () => selectNode(name);
+      privateEntities.appendChild(chip);
+    });
+
+    sharedEntities.textContent = '';
+    ['Household', 'HouseholdMember', 'Recipe', 'Ingredient', 'IngredientTemplate',
+     'Category', 'WeeklyList', 'GroceryListItem', 'MealPlan', 'PlannedMeal'].forEach(name => {
+      const chip = document.createElement('span');
+      chip.className = 'entity-chip';
+      chip.textContent = name;
+      chip.onclick = () => selectNode(name);
+      sharedEntities.appendChild(chip);
+    });
+
+    notes.textContent = 'In household mode, HouseholdScoped entities migrate to the shared store. GroceryItem and UserPreferences remain private (per-user). Household starts in private store, then moves to shared via attach-then-share.';
+  }
+}
+
+function renderScopeFlow() {
+  const content = document.getElementById('scope-flow-content');
+  const header = document.getElementById('scope-flow-header');
+
+  if (scopeMode === 'personal') {
+    header.textContent = 'Personal Mode Flow';
+    content.textContent = '';
+
+    const flow = document.createElement('div');
+    flow.className = 'scope-flow';
+
+    const title = document.createElement('div');
+    title.className = 'flow-title';
+    title.style.color = 'var(--accent-blue)';
+    title.textContent = 'Write Path (Personal)';
+    flow.appendChild(title);
+
+    const steps = [
+      { html: '<strong>View</strong> calls service method' },
+      { html: '<strong>Service</strong> creates entity via <code>Entity(context:)</code> direct init' },
+      { html: '<strong>HouseholdScopeProvider</strong> returns <code>.personal</code>' },
+      { html: '<strong>ManagedObjectFactory</strong> assigns to <strong>private store</strong>' },
+      { html: '<code>household = nil</code>, <code>householdKey = nil</code>' },
+      { html: '<strong>Service</strong> calls <code>context.save()</code>' },
+      { html: 'CloudKit syncs to <strong>private CKDatabase</strong> only' },
+    ];
+
+    steps.forEach(s => {
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = s.html;
+      flow.appendChild(step);
+    });
+
+    content.appendChild(flow);
+
+    const readFlow = document.createElement('div');
+    readFlow.className = 'scope-flow';
+    readFlow.style.marginTop = '12px';
+
+    const readTitle = document.createElement('div');
+    readTitle.className = 'flow-title';
+    readTitle.style.color = 'var(--accent-blue)';
+    readTitle.textContent = 'Read Path (Personal)';
+    readFlow.appendChild(readTitle);
+
+    const readSteps = [
+      { html: '<strong>View</strong> uses <code>@FetchRequest</code> for entity' },
+      { html: 'Fetches ALL results from viewContext (private store only has data)' },
+      { html: 'Filters where <code>householdKey == nil</code> (personal data)' },
+      { html: 'SwiftUI renders live results with animation' },
+    ];
+
+    readSteps.forEach(s => {
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = s.html;
+      readFlow.appendChild(step);
+    });
+
+    content.appendChild(readFlow);
+  } else {
+    header.textContent = 'Household Mode Flow';
+    content.textContent = '';
+
+    const flow = document.createElement('div');
+    flow.className = 'scope-flow';
+
+    const title = document.createElement('div');
+    title.className = 'flow-title';
+    title.style.color = 'var(--accent-cyan)';
+    title.textContent = 'Write Path (Household)';
+    flow.appendChild(title);
+
+    const steps = [
+      { html: '<strong>View</strong> calls service method' },
+      { html: '<strong>Service</strong> creates entity via <code>ManagedObjectFactory</code>' },
+      { html: '<strong>HouseholdScopeProvider</strong> returns <code>.household(id, .shared)</code>' },
+      { html: '<strong>Factory</strong> calls <code>context.assign(obj, to: sharedStore)</code>' },
+      { html: '<strong>Factory</strong> sets <code>household = activeHousehold</code>' },
+      { html: '<strong>Factory</strong> populates <code>householdKey</code> for queries' },
+      { html: '<strong>Service</strong> calls <code>context.save()</code>' },
+      { html: 'CloudKit syncs to <strong>shared CKDatabase zone</strong>' },
+      { html: 'Other household members receive changes via <strong>remote notifications</strong>' },
+    ];
+
+    steps.forEach(s => {
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = s.html;
+      flow.appendChild(step);
+    });
+
+    content.appendChild(flow);
+
+    const readFlow = document.createElement('div');
+    readFlow.className = 'scope-flow';
+    readFlow.style.marginTop = '12px';
+
+    const readTitle = document.createElement('div');
+    readTitle.className = 'flow-title';
+    readTitle.style.color = 'var(--accent-cyan)';
+    readTitle.textContent = 'Read Path (Household)';
+    readFlow.appendChild(readTitle);
+
+    const readSteps = [
+      { html: '<strong>View</strong> uses <code>@FetchRequest</code> for entity' },
+      { html: 'Fetches from viewContext (spans BOTH stores)' },
+      { html: 'In-memory filter: <code>householdKey == currentHouseholdKey</code>' },
+      { html: 'Shows only data belonging to active household' },
+      { html: 'CloudKit remote changes trigger <code>NSPersistentStoreRemoteChange</code>' },
+      { html: '<code>@FetchRequest</code> auto-updates via NSFetchedResultsController' },
+    ];
+
+    readSteps.forEach(s => {
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = s.html;
+      readFlow.appendChild(step);
+    });
+
+    content.appendChild(readFlow);
+
+    const migrationFlow = document.createElement('div');
+    migrationFlow.className = 'scope-flow';
+    migrationFlow.style.marginTop = '12px';
+
+    const migTitle = document.createElement('div');
+    migTitle.className = 'flow-title';
+    migTitle.style.color = 'var(--accent-orange)';
+    migTitle.textContent = 'Attach-Then-Share Migration';
+    migrationFlow.appendChild(migTitle);
+
+    const migSteps = [
+      { html: '<strong>1.</strong> Create Household in <strong>private store</strong>' },
+      { html: '<strong>2.</strong> Migrate personal recipes/lists/plans to household' },
+      { html: '<strong>3.</strong> Call <code>container.share([household], to: nil)</code>' },
+      { html: '<strong>4.</strong> <code>try viewContext.save()</code> <em>(CRITICAL - must be immediate)</em>' },
+      { html: '<strong>5.</strong> CloudKit moves data from private zone to shared zone' },
+      { html: '<strong>6.</strong> Objects now live in <code>forager_shared.sqlite</code>' },
+    ];
+
+    migSteps.forEach(s => {
+      const step = document.createElement('div');
+      step.className = 'flow-step';
+      step.innerHTML = s.html;
+      migrationFlow.appendChild(step);
+    });
+
+    content.appendChild(migrationFlow);
+  }
+}
+
+function renderSidebar() {
+  const entityList = document.getElementById('entity-list');
+  entityList.textContent = '';
+  Object.keys(entities).forEach(k => {
+    const e = entities[k];
+    const item = document.createElement('div');
+    item.className = 'sidebar-item' + (selectedNode === k ? ' selected' : '');
+    item.onclick = () => selectNode(k);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = e.color;
+    if (scopeMode === 'personal' && !e.activeInPersonal) dot.style.opacity = '0.3';
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = k;
+    if (scopeMode === 'personal' && !e.activeInPersonal) label.style.opacity = '0.4';
+
+    item.appendChild(dot);
+    item.appendChild(label);
+
+    if (e.householdScoped) {
+      const badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.style.color = 'var(--accent-cyan)';
+      badge.textContent = 'Scoped';
+      item.appendChild(badge);
+    }
+
+    entityList.appendChild(item);
+  });
+
+  const serviceList = document.getElementById('service-list');
+  serviceList.textContent = '';
+  Object.keys(services).forEach(k => {
+    const s = services[k];
+    const item = document.createElement('div');
+    item.className = 'sidebar-item' + (selectedNode === k ? ' selected' : '');
+    item.onclick = () => selectNode(k);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = 'var(--accent-green)';
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = k;
+
+    if (scopeMode === 'personal' && !s.activeInPersonal) {
+      dot.style.opacity = '0.3';
+      label.style.opacity = '0.4';
+    }
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    serviceList.appendChild(item);
+  });
+
+  const viewList = document.getElementById('view-list');
+  viewList.textContent = '';
+  Object.keys(viewGroups).forEach(k => {
+    const v = viewGroups[k];
+    const item = document.createElement('div');
+    item.className = 'sidebar-item' + (selectedNode === k ? ' selected' : '');
+    item.onclick = () => selectNode(k);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = 'var(--accent-pink)';
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = k;
+
+    const badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = v.desc;
+
+    if (scopeMode === 'personal' && !v.activeInPersonal) {
+      dot.style.opacity = '0.3';
+      label.style.opacity = '0.4';
+    }
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    item.appendChild(badge);
+    viewList.appendChild(item);
+  });
+
+  const persistList = document.getElementById('persist-list');
+  persistList.textContent = '';
+  Object.keys(infrastructure).forEach(k => {
+    const item = document.createElement('div');
+    item.className = 'sidebar-item' + (selectedNode === k ? ' selected' : '');
+    item.onclick = () => selectNode(k);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.background = 'var(--accent-orange)';
+
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = k;
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    persistList.appendChild(item);
+  });
+}
+
+function renderCanvas() {
+  const inner = document.getElementById('canvas-inner');
+  inner.querySelectorAll('.node, .service-node, .view-node, .persist-node').forEach(el => el.remove());
+
+  if (activeLayers.entities) {
+    Object.entries(entities).forEach(([name, e]) => {
+      const div = document.createElement('div');
+      div.className = 'node';
+      div.id = 'node-' + name;
+      div.style.left = e.x + 'px';
+      div.style.top = e.y + 'px';
+      div.style.width = e.w + 'px';
+      div.style.background = 'var(--entity-bg)';
+      div.onclick = () => selectNode(name);
+
+      const isInactive = (scopeMode === 'personal' && !e.activeInPersonal) ||
+                          (scopeMode === 'household' && !e.activeInHousehold);
+      if (isInactive) div.classList.add('inactive-scope');
+
+      // Scope indicator dot
+      if (e.householdScoped) {
+        const scopeDot = document.createElement('div');
+        scopeDot.style.cssText = 'position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:var(--accent-cyan);border:2px solid var(--entity-bg)';
+        scopeDot.title = 'HouseholdScoped';
+        div.appendChild(scopeDot);
+      }
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'node-header';
+
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.style.cssText = 'background:rgba(88,166,255,0.2);color:var(--accent-blue)';
+      icon.textContent = e.icon;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'name';
+      nameSpan.textContent = name;
+
+      const storeBadge = document.createElement('span');
+      storeBadge.className = 'store-badge';
+      if (scopeMode === 'personal') {
+        if (e.activeInPersonal) {
+          storeBadge.style.cssText = 'background:rgba(88,166,255,0.2);color:var(--accent-blue)';
+          storeBadge.textContent = 'Private';
+        } else {
+          storeBadge.style.cssText = 'background:rgba(139,148,158,0.2);color:var(--text-dim)';
+          storeBadge.textContent = 'N/A';
+        }
+      } else {
+        if (e.store === 'private') {
+          storeBadge.style.cssText = 'background:rgba(88,166,255,0.2);color:var(--accent-blue)';
+          storeBadge.textContent = 'Private';
+        } else if (e.store === 'shared') {
+          storeBadge.style.cssText = 'background:rgba(57,210,192,0.2);color:var(--accent-cyan)';
+          storeBadge.textContent = 'Shared';
+        } else {
+          storeBadge.style.cssText = 'background:rgba(57,210,192,0.2);color:var(--accent-cyan)';
+          storeBadge.textContent = 'Shared';
+        }
+      }
+
+      header.appendChild(icon);
+      header.appendChild(nameSpan);
+      header.appendChild(storeBadge);
+      div.appendChild(header);
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'node-body';
+
+      const propsLabel = document.createElement('div');
+      propsLabel.className = 'section-label';
+      propsLabel.textContent = 'Properties';
+      body.appendChild(propsLabel);
+
+      e.props.slice(0, 4).forEach(p => {
+        const prop = document.createElement('div');
+        prop.className = 'prop';
+        const pName = document.createElement('span');
+        pName.className = 'prop-name';
+        pName.textContent = p.name;
+        const pType = document.createElement('span');
+        pType.className = 'prop-type';
+        pType.textContent = p.type;
+        prop.appendChild(pName);
+        prop.appendChild(pType);
+        body.appendChild(prop);
+      });
+
+      if (e.props.length > 4) {
+        const more = document.createElement('div');
+        more.style.cssText = 'font-size:9px;color:var(--text-dim);opacity:0.6';
+        more.textContent = '+' + (e.props.length - 4) + ' more';
+        body.appendChild(more);
+      }
+
+      if (e.relationships.length > 0) {
+        const relsLabel = document.createElement('div');
+        relsLabel.className = 'section-label';
+        relsLabel.style.marginTop = '4px';
+        relsLabel.textContent = 'Relationships';
+        body.appendChild(relsLabel);
+
+        e.relationships.slice(0, 3).forEach(r => {
+          const rel = document.createElement('div');
+          rel.className = 'rel';
+          const arrow = document.createElement('span');
+          arrow.className = 'rel-arrow';
+          arrow.textContent = '->';
+          const rName = document.createElement('span');
+          rName.className = 'rel-name';
+          rName.textContent = r.name;
+          const rDest = document.createElement('span');
+          rDest.className = 'rel-dest';
+          rDest.textContent = r.dest;
+          rel.appendChild(arrow);
+          rel.appendChild(rName);
+          rel.appendChild(rDest);
+          body.appendChild(rel);
+        });
+
+        if (e.relationships.length > 3) {
+          const more = document.createElement('div');
+          more.style.cssText = 'font-size:9px;color:var(--text-dim);opacity:0.6';
+          more.textContent = '+' + (e.relationships.length - 3) + ' more';
+          body.appendChild(more);
+        }
+      }
+
+      div.appendChild(body);
+      inner.appendChild(div);
+    });
+  }
+
+  if (activeLayers.services) {
+    Object.entries(services).forEach(([name, s]) => {
+      const div = document.createElement('div');
+      div.className = 'service-node';
+      div.id = 'node-' + name;
+      div.style.left = s.x + 'px';
+      div.style.top = s.y + 'px';
+      div.style.width = s.w + 'px';
+      div.onclick = () => selectNode(name);
+
+      if (scopeMode === 'personal' && !s.activeInPersonal) div.classList.add('inactive-scope');
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = name;
+      const descEl = document.createElement('div');
+      descEl.className = 'desc';
+      descEl.textContent = s.desc;
+      div.appendChild(nameEl);
+      div.appendChild(descEl);
+      inner.appendChild(div);
+    });
+  }
+
+  if (activeLayers.views) {
+    Object.entries(viewGroups).forEach(([name, v]) => {
+      const div = document.createElement('div');
+      div.className = 'view-node';
+      div.id = 'node-' + name;
+      div.style.left = v.x + 'px';
+      div.style.top = v.y + 'px';
+      div.style.width = v.w + 'px';
+      div.onclick = () => selectNode(name);
+
+      if (scopeMode === 'personal' && !v.activeInPersonal) div.classList.add('inactive-scope');
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = name;
+      const fetchTag = document.createElement('div');
+      fetchTag.className = 'fetch-tag';
+      fetchTag.textContent = '@Fetch: ' + v.fetchRequests.join(', ');
+      div.appendChild(nameEl);
+      div.appendChild(fetchTag);
+      inner.appendChild(div);
+    });
+  }
+
+  if (activeLayers.persistence) {
+    Object.entries(infrastructure).forEach(([name, p]) => {
+      const div = document.createElement('div');
+      div.className = 'persist-node';
+      div.id = 'node-' + name;
+      div.style.left = p.x + 'px';
+      div.style.top = p.y + 'px';
+      div.style.width = p.w + 'px';
+      div.onclick = () => selectNode(name);
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = name;
+      const descEl = document.createElement('div');
+      descEl.className = 'desc';
+      descEl.textContent = p.desc;
+      div.appendChild(nameEl);
+      div.appendChild(descEl);
+      inner.appendChild(div);
+    });
+  }
+}
+
+function renderConnections() {
+  const svg = document.getElementById('connections');
+  svg.textContent = '';
+  const connected = getConnectedNodes();
+
+  if (activeLayers.entities) {
+    Object.entries(entities).forEach(([name, e]) => {
+      e.relationships.forEach(rel => {
+        const from = getNodeCenter(name);
+        const to = getNodeCenter(rel.dest);
+        if (!from || !to) return;
+        const dimmed = selectedNode && !connected.has(name) && !connected.has(rel.dest);
+        drawLine(svg, from, to, 'var(--accent-purple)', dimmed ? 0.05 : 0.3, false, false);
+      });
+    });
+  }
+
+  if (activeLayers.services && activeLayers.entities) {
+    Object.entries(services).forEach(([name, s]) => {
+      s.entities.writes.forEach(eName => {
+        const from = getNodeCenter(name);
+        const to = getNodeCenter(eName);
+        if (!from || !to) return;
+        const dimmed = selectedNode && !connected.has(name) && !connected.has(eName);
+        drawLine(svg, from, to, 'var(--accent-green)', dimmed ? 0.05 : 0.25, false, false);
+      });
+      s.entities.reads.forEach(eName => {
+        if (s.entities.writes.includes(eName)) return;
+        const from = getNodeCenter(name);
+        const to = getNodeCenter(eName);
+        if (!from || !to) return;
+        const dimmed = selectedNode && !connected.has(name) && !connected.has(eName);
+        drawLine(svg, from, to, 'var(--accent-blue)', dimmed ? 0.05 : 0.15, false, true);
+      });
+    });
+  }
+
+  if (activeLayers.views && activeLayers.entities) {
+    Object.entries(viewGroups).forEach(([name, v]) => {
+      v.fetchRequests.forEach(eName => {
+        const from = getNodeCenter(name);
+        const to = getNodeCenter(eName);
+        if (!from || !to) return;
+        const dimmed = selectedNode && !connected.has(name) && !connected.has(eName);
+        drawLine(svg, from, to, 'var(--accent-pink)', dimmed ? 0.05 : 0.2, false, true);
+      });
+    });
+  }
+}
+
+function getNodeCenter(name) {
+  const el = document.getElementById('node-' + name);
+  if (!el) return null;
+  return {
+    x: el.offsetLeft + el.offsetWidth / 2,
+    y: el.offsetTop + el.offsetHeight / 2,
+  };
+}
+
+function drawLine(svg, from, to, color, opacity, hasArrow, dashed) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', from.x);
+  line.setAttribute('y1', from.y);
+  line.setAttribute('x2', to.x);
+  line.setAttribute('y2', to.y);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '1.5');
+  line.setAttribute('opacity', opacity);
+  if (dashed) line.setAttribute('stroke-dasharray', '4,4');
+  svg.appendChild(line);
+}
+
+// ── Interaction ────────────────────────────────────────
+function getConnectedNodes() {
+  const connected = new Set();
+  if (!selectedNode) return connected;
+  connected.add(selectedNode);
+
+  const e = entities[selectedNode];
+  if (e) {
+    e.relationships.forEach(r => connected.add(r.dest));
+    e.services.forEach(s => connected.add(s));
+    e.views.forEach(v => connected.add(v));
+    Object.entries(entities).forEach(([name, ent]) => {
+      ent.relationships.forEach(r => { if (r.dest === selectedNode) connected.add(name); });
+    });
+    Object.entries(services).forEach(([name, s]) => {
+      if (s.entities.reads.includes(selectedNode) || s.entities.writes.includes(selectedNode)) connected.add(name);
+    });
+    Object.entries(viewGroups).forEach(([name, v]) => {
+      if (v.fetchRequests.includes(selectedNode)) connected.add(name);
+    });
+    Object.entries(infrastructure).forEach(([name, p]) => {
+      if (p.entities.includes(selectedNode) || p.entities.includes('all')) connected.add(name);
+    });
+  }
+
+  const s = services[selectedNode];
+  if (s) { [...s.entities.reads, ...s.entities.writes].forEach(e => connected.add(e)); }
+
+  const v = viewGroups[selectedNode];
+  if (v) { v.fetchRequests.forEach(e => connected.add(e)); }
+
+  const p = infrastructure[selectedNode];
+  if (p) {
+    if (p.entities.includes('all')) Object.keys(entities).forEach(e => connected.add(e));
+    else p.entities.forEach(e => connected.add(e));
+  }
+
+  return connected;
+}
+
+function selectNode(name) {
+  selectedNode = selectedNode === name ? null : name;
+  updateHighlights();
+  updateDetailPanel();
+  renderSidebar();
+  renderConnections();
+}
+
+function updateHighlights() {
+  const connected = getConnectedNodes();
+  document.querySelectorAll('.node, .service-node, .view-node, .persist-node').forEach(el => {
+    const nodeName = el.id.replace('node-', '');
+    el.classList.remove('dimmed', 'highlighted');
+    if (selectedNode) {
+      if (nodeName === selectedNode) el.classList.add('highlighted');
+      else if (!connected.has(nodeName)) el.classList.add('dimmed');
+    }
+  });
+}
+
+function updateDetailPanel() {
+  const panel = document.getElementById('detail-panel');
+  const header = document.getElementById('detail-header');
+  const content = document.getElementById('detail-content');
+
+  if (!selectedNode) { panel.classList.add('hidden'); return; }
+  panel.classList.remove('hidden');
+
+  const e = entities[selectedNode];
+  const s = services[selectedNode];
+  const v = viewGroups[selectedNode];
+  const p = infrastructure[selectedNode];
+
+  // Clear previous content
+  header.textContent = '';
+  content.textContent = '';
+
+  if (e) {
+    // Header
+    const typeLabel = document.createElement('div');
+    typeLabel.className = 'type-label';
+    typeLabel.style.color = 'var(--accent-blue)';
+    typeLabel.textContent = 'Entity' + (e.householdScoped ? ' (HouseholdScoped)' : '');
+    header.appendChild(typeLabel);
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = selectedNode;
+    header.appendChild(title);
+
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px';
+    desc.textContent = e.desc;
+    header.appendChild(desc);
+
+    // Scope behavior section
+    const scopeSection = document.createElement('div');
+    scopeSection.className = 'detail-section';
+    const scopeTitle = document.createElement('h3');
+    scopeTitle.textContent = scopeMode === 'personal' ? 'Behavior in Personal Mode' : 'Behavior in Household Mode';
+    scopeSection.appendChild(scopeTitle);
+    const scopeDesc = document.createElement('div');
+    scopeDesc.style.cssText = 'font-size:12px;color:var(--text);line-height:1.5';
+    scopeDesc.textContent = scopeMode === 'personal' ? (e.personalBehavior || 'Standard behavior.') : (e.householdBehavior || 'Standard behavior.');
+    scopeSection.appendChild(scopeDesc);
+    content.appendChild(scopeSection);
+
+    // Store section
+    const storeSection = document.createElement('div');
+    storeSection.className = 'detail-section';
+    const storeTitle = document.createElement('h3');
+    storeTitle.textContent = 'Store (' + scopeMode + ' mode)';
+    storeSection.appendChild(storeTitle);
+    const storeDesc = document.createElement('div');
+    storeDesc.style.fontSize = '13px';
+    if (scopeMode === 'personal') {
+      storeDesc.textContent = e.activeInPersonal ? 'Private Store (forager.sqlite)' : 'Not available in personal mode';
+    } else {
+      storeDesc.textContent = e.store === 'private' ? 'Private Store (forager.sqlite)' :
+                               e.store === 'shared' ? 'Shared Store (forager_shared.sqlite)' :
+                               'Shared Store (forager_shared.sqlite) - migrated from private';
+    }
+    storeSection.appendChild(storeDesc);
+    content.appendChild(storeSection);
+
+    // Properties
+    const propsSection = document.createElement('div');
+    propsSection.className = 'detail-section';
+    const propsTitle = document.createElement('h3');
+    propsTitle.textContent = 'Properties (' + e.props.length + ')';
+    propsSection.appendChild(propsTitle);
+    e.props.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'prop-row';
+      const key = document.createElement('span');
+      key.className = 'key';
+      key.textContent = p.name;
+      const val = document.createElement('span');
+      val.className = 'val';
+      val.textContent = p.type;
+      row.appendChild(key);
+      row.appendChild(val);
+      propsSection.appendChild(row);
+    });
+    content.appendChild(propsSection);
+
+    // Relationships
+    const relsSection = document.createElement('div');
+    relsSection.className = 'detail-section';
+    const relsTitle = document.createElement('h3');
+    relsTitle.textContent = 'Relationships (' + e.relationships.length + ')';
+    relsSection.appendChild(relsTitle);
+    e.relationships.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'connection-item';
+      item.onclick = () => selectNode(r.dest);
+
+      const rName = document.createElement('span');
+      rName.style.color = 'var(--accent-orange)';
+      rName.textContent = r.name;
+
+      const arrow = document.createElement('span');
+      arrow.className = 'arrow';
+      arrow.style.color = 'var(--text-dim)';
+      arrow.textContent = ' -> ';
+
+      const rDest = document.createElement('span');
+      rDest.style.color = 'var(--accent-purple)';
+      rDest.textContent = r.dest;
+
+      const connType = document.createElement('span');
+      connType.className = 'conn-type';
+      connType.textContent = r.card + ' ' + r.rule + (r.note ? ' (' + r.note + ')' : '');
+
+      item.appendChild(rName);
+      item.appendChild(arrow);
+      item.appendChild(rDest);
+      item.appendChild(connType);
+      relsSection.appendChild(item);
+    });
+    content.appendChild(relsSection);
+
+    // Services that write
+    const writesSection = document.createElement('div');
+    writesSection.className = 'detail-section';
+    const writesTitle = document.createElement('h3');
+    writesTitle.textContent = 'Written by Services';
+    writesSection.appendChild(writesTitle);
+    const writers = Object.entries(services).filter(([_, s]) => s.entities.writes.includes(selectedNode));
+    if (writers.length > 0) {
+      writers.forEach(([name]) => {
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(name);
+        const sName = document.createElement('span');
+        sName.style.color = 'var(--accent-green)';
+        sName.textContent = name;
+        const ct = document.createElement('span');
+        ct.className = 'conn-type';
+        ct.textContent = 'writes';
+        item.appendChild(sName);
+        item.appendChild(ct);
+        writesSection.appendChild(item);
+      });
+    } else {
+      const noWrites = document.createElement('div');
+      noWrites.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noWrites.textContent = 'No direct writes';
+      writesSection.appendChild(noWrites);
+    }
+    content.appendChild(writesSection);
+
+    // Views that fetch
+    const viewsSection = document.createElement('div');
+    viewsSection.className = 'detail-section';
+    const viewsTitle = document.createElement('h3');
+    viewsTitle.textContent = '@FetchRequest in Views';
+    viewsSection.appendChild(viewsTitle);
+    const fetchers = Object.entries(viewGroups).filter(([_, v]) => v.fetchRequests.includes(selectedNode));
+    if (fetchers.length > 0) {
+      fetchers.forEach(([name, v]) => {
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(name);
+        const vName = document.createElement('span');
+        vName.style.color = 'var(--accent-pink)';
+        vName.textContent = name;
+        const ct = document.createElement('span');
+        ct.className = 'conn-type';
+        ct.textContent = v.desc;
+        item.appendChild(vName);
+        item.appendChild(ct);
+        viewsSection.appendChild(item);
+      });
+    } else {
+      const noFetch = document.createElement('div');
+      noFetch.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noFetch.textContent = 'No @FetchRequest usage';
+      viewsSection.appendChild(noFetch);
+    }
+    content.appendChild(viewsSection);
+
+    // Incoming relationships
+    const incomingSection = document.createElement('div');
+    incomingSection.className = 'detail-section';
+    const incomingTitle = document.createElement('h3');
+    incomingTitle.textContent = 'Incoming Relationships';
+    incomingSection.appendChild(incomingTitle);
+    const incoming = Object.entries(entities).filter(([_, ent]) => ent.relationships.some(r => r.dest === selectedNode));
+    if (incoming.length > 0) {
+      incoming.forEach(([name, ent]) => {
+        const rel = ent.relationships.find(r => r.dest === selectedNode);
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(name);
+        const eName = document.createElement('span');
+        eName.style.color = 'var(--accent-blue)';
+        eName.textContent = name;
+        const dot = document.createElement('span');
+        dot.className = 'arrow';
+        dot.style.color = 'var(--text-dim)';
+        dot.textContent = '.' + rel.name;
+        const ct = document.createElement('span');
+        ct.className = 'conn-type';
+        ct.textContent = rel.card;
+        item.appendChild(eName);
+        item.appendChild(dot);
+        item.appendChild(ct);
+        incomingSection.appendChild(item);
+      });
+    } else {
+      const noIncoming = document.createElement('div');
+      noIncoming.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noIncoming.textContent = 'None';
+      incomingSection.appendChild(noIncoming);
+    }
+    content.appendChild(incomingSection);
+
+  } else if (s) {
+    const typeLabel = document.createElement('div');
+    typeLabel.className = 'type-label';
+    typeLabel.style.color = 'var(--accent-green)';
+    typeLabel.textContent = 'Service';
+    header.appendChild(typeLabel);
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = selectedNode;
+    header.appendChild(title);
+
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px';
+    desc.textContent = s.desc;
+    header.appendChild(desc);
+
+    // Scope behavior
+    const scopeSection = document.createElement('div');
+    scopeSection.className = 'detail-section';
+    const scopeTitle = document.createElement('h3');
+    scopeTitle.textContent = scopeMode === 'personal' ? 'Personal Mode' : 'Household Mode';
+    scopeSection.appendChild(scopeTitle);
+    const scopeDesc = document.createElement('div');
+    scopeDesc.style.cssText = 'font-size:12px;color:var(--text);line-height:1.5';
+    scopeDesc.textContent = scopeMode === 'personal' ? (s.personalNote || 'Standard behavior.') : (s.householdNote || 'Standard behavior.');
+    scopeSection.appendChild(scopeDesc);
+    content.appendChild(scopeSection);
+
+    // Writes
+    const writesSection = document.createElement('div');
+    writesSection.className = 'detail-section';
+    const writesTitle = document.createElement('h3');
+    writesTitle.textContent = 'Writes to Entities';
+    writesSection.appendChild(writesTitle);
+    if (s.entities.writes.length > 0) {
+      s.entities.writes.forEach(eName => {
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(eName);
+        const eNameEl = document.createElement('span');
+        eNameEl.style.color = 'var(--accent-blue)';
+        eNameEl.textContent = eName;
+        item.appendChild(eNameEl);
+        writesSection.appendChild(item);
+      });
+    } else {
+      const noWrites = document.createElement('div');
+      noWrites.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noWrites.textContent = 'No writes (read-only or pure logic)';
+      writesSection.appendChild(noWrites);
+    }
+    content.appendChild(writesSection);
+
+    // Reads
+    const readsSection = document.createElement('div');
+    readsSection.className = 'detail-section';
+    const readsTitle = document.createElement('h3');
+    readsTitle.textContent = 'Reads from Entities';
+    readsSection.appendChild(readsTitle);
+    if (s.entities.reads.length > 0) {
+      s.entities.reads.forEach(eName => {
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(eName);
+        const eNameEl = document.createElement('span');
+        eNameEl.style.color = 'var(--accent-blue)';
+        eNameEl.textContent = eName;
+        item.appendChild(eNameEl);
+        readsSection.appendChild(item);
+      });
+    } else {
+      const noReads = document.createElement('div');
+      noReads.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noReads.textContent = 'No entity reads';
+      readsSection.appendChild(noReads);
+    }
+    content.appendChild(readsSection);
+
+  } else if (v) {
+    const typeLabel = document.createElement('div');
+    typeLabel.className = 'type-label';
+    typeLabel.style.color = 'var(--accent-pink)';
+    typeLabel.textContent = 'View Group';
+    header.appendChild(typeLabel);
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = selectedNode;
+    header.appendChild(title);
+
+    // Scope behavior
+    const scopeSection = document.createElement('div');
+    scopeSection.className = 'detail-section';
+    const scopeTitle = document.createElement('h3');
+    scopeTitle.textContent = scopeMode === 'personal' ? 'Personal Mode' : 'Household Mode';
+    scopeSection.appendChild(scopeTitle);
+    const scopeDesc = document.createElement('div');
+    scopeDesc.style.cssText = 'font-size:12px;color:var(--text);line-height:1.5';
+    scopeDesc.textContent = scopeMode === 'personal' ? (v.personalNote || 'Standard behavior.') : (v.householdNote || 'Standard behavior.');
+    scopeSection.appendChild(scopeDesc);
+    content.appendChild(scopeSection);
+
+    // Views
+    const viewsSection = document.createElement('div');
+    viewsSection.className = 'detail-section';
+    const viewsTitle = document.createElement('h3');
+    viewsTitle.textContent = 'Views';
+    viewsSection.appendChild(viewsTitle);
+    v.views.forEach(vw => {
+      const item = document.createElement('div');
+      item.style.cssText = 'font-size:12px;padding:3px 0;color:var(--text)';
+      item.textContent = vw;
+      viewsSection.appendChild(item);
+    });
+    content.appendChild(viewsSection);
+
+    // Fetch requests
+    const fetchSection = document.createElement('div');
+    fetchSection.className = 'detail-section';
+    const fetchTitle = document.createElement('h3');
+    fetchTitle.textContent = '@FetchRequest Entities';
+    fetchSection.appendChild(fetchTitle);
+    v.fetchRequests.forEach(eName => {
+      const item = document.createElement('div');
+      item.className = 'connection-item';
+      item.onclick = () => selectNode(eName);
+      const eNameEl = document.createElement('span');
+      eNameEl.style.color = 'var(--accent-blue)';
+      eNameEl.textContent = eName;
+      item.appendChild(eNameEl);
+      fetchSection.appendChild(item);
+    });
+    content.appendChild(fetchSection);
+
+  } else if (p) {
+    const typeLabel = document.createElement('div');
+    typeLabel.className = 'type-label';
+    typeLabel.style.color = 'var(--accent-orange)';
+    typeLabel.textContent = 'Infrastructure';
+    header.appendChild(typeLabel);
+
+    const title = document.createElement('div');
+    title.className = 'title';
+    title.textContent = selectedNode;
+    header.appendChild(title);
+
+    const desc = document.createElement('div');
+    desc.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:4px';
+    desc.textContent = p.desc;
+    header.appendChild(desc);
+
+    // Scope behavior
+    if (p.personalNote || p.householdNote) {
+      const scopeSection = document.createElement('div');
+      scopeSection.className = 'detail-section';
+      const scopeTitle = document.createElement('h3');
+      scopeTitle.textContent = scopeMode === 'personal' ? 'Personal Mode' : 'Household Mode';
+      scopeSection.appendChild(scopeTitle);
+      const scopeDesc = document.createElement('div');
+      scopeDesc.style.cssText = 'font-size:12px;color:var(--text);line-height:1.5';
+      scopeDesc.textContent = scopeMode === 'personal' ? (p.personalNote || '') : (p.householdNote || '');
+      scopeSection.appendChild(scopeDesc);
+      content.appendChild(scopeSection);
+    }
+
+    // Entities
+    const entitySection = document.createElement('div');
+    entitySection.className = 'detail-section';
+    const entityTitle = document.createElement('h3');
+    entityTitle.textContent = 'Manages Entities';
+    entitySection.appendChild(entityTitle);
+    if (p.entities.includes('all')) {
+      const allNote = document.createElement('div');
+      allNote.style.cssText = 'font-size:12px;color:var(--accent-cyan)';
+      allNote.textContent = 'All entities (container-level)';
+      entitySection.appendChild(allNote);
+    } else if (p.entities.length > 0) {
+      p.entities.forEach(eName => {
+        const item = document.createElement('div');
+        item.className = 'connection-item';
+        item.onclick = () => selectNode(eName);
+        const eNameEl = document.createElement('span');
+        eNameEl.style.color = 'var(--accent-blue)';
+        eNameEl.textContent = eName;
+        item.appendChild(eNameEl);
+        entitySection.appendChild(item);
+      });
+    } else {
+      const noEntities = document.createElement('div');
+      noEntities.style.cssText = 'font-size:12px;color:var(--text-dim)';
+      noEntities.textContent = 'No direct entity management';
+      entitySection.appendChild(noEntities);
+    }
+    content.appendChild(entitySection);
+  }
+}
+
+function toggleLayer(layer) {
+  activeLayers[layer] = !activeLayers[layer];
+  document.querySelector('[data-layer="' + layer + '"]').classList.toggle('active');
+  renderCanvas();
+  renderConnections();
+}
+
+function resetView() {
+  selectedNode = null;
+  Object.keys(activeLayers).forEach(k => { activeLayers[k] = true; });
+  document.querySelectorAll('.layer-toggle[data-layer]').forEach(btn => btn.classList.add('active'));
+  render();
+  document.getElementById('detail-panel').classList.add('hidden');
+}
+
+function toggleSection(header) {
+  const items = header.nextElementSibling;
+  if (items) items.style.display = items.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Init ───────────────────────────────────────────────
+render();
+applyTransform();
+// Fit to view after first paint
+requestAnimationFrame(() => { zoomFit(); });
+</script>
+</body>
+</html>
