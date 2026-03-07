@@ -1,12 +1,38 @@
 # Current Development Story
 
-**Last Updated**: March 3, 2026
-**Status**: M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | **M10.6 🔄 ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
+**Last Updated**: March 7, 2026
+**Status**: **M16 🔄 ACTIVE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
 **Total Progress**: ~263 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.6.7-household-api-key`
-**Current Milestone**: M10.6 🔄 ACTIVE — Claude API Integration for Import Parsing
+**Current Branch**: `feature/M16-knowledge-mcp-server`
+**Current Milestone**: M16 🔄 ACTIVE — Knowledge MCP Server
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M10.6 (Claude API) → M10.4 → M7.7 → M6 → M9 → M11+
+**Next Priority**: M16 (Knowledge MCP) → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+
+
+---
+
+## 🔧 **M16: KNOWLEDGE MCP SERVER - ACTIVE**
+
+**Status**: M16.1 🔄 ACTIVE
+**Estimated**: 6-10 hours (3 phases)
+**PRD**: `docs/prds/active/m16-knowledge-mcp-server.md`
+**Branch**: `feature/M16-knowledge-mcp-server`
+
+Python MCP server at `Tools/mcp-knowledge/` that indexes all project docs, learning notes, ADRs, newsletters, and journals for search/retrieval in Claude Desktop. Includes newsletter drafting tools with .docx generation.
+
+### Phase Overview
+
+| Phase | Scope | Hours | Status |
+|-------|-------|-------|--------|
+| M16.1 | Foundation — indexer, search, core MCP tools, move newsletters | 2-3h | 🔄 ACTIVE |
+| M16.2 | Project status + newsletter context/drafting tools | 2-3h | READY |
+| M16.3 | Polish, README, test with real session | 1-2h | PLANNED |
+
+### M16.1 Implementation Progress
+1. 🔄 Document loader (markdown + docx)
+2. ⏳ Indexer + chunking
+3. ⏳ BM25 search engine
+4. ⏳ MCP server with search_knowledge, read_document, list_documents
+5. ⏳ Move newsletter .docx files to docs/newsletters/
 
 ---
 
