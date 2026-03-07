@@ -245,29 +245,11 @@ If it stays null after 30 seconds, set it via API:
 curl -s -X PATCH -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\",\"attributes\":{\"usesNonExemptEncryption\":false}}}" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)"
 ```
 
-## Step 10: Add Build to Beta Test Group
+## Step 10: Set "What to Test" & Submit for Beta Review
 
-Default group: **Public Beta Testers** (`46d19222-23de-4578-954a-ed0457239949`).
+**IMPORTANT**: This step MUST complete before Step 11 (adding to beta group). External groups require beta review approval — adding a build to the group before review is approved results in "not ready to test."
 
-Override with `--group "Group Name"` argument (see Arguments section).
-
-If `--group` was passed, look up the ID first:
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/betaGroups?filter%5Bapp%5D=6756034827" -o /tmp/forager_groups.json
-```
-```bash
-jq '.data[] | {id: .id, name: .attributes.name}' /tmp/forager_groups.json
-```
-
-**Add build to the group** (single command — substitute the actual BUILD_ID inline):
-```bash
-curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":[{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}]}" "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/relationships/builds"
-```
-HTTP 204 (empty response) = success.
-
-## Step 11: Set "What to Test" & Submit for Beta Review
-
-Set the "What to Test" notes from the latest git commit message, then submit for beta app review (required for external groups). Run each as a separate call.
+Set the "What to Test" notes from the latest git commit message, then submit for beta app review. Run each as a separate call.
 
 **Get the commit message:**
 ```bash
@@ -295,9 +277,58 @@ curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Conte
 
 **Submit for beta app review** (required for external test groups):
 ```bash
-curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"type\":\"betaAppReviewSubmissions\",\"relationships\":{\"build\":{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}}}}}" "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions"
+curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"type\":\"betaAppReviewSubmissions\",\"relationships\":{\"build\":{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}}}}}" "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions" -o /tmp/forager_review_response.json
 ```
-HTTP 201 = submitted. HTTP 422 with `INVALID_QC_STATE` = already approved (success, skip).
+
+**Check the response:**
+```bash
+jq '{type: .data.type, state: .data.attributes.betaReviewState, error: .errors[0].code}' /tmp/forager_review_response.json
+```
+
+- HTTP 201 with `betaReviewState` = submitted successfully
+- `INVALID_QC_STATE` = may already be approved — verify in next step
+
+**Verify beta review is APPROVED** before proceeding to Step 11:
+```bash
+curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)/betaAppReviewSubmission" -o /tmp/forager_review_status.json
+```
+```bash
+jq '.data.attributes.betaReviewState' /tmp/forager_review_status.json
+```
+
+If state is `"APPROVED"`, proceed to Step 11. If `"IN_REVIEW"` or `"WAITING_FOR_REVIEW"`, wait 60 seconds and re-check. If `null` or missing, the review submission may have failed — retry the submission.
+
+**Only proceed to Step 11 when betaReviewState = "APPROVED".**
+
+## Step 11: Add Build to Beta Test Group
+
+**IMPORTANT**: Only run this step AFTER Step 10 confirms betaReviewState = "APPROVED". Adding before approval causes "not ready to test" for external testers.
+
+Default group: **Public Beta Testers** (`46d19222-23de-4578-954a-ed0457239949`).
+
+Override with `--group "Group Name"` argument (see Arguments section).
+
+If `--group` was passed, look up the ID first:
+```bash
+curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/betaGroups?filter%5Bapp%5D=6756034827" -o /tmp/forager_groups.json
+```
+```bash
+jq '.data[] | {id: .id, name: .attributes.name}' /tmp/forager_groups.json
+```
+
+**Add build to the group** (single command):
+```bash
+curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":[{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}]}" "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/relationships/builds"
+```
+HTTP 204 (empty response) = success.
+
+**Verify the build is in the group and ready:**
+```bash
+curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/builds?filter%5Bversion%5D=$NEW_BUILD" -o /tmp/forager_verify_group.json
+```
+```bash
+jq '.data[0].attributes | {version: .version, state: .processingState}' /tmp/forager_verify_group.json
+```
 
 ## Step 12: Final Report
 
