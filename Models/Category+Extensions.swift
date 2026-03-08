@@ -12,24 +12,10 @@ extension Category {
     
     // MARK: - M7.2.3 Phase 4.3: Household Auto-Assignment
     
-    /// Automatically assigns new categories to existing household
-    /// Called when a new Category entity is inserted into the context
+    /// M10.6.17: awakeFromInsert no longer auto-assigns household (ADR 013).
+    /// Callers (DefaultSeeder, ManagedObjectFactory) set household + householdKey explicitly.
     public override func awakeFromInsert() {
         super.awakeFromInsert()
-        
-        // M7.2.3 Phase 4.3: Auto-assign to household if one exists
-        if household == nil, let context = managedObjectContext {
-            let fetchRequest: NSFetchRequest<Household> = Household.fetchRequest()
-            fetchRequest.fetchLimit = 1
-            
-            if let existingHousehold = try? context.fetch(fetchRequest).first {
-                household = existingHousehold
-                householdKey = existingHousehold.id?.uuidString
-                #if DEBUG
-                print("🏠 M7.2.3 Phase 4.3: Auto-assigned Category '\(name ?? "untitled")' to household '\(existingHousehold.name ?? "unknown")'")
-                #endif
-            }
-        }
     }
     
     // MARK: - M7.1.3 Semantic Key Helpers

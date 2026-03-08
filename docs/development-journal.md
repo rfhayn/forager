@@ -6,6 +6,40 @@
 
 ---
 
+## Session 72 — March 7, 2026
+**Milestone**: M10.6.17 — Ghost Household awakeFromInsert Fix
+**Focus**: Root cause analysis of invisible imported recipes; household lifecycle cleanup
+**Branch**: `bugfix/M10.6.17-ghost-household-awake-from-insert`
+
+### What Happened
+
+After deploying build 20 (M10.6.16, PR #65 — ghost duplicate detection fix), the user reported that imported recipes still don't show up when not logged into a household. The user explicitly asked for root cause analysis, not just a fix.
+
+Traced the problem to `awakeFromInsert()` in 5 Core Data entities (Recipe, IngredientTemplate, Category, MealPlan, WeeklyList). Each did an unscoped `Household.fetchRequest()` to auto-assign new objects to a household. The critical insight: **ghost Household entities persist in the private store after leaving a household** because the attach-then-share pattern means the Household NSManagedObject lives in the private store, not the shared store. All cleanup paths (`leaveHousehold`, `checkIfRemovedFromHousehold`, `cleanOrphanedHouseholdData`) only deleted data by `householdKey` from the shared store — they never deleted the Household entity itself.
+
+So when a user left a household and imported a recipe, `awakeFromInsert()` found the ghost Household via unscoped fetch and silently assigned the new Recipe to it. The recipe existed in Core Data but was invisible because all UI queries scope to the active household (or nil for personal).
+
+### Key Decisions
+
+- **Remove all awakeFromInsert auto-assign rather than scope the fetch**: The auto-assign pattern is fundamentally fragile — it relies on global state (which Household exists) at object creation time. Better to require callers (services, ManagedObjectFactory) to set household explicitly. This aligns with ADR 013's scope-aware fetch pattern.
+
+- **Delete Household entity during leave/removal**: The attach-then-share pattern means the Household lives in private store forever unless explicitly deleted. Added `viewContext.delete(household)` to both `leaveHousehold()` and `checkIfRemovedFromHousehold()`, plus added Household and HouseholdMember to `cleanOrphanedHouseholdData()`'s entity cleanup list.
+
+### Learning
+
+- **Attach-then-share has a cleanup gap**: When you `container.share([household])`, CloudKit mirrors data to the shared zone, but the original NSManagedObject stays in the private store. Leaving a share removes access to the shared zone but doesn't touch the private store copy. This is by design (Apple's pattern), but it means cleanup code must explicitly handle the private-store entity.
+- **awakeFromInsert is dangerous for relationship assignment**: It runs before the caller has a chance to configure the object. Any fetch inside it operates on the full context with no scope awareness. This is a Core Data anti-pattern when combined with multi-store/multi-zone architectures.
+
+### AI Tooling Observations
+
+The user's insistence on root cause analysis over quick fixes ("I don't want this just fixed") led to a much better outcome. The first session (PR #65) fixed symptoms. This session fixed the actual disease. Claude Code's ability to search across all 5 entity extensions and the HouseholdService simultaneously made the audit fast — the pattern was consistent across all 5 entities.
+
+### What's Next
+
+Commit, PR, merge, and archive to TestFlight for verification. The user should test: leave household → import recipe → recipe appears in personal scope.
+
+---
+
 ## Session 71 — March 7, 2026
 **Milestone**: M16 — Knowledge MCP Server + Skills Improvements
 **Focus**: MCP server, learning notes 39-43, skill auto-triggering + sub-agents
