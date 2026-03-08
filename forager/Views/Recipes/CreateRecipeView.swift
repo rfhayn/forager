@@ -231,7 +231,7 @@ struct CreateRecipeView: View {
             )) {
                 if let ingredientId = categoryPickerIngredientId {
                     categoryPickerSheet(ingredientId: ingredientId)
-                        .presentationDetents([.medium])
+                        .presentationDetents([.large])
                 }
             }
             // M7.3.4: Configure autocomplete service with current householdKey

@@ -2220,6 +2220,15 @@ class HouseholdService: ObservableObject {
         }
     }
     
+    /// M10.6.19: Run at app launch when no household is active.
+    /// Clears zone corruption from ghost awakeFromInsert assignments so the
+    /// CloudKit mirroring delegate can initialize and sync personal data.
+    /// Safe to call every launch — no-ops if stores are already clean.
+    func repairZoneCorruptionIfNeeded() {
+        guard currentHousehold == nil else { return }
+        cleanOrphanedHouseholdData()
+    }
+
     /// M10.6: Pre-creation cleanup — removes ALL objects with non-nil householdKey
     /// that don't belong to any currently active household. Prevents zone corruption
     /// when creating a new household after leaving a previous one.
@@ -2284,9 +2293,20 @@ class HouseholdService: ObservableObject {
             #endif
         }
 
-        // 3. Purge shared store remnants
-        let purgedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        cleanedCount += purgedCount
+        // 3. Destroy and recreate shared store to clear zone metadata corruption
+        // purgeAllSharedStoreObjects deletes rows but leaves CloudKit zone metadata intact,
+        // which causes "objects assigned to multiple zones" (error 134060) on the next share().
+        // Destroying the SQLite file is the only reliable way to reset zone state.
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            #if DEBUG
+            print("   ✅ Shared store destroyed and recreated (zone metadata cleared)")
+            #endif
+        } catch {
+            #if DEBUG
+            print("   ⚠️ Failed to recreate shared store: \(error)")
+            #endif
+        }
 
         if viewContext.hasChanges {
             do {

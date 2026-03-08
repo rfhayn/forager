@@ -197,6 +197,9 @@ struct foragerApp: App {
                         // The init-time loadCurrentHousehold() fires before stores
                         // load, so it finds nothing — this is the real load.
                         await householdService.loadCurrentHousehold()
+                        // M10.6.19: Clear zone corruption from ghost awakeFromInsert so
+                        // CloudKit mirroring delegate can initialize and sync personal data.
+                        householdService.repairZoneCorruptionIfNeeded()
                         await householdService.refreshCurrentMemberDisplayName()
 
                         // Check for new invitations after a delay (not urgent)
