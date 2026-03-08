@@ -200,7 +200,7 @@ struct RecipeImportPreviewView: View {
         )) {
             if let index = categoryPickerIndex {
                 categoryPickerSheet(index: index)
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
         }

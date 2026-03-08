@@ -130,7 +130,8 @@ struct EditStapleView: View {
     private func saveChanges() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Check for duplicate names (exclude current staple)
+        // GroceryItem has no householdKey — scoped through categoryEntity relationship.
+        // Name-based duplicate check is sufficient for staples.
         let request: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
         if let stapleID = staple.id {
             request.predicate = NSPredicate(format: "name ==[c] %@ AND id != %@", trimmedName, stapleID as CVarArg)
@@ -154,6 +155,7 @@ struct EditStapleView: View {
         
         // Save using background context
         let stapleID = staple.objectID
+        let currentHouseholdKey = householdService.currentHouseholdKey
         PersistenceController.shared.performWrite({ context in
             // Get the staple in the background context
             let stapleToUpdate = context.object(with: stapleID) as! GroceryItem
@@ -162,9 +164,13 @@ struct EditStapleView: View {
             stapleToUpdate.name = trimmedName
             stapleToUpdate.category = selectedCategory // Keep for legacy compatibility
             
-            // Update category relationship
+            // M10.6.18: Scope category lookup to household (ADR 013)
             let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
-            categoryRequest.predicate = NSPredicate(format: "name ==[c] %@", selectedCategory)
+            if let key = currentHouseholdKey {
+                categoryRequest.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", selectedCategory, key)
+            } else {
+                categoryRequest.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", selectedCategory)
+            }
             if let matchingCategory = try? context.fetch(categoryRequest).first {
                 stapleToUpdate.categoryEntity = matchingCategory
             }

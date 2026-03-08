@@ -71,12 +71,24 @@ class MealPlanService: ObservableObject {
     @Published var lastError: Error?
     
     // MARK: - Private Properties
-    
+
     private let context: NSManagedObjectContext
     private var cancellables = Set<AnyCancellable>()
-    
+
+    // M10.6.18: Household key for scoping fetches (ADR 013)
+    var householdKeyProvider: (() -> String?)?
+
+    // M10.6.18: Build householdKey predicate for scoped fetches (ADR 013)
+    private func householdKeyPredicate() -> NSPredicate {
+        if let key = householdKeyProvider?() {
+            return NSPredicate(format: "householdKey == %@", key)
+        } else {
+            return NSPredicate(format: "householdKey == nil")
+        }
+    }
+
     // MARK: - Initialization
-    
+
     // M4.2: Private initializer for singleton pattern
     // Loads active meal plan on initialization
     private init() {
@@ -93,10 +105,13 @@ class MealPlanService: ObservableObject {
         let startTime = CFAbsoluteTimeGetCurrent()
         
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isActive == YES")
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isActive == YES"),
+            householdKeyPredicate()
+        ])
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: false)]
         fetchRequest.fetchLimit = 1
-        
+
         do {
             let plans = try context.fetch(fetchRequest)
             activeMealPlan = plans.first
@@ -223,13 +238,14 @@ class MealPlanService: ObservableObject {
             return .invalidDate
         }
         
-        // Fetch all existing plans
+        // M10.6.18: Fetch existing plans scoped to household (ADR 013)
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        fetchRequest.predicate = householdKeyPredicate()
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: true)]
-        
+
         do {
             let existingPlans = try context.fetch(fetchRequest)
-            
+
             // Check each plan for overlap
             for plan in existingPlans {
                 // Skip the plan being edited
@@ -273,10 +289,11 @@ class MealPlanService: ObservableObject {
     func updateActivePlanStatus() {
         let startTime = CFAbsoluteTimeGetCurrent()
         let today = Calendar.current.startOfDay(for: Date())
-        
+
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        fetchRequest.predicate = householdKeyPredicate()
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: false)]
-        
+
         do {
             let allPlans = try context.fetch(fetchRequest)
             var foundActivePlan = false
@@ -321,9 +338,12 @@ class MealPlanService: ObservableObject {
     func updateCompletedStatus() {
         let startTime = CFAbsoluteTimeGetCurrent()
         let today = Calendar.current.startOfDay(for: Date())
-        
+
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isCompleted == NO")
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isCompleted == NO"),
+            householdKeyPredicate()
+        ])
         
         do {
             let incompletePlans = try context.fetch(fetchRequest)
@@ -359,7 +379,10 @@ class MealPlanService: ObservableObject {
     // Performance target: < 0.1s
     func getActivePlan() -> MealPlan? {
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isActive == YES AND isCompleted == NO")
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isActive == YES AND isCompleted == NO"),
+            householdKeyPredicate()
+        ])
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: false)]
         fetchRequest.fetchLimit = 1
         
@@ -380,9 +403,12 @@ class MealPlanService: ObservableObject {
     // Performance target: < 0.1s
     func getUpcomingPlans() -> [MealPlan] {
         let today = Calendar.current.startOfDay(for: Date())
-        
+
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "startDate > %@ AND isCompleted == NO", today as NSDate)
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "startDate > %@ AND isCompleted == NO", today as NSDate),
+            householdKeyPredicate()
+        ])
         fetchRequest.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: true)]
         
         do {
@@ -401,7 +427,10 @@ class MealPlanService: ObservableObject {
     // Performance target: < 0.1s
     func getCompletedPlans() -> [MealPlan] {
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isCompleted == YES")
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isCompleted == YES"),
+            householdKeyPredicate()
+        ])
         fetchRequest.sortDescriptors = [
             NSSortDescriptor(key: "completedDate", ascending: false),
             NSSortDescriptor(key: "startDate", ascending: false)
@@ -673,7 +702,10 @@ class MealPlanService: ObservableObject {
     // Ensures only one plan is active at a time
     private func deactivateAllPlans() {
         let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        fetchRequest.predicate = NSPredicate(format: "isActive == YES")
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isActive == YES"),
+            householdKeyPredicate()
+        ])
         
         do {
             let plans = try context.fetch(fetchRequest)

@@ -50,7 +50,9 @@ final class HouseholdIngredientTemplateRepository {
         // Query using semantic uniqueness (canonicalName)
         let canonicalName = IngredientTemplate.canonicalName(from: name)
         
-        if let existing = try findByCanonicalName(canonicalName) {
+        // M10.6.18: Scope lookup by householdKey (ADR 013) — prevents ghost templates
+        // from previous households being reused when user is in personal scope
+        if let existing = try findByCanonicalName(canonicalName, householdKey: householdKey) {
             Task { @MainActor in
                 DebugLogService.shared.log("findOrCreate: canonical=\(canonicalName), found existing=yes, householdKey param=\(householdKey ?? "nil")", category: "Repo")
                 DebugLogService.shared.log("existing template: householdKey=\(existing.householdKey ?? "nil"), category=\(existing.category ?? "nil")", category: "Repo")
@@ -167,12 +169,18 @@ final class HouseholdIngredientTemplateRepository {
     
     // MARK: - Private Helper Methods
     
-    /// Find template by canonical name (semantic uniqueness key)
-    private func findByCanonicalName(_ canonicalName: String) throws -> IngredientTemplate? {
+    /// Find template by canonical name, scoped to householdKey (ADR 013).
+    /// M10.6.18: Without householdKey scoping, ghost templates from previous households
+    /// are found and reused, making new templates invisible in personal scope.
+    private func findByCanonicalName(_ canonicalName: String, householdKey: String? = nil) throws -> IngredientTemplate? {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "canonicalName ==[c] %@", canonicalName)
+        if let key = householdKey {
+            request.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == %@", canonicalName, key)
+        } else {
+            request.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == nil", canonicalName)
+        }
         request.fetchLimit = 1
-        
+
         return try context.fetch(request).first
     }
 }

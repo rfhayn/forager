@@ -38,6 +38,8 @@ The user's insistence on root cause analysis over quick fixes ("I don't want thi
 
 Commit, PR, merge, and archive to TestFlight for verification. The user should test: leave household → import recipe → recipe appears in personal scope.
 
+**M10.6.18 addendum** (same session): Expanded to comprehensive ADR 013 audit after the user asked to fix all unscoped fetches. Found 8 violations across MealPlanService (7 fetches), IngredientTemplateService (4 methods), OptimizedRecipeDataService (2 fetches), and 4 view files. Also fixed 3 UI bugs: removed Debug Mode from Release settings, fixed category picker modal sizing, simplified import button text. The `findByCanonicalName` scope fix was the critical one — it caused 18/20 imported templates to be invisible by reusing ghost templates with stale householdKeys.
+
 ---
 
 ## Session 71 — March 7, 2026
