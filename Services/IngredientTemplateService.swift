@@ -327,22 +327,34 @@ class IngredientTemplateService: ObservableObject {
     
     // MARK: - Template Operations
     
+    // M10.6.18: Build householdKey predicate for scoped fetches (ADR 013)
+    private func householdKeyPredicate() -> NSPredicate {
+        if let key = resolvedHouseholdKey {
+            return NSPredicate(format: "householdKey == %@", key)
+        } else {
+            return NSPredicate(format: "householdKey == nil")
+        }
+    }
+
+    /// M10.6.18: Scoped by householdKey (ADR 013) to prevent ghost template results
     func searchTemplates(query: String, limit: Int = 10) -> [IngredientTemplate] {
         let startTime = CFAbsoluteTimeGetCurrent()
-        
+
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        
+
+        var predicates: [NSPredicate] = [householdKeyPredicate()]
         if !query.isEmpty {
-            request.predicate = NSPredicate(format: "name CONTAINS[cd] %@", query)
+            predicates.append(NSPredicate(format: "name CONTAINS[cd] %@", query))
         }
-        
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ]
-        
+
         request.fetchLimit = limit
-        
+
         do {
             let templates = try context.fetch(request)
             let duration = CFAbsoluteTimeGetCurrent() - startTime
@@ -355,18 +367,22 @@ class IngredientTemplateService: ObservableObject {
             return []
         }
     }
-    
+
+    /// M10.6.18: Scoped by householdKey (ADR 013) to prevent ghost template results
     func loadPopularIngredients(limit: Int = 20) -> [IngredientTemplate] {
         let startTime = CFAbsoluteTimeGetCurrent()
-        
+
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "usageCount > 0")
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "usageCount > 0"),
+            householdKeyPredicate()
+        ])
         request.sortDescriptors = [
             NSSortDescriptor(keyPath: \IngredientTemplate.usageCount, ascending: false),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ]
         request.fetchLimit = limit
-        
+
         do {
             let templates = try context.fetch(request)
             let duration = CFAbsoluteTimeGetCurrent() - startTime
@@ -403,9 +419,10 @@ class IngredientTemplateService: ObservableObject {
 
             Task { @MainActor in DebugLogService.shared.log("repository returned: existing=\(template.dateCreated != nil && template.usageCount > 0 ? "yes" : "new"), template.householdKey=\(template.householdKey ?? "nil")", category: "Template") }
 
-            // M10.6.13: Ensure householdKey is correct regardless of found vs created path
-            if let key = resolvedHouseholdKey, template.householdKey != key {
-                template.householdKey = key
+            // M10.6.18: Always sync householdKey — the nil case matters for personal scope.
+            // Previously `if let` skipped nil, leaving ghost householdKeys on reused templates.
+            if template.householdKey != resolvedHouseholdKey {
+                template.householdKey = resolvedHouseholdKey
             }
 
             // Increment usage count
@@ -478,8 +495,10 @@ class IngredientTemplateService: ObservableObject {
     // Migrates existing templates to normalized names and deduplicates collisions.
     // When two templates normalize to the same name (e.g., "Carrots" and "carrot"),
     // keeps the one with higher usage count and re-points all relationships.
+    /// M10.6.18: Scoped by householdKey (ADR 013)
     func migrateExistingTemplates() {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        request.predicate = householdKeyPredicate()
 
         do {
             let templates = try context.fetch(request)
@@ -560,8 +579,10 @@ class IngredientTemplateService: ObservableObject {
 
     /// Finds duplicate templates (same canonicalName) for user review.
     /// Returns pairs of (keeper, duplicates) grouped by normalized name.
+    /// M10.6.18: Scoped by householdKey (ADR 013)
     func findDuplicateTemplates() -> [(name: String, templates: [IngredientTemplate])] {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        request.predicate = householdKeyPredicate()
 
         do {
             let templates = try context.fetch(request)

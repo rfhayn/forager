@@ -356,8 +356,13 @@ struct AddIngredientsToListView: View {
         // This is a simple implementation showing how list selection works
         // In a production app, you might present a sheet to select the list
         
-        // For now, fetch the most recent weekly list or create one
+        // M10.6.18: Scope to household (ADR 013)
         let request: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        if let key = recipe.householdKey {
+            request.predicate = NSPredicate(format: "householdKey == %@", key)
+        } else {
+            request.predicate = NSPredicate(format: "householdKey == nil")
+        }
         request.sortDescriptors = [NSSortDescriptor(keyPath: \WeeklyList.dateCreated, ascending: false)]
         request.fetchLimit = 1
         
@@ -564,11 +569,17 @@ struct AddIngredientsToListView: View {
         }
     }
     
+    // M10.6.18: Scoped by householdKey (ADR 013) to prevent ghost template matches
     private func findExistingTemplate(cleanName: String) -> IngredientTemplate? {
         let normalizedName = templateService.normalize(name: cleanName)
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "name ==[cd] %@", normalizedName)
-        
+        let householdKey = recipe.householdKey
+        if let key = householdKey {
+            request.predicate = NSPredicate(format: "name ==[cd] %@ AND householdKey == %@", normalizedName, key)
+        } else {
+            request.predicate = NSPredicate(format: "name ==[cd] %@ AND householdKey == nil", normalizedName)
+        }
+
         do {
             return try viewContext.fetch(request).first
         } catch {

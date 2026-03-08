@@ -50,7 +50,7 @@ struct RecipeBrowserView: View {
                     Button {
                         Task { await extractRecipe() }
                     } label: {
-                        Label("Import This Recipe", systemImage: "square.and.arrow.down")
+                        Text("Import")
                     }
                     .disabled(viewModel.isExtracting || viewModel.currentURL == nil)
                 }

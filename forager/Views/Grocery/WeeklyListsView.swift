@@ -183,6 +183,7 @@ struct WeeklyListsView: View {
             isGeneratingList = true
         }
 
+        let currentKey = householdService.currentHouseholdKey
         PersistenceController.shared.performWrite({ context in
             let newList = WeeklyList(context: context)
             newList.id = UUID()
@@ -191,8 +192,13 @@ struct WeeklyListsView: View {
             newList.isCompleted = false
             newList.notes = "Auto-generated from ingredient staples"
 
+            // M10.6.18: Scope staple fetch to household (ADR 013)
             let stapleRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-            stapleRequest.predicate = NSPredicate(format: "isStaple == YES")
+            if let key = currentKey {
+                stapleRequest.predicate = NSPredicate(format: "isStaple == YES AND householdKey == %@", key)
+            } else {
+                stapleRequest.predicate = NSPredicate(format: "isStaple == YES AND householdKey == nil")
+            }
             stapleRequest.sortDescriptors = [
                 NSSortDescriptor(keyPath: \IngredientTemplate.category, ascending: true),
                 NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)

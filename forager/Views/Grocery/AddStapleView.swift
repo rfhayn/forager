@@ -146,7 +146,8 @@ struct AddStapleView: View {
     private func saveStaple() {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // Check for existing items (any item with this name)
+        // GroceryItem has no householdKey — scoped through categoryEntity relationship.
+        // Name-based duplicate check is sufficient for staples.
         let request: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
         request.predicate = NSPredicate(format: "name ==[c] %@", trimmedName)
         

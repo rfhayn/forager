@@ -52,9 +52,10 @@ struct SettingsView: View {
             // M10.6: AI Integration (optional Claude API)
             aiImportSection
 
-            // M7.1.2: Developer Tools
-            // M10.6.13: Ungated for Release — debug toggle + log viewer always available
+            // M10.6.18: Developer tools hidden in Release builds for launch
+            #if DEBUG
             developerToolsSection
+            #endif
 
             // M7.0.2: About & Privacy
             aboutSection

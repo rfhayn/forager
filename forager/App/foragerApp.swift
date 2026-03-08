@@ -116,6 +116,11 @@ struct foragerApp: App {
             household?.currentHouseholdKey
         }
 
+        // M10.6.18: Wire household key into MealPlanService singleton (ADR 013)
+        MealPlanService.shared.householdKeyProvider = { [weak household] in
+            household?.currentHouseholdKey
+        }
+
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
         DispatchQueue.global(qos: .utility).async {
