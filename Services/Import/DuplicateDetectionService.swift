@@ -14,37 +14,58 @@ import CoreData
 /// Detects whether an imported recipe already exists in the database.
 /// Strategy 1: Exact sourceURL match (cheapest, most reliable).
 /// Strategy 2: Fuzzy title match using Levenshtein distance < 3 on normalized titles.
+/// M10.6: Scoped to user's current visibility — only matches recipes with matching
+/// householdKey to prevent ghost duplicates from previous/inaccessible households.
 enum DuplicateDetectionService {
 
-    /// Check for duplicates of a draft recipe.
+    /// Check for duplicates of a draft recipe within the user's visible scope.
     /// Returns the first match found (exact URL preferred over fuzzy title), or nil.
+    /// - Parameter householdKey: Current household key, or nil if personal scope.
     static func checkForDuplicate(
         title: String,
         sourceURL: String?,
+        householdKey: String?,
         context: NSManagedObjectContext
     ) -> DuplicateResult? {
         // Strategy 1: Exact URL match
         if let url = sourceURL, !url.isEmpty,
-           let result = checkExactURL(url, context: context) {
+           let result = checkExactURL(url, householdKey: householdKey, context: context) {
             return result
         }
 
         // Strategy 2: Fuzzy title match
-        if let result = checkFuzzyTitle(title, context: context) {
+        if let result = checkFuzzyTitle(title, householdKey: householdKey, context: context) {
             return result
         }
 
         return nil
     }
 
+    // MARK: - Scope Predicate
+
+    /// Builds a predicate that limits results to the user's visible recipes.
+    /// In household: householdKey == key. Personal: householdKey == nil.
+    private static func scopePredicate(householdKey: String?) -> NSPredicate {
+        if let key = householdKey {
+            return NSPredicate(format: "householdKey == %@", key)
+        } else {
+            return NSPredicate(format: "householdKey == nil")
+        }
+    }
+
     // MARK: - Strategy 1: Exact URL Match
 
     private static func checkExactURL(
         _ url: String,
+        householdKey: String?,
         context: NSManagedObjectContext
     ) -> DuplicateResult? {
         let request = Recipe.fetchRequest()
-        request.predicate = NSPredicate(format: "sourceURL == %@", url)
+        let urlPredicate = NSPredicate(format: "sourceURL == %@", url)
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            urlPredicate,
+            scopePredicate(householdKey: householdKey)
+        ])
         request.fetchLimit = 1
 
         guard let recipes = try? context.fetch(request),
@@ -61,14 +82,16 @@ enum DuplicateDetectionService {
     /// Normalizes both titles to lowercase, trimmed, before comparison.
     private static func checkFuzzyTitle(
         _ title: String,
+        householdKey: String?,
         context: NSManagedObjectContext
     ) -> DuplicateResult? {
         let normalized = normalizeTitle(title)
         guard !normalized.isEmpty else { return nil }
 
-        // Fetch recent recipes to compare against
+        // Fetch recent recipes to compare against (scoped to visible recipes only)
         // Limit to 100 most recent to keep performance bounded
         let request = Recipe.fetchRequest()
+        request.predicate = scopePredicate(householdKey: householdKey)
         request.sortDescriptors = [NSSortDescriptor(key: "dateCreated", ascending: false)]
         request.fetchLimit = 100
 

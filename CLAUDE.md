@@ -167,6 +167,7 @@ Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/
 **Core Data rules:**
 - Always add fetch indexes for frequently queried fields
 - Use predicates for database-level filtering (not in-memory)
+- **ADR 013**: All service fetches on household-scoped entities MUST include `householdKey` predicate (prevents ghost objects from other stores/households)
 - Batch operations for multiple changes
 - Background contexts for heavy operations
 - CloudKit sync wrapped in `#if !DEBUG`
@@ -275,13 +276,14 @@ Custom skills for forager workflows. Invoke with `/name` or let Claude auto-invo
 
 ## Architecture Decision Records
 
-12 ADRs in `docs/architecture/`:
+13 ADRs in `docs/architecture/`:
 - **ADR 007**: Core Data change process (read before any schema changes)
 - **ADR 008**: Shared zone architecture (dual-store foundation)
 - **ADR 009**: Public link sharing (bypasses broken UICloudSharingController on iOS 18.x)
 - **ADR 010**: Hybrid parser confidence routing (3-tier: regex → ML → NLP fallback)
 - **ADR 011**: Tab architecture reduction (6→5 tabs for M15, read before navigation changes)
 - **ADR 012**: GroceryListItem flat string snapshots (snapshot-only, not relationships)
+- **ADR 013**: Scope-aware fetch pattern (all service fetches MUST include `householdKey` predicate)
 - **Service Layer Pattern**: M7.5+ standard for all Core Data writes
 
 ## Code Standards

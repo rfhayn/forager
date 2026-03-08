@@ -83,9 +83,29 @@ Produce a structured report:
 - [Mitigation strategy]
 ```
 
+## Step 5: Scope-Aware Fetch Audit (ADR 013)
+
+If the entity has a `householdKey` property, verify:
+
+### Fetch Scope Compliance
+- [ ] Every `fetchRequest()` in services includes a `householdKey` predicate
+- [ ] No unscoped fetches return user-facing data (ghost object risk)
+- [ ] `householdKey` is passed as a parameter, not assumed from global state
+
+### Zone Safety
+- [ ] Any overwrite/replace operation validates the target object is in an accessible store
+- [ ] Pre-mutation cleanup runs before `container.share()` operations
+- [ ] Orphaned objects (stale `householdKey`, parentless Ingredients) are handled
+
+### Entities requiring scope audit
+Recipe, WeeklyList, MealPlan, PlannedMeal, Category, IngredientTemplate
+
+See `docs/architecture/013-scope-aware-fetch-pattern.md` for the full pattern.
+
 ## Critical Reminders
 
 - CloudKit Production schema is **append-only** — no destructive changes
-- New model version requires incrementing from v6 to v7
+- New model version requires incrementing from v7 (current) — update as needed
 - Test with sample data before migrating production
 - Follow M3 Phase 3 pattern for migrations (successful isStaple migration)
+- **ADR 013**: All service fetches on household-scoped entities MUST include `householdKey` predicate
