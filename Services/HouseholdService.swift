@@ -418,23 +418,36 @@ class HouseholdService: ObservableObject {
         // Step 4: Mark household as "left" in Keychain (survives app reinstall)
         markHouseholdAsLeft(householdID)
 
-        // Step 5: Delete data by householdKey (M7.3.3 FIX)
+        // Step 5: Delete the Household entity itself (M10.6.17 FIX)
+        // The Household lives in the PRIVATE store (attach-then-share pattern) and survives
+        // shared store cleanup. Without this, ghost Household triggers awakeFromInsert auto-assign.
+        viewContext.delete(household)
+        CloudKitLogger.debug("Deleted Household entity from private store")
+
+        // Step 5b: Delete HouseholdMember entities
+        let memberRequest: NSFetchRequest<HouseholdMember> = HouseholdMember.fetchRequest()
+        if let members = try? viewContext.fetch(memberRequest) {
+            for member in members { viewContext.delete(member) }
+            CloudKitLogger.debug("Deleted \(members.count) HouseholdMember entities")
+        }
+
+        // Step 6: Delete data by householdKey (M7.3.3 FIX)
         // This ensures orphaned data is cleaned up regardless of store location
         // Prevents duplicates if user rejoins the same household later
         let deletedByKey = deleteHouseholdLinkedData(householdKey: householdID)
         CloudKitLogger.debug("Deleted \(deletedByKey) objects with householdKey=\(householdID)")
 
-        // Step 6: Also purge any remaining shared store objects
+        // Step 7: Also purge any remaining shared store objects
         let deletedFromStore = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
         CloudKitLogger.debug("Purged \(deletedFromStore) shared store objects")
 
-        // Step 7: Reset context BEFORE destroying shared store (M7.3.3)
+        // Step 8: Reset context BEFORE destroying shared store (M7.3.3)
         // This clears all in-memory managed object references, preventing crashes
         // when SwiftUI tries to access objects from the destroyed store
         viewContext.reset()
         CloudKitLogger.debug("Reset viewContext to clear in-memory references")
 
-        // Step 8: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
+        // Step 9: Destroy and recreate shared store to clear local SQLite cache (M7.3.3)
         do {
             try PersistenceController.shared.destroyAndRecreateSharedStore()
             CloudKitLogger.debug("Destroyed and recreated shared store")
@@ -725,6 +738,21 @@ class HouseholdService: ObservableObject {
             // Mark this household as "left" so we don't re-join on next sync
             if let householdID = householdKey {
                 markHouseholdAsLeft(householdID)
+            }
+
+            // M10.6.17 FIX: Delete the Household entity itself (lives in private store)
+            viewContext.delete(household)
+            #if DEBUG
+            print("✅ M10.6.17: Deleted ghost Household entity from private store")
+            #endif
+
+            // M10.6.17: Delete HouseholdMember entities
+            let memberRequest: NSFetchRequest<HouseholdMember> = HouseholdMember.fetchRequest()
+            if let members = try? viewContext.fetch(memberRequest) {
+                for member in members { viewContext.delete(member) }
+                #if DEBUG
+                print("✅ M10.6.17: Deleted \(members.count) HouseholdMember entities")
+                #endif
             }
 
             // M7.3.3 FIX: Delete data by householdKey (not just purge shared store)
@@ -2201,6 +2229,23 @@ class HouseholdService: ObservableObject {
         print("\n🧹 M10.6: Pre-creation orphan cleanup starting...")
         #endif
         var cleanedCount = 0
+
+        // 0. Delete ALL ghost Household and HouseholdMember entities
+        // Since currentHousehold is nil (checked by caller), any Household is a ghost.
+        // Household lives in the PRIVATE store (attach-then-share pattern) and survives
+        // shared store cleanup — must be explicitly deleted.
+        for entityName in ["Household", "HouseholdMember"] {
+            let request = NSFetchRequest<NSManagedObject>(entityName: entityName)
+            if let objects = try? viewContext.fetch(request), !objects.isEmpty {
+                for obj in objects {
+                    viewContext.delete(obj)
+                    cleanedCount += 1
+                }
+                #if DEBUG
+                print("   Deleted \(objects.count) ghost \(entityName)(s)")
+                #endif
+            }
+        }
 
         // 1. Delete all objects with a stale householdKey (no active household exists)
         // Since currentHousehold is nil (checked by caller), ANY householdKey is stale
