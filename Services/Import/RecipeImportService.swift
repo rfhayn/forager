@@ -237,6 +237,19 @@ class RecipeImportService: ObservableObject {
             return nil
         }
 
+        // M10.6: Validate the recipe is in the user's accessible scope.
+        // Ghost recipes from previous households are invisible in the UI and cause
+        // zone corruption if overwritten (Ingredient objects span multiple CloudKit zones).
+        let currentKey = householdKeyProvider?()
+        let recipeKey = recipe.householdKey
+        if currentKey != recipeKey {
+            #if DEBUG
+            print("⚠️ M10.6: Ghost recipe detected (householdKey=\(recipeKey ?? "nil") vs current=\(currentKey ?? "nil")) — saving as new instead of replacing")
+            #endif
+            // Fall back to saving as new — the ghost recipe is inaccessible
+            return await saveImport(from: draft, categoryAssignments: categoryAssignments)
+        }
+
         // Delete existing ingredients
         if let ingredients = recipe.ingredients as? Set<Ingredient> {
             for ingredient in ingredients {
@@ -405,12 +418,14 @@ class RecipeImportService: ObservableObject {
 
     // MARK: - Duplicate Detection
 
-    /// Check if a draft recipe already exists in the database.
+    /// Check if a draft recipe already exists in the user's visible scope.
     /// Called by the preview UI before save — returns nil if no duplicate found.
+    /// M10.6: Scoped to current householdKey to prevent ghost duplicate matches.
     func checkDuplicate(for draft: ImportDraftRecipe) -> DuplicateResult? {
         DuplicateDetectionService.checkForDuplicate(
             title: draft.title.value,
             sourceURL: draft.sourceURL,
+            householdKey: householdKeyProvider?(),
             context: viewContext
         )
     }

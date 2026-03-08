@@ -1205,6 +1205,11 @@ class HouseholdService: ObservableObject {
             throw HouseholdError.creationFailed(statusName)
         }
 
+        // M10.6: Pre-creation cleanup — remove orphaned objects from previous households
+        // These can cause CloudKit zone corruption (error 134060) if Ingredients reference
+        // IngredientTemplates across zone boundaries during container.share().
+        cleanOrphanedHouseholdData()
+
         do {
             #if DEBUG
             print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
@@ -2187,6 +2192,72 @@ class HouseholdService: ObservableObject {
         }
     }
     
+    /// M10.6: Pre-creation cleanup — removes ALL objects with non-nil householdKey
+    /// that don't belong to any currently active household. Prevents zone corruption
+    /// when creating a new household after leaving a previous one.
+    /// Also purges shared store remnants and orphaned Ingredients not linked to any Recipe.
+    private func cleanOrphanedHouseholdData() {
+        #if DEBUG
+        print("\n🧹 M10.6: Pre-creation orphan cleanup starting...")
+        #endif
+        var cleanedCount = 0
+
+        // 1. Delete all objects with a stale householdKey (no active household exists)
+        // Since currentHousehold is nil (checked by caller), ANY householdKey is stale
+        let entityKeys: [(NSFetchRequest<NSManagedObject>, String)] = [
+            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
+            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
+            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
+            (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
+        ]
+
+        for (request, name) in entityKeys {
+            request.predicate = NSPredicate(format: "householdKey != nil")
+            if let objects = try? viewContext.fetch(request), !objects.isEmpty {
+                for obj in objects {
+                    viewContext.delete(obj)
+                    cleanedCount += 1
+                }
+                #if DEBUG
+                print("   Deleted \(objects.count) orphaned \(name)(s)")
+                #endif
+            }
+        }
+
+        // 2. Delete orphaned Ingredients not linked to any Recipe
+        // These can survive if a Recipe was deleted but Ingredients weren't cascade-cleaned
+        let ingredientRequest: NSFetchRequest<NSManagedObject> = NSFetchRequest(entityName: "Ingredient")
+        ingredientRequest.predicate = NSPredicate(format: "recipe == nil")
+        if let orphanedIngredients = try? viewContext.fetch(ingredientRequest), !orphanedIngredients.isEmpty {
+            for ingredient in orphanedIngredients {
+                viewContext.delete(ingredient)
+                cleanedCount += 1
+            }
+            #if DEBUG
+            print("   Deleted \(orphanedIngredients.count) orphaned Ingredient(s) with no Recipe")
+            #endif
+        }
+
+        // 3. Purge shared store remnants
+        let purgedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        cleanedCount += purgedCount
+
+        if viewContext.hasChanges {
+            do {
+                try viewContext.save()
+            } catch {
+                #if DEBUG
+                print("   ⚠️ M10.6: Orphan cleanup save error: \(error)")
+                #endif
+            }
+        }
+
+        #if DEBUG
+        print("🧹 M10.6: Pre-creation orphan cleanup complete — removed \(cleanedCount) objects\n")
+        #endif
+    }
+
     /// M7.3.3: Deletes all objects linked to a household by householdKey
     /// Used during "Clean Delete" to remove data that may be in private store
     /// (due to attach-then-share pattern not moving related objects to shared store)
