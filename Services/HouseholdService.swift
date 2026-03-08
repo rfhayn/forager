@@ -960,6 +960,7 @@ class HouseholdService: ObservableObject {
         }()
 
         // Migrate recipes with ingredients, skipping duplicates by title
+        var recipeMapping: [UUID: Recipe] = [:]
         var skippedRecipes = 0
         for oldRecipe in recipeSet {
             let title = oldRecipe.title?.lowercased() ?? ""
@@ -982,6 +983,8 @@ class HouseholdService: ObservableObject {
             newRecipe.usageCount = 0
             newRecipe.household = nil
             newRecipe.householdKey = nil
+
+            if let oldId = oldRecipe.id { recipeMapping[oldId] = newRecipe }
 
             // Copy ingredients
             let ingredientSet = oldRecipe.ingredients as? Set<Ingredient> ?? []
@@ -1058,8 +1061,10 @@ class HouseholdService: ObservableObject {
             return Set(results.compactMap { $0.name?.lowercased() })
         }()
 
-        // Migrate meal plans, skipping duplicates by name
+        // Migrate meal plans with planned meals, skipping duplicates by name
+        var mealPlanMapping: [UUID: MealPlan] = [:]
         var skippedPlans = 0
+        var migratedPlannedMeals = 0
         for oldPlan in mealPlanSet {
             let name = oldPlan.name?.lowercased() ?? ""
             if existingPlanNames.contains(name) {
@@ -1078,9 +1083,35 @@ class HouseholdService: ObservableObject {
             newPlan.household = nil
             newPlan.householdKey = nil
 
-            // Note: PlannedMeal copying would require recipe mapping
-            // For now, skip planned meals as they reference recipes
-            // User can recreate meal assignments manually
+            if let oldId = oldPlan.id { mealPlanMapping[oldId] = newPlan }
+        }
+
+        // M10.6.20: Copy PlannedMeals from household MealPlans to personal MealPlans
+        for oldPlan in mealPlanSet {
+            guard let oldPlanId = oldPlan.id,
+                  let newPlan = mealPlanMapping[oldPlanId] else { continue }
+            let oldMeals = oldPlan.plannedMeals as? Set<PlannedMeal> ?? []
+            for oldMeal in oldMeals {
+                let newMeal = PlannedMeal(context: viewContext)
+                newMeal.id = UUID()
+                newMeal.date = oldMeal.date
+                newMeal.mealType = oldMeal.mealType
+                newMeal.notes = oldMeal.notes
+                newMeal.isCompleted = oldMeal.isCompleted
+                newMeal.scaleFactor = oldMeal.scaleFactor
+                newMeal.servings = oldMeal.servings
+                newMeal.quickOption = oldMeal.quickOption
+                newMeal.slotKey = oldMeal.slotKey
+                newMeal.household = nil
+                newMeal.householdKey = nil
+                newMeal.mealPlan = newPlan
+                // Remap recipe relationship to new personal copy
+                if let oldRecipeId = oldMeal.recipe?.id,
+                   let newRecipe = recipeMapping[oldRecipeId] {
+                    newMeal.recipe = newRecipe
+                }
+                migratedPlannedMeals += 1
+            }
         }
 
         #if DEBUG
@@ -1090,6 +1121,7 @@ class HouseholdService: ObservableObject {
         print("   \(recipeSet.count - skippedRecipes) recipes (\(skippedRecipes) skipped — already exist)")
         print("   \(listSet.count - skippedLists) weekly lists (\(skippedLists) skipped — already exist)")
         print("   \(mealPlanSet.count - skippedPlans) meal plans (\(skippedPlans) skipped — already exist)")
+        print("   \(migratedPlannedMeals) planned meals")
         #endif
     }
 
@@ -1441,13 +1473,23 @@ class HouseholdService: ObservableObject {
             migratedCount += 1
         }
 
-        // Migrate meal plans (MealPlan, not PlannedMeal!)
+        // Migrate meal plans
         let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         mealPlanRequest.predicate = NSPredicate(format: "household == nil")
         let mealPlans = try viewContext.fetch(mealPlanRequest)
         for mealPlan in mealPlans {
             mealPlan.household = household
             mealPlan.householdKey = householdKey
+            migratedCount += 1
+        }
+
+        // Migrate planned meals (children of MealPlans)
+        let plannedMealRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        plannedMealRequest.predicate = NSPredicate(format: "household == nil")
+        let plannedMeals = try viewContext.fetch(plannedMealRequest)
+        for plannedMeal in plannedMeals {
+            plannedMeal.household = household
+            plannedMeal.householdKey = householdKey
             migratedCount += 1
         }
 
@@ -1476,6 +1518,7 @@ class HouseholdService: ObservableObject {
         print("   \(recipes.count) recipes")
         print("   \(lists.count) weekly lists")
         print("   \(mealPlans.count) meal plans")
+        print("   \(plannedMeals.count) planned meals")
         print("   \(categories.count) categories")
         print("   \(templates.count) ingredient templates")
         print("   Household key: \(householdKey)")
@@ -1490,6 +1533,7 @@ class HouseholdService: ObservableObject {
             (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
             (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
             (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
             (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
             (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
         ]
@@ -2262,6 +2306,7 @@ class HouseholdService: ObservableObject {
             (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
             (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
             (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
             (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
             (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
         ]
@@ -2370,6 +2415,24 @@ class HouseholdService: ObservableObject {
         } catch {
             #if DEBUG
             print("   ❌ WeeklyList fetch error: \(error)")
+            #endif
+        }
+
+        // Delete planned meals with this householdKey (before meal plans to avoid orphans)
+        let plannedMealRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        plannedMealRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let plannedMeals = try viewContext.fetch(plannedMealRequest)
+            #if DEBUG
+            print("   Found \(plannedMeals.count) planned meals to delete")
+            #endif
+            for plannedMeal in plannedMeals {
+                viewContext.delete(plannedMeal)
+                deletedCount += 1
+            }
+        } catch {
+            #if DEBUG
+            print("   ❌ PlannedMeal fetch error: \(error)")
             #endif
         }
 
