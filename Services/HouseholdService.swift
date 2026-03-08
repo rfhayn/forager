@@ -923,6 +923,18 @@ class HouseholdService: ObservableObject {
             }
         }
 
+        // M10.6.20: Re-link GroceryItem.categoryEntity to new personal Categories
+        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        let groceryItems = try viewContext.fetch(groceryItemRequest)
+        for item in groceryItems {
+            if let catName = item.category, !catName.isEmpty {
+                let catReq: NSFetchRequest<Category> = Category.fetchRequest()
+                catReq.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", catName)
+                catReq.fetchLimit = 1
+                item.categoryEntity = try? viewContext.fetch(catReq).first
+            }
+        }
+
         // Migrate ingredient templates, skipping those that already exist by canonical name
         var templateMapping: [UUID: IngredientTemplate] = [:]
         var skippedTemplates = 0
@@ -1491,6 +1503,18 @@ class HouseholdService: ObservableObject {
             plannedMeal.household = household
             plannedMeal.householdKey = householdKey
             migratedCount += 1
+        }
+
+        // M10.6.20: Break cross-store GroceryItem→Category relationships before Categories move to shared store
+        // GroceryItem (staples) stays in private store; Category moves to shared store via household migration.
+        // Preserve the category string for display fallback via effectiveCategory computed property.
+        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        let groceryItems = try viewContext.fetch(groceryItemRequest)
+        for item in groceryItems where item.categoryEntity != nil {
+            if item.category == nil || item.category?.isEmpty == true {
+                item.category = item.categoryEntity?.name
+            }
+            item.categoryEntity = nil
         }
 
         // Migrate categories
@@ -2269,8 +2293,39 @@ class HouseholdService: ObservableObject {
     /// CloudKit mirroring delegate can initialize and sync personal data.
     /// Safe to call every launch — no-ops if stores are already clean.
     func repairZoneCorruptionIfNeeded() {
+        // M10.6.20: Fix cross-store GroceryItem→Category relationships for users IN a household
+        if currentHousehold != nil {
+            repairCrossStoreGroceryItemRelationships()
+        }
         guard currentHousehold == nil else { return }
         cleanOrphanedHouseholdData()
+    }
+
+    /// M10.6.20: GroceryItem (private store) may reference Category (shared store) via categoryEntity.
+    /// This cross-store relationship causes CloudKit zone corruption. NULL out the relationship
+    /// and preserve the category name as a fallback string for effectiveCategory.
+    private func repairCrossStoreGroceryItemRelationships() {
+        let request: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        guard let items = try? viewContext.fetch(request) else { return }
+        var fixedCount = 0
+        for item in items where item.categoryEntity != nil {
+            // Only fix items whose categoryEntity is in a different store (cross-store)
+            if let catStore = item.categoryEntity?.objectID.persistentStore,
+               let itemStore = item.objectID.persistentStore,
+               catStore != itemStore {
+                if item.category == nil || item.category?.isEmpty == true {
+                    item.category = item.categoryEntity?.name
+                }
+                item.categoryEntity = nil
+                fixedCount += 1
+            }
+        }
+        if fixedCount > 0, viewContext.hasChanges {
+            try? viewContext.save()
+            #if DEBUG
+            print("🔧 M10.6.20: Fixed \(fixedCount) cross-store GroceryItem→Category relationships")
+            #endif
+        }
     }
 
     /// M10.6: Pre-creation cleanup — removes ALL objects with non-nil householdKey
