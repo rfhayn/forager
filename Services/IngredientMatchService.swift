@@ -199,9 +199,8 @@ class IngredientMatchService: ObservableObject {
 
         if let template = exactMatch {
             templateName = template.name
-            if let category = template.categoryEntity?.name, !category.isEmpty,
-               category.lowercased() != "uncategorized" {
-                // Template already has a real category — use it
+            if let category = template.categoryEntity?.name, !category.isEmpty {
+                // Template has a category — use it (including user-assigned "Uncategorized")
                 status = .ready
                 categoryName = category
             } else if let ai = aiCategory, !ai.isEmpty {

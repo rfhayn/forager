@@ -61,7 +61,8 @@ class IngredientTemplateService: ObservableObject {
         // in plural matching — "frozen peas" stays intact, "diced tomatoes" → "tomatoes".
         let preparationPrefixes = [
             "diced ", "chopped ", "sliced ", "minced ", "crushed ", "grated ",
-            "shredded ", "halved ", "quartered "
+            "shredded ", "halved ", "quartered ",
+            "small ", "large ", "medium "
         ]
 
         var checkName = lowercased
@@ -226,7 +227,8 @@ class IngredientTemplateService: ObservableObject {
         // because they describe fundamentally different products or store locations.
         let preparationQualifiers = [
             "diced", "chopped", "sliced", "minced", "crushed", "grated",
-            "shredded", "halved", "quartered"
+            "shredded", "halved", "quartered",
+            "small", "large", "medium"
         ]
 
         var result = lowercased
@@ -303,6 +305,13 @@ class IngredientTemplateService: ObservableObject {
         normalized = normalized.replacingOccurrences(
             of: #"\s*\([^)]*\)\s*"#, with: " ", options: .regularExpression
         ).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // M9.12 Phase 0c2: Strip comma-separated prep notes — "shrimp, peeled and deveined, tails removed" → "shrimp"
+        // Multi-word comma qualifiers aren't caught by the regex parser's single-word comma pattern
+        if let commaRange = normalized.range(of: ",") {
+            normalized = String(normalized[normalized.startIndex..<commaRange.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
 
         // M10.6.15 Phase 0d: Strip trailing single-character words (artifacts like "avocado s")
         let trimWords = normalized.split(separator: " ").map(String.init)

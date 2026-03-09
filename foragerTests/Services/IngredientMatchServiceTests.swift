@@ -174,7 +174,7 @@ final class IngredientMatchServiceTests: XCTestCase {
     // MARK: - Uncategorized Template
 
     @MainActor
-    func testUncategorizedTemplateNeedsCategory() {
+    func testUncategorizedTemplateIsReady() {
         let template = templateService.findOrCreateTemplate(name: "butter")
         let uncategorized = createCategory(named: "Uncategorized")
         templateService.updateCategory(template, category: uncategorized)
@@ -182,8 +182,8 @@ final class IngredientMatchServiceTests: XCTestCase {
         let result = matchService.matchIngredient(text: "1 tbsp butter")
 
         XCTAssertNotNil(result)
-        XCTAssertEqual(result?.status, .needsCategory, "Templates with 'Uncategorized' category should still need category")
-        XCTAssertNil(result?.categoryName)
+        XCTAssertEqual(result?.status, .ready, "Templates with 'Uncategorized' category should be ready — user explicitly chose it")
+        XCTAssertEqual(result?.categoryName, "Uncategorized")
     }
 
     // MARK: - Match Summary Edge Cases
