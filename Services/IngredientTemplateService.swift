@@ -406,12 +406,29 @@ class IngredientTemplateService: ObservableObject {
         }
     }
     
+    // M9.12: Look up the "Uncategorized" Category entity for the current household scope.
+    // Used as default when no category is provided to findOrCreateTemplate.
+    private func lookupUncategorizedCategory() -> Category? {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        let key = resolvedHouseholdKey
+        if let key = key {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", "Uncategorized", key)
+        } else {
+            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", "Uncategorized")
+        }
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
+    }
+
     // M7.2.3 Phase 3.3: Updated to use HouseholdIngredientTemplateRepository
     func findOrCreateTemplate(name: String, category: Category? = nil) -> IngredientTemplate {
         // M4.3.5: Normalize ingredient name before lookup/creation
         let normalizedName = normalize(name: name)
 
         Task { @MainActor in DebugLogService.shared.log("findOrCreate: name=\(normalizedName), resolvedHouseholdKey=\(self.resolvedHouseholdKey ?? "nil")", category: "Template") }
+
+        // M9.12: Default to "Uncategorized" when no category provided
+        let resolvedCategory = category ?? lookupUncategorizedCategory()
 
         // M7.2.3 Phase 3.3: Use HouseholdIngredientTemplateRepository for semantic uniqueness
         let repository = HouseholdIngredientTemplateRepository(context: context)
@@ -421,7 +438,7 @@ class IngredientTemplateService: ObservableObject {
             // M10.6.11: Pass household key so new templates are scoped correctly
             let template = try repository.findOrCreate(
                 name: normalizedName,
-                category: category,
+                category: resolvedCategory,
                 isStaple: false,
                 householdKey: resolvedHouseholdKey
             )
