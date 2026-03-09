@@ -28,6 +28,12 @@ fi
 BUILD_NUMBER="$1"
 WHAT_TO_TEST="${2:-$(git log -1 --pretty=%B)}"
 
+# Detect marketing version from pbxproj
+MARKETING_VERSION=$(grep -m1 'MARKETING_VERSION = ' forager.xcodeproj/project.pbxproj 2>/dev/null | sed 's/.*= //' | sed 's/;.*//' | tr -d '[:space:]')
+if [ -z "$MARKETING_VERSION" ]; then
+    echo "⚠️  Could not detect MARKETING_VERSION — build matching may be imprecise"
+fi
+
 # --- Constants ---
 APP_ID="6756034827"
 BETA_GROUP_ID="46d19222-23de-4578-954a-ed0457239949"
@@ -88,17 +94,33 @@ echo "   ✅ JWT generated (20-minute expiry)"
 echo "⏳ Waiting for build $BUILD_NUMBER to finish processing..."
 
 BUILD_ID=""
+
+# First, resolve the preReleaseVersion ID for our marketing version
+# This ensures we match the correct build when multiple builds share the same build number
+PRV_FILTER=""
+if [ -n "$MARKETING_VERSION" ]; then
+    PRV_RESPONSE=$(mktemp)
+    api_get "https://api.appstoreconnect.apple.com/v1/preReleaseVersions?filter%5Bapp%5D=${APP_ID}&filter%5Bversion%5D=${MARKETING_VERSION}&filter%5Bplatform%5D=IOS&limit=1" "$PRV_RESPONSE"
+    PRV_ID=$(jq -r '.data[0].id // empty' "$PRV_RESPONSE")
+    rm -f "$PRV_RESPONSE"
+    if [ -n "$PRV_ID" ]; then
+        PRV_FILTER="&filter%5BpreReleaseVersion%5D=${PRV_ID}"
+        echo "   📦 Filtering for marketing version $MARKETING_VERSION"
+    fi
+fi
+
 for i in $(seq 1 $MAX_POLL_ATTEMPTS); do
     RESPONSE=$(mktemp)
-    api_get "https://api.appstoreconnect.apple.com/v1/builds?filter%5Bapp%5D=${APP_ID}&filter%5Bversion%5D=${BUILD_NUMBER}&filter%5Bexpired%5D=false&sort=-uploadedDate&limit=1" "$RESPONSE"
+    api_get "https://api.appstoreconnect.apple.com/v1/builds?filter%5Bapp%5D=${APP_ID}&filter%5Bversion%5D=${BUILD_NUMBER}&filter%5Bexpired%5D=false&sort=-uploadedDate&limit=1${PRV_FILTER}" "$RESPONSE"
 
     STATE=$(jq -r '.data[0].attributes.processingState // empty' "$RESPONSE")
     BUILD_ID=$(jq -r '.data[0].id // empty' "$RESPONSE")
     ENCRYPTION=$(jq -r '.data[0].attributes.usesNonExemptEncryption // empty' "$RESPONSE")
+    UPLOADED=$(jq -r '.data[0].attributes.uploadedDate // empty' "$RESPONSE")
     rm -f "$RESPONSE"
 
     if [ "$STATE" = "VALID" ] && [ -n "$BUILD_ID" ]; then
-        echo "   ✅ Build $BUILD_NUMBER is VALID (ID: $BUILD_ID)"
+        echo "   ✅ Build $BUILD_NUMBER is VALID (ID: $BUILD_ID, uploaded: $UPLOADED)"
         break
     elif [ "$STATE" = "FAILED" ] || [ "$STATE" = "INVALID" ]; then
         echo "   ❌ Build processing failed (state: $STATE)"
@@ -205,9 +227,31 @@ done
 # Step 11: Add build to beta group
 # ============================================================
 echo "👥 Adding build to Public Beta Testers..."
-api_post "https://api.appstoreconnect.apple.com/v1/betaGroups/$BETA_GROUP_ID/relationships/builds" \
-    "{\"data\":[{\"id\":\"$BUILD_ID\",\"type\":\"builds\"}]}"
-echo "   ✅ Build added to beta group"
+GROUP_RESPONSE=$(mktemp)
+curl -s -w "\n%{http_code}" -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+    -d "{\"data\":[{\"id\":\"$BUILD_ID\",\"type\":\"builds\"}]}" \
+    "https://api.appstoreconnect.apple.com/v1/betaGroups/$BETA_GROUP_ID/relationships/builds" -o "$GROUP_RESPONSE" 2>/dev/null
+HTTP_CODE=$(tail -1 "$GROUP_RESPONSE")
+rm -f "$GROUP_RESPONSE"
+
+if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
+    echo "   ✅ Build added to beta group (HTTP $HTTP_CODE)"
+else
+    echo "   ⚠️  Unexpected HTTP $HTTP_CODE adding to beta group"
+    echo "   Verifying group membership..."
+fi
+
+# Verify the build is actually in the group (no filter/sort on this endpoint)
+VERIFY_RESPONSE=$(mktemp)
+api_get "https://api.appstoreconnect.apple.com/v1/betaGroups/$BETA_GROUP_ID/builds?limit=10" "$VERIFY_RESPONSE"
+FOUND_IN_GROUP=$(jq -r "[.data[] | select(.id == \"$BUILD_ID\")] | length" "$VERIFY_RESPONSE")
+rm -f "$VERIFY_RESPONSE"
+
+if [ "$FOUND_IN_GROUP" = "1" ]; then
+    echo "   ✅ Verified: build is in Public Beta Testers group"
+else
+    echo "   ❌ Build NOT found in beta group — check App Store Connect manually"
+fi
 
 # ============================================================
 # Final Report

@@ -73,14 +73,9 @@ grep -m1 'CURRENT_PROJECT_VERSION = ' forager.xcodeproj/project.pbxproj
 ```
 Parse the number from output. Compute NEW_BUILD = CURRENT_BUILD + 1.
 
-**Update both Debug and Release** — run as two separate calls:
+**Update both Debug and Release** — single script call:
 ```bash
-# Call 1: awk to create temp file
-awk -v old="CURRENT_BUILD" -v new="NEW_BUILD" '/CURRENT_PROJECT_VERSION = / && count < 2 { sub("CURRENT_PROJECT_VERSION = " old, "CURRENT_PROJECT_VERSION = " new); count++ } { print }' forager.xcodeproj/project.pbxproj > /tmp/pbxproj_tmp
-```
-```bash
-# Call 2: move temp file back
-mv /tmp/pbxproj_tmp forager.xcodeproj/project.pbxproj
+Tools/bump-build.sh CURRENT_BUILD NEW_BUILD
 ```
 
 **Show result** and confirm with user:
