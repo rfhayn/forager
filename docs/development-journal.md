@@ -6,6 +6,37 @@
 
 ---
 
+## Session 75 — March 9, 2026
+**Milestone**: M9.12 — Bugfix Batch (Post-Migration Testing)
+**Focus**: Fix "all ingredients show as new" bug and default-to-Uncategorized design
+**Branch**: feature/M9.12-bugfix-batch
+
+### What Happened
+
+Continued from a context-compacted session. The previous session discovered that adding a recipe to a grocery list triggered the category assignment modal for every ingredient — even those already categorized. Root cause was systemic: 10 instances of `lowercased() != "uncategorized"` across 5 files rejected "Uncategorized" as a valid category, treating it the same as nil.
+
+After fixing the rejection patterns, the user clarified the deeper design intent: **all new ingredients should default to the "Uncategorized" category entity automatically**. This means the category assignment modal should never appear unless a user explicitly wants to categorize. Added `lookupUncategorizedCategory()` helper to `IngredientTemplateService` and wired it into `findOrCreateTemplate` as a nil-coalescing fallback.
+
+### Key Decisions
+
+- **Default to Uncategorized entity, not nil**: The previous assumption was `categoryEntity == nil` means uncategorized. The new model: `categoryEntity` always points to the "Uncategorized" Category entity for new templates. This eliminates the modal entirely for non-categorizing users — a one-line service change with cascading UX impact.
+
+- **Lookup scoped by householdKey**: `lookupUncategorizedCategory()` filters by `resolvedHouseholdKey` so it finds the correct Uncategorized entity whether the user is in personal scope or a shared household.
+
+### Learning
+
+- **Design assumptions embedded in 10 places are systemic bugs**: The `!= "uncategorized"` pattern appeared independently in category validity checks, assignment counts, display logic, and status indicators. When the design intent changed ("Uncategorized is a real category"), all 10 had to change. A centralized `isProperlyAssigned` check would have limited the blast radius.
+
+### AI Tooling Observations
+
+Context compaction worked well — the summary captured the exact state of in-progress work (which method was half-written, what the user's last message said). Picked up without re-reading files. The `lookupUncategorizedCategory()` method was written and building within 5 minutes of resuming.
+
+### What's Next
+
+Test the build on device. Continue bugfix-batch branch for any additional issues the user finds during testing. When stable, merge to main and archive.
+
+---
+
 ## Session 74 — March 8, 2026
 **Milestone**: M9.12 — Category String → Relationship Migration
 **Focus**: Replace string-based category fields with Category entity relationships on IngredientTemplate and GroceryListItem
