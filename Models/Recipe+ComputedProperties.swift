@@ -175,7 +175,7 @@ extension Recipe {
     var recipeIngredientsWithoutCategories: [Ingredient] {
         return recipeSortedIngredients.filter {
             guard let template = $0.ingredientTemplate else { return true }
-            return template.category == nil || template.category?.isEmpty == true
+            return template.categoryEntity == nil
         }
     }
     

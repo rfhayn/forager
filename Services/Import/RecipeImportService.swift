@@ -343,9 +343,17 @@ class RecipeImportService: ObservableObject {
                 ingredient.recipe = recipe
 
                 // M10.6.9: Use category from preview assignments if available
+                // M9.12: Look up Category entity from string assignment
+                let categoryEntity: Category? = {
+                    guard let categoryName = categoryAssignments[index] else { return nil }
+                    let request: NSFetchRequest<Category> = Category.fetchRequest()
+                    request.predicate = NSPredicate(format: "name ==[c] %@", categoryName)
+                    request.fetchLimit = 1
+                    return try? context.fetch(request).first
+                }()
                 let template = templateService.findOrCreateTemplate(
                     name: llmResult.name,
-                    category: categoryAssignments[index]
+                    category: categoryEntity
                 )
                 ingredient.ingredientTemplate = template
                 // M10.6.12: Removed redundant incrementUsage — findOrCreateTemplate already increments
@@ -398,7 +406,7 @@ class RecipeImportService: ObservableObject {
 
             let uncategorizedIDs = createdIngredients.compactMap { ingredient -> NSManagedObjectID? in
                 guard let template = ingredient.ingredientTemplate else { return nil }
-                if template.category == nil || template.category?.isEmpty == true {
+                if template.categoryEntity == nil {
                     return template.objectID
                 }
                 return nil

@@ -6,6 +6,78 @@
 
 ---
 
+## Session 74 — March 8, 2026
+**Milestone**: M9.12 — Category String → Relationship Migration
+**Focus**: Replace string-based category fields with Category entity relationships on IngredientTemplate and GroceryListItem
+**Branch**: feature/M9.12-category-relationship-migration
+
+### What Happened
+
+Implemented the M9.12 migration across 45 files — the largest single-milestone change in Forager's history. Created Core Data model v8 adding `categoryEntity: Category?` relationships on both IngredientTemplate and GroceryListItem, with inverse relationships (`ingredientTemplates`, `groceryListItems`) on Category. All code now reads/writes through the relationship; the deprecated string fields (`IngredientTemplate.category`, `GroceryListItem.categoryName`) remain in the CloudKit schema but are dead code.
+
+The work required 3 rounds of PRD auditing before implementation began. Each round found files the previous round missed — ultimately catching 6 additional files not in the original plan (RecipeImportService, RecipeListView, AddIngredientView, AddStapleView, EditStapleView, UnifiedSearchView).
+
+### Key Decisions
+
+- **Relationship-only, no dual-write**: Since the app isn't live yet, we skipped the dual-write pattern (writing both string and relationship) and the effectiveCategory fallback chain. All reads go through `categoryEntity?.name`, all writes set `categoryEntity`. This saved ~1 hour of complexity.
+
+- **categoryMapping wired up for reverse migration**: The `categoryMapping: [UUID: Category]` dictionary in HouseholdService was built during M10.6.20 but never consumed. M9.12 wired it up for both `newTemplate.categoryEntity` and `newItem.categoryEntity` during leave-household reverse migration.
+
+- **Removed NSSortDescriptor for category**: `\IngredientTemplate.category` keypaths in sort descriptors can't sort by relationship name. Removed from IngredientsView and WeeklyListsView — category grouping is handled in-memory via `Dictionary(grouping:)`.
+
+- **GroceryItem.category left alone**: Grep found `.category` references on GroceryItem (staples), but this is a separate field from M10.6.20 — not part of M9.12 scope.
+
+### Learning
+
+- **PRD auditing pays for itself**: 3 rounds caught 10+ files that would have caused compile errors mid-implementation. The `/forager-prd-audit` and `/forager-core-data-audit` skills are essential for migrations touching many files.
+- **IngredientMatchResult.categoryName is safe as a string**: It's a struct property populated from `template.categoryEntity?.name` — not a Core Data field. No migration needed.
+- **Test migration overhead**: When API signatures change from `String?` to `Category?`, every test needs a `createCategory(named:)` helper to create the entity in-memory. 4 test files needed this pattern.
+
+### AI Tooling Observations
+
+Context was the main challenge. The conversation ran out of context during Phase 3 (UI layer) and had to be resumed from a summary. The summary was comprehensive enough that Phase 5 (tests + docs) proceeded without re-reading files. Parallel grep searches across the entire codebase were essential for the verification sweep — found all remaining `.category` and `.categoryName` references in one pass.
+
+### What's Next
+
+Commit all changes. Create PR. Move PRD from `active/` to `complete/`. Update core docs via `/forager-milestone-complete`.
+
+---
+
+## Session 73 — March 8, 2026
+**Milestone**: M10.6.20 — CloudKit Store Integrity Fixes
+**Focus**: Cross-store relationship safety, PlannedMeal migration gaps, M9.12 PRD planning
+**Branch**: main (direct commits — hotfix pattern)
+
+### What Happened
+
+Architecture audit of the Core Data dual-store design revealed 3 integrity issues. Started with a plan from plan mode covering MealPlan HouseholdScoped conformance, PlannedMeal migration gaps, and GroceryItem→Category cross-store relationships.
+
+Initially dismissed Issue 2 (GroceryItem→Category cross-store) because `GroceryListItem` uses `categoryName: String?` (flat string per ADR 012). But while researching M9.12 PRD context, discovered that **GroceryItem** (the staples entity, separate from GroceryListItem) already has `categoryEntity: Category?` in the v7 schema — it was added during M15 and is actively used by AddStapleView, EditStapleView, and ManageCategoriesView. This means Issue 2 is real today, not a future M9.12 concern. Added the fix in a second commit.
+
+### Key Decisions
+
+- **Two entities, one name confusion**: GroceryItem (staples master list) vs GroceryListItem (weekly list items) have very different schemas. The plan said "GroceryItem" and I initially checked GroceryListItem. ADR 012 applies to GroceryListItem's snapshot semantics. GroceryItem's categoryEntity relationship is a separate concern that's already live.
+
+- **Store-aware repair over blanket NULL**: The startup repair (`repairCrossStoreGroceryItemRelationships`) checks `persistentStore` identity rather than NULLing all categoryEntity refs. This preserves the relationship for personal-mode users where both GroceryItem and Category are in the same (private) store.
+
+- **PlannedMeal reverse migration with relationship remapping**: Built `recipeMapping` and `mealPlanMapping` dictionaries during copy loops to correctly remap PlannedMeal→Recipe and PlannedMeal→MealPlan relationships. Same pattern as existing categoryMapping/templateMapping.
+
+### Learning
+
+- **Entity naming matters**: Two entities with similar names (GroceryItem vs GroceryListItem) led to a wrong initial conclusion. Always verify against `+CoreDataProperties` files, not assumptions.
+- **ADR 012's "future M9.12" work is partially complete**: GroceryItem already has categoryEntity in v7. IngredientTemplate does not. M9.12 scope is smaller than the ADR assumed.
+- **Cross-store detection via persistentStore**: `objectID.persistentStore` returns the store an object lives in. Comparing stores for two related objects is the definitive way to detect cross-store relationships.
+
+### AI Tooling Observations
+
+The Explore agent was highly effective for M9.12 research — it found the partial implementation status (GroceryItem done, IngredientTemplate not) across 8+ files in one pass. This would have taken multiple manual searches. The initial wrong conclusion about Issue 2 came from checking the wrong entity — a human-level naming confusion that the tooling didn't catch because the search was correctly scoped to the wrong file.
+
+### What's Next
+
+Build M9.12 PRD for completing the Category string→relationship migration on IngredientTemplate. Run Core Data audit. Need to account for CloudKit dual-store implications (the whole reason M10.6.20 exists). Update architecture mockup as part of the PRD deliverables.
+
+---
+
 ## Session 72 — March 7, 2026
 **Milestone**: M10.6.17 — Ghost Household awakeFromInsert Fix
 **Focus**: Root cause analysis of invisible imported recipes; household lifecycle cleanup

@@ -17,7 +17,6 @@ struct IngredientsView: View {
     @FetchRequest(
         sortDescriptors: [
             NSSortDescriptor(keyPath: \IngredientTemplate.isStaple, ascending: false),
-            NSSortDescriptor(keyPath: \IngredientTemplate.category, ascending: true),
             NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
         ],
         animation: .default
@@ -320,7 +319,7 @@ struct IngredientsView: View {
     }
 
     private var uniqueCategoryNames: [String] {
-        let names = Set(ingredients.compactMap { $0.category ?? "Uncategorized" })
+        let names = Set(ingredients.compactMap { $0.categoryEntity?.name ?? "Uncategorized" })
         let categoryMap = Dictionary(
             categories.map { ($0.displayName, $0.sortOrder) },
             uniquingKeysWith: { first, _ in first }
@@ -519,7 +518,7 @@ struct IngredientsView: View {
         // Apply category filter
         if let category = selectedCategory {
             filtered = filtered.filter { ingredient in
-                (ingredient.category ?? "Uncategorized") == category
+                (ingredient.categoryEntity?.name ?? "Uncategorized") == category
             }
         }
 
@@ -545,7 +544,7 @@ struct IngredientsView: View {
     
     private var groupedIngredients: [String: [IngredientTemplate]] {
         Dictionary(grouping: filteredIngredients) { ingredient in
-            ingredient.category ?? "Uncategorized"
+            ingredient.categoryEntity?.name ?? "Uncategorized"
         }
     }
     
@@ -642,7 +641,7 @@ struct IngredientsView: View {
                 if !cleanName.isEmpty && cleanName != template.name {
                     ingredientTemplateService.updateTemplate(
                         template, name: cleanName,
-                        category: template.category, isStaple: template.isStaple
+                        category: template.categoryEntity, isStaple: template.isStaple
                     )
                 }
             }
@@ -660,8 +659,8 @@ struct IngredientsView: View {
             return ingredients.sorted { ($0.name ?? "") < ($1.name ?? "") }
         case .category:
             return ingredients.sorted {
-                let cat1 = $0.category ?? "Uncategorized"
-                let cat2 = $1.category ?? "Uncategorized"
+                let cat1 = $0.categoryEntity?.name ?? "Uncategorized"
+                let cat2 = $1.categoryEntity?.name ?? "Uncategorized"
                 if cat1 == cat2 {
                     return ($0.name ?? "") < ($1.name ?? "")
                 }
@@ -722,7 +721,7 @@ struct IngredientRowView: View {
         HStack(spacing: ForagerTheme.Spacing.md) {
             // 4px category color strip
             Rectangle()
-                .fill(ForagerTheme.categoryColor(for: ingredient.category ?? "Uncategorized"))
+                .fill(ForagerTheme.categoryColor(for: ingredient.categoryEntity?.name ?? "Uncategorized"))
                 .frame(width: 4)
 
             if isEditMode {
@@ -808,7 +807,7 @@ struct IngredientRowView: View {
         }
         .padding(.vertical, ForagerTheme.Spacing.sm)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(ingredient.name ?? "Unknown"), \(ingredient.category ?? "Uncategorized")\(ingredient.isStaple ? ", staple" : "")")
+        .accessibilityLabel("\(ingredient.name ?? "Unknown"), \(ingredient.categoryEntity?.name ?? "Uncategorized")\(ingredient.isStaple ? ", staple" : "")")
         .alert("Error", isPresented: $showingError) {
             Button("OK") {
                 showingError = false
@@ -917,7 +916,7 @@ struct IngredientRowView: View {
 
                 // No duplicate — just rename
                 ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
-                    category: ingredient.category, isStaple: ingredient.isStaple)
+                    category: ingredient.categoryEntity, isStaple: ingredient.isStaple)
 
                 #if DEBUG
                 print("✅ M8.3.1: Renamed to '\(trimmedName)'")
@@ -1170,7 +1169,7 @@ struct IngredientReviewSheet: View {
         guard currentIndex < ingredients.count else { return }
         let template = ingredients[currentIndex]
         editedName = template.name ?? ""
-        selectedCategory = template.category ?? ""
+        selectedCategory = template.categoryEntity?.name ?? ""
         isStaple = template.isStaple
     }
 
@@ -1191,7 +1190,8 @@ struct IngredientReviewSheet: View {
 
         let trimmedName = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
         let nameToUse = (!trimmedName.isEmpty && trimmedName != template.name) ? trimmedName : (template.name ?? "")
-        let categoryToUse = selectedCategory.isEmpty ? nil : selectedCategory
+        // M9.12: Look up Category entity from selected name
+        let categoryToUse: Category? = selectedCategory.isEmpty ? nil : allCategories.first { $0.displayName == selectedCategory }
 
         ingredientTemplateService.updateTemplate(template, name: nameToUse,
             category: categoryToUse, isStaple: isStaple)
@@ -1344,7 +1344,7 @@ struct DuplicateReviewSheet: View {
                 }
 
                 HStack(spacing: ForagerTheme.Spacing.md) {
-                    if let category = template.category, !category.isEmpty {
+                    if let category = template.categoryEntity?.name, !category.isEmpty {
                         HStack(spacing: 4) {
                             Circle()
                                 .fill(ForagerTheme.categoryColor(for: category))
@@ -1423,9 +1423,9 @@ struct DuplicateReviewSheet: View {
             keeper.usageCount += duplicate.usageCount
 
             // Preserve category if keeper lacks one
-            if (keeper.category == nil || keeper.category?.isEmpty == true),
-               let dupCategory = duplicate.category, !dupCategory.isEmpty {
-                keeper.category = dupCategory
+            if keeper.categoryEntity == nil,
+               let dupCategoryEntity = duplicate.categoryEntity {
+                keeper.categoryEntity = dupCategoryEntity
             }
 
             // Preserve staple status

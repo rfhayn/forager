@@ -29,11 +29,9 @@ extension Ingredient {
         return ingredientTemplate != nil
     }
     
-    /// Returns true if ingredient has a category (through template)
+    /// Returns true if ingredient has a category (through template, M9.12: via relationship)
     var hasIngredientCategory: Bool {
-        guard let template = ingredientTemplate else { return false }
-        guard let category = template.category else { return false }
-        return !category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return ingredientTemplate?.categoryEntity != nil
     }
     
     // NOTE: hasStructuredQuantity already exists in Ingredient entity (from Core Data)
@@ -62,9 +60,9 @@ extension Ingredient {
         return ingredientDisplayName
     }
     
-    /// Returns category name through template
+    /// Returns category name through template (M9.12: via relationship)
     var ingredientCategoryName: String? {
-        return ingredientTemplate?.category
+        return ingredientTemplate?.categoryEntity?.name
     }
     
     /// Returns category display name with fallback

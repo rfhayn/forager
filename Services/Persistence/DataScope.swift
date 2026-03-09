@@ -172,6 +172,7 @@ protocol ScopeProvider {
 extension WeeklyList: HouseholdScoped {}
 extension Recipe: HouseholdScoped {}
 extension PlannedMeal: HouseholdScoped {}
+extension MealPlan: HouseholdScoped {}
 extension Category: HouseholdScoped {}
 extension IngredientTemplate: HouseholdScoped {}
 

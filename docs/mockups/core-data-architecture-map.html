@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forager - Core Data Architecture Map</title>
+<title>forager - Core Data Architecture Map</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -116,7 +116,7 @@
   }
 
   /* Canvas */
-  .canvas { flex: 1; position: relative; overflow: hidden; }
+  .canvas { flex: 1; position: relative; overflow: hidden; cursor: grab; user-select: none; }
 
   .canvas-inner {
     position: absolute; top: 0; left: 0;
@@ -302,7 +302,7 @@
 <body>
 
 <div class="header">
-  <h1><span>Forager</span> Core Data Architecture</h1>
+  <h1><span>forager</span> Core Data Architecture</h1>
   <div class="header-controls">
     <button class="scope-toggle" id="scope-btn" onclick="toggleScope()">Household Mode</button>
     <button class="layer-toggle active" data-layer="entities" onclick="toggleLayer('entities')">Entities</button>
@@ -471,6 +471,8 @@ const entities = {
     relationships: [
       { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
       { name: 'groceryItems', dest: 'GroceryItem', card: '0..*', rule: 'Nullify' },
+      { name: 'ingredientTemplates', dest: 'IngredientTemplate', card: '0..*', rule: 'Nullify', note: 'M9.12' },
+      { name: 'groceryListItems', dest: 'GroceryListItem', card: '0..*', rule: 'Nullify', note: 'M9.12' },
     ],
     services: ['DefaultSeeder', 'CategoryDeduplicator'],
     views: ['Grocery', 'Recipes'],
@@ -549,13 +551,14 @@ const entities = {
     householdBehavior: 'Shared store. Household-wide ingredient library. All members see same templates. householdKey scoping.',
     props: [
       { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
-      { name: 'canonicalName', type: 'String' }, { name: 'category', type: 'String' },
+      { name: 'canonicalName', type: 'String' }, { name: 'category', type: 'String', note: 'deprecated M9.12' },
       { name: 'usageCount', type: 'Int32' }, { name: 'isStaple', type: 'Bool' },
       { name: 'householdKey', type: 'String' }
     ],
     relationships: [
       { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify' },
       { name: 'ingredients', dest: 'Ingredient', card: '0..*', rule: 'Nullify', note: 'READ-ONLY' },
+      { name: 'categoryEntity', dest: 'Category', card: '0..1', rule: 'Nullify', note: 'M9.12' },
     ],
     services: ['IngredientTemplateService', 'IngredientAutocompleteService', 'IngredientMatchService'],
     views: ['Grocery', 'Recipes', 'Search'],
@@ -590,7 +593,7 @@ const entities = {
     householdBehavior: 'Follows parent WeeklyList to shared store. Cascade delete from WeeklyList.',
     props: [
       { name: 'id', type: 'UUID' }, { name: 'displayText', type: 'String' },
-      { name: 'name', type: 'String' }, { name: 'categoryName', type: 'String' },
+      { name: 'name', type: 'String' }, { name: 'categoryName', type: 'String', note: 'deprecated M9.12' },
       { name: 'numericValue', type: 'Double' }, { name: 'standardUnit', type: 'String' },
       { name: 'parseConfidence', type: 'Float' }, { name: 'isCompleted', type: 'Bool' },
       { name: 'source', type: 'String' }
@@ -598,6 +601,7 @@ const entities = {
     relationships: [
       { name: 'weeklyList', dest: 'WeeklyList', card: '0..1', rule: 'Nullify' },
       { name: 'sourceRecipes', dest: 'Recipe', card: '0..*', rule: 'Nullify' },
+      { name: 'categoryEntity', dest: 'Category', card: '0..1', rule: 'Nullify', note: 'M9.12' },
     ],
     services: ['WeeklyListService'],
     views: ['Grocery'],
@@ -966,10 +970,41 @@ document.getElementById('canvas').addEventListener('wheel', function(e) {
   renderConnections();
 }, { passive: false });
 
-// Pan with middle-click or alt+click
+// Interaction: pan canvas (empty space drag) or drag node (node drag) or select (node click)
+let dragThreshold = 4;
+let mouseDownX = 0;
+let mouseDownY = 0;
+let didDrag = false;
+let dragMode = null; // 'pan' | 'node'
+let dragNodeName = null;
+let dragNodeEl = null;
+let dragNodeStartX = 0;
+let dragNodeStartY = 0;
+
+function getDataForNode(name) {
+  return entities[name] || services[name] || viewGroups[name] || infrastructure[name] || null;
+}
+
 document.getElementById('canvas').addEventListener('mousedown', function(e) {
-  if (e.button === 1 || (e.button === 0 && e.altKey)) {
-    e.preventDefault();
+  if (e.button !== 0 && e.button !== 1) return;
+  e.preventDefault();
+
+  const nodeEl = e.target.closest('.node, .service-node, .view-node, .persist-node');
+  mouseDownX = e.clientX;
+  mouseDownY = e.clientY;
+  didDrag = false;
+
+  if (nodeEl) {
+    // Start potential node drag
+    dragMode = 'node';
+    dragNodeEl = nodeEl;
+    dragNodeName = nodeEl.id.replace('node-', '');
+    const data = getDataForNode(dragNodeName);
+    dragNodeStartX = data ? data.x : parseFloat(nodeEl.style.left);
+    dragNodeStartY = data ? data.y : parseFloat(nodeEl.style.top);
+  } else {
+    // Start canvas pan
+    dragMode = 'pan';
     isPanning = true;
     panStartX = e.clientX - panX;
     panStartY = e.clientY - panY;
@@ -978,17 +1013,55 @@ document.getElementById('canvas').addEventListener('mousedown', function(e) {
 });
 
 document.addEventListener('mousemove', function(e) {
-  if (!isPanning) return;
-  panX = e.clientX - panStartX;
-  panY = e.clientY - panStartY;
-  applyTransform();
-  renderConnections();
+  if (!dragMode) return;
+  const dx = e.clientX - mouseDownX;
+  const dy = e.clientY - mouseDownY;
+
+  if (!didDrag && Math.abs(dx) + Math.abs(dy) > dragThreshold) {
+    didDrag = true;
+  }
+
+  if (!didDrag) return;
+
+  if (dragMode === 'pan') {
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+    document.getElementById('canvas').style.cursor = 'grabbing';
+    applyTransform();
+    renderConnections();
+  } else if (dragMode === 'node' && dragNodeEl) {
+    // Convert screen delta to canvas-inner coordinates (account for zoom)
+    const newX = dragNodeStartX + dx / zoom;
+    const newY = dragNodeStartY + dy / zoom;
+    dragNodeEl.style.left = newX + 'px';
+    dragNodeEl.style.top = newY + 'px';
+    dragNodeEl.style.cursor = 'grabbing';
+    dragNodeEl.style.zIndex = '20';
+    // Update data model so connections track
+    const data = getDataForNode(dragNodeName);
+    if (data) { data.x = newX; data.y = newY; }
+    renderConnections();
+  }
 });
 
 document.addEventListener('mouseup', function() {
-  if (isPanning) {
+  if (dragMode) {
+    if (didDrag) {
+      // Suppress the click event so selectNode doesn't fire after a drag
+      document.getElementById('canvas').addEventListener('click', function suppress(ev) {
+        ev.stopPropagation();
+        document.getElementById('canvas').removeEventListener('click', suppress, true);
+      }, true);
+    }
+    if (dragNodeEl) {
+      dragNodeEl.style.cursor = '';
+      dragNodeEl.style.zIndex = '';
+    }
+    dragMode = null;
     isPanning = false;
-    document.getElementById('canvas').style.cursor = '';
+    dragNodeEl = null;
+    dragNodeName = null;
+    document.getElementById('canvas').style.cursor = 'grab';
   }
 });
 

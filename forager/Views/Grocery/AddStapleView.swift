@@ -179,7 +179,7 @@ struct AddStapleView: View {
             let newStaple = GroceryItem(context: context)
             newStaple.id = UUID()
             newStaple.name = name
-            newStaple.category = selectedCategory // Keep for legacy compatibility
+            // M9.12: category string removed — categoryEntity is the source of truth
             newStaple.isStaple = true
             newStaple.dateCreated = Date()
             
@@ -211,7 +211,7 @@ struct AddStapleView: View {
         PersistenceController.shared.performWrite({ context in
             let itemToUpdate = context.object(with: itemID) as! GroceryItem
             itemToUpdate.isStaple = true
-            itemToUpdate.category = selectedCategory // Update to selected category
+            // M9.12: category string removed — categoryEntity is the source of truth
             
             // Set category relationship
             if let categoryEntity = findCategoryEntity(named: selectedCategory) {

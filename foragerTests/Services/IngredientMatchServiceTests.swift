@@ -31,13 +31,26 @@ final class IngredientMatchServiceTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Helper
+
+    @MainActor
+    private func createCategory(named name: String) -> Category {
+        let cat = Category(context: context)
+        cat.id = UUID()
+        cat.name = name
+        cat.displayName = name
+        cat.sortOrder = 0
+        return cat
+    }
+
     // MARK: - Single Match
 
     @MainActor
     func testMatchIngredientFindsTemplate() {
         // Create a template with a category
         let template = templateService.findOrCreateTemplate(name: "flour")
-        templateService.updateCategory(template, category: "Baking")
+        let bakingCategory = createCategory(named: "Baking")
+        templateService.updateCategory(template, category: bakingCategory)
 
         let result = matchService.matchIngredient(text: "2 cups flour")
 
@@ -98,7 +111,8 @@ final class IngredientMatchServiceTests: XCTestCase {
     @MainActor
     func testMatchBatchPreservesOrder() {
         let template = templateService.findOrCreateTemplate(name: "flour")
-        templateService.updateCategory(template, category: "Baking")
+        let bakingCategory = createCategory(named: "Baking")
+        templateService.updateCategory(template, category: bakingCategory)
 
         let texts = ["2 cups flour", "unknown ingredient xyz"]
         let results = matchService.matchBatch(texts: texts)
@@ -112,7 +126,8 @@ final class IngredientMatchServiceTests: XCTestCase {
     @MainActor
     func testMatchSummaryCounts() {
         let template = templateService.findOrCreateTemplate(name: "flour")
-        templateService.updateCategory(template, category: "Baking")
+        let bakingCategory = createCategory(named: "Baking")
+        templateService.updateCategory(template, category: bakingCategory)
 
         let results = matchService.matchBatch(texts: ["2 cups flour", "chicken", "quinoa"])
         let summary = matchService.matchSummary(from: results)
@@ -161,7 +176,8 @@ final class IngredientMatchServiceTests: XCTestCase {
     @MainActor
     func testUncategorizedTemplateNeedsCategory() {
         let template = templateService.findOrCreateTemplate(name: "butter")
-        templateService.updateCategory(template, category: "Uncategorized")
+        let uncategorized = createCategory(named: "Uncategorized")
+        templateService.updateCategory(template, category: uncategorized)
 
         let result = matchService.matchIngredient(text: "1 tbsp butter")
 

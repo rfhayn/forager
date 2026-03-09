@@ -398,7 +398,7 @@ class IngredientTemplateService: ObservableObject {
     }
     
     // M7.2.3 Phase 3.3: Updated to use HouseholdIngredientTemplateRepository
-    func findOrCreateTemplate(name: String, category: String? = nil) -> IngredientTemplate {
+    func findOrCreateTemplate(name: String, category: Category? = nil) -> IngredientTemplate {
         // M4.3.5: Normalize ingredient name before lookup/creation
         let normalizedName = normalize(name: name)
 
@@ -462,7 +462,7 @@ class IngredientTemplateService: ObservableObject {
             template.id = UUID()
             template.name = normalizedName
             template.canonicalName = canonical
-            template.category = category
+            template.categoryEntity = category
             // M10.6.12: Fallback path must set householdKey — without it, templates
             // created during import are invisible in household-scoped IngredientsView
             template.householdKey = resolvedHouseholdKey
@@ -544,10 +544,9 @@ class IngredientTemplateService: ObservableObject {
                         }
                     }
 
-                    // Preserve category if keeper lacks one
-                    if (keeper.category == nil || keeper.category?.isEmpty == true),
-                       let dupCategory = duplicate.category, !dupCategory.isEmpty {
-                        keeper.category = dupCategory
+                    // M9.12: Preserve categoryEntity if keeper lacks one
+                    if keeper.categoryEntity == nil, let dupCategory = duplicate.categoryEntity {
+                        keeper.categoryEntity = dupCategory
                     }
 
                     // Preserve staple status
@@ -606,23 +605,23 @@ class IngredientTemplateService: ObservableObject {
 
     /// Updates a template's name, category, and staple status.
     /// Name is normalized through the standard pipeline (preserves sanitization chokepoint).
-    func updateTemplate(_ template: IngredientTemplate, name: String, category: String?, isStaple: Bool) {
+    func updateTemplate(_ template: IngredientTemplate, name: String, category: Category?, isStaple: Bool) {
         clearError()
 
         let normalizedName = normalize(name: name)
         template.name = normalizedName
         template.canonicalName = IngredientTemplate.canonicalName(from: normalizedName)
-        template.category = category
+        template.categoryEntity = category
         template.isStaple = isStaple
         template.updatedAt = Date()
 
         save("update template")
     }
 
-    /// Updates just the category assignment on a template
-    func updateCategory(_ template: IngredientTemplate, category: String?) {
+    /// Updates just the category assignment on a template (M9.12: via relationship)
+    func updateCategory(_ template: IngredientTemplate, category: Category?) {
         clearError()
-        template.category = category
+        template.categoryEntity = category
         template.updatedAt = Date()
         save("update template category")
     }

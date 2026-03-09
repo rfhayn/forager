@@ -26,6 +26,8 @@ extension Category {
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?
     @NSManaged public var groceryItems: NSSet?
+    @NSManaged public var groceryListItems: NSSet?
+    @NSManaged public var ingredientTemplates: NSSet?
 }
 
 // MARK: - Generated accessors for groceryItems
@@ -42,6 +44,38 @@ extension Category {
 
     @objc(removeGroceryItems:)
     @NSManaged public func removeFromGroceryItems(_ values: NSSet)
+}
+
+// MARK: - Generated accessors for groceryListItems
+extension Category {
+
+    @objc(addGroceryListItemsObject:)
+    @NSManaged public func addToGroceryListItems(_ value: GroceryListItem)
+
+    @objc(removeGroceryListItemsObject:)
+    @NSManaged public func removeFromGroceryListItems(_ value: GroceryListItem)
+
+    @objc(addGroceryListItems:)
+    @NSManaged public func addToGroceryListItems(_ values: NSSet)
+
+    @objc(removeGroceryListItems:)
+    @NSManaged public func removeFromGroceryListItems(_ values: NSSet)
+}
+
+// MARK: - Generated accessors for ingredientTemplates
+extension Category {
+
+    @objc(addIngredientTemplatesObject:)
+    @NSManaged public func addToIngredientTemplates(_ value: IngredientTemplate)
+
+    @objc(removeIngredientTemplatesObject:)
+    @NSManaged public func removeFromIngredientTemplates(_ value: IngredientTemplate)
+
+    @objc(addIngredientTemplates:)
+    @NSManaged public func addToIngredientTemplates(_ values: NSSet)
+
+    @objc(removeIngredientTemplates:)
+    @NSManaged public func removeFromIngredientTemplates(_ values: NSSet)
 }
 
 extension Category: Identifiable {

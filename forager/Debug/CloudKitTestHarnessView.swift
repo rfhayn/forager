@@ -243,18 +243,32 @@ struct CloudKitTestHarnessView: View {
         let repository = HouseholdIngredientTemplateRepository(context: viewContext)
         
         do {
+            // M9.12: Look up Category entities by name for test
+            let produceCategory: Category? = {
+                let req: NSFetchRequest<Category> = Category.fetchRequest()
+                req.predicate = NSPredicate(format: "name ==[c] %@", "Produce")
+                req.fetchLimit = 1
+                return try? viewContext.fetch(req).first
+            }()
+            let dairyCategory: Category? = {
+                let req: NSFetchRequest<Category> = Category.fetchRequest()
+                req.predicate = NSPredicate(format: "name ==[c] %@", "Dairy & Fridge")
+                req.fetchLimit = 1
+                return try? viewContext.fetch(req).first
+            }()
+
             // Attempt 1: Create template
             let template1 = try repository.findOrCreate(
                 name: "Test Ingredient",
-                category: "Produce",
+                category: produceCategory,
                 isStaple: false
             )
             testResults.append("✅ Created template: \(template1.name ?? "unknown")")
-            
+
             // Attempt 2: Try creating same template again
             let template2 = try repository.findOrCreate(
                 name: "Test Ingredient",
-                category: "Dairy & Fridge",  // Different category
+                category: dairyCategory,  // Different category
                 isStaple: true               // Different staple status
             )
             
@@ -262,7 +276,7 @@ struct CloudKitTestHarnessView: View {
             if template1.id == template2.id {
                 testResults.append("✅ PASS: Same template returned (no duplicate)")
                 testResults.append("   Template ID: \(template1.id?.uuidString.prefix(8) ?? "nil")")
-                testResults.append("   Category updated: \(template2.category ?? "nil")")
+                testResults.append("   Category updated: \(template2.categoryEntity?.name ?? "nil")")
             } else {
                 testResults.append("❌ FAIL: Different templates returned (duplicate created!)")
             }

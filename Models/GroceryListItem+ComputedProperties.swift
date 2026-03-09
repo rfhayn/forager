@@ -12,7 +12,14 @@ import Foundation
 import CoreData
 
 extension GroceryListItem {
-    
+
+    // MARK: - M9.12: Category Display
+
+    /// Returns category name from relationship, falling back to "Uncategorized"
+    var effectiveCategory: String {
+        categoryEntity?.name ?? "Uncategorized"
+    }
+
     // MARK: - M4.3.1: Recipe Source Display
     
     /// Returns formatted recipe source string for display

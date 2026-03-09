@@ -198,7 +198,7 @@ struct CategoryAssignmentModal: View {
         guard currentIndex < uncategorizedTemplates.count else { return }
         let template = uncategorizedTemplates[currentIndex]
         editedName = template.name ?? ""
-        selectedCategory = template.category ?? ""
+        selectedCategory = template.categoryEntity?.name ?? ""
     }
 
     private func advance() {
@@ -212,11 +212,18 @@ struct CategoryAssignmentModal: View {
         }
     }
 
+    // M9.12: Look up Category entity by display name from current household scope
+    private func findCategoryEntity(named name: String) -> Category? {
+        return realCategories.first { $0.displayName == name }
+            ?? allCategories.first { $0.displayName.lowercased() == name.lowercased() }
+    }
+
     private func skipCurrent() {
         // Assign "Uncategorized" to the current template and advance
         guard currentIndex < uncategorizedTemplates.count else { return }
         let template = uncategorizedTemplates[currentIndex]
-        template.category = "Uncategorized"
+        // M9.12: Set categoryEntity to nil for uncategorized
+        template.categoryEntity = nil
         ingredientTemplateService.saveContext()
         advance()
     }
@@ -224,7 +231,7 @@ struct CategoryAssignmentModal: View {
     private func skipAll() {
         // Assign "Uncategorized" to all remaining templates
         for i in currentIndex..<uncategorizedTemplates.count {
-            uncategorizedTemplates[i].category = "Uncategorized"
+            uncategorizedTemplates[i].categoryEntity = nil
         }
         ingredientTemplateService.saveContext()
         onAssignmentsComplete()
@@ -252,7 +259,8 @@ struct CategoryAssignmentModal: View {
                 mergeTemplate(template, into: existingTemplate)
 
                 // If the existing template already has a category, auto-fill it
-                if let existingCategory = existingTemplate.category,
+                if let existingCategoryEntity = existingTemplate.categoryEntity,
+                   let existingCategory = existingCategoryEntity.name,
                    !existingCategory.isEmpty,
                    existingCategory.lowercased() != "uncategorized" {
                     // Template merged + already categorized — advance
@@ -260,23 +268,23 @@ struct CategoryAssignmentModal: View {
                     return
                 } else {
                     // Template merged but still needs category — apply selected
-                    let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
-                    existingTemplate.category = categoryToUse
+                    let categoryEntity = selectedCategory.isEmpty ? nil : findCategoryEntity(named: selectedCategory)
+                    existingTemplate.categoryEntity = categoryEntity
                     ingredientTemplateService.saveContext()
                     advance()
                     return
                 }
             } else {
                 // No match — rename the template and search for category hint
-                let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
+                let categoryEntity = selectedCategory.isEmpty ? nil : findCategoryEntity(named: selectedCategory)
                 ingredientTemplateService.updateTemplate(template, name: cleanName,
-                    category: categoryToUse, isStaple: template.isStaple)
+                    category: categoryEntity, isStaple: template.isStaple)
             }
         } else {
             // Name unchanged — just assign the category
-            let categoryToUse = selectedCategory.isEmpty ? "Uncategorized" : selectedCategory
+            let categoryEntity = selectedCategory.isEmpty ? nil : findCategoryEntity(named: selectedCategory)
             ingredientTemplateService.updateTemplate(template, name: trimmedName,
-                category: categoryToUse, isStaple: template.isStaple)
+                category: categoryEntity, isStaple: template.isStaple)
         }
 
         if let error = ingredientTemplateService.errorMessage {

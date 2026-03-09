@@ -33,6 +33,18 @@ final class WeeklyListServiceTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Helper
+
+    @MainActor
+    private func createCategory(named name: String) -> Category {
+        let cat = Category(context: context)
+        cat.id = UUID()
+        cat.name = name
+        cat.displayName = name
+        cat.sortOrder = 0
+        return cat
+    }
+
     // MARK: - WeeklyList CRUD
 
     @MainActor
@@ -76,8 +88,9 @@ final class WeeklyListServiceTests: XCTestCase {
         let list = service.createList(name: "Test List")
         XCTAssertNotNil(list)
 
+        let dairyCategory = createCategory(named: "Dairy")
         let item = service.addItem(
-            to: list!, name: "Whole milk", categoryName: "Dairy",
+            to: list!, name: "Whole milk", category: dairyCategory,
             numericValue: 1.0, standardUnit: "gallon",
             displayText: "1 gallon", isParseable: true,
             parseConfidence: 0.95, source: "Pancakes"
@@ -85,7 +98,7 @@ final class WeeklyListServiceTests: XCTestCase {
 
         XCTAssertNotNil(item)
         XCTAssertEqual(item?.name, "Whole milk")
-        XCTAssertEqual(item?.categoryName, "Dairy")
+        XCTAssertEqual(item?.categoryEntity?.name, "Dairy")
         XCTAssertEqual(item?.numericValue ?? 0, 1.0, accuracy: 0.01)
         XCTAssertEqual(item?.standardUnit, "gallon")
         XCTAssertEqual(item?.displayText, "1 gallon")
@@ -103,7 +116,8 @@ final class WeeklyListServiceTests: XCTestCase {
         let list = service.createList(name: "Test List")
         XCTAssertNotNil(list)
 
-        let item = service.addItem(to: list!, name: "butter", categoryName: "Dairy", displayText: "butter")
+        let dairyCategory = createCategory(named: "Dairy")
+        let item = service.addItem(to: list!, name: "butter", category: dairyCategory, displayText: "butter")
         XCTAssertNotNil(item)
         XCTAssertEqual(item?.name, "butter")
 

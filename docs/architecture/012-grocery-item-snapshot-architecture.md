@@ -41,17 +41,24 @@ GroceryListItem
   - sourceRecipes: NSSet<Recipe> (relationship)
 ```
 
-### What Will Change (M9.12, Post-Launch)
+### What Changed (M9.12 — COMPLETE)
 
 ```
 GroceryListItem
-  + categoryEntity: Category  (replaces categoryName string)
-  - categoryName: String      (kept for CloudKit backward compat)
+  + categoryEntity: Category?  (relationship, replaces categoryName reads/writes)
+  - categoryName: String       (deprecated — remains in schema for CloudKit, no longer read/written)
 
 IngredientTemplate
-  + categoryEntity: Category  (replaces category string)
-  - category: String          (kept for CloudKit backward compat)
+  + categoryEntity: Category?  (relationship, replaces category reads/writes)
+  - category: String           (deprecated — remains in schema for CloudKit, no longer read/written)
+
+Category (inverse relationships added)
+  + ingredientTemplates: NSSet?   (inverse of IngredientTemplate.categoryEntity)
+  + groceryListItems: NSSet?      (inverse of GroceryListItem.categoryEntity)
 ```
+
+Model version: v7 → v8 (lightweight migration — optional relationships only).
+Snapshot semantics preserved: `name`, `displayText`, `numericValue`, `standardUnit` remain flat strings on GroceryListItem.
 
 ---
 
@@ -117,11 +124,11 @@ Partially accepted. The current flat-string architecture is correct for grocery 
 
 ### Negative
 - **Template improvements don't backfill**: Normalizing "grape" → "grapes" won't update existing items (acceptable — they were correct when created)
-- **Category string drift persists until M9.12**: String-based `categoryName` remains fragile until replaced with entity relationship
+- ~~**Category string drift persists until M9.12**~~: Resolved — M9.12 replaced string-based categories with `categoryEntity` relationships
 - **Duplicate data storage**: Template name and grocery item name store the same text (acceptable tradeoff for snapshot semantics)
 
 ### Neutral
-- **M9.12 scope unchanged**: Category string → entity relationship remains planned post-launch
+- **M9.12 COMPLETE**: Category string → entity relationship implemented for both IngredientTemplate and GroceryListItem
 - **M9 overall scope reduced by ~3-4h**: M9.1's category utility extraction and `extractCleanIngredientName` centralization were completed during M15 bug fixes
 
 ---

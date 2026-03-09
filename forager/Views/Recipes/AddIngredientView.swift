@@ -68,10 +68,12 @@ struct AddIngredientView: View {
             in: viewContext
         )
 
-        // Update properties (repository handles displayName and canonicalName)
-        let category = selectedCategory == "Uncategorized" ? nil : selectedCategory
+        // M9.12: Look up Category entity by name, pass entity instead of String
+        let categoryEntity: Category? = selectedCategory == "Uncategorized"
+            ? nil
+            : categories.first(where: { $0.displayName == selectedCategory })
         ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
-            category: category, isStaple: isStaple)
+            category: categoryEntity, isStaple: isStaple)
 
         if ingredientTemplateService.errorMessage == nil {
             dismiss()

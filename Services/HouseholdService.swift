@@ -923,6 +923,18 @@ class HouseholdService: ObservableObject {
             }
         }
 
+        // M10.6.20: Re-link GroceryItem.categoryEntity to new personal Categories
+        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        let groceryItems = try viewContext.fetch(groceryItemRequest)
+        for item in groceryItems {
+            if let catName = item.category, !catName.isEmpty {
+                let catReq: NSFetchRequest<Category> = Category.fetchRequest()
+                catReq.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", catName)
+                catReq.fetchLimit = 1
+                item.categoryEntity = try? viewContext.fetch(catReq).first
+            }
+        }
+
         // Migrate ingredient templates, skipping those that already exist by canonical name
         var templateMapping: [UUID: IngredientTemplate] = [:]
         var skippedTemplates = 0
@@ -944,7 +956,11 @@ class HouseholdService: ObservableObject {
             newTemplate.household = nil
             newTemplate.householdKey = nil
 
-            newTemplate.category = oldTemplate.category
+            // M9.12: Link categoryEntity using categoryMapping instead of copying string
+            if let oldCat = oldTemplate.categoryEntity, let oldCatId = oldCat.id,
+               let newCat = categoryMapping[oldCatId] {
+                newTemplate.categoryEntity = newCat
+            }
 
             if let oldId = oldTemplate.id {
                 templateMapping[oldId] = newTemplate
@@ -960,6 +976,7 @@ class HouseholdService: ObservableObject {
         }()
 
         // Migrate recipes with ingredients, skipping duplicates by title
+        var recipeMapping: [UUID: Recipe] = [:]
         var skippedRecipes = 0
         for oldRecipe in recipeSet {
             let title = oldRecipe.title?.lowercased() ?? ""
@@ -982,6 +999,8 @@ class HouseholdService: ObservableObject {
             newRecipe.usageCount = 0
             newRecipe.household = nil
             newRecipe.householdKey = nil
+
+            if let oldId = oldRecipe.id { recipeMapping[oldId] = newRecipe }
 
             // Copy ingredients
             let ingredientSet = oldRecipe.ingredients as? Set<Ingredient> ?? []
@@ -1041,7 +1060,11 @@ class HouseholdService: ObservableObject {
                 newItem.displayText = oldItem.displayText
                 newItem.numericValue = oldItem.numericValue
                 newItem.standardUnit = oldItem.standardUnit
-                newItem.categoryName = oldItem.categoryName
+                // M9.12: Link categoryEntity using categoryMapping instead of copying string
+                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id,
+                   let newCat = categoryMapping[oldCatId] {
+                    newItem.categoryEntity = newCat
+                }
                 newItem.sortOrder = oldItem.sortOrder
                 newItem.isCompleted = oldItem.isCompleted
                 newItem.isParseable = oldItem.isParseable
@@ -1058,8 +1081,10 @@ class HouseholdService: ObservableObject {
             return Set(results.compactMap { $0.name?.lowercased() })
         }()
 
-        // Migrate meal plans, skipping duplicates by name
+        // Migrate meal plans with planned meals, skipping duplicates by name
+        var mealPlanMapping: [UUID: MealPlan] = [:]
         var skippedPlans = 0
+        var migratedPlannedMeals = 0
         for oldPlan in mealPlanSet {
             let name = oldPlan.name?.lowercased() ?? ""
             if existingPlanNames.contains(name) {
@@ -1078,9 +1103,35 @@ class HouseholdService: ObservableObject {
             newPlan.household = nil
             newPlan.householdKey = nil
 
-            // Note: PlannedMeal copying would require recipe mapping
-            // For now, skip planned meals as they reference recipes
-            // User can recreate meal assignments manually
+            if let oldId = oldPlan.id { mealPlanMapping[oldId] = newPlan }
+        }
+
+        // M10.6.20: Copy PlannedMeals from household MealPlans to personal MealPlans
+        for oldPlan in mealPlanSet {
+            guard let oldPlanId = oldPlan.id,
+                  let newPlan = mealPlanMapping[oldPlanId] else { continue }
+            let oldMeals = oldPlan.plannedMeals as? Set<PlannedMeal> ?? []
+            for oldMeal in oldMeals {
+                let newMeal = PlannedMeal(context: viewContext)
+                newMeal.id = UUID()
+                newMeal.date = oldMeal.date
+                newMeal.mealType = oldMeal.mealType
+                newMeal.notes = oldMeal.notes
+                newMeal.isCompleted = oldMeal.isCompleted
+                newMeal.scaleFactor = oldMeal.scaleFactor
+                newMeal.servings = oldMeal.servings
+                newMeal.quickOption = oldMeal.quickOption
+                newMeal.slotKey = oldMeal.slotKey
+                newMeal.household = nil
+                newMeal.householdKey = nil
+                newMeal.mealPlan = newPlan
+                // Remap recipe relationship to new personal copy
+                if let oldRecipeId = oldMeal.recipe?.id,
+                   let newRecipe = recipeMapping[oldRecipeId] {
+                    newMeal.recipe = newRecipe
+                }
+                migratedPlannedMeals += 1
+            }
         }
 
         #if DEBUG
@@ -1090,6 +1141,7 @@ class HouseholdService: ObservableObject {
         print("   \(recipeSet.count - skippedRecipes) recipes (\(skippedRecipes) skipped — already exist)")
         print("   \(listSet.count - skippedLists) weekly lists (\(skippedLists) skipped — already exist)")
         print("   \(mealPlanSet.count - skippedPlans) meal plans (\(skippedPlans) skipped — already exist)")
+        print("   \(migratedPlannedMeals) planned meals")
         #endif
     }
 
@@ -1441,7 +1493,7 @@ class HouseholdService: ObservableObject {
             migratedCount += 1
         }
 
-        // Migrate meal plans (MealPlan, not PlannedMeal!)
+        // Migrate meal plans
         let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
         mealPlanRequest.predicate = NSPredicate(format: "household == nil")
         let mealPlans = try viewContext.fetch(mealPlanRequest)
@@ -1449,6 +1501,28 @@ class HouseholdService: ObservableObject {
             mealPlan.household = household
             mealPlan.householdKey = householdKey
             migratedCount += 1
+        }
+
+        // Migrate planned meals (children of MealPlans)
+        let plannedMealRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        plannedMealRequest.predicate = NSPredicate(format: "household == nil")
+        let plannedMeals = try viewContext.fetch(plannedMealRequest)
+        for plannedMeal in plannedMeals {
+            plannedMeal.household = household
+            plannedMeal.householdKey = householdKey
+            migratedCount += 1
+        }
+
+        // M10.6.20: Break cross-store GroceryItem→Category relationships before Categories move to shared store
+        // GroceryItem (staples) stays in private store; Category moves to shared store via household migration.
+        // Preserve the category string for display fallback via effectiveCategory computed property.
+        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        let groceryItems = try viewContext.fetch(groceryItemRequest)
+        for item in groceryItems where item.categoryEntity != nil {
+            if item.category == nil || item.category?.isEmpty == true {
+                item.category = item.categoryEntity?.name
+            }
+            item.categoryEntity = nil
         }
 
         // Migrate categories
@@ -1476,6 +1550,7 @@ class HouseholdService: ObservableObject {
         print("   \(recipes.count) recipes")
         print("   \(lists.count) weekly lists")
         print("   \(mealPlans.count) meal plans")
+        print("   \(plannedMeals.count) planned meals")
         print("   \(categories.count) categories")
         print("   \(templates.count) ingredient templates")
         print("   Household key: \(householdKey)")
@@ -1490,6 +1565,7 @@ class HouseholdService: ObservableObject {
             (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
             (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
             (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
             (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
             (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
         ]
@@ -2220,6 +2296,46 @@ class HouseholdService: ObservableObject {
         }
     }
     
+    /// M10.6.19: Run at app launch when no household is active.
+    /// Clears zone corruption from ghost awakeFromInsert assignments so the
+    /// CloudKit mirroring delegate can initialize and sync personal data.
+    /// Safe to call every launch — no-ops if stores are already clean.
+    func repairZoneCorruptionIfNeeded() {
+        // M10.6.20: Fix cross-store GroceryItem→Category relationships for users IN a household
+        if currentHousehold != nil {
+            repairCrossStoreGroceryItemRelationships()
+        }
+        guard currentHousehold == nil else { return }
+        cleanOrphanedHouseholdData()
+    }
+
+    /// M10.6.20: GroceryItem (private store) may reference Category (shared store) via categoryEntity.
+    /// This cross-store relationship causes CloudKit zone corruption. NULL out the relationship
+    /// and preserve the category name as a fallback string for effectiveCategory.
+    private func repairCrossStoreGroceryItemRelationships() {
+        let request: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        guard let items = try? viewContext.fetch(request) else { return }
+        var fixedCount = 0
+        for item in items where item.categoryEntity != nil {
+            // Only fix items whose categoryEntity is in a different store (cross-store)
+            if let catStore = item.categoryEntity?.objectID.persistentStore,
+               let itemStore = item.objectID.persistentStore,
+               catStore != itemStore {
+                if item.category == nil || item.category?.isEmpty == true {
+                    item.category = item.categoryEntity?.name
+                }
+                item.categoryEntity = nil
+                fixedCount += 1
+            }
+        }
+        if fixedCount > 0, viewContext.hasChanges {
+            try? viewContext.save()
+            #if DEBUG
+            print("🔧 M10.6.20: Fixed \(fixedCount) cross-store GroceryItem→Category relationships")
+            #endif
+        }
+    }
+
     /// M10.6: Pre-creation cleanup — removes ALL objects with non-nil householdKey
     /// that don't belong to any currently active household. Prevents zone corruption
     /// when creating a new household after leaving a previous one.
@@ -2253,6 +2369,7 @@ class HouseholdService: ObservableObject {
             (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
             (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
             (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
             (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
             (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
         ]
@@ -2284,9 +2401,20 @@ class HouseholdService: ObservableObject {
             #endif
         }
 
-        // 3. Purge shared store remnants
-        let purgedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
-        cleanedCount += purgedCount
+        // 3. Destroy and recreate shared store to clear zone metadata corruption
+        // purgeAllSharedStoreObjects deletes rows but leaves CloudKit zone metadata intact,
+        // which causes "objects assigned to multiple zones" (error 134060) on the next share().
+        // Destroying the SQLite file is the only reliable way to reset zone state.
+        do {
+            try PersistenceController.shared.destroyAndRecreateSharedStore()
+            #if DEBUG
+            print("   ✅ Shared store destroyed and recreated (zone metadata cleared)")
+            #endif
+        } catch {
+            #if DEBUG
+            print("   ⚠️ Failed to recreate shared store: \(error)")
+            #endif
+        }
 
         if viewContext.hasChanges {
             do {
@@ -2350,6 +2478,24 @@ class HouseholdService: ObservableObject {
         } catch {
             #if DEBUG
             print("   ❌ WeeklyList fetch error: \(error)")
+            #endif
+        }
+
+        // Delete planned meals with this householdKey (before meal plans to avoid orphans)
+        let plannedMealRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
+        plannedMealRequest.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        do {
+            let plannedMeals = try viewContext.fetch(plannedMealRequest)
+            #if DEBUG
+            print("   Found \(plannedMeals.count) planned meals to delete")
+            #endif
+            for plannedMeal in plannedMeals {
+                viewContext.delete(plannedMeal)
+                deletedCount += 1
+            }
+        } catch {
+            #if DEBUG
+            print("   ❌ PlannedMeal fetch error: \(error)")
             #endif
         }
 

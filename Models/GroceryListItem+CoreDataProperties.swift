@@ -30,6 +30,7 @@ extension GroceryListItem {
     @NSManaged public var sortOrder: Int16
     @NSManaged public var source: String?
     @NSManaged public var standardUnit: String?
+    @NSManaged public var categoryEntity: Category?
     @NSManaged public var sourceRecipes: NSSet?
     @NSManaged public var weeklyList: WeeklyList?
 

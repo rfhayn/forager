@@ -188,11 +188,11 @@ struct ManageCategoriesView: View {
     private func checkIngredientTemplateAssignments(for category: Category) -> Int {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
 
-        // M7.3.4: Filter by both category name AND householdKey
+        // M9.12: Filter by categoryEntity relationship AND householdKey
         if let householdKey = householdService.currentHouseholdKey {
-            request.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", category.displayName, householdKey)
+            request.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == %@", category, householdKey)
         } else {
-            request.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", category.displayName)
+            request.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == nil", category)
         }
 
         do {
@@ -400,35 +400,45 @@ struct ManageCategoriesView: View {
     private func reassignIngredientTemplates(from sourceCategory: Category, to targetCategory: Category) {
         let sourceCategoryID = sourceCategory.objectID
         let sourceCategoryName = sourceCategory.displayName
+        let targetCategoryID = targetCategory.objectID
         let targetCategoryName = targetCategory.displayName
         let currentHouseholdKey = householdService.currentHouseholdKey
 
         PersistenceController.shared.performWrite({ context in
             // Get references to categories in write context
             let sourceCategoryInContext = context.object(with: sourceCategoryID) as! Category
+            let targetCategoryInContext = context.object(with: targetCategoryID) as! Category
 
-            // M7.3.4: Filter by both category name AND householdKey
+            // M9.12: Filter by categoryEntity relationship AND householdKey
             let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
             if let householdKey = currentHouseholdKey {
-                request.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", sourceCategoryName, householdKey)
+                request.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == %@", sourceCategoryInContext, householdKey)
             } else {
-                request.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", sourceCategoryName)
+                request.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == nil", sourceCategoryInContext)
             }
 
             do {
                 let templates = try context.fetch(request)
                 for template in templates {
-                    template.category = targetCategoryName  // Assign String, not Category object
+                    template.categoryEntity = targetCategoryInContext
                     let templateName = template.name ?? "Unknown"
                     #if DEBUG
                     print("🔄 Reassigned '\(templateName)' from '\(sourceCategoryName)' to '\(targetCategoryName)'")
                     #endif
                 }
 
+                // M9.12: Also reassign GroceryListItems that reference this category
+                let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
+                listItemRequest.predicate = NSPredicate(format: "categoryEntity == %@", sourceCategoryInContext)
+                let listItems = try context.fetch(listItemRequest)
+                for item in listItems {
+                    item.categoryEntity = targetCategoryInContext
+                }
+
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
                 #if DEBUG
-                print("✅ Successfully reassigned \(templates.count) ingredient templates and deleted category '\(sourceCategoryName)'")
+                print("✅ Successfully reassigned \(templates.count) ingredient templates and \(listItems.count) list items, deleted category '\(sourceCategoryName)'")
                 #endif
             } catch {
                 #if DEBUG
@@ -489,27 +499,35 @@ struct ManageCategoriesView: View {
                     #endif
                 }
 
-                // M7.3.4: Move only ingredient templates in current household scope
+                // M9.12: Move only ingredient templates in current household scope (via relationship)
                 let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
                 if let householdKey = currentHouseholdKey {
-                    templateRequest.predicate = NSPredicate(format: "category == %@ AND householdKey == %@", sourceCategoryName, householdKey)
+                    templateRequest.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == %@", sourceCategoryInContext, householdKey)
                 } else {
-                    templateRequest.predicate = NSPredicate(format: "category == %@ AND householdKey == nil", sourceCategoryName)
+                    templateRequest.predicate = NSPredicate(format: "categoryEntity == %@ AND householdKey == nil", sourceCategoryInContext)
                 }
 
                 let templates = try context.fetch(templateRequest)
                 for template in templates {
-                    template.category = uncategorizedCategory.displayName  // Assign to Uncategorized, not nil
+                    template.categoryEntity = uncategorizedCategory
                     let templateName = template.name ?? "Unknown"
                     #if DEBUG
                     print("🔄 Moved '\(templateName)' to Uncategorized category")
                     #endif
                 }
 
+                // M9.12: Also move GroceryListItems that reference this category
+                let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
+                listItemRequest.predicate = NSPredicate(format: "categoryEntity == %@", sourceCategoryInContext)
+                let listItems = try context.fetch(listItemRequest)
+                for item in listItems {
+                    item.categoryEntity = uncategorizedCategory
+                }
+
                 // Now delete the source category
                 context.delete(sourceCategoryInContext)
                 #if DEBUG
-                print("✅ Successfully moved \(templates.count) ingredient templates to Uncategorized and deleted category '\(sourceCategoryName)'")
+                print("✅ Successfully moved \(templates.count) ingredient templates and \(listItems.count) list items to Uncategorized and deleted category '\(sourceCategoryName)'")
                 #endif
                 
             } catch {
@@ -592,14 +610,42 @@ struct ManageCategoriesView: View {
                     // Keep the original category name so existing lists still show it
                     item.category = categoryName
                 }
-                
+
                 if itemCount > 0 {
                     #if DEBUG
                     print("📝 Updated \(itemCount) item\(itemCount == 1 ? "" : "s") - removed category relationship but preserved category name '\(categoryName)'")
                     #endif
                 }
             }
-            
+
+            // M9.12: Nullify IngredientTemplate.categoryEntity for templates referencing this category
+            let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+            templateRequest.predicate = NSPredicate(format: "categoryEntity == %@", categoryToDelete)
+            if let templates = try? context.fetch(templateRequest) {
+                for template in templates {
+                    template.categoryEntity = nil
+                }
+                #if DEBUG
+                if !templates.isEmpty {
+                    print("📝 Nullified categoryEntity on \(templates.count) IngredientTemplate(s)")
+                }
+                #endif
+            }
+
+            // M9.12: Nullify GroceryListItem.categoryEntity for list items referencing this category
+            let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
+            listItemRequest.predicate = NSPredicate(format: "categoryEntity == %@", categoryToDelete)
+            if let listItems = try? context.fetch(listItemRequest) {
+                for item in listItems {
+                    item.categoryEntity = nil
+                }
+                #if DEBUG
+                if !listItems.isEmpty {
+                    print("📝 Nullified categoryEntity on \(listItems.count) GroceryListItem(s)")
+                }
+                #endif
+            }
+
             context.delete(categoryToDelete)
             #if DEBUG
             print("✅ Deleted category: \(categoryName)")

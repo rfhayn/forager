@@ -97,7 +97,7 @@ struct CategoryChangeModal: View {
         
         for template in ingredientTemplates {
             // Initialize with current category for existing ingredients
-            categoryAssignments[template.objectID] = template.category
+            categoryAssignments[template.objectID] = template.categoryEntity?.name
         }
     }
     
@@ -248,18 +248,18 @@ struct CategoryChangeModal: View {
         
         // Apply only changed categories
         for template in ingredientTemplates {
-            let currentCategory = template.category
+            let currentCategory = template.categoryEntity?.name
             let selectedCategory = categoryAssignments[template.objectID] ?? nil
-            
+
             if currentCategory != selectedCategory {
                 hasChanges = true
-                // Apply new category, handling "Uncategorized" as nil
+                // M9.12: Apply new category entity, handling "Uncategorized" as nil
                 if let categoryName = selectedCategory,
                    !categoryName.isEmpty,
                    categoryName.lowercased() != "uncategorized" {
-                    template.category = categoryName
+                    template.categoryEntity = categories.first { $0.name == categoryName }
                 } else {
-                    template.category = nil
+                    template.categoryEntity = nil
                 }
             }
         }

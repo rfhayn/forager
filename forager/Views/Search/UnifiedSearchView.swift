@@ -251,7 +251,7 @@ struct UnifiedSearchView: View {
                                     highlightedText(ingredient.name ?? "Unnamed", highlight: searchText)
                                         .font(.body)
 
-                                    if let category = ingredient.category {
+                                    if let category = ingredient.categoryEntity?.name {
                                         Text(category)
                                             .font(.caption)
                                             .foregroundStyle(ForagerTheme.textSecondary)

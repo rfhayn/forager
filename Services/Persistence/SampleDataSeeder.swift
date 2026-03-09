@@ -126,7 +126,7 @@ final class SampleDataSeeder {
             template.id = UUID()
             template.name = staple.name
             template.canonicalName = staple.name
-            template.category = staple.category
+            template.categoryEntity = findCategory(named: staple.category, in: context)
             template.isStaple = true
             template.usageCount = 1
             template.dateCreated = Date()
@@ -572,7 +572,7 @@ final class SampleDataSeeder {
         template.id = UUID()
         template.name = name
         template.canonicalName = name.lowercased()
-        template.category = category
+        template.categoryEntity = findCategory(named: category, in: context)
         template.isStaple = false
         template.usageCount = 1
         template.dateCreated = Date()
@@ -616,7 +616,7 @@ final class SampleDataSeeder {
             listItem.displayText = item.displayText
             listItem.numericValue = item.numericValue
             listItem.standardUnit = item.unit
-            listItem.categoryName = item.category
+            listItem.categoryEntity = findCategory(named: item.category, in: context)
             listItem.isParseable = true
             listItem.parseConfidence = 1.0
             listItem.isCompleted = item.isCompleted
@@ -694,6 +694,14 @@ final class SampleDataSeeder {
     }
 
     // MARK: - Helpers
+
+    /// M9.12: Look up a Category entity by name for relationship assignment
+    private static func findCategory(named name: String, in context: NSManagedObjectContext) -> Category? {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        request.predicate = NSPredicate(format: "name ==[cd] %@", name)
+        request.fetchLimit = 1
+        return try? context.fetch(request).first
+    }
 
     private static func deleteAll<T: NSManagedObject>(_ type: T.Type, in context: NSManagedObjectContext) {
         let request = NSFetchRequest<T>(entityName: String(describing: type))

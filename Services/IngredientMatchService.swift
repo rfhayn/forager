@@ -199,7 +199,7 @@ class IngredientMatchService: ObservableObject {
 
         if let template = exactMatch {
             templateName = template.name
-            if let category = template.category, !category.isEmpty,
+            if let category = template.categoryEntity?.name, !category.isEmpty,
                category.lowercased() != "uncategorized" {
                 // Template already has a real category — use it
                 status = .ready

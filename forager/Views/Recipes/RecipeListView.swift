@@ -1099,7 +1099,7 @@ struct RecipeDetailView: View {
             if var result {
                 // M10.6.16: If re-match lost the category, use ingredient's linked template category
                 if result.categoryName == nil,
-                   let templateCategory = sortedIngredients[index].ingredientTemplate?.category,
+                   let templateCategory = sortedIngredients[index].ingredientTemplate?.categoryEntity?.name,
                    !templateCategory.isEmpty,
                    templateCategory.lowercased() != "uncategorized" {
                     result = result.withCategory(templateCategory)
@@ -1150,9 +1150,14 @@ struct RecipeDetailView: View {
                 guard index < candidates.count else { break }
                 let ingredient = candidates[index]
 
+                // M9.12: Look up Category entity from AI-suggested category name
+                let categoryEntity: Category? = {
+                    guard let name = aiCategory else { return nil }
+                    return realCategories.first { $0.displayName == name }
+                }()
                 let template = templateService.findOrCreateTemplate(
                     name: parsed.displayName,
-                    category: aiCategory
+                    category: categoryEntity
                 )
 
                 recipeServiceM75.updateIngredient(
@@ -1786,10 +1791,14 @@ struct RecipeDetailView: View {
         // Re-parse with full telemetry
         let (parsed, structured) = parsingService.parseUnified(text: trimmed, source: .recipeIngredient)
 
-        // Find or create template for the parsed name
+        // M9.12: Look up Category entity from match result category name
+        let matchCategoryEntity: Category? = {
+            guard let name = ingredientMatches[id]?.categoryName else { return nil }
+            return realCategories.first { $0.displayName == name }
+        }()
         let template = templateService.findOrCreateTemplate(
             name: parsed.displayName,
-            category: ingredientMatches[id]?.categoryName
+            category: matchCategoryEntity
         )
 
         // Update ingredient via service (single save)
@@ -1903,7 +1912,7 @@ struct RecipeDetailView: View {
                                 Text(template.name ?? "")
                                     .font(ForagerTheme.bodyFont)
                                     .foregroundStyle(ForagerTheme.textPrimary)
-                                if let category = template.category, !category.isEmpty {
+                                if let category = template.categoryEntity?.name, !category.isEmpty {
                                     Text(category)
                                         .font(ForagerTheme.captionFont)
                                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -2132,10 +2141,11 @@ struct RecipeDetailView: View {
             ingredientMatches[ingredientId] = existing.withCategory(categoryName)
         }
 
-        // Update the template's category via service
+        // M9.12: Look up Category entity by name, pass entity instead of String
+        let categoryEntity = realCategories.first(where: { $0.displayName == categoryName })
         if let ingredient = sortedIngredients.first(where: { $0.id == ingredientId }),
            let template = ingredient.ingredientTemplate {
-            templateService.updateCategory(template, category: categoryName)
+            templateService.updateCategory(template, category: categoryEntity)
         }
     }
 
