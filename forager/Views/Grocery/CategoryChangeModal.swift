@@ -234,7 +234,7 @@ struct CategoryChangeModal: View {
     
     private var properlyAssignedCount: Int {
         categoryAssignments.values.compactMap { $0 }.filter { categoryName in
-            return categoryName.lowercased() != "uncategorized" && !categoryName.isEmpty
+            return !categoryName.isEmpty
         }.count
     }
     
@@ -253,10 +253,9 @@ struct CategoryChangeModal: View {
 
             if currentCategory != selectedCategory {
                 hasChanges = true
-                // M9.12: Apply new category entity, handling "Uncategorized" as nil
+                // M9.12: Apply new category entity
                 if let categoryName = selectedCategory,
-                   !categoryName.isEmpty,
-                   categoryName.lowercased() != "uncategorized" {
+                   !categoryName.isEmpty {
                     template.categoryEntity = categories.first { $0.name == categoryName }
                 } else {
                     template.categoryEntity = nil
@@ -325,8 +324,7 @@ struct IngredientChangeRow: View {
             )) {
                 HStack {
                     if let categoryName = selectedCategoryName,
-                       !categoryName.isEmpty,
-                       categoryName.lowercased() != "uncategorized" {
+                       !categoryName.isEmpty {
                         HStack(spacing: 8) {
                             // Find the category to get its color
                             let category = categories.first { $0.name == categoryName }
@@ -364,7 +362,7 @@ struct IngredientChangeRow: View {
     
     private var isProperlyAssigned: Bool {
         guard let categoryName = selectedCategoryName else { return false }
-        return categoryName.lowercased() != "uncategorized" && !categoryName.isEmpty
+        return !categoryName.isEmpty
     }
     
     private var categoryStatusView: some View {

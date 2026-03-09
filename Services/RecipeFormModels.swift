@@ -78,7 +78,7 @@ struct IngredientInput: Identifiable, Equatable {
     var hasCategory: Bool {
         guard let template = template else { return false }
         guard let category = template.categoryEntity?.name else { return false }
-        return !category.isEmpty && category.lowercased() != "uncategorized"
+        return !category.isEmpty
     }
     
     static func == (lhs: IngredientInput, rhs: IngredientInput) -> Bool {
