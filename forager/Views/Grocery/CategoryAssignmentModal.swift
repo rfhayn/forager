@@ -261,8 +261,7 @@ struct CategoryAssignmentModal: View {
                 // If the existing template already has a category, auto-fill it
                 if let existingCategoryEntity = existingTemplate.categoryEntity,
                    let existingCategory = existingCategoryEntity.name,
-                   !existingCategory.isEmpty,
-                   existingCategory.lowercased() != "uncategorized" {
+                   !existingCategory.isEmpty {
                     // Template merged + already categorized — advance
                     advance()
                     return

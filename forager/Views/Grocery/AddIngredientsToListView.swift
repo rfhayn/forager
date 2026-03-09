@@ -318,9 +318,8 @@ struct AddIngredientsToListView: View {
             
             // Check if template needs category assignment (M9.12: via relationship)
             if let category = template.categoryEntity?.name,
-               !category.isEmpty,
-               category.lowercased() != "uncategorized" {
-                return nil  // Already has category
+               !category.isEmpty {
+                return nil  // Already has category (including "Uncategorized")
             }
             
             return template
@@ -763,8 +762,7 @@ struct AddIngredientsToListView: View {
         if let existingTemplate = ingredient.ingredientTemplate {
             // Template exists - check if it has a category (M9.12: via relationship)
             if let category = existingTemplate.categoryEntity?.name,
-               !category.isEmpty,
-               category.lowercased() != "uncategorized" {
+               !category.isEmpty {
                 // Has category - show it with color dot
                 HStack(spacing: 4) {
                     Circle()
@@ -793,8 +791,7 @@ struct AddIngredientsToListView: View {
             if let template = existingTemplate {
                 // Template exists in database but not linked - check category (M9.12: via relationship)
                 if let category = template.categoryEntity?.name,
-                   !category.isEmpty,
-                   category.lowercased() != "uncategorized" {
+                   !category.isEmpty {
                     // Has category
                     HStack(spacing: 4) {
                         Circle()

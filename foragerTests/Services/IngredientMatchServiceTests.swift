@@ -186,6 +186,24 @@ final class IngredientMatchServiceTests: XCTestCase {
         XCTAssertEqual(result?.categoryName, "Uncategorized")
     }
 
+    @MainActor
+    func testNewTemplateDefaultsToUncategorizedWhenEntityExists() {
+        // Seed the Uncategorized category (simulates DefaultSeeder startup)
+        let uncategorized = createCategory(named: "Uncategorized")
+        uncategorized.normalizedName = "uncategorized"
+        try? context.save()
+
+        // Create a template with no explicit category — should auto-assign Uncategorized
+        let template = templateService.findOrCreateTemplate(name: "paprika")
+
+        XCTAssertNotNil(template.categoryEntity, "Template should auto-default to Uncategorized")
+        XCTAssertEqual(template.categoryEntity?.name, "Uncategorized")
+
+        let result = matchService.matchIngredient(text: "1 tsp paprika")
+        XCTAssertEqual(result?.status, .ready, "Auto-categorized template should be ready")
+        XCTAssertEqual(result?.categoryName, "Uncategorized")
+    }
+
     // MARK: - Match Summary Edge Cases
 
     @MainActor

@@ -1100,8 +1100,7 @@ struct RecipeDetailView: View {
                 // M10.6.16: If re-match lost the category, use ingredient's linked template category
                 if result.categoryName == nil,
                    let templateCategory = sortedIngredients[index].ingredientTemplate?.categoryEntity?.name,
-                   !templateCategory.isEmpty,
-                   templateCategory.lowercased() != "uncategorized" {
+                   !templateCategory.isEmpty {
                     result = result.withCategory(templateCategory)
                 }
                 matches[id] = result

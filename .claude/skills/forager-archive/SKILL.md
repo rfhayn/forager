@@ -1,12 +1,12 @@
 ---
 name: forager-archive
 description: Archive and distribute forager to TestFlight. Auto-increments build number, archives for Release, uploads to App Store Connect, waits for processing, sets export compliance, and adds to beta test group. TRIGGER when the user says "archive", "deploy to TestFlight", "upload to TestFlight", "release a build", "ship a build", or any request to distribute the app.
-allowed-tools: Read, Write, Bash(grep:*), Bash(awk:*), Bash(mv:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(xcodebuild:*), Bash(cat:*), Bash(swift:*), Bash(curl:*), Bash(jq:*), Bash(sleep:*), Bash(test:*)
+allowed-tools: Read, Write, Bash(grep:*), Bash(awk:*), Bash(mv:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(xcodebuild:*), Bash(cat:*), Bash(swift:*), Bash(curl:*), Bash(jq:*), Bash(sleep:*), Bash(test:*), Bash(Tools/appstore-connect:*), Bash(chmod:*)
 ---
 
 # Archive & Distribute to TestFlight
 
-Full pipeline: version bump → archive → upload → wait for processing → export compliance → add to beta group.
+Full pipeline: version bump → archive → upload → distribute via script.
 
 **CRITICAL: Permission-safe execution.** Run each operation as a SEPARATE Bash tool call. Never chain commands with `&&`, `||`, or pipes. Never combine multiple operations in one Bash call. One command per call. This ensures all commands match pre-approved permission patterns.
 
@@ -24,7 +24,7 @@ test -f ~/.appstoreconnect/config && echo "API KEY CONFIGURED" || echo "NOT CONF
 
 ## Prerequisites: App Store Connect API Key
 
-The TestFlight automation steps (8-11) require an App Store Connect API key. Check if configured (run as a Bash call):
+The TestFlight automation requires an App Store Connect API key. Check if configured (run as a Bash call):
 
 ```bash
 test -f ~/.appstoreconnect/config && cat ~/.appstoreconnect/config || echo "NOT CONFIGURED"
@@ -52,19 +52,7 @@ EOF
 # cp ~/Downloads/AuthKey_XXXXXXXXXX.p8 ~/.appstoreconnect/private_keys/
 ```
 
-Verify the key works:
-```bash
-source ~/.appstoreconnect/config
-JWT=$(swift Tools/appstore-connect/generate-jwt.swift \
-  ~/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8 \
-  "$KEY_ID" "$ISSUER_ID")
-curl -s -H "Authorization: Bearer $JWT" \
-  "https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]=com.richhayn.forager" | jq '.data[0].attributes.name'
-```
-
-If this returns `"forager"`, the API key is working. Proceed to Step 1.
-
-**If API key is not set up and user wants to skip TestFlight automation**, run steps 1-7 only and report that steps 8-11 were skipped.
+**If API key is not set up and user wants to skip TestFlight automation**, run steps 1-6 only and report that TestFlight distribution was skipped.
 
 ## Step 1: Pre-Flight Checks
 
@@ -178,182 +166,52 @@ The `destination: upload` auto-uploads to App Store Connect. If upload fails, fa
 xcrun notarytool submit ... # or Transporter.app / Xcode Organizer
 ```
 
-## Step 7: Generate API Token
+## Step 7: TestFlight Distribution (Automated Script)
 
-All remaining steps use the App Store Connect API. Generate a JWT and save it to a temp file.
+After upload succeeds, run the distribution script. This single command handles:
+- JWT generation
+- Build processing poll (up to 20 minutes)
+- Export compliance verification
+- "What to Test" notes (from latest commit or custom text)
+- Beta review submission + approval wait
+- Adding build to Public Beta Testers group
 
-**CRITICAL**: Each Bash call is a fresh shell — variables do NOT persist between calls. Use `/tmp/forager_jwt.txt` and `/tmp/forager_build_id.txt` to share state between calls. Never use `$JWT` or `$BUILD_ID` shell variables — always inline with `$(cat /tmp/forager_jwt.txt)` or `$(cat /tmp/forager_build_id.txt)`.
-
-Generate and save the JWT to a file (single command):
 ```bash
-swift Tools/appstore-connect/generate-jwt.swift ~/.appstoreconnect/private_keys/AuthKey_QBAG38ZPZR.p8 QBAG38ZPZR fbdd459e-6ae5-4dc5-82d0-c2bf095392e4 > /tmp/forager_jwt.txt
+Tools/appstore-connect/testflight-distribute.sh $NEW_BUILD
 ```
 
-The App ID is always `6756034827`.
-
-**Note**: The JWT expires after 20 minutes. If later steps take longer, regenerate by re-running the command above.
-
-## Step 8: Wait for Build Processing
-
-After upload, App Store Connect processes the build (typically 5-15 minutes). Poll until ready.
-
-**Check build status** — save response to a temp file (single command, no pipes):
+Or with custom "What to Test" notes:
 ```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/builds?filter%5Bapp%5D=6756034827&filter%5Bversion%5D=$NEW_BUILD&filter%5Bexpired%5D=false&sort=-uploadedDate&limit=1" -o /tmp/forager_build_response.json
+Tools/appstore-connect/testflight-distribute.sh $NEW_BUILD "Custom release notes here"
 ```
 
-**Parse the response** (single command):
-```bash
-jq '{state: .data[0].attributes.processingState, id: .data[0].id, version: .data[0].attributes.version, encryption: .data[0].attributes.usesNonExemptEncryption}' /tmp/forager_build_response.json
-```
+The script outputs progress and a final report. If it fails at any step, it exits with a non-zero code and an error message.
 
-Read the jq output for:
-- `state` — look for `"VALID"`
-- `id` — this is the BUILD_ID for subsequent steps
-- If all null, the build hasn't propagated yet — wait and retry
+**If the script fails**, check:
+- JWT issues → verify `~/.appstoreconnect/config` and `.p8` file
+- Build not found → upload may still be propagating, wait 2 min and re-run
+- Review stuck → check App Store Connect web UI
 
-**Save the BUILD_ID** once found (single command):
-```bash
-jq -r '.data[0].id' /tmp/forager_build_response.json > /tmp/forager_build_id.txt
-```
+## Step 8: Final Report
 
-If state is NOT `VALID`, wait 60 seconds then re-run the curl+jq calls:
-```bash
-sleep 60
-```
-
-**If the build is not found** (null values), the upload may still be propagating. Wait 2 minutes and try again.
-
-**If processing fails** (state = `FAILED` or `INVALID`), stop and report. Do not proceed to steps 9-12.
-
-**Only proceed to Step 9 if state = `VALID`.**
-
-## Step 9: Export Compliance (Automatic)
-
-Export compliance is handled automatically via `ITSAppUsesNonExemptEncryption = NO` in `forager/App/Info.plist`. The `encryption` field from Step 8's jq output confirms this — should be `false`.
-
-If it shows `null`, verify with a direct build check:
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)" -o /tmp/forager_compliance.json
-```
-```bash
-jq '.data.attributes.usesNonExemptEncryption' /tmp/forager_compliance.json
-```
-
-If it stays null after 30 seconds, set it via API:
-```bash
-curl -s -X PATCH -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\",\"attributes\":{\"usesNonExemptEncryption\":false}}}" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)"
-```
-
-## Step 10: Set "What to Test" & Submit for Beta Review
-
-**IMPORTANT**: This step MUST complete before Step 11 (adding to beta group). External groups require beta review approval — adding a build to the group before review is approved results in "not ready to test."
-
-Set the "What to Test" notes from the latest git commit message, then submit for beta app review. Run each as a separate call.
-
-**Get the commit message:**
-```bash
-git log -1 --pretty=%B
-```
-
-**Get the localization ID** — save response, then parse:
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)/betaBuildLocalizations" -o /tmp/forager_localizations.json
-```
-```bash
-jq '.data[0].id' /tmp/forager_localizations.json
-```
-Note the localization ID from the output (strip quotes).
-
-**Update "What to Test"** — use the localization ID from above. Escape the commit message for JSON (replace newlines with `\\n`, escape quotes). If a localization exists, PATCH it:
-```bash
-curl -s -X PATCH -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d '{"data":{"id":"LOCALIZATION_ID","type":"betaBuildLocalizations","attributes":{"whatsNew":"ESCAPED_COMMIT_MSG"}}}' "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations/LOCALIZATION_ID"
-```
-
-If no localization exists, POST to create one:
-```bash
-curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"type\":\"betaBuildLocalizations\",\"attributes\":{\"whatsNew\":\"ESCAPED_COMMIT_MSG\",\"locale\":\"en-US\"},\"relationships\":{\"build\":{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}}}}}" "https://api.appstoreconnect.apple.com/v1/betaBuildLocalizations"
-```
-
-**Submit for beta app review** (required for external test groups):
-```bash
-curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":{\"type\":\"betaAppReviewSubmissions\",\"relationships\":{\"build\":{\"data\":{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}}}}}" "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions" -o /tmp/forager_review_response.json
-```
-
-**Check the response:**
-```bash
-jq '{type: .data.type, state: .data.attributes.betaReviewState, error: .errors[0].code}' /tmp/forager_review_response.json
-```
-
-- HTTP 201 with `betaReviewState` = submitted successfully
-- `INVALID_QC_STATE` = may already be approved — verify in next step
-
-**Verify beta review is APPROVED** before proceeding to Step 11:
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/builds/$(cat /tmp/forager_build_id.txt)/betaAppReviewSubmission" -o /tmp/forager_review_status.json
-```
-```bash
-jq '.data.attributes.betaReviewState' /tmp/forager_review_status.json
-```
-
-If state is `"APPROVED"`, proceed to Step 11. If `"IN_REVIEW"` or `"WAITING_FOR_REVIEW"`, wait 60 seconds and re-check. If `null` or missing, the review submission may have failed — retry the submission.
-
-**Only proceed to Step 11 when betaReviewState = "APPROVED".**
-
-## Step 11: Add Build to Beta Test Group
-
-**IMPORTANT**: Only run this step AFTER Step 10 confirms betaReviewState = "APPROVED". Adding before approval causes "not ready to test" for external testers.
-
-Default group: **Public Beta Testers** (`46d19222-23de-4578-954a-ed0457239949`).
-
-Override with `--group "Group Name"` argument (see Arguments section).
-
-If `--group` was passed, look up the ID first:
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/betaGroups?filter%5Bapp%5D=6756034827" -o /tmp/forager_groups.json
-```
-```bash
-jq '.data[] | {id: .id, name: .attributes.name}' /tmp/forager_groups.json
-```
-
-**Add build to the group** (single command):
-```bash
-curl -s -X POST -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" -H "Content-Type: application/json" -d "{\"data\":[{\"id\":\"$(cat /tmp/forager_build_id.txt)\",\"type\":\"builds\"}]}" "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/relationships/builds"
-```
-HTTP 204 (empty response) = success.
-
-**Verify the build is in the group and ready:**
-```bash
-curl -s -H "Authorization: Bearer $(cat /tmp/forager_jwt.txt)" "https://api.appstoreconnect.apple.com/v1/betaGroups/46d19222-23de-4578-954a-ed0457239949/builds?filter%5Bversion%5D=$NEW_BUILD" -o /tmp/forager_verify_group.json
-```
-```bash
-jq '.data[0].attributes | {version: .version, state: .processingState}' /tmp/forager_verify_group.json
-```
-
-## Step 12: Final Report
+After the script completes, report:
 
 ```
 ✅ Archive & TestFlight Distribution Complete
 
 Version:       $MARKETING_VERSION (build $NEW_BUILD)
 Archive:       ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive
-Processing:    VALID
-Compliance:    No non-exempt encryption
-Beta Group:    $GROUP_NAME
-What to Test:  (from latest commit)
-Review Status: WAITING_FOR_REVIEW
-Status:        Submitted — testers notified once review completes
+Status:        Available to testers (see script output for details)
 ```
 
 ## Arguments
 
-- No arguments: full pipeline (archive → upload → wait → compliance → add to **Public Beta Testers**)
+- No arguments: full pipeline (archive → upload → distribute to **Public Beta Testers**)
 - `--version X.Y`: also bump marketing version (e.g., `/archive --version 1.3`)
-- `--group "Group Name"`: use a different beta group (e.g., `/archive --group "forager beta testing v1"`)
-- `--no-upload`: archive and export only, skip TestFlight upload and steps 8-11
-- `--no-wait`: upload only, skip steps 8-11 (processing wait + compliance + beta group)
+- `--no-upload`: archive and export only, skip TestFlight upload and distribution
+- `--no-wait`: upload only, skip distribution script
 - `--dry-run`: show what would happen without making changes
-- `--testflight-only`: skip archive/upload, run only steps 7-11 (for builds already uploaded)
+- `--testflight-only`: skip archive/upload, run only the distribution script (for builds already uploaded)
 
 ## Configuration
 
@@ -364,6 +222,7 @@ Status:        Submitted — testers notified once review completes
 - **API Key Config**: `~/.appstoreconnect/config` (KEY_ID, ISSUER_ID)
 - **API Key File**: `~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8`
 - **JWT Generator**: `Tools/appstore-connect/generate-jwt.swift`
+- **Distribution Script**: `Tools/appstore-connect/testflight-distribute.sh`
 
 ## Troubleshooting
 
@@ -374,8 +233,8 @@ Status:        Submitted — testers notified once review completes
 | `Export failed` | Try `xcodebuild -exportArchive` with `-allowProvisioningUpdates` flag |
 | `Upload rejected` | Check build number isn't reused. App Store Connect rejects duplicate build numbers per version |
 | `JWT generation failed` | Verify .p8 file path and format. Run: `swift Tools/appstore-connect/generate-jwt.swift <path> <key-id> <issuer-id>` manually |
-| `API returns 401` | JWT may be expired (20 min). Regenerate with Step 7 |
+| `API returns 401` | JWT may be expired (20 min). Script auto-refreshes after 15 poll cycles |
 | `API returns 403` | API key role too restrictive. Needs at least "Developer" role |
-| `Build not found after upload` | Wait 2-5 minutes for propagation, then retry Step 8 |
+| `Build not found after upload` | Wait 2-5 minutes for propagation, then re-run the distribution script |
 | `Build stuck in PROCESSING` | Normal for up to 15 min. If >30 min, check App Store Connect web UI |
-| `Export compliance already set` | Info.plist has `ITSAppUsesNonExemptEncryption`. Step 9 is automatic — no action needed |
+| `Export compliance already set` | Info.plist has `ITSAppUsesNonExemptEncryption`. Script handles this automatically |
