@@ -68,7 +68,7 @@ struct IngredientInput: Identifiable, Equatable {
     var statusIndicator: IngredientStatus {
         if template == nil {
             return .needsTemplate
-        } else if template?.category == nil || template?.category?.isEmpty == true {
+        } else if template?.categoryEntity == nil {
             return .needsCategory
         } else {
             return .ready
@@ -77,7 +77,7 @@ struct IngredientInput: Identifiable, Equatable {
     
     var hasCategory: Bool {
         guard let template = template else { return false }
-        guard let category = template.category else { return false }
+        guard let category = template.categoryEntity?.name else { return false }
         return !category.isEmpty && category.lowercased() != "uncategorized"
     }
     
@@ -170,7 +170,7 @@ struct RecipeFormData {
     var uncategorizedTemplates: [IngredientTemplate] {
         return ingredients.compactMap { ingredientInput in
             guard let template = ingredientInput.template else { return nil }
-            guard template.category == nil || template.category?.isEmpty == true else { return nil }
+            guard template.categoryEntity == nil else { return nil }
             return template
         }
     }

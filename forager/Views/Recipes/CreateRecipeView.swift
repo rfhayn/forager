@@ -439,7 +439,7 @@ struct CreateRecipeView: View {
                                                 .font(.body)
                                                 .foregroundStyle(ForagerTheme.textPrimary)
 
-                                            if let category = template.category, !category.isEmpty {
+                                            if let category = template.categoryEntity?.name, !category.isEmpty {
                                                 Text(category)
                                                     .font(.caption)
                                                     .foregroundStyle(ForagerTheme.textSecondary)
@@ -606,11 +606,14 @@ struct CreateRecipeView: View {
     private func assignCategory(_ categoryName: String, to ingredientId: UUID) {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredientId }) else { return }
 
+        // M9.12: Look up Category entity by name from realCategories
+        let categoryEntity = realCategories.first(where: { $0.displayName == categoryName })
+
         if let template = formData.ingredients[index].template {
-            template.category = categoryName
+            template.categoryEntity = categoryEntity
         } else {
             let parsed = parsingService.parseIngredient(text: formData.ingredients[index].fullText)
-            let template = templateService.findOrCreateTemplate(name: parsed.displayName, category: categoryName)
+            let template = templateService.findOrCreateTemplate(name: parsed.displayName, category: categoryEntity)
             formData.ingredients[index].template = template
         }
         hasUnsavedChanges = true

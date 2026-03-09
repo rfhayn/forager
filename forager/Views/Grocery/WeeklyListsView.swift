@@ -200,7 +200,6 @@ struct WeeklyListsView: View {
                 stapleRequest.predicate = NSPredicate(format: "isStaple == YES AND householdKey == nil")
             }
             stapleRequest.sortDescriptors = [
-                NSSortDescriptor(keyPath: \IngredientTemplate.category, ascending: true),
                 NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
             ]
 
@@ -219,7 +218,8 @@ struct WeeklyListsView: View {
                     listItem.isCompleted = false
                     listItem.source = "staples"
                     listItem.sortOrder = Int16(index)
-                    listItem.categoryName = (template.category?.isEmpty == false) ? template.category : "Uncategorized"
+                    // M9.12: Set categoryEntity directly from template
+                    listItem.categoryEntity = template.categoryEntity
                     newList.addToItems(listItem)
                 }
             } catch {
@@ -315,7 +315,7 @@ struct WeeklyListRowView: View {
     }
 
     private var categoryComposition: [(name: String, count: Int)] {
-        Dictionary(grouping: Array(itemsFetch)) { $0.categoryName ?? "Uncategorized" }
+        Dictionary(grouping: Array(itemsFetch)) { $0.categoryEntity?.name ?? "Uncategorized" }
             .map { (name: $0.key, count: $0.value.count) }
             .sorted { $0.name < $1.name }
     }

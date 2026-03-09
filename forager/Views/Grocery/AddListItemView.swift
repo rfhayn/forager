@@ -105,7 +105,7 @@ struct AddListItemView: View {
                                                     .font(.body)
                                                     .foregroundStyle(.primary)
                                                 
-                                                if let category = template.category, !category.isEmpty {
+                                                if let category = template.categoryEntity?.name, !category.isEmpty {
                                                     Text(category)
                                                         .font(.caption)
                                                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -309,7 +309,7 @@ struct AddListItemView: View {
         ingredientText = rebuiltText
         showingAutocomplete = false
         
-        if let category = template.category, !category.isEmpty {
+        if let category = template.categoryEntity?.name, !category.isEmpty {
             selectedCategory = category
             #if DEBUG
             print("📋 Auto-populated category: \(category)")
@@ -333,11 +333,12 @@ struct AddListItemView: View {
             let matchedTemplate = selectedTemplate ?? templateService.searchTemplates(query: cleanName, limit: 1)
                 .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
 
-            let categoryToUse: String
-            if let template = matchedTemplate, let category = template.category, !category.isEmpty {
-                categoryToUse = category
+            // M9.12: Resolve category entity from template or selected category
+            let categoryEntity: Category?
+            if let template = matchedTemplate, let catEntity = template.categoryEntity {
+                categoryEntity = catEntity
             } else {
-                categoryToUse = selectedCategory
+                categoryEntity = categories.first { $0.displayName == selectedCategory }
             }
 
             let confidence = matchedTemplate != nil
@@ -346,7 +347,7 @@ struct AddListItemView: View {
 
             let listItem = weeklyListService.addItem(
                 to: weeklyList, name: parsed.displayName,
-                categoryName: categoryToUse,
+                category: categoryEntity,
                 numericValue: structured.numericValue ?? 0.0,
                 standardUnit: structured.standardUnit,
                 displayText: structured.displayText,
@@ -358,7 +359,7 @@ struct AddListItemView: View {
                 if matchedTemplate == nil {
                     lastAddedItem = listItem
                     newIngredientName = cleanName
-                    newIngredientCategory = categoryToUse
+                    newIngredientCategory = categoryEntity?.displayName ?? selectedCategory
                     markAsStaple = false
                     showingAddToTemplates = true
                 } else {
@@ -395,9 +396,11 @@ struct AddListItemView: View {
             ? max(structured.parseConfidence, 0.8)
             : structured.parseConfidence
 
+        // M9.12: Resolve category entity from selected category name
+        let categoryEntity = categories.first { $0.displayName == selectedCategory }
         let listItem = weeklyListService.addItem(
             to: weeklyList, name: parsed.displayName,
-            categoryName: selectedCategory,
+            category: categoryEntity,
             numericValue: structured.numericValue ?? 0.0,
             standardUnit: structured.standardUnit,
             displayText: structured.displayText,
@@ -434,12 +437,14 @@ struct AddListItemView: View {
     // PHASE 3: Save new ingredient to templates
     // M8.3.1: Route through findOrCreateTemplate for normalization & dedup
     private func saveToTemplates() {
-        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
+        // M9.12: Look up Category entity for the selected category name
+        let categoryEntity = categories.first { $0.displayName == newIngredientCategory }
+        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: categoryEntity)
         newTemplate.isStaple = markAsStaple
 
         // Propagate the user's category choice to the grocery list item
         if let item = lastAddedItem {
-            item.categoryName = newIngredientCategory
+            item.categoryEntity = categoryEntity
             lastAddedItem = nil
         }
 

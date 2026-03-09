@@ -162,7 +162,7 @@ struct EditStapleView: View {
             
             // Update the staple properties
             stapleToUpdate.name = trimmedName
-            stapleToUpdate.category = selectedCategory // Keep for legacy compatibility
+            // M9.12: category string removed — categoryEntity is the source of truth
             
             // M10.6.18: Scope category lookup to household (ADR 013)
             let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()

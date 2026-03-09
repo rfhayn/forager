@@ -458,7 +458,7 @@ struct EditRecipeView: View {
                                                 .font(.body)
                                                 .foregroundStyle(ForagerTheme.textPrimary)
 
-                                            if let category = template.category, !category.isEmpty {
+                                            if let category = template.categoryEntity?.name, !category.isEmpty {
                                                 Text(category)
                                                     .font(.caption)
                                                     .foregroundStyle(ForagerTheme.textSecondary)
@@ -527,7 +527,7 @@ struct EditRecipeView: View {
             isAIParsing: llmParsingIngredients.contains(ingredient.id),
             showRawText: false,
             // M10.6.14: Fall back to existing template category when re-parse match fails
-            categoryName: matchInfo?.categoryName ?? ingredient.template?.category,
+            categoryName: matchInfo?.categoryName ?? ingredient.template?.categoryEntity?.name,
             onTapEdit: { editingIngredientId = ingredient.id },
             onCategoryTap: { categoryPickerIngredientId = ingredient.id },
             editText: ingredientBinding(for: ingredient),
@@ -626,12 +626,15 @@ struct EditRecipeView: View {
     private func assignCategory(_ categoryName: String, to ingredientId: UUID) {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredientId }) else { return }
 
+        // M9.12: Look up Category entity by name from realCategories
+        let categoryEntity = realCategories.first(where: { $0.displayName == categoryName })
+
         // Update or create template with this category
         if let template = formData.ingredients[index].template {
-            template.category = categoryName
+            template.categoryEntity = categoryEntity
         } else {
             let parsed = parsingService.parseIngredient(text: formData.ingredients[index].fullText)
-            let template = templateService.findOrCreateTemplate(name: parsed.displayName, category: categoryName)
+            let template = templateService.findOrCreateTemplate(name: parsed.displayName, category: categoryEntity)
             formData.ingredients[index].template = template
         }
         hasUnsavedChanges = true
@@ -655,7 +658,7 @@ struct EditRecipeView: View {
     private func commitIngredientEdit(for ingredient: IngredientInput) {
         guard let index = formData.ingredients.firstIndex(where: { $0.id == ingredient.id }) else { return }
         let text = formData.ingredients[index].fullText
-        let previousCategory = formData.ingredients[index].template?.category
+        let previousCategory = formData.ingredients[index].template?.categoryEntity?.name
 
         if let result = matchService.matchIngredient(text: text) {
             // Carry over old template's category if re-match has no category

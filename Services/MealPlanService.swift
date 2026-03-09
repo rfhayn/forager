@@ -855,13 +855,8 @@ class MealPlanService: ObservableObject {
                     listItem.sortOrder = sortIndex
                     sortIndex += 1
 
-                    // Category from ingredient template or default
-                    if let template = ingredient.ingredientTemplate,
-                       let category = template.category, !category.isEmpty {
-                        listItem.categoryName = category
-                    } else {
-                        listItem.categoryName = "Uncategorized"
-                    }
+                    // M9.12: Category from ingredient template relationship
+                    listItem.categoryEntity = ingredient.ingredientTemplate?.categoryEntity
 
                     newList.addToItems(listItem)
                 }

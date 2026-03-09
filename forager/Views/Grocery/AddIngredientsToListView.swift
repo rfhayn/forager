@@ -162,7 +162,7 @@ struct AddIngredientsToListView: View {
     // M4.3.2 Phase 2: Updated to use scaledIngredients
     private var groupedIngredients: [String: [Ingredient]] {
         return Dictionary(grouping: scaledIngredients) { ingredient in
-            ingredient.ingredientTemplate?.category ?? "Uncategorized"
+            ingredient.ingredientTemplate?.categoryEntity?.name ?? "Uncategorized"
         }
     }
 
@@ -316,8 +316,8 @@ struct AddIngredientsToListView: View {
                 return nil
             }
             
-            // Check if template needs category assignment
-            if let category = template.category,
+            // Check if template needs category assignment (M9.12: via relationship)
+            if let category = template.categoryEntity?.name,
                !category.isEmpty,
                category.lowercased() != "uncategorized" {
                 return nil  // Already has category
@@ -503,18 +503,17 @@ struct AddIngredientsToListView: View {
                 // M4.3.1: Add recipe to sourceRecipes relationship
                 listItem.addToSourceRecipes(recipe)
                 
-                // Use proper category assignment logic
+                // M9.12: Use category entity relationship directly
                 if let template = ingredient.ingredientTemplate,
-                   let categoryString = template.category,
-                   !categoryString.isEmpty {
-                    listItem.categoryName = categoryString
+                   let categoryEntity = template.categoryEntity {
+                    listItem.categoryEntity = categoryEntity
                     #if DEBUG
-                    print("Assigned category '\(categoryString)' to '\(cleanName)'")
+                    print("Assigned category '\(categoryEntity.name ?? "Unknown")' to '\(cleanName)'")
                     #endif
                 } else {
-                    listItem.categoryName = "UNCATEGORIZED"
+                    // Leave categoryEntity nil for uncategorized
                     #if DEBUG
-                    print("Assigned UNCATEGORIZED to '\(cleanName)'")
+                    print("Assigned uncategorized to '\(cleanName)'")
                     #endif
                 }
                 
@@ -762,8 +761,8 @@ struct AddIngredientsToListView: View {
     private func ingredientStatusView(for ingredient: Ingredient) -> some View {
         // Check if ingredient already has a linked template
         if let existingTemplate = ingredient.ingredientTemplate {
-            // Template exists - check if it has a category
-            if let category = existingTemplate.category,
+            // Template exists - check if it has a category (M9.12: via relationship)
+            if let category = existingTemplate.categoryEntity?.name,
                !category.isEmpty,
                category.lowercased() != "uncategorized" {
                 // Has category - show it with color dot
@@ -792,8 +791,8 @@ struct AddIngredientsToListView: View {
             let existingTemplate = findExistingTemplate(cleanName: cleanName)
             
             if let template = existingTemplate {
-                // Template exists in database but not linked - check category
-                if let category = template.category,
+                // Template exists in database but not linked - check category (M9.12: via relationship)
+                if let category = template.categoryEntity?.name,
                    !category.isEmpty,
                    category.lowercased() != "uncategorized" {
                     // Has category

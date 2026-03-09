@@ -169,16 +169,14 @@ public class Ingredient: NSManagedObject {
         return ingredientTemplate != nil
     }
     
-    /// Whether this ingredient has a category (via template)
+    /// Whether this ingredient has a category (via template, M9.12: via relationship)
     public var hasCategory: Bool {
-        guard let template = ingredientTemplate else { return false }
-        guard let category = template.category else { return false }
-        return !category.isEmpty && category.lowercased() != "uncategorized"
+        return ingredientTemplate?.categoryEntity != nil
     }
-    
-    /// Category name from template (or "Uncategorized")
+
+    /// Category name from template (or "Uncategorized") (M9.12: via relationship)
     public var categoryName: String {
-        return ingredientTemplate?.category ?? "Uncategorized"
+        return ingredientTemplate?.categoryEntity?.name ?? "Uncategorized"
     }
     
     /// Template name for display

@@ -72,20 +72,9 @@ extension IngredientTemplate {
     }
     
     private func validateCategory() throws {
-        // Category is optional, but if provided, must be valid
-        if let category = self.category {
-            let trimmedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            if trimmedCategory.isEmpty {
-                // Empty string not allowed - should be nil instead
-                throw ValidationError.categoryEmpty
-            }
-            
-            if trimmedCategory.count > 50 {
-                throw ValidationError.categoryTooLong
-            }
-        }
-        // nil category is valid (uncategorized)
+        // M9.12: Category validated through categoryEntity relationship
+        // categoryEntity is optional — nil means uncategorized
+        // No string validation needed; Category entity validates its own name
     }
     
     private func validateUsageCount() throws {
@@ -172,9 +161,9 @@ extension IngredientTemplate {
 
     // MARK: - Computed Properties for Common Queries
 
-    /// Returns true if template has a category assigned
+    /// Returns true if template has a category assigned (M9.12: via relationship)
     var hasCategory: Bool {
-        return category != nil && !(category?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? false)
+        return categoryEntity != nil
     }
     
     /// Returns true if template is marked as a staple
@@ -197,9 +186,9 @@ extension IngredientTemplate {
         return name ?? "Unknown Ingredient"
     }
     
-    /// Returns category display name with proper formatting
+    /// Returns category display name with proper formatting (M9.12: via relationship)
     var displayCategory: String {
-        return category ?? "Uncategorized"
+        return categoryEntity?.name ?? "Uncategorized"
     }
     
     /// Returns formatted usage description
@@ -311,7 +300,7 @@ extension IngredientTemplate {
         IngredientTemplate {
             id: \(id?.uuidString ?? "nil")
             name: \(name ?? "nil")
-            category: \(category ?? "nil")
+            category: \(categoryEntity?.name ?? "nil")
             isStaple: \(isStaple)
             usageCount: \(usageCount)
             dateCreated: \(dateCreated?.description ?? "nil")

@@ -23,6 +23,7 @@ extension IngredientTemplate {
     @NSManaged public var dateCreated: Date?
     @NSManaged public var updatedAt: Date?
     @NSManaged public var isStaple: Bool
+    @NSManaged public var categoryEntity: Category?
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?
     @NSManaged public var ingredients: NSSet?

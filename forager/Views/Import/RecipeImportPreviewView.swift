@@ -511,7 +511,7 @@ struct RecipeImportPreviewView: View {
                                 Text(template.name ?? "")
                                     .font(ForagerTheme.bodyFont)
                                     .foregroundStyle(ForagerTheme.textPrimary)
-                                if let category = template.category, !category.isEmpty {
+                                if let category = template.categoryEntity?.name, !category.isEmpty {
                                     Text(category)
                                         .font(ForagerTheme.captionFont)
                                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -570,7 +570,7 @@ struct RecipeImportPreviewView: View {
         }
 
         // Pre-fill category from template if available
-        if let templateCategory = template.category, !templateCategory.isEmpty {
+        if let templateCategory = template.categoryEntity?.name, !templateCategory.isEmpty {
             categoryAssignments[index] = templateCategory
         }
 

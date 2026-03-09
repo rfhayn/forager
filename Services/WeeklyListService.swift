@@ -62,7 +62,7 @@ class WeeklyListService: ObservableObject {
     // MARK: - GroceryListItem Operations
 
     /// Adds a grocery item using pre-parsed structured data (ADR 012: flat string snapshots)
-    func addItem(to list: WeeklyList, name: String, categoryName: String? = nil,
+    func addItem(to list: WeeklyList, name: String, category: Category? = nil,
                  numericValue: Double = 0, standardUnit: String? = nil,
                  displayText: String? = nil, isParseable: Bool = false,
                  parseConfidence: Float = 0, source: String? = nil) -> GroceryListItem? {
@@ -71,7 +71,7 @@ class WeeklyListService: ObservableObject {
         let item = GroceryListItem(context: viewContext)
         item.id = UUID()
         item.name = name
-        item.categoryName = categoryName
+        item.categoryEntity = category
         item.numericValue = numericValue
         item.standardUnit = standardUnit
         item.displayText = displayText
@@ -105,12 +105,12 @@ class WeeklyListService: ObservableObject {
 
     /// Updates a grocery item's properties
     func updateItem(_ item: GroceryListItem, name: String? = nil,
-                    categoryName: String? = nil, numericValue: Double? = nil,
+                    category: Category? = nil, numericValue: Double? = nil,
                     standardUnit: String? = nil, displayText: String? = nil) {
         clearError()
 
         if let name = name { item.name = name }
-        if let categoryName = categoryName { item.categoryName = categoryName }
+        if let category = category { item.categoryEntity = category }
         if let numericValue = numericValue { item.numericValue = numericValue }
         if let standardUnit = standardUnit { item.standardUnit = standardUnit }
         if let displayText = displayText { item.displayText = displayText }

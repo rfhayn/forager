@@ -248,7 +248,7 @@ class QuantityMergeService: ObservableObject {
                 consolidated.weeklyList = list
                 
                 // Use category from first item
-                consolidated.categoryName = mergedItem.originalItems.first?.categoryName
+                consolidated.categoryEntity = mergedItem.originalItems.first?.categoryEntity
                 consolidated.sortOrder = mergedItem.originalItems.first?.sortOrder ?? 0
                 
                 // Delete original items

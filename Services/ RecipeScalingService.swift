@@ -70,7 +70,7 @@ class RecipeScalingService {
             .sorted { ($0.sortOrder) < ($1.sortOrder) }
         
         for ingredient in ingredients {
-            let category = ingredient.ingredientTemplate?.category ?? "Uncategorized"
+            let category = ingredient.ingredientTemplate?.categoryEntity?.name ?? "Uncategorized"
             
             // Check if ingredient has a valid numeric value for scaling
             // Note: numericValue is non-optional Double (0.0 default for unparseable)

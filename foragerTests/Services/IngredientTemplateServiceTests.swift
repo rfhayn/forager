@@ -25,16 +25,29 @@ final class IngredientTemplateServiceTests: XCTestCase {
         super.tearDown()
     }
 
+    // MARK: - Helper
+
+    @MainActor
+    private func createCategory(named name: String) -> Category {
+        let cat = Category(context: context)
+        cat.id = UUID()
+        cat.name = name
+        cat.displayName = name
+        cat.sortOrder = 0
+        return cat
+    }
+
     // MARK: - Update Template
 
     @MainActor
     func testUpdateTemplateNormalizesName() {
         let template = service.findOrCreateTemplate(name: "basil")
+        let bakingCategory = createCategory(named: "Baking")
 
-        service.updateTemplate(template, name: "FLOUR", category: "Baking", isStaple: true)
+        service.updateTemplate(template, name: "FLOUR", category: bakingCategory, isStaple: true)
 
         XCTAssertEqual(template.name, "flour", "Name should be normalized to lowercase")
-        XCTAssertEqual(template.category, "Baking")
+        XCTAssertEqual(template.categoryEntity?.name, "Baking")
         XCTAssertTrue(template.isStaple)
         XCTAssertNotNil(template.canonicalName)
         XCTAssertNil(service.errorMessage)
@@ -43,12 +56,13 @@ final class IngredientTemplateServiceTests: XCTestCase {
     @MainActor
     func testUpdateCategory() {
         let template = service.findOrCreateTemplate(name: "chicken")
+        let meatCategory = createCategory(named: "Meat")
 
-        service.updateCategory(template, category: "Meat")
-        XCTAssertEqual(template.category, "Meat")
+        service.updateCategory(template, category: meatCategory)
+        XCTAssertEqual(template.categoryEntity?.name, "Meat")
 
         service.updateCategory(template, category: nil)
-        XCTAssertNil(template.category)
+        XCTAssertNil(template.categoryEntity)
     }
 
     @MainActor

@@ -956,7 +956,11 @@ class HouseholdService: ObservableObject {
             newTemplate.household = nil
             newTemplate.householdKey = nil
 
-            newTemplate.category = oldTemplate.category
+            // M9.12: Link categoryEntity using categoryMapping instead of copying string
+            if let oldCat = oldTemplate.categoryEntity, let oldCatId = oldCat.id,
+               let newCat = categoryMapping[oldCatId] {
+                newTemplate.categoryEntity = newCat
+            }
 
             if let oldId = oldTemplate.id {
                 templateMapping[oldId] = newTemplate
@@ -1056,7 +1060,11 @@ class HouseholdService: ObservableObject {
                 newItem.displayText = oldItem.displayText
                 newItem.numericValue = oldItem.numericValue
                 newItem.standardUnit = oldItem.standardUnit
-                newItem.categoryName = oldItem.categoryName
+                // M9.12: Link categoryEntity using categoryMapping instead of copying string
+                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id,
+                   let newCat = categoryMapping[oldCatId] {
+                    newItem.categoryEntity = newCat
+                }
                 newItem.sortOrder = oldItem.sortOrder
                 newItem.isCompleted = oldItem.isCompleted
                 newItem.isParseable = oldItem.isParseable

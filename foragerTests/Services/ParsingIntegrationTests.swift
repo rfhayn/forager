@@ -77,10 +77,17 @@ final class ParsingIntegrationTests: XCTestCase {
         // Parse "3 cloves garlic" through the real parsing service
         let parsed = parsingService.parseToStructured(text: "3 cloves garlic")
 
+        // M9.12: Create Category entity for relationship-based assignment
+        let produceCategory = Category(context: context)
+        produceCategory.id = UUID()
+        produceCategory.name = "Produce"
+        produceCategory.displayName = "Produce"
+        produceCategory.sortOrder = 0
+
         // Pass parsed result to WeeklyListService
         let item = weeklyListService.addItem(
             to: list!, name: "garlic",
-            categoryName: "Produce",
+            category: produceCategory,
             numericValue: parsed.numericValue ?? 0,
             standardUnit: parsed.standardUnit,
             displayText: parsed.displayText,
@@ -91,8 +98,8 @@ final class ParsingIntegrationTests: XCTestCase {
 
         XCTAssertNotNil(item)
         XCTAssertEqual(item?.name, "garlic")
-        XCTAssertEqual(item?.categoryName, "Produce",
-                       "ADR 012: categoryName is a flat string snapshot")
+        XCTAssertEqual(item?.categoryEntity?.name, "Produce",
+                       "M9.12: categoryEntity relationship replaces flat string")
         XCTAssertEqual(item?.source, "Test Recipe")
     }
 

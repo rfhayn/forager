@@ -152,7 +152,7 @@ struct GroceryListDetailView: View {
     }
 
     private var groupedItems: [(key: String, value: [GroceryListItem])] {
-        let grouped = Dictionary(grouping: listItems) { $0.categoryName ?? "Uncategorized" }
+        let grouped = Dictionary(grouping: listItems) { $0.categoryEntity?.name ?? "Uncategorized" }
         return grouped.sorted { lhs, rhs in
             if let lhsCategory = categories.first(where: { $0.displayName == lhs.key }),
                let rhsCategory = categories.first(where: { $0.displayName == rhs.key }) {
@@ -271,7 +271,7 @@ struct GroceryListDetailView: View {
                             Text(template.name ?? "")
                                 .font(ForagerTheme.bodyFont)
                                 .foregroundStyle(ForagerTheme.textPrimary)
-                            if let category = template.category, !category.isEmpty {
+                            if let category = template.categoryEntity?.name, !category.isEmpty {
                                 Text(category)
                                     .font(ForagerTheme.captionFont)
                                     .foregroundStyle(ForagerTheme.textSecondary)
@@ -414,19 +414,19 @@ struct GroceryListDetailView: View {
         }
 
         // M15.3: Auto-collapse fully completed categories after 2s
-        if let categoryName = item.categoryName {
+        if let categoryName = item.categoryEntity?.name {
             checkAutoCollapse(category: categoryName)
         }
     }
 
     private func checkAutoCollapse(category: String) {
-        let categoryItems = listItems.filter { $0.categoryName == category }
+        let categoryItems = listItems.filter { ($0.categoryEntity?.name ?? "Uncategorized") == category }
         let allCompleted = categoryItems.allSatisfy { $0.isCompleted }
         if allCompleted && !categoryItems.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 // Re-check: user may have unchecked during delay
                 let stillAllCompleted = listItems
-                    .filter { $0.categoryName == category }
+                    .filter { ($0.categoryEntity?.name ?? "Uncategorized") == category }
                     .allSatisfy { $0.isCompleted }
                 guard stillAllCompleted else { return }
                 _ = withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
@@ -468,7 +468,7 @@ struct GroceryListDetailView: View {
         quickAddText = rebuiltText
         showingAutocomplete = false
 
-        if let category = template.category, !category.isEmpty {
+        if let category = template.categoryEntity?.name, !category.isEmpty {
             defaultCategory = category
         }
     }
@@ -486,11 +486,12 @@ struct GroceryListDetailView: View {
             let matchedTemplate = selectedTemplate ?? templateService.searchTemplates(query: cleanName, limit: 1)
                 .first(where: { $0.name?.lowercased() == cleanName.lowercased() })
 
-            let categoryToUse: String
-            if let template = matchedTemplate, let category = template.category, !category.isEmpty {
-                categoryToUse = category
+            // M9.12: Resolve category entity from template or default
+            let categoryEntity: Category?
+            if let template = matchedTemplate, let catEntity = template.categoryEntity {
+                categoryEntity = catEntity
             } else {
-                categoryToUse = defaultCategory
+                categoryEntity = categories.first { $0.displayName == defaultCategory }
             }
 
             let confidence = matchedTemplate != nil
@@ -498,7 +499,7 @@ struct GroceryListDetailView: View {
                 : structured.parseConfidence
 
             let listItem = weeklyListService.addItem(
-                to: weeklyList, name: trimmedText, categoryName: categoryToUse,
+                to: weeklyList, name: trimmedText, category: categoryEntity,
                 numericValue: structured.numericValue ?? 0.0,
                 standardUnit: structured.standardUnit,
                 displayText: structured.displayText,
@@ -510,7 +511,7 @@ struct GroceryListDetailView: View {
                 if matchedTemplate == nil {
                     lastAddedItem = listItem
                     newIngredientName = cleanName
-                    newIngredientCategory = categoryToUse
+                    newIngredientCategory = categoryEntity?.displayName ?? defaultCategory
                     markAsStaple = false
                     DispatchQueue.main.async {
                         self.showingAddToTemplates = true
@@ -545,11 +546,12 @@ struct GroceryListDetailView: View {
                 .first(where: { $0.name?.lowercased() == parsed.name.lowercased() })
         }
 
-        let categoryToUse: String
-        if let template = selectedTemplate, let category = template.category, !category.isEmpty {
-            categoryToUse = category
+        // M9.12: Resolve category entity from template or default
+        let categoryEntity: Category?
+        if let template = selectedTemplate, let catEntity = template.categoryEntity {
+            categoryEntity = catEntity
         } else {
-            categoryToUse = defaultCategory
+            categoryEntity = categories.first { $0.displayName == defaultCategory }
         }
 
         let confidence = selectedTemplate != nil
@@ -557,7 +559,7 @@ struct GroceryListDetailView: View {
             : structured.parseConfidence
 
         let listItem = weeklyListService.addItem(
-            to: weeklyList, name: trimmedText, categoryName: categoryToUse,
+            to: weeklyList, name: trimmedText, category: categoryEntity,
             numericValue: structured.numericValue ?? 0.0,
             standardUnit: structured.standardUnit,
             displayText: structured.displayText,
@@ -569,7 +571,7 @@ struct GroceryListDetailView: View {
             if selectedTemplate == nil {
                 lastAddedItem = listItem
                 newIngredientName = parsed.name
-                newIngredientCategory = categoryToUse
+                newIngredientCategory = categoryEntity?.displayName ?? defaultCategory
                 markAsStaple = false
                 DispatchQueue.main.async {
                     self.showingAddToTemplates = true
@@ -633,12 +635,14 @@ struct GroceryListDetailView: View {
 
 
     private func saveToTemplates() {
-        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: newIngredientCategory)
+        // M9.12: Look up Category entity for the selected category name
+        let categoryEntity = categories.first { $0.displayName == newIngredientCategory }
+        let newTemplate = templateService.findOrCreateTemplate(name: newIngredientName, category: categoryEntity)
         newTemplate.isStaple = markAsStaple
 
         // Propagate the user's category choice to the grocery list item
         if let item = lastAddedItem {
-            item.categoryName = newIngredientCategory
+            item.categoryEntity = categoryEntity
             lastAddedItem = nil
         }
 

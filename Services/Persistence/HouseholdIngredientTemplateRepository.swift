@@ -37,13 +37,13 @@ final class HouseholdIngredientTemplateRepository {
     ///
     /// - Parameters:
     ///   - name: Display name of ingredient (e.g., "Milk")
-    ///   - category: Category assignment (e.g., "Dairy & Fridge")
+    ///   - category: Category entity assignment (M9.12: relationship replaces string)
     ///   - isStaple: Whether this is a staple item
     /// - Returns: Existing template if found, or newly created template
     /// - Throws: Core Data errors during fetch or save
     func findOrCreate(
         name: String,
-        category: String?,
+        category: Category?,
         isStaple: Bool,
         householdKey: String? = nil
     ) throws -> IngredientTemplate {
@@ -55,18 +55,18 @@ final class HouseholdIngredientTemplateRepository {
         if let existing = try findByCanonicalName(canonicalName, householdKey: householdKey) {
             Task { @MainActor in
                 DebugLogService.shared.log("findOrCreate: canonical=\(canonicalName), found existing=yes, householdKey param=\(householdKey ?? "nil")", category: "Repo")
-                DebugLogService.shared.log("existing template: householdKey=\(existing.householdKey ?? "nil"), category=\(existing.category ?? "nil")", category: "Repo")
+                DebugLogService.shared.log("existing template: householdKey=\(existing.householdKey ?? "nil"), category=\(existing.categoryEntity?.name ?? "nil")", category: "Repo")
             }
             #if DEBUG
             print("ℹ️ M7.2.3: Template '\(name)' already exists (canonical: '\(canonicalName)')")
             #endif
 
-            // Update category if provided and different
-            if let newCategory = category, newCategory != existing.category {
-                existing.category = newCategory
+            // M9.12: Update categoryEntity if provided and different
+            if let newCategory = category, newCategory !== existing.categoryEntity {
+                existing.categoryEntity = newCategory
                 existing.updatedAt = Date()
                 #if DEBUG
-                print("   Updated category: '\(existing.category ?? "nil")' → '\(newCategory)'")
+                print("   Updated category: '\(existing.categoryEntity?.name ?? "nil")' → '\(newCategory.name ?? "nil")'")
                 #endif
             }
 
@@ -94,7 +94,7 @@ final class HouseholdIngredientTemplateRepository {
         template.id = UUID()
         template.name = name
         template.canonicalName = canonicalName
-        template.category = category
+        template.categoryEntity = category
         template.isStaple = isStaple
         template.usageCount = 0
         template.dateCreated = Date()
@@ -159,11 +159,12 @@ final class HouseholdIngredientTemplateRepository {
     /// - Parameter category: Category name
     /// - Returns: Array of templates in category
     /// - Throws: Core Data errors during fetch
-    func findByCategory(_ category: String) throws -> [IngredientTemplate] {
+    /// M9.12: Find templates by Category entity relationship
+    func findByCategory(_ category: Category) throws -> [IngredientTemplate] {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        request.predicate = NSPredicate(format: "category ==[c] %@", category)
+        request.predicate = NSPredicate(format: "categoryEntity == %@", category)
         request.sortDescriptors = [NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)]
-        
+
         return try context.fetch(request)
     }
     
