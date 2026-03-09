@@ -422,6 +422,9 @@ final class PersistenceController: ObservableObject {
                 // M7.2.3 Phase 3.6: Use DefaultSeeder for truly idempotent category creation
                 try DefaultSeeder.seedDefaultsIfNeeded(in: context)
 
+                // M9.12: Ensure "Uncategorized" always exists (survives leave-household)
+                try DefaultSeeder.ensureUncategorizedExists(in: context)
+
                 // M7.6.3: Seed sample data for onboarding (after categories exist)
                 SampleDataSeeder.seedSampleDataIfNeeded(in: context)
 

@@ -96,13 +96,18 @@ class ClaudeIngredientParser: LLMIngredientParser {
                 "flour, cornstarch, broth/stock, and canned goods are typically \"Pantry\" (or equivalent). " +
                 "Spices and dried herbs are typically \"Spices & Seasonings\" (or equivalent). " +
                 "Salt and pepper are \"Spices & Seasonings\". Do not leave common items uncategorized."
+        } else {
+            // No user categories available — ask AI to suggest standard grocery categories
+            prompt += "\n\nFor each ingredient, suggest the most appropriate grocery store category " +
+                "(e.g., Produce, Dairy, Meat & Seafood, Bakery, Pantry, Frozen, Spices & Seasonings, Beverages). " +
+                "Use null only if truly uncertain."
         }
 
         return [
             "model": model,
             "max_tokens": 1024,
             "system": prompt,
-            "tools": [categories.isEmpty ? toolDefinition : toolDefinitionWithCategory],
+            "tools": [toolDefinitionWithCategory],
             "tool_choice": ["type": "tool", "name": "parse_ingredients"],
             "messages": [
                 ["role": "user", "content": userMessage]

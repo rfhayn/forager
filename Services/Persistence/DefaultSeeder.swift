@@ -118,6 +118,37 @@ final class DefaultSeeder {
         #endif
     }
     
+    // MARK: - Uncategorized Safety Net
+
+    /// M9.12: Ensure "Uncategorized" category exists in the personal store.
+    /// Runs every startup (no UserDefaults gate) — cheap fetch, no-op if it exists.
+    /// Handles the edge case where a user leaves a household without migrating data,
+    /// leaving no categories in the personal store.
+    static func ensureUncategorizedExists(in context: NSManagedObjectContext) throws {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", "Uncategorized")
+        request.fetchLimit = 1
+
+        let existing = (try? context.fetch(request))?.first
+        if existing != nil { return }
+
+        // Create "Uncategorized" in the personal store (householdKey = nil)
+        let uncategorized = Category(context: context)
+        uncategorized.id = UUID()
+        uncategorized.name = "Uncategorized"
+        uncategorized.normalizedName = "uncategorized"
+        uncategorized.color = "#9E9E9E"
+        uncategorized.sortOrder = 999
+        uncategorized.isDefault = true
+        uncategorized.dateCreated = Date()
+        uncategorized.updatedAt = Date()
+        // householdKey stays nil — personal store
+
+        #if DEBUG
+        print("🏷️ M9.12: Created missing 'Uncategorized' category in personal store")
+        #endif
+    }
+
     // MARK: - Category Seeding (Phase 3.1: Using Repository)
     
     /// M7.2.3 Phase 3.1: Seeds default categories using HouseholdCategoryRepository
