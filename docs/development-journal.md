@@ -13,27 +13,39 @@
 
 ### What Happened
 
-Continued from a context-compacted session. The previous session discovered that adding a recipe to a grocery list triggered the category assignment modal for every ingredient — even those already categorized. Root cause was systemic: 10 instances of `lowercased() != "uncategorized"` across 5 files rejected "Uncategorized" as a valid category, treating it the same as nil.
+Long session spanning two context windows. Started by completing the `lookupUncategorizedCategory()` helper from the previous compacted session, then went through 3 rounds of testing and fixing:
 
-After fixing the rejection patterns, the user clarified the deeper design intent: **all new ingredients should default to the "Uncategorized" category entity automatically**. This means the category assignment modal should never appear unless a user explicitly wants to categorize. Added `lookupUncategorizedCategory()` helper to `IngredientTemplateService` and wired it into `findOrCreateTemplate` as a nil-coalescing fallback.
+**Round 1**: Default-to-Uncategorized. Added `lookupUncategorizedCategory()` to `IngredientTemplateService`. New templates without an explicit category default to the Uncategorized entity. Archived as build 26.
+
+**Round 2**: TestFlight distribution script was adding the wrong build to the beta group. The `filter[version]=27` API call matched builds across all marketing versions — it grabbed a Feb 28 build instead of today's upload. Fixed by filtering with `preReleaseVersion` ID. Also created `Tools/bump-build.sh` to eliminate the awk approval prompt during archives. Archived as build 27, manually fixed the beta group assignment.
+
+**Round 3**: User testing revealed the default-to-Uncategorized caused a regression — `findOrCreateTemplate` was clobbering real categories (Produce, Pantry) with Uncategorized on existing templates. The nil-coalescing default flowed into the repository's "update if different" logic, which treated it as an explicit category change. Fixed by applying the default AFTER the repository returns, only when `categoryEntity == nil`. Also fixed HTML entity decoding (`&amp;` → `&`) in recipe titles — `SchemaRecipeMapper.stringValue()` wasn't using the existing `HTMLEntityDecoder`. Archived as build 28.
+
+**CloudKit issue identified**: User reported data loss after app delete/reinstall. Recipes and ingredients disappeared despite being visible before deletion. Household was found but data didn't sync back. Deferred to a future milestone — needs investigation into CloudKit sync-down behavior and possibly a "returning user" startup check.
 
 ### Key Decisions
 
-- **Default to Uncategorized entity, not nil**: The previous assumption was `categoryEntity == nil` means uncategorized. The new model: `categoryEntity` always points to the "Uncategorized" Category entity for new templates. This eliminates the modal entirely for non-categorizing users — a one-line service change with cascading UX impact.
+- **Default to Uncategorized entity, not nil**: New templates get `categoryEntity = Uncategorized` automatically. But the default must only apply to genuinely new/uncategorized templates — never overwrite existing categories.
 
-- **Lookup scoped by householdKey**: `lookupUncategorizedCategory()` filters by `resolvedHouseholdKey` so it finds the correct Uncategorized entity whether the user is in personal scope or a shared household.
+- **Post-lookup default, not parameter default**: The first implementation passed Uncategorized as a parameter to the repository, which triggered the "update if different" branch. Moving the default to after the repository call (only when `categoryEntity == nil`) respects existing categories.
+
+- **preReleaseVersion filter for TestFlight builds**: Build numbers can repeat across marketing versions. The script now resolves the marketing version's `preReleaseVersion` ID and includes it in the build query.
+
+- **Deferred CloudKit sync investigation**: Data loss after reinstall is real but complex. Needs its own milestone to audit the sync-down flow, not a quick fix.
 
 ### Learning
 
-- **Design assumptions embedded in 10 places are systemic bugs**: The `!= "uncategorized"` pattern appeared independently in category validity checks, assignment counts, display logic, and status indicators. When the design intent changed ("Uncategorized is a real category"), all 10 had to change. A centralized `isProperlyAssigned` check would have limited the blast radius.
+- **Nil-coalescing defaults in update-or-create paths are dangerous**: A default value that flows through an update path silently overwrites real data. The fix pattern: apply defaults only on the create path, or after the lookup, conditioned on "field is still nil."
+- **HTML entity decoding must be applied at extraction, not display**: `stringValue()` is the single extraction point for all JSON-LD fields. Adding decoding there fixes titles, authors, and any other string field in one place.
+- **TestFlight API's version filter matches across marketing versions**: `filter[version]=27` returns all builds numbered 27, regardless of which app version they belong to. Always pair with `preReleaseVersion` filter.
 
 ### AI Tooling Observations
 
-Context compaction worked well — the summary captured the exact state of in-progress work (which method was half-written, what the user's last message said). Picked up without re-reading files. The `lookupUncategorizedCategory()` method was written and building within 5 minutes of resuming.
+Context compaction worked well for code continuity but lost the nuance of the user's testing feedback. The regression (category clobbering) was found through real-device testing, not automated tests — highlighting the gap between "builds successfully" and "works correctly." The `bump-build.sh` script eliminated a recurring approval friction point in the archive pipeline.
 
 ### What's Next
 
-Test the build on device. Continue bugfix-batch branch for any additional issues the user finds during testing. When stable, merge to main and archive.
+Continue testing build 28 on device. The bugfix-batch branch stays open for additional issues. CloudKit data loss after reinstall needs a future milestone for investigation.
 
 ---
 
