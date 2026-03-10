@@ -227,12 +227,9 @@ done
 # Step 11: Add build to beta group
 # ============================================================
 echo "👥 Adding build to Public Beta Testers..."
-GROUP_RESPONSE=$(mktemp)
-curl -s -w "\n%{http_code}" -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Authorization: Bearer $JWT" -H "Content-Type: application/json" \
     -d "{\"data\":[{\"id\":\"$BUILD_ID\",\"type\":\"builds\"}]}" \
-    "https://api.appstoreconnect.apple.com/v1/betaGroups/$BETA_GROUP_ID/relationships/builds" -o "$GROUP_RESPONSE" 2>/dev/null
-HTTP_CODE=$(tail -1 "$GROUP_RESPONSE")
-rm -f "$GROUP_RESPONSE"
+    "https://api.appstoreconnect.apple.com/v1/betaGroups/$BETA_GROUP_ID/relationships/builds")
 
 if [ "$HTTP_CODE" = "204" ] || [ "$HTTP_CODE" = "200" ]; then
     echo "   ✅ Build added to beta group (HTTP $HTTP_CODE)"
