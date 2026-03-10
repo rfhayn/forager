@@ -427,21 +427,25 @@ class IngredientTemplateService: ObservableObject {
 
         Task { @MainActor in DebugLogService.shared.log("findOrCreate: name=\(normalizedName), resolvedHouseholdKey=\(self.resolvedHouseholdKey ?? "nil")", category: "Template") }
 
-        // M9.12: Default to "Uncategorized" when no category provided
-        let resolvedCategory = category ?? lookupUncategorizedCategory()
-
         // M7.2.3 Phase 3.3: Use HouseholdIngredientTemplateRepository for semantic uniqueness
         let repository = HouseholdIngredientTemplateRepository(context: context)
 
         do {
-            // Use repository's findOrCreate (handles semantic uniqueness + category/staple)
+            // Pass caller's category (nil if not specified) — repository only updates
+            // existing templates when an explicit category is provided
             // M10.6.11: Pass household key so new templates are scoped correctly
             let template = try repository.findOrCreate(
                 name: normalizedName,
-                category: resolvedCategory,
+                category: category,
                 isStaple: false,
                 householdKey: resolvedHouseholdKey
             )
+
+            // M9.12: Default new/uncategorized templates to "Uncategorized" entity.
+            // Only applied when template has no category — never overwrites real categories.
+            if template.categoryEntity == nil {
+                template.categoryEntity = lookupUncategorizedCategory()
+            }
 
             Task { @MainActor in DebugLogService.shared.log("repository returned: existing=\(template.dateCreated != nil && template.usageCount > 0 ? "yes" : "new"), template.householdKey=\(template.householdKey ?? "nil")", category: "Template") }
 

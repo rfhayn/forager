@@ -85,20 +85,24 @@ enum SchemaRecipeMapper {
 
     // MARK: - Field Extractors
 
-    /// Extract a string from various JSON value types.
+    /// Extract a string from various JSON value types, decoding HTML entities.
     private static func stringValue(_ value: Any?) -> String? {
         guard let value = value else { return nil }
 
+        var result: String?
         if let str = value as? String {
             let cleaned = str.trimmingCharacters(in: .whitespacesAndNewlines)
-            return cleaned.isEmpty ? nil : cleaned
+            result = cleaned.isEmpty ? nil : cleaned
+        } else if let array = value as? [String], let first = array.first {
+            result = first.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
-        if let array = value as? [String], let first = array.first {
-            return first.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Decode HTML entities (e.g., &amp; → &) — same pattern as cleanInstructionText
+        if let text = result, HTMLEntityDecoder.containsEntities(text) {
+            result = HTMLEntityDecoder.decode(text)
         }
 
-        return nil
+        return result
     }
 
     /// Extract author name from various author formats.
