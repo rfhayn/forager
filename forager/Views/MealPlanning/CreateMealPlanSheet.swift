@@ -272,28 +272,33 @@ struct CreateMealPlanSheet: View {
         
         let duration = calculatedDuration
         
-        // Create the plan
-        let plan = MealPlan(context: viewContext)
-        plan.id = UUID()
-        plan.name = name.isEmpty ? generateAutoName() : name
-        plan.startDate = Calendar.current.startOfDay(for: startDate)
-        plan.duration = Int16(duration)
-        plan.createdDate = Date()
-        plan.isActive = false  // Will be set by updateActivePlanStatus
-        plan.isCompleted = false
-
-        MealPlanService.shared.saveContext()
-
-        if MealPlanService.shared.lastError != nil {
-            validationError = "Failed to create meal plan. Please try again."
-        } else {
-            MealPlanService.shared.updateActivePlanStatus()
-
-            if isInline, let callback = onCreated {
-                callback(plan)
-            } else {
-                dismiss()
+        // M9.13: Route through MealPlanService for factory-based creation (ADR 014)
+        // Pass the calculated start date; MealPlanService.createMealPlan handles
+        // factory routing, store assignment, and user preference defaults.
+        if let plan = MealPlanService.shared.createMealPlan(startDate: Calendar.current.startOfDay(for: startDate)) {
+            // Override auto-generated name if user provided one
+            if !name.isEmpty {
+                plan.name = name
             }
+            plan.duration = Int16(duration)
+            plan.isActive = false  // Will be set by updateActivePlanStatus
+            plan.isCompleted = false
+
+            MealPlanService.shared.saveContext()
+
+            if MealPlanService.shared.lastError != nil {
+                validationError = "Failed to create meal plan. Please try again."
+            } else {
+                MealPlanService.shared.updateActivePlanStatus()
+
+                if isInline, let callback = onCreated {
+                    callback(plan)
+                } else {
+                    dismiss()
+                }
+            }
+        } else {
+            validationError = "Failed to create meal plan. Please try again."
         }
     }
 }

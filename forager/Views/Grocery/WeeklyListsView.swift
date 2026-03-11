@@ -183,14 +183,18 @@ struct WeeklyListsView: View {
             isGeneratingList = true
         }
 
+        // M9.13: Capture scope for background factory (ADR 014)
         let currentKey = householdService.currentHouseholdKey
         PersistenceController.shared.performWrite({ context in
+            // M9.13: Background context — householdKey set manually, store assignment
+            // handled by performWrite's merge policy. Factory not available in bg context.
             let newList = WeeklyList(context: context)
             newList.id = UUID()
             newList.name = "Weekly Shopping - \(DateFormatter.shortDate.string(from: Date()))"
             newList.dateCreated = Date()
             newList.isCompleted = false
             newList.notes = "Auto-generated from ingredient staples"
+            newList.householdKey = currentKey
 
             // M10.6.18: Scope staple fetch to household (ADR 013)
             let stapleRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
@@ -255,12 +259,15 @@ struct WeeklyListsView: View {
     }
 
     private func createEmptyList() {
+        let currentKey = householdService.currentHouseholdKey
         PersistenceController.shared.performWrite({ context in
+            // M9.13: Background context — householdKey set manually (ADR 014)
             let newList = WeeklyList(context: context)
             newList.id = UUID()
             newList.name = "Shopping - \(DateFormatter.shortDate.string(from: Date()))"
             newList.dateCreated = Date()
             newList.isCompleted = false
+            newList.householdKey = currentKey
         }, onError: { error in
             errorMessage = "Failed to create list: \(error.localizedDescription)"
             showingError = true
