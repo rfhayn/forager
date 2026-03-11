@@ -72,6 +72,10 @@ struct foragerApp: App {
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
+    // M9.13: Factory + scope provider stored at app level for service injection (ADR 014)
+    private let scopeProvider: HouseholdScopeProvider
+    private let objectFactory: ManagedObjectFactory
+
     // Coach mark onboarding
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showCoachMarks = false
@@ -121,6 +125,26 @@ struct foragerApp: App {
             household?.currentHouseholdKey
         }
 
+        // M9.13: Create scope provider + factory, inject into services (ADR 014)
+        let sp = HouseholdScopeProvider(
+            householdService: household,
+            persistence: PersistenceController.shared
+        )
+        let factory = ManagedObjectFactory(
+            context: context,
+            scopeProvider: sp,
+            persistence: PersistenceController.shared
+        )
+        self.scopeProvider = sp
+        self.objectFactory = factory
+
+        // Inject factory into all services that create HouseholdScoped entities
+        recipe.factory = factory
+        weeklyList.factory = factory
+        templateService.factory = factory
+        importSvc.factory = factory
+        MealPlanService.shared.factory = factory
+
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
         DispatchQueue.global(qos: .utility).async {
@@ -130,16 +154,6 @@ struct foragerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            let scopeProvider = HouseholdScopeProvider(
-                householdService: householdService,
-                persistence: persistenceController
-            )
-            let objectFactory = ManagedObjectFactory(
-                context: persistenceController.container.viewContext,
-                scopeProvider: scopeProvider,
-                persistence: persistenceController
-            )
-
             Group {
                 if isReady {
                     // M15.1: Liquid Glass TabView replaces CustomBottomNavigationView

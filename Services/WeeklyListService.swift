@@ -13,6 +13,9 @@ class WeeklyListService: ObservableObject {
     private let viewContext: NSManagedObjectContext
     private let parsingService: IngredientParsingService
 
+    // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
+    var factory: ManagedObjectFactory?
+
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
 
@@ -26,14 +29,29 @@ class WeeklyListService: ObservableObject {
     // MARK: - WeeklyList Operations
 
     /// Creates a new grocery list
+    /// M9.13: Routes through ManagedObjectFactory for correct store assignment (ADR 014)
     func createList(name: String, startDate: Date = Date()) -> WeeklyList? {
         clearError()
 
-        let list = WeeklyList(context: viewContext)
-        list.id = UUID()
-        list.name = name
-        list.dateCreated = startDate
-        list.isCompleted = false
+        let list: WeeklyList
+        if let factory = factory {
+            guard let factoryList = try? factory.make(WeeklyList.self, configure: { l in
+                l.id = UUID()
+                l.name = name
+                l.dateCreated = startDate
+                l.isCompleted = false
+            }) else {
+                errorMessage = "Failed to create list"
+                return nil
+            }
+            list = factoryList
+        } else {
+            list = WeeklyList(context: viewContext)
+            list.id = UUID()
+            list.name = name
+            list.dateCreated = startDate
+            list.isCompleted = false
+        }
 
         return save("create list") ? list : nil
     }

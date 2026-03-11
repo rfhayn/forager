@@ -23,11 +23,15 @@ import Foundation
 final class HouseholdPlannedMealRepository {
     
     private let context: NSManagedObjectContext
-    
+
+    // M9.13: Optional factory for correct store assignment (ADR 014)
+    var factory: ManagedObjectFactory?
+
     // MARK: - Initialization
-    
-    init(context: NSManagedObjectContext) {
+
+    init(context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) {
         self.context = context
+        self.factory = factory
     }
     
     // MARK: - Public Repository Methods
@@ -65,14 +69,26 @@ final class HouseholdPlannedMealRepository {
             return existing
         }
         
-        // Create new planned meal
-        let plannedMeal = PlannedMeal(context: context)
-        plannedMeal.id = UUID()
-        plannedMeal.date = date
-        plannedMeal.mealType = mealType
-        plannedMeal.slotKey = slotKey
-        plannedMeal.recipe = recipe
-        plannedMeal.createdDate = Date()
+        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        let plannedMeal: PlannedMeal
+        if let factory = factory {
+            plannedMeal = try factory.make(PlannedMeal.self, configure: { m in
+                m.id = UUID()
+                m.date = date
+                m.mealType = mealType
+                m.slotKey = slotKey
+                m.recipe = recipe
+                m.createdDate = Date()
+            })
+        } else {
+            plannedMeal = PlannedMeal(context: context)
+            plannedMeal.id = UUID()
+            plannedMeal.date = date
+            plannedMeal.mealType = mealType
+            plannedMeal.slotKey = slotKey
+            plannedMeal.recipe = recipe
+            plannedMeal.createdDate = Date()
+        }
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium

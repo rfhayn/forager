@@ -31,14 +31,15 @@ struct IngredientTemplateRepository {
     ///   - displayName: User-facing ingredient name (e.g., "Basil")
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created IngredientTemplate
-    static func getOrCreate(displayName: String, in context: NSManagedObjectContext) -> IngredientTemplate {
+    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
+    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) -> IngredientTemplate {
         let canonical = IngredientTemplate.canonicalName(from: displayName)
-        
+
         // Query by semantic key first
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         request.predicate = NSPredicate(format: "canonicalName == %@", canonical)
         request.fetchLimit = 1
-        
+
         // Return existing if found
         if let existing = try? context.fetch(request).first {
             #if DEBUG
@@ -46,17 +47,28 @@ struct IngredientTemplateRepository {
             #endif
             return existing
         }
-        
+
         // Create new if doesn't exist
         #if DEBUG
         print("✨ IngredientTemplateRepository: Creating new '\(displayName)' (canonical: '\(canonical)')")
         #endif
+        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        if let factory = factory,
+           let factoryTemplate = try? factory.make(IngredientTemplate.self, configure: { t in
+               t.name = displayName
+               t.canonicalName = canonical
+               t.dateCreated = Date()
+               t.updatedAt = Date()
+           }) {
+            return factoryTemplate
+        }
+
         let template = IngredientTemplate(context: context)
         template.name = displayName
         template.canonicalName = canonical
         template.dateCreated = Date()
         template.updatedAt = Date()
-        
+
         return template
     }
     

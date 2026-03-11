@@ -75,6 +75,9 @@ class MealPlanService: ObservableObject {
     private let context: NSManagedObjectContext
     private var cancellables = Set<AnyCancellable>()
 
+    // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
+    var factory: ManagedObjectFactory?
+
     // M10.6.18: Household key for scoping fetches (ADR 013)
     var householdKeyProvider: (() -> String?)?
 
@@ -141,20 +144,36 @@ class MealPlanService: ObservableObject {
         // Deactivate any existing active plans
         deactivateAllPlans()
         
-        let plan = MealPlan(context: context)
-        plan.id = UUID()
-        plan.createdDate = Date()
-        plan.isActive = true
-        
-        // Use provided start date or calculate from user preferences
+        // M9.13: Route through factory for correct store assignment (ADR 014)
+        let plan: MealPlan
         let prefs = UserPreferencesService.shared
         let calculatedStartDate = startDate ?? calculateStartDate(using: prefs.mealPlanStartDay)
-        plan.startDate = calculatedStartDate
-        plan.duration = Int16(prefs.mealPlanDuration)
-        
-        // Auto-generate name if enabled in preferences
-        if prefs.autoNameMealPlans {
-            plan.name = generateMealPlanName(for: calculatedStartDate)
+
+        if let factory = factory {
+            guard let factoryPlan = try? factory.make(MealPlan.self, configure: { p in
+                p.id = UUID()
+                p.createdDate = Date()
+                p.isActive = true
+                p.startDate = calculatedStartDate
+                p.duration = Int16(prefs.mealPlanDuration)
+                if prefs.autoNameMealPlans {
+                    p.name = generateMealPlanName(for: calculatedStartDate)
+                }
+            }) else {
+                lastError = FactoryError.invalidHouseholdObjectID
+                return nil
+            }
+            plan = factoryPlan
+        } else {
+            plan = MealPlan(context: context)
+            plan.id = UUID()
+            plan.createdDate = Date()
+            plan.isActive = true
+            plan.startDate = calculatedStartDate
+            plan.duration = Int16(prefs.mealPlanDuration)
+            if prefs.autoNameMealPlans {
+                plan.name = generateMealPlanName(for: calculatedStartDate)
+            }
         }
         
         do {
@@ -787,14 +806,31 @@ class MealPlanService: ObservableObject {
                 context.delete(meal)
             }
 
-            let meal = PlannedMeal(context: context)
-            meal.id = UUID()
-            meal.date = startOfDay
-            meal.quickOption = option.rawValue
-            meal.recipe = nil
-            meal.mealPlan = plan
-            meal.createdDate = Date()
-            meal.isCompleted = option == .noMeal
+            // M9.13: Route through factory for correct store assignment (ADR 014)
+            let meal: PlannedMeal
+            if let factory = factory {
+                guard let factoryMeal = try? factory.make(PlannedMeal.self, configure: { m in
+                    m.id = UUID()
+                    m.date = startOfDay
+                    m.quickOption = option.rawValue
+                    m.recipe = nil
+                    m.mealPlan = plan
+                    m.createdDate = Date()
+                    m.isCompleted = option == .noMeal
+                }) else {
+                    throw FactoryError.invalidHouseholdObjectID
+                }
+                meal = factoryMeal
+            } else {
+                meal = PlannedMeal(context: context)
+                meal.id = UUID()
+                meal.date = startOfDay
+                meal.quickOption = option.rawValue
+                meal.recipe = nil
+                meal.mealPlan = plan
+                meal.createdDate = Date()
+                meal.isCompleted = option == .noMeal
+            }
 
             try context.save()
 
@@ -827,12 +863,25 @@ class MealPlanService: ObservableObject {
         do {
             let meals = try context.fetch(fetchRequest)
 
-            let newList = WeeklyList(context: context)
-            newList.id = UUID()
-            newList.name = "From Plan - \(plan.name ?? DateFormatter.shortDate.string(from: Date()))"
-            newList.dateCreated = Date()
-            newList.isCompleted = false
-            newList.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
+            // M9.13: Route through factory for correct store assignment (ADR 014)
+            let newList: WeeklyList
+            let planName = plan.name ?? DateFormatter.shortDate.string(from: Date())
+            if let factory = factory {
+                newList = try factory.make(WeeklyList.self, configure: { l in
+                    l.id = UUID()
+                    l.name = "From Plan - \(planName)"
+                    l.dateCreated = Date()
+                    l.isCompleted = false
+                    l.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
+                })
+            } else {
+                newList = WeeklyList(context: context)
+                newList.id = UUID()
+                newList.name = "From Plan - \(planName)"
+                newList.dateCreated = Date()
+                newList.isCompleted = false
+                newList.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
+            }
 
             var sortIndex: Int16 = 0
 

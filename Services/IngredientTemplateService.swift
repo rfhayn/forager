@@ -8,6 +8,9 @@ class IngredientTemplateService: ObservableObject {
     @Published var popularIngredients: [IngredientTemplate] = []
     @Published var errorMessage: String?
 
+    // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
+    var factory: ManagedObjectFactory?
+
     // M10.6.11: Household key for scoping newly created templates.
     // Set via provider closure (app-level) or direct property (child contexts).
     var householdKey: String?
@@ -497,17 +500,33 @@ class IngredientTemplateService: ObservableObject {
                 return existing
             }
 
-            let template = IngredientTemplate(context: context)
-            template.id = UUID()
-            template.name = normalizedName
-            template.canonicalName = canonical
-            template.categoryEntity = category
-            // M10.6.12: Fallback path must set householdKey — without it, templates
-            // created during import are invisible in household-scoped IngredientsView
-            template.householdKey = resolvedHouseholdKey
-            template.usageCount = 1
-            template.dateCreated = Date()
-            template.updatedAt = Date()
+            // M9.13: Use factory when available for correct store assignment (ADR 014)
+            let template: IngredientTemplate
+            if let factory = factory,
+               let factoryTemplate = try? factory.make(IngredientTemplate.self, configure: { t in
+                   t.id = UUID()
+                   t.name = normalizedName
+                   t.canonicalName = canonical
+                   t.categoryEntity = category
+                   t.householdKey = self.resolvedHouseholdKey
+                   t.usageCount = 1
+                   t.dateCreated = Date()
+                   t.updatedAt = Date()
+               }) {
+                template = factoryTemplate
+            } else {
+                template = IngredientTemplate(context: context)
+                template.id = UUID()
+                template.name = normalizedName
+                template.canonicalName = canonical
+                template.categoryEntity = category
+                // M10.6.12: Fallback path must set householdKey — without it, templates
+                // created during import are invisible in household-scoped IngredientsView
+                template.householdKey = resolvedHouseholdKey
+                template.usageCount = 1
+                template.dateCreated = Date()
+                template.updatedAt = Date()
+            }
             return template
         }
     }
