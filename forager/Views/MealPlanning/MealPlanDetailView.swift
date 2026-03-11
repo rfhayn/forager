@@ -637,11 +637,9 @@ struct MealPlanDetailView: View {
                 let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
                 _ = templateService.findOrCreateTemplate(name: cleanName)
 
+                // M9.13: GroceryListItem inherits store from parent WeeklyList via
+                // the weeklyList relationship — no assign() needed (ADR 014)
                 let listItem = GroceryListItem(context: viewContext)
-                // M9.12: Assign to same store as target list to prevent cross-store failures
-                if let store = weeklyList.objectID.persistentStore {
-                    viewContext.assign(listItem, to: store)
-                }
                 listItem.id = UUID()
                 listItem.name = ingredientName
                 listItem.isCompleted = false

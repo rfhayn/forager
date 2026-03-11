@@ -4,6 +4,7 @@ import CoreData
 struct AddIngredientsToListView: View {
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.managedObjectFactory) private var factory
     @EnvironmentObject private var weeklyListService: WeeklyListService
 
     let recipe: Recipe
@@ -372,13 +373,18 @@ struct AddIngredientsToListView: View {
                 targetWeeklyList = weeklyList
                 addToShoppingList(targetList: weeklyList)
             } else {
-                if let newList = weeklyListService.createList(name: "Shopping List") {
-                    // M9.12: Scope new list to recipe's household so it's visible
-                    // in household-filtered views and in the correct store.
-                    newList.householdKey = recipe.householdKey
-                    if let store = recipe.objectID.persistentStore {
-                        viewContext.assign(newList, to: store)
-                    }
+                // M9.13: Use ManagedObjectFactory for correct store assignment (ADR 014)
+                if let factory = factory,
+                   let newList = try? factory.make(WeeklyList.self) { list in
+                       list.id = UUID()
+                       list.name = "Shopping List"
+                       list.dateCreated = Date()
+                       list.isCompleted = false
+                   } {
+                    targetWeeklyList = newList
+                    addToShoppingList(targetList: newList)
+                } else if let newList = weeklyListService.createList(name: "Shopping List") {
+                    // Fallback when factory unavailable (e.g. previews)
                     targetWeeklyList = newList
                     addToShoppingList(targetList: newList)
                 } else {
@@ -485,12 +491,9 @@ struct AddIngredientsToListView: View {
                 mergeCount += 1
             } else {
                 // Create new item
+                // M9.13: GroceryListItem inherits store from parent WeeklyList via
+                // the weeklyList relationship — no assign() needed (ADR 014)
                 let listItem = GroceryListItem(context: viewContext)
-                // M9.12: Assign to same store as target list to prevent cross-store failures
-                // In household mode, the list is in the shared store — items must match.
-                if let store = targetList.objectID.persistentStore {
-                    viewContext.assign(listItem, to: store)
-                }
                 listItem.id = UUID()
                 listItem.name = itemDisplayName
 
