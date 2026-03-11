@@ -1,0 +1,55 @@
+# ADR 014: ManagedObjectFactory Enforcement
+
+**Status**: Accepted
+**Date**: 2026-03-11
+**Context**: M9.13 ManagedObjectFactory Enforcement & Cross-Store Crash Fix
+
+## Decision
+
+All creation of HouseholdScoped entities (`WeeklyList`, `Recipe`, `PlannedMeal`, `MealPlan`, `Category`, `IngredientTemplate`) MUST go through `ManagedObjectFactory.make()`. Direct `Entity(context:)` for these types is **forbidden** in production code.
+
+## Context
+
+A TestFlight crash (`CoreData -[NSManagedObjectContext assignObject:toPersistentStore:]`) occurred when tapping "Add to Grocery List" from a recipe after leaving a household. The root cause was ad-hoc `viewContext.assign()` calls in view code that attempted to reassign objects between stores — illegal when the recipe still references a defunct shared store.
+
+Investigation revealed a **systemic architectural violation**: M7.2.3 established `ManagedObjectFactory` as the ONLY creation path for HouseholdScoped entities (documented in `DataScope.swift`), but **zero production code actually used it**. All 43+ creation sites used direct `Entity(context:)`, which defaults to the private store regardless of household scope.
+
+This worked through M7 because the views that crash (`AddIngredientsToListView`, `MealPlanDetailView`) didn't exist yet, and categories were flat strings (no cross-store relationships). Post-M7 milestones added these views and entity relationships without routing through the factory.
+
+## Consequences
+
+### Positive
+- Cross-store crashes eliminated — objects always land in the correct store
+- `householdKey` automatically set by factory — no manual assignment needed
+- Store cleanup paths (`deleteHouseholdLinkedData`, `purgeAllSharedStoreObjects`) work reliably
+- Compile-time protocol (`HouseholdScoped`) makes scope requirements explicit
+
+### Negative
+- Factory adds indirection to entity creation
+- Services need factory injection (added `factory` property pattern)
+- Background contexts can't use factory with scope provider (must use `performScopedWrite` or set householdKey manually)
+
+## Enforcement
+
+### Automated
+- `/forager-architecture-audit` skill checks for direct `Entity(context:)` in non-exempt files
+- Pre-development analysis includes factory compliance check
+
+### Exempt Files
+- **Test files** — in-memory contexts, no CloudKit
+- **Preview providers** — in-memory contexts
+- **`DefaultSeeder` / `SampleDataSeeder`** — first-launch seeding, no household
+- **`HouseholdService.migrateDataFromHousehold()`** — intentional personal-scope copy
+- **Background contexts** (`performWrite`) where householdKey is set manually
+
+## Non-HouseholdScoped Entities (Safe for Direct Creation)
+- `GroceryListItem` — inherits store from parent `WeeklyList` via relationship
+- `Ingredient` — inherits store from parent `Recipe` via relationship
+- `Household`, `HouseholdMember` — manage their own store placement
+- `UserPreferences` — personal-only, no household scope
+
+## Related ADRs
+- ADR 007: Core Data Change Process
+- ADR 008: Shared Zone Architecture
+- ADR 013: Scope-Aware Fetch Pattern
+- Service Layer Pattern (docs/architecture/service-layer-pattern.md)

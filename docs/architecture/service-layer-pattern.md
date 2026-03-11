@@ -311,6 +311,9 @@ func toggleItemChecked(_ item: GroceryListItem) {
 }
 ```
 
+### Store Assignment Pattern (ADR 014)
+Services that create HouseholdScoped entities (`WeeklyList`, `Recipe`, `PlannedMeal`, `MealPlan`, `Category`, `IngredientTemplate`) MUST accept a `ManagedObjectFactory` and use `factory.make()` for creation. Add a `var factory: ManagedObjectFactory?` property and fall back to direct creation only when factory is nil (tests/previews).
+
 ---
 
 ## 📏 Existing Service Examples
