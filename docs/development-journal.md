@@ -6,6 +6,53 @@
 
 ---
 
+## Session 76 — March 10-11, 2026
+**Milestone**: M9.12 — Cross-Store Fix (Household Grocery List Failure)
+**Focus**: Fix silent failure when adding recipe ingredients to grocery list while in a household
+**Branch**: main (direct commits — continuation of bugfix batch)
+
+### What Happened
+
+User tested build 28 on device while in a household. Recipe import worked, but adding ingredients to a grocery list from the recipe produced nothing — no list, no items, no error. Same flow worked perfectly on simulator (no household). The simulator log showed all 9 ingredients added successfully with correct categories.
+
+Root cause: **cross-store relationship failures in the dual-store CloudKit architecture.** When a user is in a household, grocery lists created via ManagedObjectFactory are in the shared store, but `AddIngredientsToListView` created `IngredientTemplateService` without `householdKey` and `GroceryListItem` objects without store assignment. This caused:
+
+1. `IngredientTemplateService` found/created templates in personal scope (private store) instead of household scope
+2. `GroceryListItem(context:)` defaulted to private store, but `targetList.addToItems(listItem)` tried to link to a shared-store list — cross-store relationship
+3. `viewContext.save()` failed, `WeeklyListService.save()` caught the error, rolled back, set `errorMessage` — but the UI just dismissed
+
+Fixed in 5 files: set `templateService.householdKey` from recipe/household scope in AddIngredientsToListView, GroceryListDetailView, AddListItemView, and MealPlanDetailView. Added `context.assign(object, to: store)` for new GroceryListItems to match the target list's store. Added cross-store safe category lookup. Added store-safety guard in `lookupUncategorizedCategory()`.
+
+Also fixed pre-existing test compilation issues: `Category` type ambiguity (needed `forager.Category` disambiguation) and `displayName` assignment on a computed property.
+
+Archived as build 29, but user noted they're not fully convinced the fix is complete — the underlying issue is that RecipeImportService creates objects in the private store (no ManagedObjectFactory) even when in a household. The downstream fixes are patches over that root cause.
+
+### Key Decisions
+
+- **Store assignment via `objectID.persistentStore`**: Rather than injecting `PersistenceController` and `ManagedObjectFactory` into every view, used the simpler pattern of `context.assign(listItem, to: targetList.objectID.persistentStore)` to match the parent's store.
+
+- **Cross-store safe category lookup**: When the template's `categoryEntity` is in a different store than the target list item, a name-based `findCategory(named:householdKey:)` lookup finds the matching Category in the correct store.
+
+- **Guard in `lookupUncategorizedCategory`**: Only sets `template.categoryEntity` when both objects are in the same store (or store is unknown for new objects). Prevents cross-store failures during template creation.
+
+- **Deferred root cause fix**: The proper fix is making RecipeImportService assign objects to the shared store when in a household. Current fixes are downstream patches. User acknowledged this is likely not fully solved.
+
+### Learning
+
+- **`Entity(context:)` always creates in the default (first) persistent store**: In a dual-store setup, this is the private store. Any object that needs to be in the shared store must be explicitly assigned via `context.assign(object, to: store)` or created via `ManagedObjectFactory`.
+- **Cross-store relationships silently fail**: Core Data doesn't throw during relationship assignment — it fails on `save()` with an error that gets caught and rolled back. From the user's perspective, nothing happens.
+- **9 views create `IngredientTemplateService` without `householdKey`**: This is a systemic pattern — every view that creates its own service instance needs to set the household scope. A better architectural solution would be injecting a properly-configured service via the environment.
+
+### AI Tooling Observations
+
+The analysis required tracing through 6+ files to understand the full failure path (view init → service → repository → save → rollback). Claude's ability to hold this chain in context and identify the cross-store root cause was effective, though it took several rounds of hypothesis-test-revise. The user's real-device testing was essential — this bug is invisible in the simulator.
+
+### What's Next
+
+Test build 29 on device while in a household. If the grocery list creation still fails, the next step is fixing RecipeImportService to properly assign objects to the shared store when in a household (using ManagedObjectFactory or manual `context.assign`).
+
+---
+
 ## Session 75 — March 9, 2026
 **Milestone**: M9.12 — Bugfix Batch (Post-Migration Testing)
 **Focus**: Fix "all ingredients show as new" bug and default-to-Uncategorized design
