@@ -28,11 +28,10 @@ final class IngredientTemplateServiceTests: XCTestCase {
     // MARK: - Helper
 
     @MainActor
-    private func createCategory(named name: String) -> Category {
-        let cat = Category(context: context)
+    private func createCategory(named name: String) -> forager.Category {
+        let cat = forager.Category(context: context)
         cat.id = UUID()
         cat.name = name
-        cat.displayName = name
         cat.sortOrder = 0
         return cat
     }

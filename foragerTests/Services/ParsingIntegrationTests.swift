@@ -78,10 +78,9 @@ final class ParsingIntegrationTests: XCTestCase {
         let parsed = parsingService.parseToStructured(text: "3 cloves garlic")
 
         // M9.12: Create Category entity for relationship-based assignment
-        let produceCategory = Category(context: context)
+        let produceCategory = forager.Category(context: context)
         produceCategory.id = UUID()
         produceCategory.name = "Produce"
-        produceCategory.displayName = "Produce"
         produceCategory.sortOrder = 0
 
         // Pass parsed result to WeeklyListService

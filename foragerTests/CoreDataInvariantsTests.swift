@@ -30,10 +30,10 @@ final class CoreDataInvariantsTests: XCTestCase {
     /// Test 1: Default seeding is idempotent
     func testDefaultSeedingIdempotency() throws {
         try DefaultSeeder.seedDefaultsIfNeeded(in: context)
-        let firstCount = try context.count(for: Category.fetchRequest())
+        let firstCount = try context.count(for: forager.Category.fetchRequest())
 
         try DefaultSeeder.seedDefaultsIfNeeded(in: context)
-        let secondCount = try context.count(for: Category.fetchRequest())
+        let secondCount = try context.count(for: forager.Category.fetchRequest())
 
         XCTAssertEqual(firstCount, secondCount, "Seeding should be idempotent")
         XCTAssertGreaterThan(firstCount, 0, "Should have default categories")
@@ -90,7 +90,7 @@ final class CoreDataInvariantsTests: XCTestCase {
 
     /// Test 4: Category delete behavior
     func testCategoryDeleteBehavior() throws {
-        let category = Category(context: context)
+        let category = forager.Category(context: context)
         category.id = UUID()
         category.name = "Test Category"
         try context.save()

@@ -443,8 +443,17 @@ class IngredientTemplateService: ObservableObject {
 
             // M9.12: Default new/uncategorized templates to "Uncategorized" entity.
             // Only applied when template has no category — never overwrites real categories.
+            // Cross-store safety: verify the category is in the same store as the template
+            // to prevent cross-store relationship failures in dual-store CloudKit setups.
             if template.categoryEntity == nil {
-                template.categoryEntity = lookupUncategorizedCategory()
+                if let uncategorized = lookupUncategorizedCategory() {
+                    let templateStore = template.objectID.persistentStore
+                    let categoryStore = uncategorized.objectID.persistentStore
+                    if templateStore == nil || categoryStore == nil || templateStore == categoryStore {
+                        template.categoryEntity = uncategorized
+                    }
+                    // If stores differ, skip — category will be assigned at the UI layer
+                }
             }
 
             Task { @MainActor in DebugLogService.shared.log("repository returned: existing=\(template.dateCreated != nil && template.usageCount > 0 ? "yes" : "new"), template.householdKey=\(template.householdKey ?? "nil")", category: "Template") }

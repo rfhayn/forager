@@ -607,6 +607,8 @@ struct MealPlanDetailView: View {
         }
 
         let templateService = IngredientTemplateService(context: viewContext)
+        // M9.12: Scope template lookups to household to prevent cross-store failures
+        templateService.householdKey = householdService.currentHouseholdKey
         var totalIngredientsAdded = 0
         let totalMeals = recipesWithIngredients.count
 
@@ -636,6 +638,10 @@ struct MealPlanDetailView: View {
                 _ = templateService.findOrCreateTemplate(name: cleanName)
 
                 let listItem = GroceryListItem(context: viewContext)
+                // M9.12: Assign to same store as target list to prevent cross-store failures
+                if let store = weeklyList.objectID.persistentStore {
+                    viewContext.assign(listItem, to: store)
+                }
                 listItem.id = UUID()
                 listItem.name = ingredientName
                 listItem.isCompleted = false

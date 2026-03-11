@@ -44,6 +44,8 @@ struct AddIngredientsToListView: View {
         // Initialize services (regular properties, not @StateObject)
         self.scalingService = RecipeScalingService(context: context)
         self.templateService = IngredientTemplateService(context: context)
+        // M9.12: Scope template lookups to recipe's household to prevent cross-store failures
+        self.templateService.householdKey = recipe.householdKey
         self.mergeService = GroceryMergeService()
         self.parsingService = IngredientParsingService(context: context, templateService: self.templateService)
     }
@@ -371,6 +373,12 @@ struct AddIngredientsToListView: View {
                 addToShoppingList(targetList: weeklyList)
             } else {
                 if let newList = weeklyListService.createList(name: "Shopping List") {
+                    // M9.12: Scope new list to recipe's household so it's visible
+                    // in household-filtered views and in the correct store.
+                    newList.householdKey = recipe.householdKey
+                    if let store = recipe.objectID.persistentStore {
+                        viewContext.assign(newList, to: store)
+                    }
                     targetWeeklyList = newList
                     addToShoppingList(targetList: newList)
                 } else {
@@ -478,6 +486,11 @@ struct AddIngredientsToListView: View {
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)
+                // M9.12: Assign to same store as target list to prevent cross-store failures
+                // In household mode, the list is in the shared store — items must match.
+                if let store = targetList.objectID.persistentStore {
+                    viewContext.assign(listItem, to: store)
+                }
                 listItem.id = UUID()
                 listItem.name = itemDisplayName
 
@@ -502,12 +515,22 @@ struct AddIngredientsToListView: View {
                 // M4.3.1: Add recipe to sourceRecipes relationship
                 listItem.addToSourceRecipes(recipe)
                 
-                // M9.12: Use category entity relationship directly
+                // M9.12: Use category entity relationship — with cross-store safety.
+                // Template may be in private store while list is in shared store (household).
+                // Look up a matching category in the list's scope to avoid cross-store failures.
                 if let template = ingredient.ingredientTemplate,
-                   let categoryEntity = template.categoryEntity {
-                    listItem.categoryEntity = categoryEntity
+                   let categoryName = template.categoryEntity?.name {
+                    let targetStore = targetList.objectID.persistentStore
+                    let templateStore = template.categoryEntity?.objectID.persistentStore
+                    if targetStore == templateStore || targetStore == nil {
+                        // Same store — safe to link directly
+                        listItem.categoryEntity = template.categoryEntity
+                    } else {
+                        // Cross-store — look up category by name in the list's scope
+                        listItem.categoryEntity = findCategory(named: categoryName, householdKey: recipe.householdKey)
+                    }
                     #if DEBUG
-                    print("Assigned category '\(categoryEntity.name ?? "Unknown")' to '\(cleanName)'")
+                    print("Assigned category '\(categoryName)' to '\(cleanName)'")
                     #endif
                 } else {
                     // Leave categoryEntity nil for uncategorized
@@ -588,6 +611,19 @@ struct AddIngredientsToListView: View {
         }
     }
     
+    // M9.12: Look up category by name in the correct household scope.
+    // Used when template's categoryEntity is in a different store than the target list.
+    private func findCategory(named name: String, householdKey: String?) -> Category? {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        if let key = householdKey {
+            request.predicate = NSPredicate(format: "name == %@ AND householdKey == %@", name, key)
+        } else {
+            request.predicate = NSPredicate(format: "name == %@ AND householdKey == nil", name)
+        }
+        request.fetchLimit = 1
+        return try? viewContext.fetch(request).first
+    }
+
     // MARK: - View Helpers
     
     private var processingView: some View {

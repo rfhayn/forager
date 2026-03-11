@@ -225,6 +225,8 @@ struct AddListItemView: View {
                 addToTemplatesSheet
             }
             .onAppear {
+                // M9.12: Scope template lookups to household to prevent cross-store failures
+                templateService.householdKey = householdService.currentHouseholdKey
                 // M7.3.4: Configure autocomplete service with current householdKey
                 autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
 

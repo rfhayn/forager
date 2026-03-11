@@ -126,6 +126,8 @@ struct GroceryListDetailView: View {
         }
         .llmParsingToast(message: $llmToastMessage)
         .onAppear {
+            // M9.12: Scope template lookups to household to prevent cross-store failures
+            templateService.householdKey = householdService.currentHouseholdKey
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
             if let firstCategory = categories.first {
                 defaultCategory = firstCategory.displayName
