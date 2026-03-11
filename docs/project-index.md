@@ -1,8 +1,8 @@
 # Forager - Project Index
 
-**Last Updated**: March 3, 2026
+**Last Updated**: March 11, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M10.6 🔄 **ACTIVE** (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 ✅) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
+**Current Milestone**: M16 🔄 **ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 **ACTIVE** (M10.6.5 docs remaining) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
 **Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration (near complete, M10.6.5 docs remaining)
 **Next Priority**: M10.6.5 (docs) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 **Execution Order**: M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
@@ -50,6 +50,13 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **March 11, 2026** - M16.1-M16.2 ✅ COMPLETE — Knowledge MCP Server
+- **Completed**: Python MCP server at `Tools/mcp-knowledge/` with 7 tools (search, read, list, project status, newsletter context/draft/export)
+- **Stats**: 182 documents indexed, 2,472 searchable chunks, BM25 search <1ms
+- **Newsletters**: 7 .docx files moved to `docs/newsletters/`, fully indexed
+- **Deployed**: Operational in Claude Desktop via MCP configuration
+- **Remaining**: M16.3 (polish, search tuning) — planned for later
 
 ### **March 3, 2026** - M10.6.10 ✅ COMPLETE — Ingredient Autocomplete + Three-State Match Icons
 - **Completed**: Autocomplete dropdowns in RecipeDetailView + RecipeImportPreviewView ingredient editing

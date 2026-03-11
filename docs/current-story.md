@@ -1,38 +1,44 @@
 # Current Development Story
 
-**Last Updated**: March 7, 2026
-**Status**: **M16 🔄 ACTIVE** | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
+**Last Updated**: March 11, 2026
+**Status**: **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
 **Total Progress**: ~263 hours | 89% planning accuracy
-**Current Branch**: `feature/M16-knowledge-mcp-server`
-**Current Milestone**: M16 🔄 ACTIVE — Knowledge MCP Server
+**Current Branch**: `main`
+**Current Milestone**: M16 🔄 ACTIVE — Knowledge MCP Server (M16.3 polish remaining)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M16 (Knowledge MCP) → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+
+**Next Priority**: M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
 
 ---
 
-## 🔧 **M16: KNOWLEDGE MCP SERVER - ACTIVE**
+## 🔧 **M16: KNOWLEDGE MCP SERVER - ACTIVE (M16.3 remaining)**
 
-**Status**: M16.1 🔄 ACTIVE
+**Status**: M16.1 ✅ COMPLETE | M16.2 ✅ COMPLETE | M16.3 ⏳ PLANNED
 **Estimated**: 6-10 hours (3 phases)
 **PRD**: `docs/prds/active/m16-knowledge-mcp-server.md`
-**Branch**: `feature/M16-knowledge-mcp-server`
+**Branch**: Merged to main (PR #63)
 
-Python MCP server at `Tools/mcp-knowledge/` that indexes all project docs, learning notes, ADRs, newsletters, and journals for search/retrieval in Claude Desktop. Includes newsletter drafting tools with .docx generation.
+Python MCP server at `Tools/mcp-knowledge/` that indexes all project docs (182 docs, 2,472 chunks), learning notes, ADRs, newsletters, and journals for search/retrieval in Claude Desktop. Includes newsletter drafting tools with .docx generation. Deployed and operational.
 
 ### Phase Overview
 
 | Phase | Scope | Hours | Status |
 |-------|-------|-------|--------|
-| M16.1 | Foundation — indexer, search, core MCP tools, move newsletters | 2-3h | 🔄 ACTIVE |
-| M16.2 | Project status + newsletter context/drafting tools | 2-3h | READY |
-| M16.3 | Polish, README, test with real session | 1-2h | PLANNED |
+| M16.1 | Foundation — indexer, search, core MCP tools, move newsletters | 2-3h | ✅ COMPLETE |
+| M16.2 | Project status + newsletter context/drafting tools | 2-3h | ✅ COMPLETE |
+| M16.3 | Polish, tune search quality, test with real session | 1-2h | ⏳ PLANNED |
 
-### M16.1 Implementation Progress
-1. 🔄 Document loader (markdown + docx)
-2. ⏳ Indexer + chunking
-3. ⏳ BM25 search engine
-4. ⏳ MCP server with search_knowledge, read_document, list_documents
-5. ⏳ Move newsletter .docx files to docs/newsletters/
+### M16.1 ✅ COMPLETE
+1. ✅ Document loader (markdown + docx) — `src/documents.py`
+2. ✅ Indexer + H2 chunking — `src/indexer.py`
+3. ✅ BM25 search engine — `src/search.py`
+4. ✅ MCP server with `search_knowledge`, `read_document`, `list_documents` — `src/server.py`
+5. ✅ Newsletter .docx files moved to `docs/newsletters/` (7 files)
+
+### M16.2 ✅ COMPLETE
+1. ✅ `get_project_status` — current-story + next-prompt summary
+2. ✅ `get_newsletter_context` — topic search + style reference
+3. ✅ `draft_newsletter_section` — context bundle + outline
+4. ✅ `create_newsletter_draft` — markdown → .docx generation
 
 ---
 

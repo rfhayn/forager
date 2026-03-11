@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: March 3, 2026
-**Current Phase**: **M10.6 🔄 ACTIVE** | **M10.8 ✅ COMPLETE** | **M10.3 ✅ DEV COMPLETE** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M10.6 Claude API integration in progress (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 COMPLETE)
-**Execution Order**: M10.6 (8.5-12h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: March 11, 2026
+**Current Phase**: **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | **M10.6 🔄 ACTIVE** | **M10.8 ✅ COMPLETE** | **M10.3 ✅ DEV COMPLETE** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M16 Knowledge MCP Server deployed (M16.1-M16.2 COMPLETE), M10.6 Claude API integration near complete (M10.6.5 docs remaining)
+**Execution Order**: M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -1245,6 +1245,30 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [x] iOS 26 deployment target with full Liquid Glass adoption
 - [ ] Layered app icon renders correctly in Icon Composer (deferred — manual GUI tool)
 - [x] All existing features maintain functionality (zero regressions)
+
+---
+
+### **🔄 M16: Knowledge MCP Server - ACTIVE (M16.3 remaining)**
+
+**Status**: M16.1 ✅ COMPLETE | M16.2 ✅ COMPLETE | M16.3 ⏳ PLANNED
+**Estimated Time**: 6-10 hours (3 phases)
+**PRD**: [M16 Knowledge MCP Server PRD](prds/active/m16-knowledge-mcp-server.md)
+**Branch**: Merged to main (PR #63)
+
+**Overview**: Python MCP server at `Tools/mcp-knowledge/` that indexes all project documentation (182 docs, 2,472 searchable chunks) for search/retrieval in Claude Desktop. BM25 search with <1ms response time. 7 MCP tools covering document search, project status, and newsletter drafting with .docx generation.
+
+**M16.1: Foundation** ✅ COMPLETE
+- Document loader (markdown + docx), indexer with H2 chunking, BM25 search engine
+- Core MCP tools: `search_knowledge`, `read_document`, `list_documents`
+- Newsletter .docx files migrated to `docs/newsletters/` (7 files)
+
+**M16.2: Newsletter + Status Tools** ✅ COMPLETE
+- `get_project_status`, `get_newsletter_context`, `draft_newsletter_section`, `create_newsletter_draft`
+- Full markdown → .docx conversion pipeline
+
+**M16.3: Polish** ⏳ PLANNED
+- Tune chunking/search quality based on real usage
+- Test with real newsletter writing session
 
 ---
 
