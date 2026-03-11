@@ -6,6 +6,45 @@
 
 ---
 
+## Session 77 — March 11, 2026
+**Milestone**: M9.13 — ManagedObjectFactory Enforcement & Cross-Store Crash Fix
+**Focus**: Fix TestFlight crash from `viewContext.assign()` and enforce factory pattern across all 43+ creation sites
+**Branch**: feature/M9.13-factory-enforcement
+
+### What Happened
+
+Implemented the full 5-phase plan for M9.13, addressing a TestFlight crash (`CoreData -[NSManagedObjectContext assignObject:toPersistentStore:]`) that occurred when tapping "Add to Grocery List" from a recipe after leaving a household. The M9.12 session added `context.assign()` calls as band-aids for incorrect store placement, but these caused crashes when the recipe's store was no longer accessible.
+
+The deeper finding was that M7.2.3 established `ManagedObjectFactory` as the canonical creation path for HouseholdScoped entities, but **zero production code actually used it**. All 43+ creation sites used direct `Entity(context:)`, which defaults to the private store regardless of household scope. This worked until M10.9/M9.12 added cross-store views and entity relationships.
+
+Across 4 phases (P1 crash fix, P2 service integration, P3 view cleanup, P4 architecture enforcement), converted all production creation sites to use factory with fallback, removed all `viewContext.assign()` calls outside ManagedObjectFactory, and added ADR 014 + an architecture audit skill to prevent regression.
+
+### Key Decisions
+
+- **Factory with fallback pattern**: Rather than making factory non-optional (which would require changing service init signatures and test setup), used `if let factory { factory.make(...) } else { Entity(context:) }` pattern. The fallback ensures tests/previews keep working without factory injection. This is pragmatic — the architecture audit skill catches production violations.
+
+- **Child entities don't need factory**: `GroceryListItem` and `Ingredient` inherit their persistent store from their parent (`WeeklyList`/`Recipe`) via Core Data relationships. The M9.12 `assign()` calls on these were unnecessary — fixing the parent's store placement is sufficient.
+
+- **Background contexts use manual householdKey**: `performWrite` background contexts can't use `ManagedObjectFactory` because `HouseholdScopeProvider` is `@MainActor`. These sites set `householdKey` manually and rely on merge policy for store placement. This is acceptable because background contexts merge into the view context on save.
+
+- **RecipeImportService kept direct creation**: The import service uses a child context, which doesn't support `context.assign()`. Store assignment is inherited from the parent context on save. Kept `Recipe(context: childContext)` with manual `householdKey` assignment.
+
+### Learning
+
+- **`context.assign()` is a sharp edge**: It works only when the target store is accessible. After leaving a household, the shared store is gone, so `assign()` crashes. The factory avoids this entirely by resolving scope at creation time.
+- **Core Data relationship store inheritance**: When you set `listItem.weeklyList = someList`, the child object inherits the parent's store. No explicit `assign()` needed. This is a Core Data guarantee that simplifies the architecture considerably.
+- **`HouseholdScopeProvider` is @MainActor**: This limits factory usage to the main context. Background contexts must use `performScopedWrite` (which creates its own factory) or set householdKey manually.
+
+### AI Tooling Observations
+
+This was a large, systematic refactoring (26 production sites across 20+ files). The detailed PRD with a complete violation inventory was critical — it provided an exhaustive checklist so no site was missed. Claude's ability to make parallel edits across many files in sequence was effective, though the session ran long enough to hit context limits. The grep-based architecture audit at the end confirmed zero violations, which gave confidence in the completeness of the changes.
+
+### What's Next
+
+Create PR, squash merge to main. Test on device: "Add to Grocery List" after leaving a household (the original crash scenario), plus household mode create/import flows. If stable, archive as the next TestFlight build.
+
+---
+
 ## Session 76 — March 10-11, 2026
 **Milestone**: M9.12 — Cross-Store Fix (Household Grocery List Failure)
 **Focus**: Fix silent failure when adding recipe ingredients to grocery list while in a household
