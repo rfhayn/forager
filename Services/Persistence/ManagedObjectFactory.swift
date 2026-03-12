@@ -226,32 +226,50 @@ final class ManagedObjectFactory {
             
             // M7.2.3 Phase 2.6: Loud failure on household resolution (Gemini)
             // "Prefer throw if scope says household but fetch fails"
+            // M9.14: Added fallback fetch for stale ObjectIDs after CloudKit sync/reinstall
             if let scopedObject = object as? HouseholdScoped {
+                var resolvedHousehold: Household?
+
+                // Primary path: resolve by ObjectID (fast)
                 do {
-                    guard let household = try context.existingObject(with: householdID) as? Household else {
-                        #if DEBUG
-                        fatalError("❌ Factory: Household ObjectID resolved to wrong type")
-                        #else
-                        throw FactoryError.invalidHouseholdObjectID
-                        #endif
-                    }
-                    
-                    scopedObject.household = household
-                    scopedObject.householdKey = household.id?.uuidString
-                    
-                    #if DEBUG
-                    print("   ✅ Household: \(household.name ?? "Unnamed")")
-                    print("   ✅ HouseholdKey: \(household.id?.uuidString ?? "nil")")
-                    print("   ✅ Store: \(storeID)")
-                    #endif
-                    
+                    resolvedHousehold = try context.existingObject(with: householdID) as? Household
                 } catch {
+                    // M9.14: ObjectID may be stale after reinstall + CloudKit sync.
+                    // Fallback to fetch — the household exists in the store, the reference is just stale.
                     #if DEBUG
-                    fatalError("❌ Factory: Failed to resolve household from ObjectID: \(error)")
+                    print("⚠️ Factory: existingObject(with:) failed (\(error.localizedDescription)), trying fetch fallback")
+                    #endif
+                }
+
+                // M9.14: Fallback path — fetch household directly
+                if resolvedHousehold == nil {
+                    let request: NSFetchRequest<Household> = Household.fetchRequest()
+                    request.fetchLimit = 1
+                    resolvedHousehold = try context.fetch(request).first
+
+                    #if DEBUG
+                    if resolvedHousehold != nil {
+                        print("   ✅ Factory: Fallback fetch succeeded")
+                    }
+                    #endif
+                }
+
+                guard let household = resolvedHousehold else {
+                    #if DEBUG
+                    fatalError("❌ Factory: Household not found via ObjectID or fallback fetch")
                     #else
                     throw FactoryError.householdNotFound(householdID)
                     #endif
                 }
+
+                scopedObject.household = household
+                scopedObject.householdKey = household.id?.uuidString
+
+                #if DEBUG
+                print("   ✅ Household: \(household.name ?? "Unnamed")")
+                print("   ✅ HouseholdKey: \(household.id?.uuidString ?? "nil")")
+                print("   ✅ Store: \(storeID)")
+                #endif
             }
         }
         

@@ -93,6 +93,15 @@ final class HouseholdScopeProvider: ScopeProvider {
             return .personal
         }
         
+        // M9.14: Verify household object is still valid in current context
+        // After reinstall + CloudKit sync, the object may be faulted or invalidated
+        guard household.managedObjectContext != nil, !household.isDeleted else {
+            #if DEBUG
+            print("⚠️ HouseholdScopeProvider: Household object invalid (deleted or no context) → Personal scope (fallback)")
+            #endif
+            return .personal
+        }
+
         // 2. Get the store directly from the ObjectID
         guard let householdStore = household.objectID.persistentStore else {
             #if DEBUG
