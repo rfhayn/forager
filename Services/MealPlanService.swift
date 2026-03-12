@@ -76,7 +76,7 @@ class MealPlanService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    var factory: ManagedObjectFactory?
+    private(set) var factory: ManagedObjectFactory?
 
     // M10.6.18: Household key for scoping fetches (ADR 013)
     var householdKeyProvider: (() -> String?)?
@@ -97,6 +97,11 @@ class MealPlanService: ObservableObject {
     private init() {
         self.context = PersistenceController.shared.container.viewContext
         loadActiveMealPlan()
+    }
+
+    /// One-time factory injection at app startup (ADR 014)
+    func configure(factory: ManagedObjectFactory) {
+        self.factory = factory
     }
     
     // MARK: - Meal Plan Management
@@ -138,7 +143,7 @@ class MealPlanService: ObservableObject {
     // M4.2: Creates a new meal plan using user preferences
     // Automatically sets as active and deactivates any existing active plans
     // Uses UserPreferencesService for duration and start day defaults
-    func createMealPlan(startDate: Date? = nil) -> MealPlan? {
+    func createMealPlan(startDate: Date? = nil, name: String? = nil, duration: Int? = nil) -> MealPlan? {
         let startTime = CFAbsoluteTimeGetCurrent()
         
         // Deactivate any existing active plans
@@ -150,20 +155,24 @@ class MealPlanService: ObservableObject {
         let calculatedStartDate = startDate ?? calculateStartDate(using: prefs.mealPlanStartDay)
 
         if let factory = factory {
-            guard let factoryPlan = try? factory.make(MealPlan.self, configure: { p in
-                p.id = UUID()
-                p.createdDate = Date()
-                p.isActive = true
-                p.startDate = calculatedStartDate
-                p.duration = Int16(prefs.mealPlanDuration)
-                if prefs.autoNameMealPlans {
-                    p.name = generateMealPlanName(for: calculatedStartDate)
-                }
-            }) else {
-                lastError = FactoryError.invalidHouseholdObjectID
+            do {
+                plan = try factory.make(MealPlan.self, configure: { p in
+                    p.id = UUID()
+                    p.createdDate = Date()
+                    p.isActive = true
+                    p.startDate = calculatedStartDate
+                    p.duration = Int16(prefs.mealPlanDuration)
+                    if prefs.autoNameMealPlans {
+                        p.name = generateMealPlanName(for: calculatedStartDate)
+                    }
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating MealPlan: \(error)")
+                #endif
+                lastError = error
                 return nil
             }
-            plan = factoryPlan
         } else {
             plan = MealPlan(context: context)
             plan.id = UUID()
@@ -176,6 +185,14 @@ class MealPlanService: ObservableObject {
             }
         }
         
+        // M9.13: Apply caller-provided overrides before single save
+        if let name = name {
+            plan.name = name
+        }
+        if let duration = duration {
+            plan.duration = Int16(duration)
+        }
+
         do {
             try context.save()
             activeMealPlan = plan
@@ -809,7 +826,7 @@ class MealPlanService: ObservableObject {
             // M9.13: Route through factory for correct store assignment (ADR 014)
             let meal: PlannedMeal
             if let factory = factory {
-                guard let factoryMeal = try? factory.make(PlannedMeal.self, configure: { m in
+                meal = try factory.make(PlannedMeal.self, configure: { m in
                     m.id = UUID()
                     m.date = startOfDay
                     m.quickOption = option.rawValue
@@ -817,10 +834,7 @@ class MealPlanService: ObservableObject {
                     m.mealPlan = plan
                     m.createdDate = Date()
                     m.isCompleted = option == .noMeal
-                }) else {
-                    throw FactoryError.invalidHouseholdObjectID
-                }
-                meal = factoryMeal
+                })
             } else {
                 meal = PlannedMeal(context: context)
                 meal.id = UUID()

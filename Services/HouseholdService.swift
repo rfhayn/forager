@@ -118,6 +118,19 @@ class HouseholdService: ObservableObject {
         #endif
     }
 
+    // M9.13: Resolved DataScope for current household state.
+    // Used by views that need to create entities via performScopedWrite.
+    var currentScope: DataScope {
+        guard let household = currentHousehold,
+              let store = household.objectID.persistentStore else {
+            return .personal
+        }
+        let isShared = store.url?.absoluteString.contains("shared") ?? false
+        return isShared
+            ? .household(id: household.objectID, storeID: .shared)
+            : .personal
+    }
+
     // M7.2.2 FIX: Derived household key with fallback
     // When household syncs from CloudKit, the UUID `id` attribute may be nil
     // but related data (recipes, etc.) have the correct householdKey string

@@ -139,11 +139,10 @@ struct foragerApp: App {
         self.objectFactory = factory
 
         // Inject factory into all services that create HouseholdScoped entities
-        recipe.factory = factory
-        weeklyList.factory = factory
-        templateService.factory = factory
-        importSvc.factory = factory
-        MealPlanService.shared.factory = factory
+        recipe.configure(factory: factory)
+        weeklyList.configure(factory: factory)
+        templateService.configure(factory: factory)
+        MealPlanService.shared.configure(factory: factory)
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)

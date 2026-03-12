@@ -851,21 +851,38 @@ struct CreateRecipeView: View {
         let trimmedInstructions = formData.instructions.trimmingCharacters(in: .whitespacesAndNewlines)
         let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if let factory = factory,
-           let factoryRecipe = try? factory.make(Recipe.self, configure: { r in
-               r.id = UUID()
-               r.title = trimmedName
-               r.prepTime = Int16(formData.prepTime)
-               r.cookTime = Int16(formData.cookTime)
-               r.servings = Int16(formData.servings)
-               r.instructions = trimmedInstructions
-               r.isFavorite = formData.isFavorite
-               r.dateCreated = Date()
-               r.usageCount = 0
-               r.lastUsed = nil
-               if !tagsString.isEmpty { r.tags = tagsString }
-           }) {
-            recipe = factoryRecipe
+        if let factory = factory {
+            do {
+                recipe = try factory.make(Recipe.self, configure: { r in
+                    r.id = UUID()
+                    r.title = trimmedName
+                    r.prepTime = Int16(formData.prepTime)
+                    r.cookTime = Int16(formData.cookTime)
+                    r.servings = Int16(formData.servings)
+                    r.instructions = trimmedInstructions
+                    r.isFavorite = formData.isFavorite
+                    r.dateCreated = Date()
+                    r.usageCount = 0
+                    r.lastUsed = nil
+                    if !tagsString.isEmpty { r.tags = tagsString }
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating Recipe: \(error)")
+                #endif
+                recipe = Recipe(context: viewContext)
+                recipe.id = UUID()
+                recipe.title = trimmedName
+                recipe.prepTime = Int16(formData.prepTime)
+                recipe.cookTime = Int16(formData.cookTime)
+                recipe.servings = Int16(formData.servings)
+                recipe.instructions = trimmedInstructions
+                recipe.isFavorite = formData.isFavorite
+                recipe.dateCreated = Date()
+                recipe.usageCount = 0
+                recipe.lastUsed = nil
+                if !tagsString.isEmpty { recipe.tags = tagsString }
+            }
         } else {
             recipe = Recipe(context: viewContext)
             recipe.id = UUID()

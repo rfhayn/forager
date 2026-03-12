@@ -273,29 +273,18 @@ struct CreateMealPlanSheet: View {
         let duration = calculatedDuration
         
         // M9.13: Route through MealPlanService for factory-based creation (ADR 014)
-        // Pass the calculated start date; MealPlanService.createMealPlan handles
-        // factory routing, store assignment, and user preference defaults.
-        if let plan = MealPlanService.shared.createMealPlan(startDate: Calendar.current.startOfDay(for: startDate)) {
-            // Override auto-generated name if user provided one
-            if !name.isEmpty {
-                plan.name = name
-            }
-            plan.duration = Int16(duration)
-            plan.isActive = false  // Will be set by updateActivePlanStatus
-            plan.isCompleted = false
+        // Pass all values so MealPlanService applies them in a single save.
+        if let plan = MealPlanService.shared.createMealPlan(
+            startDate: Calendar.current.startOfDay(for: startDate),
+            name: name.isEmpty ? nil : name,
+            duration: duration
+        ) {
+            MealPlanService.shared.updateActivePlanStatus()
 
-            MealPlanService.shared.saveContext()
-
-            if MealPlanService.shared.lastError != nil {
-                validationError = "Failed to create meal plan. Please try again."
+            if isInline, let callback = onCreated {
+                callback(plan)
             } else {
-                MealPlanService.shared.updateActivePlanStatus()
-
-                if isInline, let callback = onCreated {
-                    callback(plan)
-                } else {
-                    dismiss()
-                }
+                dismiss()
             }
         } else {
             validationError = "Failed to create meal plan. Please try again."

@@ -37,9 +37,6 @@ class RecipeImportService: ObservableObject {
     private let viewContext: NSManagedObjectContext
     private let parsingService: IngredientParsingService
 
-    // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    var factory: ManagedObjectFactory?
-
     // M10.6.11: Household key for scoping templates created during import
     var householdKeyProvider: (() -> String?)?
 
@@ -168,9 +165,9 @@ class RecipeImportService: ObservableObject {
             templateService: childTemplateService
         )
 
-        // Create Recipe entity
-        // Note: Child context — store assignment inherited from parent on save.
-        // householdKey is set manually below for CloudKit scoping.
+        // Create Recipe entity in child context. Child context saves to parent
+        // (viewContext), which persists to disk. householdKey set manually via
+        // provider — factory not used because child contexts don't support store assignment.
         let recipe = Recipe(context: childContext)
         recipe.id = UUID()
         recipe.title = draft.title.value

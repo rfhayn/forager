@@ -53,14 +53,19 @@ struct IngredientTemplateRepository {
         print("✨ IngredientTemplateRepository: Creating new '\(displayName)' (canonical: '\(canonical)')")
         #endif
         // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory,
-           let factoryTemplate = try? factory.make(IngredientTemplate.self, configure: { t in
-               t.name = displayName
-               t.canonicalName = canonical
-               t.dateCreated = Date()
-               t.updatedAt = Date()
-           }) {
-            return factoryTemplate
+        if let factory = factory {
+            do {
+                return try factory.make(IngredientTemplate.self, configure: { t in
+                    t.name = displayName
+                    t.canonicalName = canonical
+                    t.dateCreated = Date()
+                    t.updatedAt = Date()
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating IngredientTemplate: \(error)")
+                #endif
+            }
         }
 
         let template = IngredientTemplate(context: context)

@@ -1,23 +1,23 @@
 # Current Development Story
 
 **Last Updated**: March 11, 2026
-**Status**: **M9.13 🔄 ACTIVE** (P1-P4 ✅, P5 verification) | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
-**Total Progress**: ~263 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.13-factory-enforcement`
-**Current Milestone**: M9.13 🔄 ACTIVE — ManagedObjectFactory Enforcement & Cross-Store Crash Fix
+**Status**: **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
+**Total Progress**: ~266 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.13-factory-enforcement` (PR pending)
+**Current Milestone**: M9.13 ✅ COMPLETE — ManagedObjectFactory Enforcement & Cross-Store Crash Fix
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M9.13 PR → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
 
 ---
 
-## 🔧 **M9.13: MANAGEDOBJECTFACTORY ENFORCEMENT - ACTIVE (PR pending)**
+## ✅ **M9.13: MANAGEDOBJECTFACTORY ENFORCEMENT - COMPLETE**
 
-**Status**: P1-P4 ✅ COMPLETE | P5 🔄 VERIFICATION
-**Estimated**: 10-13 hours (5 phases)
+**Status**: ✅ COMPLETE (all phases + hardening)
+**Actual**: ~3 hours (2 sessions)
 **PRD**: Plan in `.claude/plans/dazzling-rolling-puzzle.md`
-**Branch**: `feature/M9.13-factory-enforcement`
+**Branch**: `feature/M9.13-factory-enforcement` (PR pending)
 
-Fixes TestFlight crash from `viewContext.assign()` in AddIngredientsToListView after leaving a household. Root cause: M7.2.3 established ManagedObjectFactory but zero production code used it — all 43+ sites used direct `Entity(context:)`. Enforced factory across all services, repositories, and views. Added ADR 014 and `/forager-architecture-audit` skill.
+Fixes TestFlight crash from `viewContext.assign()` in AddIngredientsToListView after leaving a household. Root cause: M7.2.3 established ManagedObjectFactory but zero production code used it — all 43+ sites used direct `Entity(context:)`. Enforced factory across all services, repositories, and views. Added ADR 014 and `/forager-architecture-audit` skill. Post-review hardening: converted 11 `try?` sites to `do/catch` with DEBUG logging, removed dead code, fixed store correctness in WeeklyListsView, eliminated double-save in CreateMealPlanSheet.
 
 ### Phase Overview
 
@@ -27,7 +27,7 @@ Fixes TestFlight crash from `viewContext.assign()` in AddIngredientsToListView a
 | P2 | Service/repository factory integration (13 files) | ✅ COMPLETE |
 | P3 | View-layer cleanup (4 views) | ✅ COMPLETE |
 | P4 | ADR 014 + update 4 ADRs + CLAUDE.md + skills | ✅ COMPLETE |
-| P5 | Verification — build, audit, PR | 🔄 IN PROGRESS |
+| P5 | Hardening — dead code, DEBUG logging, store correctness, private(set) | ✅ COMPLETE |
 
 ---
 

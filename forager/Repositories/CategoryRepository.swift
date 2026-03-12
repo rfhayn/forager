@@ -53,13 +53,18 @@ struct CategoryRepository {
         print("✨ CategoryRepository: Creating new '\(displayName)' (normalized: '\(normalized)')")
         #endif
         // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory,
-           let factoryCategory = try? factory.make(Category.self, configure: { c in
-               c.name = displayName
-               c.normalizedName = normalized
-               c.updatedAt = Date()
-           }) {
-            return factoryCategory
+        if let factory = factory {
+            do {
+                return try factory.make(Category.self, configure: { c in
+                    c.name = displayName
+                    c.normalizedName = normalized
+                    c.updatedAt = Date()
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating Category: \(error)")
+                #endif
+            }
         }
 
         let category = Category(context: context)

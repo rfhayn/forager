@@ -97,16 +97,21 @@ struct PlannedMealRepository {
         print("✨ PlannedMealRepository: Creating new meal for slot '\(slotKey)'")
         #endif
         // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory,
-           let factoryMeal = try? factory.make(PlannedMeal.self, configure: { m in
-               m.date = date
-               m.mealType = mealType.lowercased()
-               m.slotKey = slotKey
-               m.recipe = recipe
-               m.mealPlan = mealPlan
-               m.createdDate = Date()
-           }) {
-            return factoryMeal
+        if let factory = factory {
+            do {
+                return try factory.make(PlannedMeal.self, configure: { m in
+                    m.date = date
+                    m.mealType = mealType.lowercased()
+                    m.slotKey = slotKey
+                    m.recipe = recipe
+                    m.mealPlan = mealPlan
+                    m.createdDate = Date()
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating PlannedMeal: \(error)")
+                #endif
+            }
         }
 
         let meal = PlannedMeal(context: context)

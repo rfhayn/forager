@@ -864,6 +864,23 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
+## ✅ **M9.13: MANAGEDOBJECTFACTORY ENFORCEMENT - COMPLETE**
+
+**Status**: ✅ Complete - March 11, 2026 (~3 hours)
+**Summary**: Bugfix milestone — fix TestFlight crash and enforce factory pattern for HouseholdScoped entity creation
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-FE-001** | **Factory enforcement for HouseholdScoped entities** | ✅ All 26 production creation sites route through ManagedObjectFactory (ADR 014) | M9.13 P1-P3 | 🎯 **Store correctness** |
+| **FR-FE-002** | **Remove assign() band-aids** | ✅ All `viewContext.assign()` calls removed — factory handles store assignment | M9.13 P1 | 🎯 **Crash fix** |
+| **FR-FE-003** | **Factory error visibility** | ✅ All 11 `try?` sites converted to `do/catch` with `#if DEBUG` logging | M9.13 P5 | 🎯 **Diagnosability** |
+| **FR-FE-004** | **Store-correct background writes** | ✅ WeeklyListsView uses `performScopedWrite` instead of `performWrite` | M9.13 P5 | 🎯 **Store correctness** |
+| **FR-FE-005** | **Factory encapsulation** | ✅ All `factory` properties `private(set)` with `configure(factory:)` injection | M9.13 P5 | 🎯 **Encapsulation** |
+
+**M9.13 Summary (COMPLETE)**: 5 requirements across 5 phases. Fixed TestFlight crash from `viewContext.assign()`, enforced ManagedObjectFactory across all creation sites, hardened with DEBUG logging and encapsulation. Architecture audit skill prevents regression.
+
+---
+
 ## 📊 **REQUIREMENTS SUMMARY**
 
 ### **By Status**

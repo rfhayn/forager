@@ -374,15 +374,28 @@ struct AddIngredientsToListView: View {
                 addToShoppingList(targetList: weeklyList)
             } else {
                 // M9.13: Use ManagedObjectFactory for correct store assignment (ADR 014)
-                if let factory = factory,
-                   let newList = try? factory.make(WeeklyList.self) { list in
-                       list.id = UUID()
-                       list.name = "Shopping List"
-                       list.dateCreated = Date()
-                       list.isCompleted = false
-                   } {
-                    targetWeeklyList = newList
-                    addToShoppingList(targetList: newList)
+                if let factory = factory {
+                    do {
+                        let newList = try factory.make(WeeklyList.self, configure: { list in
+                            list.id = UUID()
+                            list.name = "Shopping List"
+                            list.dateCreated = Date()
+                            list.isCompleted = false
+                        })
+                        targetWeeklyList = newList
+                        addToShoppingList(targetList: newList)
+                    } catch {
+                        #if DEBUG
+                        print("⚠️ Factory error creating WeeklyList: \(error)")
+                        #endif
+                        if let newList = weeklyListService.createList(name: "Shopping List") {
+                            targetWeeklyList = newList
+                            addToShoppingList(targetList: newList)
+                        } else {
+                            processingMessage = "Error creating shopping list"
+                            isProcessing = false
+                        }
+                    }
                 } else if let newList = weeklyListService.createList(name: "Shopping List") {
                     // Fallback when factory unavailable (e.g. previews)
                     targetWeeklyList = newList

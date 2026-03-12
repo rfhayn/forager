@@ -25,7 +25,7 @@ final class HouseholdIngredientTemplateRepository {
     private let context: NSManagedObjectContext
 
     // M9.13: Optional factory for correct store assignment (ADR 014)
-    var factory: ManagedObjectFactory?
+    private(set) var factory: ManagedObjectFactory?
 
     // MARK: - Initialization
 

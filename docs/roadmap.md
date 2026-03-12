@@ -2,7 +2,7 @@
 
 **Last Updated**: March 11, 2026
 **Current Phase**: **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | **M10.6 🔄 ACTIVE** | **M10.8 ✅ COMPLETE** | **M10.3 ✅ DEV COMPLETE** | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅ | M10.1 ✅ | M10.2 ✅
-**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M10.8 inline editing COMPLETE, M16 Knowledge MCP Server deployed (M16.1-M16.2 COMPLETE), M10.6 Claude API integration near complete (M10.6.5 docs remaining)
+**Status**: All M1-M5.0 milestones complete, M7 CloudKit sync operational, M8.4 ML parsing COMPLETE, M9.13 factory enforcement COMPLETE, M10.8 inline editing COMPLETE, M16 Knowledge MCP Server deployed (M16.1-M16.2 COMPLETE), M10.6 Claude API integration near complete (M10.6.5 docs remaining)
 **Execution Order**: M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
@@ -1245,6 +1245,16 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 - [x] iOS 26 deployment target with full Liquid Glass adoption
 - [ ] Layered app icon renders correctly in Icon Composer (deferred — manual GUI tool)
 - [x] All existing features maintain functionality (zero regressions)
+
+---
+
+### **✅ M9.13: ManagedObjectFactory Enforcement — COMPLETE (~3h)**
+
+**Status**: ✅ COMPLETE (March 11, 2026)
+**Actual Time**: ~3 hours (2 sessions)
+**Branch**: `feature/M9.13-factory-enforcement`
+
+Unplanned bugfix milestone. Fixed TestFlight crash from `viewContext.assign()` after leaving household. Enforced ManagedObjectFactory across all 26 production creation sites (ADR 014). Post-review hardening: converted 11 `try?` to `do/catch`, fixed WeeklyListsView store correctness, eliminated CreateMealPlanSheet double-save, `private(set)` encapsulation on factory properties.
 
 ---
 
