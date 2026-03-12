@@ -74,6 +74,13 @@ let recipe = factory.createRecipe() // Automatically assigned to correct store
 4. **CRITICAL**: `try viewContext.save()` immediately after sharing
 5. Data moves from private to shared zone
 
+**Factory Enforcement (ADR 014):**
+- HouseholdScoped entities MUST be created via `ManagedObjectFactory.make()`
+- Direct `Entity(context:)` for HouseholdScoped types is FORBIDDEN
+- Exceptions: tests, previews, seeders, HouseholdService migration, background contexts with manual householdKey
+- HouseholdScoped entities: WeeklyList, Recipe, PlannedMeal, MealPlan, Category, IngredientTemplate
+- Non-HouseholdScoped (safe for direct creation): GroceryListItem, Ingredient, Household, HouseholdMember, UserPreferences
+
 ### Service Layer (M7.5+ Standard)
 
 **All Core Data writes MUST go through services.** Views never call `context.save()` directly. See `docs/architecture/service-layer-pattern.md` for the complete standard.
@@ -210,6 +217,7 @@ Before implementing ANY feature, use these skills as needed:
 - `/forager-core-data-audit <EntityName>` — Required before schema changes (ADR 007)
 - `/forager-service-check <functionality>` — Required before creating new services
 - `/forager-prd-audit <path>` — Required if PRD is >2 weeks old
+- `/forager-architecture-audit` — Required before any milestone that creates Core Data objects
 - Verify correct M#.#.# format in current-story.md
 - Follow established patterns and ADR decisions
 
@@ -349,6 +357,7 @@ Break work into phases with clear deliverables:
 - Working on main branch instead of feature branch
 - Creating documentation without updating project-index.md
 - Making Core Data changes without impact analysis
+- Creating HouseholdScoped entities without ManagedObjectFactory (ADR 014)
 
 **Continue when:**
 - Build succeeds first try or with minor fixes (<3 attempts)

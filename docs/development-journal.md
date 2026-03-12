@@ -6,6 +6,82 @@
 
 ---
 
+## Session 78 — March 11, 2026
+**Milestone**: M9.13 — Code Review & Security Review Fixes
+**Focus**: Harden factory enforcement — surface silent failures, fix store correctness, remove dead code
+**Branch**: feature/M9.13-factory-enforcement
+
+### What Happened
+
+Applied fixes identified by 5-agent code review and security review of the M9.13 factory enforcement work. The review found 11 sites using `try? factory.make()` which silently swallowed errors, dead code in `RecipeImportService`, `WeeklyListsView` bypassing store assignment via `performWrite`, `CreateMealPlanSheet` double-saving, publicly mutable `factory` properties, and `duplicateRecipe` using active scope instead of source recipe's scope.
+
+Implemented all fixes across 18 files in 3 phases: (P1) dead code removal + DEBUG logging on all factory error paths + `private(set)` on factory properties, (P2) store correctness fixes including converting `WeeklyListsView` to `performScopedWrite` and eliminating `CreateMealPlanSheet`'s double-save, (P3) edge case fixes for `duplicateRecipe` householdKey preservation and `setQuickOption` error propagation.
+
+### Key Decisions
+
+- **`do/catch` with `#if DEBUG` instead of removing `try?` fallbacks**: The fallback behavior (falling back to `Entity(context:)` when factory fails) is actually correct for graceful degradation. The problem was *silent* failure — developers couldn't see when factory creation failed during testing. The `#if DEBUG print()` pattern makes failures visible in development without changing production behavior.
+
+- **`private(set)` + `configure(factory:)` method**: Swift's `private(set)` restricts the setter to the declaring source file. Since `foragerApp.swift` injects factory into services defined in other files, direct property assignment wouldn't compile. Added `configure(factory:)` methods to make the one-time injection explicit. This prevents views from accidentally overwriting factory references while keeping the injection API clean.
+
+- **`performScopedWrite` over `performWrite` for background list creation**: `WeeklyListsView` was using `performWrite` (raw context, no factory) with manual `householdKey` but no store assignment. Objects landed in the private store even in household mode. `performScopedWrite` creates a factory bound to the background context with explicit scope, ensuring correct store placement. Added `onSuccess`/`onError` callbacks to match `performWrite`'s signature so the migration was drop-in.
+
+- **Single-save `createMealPlan` with `name:`/`duration:` params**: `CreateMealPlanSheet` was calling `createMealPlan()` (save #1), mutating the returned plan, then calling `saveContext()` (save #2). This is wasteful and risky — if save #2 fails, the plan exists with wrong metadata. Moving `name` and `duration` into the service method maintains atomicity with a single save.
+
+### Learning
+
+- **`try?` is a code smell on factory calls**: Silent `nil` return from `try? factory.make()` means the code falls back to `Entity(context:)` without anyone knowing. In production this creates objects in the wrong store. The pattern of `do/catch` with debug logging preserves the fallback while making failures diagnosable.
+- **`performScopedWrite` needs callbacks for UI feedback**: The original `performScopedWrite` had no way to notify the caller of success/failure, unlike `performWrite`. Views that show loading spinners or error messages need these callbacks.
+- **`duplicateRecipe` scope should match source, not active**: When duplicating a recipe, the copy should stay in the same store as the original. Using the active scope (via factory's scope provider) could put the copy in a different store if the user switched contexts.
+
+### AI Tooling Observations
+
+The detailed plan with exact file paths and line numbers made implementation very efficient — each change was precisely located. The parallel read of all 18 files at session start loaded full context immediately. Build succeeded on first attempt after all changes, validating the plan's accuracy. Grep verification at the end (`try? factory.make` = 0, `var factory: ManagedObjectFactory` = 0, `importSvc.factory` = 0) provided automated confidence checks.
+
+### What's Next
+
+Commit these hardening fixes, then create PR for full M9.13 (factory enforcement + hardening). Run architecture audit to verify zero violations. Test on device in household mode.
+
+---
+
+## Session 77 — March 11, 2026
+**Milestone**: M9.13 — ManagedObjectFactory Enforcement & Cross-Store Crash Fix
+**Focus**: Fix TestFlight crash from `viewContext.assign()` and enforce factory pattern across all 43+ creation sites
+**Branch**: feature/M9.13-factory-enforcement
+
+### What Happened
+
+Implemented the full 5-phase plan for M9.13, addressing a TestFlight crash (`CoreData -[NSManagedObjectContext assignObject:toPersistentStore:]`) that occurred when tapping "Add to Grocery List" from a recipe after leaving a household. The M9.12 session added `context.assign()` calls as band-aids for incorrect store placement, but these caused crashes when the recipe's store was no longer accessible.
+
+The deeper finding was that M7.2.3 established `ManagedObjectFactory` as the canonical creation path for HouseholdScoped entities, but **zero production code actually used it**. All 43+ creation sites used direct `Entity(context:)`, which defaults to the private store regardless of household scope. This worked until M10.9/M9.12 added cross-store views and entity relationships.
+
+Across 4 phases (P1 crash fix, P2 service integration, P3 view cleanup, P4 architecture enforcement), converted all production creation sites to use factory with fallback, removed all `viewContext.assign()` calls outside ManagedObjectFactory, and added ADR 014 + an architecture audit skill to prevent regression.
+
+### Key Decisions
+
+- **Factory with fallback pattern**: Rather than making factory non-optional (which would require changing service init signatures and test setup), used `if let factory { factory.make(...) } else { Entity(context:) }` pattern. The fallback ensures tests/previews keep working without factory injection. This is pragmatic — the architecture audit skill catches production violations.
+
+- **Child entities don't need factory**: `GroceryListItem` and `Ingredient` inherit their persistent store from their parent (`WeeklyList`/`Recipe`) via Core Data relationships. The M9.12 `assign()` calls on these were unnecessary — fixing the parent's store placement is sufficient.
+
+- **Background contexts use manual householdKey**: `performWrite` background contexts can't use `ManagedObjectFactory` because `HouseholdScopeProvider` is `@MainActor`. These sites set `householdKey` manually and rely on merge policy for store placement. This is acceptable because background contexts merge into the view context on save.
+
+- **RecipeImportService kept direct creation**: The import service uses a child context, which doesn't support `context.assign()`. Store assignment is inherited from the parent context on save. Kept `Recipe(context: childContext)` with manual `householdKey` assignment.
+
+### Learning
+
+- **`context.assign()` is a sharp edge**: It works only when the target store is accessible. After leaving a household, the shared store is gone, so `assign()` crashes. The factory avoids this entirely by resolving scope at creation time.
+- **Core Data relationship store inheritance**: When you set `listItem.weeklyList = someList`, the child object inherits the parent's store. No explicit `assign()` needed. This is a Core Data guarantee that simplifies the architecture considerably.
+- **`HouseholdScopeProvider` is @MainActor**: This limits factory usage to the main context. Background contexts must use `performScopedWrite` (which creates its own factory) or set householdKey manually.
+
+### AI Tooling Observations
+
+This was a large, systematic refactoring (26 production sites across 20+ files). The detailed PRD with a complete violation inventory was critical — it provided an exhaustive checklist so no site was missed. Claude's ability to make parallel edits across many files in sequence was effective, though the session ran long enough to hit context limits. The grep-based architecture audit at the end confirmed zero violations, which gave confidence in the completeness of the changes.
+
+### What's Next
+
+Create PR, squash merge to main. Test on device: "Add to Grocery List" after leaving a household (the original crash scenario), plus household mode create/import flows. If stable, archive as the next TestFlight build.
+
+---
+
 ## Session 76 — March 10-11, 2026
 **Milestone**: M9.12 — Cross-Store Fix (Household Grocery List Failure)
 **Focus**: Fix silent failure when adding recipe ingredients to grocery list while in a household

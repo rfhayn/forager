@@ -40,12 +40,14 @@ struct PlannedMealRepository {
     ///   - mealPlan: Parent meal plan (can be nil)
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created PlannedMeal
+    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
     static func getOrCreate(
         date: Date,
         mealType: String,
         recipe: Recipe?,
         mealPlan: MealPlan?,
-        in context: NSManagedObjectContext
+        in context: NSManagedObjectContext,
+        factory: ManagedObjectFactory? = nil
     ) -> PlannedMeal {
         // Validate meal type
         guard PlannedMeal.isValidMealType(mealType) else {
@@ -94,6 +96,24 @@ struct PlannedMealRepository {
         #if DEBUG
         print("✨ PlannedMealRepository: Creating new meal for slot '\(slotKey)'")
         #endif
+        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        if let factory = factory {
+            do {
+                return try factory.make(PlannedMeal.self, configure: { m in
+                    m.date = date
+                    m.mealType = mealType.lowercased()
+                    m.slotKey = slotKey
+                    m.recipe = recipe
+                    m.mealPlan = mealPlan
+                    m.createdDate = Date()
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating PlannedMeal: \(error)")
+                #endif
+            }
+        }
+
         let meal = PlannedMeal(context: context)
         meal.date = date
         meal.mealType = mealType.lowercased()
@@ -101,7 +121,7 @@ struct PlannedMealRepository {
         meal.recipe = recipe
         meal.mealPlan = mealPlan
         meal.createdDate = Date()
-        
+
         return meal
     }
     

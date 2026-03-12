@@ -412,6 +412,9 @@ context.refreshAllObjects()
 | `ManagedObjectFactory` | Automatic store assignment based on scope |
 | `CategoryDeduplicator` | Self-healing duplicate prevention |
 
+### Factory Enforcement (ADR 014)
+`ManagedObjectFactory` is **mandatory** for all HouseholdScoped entity creation. Direct `Entity(context:)` is forbidden. See ADR 014 for full rationale and exemptions.
+
 ---
 
 ## 📊 **Data Model**

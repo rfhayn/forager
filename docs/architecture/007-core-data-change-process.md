@@ -50,6 +50,9 @@ During M3 implementation, we changed the Core Data schema (removed `quantity` an
 
 ## Decision
 
+### Phase 0: Factory Compliance (ADR 014)
+Before making schema changes, verify that all creation sites for the affected entity use `ManagedObjectFactory`. Run `/forager-architecture-audit` to check.
+
 ### Mandatory Core Data Impact Analysis
 
 **For ANY Core Data schema change, we will:**

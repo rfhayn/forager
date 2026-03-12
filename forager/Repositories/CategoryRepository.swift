@@ -31,14 +31,15 @@ struct CategoryRepository {
     ///   - displayName: User-facing category name (e.g., "Produce")
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created Category
-    static func getOrCreate(displayName: String, in context: NSManagedObjectContext) -> Category {
+    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
+    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) -> Category {
         let normalized = Category.normalizedName(from: displayName)
-        
+
         // Query by semantic key first
         let request: NSFetchRequest<Category> = Category.fetchRequest()
         request.predicate = NSPredicate(format: "normalizedName == %@", normalized)
         request.fetchLimit = 1
-        
+
         // Return existing if found
         if let existing = try? context.fetch(request).first {
             #if DEBUG
@@ -46,16 +47,31 @@ struct CategoryRepository {
             #endif
             return existing
         }
-        
+
         // Create new if doesn't exist
         #if DEBUG
         print("✨ CategoryRepository: Creating new '\(displayName)' (normalized: '\(normalized)')")
         #endif
+        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        if let factory = factory {
+            do {
+                return try factory.make(Category.self, configure: { c in
+                    c.name = displayName
+                    c.normalizedName = normalized
+                    c.updatedAt = Date()
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating Category: \(error)")
+                #endif
+            }
+        }
+
         let category = Category(context: context)
         category.name = displayName
         category.normalizedName = normalized
         category.updatedAt = Date()
-        
+
         return category
     }
     

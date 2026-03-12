@@ -52,7 +52,9 @@ extension PersistenceController {
     /// Source: ChatGPT - "wrap Option A inside a lightweight version of Option B"
     func performScopedWrite(
         scope: DataScope,
-        block: @escaping (NSManagedObjectContext, ManagedObjectFactory) throws -> Void
+        block: @escaping (NSManagedObjectContext, ManagedObjectFactory) throws -> Void,
+        onSuccess: (() -> Void)? = nil,
+        onError: ((Error) -> Void)? = nil
     ) {
         container.performBackgroundTask { bgContext in
             // Create factory for background context (no scopeProvider needed)
@@ -61,28 +63,34 @@ extension PersistenceController {
                 scopeProvider: nil,  // ← Background doesn't use provider
                 persistence: self
             )
-            
+
             do {
                 // Execute work block
                 try block(bgContext, factory)
-                
+
                 // Save if changes were made
                 if bgContext.hasChanges {
                     try bgContext.save()
-                    
+
                     #if DEBUG
                     let insertedCount = bgContext.insertedObjects.count
                     let updatedCount = bgContext.updatedObjects.count
                     print("✅ M7.2.3 ScopedWrite: Saved \(insertedCount) inserted, \(updatedCount) updated")
                     #endif
                 }
+                DispatchQueue.main.async {
+                    onSuccess?()
+                }
             } catch {
                 #if DEBUG
                 print("❌ M7.2.3 ScopedWrite Failed: \(error)")
                 #endif
-                
+
                 // Rollback on error
                 bgContext.rollback()
+                DispatchQueue.main.async {
+                    onError?(error)
+                }
             }
         }
     }

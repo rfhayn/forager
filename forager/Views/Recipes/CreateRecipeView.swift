@@ -11,6 +11,7 @@ import CoreData
 
 struct CreateRecipeView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.managedObjectFactory) private var factory
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var recipeService: RecipeService
 
@@ -844,24 +845,58 @@ struct CreateRecipeView: View {
     private func completeSave() {
         // CRITICAL: Transaction order - Templates already created, now create Ingredients and Recipe
 
-        // Step 1: Create Recipe
-        let recipe = Recipe(context: viewContext)
+        // M9.13: Create Recipe via factory for correct store assignment (ADR 014)
+        let recipe: Recipe
+        let trimmedName = formData.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedInstructions = formData.instructions.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let factory = factory {
+            do {
+                recipe = try factory.make(Recipe.self, configure: { r in
+                    r.id = UUID()
+                    r.title = trimmedName
+                    r.prepTime = Int16(formData.prepTime)
+                    r.cookTime = Int16(formData.cookTime)
+                    r.servings = Int16(formData.servings)
+                    r.instructions = trimmedInstructions
+                    r.isFavorite = formData.isFavorite
+                    r.dateCreated = Date()
+                    r.usageCount = 0
+                    r.lastUsed = nil
+                    if !tagsString.isEmpty { r.tags = tagsString }
+                })
+            } catch {
+                #if DEBUG
+                print("⚠️ Factory error creating Recipe: \(error)")
+                #endif
+                recipe = Recipe(context: viewContext)
+                recipe.id = UUID()
+                recipe.title = trimmedName
+                recipe.prepTime = Int16(formData.prepTime)
+                recipe.cookTime = Int16(formData.cookTime)
+                recipe.servings = Int16(formData.servings)
+                recipe.instructions = trimmedInstructions
+                recipe.isFavorite = formData.isFavorite
+                recipe.dateCreated = Date()
+                recipe.usageCount = 0
+                recipe.lastUsed = nil
+                if !tagsString.isEmpty { recipe.tags = tagsString }
+            }
+        } else {
+            recipe = Recipe(context: viewContext)
             recipe.id = UUID()
-            recipe.title = formData.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            recipe.title = trimmedName
             recipe.prepTime = Int16(formData.prepTime)
             recipe.cookTime = Int16(formData.cookTime)
             recipe.servings = Int16(formData.servings)
-            recipe.instructions = formData.instructions.trimmingCharacters(in: .whitespacesAndNewlines)
+            recipe.instructions = trimmedInstructions
             recipe.isFavorite = formData.isFavorite
             recipe.dateCreated = Date()
             recipe.usageCount = 0
             recipe.lastUsed = nil
-            
-            // Store tags in dedicated field
-            let tagsString = formData.tags.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !tagsString.isEmpty {
-                recipe.tags = tagsString
-            }
+            if !tagsString.isEmpty { recipe.tags = tagsString }
+        }
             
             // Step 2: Create Ingredients with Template links
             for (index, ingredientInput) in formData.ingredients.enumerated() {

@@ -102,10 +102,23 @@ Recipe, WeeklyList, MealPlan, PlannedMeal, Category, IngredientTemplate
 
 See `docs/architecture/013-scope-aware-fetch-pattern.md` for the full pattern.
 
+## Step 6: Factory Compliance Check (ADR 014)
+
+If the entity conforms to `HouseholdScoped`, verify:
+
+- [ ] All creation sites use `ManagedObjectFactory.make()` (not direct `Entity(context:)`)
+- [ ] Services that create this entity have `var factory: ManagedObjectFactory?` property
+- [ ] Factory is injected via `foragerApp.init()` or `performScopedWrite`
+- [ ] Exempt sites documented: tests, previews, seeders, HouseholdService migration
+
+Run `/forager-architecture-audit` to verify compliance.
+
+HouseholdScoped entities: `WeeklyList`, `Recipe`, `PlannedMeal`, `MealPlan`, `Category`, `IngredientTemplate`
+
 ## Critical Reminders
 
 - CloudKit Production schema is **append-only** — no destructive changes
-- New model version requires incrementing from v7 (current) — update as needed
+- New model version requires incrementing from v8 (current) — update as needed
 - Test with sample data before migrating production
 - Follow M3 Phase 3 pattern for migrations (successful isStaple migration)
 - **ADR 013**: All service fetches on household-scoped entities MUST include `householdKey` predicate

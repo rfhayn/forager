@@ -183,14 +183,18 @@ struct WeeklyListsView: View {
             isGeneratingList = true
         }
 
+        // M9.13: Use performScopedWrite for correct store assignment (ADR 014)
+        let scope = householdService.currentScope
         let currentKey = householdService.currentHouseholdKey
-        PersistenceController.shared.performWrite({ context in
-            let newList = WeeklyList(context: context)
-            newList.id = UUID()
-            newList.name = "Weekly Shopping - \(DateFormatter.shortDate.string(from: Date()))"
-            newList.dateCreated = Date()
-            newList.isCompleted = false
-            newList.notes = "Auto-generated from ingredient staples"
+        PersistenceController.shared.performScopedWrite(scope: scope, block: { context, factory in
+            let newList = try factory.make(WeeklyList.self, in: scope, configure: { list in
+                list.id = UUID()
+                list.name = "Weekly Shopping - \(DateFormatter.shortDate.string(from: Date()))"
+                list.dateCreated = Date()
+                list.isCompleted = false
+                list.notes = "Auto-generated from ingredient staples"
+                list.householdKey = currentKey
+            })
 
             // M10.6.18: Scope staple fetch to household (ADR 013)
             let stapleRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
@@ -203,32 +207,23 @@ struct WeeklyListsView: View {
                 NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)
             ]
 
-            do {
-                let stapleTemplates = try context.fetch(stapleRequest)
+            let stapleTemplates = try context.fetch(stapleRequest)
 
-                for (index, template) in stapleTemplates.enumerated() {
-                    let listItem = GroceryListItem(context: context)
-                    listItem.id = UUID()
-                    listItem.name = template.name
-                    listItem.displayText = "1"
-                    listItem.numericValue = 1.0
-                    listItem.standardUnit = nil
-                    listItem.isParseable = true
-                    listItem.parseConfidence = 1.0
-                    listItem.isCompleted = false
-                    listItem.source = "staples"
-                    listItem.sortOrder = Int16(index)
-                    // M9.12: Set categoryEntity directly from template
-                    listItem.categoryEntity = template.categoryEntity
-                    newList.addToItems(listItem)
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Failed to fetch staples: \(error.localizedDescription)"
-                    self.showingError = true
-                    self.isGeneratingList = false
-                }
-                return
+            for (index, template) in stapleTemplates.enumerated() {
+                let listItem = GroceryListItem(context: context)
+                listItem.id = UUID()
+                listItem.name = template.name
+                listItem.displayText = "1"
+                listItem.numericValue = 1.0
+                listItem.standardUnit = nil
+                listItem.isParseable = true
+                listItem.parseConfidence = 1.0
+                listItem.isCompleted = false
+                listItem.source = "staples"
+                listItem.sortOrder = Int16(index)
+                // M9.12: Set categoryEntity directly from template
+                listItem.categoryEntity = template.categoryEntity
+                newList.addToItems(listItem)
             }
         }, onSuccess: {
             withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
@@ -255,12 +250,17 @@ struct WeeklyListsView: View {
     }
 
     private func createEmptyList() {
-        PersistenceController.shared.performWrite({ context in
-            let newList = WeeklyList(context: context)
-            newList.id = UUID()
-            newList.name = "Shopping - \(DateFormatter.shortDate.string(from: Date()))"
-            newList.dateCreated = Date()
-            newList.isCompleted = false
+        let scope = householdService.currentScope
+        let currentKey = householdService.currentHouseholdKey
+        PersistenceController.shared.performScopedWrite(scope: scope, block: { context, factory in
+            // M9.13: Use factory for correct store assignment (ADR 014)
+            _ = try factory.make(WeeklyList.self, in: scope, configure: { list in
+                list.id = UUID()
+                list.name = "Shopping - \(DateFormatter.shortDate.string(from: Date()))"
+                list.dateCreated = Date()
+                list.isCompleted = false
+                list.householdKey = currentKey
+            })
         }, onError: { error in
             errorMessage = "Failed to create list: \(error.localizedDescription)"
             showingError = true

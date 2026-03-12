@@ -105,6 +105,7 @@ When creating or modifying a service that fetches household-scoped entities:
 - [ ] Is `householdKey` passed in (not assumed from global state)?
 - [ ] Does the `replaceExistingRecipe`-style overwrite validate store accessibility?
 - [ ] Before `container.share()`, is `cleanOrphanedHouseholdData()` called?
+- [ ] Are all household-scoped entity creations using `ManagedObjectFactory`? (ADR 014)
 
 Add this to the `/forager-core-data-audit` checklist for any entity with `householdKey`.
 

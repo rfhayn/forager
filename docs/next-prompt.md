@@ -2,7 +2,7 @@
 
 **Last Updated**: March 11, 2026
 **For Milestone**: M10.6 Claude API Integration (documentation)
-**Status**: **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 ACTIVE (M10.6.5 remaining)
+**Status**: **M9.13 ✅ COMPLETE** (PR pending) | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 ACTIVE (M10.6.5 remaining)
 
 ---
 

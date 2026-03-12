@@ -165,7 +165,9 @@ class RecipeImportService: ObservableObject {
             templateService: childTemplateService
         )
 
-        // Create Recipe entity
+        // Create Recipe entity in child context. Child context saves to parent
+        // (viewContext), which persists to disk. householdKey set manually via
+        // provider — factory not used because child contexts don't support store assignment.
         let recipe = Recipe(context: childContext)
         recipe.id = UUID()
         recipe.title = draft.title.value

@@ -51,6 +51,14 @@
 
 ## 🔥 **RECENT ACTIVITY**
 
+### **March 11, 2026** - M9.13 ✅ COMPLETE — ManagedObjectFactory Enforcement & Hardening
+- **Fixed**: TestFlight crash from `viewContext.assign()` after leaving household
+- **Enforced**: Factory pattern across all 26 production creation sites (ADR 014)
+- **Hardened**: Converted 11 `try?` sites to `do/catch` with DEBUG logging, removed dead code in RecipeImportService
+- **Store correctness**: WeeklyListsView now uses `performScopedWrite`, CreateMealPlanSheet single-save
+- **Encapsulation**: All `factory` properties now `private(set)` with `configure(factory:)` injection
+- **Branch**: `feature/M9.13-factory-enforcement` (PR pending)
+
 ### **March 11, 2026** - M16.1-M16.2 ✅ COMPLETE — Knowledge MCP Server
 - **Completed**: Python MCP server at `Tools/mcp-knowledge/` with 7 tools (search, read, list, project status, newsletter context/draft/export)
 - **Stats**: 182 documents indexed, 2,472 searchable chunks, BM25 search <1ms

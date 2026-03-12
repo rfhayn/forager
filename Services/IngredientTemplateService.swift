@@ -8,6 +8,9 @@ class IngredientTemplateService: ObservableObject {
     @Published var popularIngredients: [IngredientTemplate] = []
     @Published var errorMessage: String?
 
+    // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
+    private(set) var factory: ManagedObjectFactory?
+
     // M10.6.11: Household key for scoping newly created templates.
     // Set via provider closure (app-level) or direct property (child contexts).
     var householdKey: String?
@@ -20,6 +23,11 @@ class IngredientTemplateService: ObservableObject {
 
     init(context: NSManagedObjectContext) {
         self.context = context
+    }
+
+    /// One-time factory injection at app startup (ADR 014)
+    func configure(factory: ManagedObjectFactory) {
+        self.factory = factory
     }
     
     // MARK: - M4.3.5: Ingredient Normalization
@@ -497,7 +505,29 @@ class IngredientTemplateService: ObservableObject {
                 return existing
             }
 
-            let template = IngredientTemplate(context: context)
+            // M9.13: Use factory when available for correct store assignment (ADR 014)
+            let template: IngredientTemplate
+            if let factory = factory {
+                do {
+                    template = try factory.make(IngredientTemplate.self, configure: { t in
+                        t.id = UUID()
+                        t.name = normalizedName
+                        t.canonicalName = canonical
+                        t.categoryEntity = category
+                        t.householdKey = self.resolvedHouseholdKey
+                        t.usageCount = 1
+                        t.dateCreated = Date()
+                        t.updatedAt = Date()
+                    })
+                    return template
+                } catch {
+                    #if DEBUG
+                    print("⚠️ Factory error creating IngredientTemplate: \(error)")
+                    #endif
+                }
+            }
+            // Fallback: no factory or factory error
+            template = IngredientTemplate(context: context)
             template.id = UUID()
             template.name = normalizedName
             template.canonicalName = canonical

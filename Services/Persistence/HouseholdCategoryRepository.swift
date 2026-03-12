@@ -23,11 +23,15 @@ import Foundation
 final class HouseholdCategoryRepository {
     
     private let context: NSManagedObjectContext
-    
+
+    // M9.13: Optional factory for correct store assignment (ADR 014)
+    private(set) var factory: ManagedObjectFactory?
+
     // MARK: - Initialization
-    
-    init(context: NSManagedObjectContext) {
+
+    init(context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) {
         self.context = context
+        self.factory = factory
     }
     
     // MARK: - Public Repository Methods
@@ -58,16 +62,30 @@ final class HouseholdCategoryRepository {
             return existing
         }
         
-        // Create new category
-        let category = Category(context: context)
-        category.id = UUID()
-        category.name = name
-        category.normalizedName = normalizedName
-        category.color = color
-        category.sortOrder = sortOrder
-        category.isDefault = isDefault
-        category.dateCreated = Date()
-        category.updatedAt = Date()
+        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        let category: Category
+        if let factory = factory {
+            category = try factory.make(Category.self, configure: { c in
+                c.id = UUID()
+                c.name = name
+                c.normalizedName = normalizedName
+                c.color = color
+                c.sortOrder = sortOrder
+                c.isDefault = isDefault
+                c.dateCreated = Date()
+                c.updatedAt = Date()
+            })
+        } else {
+            category = Category(context: context)
+            category.id = UUID()
+            category.name = name
+            category.normalizedName = normalizedName
+            category.color = color
+            category.sortOrder = sortOrder
+            category.isDefault = isDefault
+            category.dateCreated = Date()
+            category.updatedAt = Date()
+        }
         
         #if DEBUG
         print("✅ M7.2.3: Created category '\(name)' (normalized: '\(normalizedName)')")

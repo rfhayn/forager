@@ -272,21 +272,13 @@ struct CreateMealPlanSheet: View {
         
         let duration = calculatedDuration
         
-        // Create the plan
-        let plan = MealPlan(context: viewContext)
-        plan.id = UUID()
-        plan.name = name.isEmpty ? generateAutoName() : name
-        plan.startDate = Calendar.current.startOfDay(for: startDate)
-        plan.duration = Int16(duration)
-        plan.createdDate = Date()
-        plan.isActive = false  // Will be set by updateActivePlanStatus
-        plan.isCompleted = false
-
-        MealPlanService.shared.saveContext()
-
-        if MealPlanService.shared.lastError != nil {
-            validationError = "Failed to create meal plan. Please try again."
-        } else {
+        // M9.13: Route through MealPlanService for factory-based creation (ADR 014)
+        // Pass all values so MealPlanService applies them in a single save.
+        if let plan = MealPlanService.shared.createMealPlan(
+            startDate: Calendar.current.startOfDay(for: startDate),
+            name: name.isEmpty ? nil : name,
+            duration: duration
+        ) {
             MealPlanService.shared.updateActivePlanStatus()
 
             if isInline, let callback = onCreated {
@@ -294,6 +286,8 @@ struct CreateMealPlanSheet: View {
             } else {
                 dismiss()
             }
+        } else {
+            validationError = "Failed to create meal plan. Please try again."
         }
     }
 }
