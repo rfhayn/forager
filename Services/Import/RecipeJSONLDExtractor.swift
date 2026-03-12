@@ -369,8 +369,12 @@ class RecipeJSONLDExtractor: RecipeExtractor {
             guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else { continue }
             if let match = regex.firstMatch(in: html, range: NSRange(location: 0, length: nsHTML.length)),
                match.numberOfRanges > 1 {
-                let content = nsHTML.substring(with: match.range(at: 1))
+                var content = nsHTML.substring(with: match.range(at: 1))
                     .trimmingCharacters(in: .whitespacesAndNewlines)
+                // M9.14: Decode HTML entities in og:title (e.g., &amp; → &)
+                if HTMLEntityDecoder.containsEntities(content) {
+                    content = HTMLEntityDecoder.decode(content)
+                }
                 if !content.isEmpty { return content }
             }
         }
@@ -390,8 +394,12 @@ class RecipeJSONLDExtractor: RecipeExtractor {
             return nil
         }
 
-        let content = nsHTML.substring(with: match.range(at: 1))
+        var content = nsHTML.substring(with: match.range(at: 1))
             .trimmingCharacters(in: .whitespacesAndNewlines)
+        // M9.14: Decode HTML entities in title tag (e.g., &amp; → &)
+        if HTMLEntityDecoder.containsEntities(content) {
+            content = HTMLEntityDecoder.decode(content)
+        }
         return content.isEmpty ? nil : content
     }
 

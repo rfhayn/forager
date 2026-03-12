@@ -6,6 +6,45 @@
 
 ---
 
+## Session 79 — March 12, 2026
+**Milestone**: M9.14 — Household Scope Bug Fixes (Post-Reinstall Entity Creation)
+**Focus**: Diagnose and fix silent meal plan + grocery list creation failures reported from TestFlight build 30
+**Branch**: bugfix/M9.14-household-scope-fixes
+
+### What Happened
+
+Rich reported critical bugs from TestFlight build 30: after deleting and reinstalling the app while remaining a household member, meal plan creation and grocery list creation from recipes both fail silently. Also reported: `&amp;` showing in recipe titles, and a parsing name discrepancy with "lean ground beef."
+
+Investigated all four issues using parallel exploration agents. The root cause for the two critical failures traces back to M9.13's factory enforcement: `ManagedObjectFactory.make()` in the `.household` scope path calls `context.existingObject(with: householdID)` which throws when the ObjectID is stale after CloudKit sync on a fresh install. In Release builds, the factory throws `FactoryError.householdNotFound`, which services catch and return nil — the user sees nothing happen.
+
+Fix was surgical: added a fallback `NSFetchRequest<Household>` with `fetchLimit = 1` in the factory when `existingObject(with:)` fails. The household exists in the store — only the ObjectID reference is stale. Also added defensive object validation in `HouseholdScopeProvider` and HTML entity decoding in both `extractMetaOGTitle()` and `extractTitleTag()`.
+
+### Key Decisions
+
+- **Fallback fetch over scope degradation**: Could have fallen back to `.personal` scope when household ObjectID fails, but that would create entities in the wrong store. Instead, the fallback fetches the household directly — preserving correct store assignment while handling staleness.
+
+- **PRD before code**: Wrote the full investigation into a PRD (`docs/prds/active/m9.14-household-scope-bugfixes.md`) and had Rich review before implementing. This caught the scope of the fix and documented the root cause for future reference.
+
+- **No fix for parsing discrepancy**: The "lean ground beef" → "beef" → "lean ground beef" flow is working as designed through template matching fallback. Documented for future M8.x review rather than fixing now.
+
+### Learning
+
+- **NSManagedObjectID staleness after reinstall**: ObjectIDs are stable within a persistent store coordinator session but can become stale when CloudKit re-syncs data to a fresh install. Any code caching ObjectIDs across app launches (like `DataScope.household(id:, storeID:)`) must handle this. The factory was the first code to actually USE the cached ObjectID for resolution — pre-M9.13 code never needed it.
+
+- **M9.13 enforcement exposed a latent bug**: The factory enforcement was correct — it just revealed that the `.household` path had never been stress-tested with real-world CloudKit scenarios like reinstall. Testing factory paths requires testing CloudKit lifecycle events, not just unit tests.
+
+- **Multiple extraction paths need consistent normalization**: The `&amp;` bug was the same class as a M9.12 insight — JSON-LD title was decoded, but `enhanceTitleFromHTML()` replaced it with an un-decoded og:title. When multiple paths feed the same field, all must apply the same transforms.
+
+### AI Tooling Observations
+
+The 4-agent parallel investigation (meal plan, grocery list, ampersand, parsing) was highly effective — each agent traced a complete code path independently in ~30-60 seconds. The screenshot review gave clear visual evidence of each bug. The PRD-first workflow worked well for getting alignment before touching code.
+
+### What's Next
+
+Commit journal + insights, then archive to TestFlight for Rich to verify the fixes on-device. After verification, create PR and merge to main.
+
+---
+
 ## Session 78 — March 11, 2026
 **Milestone**: M9.13 — Code Review & Security Review Fixes
 **Focus**: Harden factory enforcement — surface silent failures, fix store correctness, remove dead code
