@@ -1538,6 +1538,43 @@ class HouseholdService: ObservableObject {
             item.categoryEntity = nil
         }
 
+        // M9.14: Break cross-store Ingredient→IngredientTemplate relationships before templates move to shared store.
+        // Ingredient is non-HouseholdScoped (stays in private zone); IngredientTemplate is HouseholdScoped (moves to shared zone).
+        // Without this, CloudKit error 134060: "Object graph corruption — objects assigned to multiple zones."
+        // The template name is already stored as Ingredient.name, so no data loss.
+        let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
+        let ingredients = try viewContext.fetch(ingredientRequest)
+        var brokenTemplateLinks = 0
+        for ingredient in ingredients where ingredient.ingredientTemplate != nil {
+            ingredient.ingredientTemplate = nil
+            brokenTemplateLinks += 1
+        }
+
+        // M9.14: Also break GroceryListItem→Category relationships.
+        // GroceryListItem should follow its parent WeeklyList to the shared zone, but the optional
+        // weeklyList relationship means CloudKit may not move it automatically. Defensive nil to
+        // prevent the same cross-zone error as GroceryItem→Category.
+        // categoryName string is preserved for display.
+        let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
+        let listItems = try viewContext.fetch(listItemRequest)
+        var brokenCategoryLinks = 0
+        for item in listItems where item.categoryEntity != nil {
+            if item.categoryName == nil || item.categoryName?.isEmpty == true {
+                item.categoryName = item.categoryEntity?.name
+            }
+            item.categoryEntity = nil
+            brokenCategoryLinks += 1
+        }
+
+        #if DEBUG
+        if brokenTemplateLinks > 0 {
+            print("   🔗 Broke \(brokenTemplateLinks) Ingredient→IngredientTemplate cross-zone links")
+        }
+        if brokenCategoryLinks > 0 {
+            print("   🔗 Broke \(brokenCategoryLinks) GroceryListItem→Category cross-zone links")
+        }
+        #endif
+
         // Migrate categories
         let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
         categoryRequest.predicate = NSPredicate(format: "household == nil")
