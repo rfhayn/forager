@@ -242,6 +242,23 @@ final class PersistenceController: ObservableObject {
             print("   CloudKit Scope: .\(scopeName.lowercased())")
             #endif
         }
+
+        // M9.15: Push Core Data model schema to CloudKit Development environment.
+        // This ensures new attributes (e.g., householdKey on Ingredient/GroceryListItem)
+        // are registered in CloudKit BEFORE any records are written. Without this,
+        // Debug builds only push schema when a record with the new field is actually saved,
+        // which may never happen if the creation flow fails before that point.
+        // Safe to call multiple times — no-op if schema is already current.
+        // Only runs in Debug builds (Production schema must be promoted manually).
+        #if DEBUG
+        do {
+            try container.initializeCloudKitSchema()
+            print("✅ M9.15: CloudKit schema initialized (Development environment)")
+        } catch {
+            print("⚠️ M9.15: CloudKit schema initialization failed: \(error)")
+            // Non-fatal — schema may already be current, or CloudKit may be unavailable
+        }
+        #endif
     }
     
     /// M7.2.3: Configure view context with object-trump merge policy

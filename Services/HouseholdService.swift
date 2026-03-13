@@ -334,8 +334,20 @@ class HouseholdService: ObservableObject {
                     // M7.2.2: Check for member departures via CKShare polling (owner-only)
                     await checkForMemberDepartures()
                 } else {
+                    // M9.15.3: Ghost Household — exists locally but user has no CKShare.
+                    // This happens when a previous createHouseholdAndShare() failed mid-way:
+                    // the Household was saved to private store and synced to CloudKit,
+                    // but the share step failed. On reinstall, CloudKit re-downloads it.
+                    // Delete it so the deletion syncs to CloudKit and it stops coming back.
+                    CloudKitLogger.warning("Deleting ghost Household '\(household.name ?? "Unknown")' — no CKShare, user is not a participant")
+                    viewContext.delete(household)
+                    // Also delete any associated HouseholdMember ghosts
+                    let memberRequest: NSFetchRequest<HouseholdMember> = HouseholdMember.fetchRequest()
+                    if let members = try? viewContext.fetch(memberRequest) {
+                        for member in members { viewContext.delete(member) }
+                    }
+                    try? viewContext.save()
                     currentHousehold = nil
-                    CloudKitLogger.info("Household exists but user is not a participant (left or removed)")
                 }
             } else {
                 currentHousehold = nil
@@ -2681,18 +2693,17 @@ class HouseholdService: ObservableObject {
             #endif
         }
 
-        // 3. Destroy and recreate shared store to clear zone metadata corruption
-        // purgeAllSharedStoreObjects deletes rows but leaves CloudKit zone metadata intact,
-        // which causes "objects assigned to multiple zones" (error 134060) on the next share().
-        // Destroying the SQLite file is the only reliable way to reset zone state.
-        do {
-            try PersistenceController.shared.destroyAndRecreateSharedStore()
+        // 3. Purge shared store objects (without destroying the store file).
+        // M9.15.3: destroyAndRecreateSharedStore() kills the NSCloudKitMirroringDelegate
+        // permanently (error 134060: "store was removed from the coordinator"), making
+        // the shared store unable to sync for the rest of the app session. Use the safer
+        // purgeAllSharedStoreObjects() which deletes rows but keeps the store intact.
+        // The old zone metadata concern is moot with create-empty-then-copy (M9.15):
+        // we share an empty Household with no pre-existing CKRecords.
+        let purgedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
+        if purgedCount > 0 {
             #if DEBUG
-            print("   ✅ Shared store destroyed and recreated (zone metadata cleared)")
-            #endif
-        } catch {
-            #if DEBUG
-            print("   ⚠️ Failed to recreate shared store: \(error)")
+            print("   ✅ Purged \(purgedCount) shared store objects")
             #endif
         }
 
