@@ -1538,23 +1538,28 @@ class HouseholdService: ObservableObject {
             item.categoryEntity = nil
         }
 
-        // M9.14: Break cross-store Ingredient→IngredientTemplate relationships before templates move to shared store.
-        // Ingredient is non-HouseholdScoped (stays in private zone); IngredientTemplate is HouseholdScoped (moves to shared zone).
-        // Without this, CloudKit error 134060: "Object graph corruption — objects assigned to multiple zones."
-        // The template name is already stored as Ingredient.name, so no data loss.
+        // M9.14: Delete IngredientTemplates before household share to prevent CloudKit error 134060.
+        // Problem: templates already have CKRecords in the private CloudKit zone. Setting
+        // template.household = household tells CloudKit to put them in the shared zone too,
+        // causing "objects assigned to multiple zones." Nil'ing relationships isn't enough —
+        // the CKRecords themselves are the issue.
+        // Solution: Delete all templates. They're fully recreatable from Ingredient.name + category
+        // data and will be lazily recreated in the shared store by IngredientTemplateService.
         let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
-        let ingredients = try viewContext.fetch(ingredientRequest)
-        var brokenTemplateLinks = 0
-        for ingredient in ingredients where ingredient.ingredientTemplate != nil {
+        let allIngredients = try viewContext.fetch(ingredientRequest)
+        for ingredient in allIngredients {
             ingredient.ingredientTemplate = nil
-            brokenTemplateLinks += 1
         }
 
-        // M9.14: Also break GroceryListItem→Category relationships.
-        // GroceryListItem should follow its parent WeeklyList to the shared zone, but the optional
-        // weeklyList relationship means CloudKit may not move it automatically. Defensive nil to
-        // prevent the same cross-zone error as GroceryItem→Category.
-        // categoryName string is preserved for display.
+        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        let templatesToDelete = try viewContext.fetch(templateRequest)
+        let deletedTemplateCount = templatesToDelete.count
+        for template in templatesToDelete {
+            viewContext.delete(template)
+        }
+
+        // M9.14: Break GroceryListItem→Category relationships before Categories move to shared store.
+        // categoryName string is preserved for display fallback.
         let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
         let listItems = try viewContext.fetch(listItemRequest)
         var brokenCategoryLinks = 0
@@ -1567,9 +1572,7 @@ class HouseholdService: ObservableObject {
         }
 
         #if DEBUG
-        if brokenTemplateLinks > 0 {
-            print("   🔗 Broke \(brokenTemplateLinks) Ingredient→IngredientTemplate cross-zone links")
-        }
+        print("   🗑️ Deleted \(deletedTemplateCount) IngredientTemplates (will recreate in shared store)")
         if brokenCategoryLinks > 0 {
             print("   🔗 Broke \(brokenCategoryLinks) GroceryListItem→Category cross-zone links")
         }
@@ -1585,15 +1588,9 @@ class HouseholdService: ObservableObject {
             migratedCount += 1
         }
 
-        // Migrate ingredient templates
-        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        templateRequest.predicate = NSPredicate(format: "household == nil")
-        let templates = try viewContext.fetch(templateRequest)
-        for template in templates {
-            template.household = household
-            template.householdKey = householdKey
-            migratedCount += 1
-        }
+        // M9.14: IngredientTemplates are NOT migrated — they were deleted above to prevent
+        // CloudKit error 134060. They'll be recreated in the shared store by IngredientTemplateService
+        // when recipes are viewed or ingredients are parsed.
 
         #if DEBUG
         print("✅ Migrated \(migratedCount) items:")
@@ -1602,7 +1599,7 @@ class HouseholdService: ObservableObject {
         print("   \(mealPlans.count) meal plans")
         print("   \(plannedMeals.count) planned meals")
         print("   \(categories.count) categories")
-        print("   \(templates.count) ingredient templates")
+        print("   \(deletedTemplateCount) ingredient templates deleted (will recreate in shared store)")
         print("   Household key: \(householdKey)")
         #endif
     }
