@@ -6,6 +6,43 @@
 
 ---
 
+## Session 82 — March 13, 2026
+**Milestone**: M9.15.3 — Scope Resolution Fix
+**Focus**: Fix entities not appearing after household creation (builds 37→38→39 rapid iteration)
+**Branch**: main (direct bugfixes)
+
+### What Happened
+
+Rapid-fire TestFlight iteration to chase down why meal plans, recipes, and grocery lists created after household creation were invisible. Three builds shipped in this session (37, 38, 39), each narrowing the bug.
+
+**Build 37** (stamp-in-place): Replaced the `waitForSharedStoreReady()` + `copyPersonalDataToSharedStore()` pattern with `stampPersonalDataWithHouseholdKey()`. The old pattern polled for the Household to appear in the shared store after `container.share()`, but CloudKit's server-side zone migration takes >60s on Production. The new approach stamps existing objects with `householdKey` directly in the private store — CloudKit's mirroring delegate handles the actual zone migration asynchronously.
+
+**Build 38** (currentScope fix): Rich reported meal plans still not showing. Diagnostic logs revealed household creation worked perfectly (7 Categories stamped), but new entities created afterward had no `householdKey`. Found the bug in `HouseholdService.currentScope`: it checked `store.url.contains("shared")` and returned `.personal` when the Household was in the private store. Fixed to return `.household(id, storeID)` regardless of store.
+
+**Build 39** (activeScope fix — this session): Meal plans *still* not showing. The `currentScope` fix only affected direct callers of `householdService.currentScope`. The `ManagedObjectFactory` uses a completely separate code path: `HouseholdScopeProvider.activeScope`. This had the **identical bug** — returning `.personal` when Household was in the private store. One-line fix: return `.household(id: household.objectID, storeID: .private)` instead of `.personal`.
+
+### Key Decisions
+
+- **Direct commits to main**: These were one-line bugfixes in a hot path (user actively testing each build on device). Feature branches and PRs would have added 10+ minutes per iteration for no safety benefit.
+
+- **Scope = entity existence, not store location**: The fundamental architectural insight. After `container.share()`, the Household may stay in the private store for minutes. Scope determination must check "does a Household exist?" not "is the Household in the shared store?".
+
+### Learning
+
+- **Same logical error, two code paths**: `currentScope` (on HouseholdService) and `activeScope` (on HouseholdScopeProvider) both determined scope by checking store URL. Fixing one didn't fix the other because they're consumed by completely different callers. The factory uses `activeScope` via `scopeProvider`, not `currentScope`. Always search for all instances of a pattern when fixing a bug.
+
+- **Diagnostic logging paid off immediately**: The DiagnosticLogger built in session 81 let Rich export logs from TestFlight that confirmed household creation was succeeding but entities were being created without `householdKey`. Without this, the bug would have been much harder to isolate.
+
+### AI Tooling Observations
+
+Context compaction happened mid-session but the summary preserved the full bug-hunting arc across builds 36-38, allowing immediate continuation to the build 39 fix without re-reading any files. The rapid commit→archive→distribute→test cycle (fix → build → TestFlight in ~5 minutes) was efficient — the `/forager-archive` skill handles the full pipeline automatically.
+
+### What's Next
+
+Build 39 is on TestFlight. Rich will test: (1) delete app, reinstall, (2) create household, (3) create meal plan, recipe, and grocery list — all should appear immediately. If this works, M9.15.3 scope resolution is complete and can be wrapped up.
+
+---
+
 ## Session 81 — March 13, 2026
 **Milestone**: M9.15.3 — Diagnostic Logging + Returning User Detection
 **Focus**: Build persistent diagnostic logging for TestFlight CloudKit debugging; add background household discovery
