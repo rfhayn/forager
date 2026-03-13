@@ -6,6 +6,49 @@
 
 ---
 
+## Session 80 — March 13, 2026
+**Milestone**: M9.15 — Household Creation Architecture Fix (Phases 1 & 2)
+**Focus**: Fix CloudKit error 134060 by replacing attach-then-share with create-empty-then-copy
+**Branch**: bugfix/M9.15-household-creation-fix
+
+### What Happened
+
+This session tackled the root cause behind three consecutive failed TestFlight builds (31-33): household creation crashes with CloudKit error 134060 ("objects assigned to multiple zones"). After three sessions of symptom-chasing (nil'ing relationships, deleting IngredientTemplates), the fundamental problem became clear — the attach-then-share pattern from ADR 008 is architecturally broken once objects have CKRecords in the private CloudKit zone.
+
+**Phase 1** (carried over from prior session): Promoted Ingredient and GroceryListItem to HouseholdScoped by adding `household` relationship and `householdKey` attribute in schema v9. Updated all 15 production creation sites with the "inherit from parent" pattern — children copy `household`/`householdKey` from their parent entity (Recipe or WeeklyList) rather than going through ManagedObjectFactory. This eliminates cross-store relationships entirely.
+
+**Phase 2** (this session's core work): Rewrote `createHouseholdAndShare()` from scratch. The new flow creates an empty Household + HouseholdMember, shares them (2 objects = no zone conflicts), waits for the shared store to be ready via polling, then copies all personal data to the shared store as brand new objects using ManagedObjectFactory. Old private-store originals are deleted only after copy succeeds. Key helpers: `waitForSharedStoreReady()` (60s polling), `copyPersonalDataToSharedStore()` (topological copy order respecting relationship dependencies), `copyAllAttributes()` (dynamic attribute copier via `entity.attributesByName`), `fetchPersonalEntities()` (private-store-scoped fetch), and `backfillChildEntityHouseholdKeys()` (one-time migration for existing users).
+
+Also updated ADR 008 to deprecate attach-then-share and document the new pattern, updated the interactive core-data-architecture-map.html with v9 schema changes, and logged 3 insights.
+
+### Key Decisions
+
+- **Always copy data, not just when `moveExistingData` is true**: The `moveExistingData` parameter is kept for API compatibility but is effectively always true. There's no good reason to leave personal data orphaned in the private store when creating a household — the user expects to share everything.
+
+- **Fresh UUIDs on copied objects**: Each copied entity gets a new `UUID()` for its `id` field. This prevents CKRecord ID conflicts between the old private-zone records (being deleted) and new shared-zone records. The `copyAllAttributes` helper skips `id` for this reason.
+
+- **Child pattern over factory for Ingredient/GroceryListItem**: Rather than injecting ManagedObjectFactory into 15+ creation sites, child entities inherit `household`/`householdKey` from their parent. This is equivalent in correctness and dramatically simpler to implement. Documented in ADR 014.
+
+- **Dynamic attribute copy over manual property lists**: Using `entity.attributesByName` to enumerate attributes means the copy is resilient to future schema changes. Manual listing would require ~60 lines of boilerplate and break on every schema addition.
+
+### Learning
+
+- **CloudKit zone immutability is permanent**: Once NSPersistentCloudKitContainer's mirroring delegate creates a CKRecord in a zone, that zone assignment is forever. `container.share()` cannot move existing CKRecords. This is the root cause — not a bug in our code, but a fundamental CloudKit constraint that makes attach-then-share unworkable for objects with existing data.
+
+- **Shared store readiness requires polling**: After `container.share()`, CloudKit needs time (5-30 seconds) to set up the shared zone and sync records. The shared store isn't immediately queryable — you must poll with `affectedStores: [sharedStore]` until the Household appears.
+
+- **Topological copy order matters**: When copying an entity graph with relationships, parents must be created before children so relationship reconstruction works. Our order: Category → IngredientTemplate → Recipe → Ingredient → WeeklyList → GroceryListItem → MealPlan → PlannedMeal.
+
+### AI Tooling Observations
+
+The context window challenge was real this session — the prior conversation ran out of context mid-implementation. The detailed summary allowed seamless continuation, but it reinforced the importance of committing frequently and logging insights immediately (not deferring). The `entity.attributesByName` dynamic copier was suggested by Claude and eliminated a massive amount of manual boilerplate — a good example of where AI-generated code is more resilient than hand-written property lists.
+
+### What's Next
+
+Phase 3: Returning user detection (`discoverExistingHousehold()`). Then dev journal + insight logging, create PR, and prepare for TestFlight build 34 to verify the fix on-device. Also should update `docs/current-story.md` and `docs/next-prompt.md` to reflect Phase 2 completion.
+
+---
+
 ## Session 79 — March 12, 2026
 **Milestone**: M9.14 — Household Scope Bug Fixes (Post-Reinstall Entity Creation)
 **Focus**: Diagnose and fix silent meal plan + grocery list creation failures reported from TestFlight build 30
