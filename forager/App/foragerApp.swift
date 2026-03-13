@@ -215,15 +215,11 @@ struct foragerApp: App {
                         householdService.repairZoneCorruptionIfNeeded()
                         await householdService.refreshCurrentMemberDisplayName()
 
-                        // Check for new invitations after a delay (not urgent)
-                        try? await Task.sleep(nanoseconds: 3_000_000_000)
+                        // M9.15.3: If no household found, start background discovery.
+                        // Handles reinstall scenario where CloudKit hasn't synced yet.
+                        // Non-blocking — app is fully usable while this runs.
                         if householdService.currentHousehold == nil {
-                            #if DEBUG
-                            print("🔍 App launch: Checking for existing households...")
-                            #endif
-                            await householdService.checkForAcceptedInvitations()
-                            // Refresh display name if invitation check loaded a household
-                            await householdService.refreshCurrentMemberDisplayName()
+                            householdService.discoverExistingHousehold()
                         }
                     }
                     .onAppear {
