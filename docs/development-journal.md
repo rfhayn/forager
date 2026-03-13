@@ -6,6 +6,47 @@
 
 ---
 
+## Session 81 — March 13, 2026
+**Milestone**: M9.15.3 — Diagnostic Logging + Returning User Detection
+**Focus**: Build persistent diagnostic logging for TestFlight CloudKit debugging; add background household discovery
+**Branch**: feature/M9.15.3-diagnostic-logging (logging), feature/M9.15.3-returning-user-detection (discovery, merged as build 35)
+
+### What Happened
+
+Two major pieces of work this session, spanning two branches.
+
+**Returning user detection** (branch merged as build 35, PR #74): Implemented `discoverExistingHousehold()` — a non-blocking background polling loop that checks for CloudKit-synced Household entities every 2s for 60s. App launches instantly with empty state; if a household appears via sync, `@Published var currentHousehold` triggers automatic UI updates. Also added ghost Household deletion (failed `createHouseholdAndShare()` leaves orphaned Household in private store → CloudKit re-downloads on reinstall → infinite discovery loop). Fixed mirroring delegate death from `destroyAndRecreateSharedStore()` by switching to `purgeAllSharedStoreObjects()`.
+
+**Persistent diagnostic logging** (current branch, in progress): After TestFlight build 35 failed with CloudKit household creation timeout, Rich asked for a way to get logs from TestFlight devices without needing to connect via Xcode. Built DiagnosticLogger — a persistent file-based logger that writes to Documents/forager-diagnostics.log, works in Release builds, survives restarts, has 2MB rotation, and is exportable via share sheet. Rewrote CloudKitLogger to dual-write (OSLog + DiagnosticLogger). Added step-by-step diagnostic logging to all critical HouseholdService methods: `createHouseholdAndShare()` (Steps 1-10 + error paths), `loadCurrentHousehold()`, `discoverExistingHousehold()`, `waitForSharedStoreReady()`, `cleanOrphanedHouseholdData()`. Created DiagnosticLogView with level filtering, search, and share sheet export. Added Diagnostics section to Settings (Release-safe, not behind `#if DEBUG`).
+
+### Key Decisions
+
+- **Dual-write logging over replacing OSLog**: OSLog is still valuable for `log collect` on connected devices and Console.app. DiagnosticLogger adds a user-accessible layer on top, not a replacement. Both write to their respective outputs from CloudKitLogger's static methods.
+
+- **`@MainActor` DiagnosticLogger with Task hop**: DiagnosticLogger needs `@Published` properties for SwiftUI binding (line count, enabled state). CloudKitLogger's static methods are called from various contexts, so `persist()` uses `Task { @MainActor in }` — fire-and-forget, timestamps in the log line preserve ordering accuracy.
+
+- **Ghost Household deletion syncs via CloudKit**: Rather than just ignoring ghost Households locally, we delete them from the context so the deletion syncs to CloudKit and stops the re-download cycle on future reinstalls.
+
+- **Diagnostics in Settings, not Developer Tools**: The whole point is TestFlight users can access it. Placed outside `#if DEBUG` gate as its own section.
+
+### Learning
+
+- **NSCloudKitMirroringDelegate is permanently killed by store removal**: `destroyAndRecreateSharedStore()` removes the store from the coordinator, triggering error 134060. The mirroring delegate never recovers — shared store sync is dead for the rest of the app session. `purgeAllSharedStoreObjects()` (delete rows, keep store file) is the safe alternative.
+
+- **TestFlight log accessibility is a real gap**: OSLog requires `log collect` from a connected Mac. Console.app on device is limited. For CloudKit debugging where issues only reproduce on specific iCloud accounts, a user-exportable file log is essential.
+
+- **Schema must be pushed to CloudKit before testing**: v9 schema changes (Ingredient/GroceryListItem householdKey) weren't in CloudKit Production. Build 35's timeout was likely caused by missing schema fields. `initializeCloudKitSchema()` added for Debug builds to force-push, but Production requires manual deployment via CloudKit Dashboard.
+
+### AI Tooling Observations
+
+Context window ran out during the first session, but the detailed summary allowed seamless continuation — picked up mid-implementation of DiagnosticLogger without losing any context. The key pattern: commit frequently and log insights immediately so nothing is lost on compaction. Claude identified the ShareSheet naming conflict during build and resolved it quickly by creating a local `DiagnosticShareSheet` to avoid API mismatch with the existing invitation-specific ShareSheet.
+
+### What's Next
+
+Commit the diagnostic logging changes, create PR, merge, and prepare TestFlight build 36. Rich needs to: (1) run a Debug build to phone to push v9 schema to CloudKit Development, (2) promote Development → Production in CloudKit Dashboard, (3) test household creation on TestFlight with the new diagnostic logs for visibility.
+
+---
+
 ## Session 80 — March 13, 2026
 **Milestone**: M9.15 — Household Creation Architecture Fix (Phases 1 & 2)
 **Focus**: Fix CloudKit error 134060 by replacing attach-then-share with create-empty-then-copy

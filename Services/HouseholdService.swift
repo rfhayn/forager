@@ -253,6 +253,8 @@ class HouseholdService: ObservableObject {
     /// Fallback: If household is in shared store, user is a participant (CloudKit synced it)
     /// Also checks local "left households" list to prevent re-joining after leaving
     func loadCurrentHousehold() async {
+        let diag = DiagnosticLogger.shared
+        diag.debug("loadCurrentHousehold() called", category: .household)
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         request.fetchLimit = 1
 
@@ -260,12 +262,12 @@ class HouseholdService: ObservableObject {
             let households = try viewContext.fetch(request)
 
             if let household = households.first {
+                diag.info("Found Household: '\(household.name ?? "unnamed")' id=\(household.id?.uuidString ?? "nil")", category: .household)
                 // M7.2.2 FIX: Check if user has locally "left" this household
                 // CloudKit limitation: Members can't remove themselves from CKShare.participants
                 // So we track left households locally to prevent re-joining
                 if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
-                    // M7.3.4 FIX: Check if user is still CKShare participant
-                    // If they are, it means server-side leave failed - DON'T auto-rejoin
+                    diag.info("Household marked as left in Keychain — checking CKShare", category: .household)
                     let isParticipant = await isCurrentUserParticipant(in: household)
                     if isParticipant {
                         // M7.3.4: User marked as left but still participant on server
@@ -289,6 +291,7 @@ class HouseholdService: ObservableObject {
 
                 // M7.2.2 Refactor: Check membership via CKShare, not HouseholdMember records
                 let isMember = await isCurrentUserParticipant(in: household)
+                diag.info("CKShare membership check: \(isMember ? "IS member" : "NOT member")", category: .household)
 
                 if isMember {
                     currentHousehold = household
@@ -350,9 +353,11 @@ class HouseholdService: ObservableObject {
                     currentHousehold = nil
                 }
             } else {
+                diag.debug("No Household entity found in store", category: .household)
                 currentHousehold = nil
             }
         } catch {
+            diag.error("loadCurrentHousehold() failed: \(error.localizedDescription)", category: .household)
             CloudKitLogger.error("Error loading household", error: error)
             errorMessage = "Failed to load household"
             currentHousehold = nil
@@ -366,12 +371,14 @@ class HouseholdService: ObservableObject {
     /// so currentHousehold is nil. This listens for sync events and re-checks.
     /// Non-blocking — app is fully usable while this runs.
     func discoverExistingHousehold() {
+        let diag = DiagnosticLogger.shared
         // Only run if no household is known
         guard currentHousehold == nil else {
             discoveryState = .idle
             return
         }
 
+        diag.info("=== DISCOVERY START ===", category: .discovery)
         discoveryState = .checking
 
         discoveryTask = Task { [weak self] in
@@ -381,42 +388,46 @@ class HouseholdService: ObservableObject {
             await self.loadCurrentHousehold()
             if self.currentHousehold != nil {
                 self.discoveryState = .found
-                #if DEBUG
-                print("🔍 M9.15.3: Household discovered immediately")
-                #endif
+                diag.info("Household discovered immediately", category: .discovery)
                 return
             }
 
             // Listen for sync events with timeout — CloudKit may still be syncing
             // 30 attempts × 2s = 60s max wait
             for attempt in 1...30 {
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    diag.info("Discovery cancelled at attempt \(attempt)", category: .discovery)
+                    return
+                }
 
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
 
-                guard !Task.isCancelled else { return }
+                guard !Task.isCancelled else {
+                    diag.info("Discovery cancelled at attempt \(attempt)", category: .discovery)
+                    return
+                }
                 guard self.currentHousehold == nil else {
-                    // Something else found it (e.g., accepted invitation flow)
                     self.discoveryState = .found
+                    diag.info("Household found externally at attempt \(attempt)", category: .discovery)
                     return
                 }
 
                 await self.loadCurrentHousehold()
                 if self.currentHousehold != nil {
                     self.discoveryState = .found
-                    #if DEBUG
-                    print("🔍 M9.15.3: Household discovered on attempt \(attempt)")
-                    #endif
+                    diag.info("Household discovered on attempt \(attempt)/30", category: .discovery)
                     return
+                }
+
+                if attempt % 5 == 0 {
+                    diag.debug("Discovery polling... attempt \(attempt)/30", category: .discovery)
                 }
             }
 
             // Timed out
             if self.currentHousehold == nil {
                 self.discoveryState = .notFound
-                #if DEBUG
-                print("🔍 M9.15.3: Discovery timed out — no household found")
-                #endif
+                diag.info("=== DISCOVERY TIMEOUT — no household found after 60s ===", category: .discovery)
             }
         }
     }
@@ -1364,6 +1375,10 @@ class HouseholdService: ObservableObject {
         // M9.15.3: Stop background discovery — user explicitly chose to create
         cancelDiscovery()
 
+        let diag = DiagnosticLogger.shared
+        diag.info("=== CREATE HOUSEHOLD START ===", category: .household)
+        diag.info("Name: \(name), Owner: \(ownerName), MoveData: \(moveExistingData)", category: .household)
+
         isLoading = true
         creationStatus = "Checking iCloud account…"
         defer {
@@ -1449,6 +1464,7 @@ class HouseholdService: ObservableObject {
             // 2. Create EMPTY Household + owner member (no data relationships!)
             // M9.15: Critical difference from old pattern — DO NOT attach any data here.
             // Sharing an empty object means no CKRecords need to move between zones.
+            diag.info("Step 2: Creating empty Household entity", category: .household)
             creationStatus = "Creating household…"
             let household = Household(context: viewContext)
             household.id = UUID()
@@ -1468,10 +1484,13 @@ class HouseholdService: ObservableObject {
             ownerMember.household = household
 
             // 3. Save empty household to Core Data (private store initially)
+            diag.info("Step 3: Saving empty Household to private store", category: .household)
             creationStatus = "Saving to device…"
             do {
                 try viewContext.save()
+                diag.info("Step 3: Save succeeded", category: .household)
             } catch {
+                diag.error("Step 3 FAILED: \(Self.extractDetailedError(error))", category: .household)
                 throw HouseholdError.creationFailed("Failed to save household locally: \(Self.extractDetailedError(error))")
             }
 
@@ -1481,6 +1500,7 @@ class HouseholdService: ObservableObject {
 
             // 4. Share the EMPTY household via CloudKit
             // M9.15: Only Household + HouseholdMember are shared — no data graph = no zone conflicts
+            diag.info("Step 4: Sharing empty Household via CloudKit", category: .household)
             let persistenceController = PersistenceController.shared
             creationStatus = "Setting up CloudKit sharing…"
             let share: CKShare
@@ -1488,12 +1508,10 @@ class HouseholdService: ObservableObject {
                 share = try await shareWithRetry(household: household, persistence: persistenceController) { status in
                     self.creationStatus = status
                 }
+                diag.info("Step 4: CKShare created: \(share.recordID.recordName)", category: .household)
             } catch {
-                // Share failed — delete the empty household (no data to rollback)
+                diag.error("Step 4 FAILED — CloudKit sharing: \(Self.extractDetailedError(error))", category: .household)
                 CloudKitLogger.householdError("CloudKit sharing failed after retries", householdID: household.id?.uuidString, error: error)
-                #if DEBUG
-                print("🔙 Deleting failed empty household...")
-                #endif
                 viewContext.delete(ownerMember)
                 viewContext.delete(household)
                 try? viewContext.save()
@@ -1505,6 +1523,7 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 5. Persist the CKShare
+            diag.info("Step 5: Persisting CKShare to context", category: .household)
             creationStatus = "Finalizing CloudKit share…"
             try viewContext.save()
 
@@ -1514,6 +1533,7 @@ class HouseholdService: ObservableObject {
             #endif
 
             // 6. Store share record reference
+            diag.info("Step 6: Archiving CKShare reference", category: .household)
             household.shareRecord = try NSKeyedArchiver.archivedData(
                 withRootObject: share,
                 requiringSecureCoding: true
@@ -1522,21 +1542,28 @@ class HouseholdService: ObservableObject {
             try viewContext.save()
 
             // 7. Wait for the shared store to be ready (CloudKit zone setup)
+            diag.info("Step 7: Waiting for shared store to be ready", category: .household)
             try await waitForSharedStoreReady(household: household)
+            diag.info("Step 7: Shared store ready", category: .household)
 
             // 8. Copy personal data to shared store (if requested and data exists)
             if moveExistingData {
+                diag.info("Step 8: Copying personal data to shared store", category: .household)
                 creationStatus = "Moving your data to household…"
                 try copyPersonalDataToSharedStore(household: household)
+                diag.info("Step 8: Data copy complete", category: .household)
+            } else {
+                diag.info("Step 8: Skipped (moveExistingData=false)", category: .household)
             }
 
             // 9. Break GroceryItem→Category cross-store relationships
-            // GroceryItem stays in private store; Categories now live in shared store
+            diag.info("Step 9: Breaking cross-store GroceryItem→Category links", category: .household)
             breakGroceryItemCategoryLinks()
 
             // 10. Update state
             currentHousehold = household
             creationStatus = "Done!"
+            diag.info("=== CREATE HOUSEHOLD COMPLETE ===", category: .household)
 
             CloudKitLogger.householdCreated(name)
             CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
@@ -1547,8 +1574,10 @@ class HouseholdService: ObservableObject {
             return household
 
         } catch let householdError as HouseholdError {
+            diag.error("=== CREATE HOUSEHOLD FAILED: \(householdError.localizedDescription) ===", category: .household)
             throw householdError
         } catch {
+            diag.error("=== CREATE HOUSEHOLD FAILED: \(Self.extractDetailedError(error)) ===", category: .household)
             CloudKitLogger.householdError("Household creation failed", householdID: nil, error: error)
             throw HouseholdError.creationFailed(Self.extractDetailedError(error))
         }
@@ -1560,6 +1589,7 @@ class HouseholdService: ObservableObject {
     /// After container.share(), CloudKit needs time to set up the shared zone and
     /// sync the record. We poll until the object is accessible via the shared store.
     private func waitForSharedStoreReady(household: Household) async throws {
+        let diag = DiagnosticLogger.shared
         creationStatus = "Syncing with iCloud…"
 
         let maxAttempts = 30  // 30 × 2s = 60s max
@@ -1571,22 +1601,19 @@ class HouseholdService: ObservableObject {
             request.affectedStores = [persistence.sharedStore]
 
             if let _ = try? viewContext.fetch(request).first {
-                #if DEBUG
-                print("✅ M9.15: Shared store ready after \(attempt) attempt(s)")
-                #endif
+                diag.info("Shared store ready after \(attempt) attempt(s)", category: .store)
                 return
             }
 
-            #if DEBUG
             if attempt % 5 == 0 {
-                print("⏳ M9.15: Waiting for shared store... attempt \(attempt)/\(maxAttempts)")
+                diag.debug("Waiting for shared store... attempt \(attempt)/\(maxAttempts)", category: .store)
             }
-            #endif
 
             creationStatus = "Syncing with iCloud… (\(attempt * 2)s)"
             try await Task.sleep(nanoseconds: 2_000_000_000)
         }
 
+        diag.error("Shared store timeout after \(maxAttempts) attempts (60s)", category: .store)
         throw HouseholdError.sharedStoreTimeout
     }
 
@@ -2630,9 +2657,8 @@ class HouseholdService: ObservableObject {
     /// when creating a new household after leaving a previous one.
     /// Also purges shared store remnants and orphaned Ingredients not linked to any Recipe.
     private func cleanOrphanedHouseholdData() {
-        #if DEBUG
-        print("\n🧹 M10.6: Pre-creation orphan cleanup starting...")
-        #endif
+        let diag = DiagnosticLogger.shared
+        diag.info("Pre-creation orphan cleanup starting", category: .household)
         var cleanedCount = 0
 
         // 0. Delete ALL ghost Household and HouseholdMember entities
@@ -2711,15 +2737,11 @@ class HouseholdService: ObservableObject {
             do {
                 try viewContext.save()
             } catch {
-                #if DEBUG
-                print("   ⚠️ M10.6: Orphan cleanup save error: \(error)")
-                #endif
+                diag.error("Orphan cleanup save error: \(error.localizedDescription)", category: .household)
             }
         }
 
-        #if DEBUG
-        print("🧹 M10.6: Pre-creation orphan cleanup complete — removed \(cleanedCount) objects\n")
-        #endif
+        diag.info("Pre-creation orphan cleanup complete — removed \(cleanedCount) objects", category: .household)
     }
 
     /// M7.3.3: Deletes all objects linked to a household by householdKey
