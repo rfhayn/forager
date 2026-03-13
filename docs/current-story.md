@@ -1,12 +1,12 @@
 # Current Development Story
 
-**Last Updated**: March 12, 2026
-**Status**: **M9.15 🔄 ACTIVE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
-**Total Progress**: ~266 hours | 89% planning accuracy
-**Current Branch**: `bugfix/M9.15-household-creation-fix`
-**Current Milestone**: M9.15 🔄 ACTIVE — Household Creation Architecture Fix (Replace Attach-Then-Share)
+**Last Updated**: March 13, 2026
+**Status**: **M9.15.3 🔄 ACTIVE** | **M9.15 P1+P2 ✅ COMPLETE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
+**Total Progress**: ~270 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.15.3-returning-user-detection`
+**Current Milestone**: M9.15.3 🔄 ACTIVE — Returning User Detection
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M9.15 → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
+**Next Priority**: M9.15.3 → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
 
 ---
 
@@ -24,9 +24,9 @@ Household creation fails 100% with CloudKit error 134060 ("objects assigned to m
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| P1 | Promote Ingredient + GroceryListItem to HouseholdScoped (schema v9, factory routing, fetch predicates) | ⏳ PLANNED |
-| P2 | Rewrite household creation: create empty → share → copy → delete, with progress UI | ⏳ PLANNED |
-| P3 | Returning user detection: auto-discover household on reinstall | ⏳ PLANNED |
+| P1 | Promote Ingredient + GroceryListItem to HouseholdScoped (schema v9, factory routing, fetch predicates) | ✅ COMPLETE |
+| P2 | Rewrite household creation: create empty → share → copy → delete, with progress UI | ✅ COMPLETE |
+| P3 | Returning user detection: auto-discover household on reinstall | 🔄 ACTIVE |
 
 ---
 

@@ -11,6 +11,7 @@ import CoreData
 
 struct HouseholdView: View {
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var syncMonitor: CloudKitSyncMonitor
     @Environment(\.managedObjectContext) private var viewContext
 
     // Async-loaded state
@@ -140,15 +141,8 @@ struct HouseholdView: View {
                     .foregroundStyle(ForagerTheme.statusDangerFG)
             }
 
-            // Sync status indicator
-            HStack(spacing: ForagerTheme.Spacing.sm) {
-                Circle()
-                    .fill(ForagerTheme.statusSuccessFG)
-                    .frame(width: 8, height: 8)
-                Text("iCloud sync active")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
+            // M9.15.3: Live sync status from CloudKitSyncMonitor
+            syncStatusRow
         }
     }
 
@@ -339,6 +333,12 @@ struct HouseholdView: View {
                     .font(ForagerTheme.secondaryFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .multilineTextAlignment(.center)
+
+                // M9.15.3: Show discovery status when checking for existing household
+                if householdService.discoveryState == .checking {
+                    discoveryStatusRow
+                }
+
                 Button("Create Household") {
                     showCreateSheet = true
                 }
@@ -347,9 +347,71 @@ struct HouseholdView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, ForagerTheme.Spacing.xl)
         } footer: {
-            Text("All household members will automatically share grocery lists, recipes, and meal plans via iCloud.")
-                .font(ForagerTheme.captionFont)
+            if householdService.discoveryState == .checking {
+                Text("If you were previously in a household, your data is syncing from iCloud. You can create a new household at any time.")
+                    .font(ForagerTheme.captionFont)
+            } else {
+                Text("All household members will automatically share grocery lists, recipes, and meal plans via iCloud.")
+                    .font(ForagerTheme.captionFont)
+            }
         }
+    }
+
+    // MARK: - M9.15.3: Sync Status Views
+
+    /// Live sync status for household header (replaces hardcoded green dot)
+    private var syncStatusRow: some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            switch syncMonitor.syncState {
+            case .syncing:
+                ProgressView()
+                    .scaleEffect(0.6)
+                    .frame(width: 8, height: 8)
+                Text("Syncing...")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            case .synced:
+                Circle()
+                    .fill(ForagerTheme.statusSuccessFG)
+                    .frame(width: 8, height: 8)
+                if let lastSync = syncMonitor.lastSyncDate {
+                    Text("Synced \(lastSync, style: .relative) ago")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                } else {
+                    Text("iCloud synced")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+            case .error(let message):
+                Circle()
+                    .fill(ForagerTheme.statusWarningFG)
+                    .frame(width: 8, height: 8)
+                Text(message)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.statusWarningFG)
+                    .lineLimit(1)
+            case .idle:
+                Circle()
+                    .fill(ForagerTheme.textTertiary)
+                    .frame(width: 8, height: 8)
+                Text("iCloud idle")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
+        }
+    }
+
+    /// Discovery progress indicator for the no-household state
+    private var discoveryStatusRow: some View {
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            ProgressView()
+                .scaleEffect(0.8)
+            Text("Checking iCloud for existing household...")
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textSecondary)
+        }
+        .padding(.vertical, ForagerTheme.Spacing.xs)
     }
 
     // MARK: - Data Loading
@@ -457,5 +519,6 @@ struct HouseholdView_Previews: PreviewProvider {
         }
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
         .environmentObject(HouseholdService(context: PersistenceController.preview.container.viewContext))
+        .environmentObject(CloudKitSyncMonitor())
     }
 }

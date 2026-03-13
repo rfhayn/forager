@@ -96,6 +96,17 @@ class HouseholdService: ObservableObject {
     @Published var errorMessage: String?
     @Published var creationStatus: String?
 
+    // M9.15.3: Returning user detection — background discovery state
+    enum DiscoveryState: Equatable {
+        case idle           // Not running (already has household or never started)
+        case checking       // Actively checking for existing household
+        case found          // Household discovered and restored
+        case notFound       // Timed out with no household found
+        case error(String)  // CloudKit error during discovery
+    }
+    @Published var discoveryState: DiscoveryState = .idle
+    private var discoveryTask: Task<Void, Never>?
+
     private var cancellables = Set<AnyCancellable>()
 
     // M7.2.2: Debounce timer to avoid processing leave requests on every sync event
@@ -333,6 +344,77 @@ class HouseholdService: ObservableObject {
             CloudKitLogger.error("Error loading household", error: error)
             errorMessage = "Failed to load household"
             currentHousehold = nil
+        }
+    }
+
+    // MARK: - M9.15.3: Returning User Detection
+
+    /// Background discovery for returning users after app reinstall.
+    /// CloudKit re-downloads Household to shared store, but UserDefaults is gone
+    /// so currentHousehold is nil. This listens for sync events and re-checks.
+    /// Non-blocking — app is fully usable while this runs.
+    func discoverExistingHousehold() {
+        // Only run if no household is known
+        guard currentHousehold == nil else {
+            discoveryState = .idle
+            return
+        }
+
+        discoveryState = .checking
+
+        discoveryTask = Task { [weak self] in
+            guard let self else { return }
+
+            // Immediate check — shared store may already have data from a prior sync
+            await self.loadCurrentHousehold()
+            if self.currentHousehold != nil {
+                self.discoveryState = .found
+                #if DEBUG
+                print("🔍 M9.15.3: Household discovered immediately")
+                #endif
+                return
+            }
+
+            // Listen for sync events with timeout — CloudKit may still be syncing
+            // 30 attempts × 2s = 60s max wait
+            for attempt in 1...30 {
+                guard !Task.isCancelled else { return }
+
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+
+                guard !Task.isCancelled else { return }
+                guard self.currentHousehold == nil else {
+                    // Something else found it (e.g., accepted invitation flow)
+                    self.discoveryState = .found
+                    return
+                }
+
+                await self.loadCurrentHousehold()
+                if self.currentHousehold != nil {
+                    self.discoveryState = .found
+                    #if DEBUG
+                    print("🔍 M9.15.3: Household discovered on attempt \(attempt)")
+                    #endif
+                    return
+                }
+            }
+
+            // Timed out
+            if self.currentHousehold == nil {
+                self.discoveryState = .notFound
+                #if DEBUG
+                print("🔍 M9.15.3: Discovery timed out — no household found")
+                #endif
+            }
+        }
+    }
+
+    /// Cancel background discovery (e.g., user taps Create Household)
+    func cancelDiscovery() {
+        discoveryTask?.cancel()
+        discoveryTask = nil
+        if discoveryState == .checking {
+            discoveryState = .idle
         }
     }
 
@@ -1267,6 +1349,9 @@ class HouseholdService: ObservableObject {
     /// The `moveExistingData` parameter is preserved for API compatibility but is
     /// effectively always true — there's no reason to leave data orphaned in private store.
     func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
+        // M9.15.3: Stop background discovery — user explicitly chose to create
+        cancelDiscovery()
+
         isLoading = true
         creationStatus = "Checking iCloud account…"
         defer {
