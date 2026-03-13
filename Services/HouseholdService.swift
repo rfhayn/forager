@@ -137,15 +137,17 @@ class HouseholdService: ObservableObject {
 
     // M9.13: Resolved DataScope for current household state.
     // Used by views that need to create entities via performScopedWrite.
+    // M9.15.3: Returns .household scope based on whichever store the Household
+    // currently lives in. After creation, the Household starts in the private store;
+    // CloudKit migrates it to the shared store asynchronously. Both are valid.
     var currentScope: DataScope {
         guard let household = currentHousehold,
               let store = household.objectID.persistentStore else {
             return .personal
         }
         let isShared = store.url?.absoluteString.contains("shared") ?? false
-        return isShared
-            ? .household(id: household.objectID, storeID: .shared)
-            : .personal
+        let storeID: StoreID = isShared ? .shared : .private
+        return .household(id: household.objectID, storeID: storeID)
     }
 
     // M7.2.2 FIX: Derived household key with fallback
