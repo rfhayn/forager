@@ -1029,6 +1029,9 @@ class HouseholdService: ObservableObject {
                 newIngredient.isParseable = oldIngredient.isParseable
                 newIngredient.parseConfidence = oldIngredient.parseConfidence
                 newIngredient.recipe = newRecipe
+                // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+                newIngredient.household = newRecipe.household
+                newIngredient.householdKey = newRecipe.householdKey
 
                 // M7.2.2 FIX: Link to migrated template if it exists
                 if let oldTemplateId = oldIngredient.ingredientTemplate?.id,
@@ -1083,6 +1086,9 @@ class HouseholdService: ObservableObject {
                 newItem.isParseable = oldItem.isParseable
                 newItem.parseConfidence = oldItem.parseConfidence
                 newItem.weeklyList = newList
+                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                newItem.household = newList.household
+                newItem.householdKey = newList.householdKey
             }
         }
 

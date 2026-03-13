@@ -176,6 +176,9 @@ class RecipeService: ObservableObject {
                 ingredient.parseConfidence = original.parseConfidence
                 ingredient.ingredientTemplate = original.ingredientTemplate
                 ingredient.recipe = copy
+                // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+                ingredient.household = copy.household
+                ingredient.householdKey = copy.householdKey
             }
         }
 
@@ -204,6 +207,9 @@ class RecipeService: ObservableObject {
         ingredient.notes = notes
         ingredient.ingredientTemplate = template
         ingredient.recipe = recipe
+        // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+        ingredient.household = recipe.household
+        ingredient.householdKey = recipe.householdKey
 
         // Set sort order to end of list
         let existingCount = (recipe.ingredients as? Set<Ingredient>)?.count ?? 0

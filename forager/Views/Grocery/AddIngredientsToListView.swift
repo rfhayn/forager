@@ -504,8 +504,6 @@ struct AddIngredientsToListView: View {
                 mergeCount += 1
             } else {
                 // Create new item
-                // M9.13: GroceryListItem inherits store from parent WeeklyList via
-                // the weeklyList relationship — no assign() needed (ADR 014)
                 let listItem = GroceryListItem(context: viewContext)
                 listItem.id = UUID()
                 listItem.name = itemDisplayName
@@ -556,6 +554,9 @@ struct AddIngredientsToListView: View {
                 }
                 
                 targetList.addToItems(listItem)
+                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                listItem.household = targetList.household
+                listItem.householdKey = targetList.householdKey
                 #if DEBUG
                 print("Created new item: \(itemDisplayName)")
                 #endif

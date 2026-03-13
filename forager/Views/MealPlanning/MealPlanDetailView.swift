@@ -637,14 +637,15 @@ struct MealPlanDetailView: View {
                 let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
                 _ = templateService.findOrCreateTemplate(name: cleanName)
 
-                // M9.13: GroceryListItem inherits store from parent WeeklyList via
-                // the weeklyList relationship — no assign() needed (ADR 014)
                 let listItem = GroceryListItem(context: viewContext)
                 listItem.id = UUID()
                 listItem.name = ingredientName
                 listItem.isCompleted = false
                 listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
                 listItem.weeklyList = weeklyList
+                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                listItem.household = weeklyList.household
+                listItem.householdKey = weeklyList.householdKey
 
                 if scaleFactor != 1.0 && ingredient.isParseable && ingredient.numericValue > 0 {
                     let scaledValue = ingredient.numericValue * scaleFactor

@@ -246,6 +246,9 @@ class QuantityMergeService: ObservableObject {
                 consolidated.source = "\(sourceNote)(\(mergedItem.sourceCount))"
                 consolidated.isCompleted = false
                 consolidated.weeklyList = list
+                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                consolidated.household = list.household
+                consolidated.householdKey = list.householdKey
                 
                 // Use category from first item
                 consolidated.categoryEntity = mergedItem.originalItems.first?.categoryEntity

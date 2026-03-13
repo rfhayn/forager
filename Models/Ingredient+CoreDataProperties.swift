@@ -27,6 +27,8 @@ extension Ingredient {
     @NSManaged public var displayText: String?
     @NSManaged public var isParseable: Bool
     @NSManaged public var parseConfidence: Float
+    @NSManaged public var householdKey: String?
+    @NSManaged public var household: Household?
     @NSManaged public var ingredientTemplate: IngredientTemplate?
     @NSManaged public var recipe: Recipe?
 

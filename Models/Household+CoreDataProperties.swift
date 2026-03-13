@@ -24,6 +24,8 @@ extension Household {
     @NSManaged public var shareRecord: Data?
     @NSManaged public var members: NSSet?
     @NSManaged public var categories: NSSet?
+    @NSManaged public var groceryListItems: NSSet?
+    @NSManaged public var ingredients: NSSet?
     @NSManaged public var ingredientTemplates: NSSet?
     @NSManaged public var mealPlans: NSSet?
     @NSManaged public var plannedMeals: NSSet?

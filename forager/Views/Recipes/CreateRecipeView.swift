@@ -911,6 +911,9 @@ struct CreateRecipeView: View {
                 ingredient.name = trimmed // Full text with quantity
                 ingredient.sortOrder = Int16(index)
                 ingredient.recipe = recipe
+                // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+                ingredient.household = recipe.household
+                ingredient.householdKey = recipe.householdKey
 
                 ingredient.displayText = structured.displayText
                 ingredient.numericValue = structured.numericValue ?? 0.0

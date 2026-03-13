@@ -922,6 +922,9 @@ class MealPlanService: ObservableObject {
                     listItem.categoryEntity = ingredient.ingredientTemplate?.categoryEntity
 
                     newList.addToItems(listItem)
+                    // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                    listItem.household = newList.household
+                    listItem.householdKey = newList.householdKey
                 }
             }
 
