@@ -1542,25 +1542,25 @@ class HouseholdService: ObservableObject {
             try viewContext.save()
 
             // 7. Wait for the shared store to be ready (CloudKit zone setup)
-            diag.info("Step 7: Waiting for shared store to be ready", category: .household)
-            try await waitForSharedStoreReady(household: household)
-            diag.info("Step 7: Shared store ready", category: .household)
-
-            // 8. Copy personal data to shared store (if requested and data exists)
+            // 7. Stamp existing personal data with householdKey (if requested)
+            // M9.15.3: Don't wait for shared store — CloudKit migrates records
+            // from private→shared zone asynchronously (can take >60s). Instead,
+            // stamp householdKey on existing objects in the private store. CloudKit
+            // will move them to the shared zone when it's ready.
             if moveExistingData {
-                diag.info("Step 8: Copying personal data to shared store", category: .household)
-                creationStatus = "Moving your data to household…"
-                try copyPersonalDataToSharedStore(household: household)
-                diag.info("Step 8: Data copy complete", category: .household)
+                diag.info("Step 7: Stamping personal data with householdKey", category: .household)
+                creationStatus = "Linking your data to household…"
+                try stampPersonalDataWithHouseholdKey(household: household)
+                diag.info("Step 7: Data stamp complete", category: .household)
             } else {
-                diag.info("Step 8: Skipped (moveExistingData=false)", category: .household)
+                diag.info("Step 7: Skipped (moveExistingData=false)", category: .household)
             }
 
-            // 9. Break GroceryItem→Category cross-store relationships
-            diag.info("Step 9: Breaking cross-store GroceryItem→Category links", category: .household)
+            // 8. Break GroceryItem→Category cross-store relationships
+            diag.info("Step 8: Breaking cross-store GroceryItem→Category links", category: .household)
             breakGroceryItemCategoryLinks()
 
-            // 10. Update state
+            // 9. Update state
             currentHousehold = household
             creationStatus = "Done!"
             diag.info("=== CREATE HOUSEHOLD COMPLETE ===", category: .household)
@@ -1568,7 +1568,7 @@ class HouseholdService: ObservableObject {
             CloudKitLogger.householdCreated(name)
             CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
             if moveExistingData {
-                CloudKitLogger.debug("Personal data copied to shared store (create-empty-then-copy)")
+                CloudKitLogger.debug("Personal data stamped with householdKey — CloudKit will migrate to shared zone")
             }
 
             return household
@@ -1583,39 +1583,52 @@ class HouseholdService: ObservableObject {
         }
     }
 
-    // MARK: - M9.15: Create-Empty-Then-Copy Helpers
+    // MARK: - M9.15.3: Stamp-in-Place Helpers
 
-    /// M9.15: Wait for the Household object to appear in the shared store.
-    /// After container.share(), CloudKit needs time to set up the shared zone and
-    /// sync the record. We poll until the object is accessible via the shared store.
-    private func waitForSharedStoreReady(household: Household) async throws {
+    /// M9.15.3: Stamp existing personal data with householdKey and household relationship.
+    /// Instead of copying objects to the shared store (which requires waiting for CloudKit
+    /// to migrate the Household to the shared zone — can take >60s), we stamp the existing
+    /// objects in the private store. CloudKit's mirroring delegate will migrate them to the
+    /// shared zone when it processes the CKShare.
+    ///
+    /// This is faster and more reliable than the copy-then-delete pattern because:
+    /// 1. No waiting for shared store readiness
+    /// 2. No duplicate objects (old + new) during the transition
+    /// 3. CloudKit handles the zone migration atomically
+    private func stampPersonalDataWithHouseholdKey(household: Household) throws {
         let diag = DiagnosticLogger.shared
-        creationStatus = "Syncing with iCloud…"
-
-        let maxAttempts = 30  // 30 × 2s = 60s max
-        let persistence = PersistenceController.shared
-
-        for attempt in 1...maxAttempts {
-            let request: NSFetchRequest<Household> = Household.fetchRequest()
-            request.predicate = NSPredicate(format: "id == %@", (household.id ?? UUID()) as CVarArg)
-            request.affectedStores = [persistence.sharedStore]
-
-            if let _ = try? viewContext.fetch(request).first {
-                diag.info("Shared store ready after \(attempt) attempt(s)", category: .store)
-                return
-            }
-
-            if attempt % 5 == 0 {
-                diag.debug("Waiting for shared store... attempt \(attempt)/\(maxAttempts)", category: .store)
-            }
-
-            creationStatus = "Syncing with iCloud… (\(attempt * 2)s)"
-            try await Task.sleep(nanoseconds: 2_000_000_000)
+        guard let householdKey = household.id?.uuidString else {
+            throw HouseholdError.copyFailed("Household missing ID")
         }
 
-        diag.error("Shared store timeout after \(maxAttempts) attempts (60s)", category: .store)
-        throw HouseholdError.sharedStoreTimeout
+        let persistence = PersistenceController.shared
+        var stampedCount = 0
+
+        // Stamp all HouseholdScoped entities that don't already have a householdKey
+        // Order doesn't matter since we're updating in-place, not creating new objects
+        let entityNames = ["Category", "IngredientTemplate", "Recipe", "Ingredient",
+                           "WeeklyList", "GroceryListItem", "MealPlan", "PlannedMeal"]
+
+        for entityName in entityNames {
+            let request = NSFetchRequest<NSManagedObject>(entityName: entityName)
+            request.predicate = NSPredicate(format: "householdKey == nil")
+            request.affectedStores = [persistence.privateStore]
+
+            if let objects = try? viewContext.fetch(request), !objects.isEmpty {
+                for obj in objects {
+                    obj.setValue(householdKey, forKey: "householdKey")
+                    obj.setValue(household, forKey: "household")
+                    stampedCount += 1
+                }
+                diag.debug("Stamped \(objects.count) \(entityName)(s) with householdKey", category: .household)
+            }
+        }
+
+        try viewContext.save()
+        diag.info("Stamped \(stampedCount) total objects with householdKey \(householdKey)", category: .household)
     }
+
+    // MARK: - M9.15: Create-Empty-Then-Copy Helpers (Legacy)
 
     /// M9.15: Copy all personal data from private store to shared store as new objects.
     /// Uses ManagedObjectFactory for correct store assignment. Copy order respects
