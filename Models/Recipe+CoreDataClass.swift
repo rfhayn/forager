@@ -28,7 +28,7 @@ public class Recipe: NSManagedObject {
         setPrimitiveValue(false, forKey: "isFavorite")
         
         // M10.6.17: Household assignment removed from awakeFromInsert (ADR 013).
-        // Callers (saveImport, ManagedObjectFactory, migratePersonalDataToHousehold)
+        // Callers (saveImport, ManagedObjectFactory, copyPersonalDataToSharedStore)
         // set household + householdKey explicitly. The unscoped fetch here found ghost
         // Household entities from previous memberships, causing invisible data.
     }

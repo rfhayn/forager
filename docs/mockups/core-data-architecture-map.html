@@ -120,7 +120,7 @@
 
   .canvas-inner {
     position: absolute; top: 0; left: 0;
-    width: 2800px; height: 1700px;
+    width: 3100px; height: 1700px;
     transform-origin: 0 0;
     padding: 60px;
   }
@@ -217,7 +217,7 @@
   .persist-node .desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
 
   /* SVG */
-  svg.connections { position: absolute; top: 0; left: 0; width: 2800px; height: 1700px; pointer-events: none; z-index: 1; }
+  svg.connections { position: absolute; top: 0; left: 0; width: 3100px; height: 1700px; pointer-events: none; z-index: 1; }
 
   /* Detail Panel */
   .detail-panel {
@@ -346,7 +346,7 @@
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-header" onclick="toggleSection(this)">
-        Infrastructure <span class="count">8</span>
+        Infrastructure <span class="count">9</span>
       </div>
       <div class="sidebar-items" id="persist-list"></div>
     </div>
@@ -430,6 +430,8 @@ const entities = {
       { name: 'mealPlans', dest: 'MealPlan', card: '0..*', rule: 'Cascade' },
       { name: 'plannedMeals', dest: 'PlannedMeal', card: '0..*', rule: 'Cascade' },
       { name: 'weeklyLists', dest: 'WeeklyList', card: '0..*', rule: 'Cascade' },
+      { name: 'ingredients', dest: 'Ingredient', card: '0..*', rule: 'Nullify', note: 'M9.15' },
+      { name: 'groceryListItems', dest: 'GroceryListItem', card: '0..*', rule: 'Nullify', note: 'M9.15' },
       { name: 'preferences', dest: 'UserPreferences', card: '0..1', rule: 'Cascade' },
     ],
     services: ['HouseholdService'],
@@ -523,20 +525,21 @@ const entities = {
     x: 880, y: 800, w: 220
   },
   Ingredient: {
-    type: 'entity', color: '#58a6ff', householdScoped: false,
+    type: 'entity', color: '#58a6ff', householdScoped: true,
     store: 'both', icon: 'I',
-    desc: 'Individual ingredient in a recipe with parsed quantity data.',
-    personalBehavior: 'Follows parent Recipe to private store.',
-    householdBehavior: 'Follows parent Recipe to shared store. Cascade delete from Recipe.',
+    desc: 'Individual ingredient in a recipe with parsed quantity data. HouseholdScoped (M9.15).',
+    personalBehavior: 'Follows parent Recipe to private store. household=nil, householdKey=nil.',
+    householdBehavior: 'Follows parent Recipe to shared store. Inherits household/householdKey from Recipe (child pattern, not factory).',
     props: [
       { name: 'id', type: 'UUID' }, { name: 'name', type: 'String' },
       { name: 'displayText', type: 'String' }, { name: 'numericValue', type: 'Double' },
       { name: 'standardUnit', type: 'String' }, { name: 'parseConfidence', type: 'Float' },
-      { name: 'sortOrder', type: 'Int16' }
+      { name: 'sortOrder', type: 'Int16' }, { name: 'householdKey', type: 'String', note: 'M9.15' }
     ],
     relationships: [
       { name: 'recipe', dest: 'Recipe', card: '0..1', rule: 'Nullify' },
       { name: 'ingredientTemplate', dest: 'IngredientTemplate', card: '0..1', rule: 'Nullify' },
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify', note: 'M9.15' },
     ],
     services: ['RecipeService', 'RecipeImportService'],
     views: ['Recipes'],
@@ -586,22 +589,23 @@ const entities = {
     x: 80, y: 500, w: 190
   },
   GroceryListItem: {
-    type: 'entity', color: '#58a6ff', householdScoped: false,
+    type: 'entity', color: '#58a6ff', householdScoped: true,
     store: 'both', icon: 'GL',
-    desc: 'Item on a WeeklyList. Flat string snapshots (ADR 012).',
-    personalBehavior: 'Follows parent WeeklyList to private store.',
-    householdBehavior: 'Follows parent WeeklyList to shared store. Cascade delete from WeeklyList.',
+    desc: 'Item on a WeeklyList. Flat string snapshots (ADR 012). HouseholdScoped (M9.15).',
+    personalBehavior: 'Follows parent WeeklyList to private store. household=nil, householdKey=nil.',
+    householdBehavior: 'Follows parent WeeklyList to shared store. Inherits household/householdKey from WeeklyList (child pattern, not factory).',
     props: [
       { name: 'id', type: 'UUID' }, { name: 'displayText', type: 'String' },
       { name: 'name', type: 'String' }, { name: 'categoryName', type: 'String', note: 'deprecated M9.12' },
       { name: 'numericValue', type: 'Double' }, { name: 'standardUnit', type: 'String' },
       { name: 'parseConfidence', type: 'Float' }, { name: 'isCompleted', type: 'Bool' },
-      { name: 'source', type: 'String' }
+      { name: 'source', type: 'String' }, { name: 'householdKey', type: 'String', note: 'M9.15' }
     ],
     relationships: [
       { name: 'weeklyList', dest: 'WeeklyList', card: '0..1', rule: 'Nullify' },
       { name: 'sourceRecipes', dest: 'Recipe', card: '0..*', rule: 'Nullify' },
       { name: 'categoryEntity', dest: 'Category', card: '0..1', rule: 'Nullify', note: 'M9.12' },
+      { name: 'household', dest: 'Household', card: '0..1', rule: 'Nullify', note: 'M9.15' },
     ],
     services: ['WeeklyListService'],
     views: ['Grocery'],
@@ -674,11 +678,11 @@ const entities = {
 
 const services = {
   HouseholdService: {
-    type: 'service', desc: 'Household mgmt, CloudKit sharing, invitations',
+    type: 'service', desc: 'Household mgmt, sharing, currentScope',
     entities: { writes: ['Household', 'HouseholdMember'], reads: ['Household', 'HouseholdMember'] },
     activeInPersonal: false, activeInHousehold: true,
-    personalNote: 'Inactive. No household exists.',
-    householdNote: 'Central service: create household, invite members, manage CKShare, leave/delete.',
+    personalNote: 'Inactive. currentScope returns .personal.',
+    householdNote: 'Central service: create household, invite members, manage CKShare, leave/delete. currentScope resolves DataScope from active household.',
     x: 1520, y: 200, w: 200
   },
   WeeklyListService: {
@@ -702,7 +706,7 @@ const services = {
     entities: { writes: ['Recipe', 'Ingredient', 'IngredientTemplate'], reads: ['Recipe'] },
     activeInPersonal: true, activeInHousehold: true,
     personalNote: 'Imports to private store via child context.',
-    householdNote: 'Imports to shared store. Child context with explicit scope.',
+    householdNote: 'Imports via child context with manual householdKey. No factory (child contexts don\'t support store assignment).',
     x: 340, y: 1200, w: 200
   },
   OptimizedRecipeDataService: {
@@ -842,9 +846,16 @@ const infrastructure = {
     householdNote: 'Both stores active. CloudKit syncs shared store across devices.',
     x: 2200, y: 200, w: 240
   },
+  performScopedWrite: {
+    type: 'persist', desc: 'Background write with factory + scope',
+    entities: ['all'],
+    personalNote: 'Creates background context + factory with .personal scope.',
+    householdNote: 'Creates background context + factory bound to .household scope. onSuccess/onError callbacks dispatch to main queue.',
+    x: 2500, y: 200, w: 250
+  },
   ManagedObjectFactory: {
     type: 'persist', desc: 'Single creation path for HouseholdScoped',
-    entities: ['Recipe', 'Category', 'WeeklyList', 'PlannedMeal', 'IngredientTemplate'],
+    entities: ['Recipe', 'Category', 'WeeklyList', 'MealPlan', 'PlannedMeal', 'IngredientTemplate', 'Ingredient (child)', 'GroceryListItem (child)'],
     personalNote: 'Scope = .personal. Objects go to private store, household = nil.',
     householdNote: 'Scope = .household(id, .shared). Objects go to shared store, household auto-set.',
     x: 2200, y: 340, w: 240
@@ -1141,7 +1152,7 @@ function renderStoreArchitecture() {
       sharedEntities.appendChild(chip);
     });
 
-    notes.textContent = 'In household mode, HouseholdScoped entities migrate to the shared store. GroceryItem and UserPreferences remain private (per-user). Household starts in private store, then moves to shared via attach-then-share.';
+    notes.textContent = 'In household mode, HouseholdScoped entities migrate to the shared store. GroceryItem and UserPreferences remain private (per-user). Child HouseholdScoped entities (Ingredient, GroceryListItem) inherit household/householdKey from their parent (Recipe, WeeklyList) rather than using ManagedObjectFactory directly (M9.15).';
   }
 }
 

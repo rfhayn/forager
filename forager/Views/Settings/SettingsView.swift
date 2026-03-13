@@ -691,7 +691,7 @@ struct CreateHouseholdSheet: View {
     }
     
     // M7.2.3 Phase 4.1: Creates household with optional data migration
-    // Uses createHouseholdAndShare which implements attach-then-share pattern
+    // M9.15: Uses create-empty-then-copy pattern (replaces broken attach-then-share)
     private func createHouseholdWithMigration() {
         isCreating = true
         
