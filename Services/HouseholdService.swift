@@ -34,6 +34,8 @@ enum HouseholdError: LocalizedError {
     case cannotRemoveSelf
     case cannotRemoveOwner
     case alreadyInHousehold
+    case sharedStoreTimeout
+    case copyFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -71,6 +73,10 @@ enum HouseholdError: LocalizedError {
             return "The household owner cannot be removed."
         case .alreadyInHousehold:
             return "You are already in a household. Leave or delete it first before joining another."
+        case .sharedStoreTimeout:
+            return "iCloud took too long to set up sharing. Please try again."
+        case .copyFailed(let reason):
+            return "Failed to move data to household: \(reason)"
         }
     }
 }
@@ -180,6 +186,8 @@ class HouseholdService: ObservableObject {
         // Load current household on init
         Task {
             await loadCurrentHousehold()
+            // M9.15: Backfill householdKey on Ingredient/GroceryListItem for existing household users
+            backfillChildEntityHouseholdKeys()
             // M7.3.4: Process any pending leaves from offline sessions
             await processPendingLeaves()
         }
@@ -1029,6 +1037,9 @@ class HouseholdService: ObservableObject {
                 newIngredient.isParseable = oldIngredient.isParseable
                 newIngredient.parseConfidence = oldIngredient.parseConfidence
                 newIngredient.recipe = newRecipe
+                // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+                newIngredient.household = newRecipe.household
+                newIngredient.householdKey = newRecipe.householdKey
 
                 // M7.2.2 FIX: Link to migrated template if it exists
                 if let oldTemplateId = oldIngredient.ingredientTemplate?.id,
@@ -1083,6 +1094,9 @@ class HouseholdService: ObservableObject {
                 newItem.isParseable = oldItem.isParseable
                 newItem.parseConfidence = oldItem.parseConfidence
                 newItem.weeklyList = newList
+                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+                newItem.household = newList.household
+                newItem.householdKey = newList.householdKey
             }
         }
 
@@ -1239,12 +1253,19 @@ class HouseholdService: ObservableObject {
         return (recipeCount, listCount, mealPlanCount, categoryCount, templateCount)
     }
     
-    /// Creates household and migrates existing personal data if requested
-    /// - Parameters:
-    ///   - name: Name of the household
-    ///   - ownerName: Display name for the owner
-    ///   - moveExistingData: Whether to migrate existing personal data to household
-    /// - Returns: The newly created Household
+    /// M9.15: Creates household using create-empty-then-copy pattern.
+    /// Replaces the broken attach-then-share pattern (ADR 008) that caused
+    /// CloudKit error 134060 when objects had existing CKRecords in the private zone.
+    ///
+    /// New flow:
+    /// 1. Create empty Household + HouseholdMember (no data relationships)
+    /// 2. Share via CloudKit (single object = no zone conflicts)
+    /// 3. Wait for shared store to be ready
+    /// 4. Copy personal data to shared store as new objects via ManagedObjectFactory
+    /// 5. Delete old private-store originals
+    ///
+    /// The `moveExistingData` parameter is preserved for API compatibility but is
+    /// effectively always true — there's no reason to leave data orphaned in private store.
     func createHouseholdAndShare(name: String, ownerName: String, moveExistingData: Bool) async throws -> Household {
         isLoading = true
         creationStatus = "Checking iCloud account…"
@@ -1254,7 +1275,6 @@ class HouseholdService: ObservableObject {
         }
 
         // M7.3.3: Prevent creating a household when already in one
-        // User must leave/delete their current household first
         if currentHousehold != nil {
             CloudKitLogger.warning("Cannot create household - already in one")
             throw HouseholdError.alreadyInHousehold
@@ -1265,7 +1285,6 @@ class HouseholdService: ObservableObject {
         existingRequest.fetchLimit = 1
         if let existingHouseholds = try? viewContext.fetch(existingRequest),
            !existingHouseholds.isEmpty {
-            // Check if user is actually a participant in any of them
             for existing in existingHouseholds {
                 if await isCurrentUserParticipant(in: existing) {
                     CloudKitLogger.warning("Cannot create household - already a participant in '\(existing.name ?? "Unknown")'")
@@ -1288,7 +1307,7 @@ class HouseholdService: ObservableObject {
         guard accountStatus == .available else {
             let statusName: String
             switch accountStatus {
-            case .available: statusName = "iCloud available" // Unreachable due to guard, but required for exhaustiveness
+            case .available: statusName = "iCloud available"
             case .noAccount: statusName = "No iCloud account signed in"
             case .restricted: statusName = "iCloud access is restricted"
             case .couldNotDetermine: statusName = "Could not determine iCloud status"
@@ -1299,13 +1318,11 @@ class HouseholdService: ObservableObject {
         }
 
         // M10.6: Pre-creation cleanup — remove orphaned objects from previous households
-        // These can cause CloudKit zone corruption (error 134060) if Ingredients reference
-        // IngredientTemplates across zone boundaries during container.share().
         cleanOrphanedHouseholdData()
 
         do {
             #if DEBUG
-            print("\n🏗️ M7.2.3 Phase 4: Creating household and share")
+            print("\n🏗️ M9.15: Creating household (create-empty-then-copy pattern)")
             print("   Household: \(name)")
             print("   Move existing data: \(moveExistingData)")
             #endif
@@ -1332,34 +1349,28 @@ class HouseholdService: ObservableObject {
             print("📝 Owner display name: \(ownerName)")
             #endif
 
-            // 2. Create Household entity in Private Store (will be shared after)
+            // 2. Create EMPTY Household + owner member (no data relationships!)
+            // M9.15: Critical difference from old pattern — DO NOT attach any data here.
+            // Sharing an empty object means no CKRecords need to move between zones.
             creationStatus = "Creating household…"
             let household = Household(context: viewContext)
             household.id = UUID()
             household.name = name
             household.ownerRecordName = ownerIdentifier
-            household.ownerDisplayName = ownerName  // M7.6.8: Store display name on shared root record
+            household.ownerDisplayName = ownerName
             household.createdDate = Date()
 
-            // 3. Create owner as first member
             let ownerMember = HouseholdMember(context: viewContext)
             ownerMember.id = UUID()
-            ownerMember.email = ownerIdentifier  // Stable userRecordID
-            ownerMember.displayName = ownerName  // From UI (auto-populated or user-entered)
-            // Cache for fallback when CKShare and member lookup both fail
+            ownerMember.email = ownerIdentifier
+            ownerMember.displayName = ownerName
             UserDefaults.standard.set(ownerName, forKey: "cachedOwnerDisplayName")
             ownerMember.role = "owner"
             ownerMember.status = "active"
             ownerMember.joinedDate = Date()
             ownerMember.household = household
 
-            // 4. Migrate existing data if requested
-            if moveExistingData {
-                creationStatus = "Migrating your data…"
-                try migratePersonalDataToHousehold(household)
-            }
-
-            // 5. Save to Core Data (household in Private Store initially)
+            // 3. Save empty household to Core Data (private store initially)
             creationStatus = "Saving to device…"
             do {
                 try viewContext.save()
@@ -1371,9 +1382,8 @@ class HouseholdService: ObservableObject {
             household.logStoreIdentity()  // Should show "Private Store"
             #endif
 
-            // 6. Share the household via CloudKit with retry
-            // M7.6.8: On fresh installs, CloudKit may not have finished exporting the
-            // household record before share() runs. Retry with backoff to allow export.
+            // 4. Share the EMPTY household via CloudKit
+            // M9.15: Only Household + HouseholdMember are shared — no data graph = no zone conflicts
             let persistenceController = PersistenceController.shared
             creationStatus = "Setting up CloudKit sharing…"
             let share: CKShare
@@ -1382,12 +1392,11 @@ class HouseholdService: ObservableObject {
                     self.creationStatus = status
                 }
             } catch {
-                // Share failed even after retries — rollback the ghost household
-                CloudKitLogger.householdError("CloudKit sharing failed after retries, rolling back", householdID: household.id?.uuidString, error: error)
+                // Share failed — delete the empty household (no data to rollback)
+                CloudKitLogger.householdError("CloudKit sharing failed after retries", householdID: household.id?.uuidString, error: error)
                 #if DEBUG
-                print("🔙 Rolling back ghost household and migrated data...")
+                print("🔙 Deleting failed empty household...")
                 #endif
-                rollbackMigratedData(household)
                 viewContext.delete(ownerMember)
                 viewContext.delete(household)
                 try? viewContext.save()
@@ -1398,9 +1407,8 @@ class HouseholdService: ObservableObject {
             print("✅ CKShare created: \(share.recordID.recordName)")
             #endif
 
-            // 7. CRITICAL: Save context immediately to persist the share
-            creationStatus = "Finalizing…"
-            // M7.2.3 Phase 4.4 FIX: Without this save, CKShare exists in-memory but never syncs to CloudKit!
+            // 5. Persist the CKShare
+            creationStatus = "Finalizing CloudKit share…"
             try viewContext.save()
 
             #if DEBUG
@@ -1408,41 +1416,341 @@ class HouseholdService: ObservableObject {
             household.logStoreIdentity()  // Should show "Shared Store" after share
             #endif
 
-            // 8. Store share record reference for future access
+            // 6. Store share record reference
             household.shareRecord = try NSKeyedArchiver.archivedData(
                 withRootObject: share,
                 requiringSecureCoding: true
             )
-
-            // 9. CRITICAL: Refresh all household-related objects to get updated store assignments
             viewContext.refreshAllObjects()
-
-            // 10. Save share record
             try viewContext.save()
 
-            // 11. Update current household
+            // 7. Wait for the shared store to be ready (CloudKit zone setup)
+            try await waitForSharedStoreReady(household: household)
+
+            // 8. Copy personal data to shared store (if requested and data exists)
+            if moveExistingData {
+                creationStatus = "Moving your data to household…"
+                try copyPersonalDataToSharedStore(household: household)
+            }
+
+            // 9. Break GroceryItem→Category cross-store relationships
+            // GroceryItem stays in private store; Categories now live in shared store
+            breakGroceryItemCategoryLinks()
+
+            // 10. Update state
             currentHousehold = household
+            creationStatus = "Done!"
 
             CloudKitLogger.householdCreated(name)
             CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
             if moveExistingData {
-                CloudKitLogger.debug("Personal data migrated to household")
+                CloudKitLogger.debug("Personal data copied to shared store (create-empty-then-copy)")
             }
 
             return household
 
         } catch let householdError as HouseholdError {
-            // Re-throw already-formatted household errors
             throw householdError
         } catch {
             CloudKitLogger.householdError("Household creation failed", householdID: nil, error: error)
             throw HouseholdError.creationFailed(Self.extractDetailedError(error))
         }
     }
-    
-    /// Migrates ALL existing personal data to household
-    /// Attaches recipes, lists, meal plans, categories, and ingredient templates
-    /// Sets both household relationship AND householdKey for CloudKit sync
+
+    // MARK: - M9.15: Create-Empty-Then-Copy Helpers
+
+    /// M9.15: Wait for the Household object to appear in the shared store.
+    /// After container.share(), CloudKit needs time to set up the shared zone and
+    /// sync the record. We poll until the object is accessible via the shared store.
+    private func waitForSharedStoreReady(household: Household) async throws {
+        creationStatus = "Syncing with iCloud…"
+
+        let maxAttempts = 30  // 30 × 2s = 60s max
+        let persistence = PersistenceController.shared
+
+        for attempt in 1...maxAttempts {
+            let request: NSFetchRequest<Household> = Household.fetchRequest()
+            request.predicate = NSPredicate(format: "id == %@", (household.id ?? UUID()) as CVarArg)
+            request.affectedStores = [persistence.sharedStore]
+
+            if let _ = try? viewContext.fetch(request).first {
+                #if DEBUG
+                print("✅ M9.15: Shared store ready after \(attempt) attempt(s)")
+                #endif
+                return
+            }
+
+            #if DEBUG
+            if attempt % 5 == 0 {
+                print("⏳ M9.15: Waiting for shared store... attempt \(attempt)/\(maxAttempts)")
+            }
+            #endif
+
+            creationStatus = "Syncing with iCloud… (\(attempt * 2)s)"
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+        }
+
+        throw HouseholdError.sharedStoreTimeout
+    }
+
+    /// M9.15: Copy all personal data from private store to shared store as new objects.
+    /// Uses ManagedObjectFactory for correct store assignment. Copy order respects
+    /// the entity relationship graph — parents before children.
+    ///
+    /// Pattern: fetch from private store → create new in shared store → reconstruct relationships → delete originals
+    private func copyPersonalDataToSharedStore(household: Household) throws {
+        let persistence = PersistenceController.shared
+        let factory = ManagedObjectFactory(context: viewContext, persistence: persistence)
+        let scope = DataScope.household(id: household.objectID, storeID: .shared)
+
+        guard let householdKey = household.id?.uuidString else {
+            throw HouseholdError.copyFailed("Household missing ID")
+        }
+
+        #if DEBUG
+        print("\n📦 M9.15: Copying personal data to shared store...")
+        #endif
+
+        // Old→new ID maps for relationship reconstruction
+        var categoryMap: [NSManagedObjectID: Category] = [:]
+        var templateMap: [NSManagedObjectID: IngredientTemplate] = [:]
+        var recipeMap: [NSManagedObjectID: Recipe] = [:]
+        var weeklyListMap: [NSManagedObjectID: WeeklyList] = [:]
+        var mealPlanMap: [NSManagedObjectID: MealPlan] = [:]
+
+        // 1. Categories (no dependencies)
+        let oldCategories = try fetchPersonalEntities(Category.self, persistence: persistence)
+        for old in oldCategories {
+            let new = try factory.make(Category.self, in: scope) { cat in
+                self.copyAllAttributes(from: old, to: cat)
+                cat.id = UUID()  // Fresh ID for shared store
+            }
+            categoryMap[old.objectID] = new
+        }
+
+        // 2. IngredientTemplates (→ Category)
+        let oldTemplates = try fetchPersonalEntities(IngredientTemplate.self, persistence: persistence)
+        for old in oldTemplates {
+            let new = try factory.make(IngredientTemplate.self, in: scope) { tmpl in
+                self.copyAllAttributes(from: old, to: tmpl)
+                tmpl.id = UUID()
+                if let oldCat = old.categoryEntity {
+                    tmpl.categoryEntity = categoryMap[oldCat.objectID]
+                }
+            }
+            templateMap[old.objectID] = new
+        }
+
+        // 3. Recipes (no entity dependencies)
+        let oldRecipes = try fetchPersonalEntities(Recipe.self, persistence: persistence)
+        for old in oldRecipes {
+            let new = try factory.make(Recipe.self, in: scope) { recipe in
+                self.copyAllAttributes(from: old, to: recipe)
+                recipe.id = UUID()
+            }
+            recipeMap[old.objectID] = new
+        }
+
+        // 4. Ingredients (→ Recipe, → IngredientTemplate)
+        // M9.15: Ingredient is now HouseholdScoped — inherits from parent Recipe
+        let oldIngredients = try fetchPersonalEntities(Ingredient.self, persistence: persistence)
+        for old in oldIngredients {
+            let newIngredient = Ingredient(context: viewContext)
+            copyAllAttributes(from: old, to: newIngredient)
+            newIngredient.id = UUID()
+            // Reconstruct relationships
+            if let oldRecipe = old.recipe, let newRecipe = recipeMap[oldRecipe.objectID] {
+                newIngredient.recipe = newRecipe
+            }
+            if let oldTemplate = old.ingredientTemplate, let newTemplate = templateMap[oldTemplate.objectID] {
+                newIngredient.ingredientTemplate = newTemplate
+            }
+            // M9.15: Inherit household/householdKey from parent Recipe
+            if let parentRecipe = newIngredient.recipe {
+                newIngredient.household = parentRecipe.household
+                newIngredient.householdKey = parentRecipe.householdKey
+            } else {
+                newIngredient.household = household
+                newIngredient.householdKey = householdKey
+            }
+            // Assign to shared store
+            viewContext.assign(newIngredient, to: persistence.sharedStore)
+        }
+
+        // 5. WeeklyLists (no entity dependencies)
+        let oldLists = try fetchPersonalEntities(WeeklyList.self, persistence: persistence)
+        for old in oldLists {
+            let new = try factory.make(WeeklyList.self, in: scope) { list in
+                self.copyAllAttributes(from: old, to: list)
+                list.id = UUID()
+            }
+            weeklyListMap[old.objectID] = new
+        }
+
+        // 6. GroceryListItems (→ WeeklyList, → Category, → Recipe)
+        // M9.15: GroceryListItem is now HouseholdScoped — inherits from parent WeeklyList
+        let oldItems = try fetchPersonalEntities(GroceryListItem.self, persistence: persistence)
+        for old in oldItems {
+            let newItem = GroceryListItem(context: viewContext)
+            copyAllAttributes(from: old, to: newItem)
+            newItem.id = UUID()
+            // Reconstruct relationships
+            if let oldList = old.weeklyList, let newList = weeklyListMap[oldList.objectID] {
+                newItem.weeklyList = newList
+            }
+            if let oldCat = old.categoryEntity, let newCat = categoryMap[oldCat.objectID] {
+                newItem.categoryEntity = newCat
+            }
+            // Reconstruct sourceRecipes (to-many)
+            if let oldSourceRecipes = old.sourceRecipes as? Set<Recipe> {
+                for oldRecipe in oldSourceRecipes {
+                    if let newRecipe = recipeMap[oldRecipe.objectID] {
+                        newItem.addToSourceRecipes(newRecipe)
+                    }
+                }
+            }
+            // M9.15: Inherit household/householdKey from parent WeeklyList
+            if let parentList = newItem.weeklyList {
+                newItem.household = parentList.household
+                newItem.householdKey = parentList.householdKey
+            } else {
+                newItem.household = household
+                newItem.householdKey = householdKey
+            }
+            viewContext.assign(newItem, to: persistence.sharedStore)
+        }
+
+        // 7. MealPlans (no entity dependencies)
+        let oldPlans = try fetchPersonalEntities(MealPlan.self, persistence: persistence)
+        for old in oldPlans {
+            let new = try factory.make(MealPlan.self, in: scope) { plan in
+                self.copyAllAttributes(from: old, to: plan)
+                plan.id = UUID()
+            }
+            mealPlanMap[old.objectID] = new
+        }
+
+        // 8. PlannedMeals (→ MealPlan, → Recipe)
+        let oldMeals = try fetchPersonalEntities(PlannedMeal.self, persistence: persistence)
+        for old in oldMeals {
+            let _ = try factory.make(PlannedMeal.self, in: scope) { meal in
+                self.copyAllAttributes(from: old, to: meal)
+                meal.id = UUID()
+                if let oldPlan = old.mealPlan, let newPlan = mealPlanMap[oldPlan.objectID] {
+                    meal.mealPlan = newPlan
+                }
+                if let oldRecipe = old.recipe, let newRecipe = recipeMap[oldRecipe.objectID] {
+                    meal.recipe = newRecipe
+                }
+            }
+        }
+
+        #if DEBUG
+        print("📦 M9.15: Copy complete:")
+        print("   Categories: \(oldCategories.count)")
+        print("   IngredientTemplates: \(oldTemplates.count)")
+        print("   Recipes: \(oldRecipes.count)")
+        print("   Ingredients: \(oldIngredients.count)")
+        print("   WeeklyLists: \(oldLists.count)")
+        print("   GroceryListItems: \(oldItems.count)")
+        print("   MealPlans: \(oldPlans.count)")
+        print("   PlannedMeals: \(oldMeals.count)")
+        #endif
+
+        // Delete originals from private store (copy succeeded)
+        // Delete in reverse dependency order: children first, parents last
+        creationStatus = "Cleaning up old data…"
+        for old in oldMeals { viewContext.delete(old) }
+        for old in oldPlans { viewContext.delete(old) }
+        for old in oldItems { viewContext.delete(old) }
+        for old in oldLists { viewContext.delete(old) }
+        for old in oldIngredients { viewContext.delete(old) }
+        for old in oldRecipes { viewContext.delete(old) }
+        for old in oldTemplates { viewContext.delete(old) }
+        for old in oldCategories { viewContext.delete(old) }
+
+        try viewContext.save()
+
+        #if DEBUG
+        print("✅ M9.15: Private store originals deleted, save complete")
+        #endif
+    }
+
+    /// M9.15: Fetch entities from the private store only (excludes shared store objects).
+    private func fetchPersonalEntities<T: NSManagedObject>(_ type: T.Type, persistence: PersistenceController) throws -> [T] {
+        let request = type.fetchRequest() as! NSFetchRequest<T>
+        request.affectedStores = [persistence.privateStore]
+        return try viewContext.fetch(request)
+    }
+
+    /// M9.15: Copy all non-relationship attributes from one managed object to another.
+    /// Uses Core Data entity description to dynamically enumerate attributes,
+    /// ensuring full fidelity without manually listing every property.
+    private func copyAllAttributes(from source: NSManagedObject, to destination: NSManagedObject) {
+        for (name, _) in source.entity.attributesByName {
+            // Skip id — caller assigns fresh UUIDs
+            if name == "id" { continue }
+            destination.setValue(source.value(forKey: name), forKey: name)
+        }
+    }
+
+    /// M9.15: Break GroceryItem→Category cross-store relationships.
+    /// GroceryItem stays in private store; Category moves to shared store.
+    /// Preserves category string for display fallback via effectiveCategory.
+    /// M9.15: One-time backfill for existing household users.
+    /// Populates householdKey on Ingredient/GroceryListItem records that were created
+    /// before v9 schema (when these entities weren't HouseholdScoped).
+    private func backfillChildEntityHouseholdKeys() {
+        let hasRun = UserDefaults.standard.bool(forKey: "m9.15.backfillComplete")
+        guard !hasRun else { return }
+        guard currentHousehold != nil else { return }
+
+        var backfilled = 0
+
+        // Ingredients: copy from parent Recipe
+        let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
+        ingredientRequest.predicate = NSPredicate(format: "householdKey == nil AND recipe.householdKey != nil")
+        if let ingredients = try? viewContext.fetch(ingredientRequest) {
+            for ingredient in ingredients {
+                ingredient.householdKey = ingredient.recipe?.householdKey
+                ingredient.household = ingredient.recipe?.household
+                backfilled += 1
+            }
+        }
+
+        // GroceryListItems: copy from parent WeeklyList
+        let itemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
+        itemRequest.predicate = NSPredicate(format: "householdKey == nil AND weeklyList.householdKey != nil")
+        if let items = try? viewContext.fetch(itemRequest) {
+            for item in items {
+                item.householdKey = item.weeklyList?.householdKey
+                item.household = item.weeklyList?.household
+                backfilled += 1
+            }
+        }
+
+        if backfilled > 0 {
+            try? viewContext.save()
+            #if DEBUG
+            print("📦 M9.15: Backfilled householdKey on \(backfilled) child entities")
+            #endif
+        }
+
+        UserDefaults.standard.set(true, forKey: "m9.15.backfillComplete")
+    }
+
+    private func breakGroceryItemCategoryLinks() {
+        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
+        if let groceryItems = try? viewContext.fetch(groceryItemRequest) {
+            for item in groceryItems where item.categoryEntity != nil {
+                if item.category == nil || item.category?.isEmpty == true {
+                    item.category = item.categoryEntity?.name
+                }
+                item.categoryEntity = nil
+            }
+        }
+    }
+
     // M7.6.8: Drill into NSError chain to find the actual underlying error message.
     // CloudKit errors from NSPersistentCloudKitContainer are often wrapped in
     // multiple NSError layers where localizedDescription just shows "Cocoa error XXXXX".
@@ -1453,10 +1761,8 @@ class HouseholdService: ObservableObject {
         if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
             let underlyingNS = underlying as NSError
             if underlyingNS.domain == CKErrorDomain {
-                // Found the actual CloudKit error
                 return underlyingNS.localizedDescription
             }
-            // Recurse into deeper layers
             return extractDetailedError(underlying)
         }
 
@@ -1465,172 +1771,11 @@ class HouseholdService: ObservableObject {
             return extractDetailedError(first)
         }
 
-        // Fall back to the best available description
         let description = nsError.localizedDescription
         if description.contains("Cocoa error") {
-            // Generic Cocoa error — add the domain and code for diagnostics
             return "\(description) [domain: \(nsError.domain), code: \(nsError.code)]"
         }
         return description
-    }
-
-    private func migratePersonalDataToHousehold(_ household: Household) throws {
-        #if DEBUG
-        print("\n🔄 Migrating ALL personal data to household...")
-        #endif
-
-        guard let householdId = household.id else {
-            throw HouseholdError.creationFailed("Household missing ID")
-        }
-
-        let householdKey = householdId.uuidString
-        var migratedCount = 0
-
-        // Migrate recipes
-        let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
-        recipeRequest.predicate = NSPredicate(format: "household == nil")
-        let recipes = try viewContext.fetch(recipeRequest)
-        for recipe in recipes {
-            recipe.household = household
-            recipe.householdKey = householdKey
-            migratedCount += 1
-        }
-
-        // Migrate weekly lists
-        let listRequest: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
-        listRequest.predicate = NSPredicate(format: "household == nil")
-        let lists = try viewContext.fetch(listRequest)
-        for list in lists {
-            list.household = household
-            list.householdKey = householdKey
-            migratedCount += 1
-        }
-
-        // Migrate meal plans
-        let mealPlanRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
-        mealPlanRequest.predicate = NSPredicate(format: "household == nil")
-        let mealPlans = try viewContext.fetch(mealPlanRequest)
-        for mealPlan in mealPlans {
-            mealPlan.household = household
-            mealPlan.householdKey = householdKey
-            migratedCount += 1
-        }
-
-        // Migrate planned meals (children of MealPlans)
-        let plannedMealRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
-        plannedMealRequest.predicate = NSPredicate(format: "household == nil")
-        let plannedMeals = try viewContext.fetch(plannedMealRequest)
-        for plannedMeal in plannedMeals {
-            plannedMeal.household = household
-            plannedMeal.householdKey = householdKey
-            migratedCount += 1
-        }
-
-        // M10.6.20: Break cross-store GroceryItem→Category relationships before Categories move to shared store
-        // GroceryItem (staples) stays in private store; Category moves to shared store via household migration.
-        // Preserve the category string for display fallback via effectiveCategory computed property.
-        let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
-        let groceryItems = try viewContext.fetch(groceryItemRequest)
-        for item in groceryItems where item.categoryEntity != nil {
-            if item.category == nil || item.category?.isEmpty == true {
-                item.category = item.categoryEntity?.name
-            }
-            item.categoryEntity = nil
-        }
-
-        // M9.14: Delete IngredientTemplates before household share to prevent CloudKit error 134060.
-        // Problem: templates already have CKRecords in the private CloudKit zone. Setting
-        // template.household = household tells CloudKit to put them in the shared zone too,
-        // causing "objects assigned to multiple zones." Nil'ing relationships isn't enough —
-        // the CKRecords themselves are the issue.
-        // Solution: Delete all templates. They're fully recreatable from Ingredient.name + category
-        // data and will be lazily recreated in the shared store by IngredientTemplateService.
-        let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
-        let allIngredients = try viewContext.fetch(ingredientRequest)
-        for ingredient in allIngredients {
-            ingredient.ingredientTemplate = nil
-        }
-
-        let templateRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-        let templatesToDelete = try viewContext.fetch(templateRequest)
-        let deletedTemplateCount = templatesToDelete.count
-        for template in templatesToDelete {
-            viewContext.delete(template)
-        }
-
-        // M9.14: Break GroceryListItem→Category relationships before Categories move to shared store.
-        // categoryName string is preserved for display fallback.
-        let listItemRequest: NSFetchRequest<GroceryListItem> = GroceryListItem.fetchRequest()
-        let listItems = try viewContext.fetch(listItemRequest)
-        var brokenCategoryLinks = 0
-        for item in listItems where item.categoryEntity != nil {
-            if item.categoryName == nil || item.categoryName?.isEmpty == true {
-                item.categoryName = item.categoryEntity?.name
-            }
-            item.categoryEntity = nil
-            brokenCategoryLinks += 1
-        }
-
-        #if DEBUG
-        print("   🗑️ Deleted \(deletedTemplateCount) IngredientTemplates (will recreate in shared store)")
-        if brokenCategoryLinks > 0 {
-            print("   🔗 Broke \(brokenCategoryLinks) GroceryListItem→Category cross-zone links")
-        }
-        #endif
-
-        // Migrate categories
-        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
-        categoryRequest.predicate = NSPredicate(format: "household == nil")
-        let categories = try viewContext.fetch(categoryRequest)
-        for category in categories {
-            category.household = household
-            category.householdKey = householdKey
-            migratedCount += 1
-        }
-
-        // M9.14: IngredientTemplates are NOT migrated — they were deleted above to prevent
-        // CloudKit error 134060. They'll be recreated in the shared store by IngredientTemplateService
-        // when recipes are viewed or ingredients are parsed.
-
-        #if DEBUG
-        print("✅ Migrated \(migratedCount) items:")
-        print("   \(recipes.count) recipes")
-        print("   \(lists.count) weekly lists")
-        print("   \(mealPlans.count) meal plans")
-        print("   \(plannedMeals.count) planned meals")
-        print("   \(categories.count) categories")
-        print("   \(deletedTemplateCount) ingredient templates deleted (will recreate in shared store)")
-        print("   Household key: \(householdKey)")
-        #endif
-    }
-    
-    /// M7.6.8: Undo migratePersonalDataToHousehold by clearing household references.
-    /// Called when container.share() fails after the local save succeeded,
-    /// so the user's personal data isn't left orphaned on a ghost household.
-    private func rollbackMigratedData(_ household: Household) {
-        let entities: [(NSFetchRequest<NSManagedObject>, String)] = [
-            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
-            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
-            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
-            (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
-            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
-            (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
-        ]
-
-        for (request, name) in entities {
-            request.predicate = NSPredicate(format: "household == %@", household)
-            if let objects = try? viewContext.fetch(request) {
-                for obj in objects {
-                    obj.setValue(nil, forKey: "household")
-                    obj.setValue(nil, forKey: "householdKey")
-                }
-                #if DEBUG
-                if !objects.isEmpty {
-                    print("   Rolled back \(objects.count) \(name)(s)")
-                }
-                #endif
-            }
-        }
     }
 
     // MARK: - User Name Resolution
@@ -2412,13 +2557,16 @@ class HouseholdService: ObservableObject {
 
         // 1. Delete all objects with a stale householdKey (no active household exists)
         // Since currentHousehold is nil (checked by caller), ANY householdKey is stale
+        // M9.15: Include Ingredient and GroceryListItem (now HouseholdScoped)
         let entityKeys: [(NSFetchRequest<NSManagedObject>, String)] = [
-            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
-            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
-            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
             (NSFetchRequest<NSManagedObject>(entityName: "PlannedMeal"), "PlannedMeal"),
-            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
+            (NSFetchRequest<NSManagedObject>(entityName: "MealPlan"), "MealPlan"),
+            (NSFetchRequest<NSManagedObject>(entityName: "GroceryListItem"), "GroceryListItem"),
+            (NSFetchRequest<NSManagedObject>(entityName: "WeeklyList"), "WeeklyList"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Ingredient"), "Ingredient"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Recipe"), "Recipe"),
             (NSFetchRequest<NSManagedObject>(entityName: "IngredientTemplate"), "IngredientTemplate"),
+            (NSFetchRequest<NSManagedObject>(entityName: "Category"), "Category"),
         ]
 
         for (request, name) in entityKeys {
@@ -2491,6 +2639,21 @@ class HouseholdService: ObservableObject {
 
         // M7.3.3 FIX: Refresh context to ensure we see latest state from all stores
         viewContext.refreshAllObjects()
+
+        // M9.15: Delete child HouseholdScoped entities first (before parents)
+        for childEntity in ["Ingredient", "GroceryListItem"] {
+            let request = NSFetchRequest<NSManagedObject>(entityName: childEntity)
+            request.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            if let objects = try? viewContext.fetch(request) {
+                #if DEBUG
+                if !objects.isEmpty { print("   Found \(objects.count) \(childEntity)(s) to delete") }
+                #endif
+                for obj in objects {
+                    viewContext.delete(obj)
+                    deletedCount += 1
+                }
+            }
+        }
 
         // Delete recipes with this householdKey
         let recipeRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()

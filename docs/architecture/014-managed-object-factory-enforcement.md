@@ -6,7 +6,7 @@
 
 ## Decision
 
-All creation of HouseholdScoped entities (`WeeklyList`, `Recipe`, `PlannedMeal`, `MealPlan`, `Category`, `IngredientTemplate`) MUST go through `ManagedObjectFactory.make()`. Direct `Entity(context:)` for these types is **forbidden** in production code.
+All creation of HouseholdScoped entities (`WeeklyList`, `Recipe`, `PlannedMeal`, `MealPlan`, `Category`, `IngredientTemplate`, `Ingredient`, `GroceryListItem`) MUST go through `ManagedObjectFactory.make()` or set `household`/`householdKey` by inheriting from their parent entity. Direct `Entity(context:)` without household binding for these types is **forbidden** in production code.
 
 ## Context
 
@@ -42,9 +42,18 @@ This worked through M7 because the views that crash (`AddIngredientsToListView`,
 - **`HouseholdService.migrateDataFromHousehold()`** — intentional personal-scope copy
 - **Background contexts** (`performWrite`) where householdKey is set manually
 
+## Child HouseholdScoped Entities (M9.15)
+
+`Ingredient` and `GroceryListItem` were promoted to HouseholdScoped in M9.15 to eliminate cross-store relationships. They inherit `household`/`householdKey` from their parent entity (Recipe/WeeklyList) rather than going through `ManagedObjectFactory.make()` directly. Pattern:
+
+```swift
+let ingredient = Ingredient(context: viewContext)
+ingredient.recipe = recipe
+ingredient.household = recipe.household
+ingredient.householdKey = recipe.householdKey
+```
+
 ## Non-HouseholdScoped Entities (Safe for Direct Creation)
-- `GroceryListItem` — inherits store from parent `WeeklyList` via relationship
-- `Ingredient` — inherits store from parent `Recipe` via relationship
 - `Household`, `HouseholdMember` — manage their own store placement
 - `UserPreferences` — personal-only, no household scope
 

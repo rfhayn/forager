@@ -78,8 +78,9 @@ let recipe = factory.createRecipe() // Automatically assigned to correct store
 - HouseholdScoped entities MUST be created via `ManagedObjectFactory.make()`
 - Direct `Entity(context:)` for HouseholdScoped types is FORBIDDEN
 - Exceptions: tests, previews, seeders, HouseholdService migration, background contexts with manual householdKey
-- HouseholdScoped entities: WeeklyList, Recipe, PlannedMeal, MealPlan, Category, IngredientTemplate
-- Non-HouseholdScoped (safe for direct creation): GroceryListItem, Ingredient, Household, HouseholdMember, UserPreferences
+- HouseholdScoped entities: WeeklyList, Recipe, PlannedMeal, MealPlan, Category, IngredientTemplate, Ingredient, GroceryListItem
+- Ingredient and GroceryListItem inherit `household`/`householdKey` from parent (Recipe/WeeklyList) rather than using factory directly (M9.15)
+- Non-HouseholdScoped (safe for direct creation): Household, HouseholdMember, UserPreferences
 
 ### Service Layer (M7.5+ Standard)
 
@@ -164,7 +165,7 @@ Input → RegexParser (≥0.9 confidence → return)
 - **Household**: Household, HouseholdMember
 - **Settings**: UserPreferences
 
-Model has 6 versions (v1-v6, current is v6). Before changing schema, read `docs/architecture/007-core-data-change-process.md` and document impact. CloudKit Production schema is append-only — no destructive changes.
+Model has 9 versions (v1-v9, current is v9). Before changing schema, read `docs/architecture/007-core-data-change-process.md` and document impact. CloudKit Production schema is append-only — no destructive changes. v9 added `household`/`householdKey` to Ingredient and GroceryListItem (M9.15).
 
 **Codegen approach:**
 - `IngredientTemplate` uses **Class Definition** (auto-generated code)

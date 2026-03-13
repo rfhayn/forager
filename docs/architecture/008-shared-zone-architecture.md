@@ -2,8 +2,8 @@
 
 **Document Type**: Architecture Decision & Technical Framework
 **Created**: December 21, 2025
-**Last Updated**: February 6, 2026
-**Status**: ✅ IMPLEMENTED - Production Ready
+**Last Updated**: March 13, 2026
+**Status**: ✅ IMPLEMENTED - M9.15 Updated (create-empty-then-copy pattern)
 **Related Learning Notes**:
 - [25-m7-architecture-pivot-ckshare-vs-shared-zone.md](../learning-notes/25-m7-architecture-pivot-ckshare-vs-shared-zone.md)
 - [26-m7.2.2-public-link-sharing.md](../learning-notes/26-m7.2.2-public-link-sharing.md)
@@ -381,27 +381,52 @@ enum DataScope {
 }
 ```
 
-### Attach-Then-Share Pattern
+### ~~Attach-Then-Share Pattern~~ — DEPRECATED (M9.15)
 
-The critical migration pattern for creating households:
+> **⚠️ DEPRECATED**: The attach-then-share pattern causes CloudKit error 134060
+> ("objects assigned to multiple zones") when objects have existing CKRecords in the
+> private zone. Zone assignment is immutable once a CKRecord exists.
+> Replaced by **Create-Empty-Then-Copy** pattern below.
+
+~~The critical migration pattern for creating households:~~
 
 ```swift
+// ❌ OLD PATTERN — DO NOT USE
 // 1. Create household in private store
-let household = Household(context: context)
-context.assign(household, to: persistence.privateStore)
-
 // 2. Attach existing data via relationships
-household.addToRecipes(NSSet(array: personalRecipes))
-
-// 3. Save to private store
-try context.save()
-
-// 4. Share (CloudKit moves entire graph to shared zone)
-try await persistence.container.share([household], to: nil)
-
-// 5. Refresh all objects (they moved stores)
-context.refreshAllObjects()
+// 3. Save (creates CKRecords in private zone)
+// 4. Share (tries to move CKRecords to shared zone → ERROR 134060)
 ```
+
+### Create-Empty-Then-Copy Pattern (M9.15)
+
+The safe household creation pattern that never moves existing CKRecords between zones:
+
+```swift
+// 1. Create EMPTY Household + HouseholdMember (no data relationships)
+let household = Household(context: viewContext)
+// ... set properties but NO data relationships
+
+// 2. Save + Share (only 2 objects = no zone conflicts)
+try viewContext.save()
+let share = try await container.share([household], to: nil)
+try viewContext.save()  // Persist CKShare
+
+// 3. Wait for shared store to be ready (CloudKit zone setup, ~5-30s)
+try await waitForSharedStoreReady(household: household)
+
+// 4. COPY data from private → shared as NEW objects via ManagedObjectFactory
+// Copy order: Category → IngredientTemplate → Recipe → Ingredient
+//           → WeeklyList → GroceryListItem → MealPlan → PlannedMeal
+try copyPersonalDataToSharedStore(household: household)
+// New objects get fresh CKRecords in shared zone — no conflicts
+
+// 5. DELETE old private-store originals (their CKRecords cleanly removed)
+```
+
+**Why this works**: Step 2 shares only the Household entity (no relationships = no graph
+to walk). Step 4 creates brand new objects with fresh CKRecords in the shared zone.
+The old private-zone CKRecords are deleted in step 5.
 
 ### Key Components Built
 
@@ -976,8 +1001,8 @@ func leavehousehold() async throws {
 
 ---
 
-**Version**: 2.0
+**Version**: 3.0
 **Author**: Claude (with Rich's requirements)
 **Created**: December 21, 2025
-**Last Updated**: February 6, 2026
-**Status**: ✅ IMPLEMENTED - Production Ready
+**Last Updated**: March 13, 2026
+**Status**: ✅ IMPLEMENTED - M9.15 Rewrote household creation (create-empty-then-copy replaces attach-then-share)

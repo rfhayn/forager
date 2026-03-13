@@ -852,6 +852,9 @@ struct RecipeListView: View {
             ingredient.name = text
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
+            // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+            ingredient.household = recipe.household
+            ingredient.householdKey = recipe.householdKey
 
             let ingredientName = parsed.displayName
             if !ingredientName.isEmpty && ingredientName.lowercased() != "unknown ingredient" {

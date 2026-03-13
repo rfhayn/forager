@@ -107,6 +107,9 @@ class WeeklyListService: ObservableObject {
         item.source = source
         item.isCompleted = false
         item.weeklyList = list
+        // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
+        item.household = list.household
+        item.householdKey = list.householdKey
 
         // Set sort order to end of list
         let existingCount = (list.items as? Set<GroceryListItem>)?.count ?? 0

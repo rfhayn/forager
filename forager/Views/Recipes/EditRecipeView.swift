@@ -891,6 +891,9 @@ struct EditRecipeView: View {
             ingredient.name = trimmed
             ingredient.sortOrder = Int16(index)
             ingredient.recipe = recipe
+            // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+            ingredient.household = recipe.household
+            ingredient.householdKey = recipe.householdKey
 
             // M8.4: Use parseUnified for both structured fields + correction detection
             let (parsedIngredient, structured) = parsingService.parseUnified(text: trimmed)

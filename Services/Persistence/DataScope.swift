@@ -175,6 +175,9 @@ extension PlannedMeal: HouseholdScoped {}
 extension MealPlan: HouseholdScoped {}
 extension Category: HouseholdScoped {}
 extension IngredientTemplate: HouseholdScoped {}
+// M9.15: Promoted from non-HouseholdScoped — eliminates cross-store relationships
+extension Ingredient: HouseholdScoped {}
+extension GroceryListItem: HouseholdScoped {}
 
 // MARK: - Debug Utilities
 

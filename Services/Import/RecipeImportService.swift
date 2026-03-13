@@ -343,6 +343,9 @@ class RecipeImportService: ObservableObject {
                 ingredient.notes = llmResult.notes
                 ingredient.sortOrder = Int16(index)
                 ingredient.recipe = recipe
+                // M9.15: Ingredient is now HouseholdScoped — inherit from parent Recipe
+                ingredient.household = recipe.household
+                ingredient.householdKey = recipe.householdKey
 
                 // M10.6.9: Use category from preview assignments if available
                 // M9.12: Look up Category entity from string assignment
