@@ -1,8 +1,58 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 11, 2026
-**For Milestone**: M10.6 Claude API Integration (documentation)
-**Status**: **M9.13 ✅ COMPLETE** (PR pending) | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 ACTIVE (M10.6.5 remaining)
+**Last Updated**: March 12, 2026
+**For Milestone**: M9.15 Household Creation Architecture Fix
+**Status**: **M9.15 🔄 ACTIVE** | **M9.14 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 ACTIVE (M10.6.5 remaining)
+
+---
+
+## **M9.15 — 🔄 ACTIVE: Household Creation Architecture Fix**
+
+**PRD**: `docs/prds/active/m9.15-household-creation-architecture-fix.md`
+**Branch**: `bugfix/M9.15-household-creation-fix`
+**Root Cause**: Attach-then-share pattern (ADR 008) creates CKRecords in private zone, then `container.share()` fails to move them to shared zone → error 134060
+
+### What's Done
+- Root cause identified through 3 failed fix attempts (builds 31-33)
+- PRD written with full solution design
+- M9.14 fixes merged (ObjectID staleness, HTML entities)
+
+### What Needs to Be Built
+
+**Phase 1 — Promote Ingredient + GroceryListItem to HouseholdScoped:**
+- Schema v9: add `household` relationship + `householdKey` attribute to both entities
+- Add `HouseholdScoped` conformance in `DataScope.swift`
+- Route 15 creation sites through `ManagedObjectFactory`
+- Add `householdKey` predicates to ~15 fetch sites
+- Backfill migration for existing household users
+- Update ADR 014, ADR 013, CLAUDE.md
+
+**Phase 2 — Rewrite Household Creation:**
+- Rewrite `createHouseholdAndShare()` → create empty, share, wait, copy, delete
+- Implement `waitForSharedStoreReady()` (poll shared store with 60s timeout)
+- Implement `copyPersonalDataToSharedStore()` (topological copy order: Category → IngredientTemplate → Recipe → Ingredient → WeeklyList → GroceryListItem → MealPlan → PlannedMeal)
+- Add `HouseholdCreationPhase` enum + `@Published` for progress UI
+- Remove old `migratePersonalDataToHousehold()`
+- Update ADR 008
+
+**Phase 3 — Returning User Detection:**
+- `discoverExistingHousehold()` — check for CloudKit-synced household on launch
+- Call from `foragerApp.swift` after persistence init
+- Observe `NSPersistentStoreRemoteChangeNotification` for late arrivals
+
+### Key Files
+- `Services/HouseholdService.swift` — main target (createHouseholdAndShare, migration code)
+- `Services/Persistence/ManagedObjectFactory.swift` — factory for all copies
+- `Services/Persistence/DataScope.swift` — HouseholdScoped conformance
+- `Services/Persistence/PersistenceController.swift` — store access (privateStore, sharedStore)
+- `forager.xcdatamodeld/` — schema v9
+- `forager/Views/Household/CreateHouseholdView.swift` — progress UI binding
+
+### Critical Design Decisions
+1. Copy uses old→new ID maps (`[NSManagedObjectID: Entity]`) for relationship reconstruction
+2. Delete originals ONLY after copy fully verified (atomic safety)
+3. `copyAllProperties()` uses entity description to enumerate attributes dynamically (full fidelity)
+4. `fetchPrivateStoreEntities()` uses `request.affectedStores = [persistence.privateStore]`
 
 ---
 

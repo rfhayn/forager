@@ -1,12 +1,42 @@
 # Current Development Story
 
-**Last Updated**: March 11, 2026
-**Status**: **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE** | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M8.4.1 ✅ | M15 ✅ | M9.5-partial ✅
+**Last Updated**: March 12, 2026
+**Status**: **M9.15 🔄 ACTIVE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
 **Total Progress**: ~266 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.13-factory-enforcement` (PR pending)
-**Current Milestone**: M9.13 ✅ COMPLETE — ManagedObjectFactory Enforcement & Cross-Store Crash Fix
+**Current Branch**: `bugfix/M9.15-household-creation-fix`
+**Current Milestone**: M9.15 🔄 ACTIVE — Household Creation Architecture Fix (Replace Attach-Then-Share)
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M9.13 PR → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
+**Next Priority**: M9.15 → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
+
+---
+
+## 🔄 **M9.15: HOUSEHOLD CREATION ARCHITECTURE FIX - ACTIVE**
+
+**Status**: 🔄 ACTIVE
+**Estimated**: 12-16 hours (3 phases)
+**PRD**: `docs/prds/active/m9.15-household-creation-architecture-fix.md`
+**Branch**: `bugfix/M9.15-household-creation-fix`
+**Depends On**: M9.14 (PRs #70-72 merged)
+
+Household creation fails 100% with CloudKit error 134060 ("objects assigned to multiple zones"). Root cause: the attach-then-share migration pattern (ADR 008) is fundamentally incompatible with objects that already have CKRecords in the private CloudKit zone. Three fix attempts (builds 31-33) each cascaded the error to the next entity. Solution: replace with "create empty → share → copy" pattern + promote Ingredient/GroceryListItem to HouseholdScoped + add returning user detection after reinstall.
+
+### Phase Overview
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| P1 | Promote Ingredient + GroceryListItem to HouseholdScoped (schema v9, factory routing, fetch predicates) | ⏳ PLANNED |
+| P2 | Rewrite household creation: create empty → share → copy → delete, with progress UI | ⏳ PLANNED |
+| P3 | Returning user detection: auto-discover household on reinstall | ⏳ PLANNED |
+
+---
+
+## ✅ **M9.14: HOUSEHOLD SCOPE BUGFIXES - COMPLETE**
+
+**Status**: ✅ COMPLETE (3 PRs merged: #70, #71, #72)
+**Actual**: ~4 hours
+**Branch**: merged to main
+
+Post-reinstall entity creation failures + HTML entity encoding + CloudKit zone conflict investigation. Fixed ObjectID staleness in ManagedObjectFactory (fallback fetch), HTML entity decoding in recipe import, and identified root cause of error 134060 (attach-then-share pattern). Led to M9.15 architectural rewrite.
 
 ---
 
