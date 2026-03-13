@@ -3,6 +3,7 @@
 //  forager
 //
 //  M7.3.4: Structured logging for CloudKit operations
+//  M9.15.3: Added persistent DiagnosticLogger integration for Release builds
 //  Uses OSLog for retrieval from TestFlight devices
 //
 //  Created on February 3, 2026.
@@ -15,189 +16,219 @@ import CloudKit
 ///
 /// Provides:
 /// - OSLog-based logging retrievable from TestFlight devices
+/// - M9.15.3: Persistent file logging via DiagnosticLogger (exportable from Settings)
 /// - Structured logging for household, share, and sync operations
 /// - Privacy-conscious logging (emails not logged)
 /// - Integration with CloudKitErrorMapper for consistent error messages
-///
-/// Retrieving logs from TestFlight:
-/// ```bash
-/// # From Mac with device connected:
-/// log show --predicate 'subsystem == "com.richhayn.forager"' --last 1h
-///
-/// # Or use Console.app → select device → filter by subsystem
-/// ```
 struct CloudKitLogger {
     private static let logger = Logger(
         subsystem: Bundle.main.bundleIdentifier ?? "com.richhayn.forager",
         category: "CloudKit"
     )
 
+    /// M9.15.3: Write to persistent DiagnosticLogger alongside OSLog.
+    /// Uses Task to hop to MainActor since DiagnosticLogger is @MainActor.
+    private static func persist(_ message: String, level: DiagnosticLogger.Level = .info) {
+        Task { @MainActor in
+            DiagnosticLogger.shared.log(message, category: .cloudKit, level: level)
+        }
+    }
+
     // MARK: - Household Operations
 
-    /// Log household creation
     static func householdCreated(_ householdName: String?) {
-        logger.info("Household created: \(householdName ?? "unnamed", privacy: .public)")
+        let msg = "Household created: \(householdName ?? "unnamed")"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log leaving a household
     static func householdLeft(_ householdID: String) {
-        logger.info("Left household: \(householdID, privacy: .public)")
+        let msg = "Left household: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log household deletion
     static func householdDeleted(_ householdID: String) {
-        logger.info("Household deleted: \(householdID, privacy: .public)")
+        let msg = "Household deleted: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log household loaded
     static func householdLoaded(_ householdName: String?, householdID: String) {
-        logger.info("Household loaded: \(householdName ?? "unnamed", privacy: .public) (\(householdID, privacy: .public))")
+        let msg = "Household loaded: \(householdName ?? "unnamed") (\(householdID))"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log member invited (email not logged for privacy)
     static func memberInvited(householdID: String) {
-        logger.info("Member invited to household: \(householdID, privacy: .public)")
+        let msg = "Member invited to household: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log member removed
     static func memberRemoved(householdID: String) {
-        logger.info("Member removed from household: \(householdID, privacy: .public)")
+        let msg = "Member removed from household: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log member joined
     static func memberJoined(householdID: String) {
-        logger.info("Member joined household: \(householdID, privacy: .public)")
+        let msg = "Member joined household: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log member activated (pending → active)
     static func memberActivated(householdID: String) {
-        logger.info("Member activated in household: \(householdID, privacy: .public)")
+        let msg = "Member activated in household: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
     // MARK: - Share Operations
 
-    /// Log CKShare created
     static func shareCreated(recordID: String) {
-        logger.info("CKShare created: \(recordID, privacy: .public)")
+        let msg = "CKShare created: \(recordID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log CKShare accepted
     static func shareAccepted(recordID: String) {
-        logger.info("CKShare accepted: \(recordID, privacy: .public)")
+        let msg = "CKShare accepted: \(recordID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log share lookup result
     static func shareLookup(found: Bool, householdID: String) {
+        let msg = found
+            ? "CKShare found for household: \(householdID)"
+            : "CKShare NOT found for household: \(householdID)"
         if found {
-            logger.debug("CKShare found for household: \(householdID, privacy: .public)")
+            logger.debug("\(msg, privacy: .public)")
+            persist(msg, level: .debug)
         } else {
-            logger.warning("CKShare not found for household: \(householdID, privacy: .public)")
+            logger.warning("\(msg, privacy: .public)")
+            persist(msg, level: .warning)
         }
     }
 
-    /// Log share operation failure
     static func shareFailed(operation: String, error: Error) {
+        let msg: String
         if let ckError = error as? CKError {
             let mapped = CloudKitErrorMapper.map(ckError)
-            logger.error("Share operation '\(operation, privacy: .public)' failed: \(mapped.userMessage, privacy: .public) (code: \(ckError.code.rawValue))")
+            msg = "Share '\(operation)' failed: \(mapped.userMessage) (code: \(ckError.code.rawValue))"
         } else {
-            logger.error("Share operation '\(operation, privacy: .public)' failed: \(error.localizedDescription, privacy: .public)")
+            msg = "Share '\(operation)' failed: \(error.localizedDescription)"
         }
+        logger.error("\(msg, privacy: .public)")
+        persist(msg, level: .error)
     }
 
     // MARK: - Leave/Delete Operations
 
-    /// Log leave household attempt started
     static func leaveAttemptStarted(householdID: String) {
-        logger.info("Leave household attempt started: \(householdID, privacy: .public)")
+        let msg = "Leave household started: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log leave household completed
     static func leaveCompleted(householdID: String, migratedData: Bool) {
-        logger.info("Leave household completed: \(householdID, privacy: .public), migrated: \(migratedData)")
+        let msg = "Leave household completed: \(householdID), migrated: \(migratedData)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log delete household attempt started
     static func deleteAttemptStarted(householdID: String) {
-        logger.info("Delete household attempt started: \(householdID, privacy: .public)")
+        let msg = "Delete household started: \(householdID)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log delete household completed
     static func deleteCompleted(householdID: String, migratedData: Bool) {
-        logger.info("Delete household completed: \(householdID, privacy: .public), migrated: \(migratedData)")
+        let msg = "Delete household completed: \(householdID), migrated: \(migratedData)"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
     // MARK: - Sync Events
 
-    /// Log sync started
     static func syncStarted() {
         logger.debug("Sync started")
+        persist("Sync started", level: .debug)
     }
 
-    /// Log sync completed
     static func syncCompleted(recordCount: Int) {
-        logger.info("Sync completed: \(recordCount) records")
+        let msg = "Sync completed: \(recordCount) records"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 
-    /// Log sync failed
     static func syncFailed(error: Error) {
+        let msg: String
         if let ckError = error as? CKError {
             let mapped = CloudKitErrorMapper.map(ckError)
-            logger.error("Sync failed: \(mapped.userMessage, privacy: .public) (code: \(ckError.code.rawValue))")
+            msg = "Sync failed: \(mapped.userMessage) (code: \(ckError.code.rawValue))"
         } else {
-            logger.error("Sync failed: \(error.localizedDescription, privacy: .public)")
+            msg = "Sync failed: \(error.localizedDescription)"
         }
+        logger.error("\(msg, privacy: .public)")
+        persist(msg, level: .error)
     }
 
     // MARK: - Error Logging
 
-    /// Log a CloudKit error with context
     static func error(_ context: String, error: Error) {
+        let msg: String
         if let ckError = error as? CKError {
             let mapped = CloudKitErrorMapper.map(ckError)
-            logger.error("\(context, privacy: .public): \(mapped.userMessage, privacy: .public) (code: \(ckError.code.rawValue))")
+            msg = "\(context): \(mapped.userMessage) (code: \(ckError.code.rawValue))"
         } else {
-            logger.error("\(context, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            msg = "\(context): \(error.localizedDescription)"
         }
+        logger.error("\(msg, privacy: .public)")
+        persist(msg, level: .error)
     }
 
-    /// Log a household-specific error
     static func householdError(_ context: String, householdID: String?, error: Error) {
         let idString = householdID ?? "unknown"
+        let msg: String
         if let ckError = error as? CKError {
             let mapped = CloudKitErrorMapper.map(ckError)
-            logger.error("\(context, privacy: .public) [household: \(idString, privacy: .public)]: \(mapped.userMessage, privacy: .public) (code: \(ckError.code.rawValue))")
+            msg = "\(context) [household: \(idString)]: \(mapped.userMessage) (code: \(ckError.code.rawValue))"
         } else {
-            logger.error("\(context, privacy: .public) [household: \(idString, privacy: .public)]: \(error.localizedDescription, privacy: .public)")
+            msg = "\(context) [household: \(idString)]: \(error.localizedDescription)"
         }
+        logger.error("\(msg, privacy: .public)")
+        persist(msg, level: .error)
     }
 
     // MARK: - Debug/Warning
 
-    /// Log debug message
     static func debug(_ message: String) {
         logger.debug("\(message, privacy: .public)")
+        persist(message, level: .debug)
     }
 
-    /// Log warning message
     static func warning(_ message: String) {
         logger.warning("\(message, privacy: .public)")
+        persist(message, level: .warning)
     }
 
-    /// Log info message
     static func info(_ message: String) {
         logger.info("\(message, privacy: .public)")
+        persist(message)
     }
 
     // MARK: - Ghost Data Bug Specific (M7.3.4)
 
-    /// Log when user is marked as left but still participant (ghost data scenario)
     static func ghostDataDetected(householdID: String) {
-        logger.warning("Ghost data detected: User marked as left but still CKShare participant [household: \(householdID, privacy: .public)]")
+        let msg = "Ghost data detected: User marked as left but still CKShare participant [household: \(householdID)]"
+        logger.warning("\(msg, privacy: .public)")
+        persist(msg, level: .warning)
     }
 
-    /// Log when shared store is purged
     static func sharedStorePurged() {
-        logger.info("Shared store objects purged")
+        let msg = "Shared store objects purged"
+        logger.info("\(msg, privacy: .public)")
+        persist(msg)
     }
 }

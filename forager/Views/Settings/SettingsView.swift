@@ -52,6 +52,9 @@ struct SettingsView: View {
             // M10.6: AI Integration (optional Claude API)
             aiImportSection
 
+            // M9.15.3: Diagnostic Log (available in Release + Debug)
+            diagnosticLogSection
+
             // M10.6.18: Developer tools hidden in Release builds for launch
             #if DEBUG
             developerToolsSection
@@ -333,6 +336,38 @@ struct SettingsView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .font(.caption)
             }
+        }
+    }
+
+    // MARK: - M9.15.3: Diagnostic Log Section (Release-safe)
+
+    @ObservedObject private var diagnosticLogger = DiagnosticLogger.shared
+
+    private var diagnosticLogSection: some View {
+        Section {
+            NavigationLink {
+                DiagnosticLogView()
+            } label: {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .foregroundStyle(ForagerTheme.accentSecondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Diagnostic Log")
+                            .font(ForagerTheme.bodyFont)
+                        Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                }
+            }
+
+            Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
+                .font(ForagerTheme.bodyFont)
+        } header: {
+            Text("Diagnostics")
+        } footer: {
+            Text("Persistent log of CloudKit and household operations. Export from the log viewer to share with support.")
+                .font(.caption)
         }
     }
 
