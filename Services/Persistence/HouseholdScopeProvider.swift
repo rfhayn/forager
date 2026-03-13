@@ -125,14 +125,14 @@ final class HouseholdScopeProvider: ScopeProvider {
             
             return .household(id: household.objectID, storeID: .shared)
         } else {
-            // Household is in local/private store or not yet shared
-            // Still return personal scope until share is created
+            // Household is in private store — CloudKit may still be migrating to shared zone
+            // Return household scope so factory stamps entities with householdKey
             #if DEBUG
-            print("🏠 HouseholdScopeProvider: Household in private store → Personal scope")
+            print("🏠 HouseholdScopeProvider: Household in private store → Household scope (.private)")
             print("   Household: \(household.name ?? "Unnamed")")
             print("   StoreID: .private")
             #endif
-            return .personal
+            return .household(id: household.objectID, storeID: .private)
         }
     }
     
