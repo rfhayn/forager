@@ -922,16 +922,43 @@ class MealPlanService: ObservableObject {
                     listItem.sortOrder = sortIndex
                     sortIndex += 1
 
-                    // M9.12: Category from ingredient template relationship — with cross-store safety
+                    // M9.15.3: Resolve category — try template first, then lookup by name
+                    var resolvedCat: Category?
+
+                    // Path 1: ingredient already has a template with a category
                     if let templateCat = ingredient.ingredientTemplate?.categoryEntity {
-                        let listStore = newList.objectID.persistentStore
-                        let catStore = templateCat.objectID.persistentStore
-                        if listStore == catStore || listStore == nil {
-                            listItem.categoryEntity = templateCat
+                        resolvedCat = templateCat
+                    }
+
+                    // Path 2: template missing or has no category — look up by ingredient name
+                    if resolvedCat == nil, let ingredientName = ingredient.name, !ingredientName.isEmpty {
+                        let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
+                        let templateReq: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+                        let canonical = cleanName.lowercased()
+                        if let key = recipe.householdKey {
+                            templateReq.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == %@", canonical, key)
                         } else {
-                            // Cross-store: look up category by name in the list's scope
+                            templateReq.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == nil", canonical)
+                        }
+                        templateReq.fetchLimit = 1
+                        if let matchedTemplate = try? context.fetch(templateReq).first {
+                            resolvedCat = matchedTemplate.categoryEntity
+                            // Also link the ingredient to the template for future lookups
+                            if ingredient.ingredientTemplate == nil {
+                                ingredient.ingredientTemplate = matchedTemplate
+                            }
+                        }
+                    }
+
+                    // Assign category with cross-store safety
+                    if let cat = resolvedCat {
+                        let listStore = newList.objectID.persistentStore
+                        let catStore = cat.objectID.persistentStore
+                        if listStore == catStore || listStore == nil {
+                            listItem.categoryEntity = cat
+                        } else {
                             let catReq: NSFetchRequest<Category> = Category.fetchRequest()
-                            let catName = templateCat.name ?? ""
+                            let catName = cat.name ?? ""
                             if let key = newList.householdKey {
                                 catReq.predicate = NSPredicate(format: "name == %@ AND householdKey == %@", catName, key)
                             } else {
@@ -940,9 +967,9 @@ class MealPlanService: ObservableObject {
                             catReq.fetchLimit = 1
                             listItem.categoryEntity = try? context.fetch(catReq).first
                         }
-                        DiagnosticLogger.shared.debug("MealPlanGrocery '\(ingredient.name ?? "?")': cat=\(templateCat.name ?? "nil"), listStore=\(listStore?.url?.lastPathComponent ?? "nil"), catStore=\(catStore?.url?.lastPathComponent ?? "nil")", category: .household)
+                        diag.debug("MealPlanGrocery '\(ingredient.name ?? "?")': cat=\(cat.name ?? "nil")", category: .household)
                     } else {
-                        DiagnosticLogger.shared.debug("MealPlanGrocery '\(ingredient.name ?? "?")': template=\(ingredient.ingredientTemplate?.name ?? "nil"), cat=nil", category: .household)
+                        diag.debug("MealPlanGrocery '\(ingredient.name ?? "?")': no template/category found", category: .household)
                     }
 
                     newList.addToItems(listItem)
