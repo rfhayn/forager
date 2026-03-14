@@ -78,6 +78,9 @@ class MealPlanService: ObservableObject {
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
     private(set) var factory: ManagedObjectFactory?
 
+    // M9.16: Unified grocery list item service for generateGroceryList
+    private(set) var groceryListItemService: GroceryListItemService?
+
     // M10.6.18: Household key for scoping fetches (ADR 013)
     var householdKeyProvider: (() -> String?)?
 
@@ -102,6 +105,11 @@ class MealPlanService: ObservableObject {
     /// One-time factory injection at app startup (ADR 014)
     func configure(factory: ManagedObjectFactory) {
         self.factory = factory
+    }
+
+    /// M9.16: One-time service injection for grocery list item creation
+    func configure(groceryListItemService: GroceryListItemService) {
+        self.groceryListItemService = groceryListItemService
     }
     
     // MARK: - Meal Plan Management
@@ -901,81 +909,42 @@ class MealPlanService: ObservableObject {
                 newList.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
             }
 
-            var sortIndex: Int16 = 0
+            // M9.16: Delegate item creation to GroceryListItemService for consistent
+            // template resolution, category assignment, cross-store safety, and merge logic
+            if let itemService = groceryListItemService {
+                for meal in meals {
+                    guard let recipe = meal.recipe,
+                          let ingredients = recipe.ingredients?.allObjects as? [Ingredient] else { continue }
+                    itemService.addIngredients(
+                        ingredients,
+                        to: newList,
+                        scaleFactor: 1.0,
+                        sourceRecipe: recipe,
+                        mergeWithExisting: true
+                    )
+                }
+            } else {
+                // Fallback: inline creation if service not injected (shouldn't happen in production)
+                for meal in meals {
+                    guard let recipe = meal.recipe,
+                          let ingredients = recipe.ingredients?.allObjects as? [Ingredient] else { continue }
 
-            for meal in meals {
-                guard let recipe = meal.recipe,
-                      let ingredients = recipe.ingredients?.allObjects as? [Ingredient] else { continue }
-
-                for ingredient in ingredients {
-                    let listItem = GroceryListItem(context: context)
-                    listItem.id = UUID()
-                    listItem.name = ingredient.name
-                    listItem.displayText = ingredient.displayText ?? "1"
-                    listItem.numericValue = ingredient.numericValue
-                    listItem.standardUnit = ingredient.standardUnit
-                    listItem.isParseable = ingredient.isParseable
-                    listItem.parseConfidence = ingredient.parseConfidence
-                    listItem.isCompleted = false
-                    listItem.source = "recipe"
-                    listItem.addToSourceRecipes(recipe)
-                    listItem.sortOrder = sortIndex
-                    sortIndex += 1
-
-                    // M9.15.3: Resolve category — try template first, then lookup by name
-                    var resolvedCat: Category?
-
-                    // Path 1: ingredient already has a template with a category
-                    if let templateCat = ingredient.ingredientTemplate?.categoryEntity {
-                        resolvedCat = templateCat
+                    for ingredient in ingredients {
+                        let listItem = GroceryListItem(context: context)
+                        listItem.id = UUID()
+                        listItem.name = ingredient.name
+                        listItem.displayText = ingredient.displayText ?? "1"
+                        listItem.numericValue = ingredient.numericValue
+                        listItem.standardUnit = ingredient.standardUnit
+                        listItem.isParseable = ingredient.isParseable
+                        listItem.parseConfidence = ingredient.parseConfidence
+                        listItem.isCompleted = false
+                        listItem.source = "recipe"
+                        listItem.addToSourceRecipes(recipe)
+                        newList.addToItems(listItem)
+                        listItem.household = newList.household
+                        listItem.householdKey = newList.householdKey
                     }
-
-                    // Path 2: template missing or has no category — look up by ingredient name
-                    if resolvedCat == nil, let ingredientName = ingredient.name, !ingredientName.isEmpty {
-                        let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
-                        let templateReq: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
-                        let canonical = cleanName.lowercased()
-                        if let key = recipe.householdKey {
-                            templateReq.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == %@", canonical, key)
-                        } else {
-                            templateReq.predicate = NSPredicate(format: "canonicalName ==[c] %@ AND householdKey == nil", canonical)
-                        }
-                        templateReq.fetchLimit = 1
-                        if let matchedTemplate = try? context.fetch(templateReq).first {
-                            resolvedCat = matchedTemplate.categoryEntity
-                            // Also link the ingredient to the template for future lookups
-                            if ingredient.ingredientTemplate == nil {
-                                ingredient.ingredientTemplate = matchedTemplate
-                            }
-                        }
-                    }
-
-                    // Assign category with cross-store safety
-                    if let cat = resolvedCat {
-                        let listStore = newList.objectID.persistentStore
-                        let catStore = cat.objectID.persistentStore
-                        if listStore == catStore || listStore == nil {
-                            listItem.categoryEntity = cat
-                        } else {
-                            let catReq: NSFetchRequest<Category> = Category.fetchRequest()
-                            let catName = cat.name ?? ""
-                            if let key = newList.householdKey {
-                                catReq.predicate = NSPredicate(format: "name == %@ AND householdKey == %@", catName, key)
-                            } else {
-                                catReq.predicate = NSPredicate(format: "name == %@ AND householdKey == nil", catName)
-                            }
-                            catReq.fetchLimit = 1
-                            listItem.categoryEntity = try? context.fetch(catReq).first
-                        }
-                        diag.debug("MealPlanGrocery '\(ingredient.name ?? "?")': cat=\(cat.name ?? "nil")", category: .household)
-                    } else {
-                        diag.debug("MealPlanGrocery '\(ingredient.name ?? "?")': no template/category found", category: .household)
-                    }
-
-                    newList.addToItems(listItem)
-                    // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
-                    listItem.household = newList.household
-                    listItem.householdKey = newList.householdKey
                 }
             }
 

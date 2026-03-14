@@ -17,6 +17,7 @@ struct MealPlanDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var groceryListItemService: GroceryListItemService
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
 
@@ -28,6 +29,10 @@ struct MealPlanDetailView: View {
     @State private var bulkAddProgress: Double = 0.0
     @State private var bulkAddMessage = "Processing recipes..."
     @State private var bulkAddResults: BulkAddResults?
+
+    // M9.16: Ingredient selection wizard state
+    @State private var showingIngredientSelection = false
+    @State private var selectedTargetList: WeeklyList?
 
     // Remove confirmation
     @State private var mealToRemove: PlannedMeal?
@@ -101,8 +106,13 @@ struct MealPlanDetailView: View {
         }
         .sheet(isPresented: $showingBulkAddSheet) {
             SelectListSheet(
-                onSelect: { selectedList, adjustedServings in
-                    Task { await performBulkAdd(to: selectedList, adjustedServings: adjustedServings) }
+                onSelect: { selectedList, _ in
+                    // M9.16: Present ingredient selection wizard instead of direct bulk add
+                    selectedTargetList = selectedList
+                    showingBulkAddSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showingIngredientSelection = true
+                    }
                 },
                 recipes: plannedMeals.compactMap { meal in
                     guard let recipe = meal.recipe else { return nil }
@@ -110,6 +120,19 @@ struct MealPlanDetailView: View {
                 }
             )
             .environment(\.managedObjectContext, viewContext)
+        }
+        .sheet(isPresented: $showingIngredientSelection) {
+            if let list = selectedTargetList {
+                MealPlanIngredientSelectionView(
+                    targetList: list,
+                    recipes: plannedMeals.compactMap { meal in
+                        guard let recipe = meal.recipe else { return nil }
+                        return (recipe: recipe, servings: meal.servings)
+                    }
+                )
+                .environment(\.managedObjectContext, viewContext)
+                .environmentObject(groceryListItemService)
+            }
         }
         .sheet(item: $recipePickerPayload) { payload in
             RecipePickerSheet(
@@ -606,9 +629,6 @@ struct MealPlanDetailView: View {
             bulkAddProgress = 0.0
         }
 
-        let templateService = IngredientTemplateService(context: viewContext)
-        // M9.12: Scope template lookups to household to prevent cross-store failures
-        templateService.householdKey = householdService.currentHouseholdKey
         var totalIngredientsAdded = 0
         let totalMeals = recipesWithIngredients.count
 
@@ -631,45 +651,22 @@ struct MealPlanDetailView: View {
             guard let ingredientsSet = recipe.ingredients else { continue }
             let ingredients = Array(ingredientsSet) as! [Ingredient]
 
-            for ingredient in ingredients {
-                guard let ingredientName = ingredient.name, !ingredientName.isEmpty else { continue }
-
-                let cleanName = IngredientParsingService.extractCleanIngredientName(from: ingredientName)
-                _ = templateService.findOrCreateTemplate(name: cleanName)
-
-                let listItem = GroceryListItem(context: viewContext)
-                listItem.id = UUID()
-                listItem.name = ingredientName
-                listItem.isCompleted = false
-                listItem.sortOrder = Int16(weeklyList.items?.count ?? 0)
-                listItem.weeklyList = weeklyList
-                // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList
-                listItem.household = weeklyList.household
-                listItem.householdKey = weeklyList.householdKey
-
-                if scaleFactor != 1.0 && ingredient.isParseable && ingredient.numericValue > 0 {
-                    let scaledValue = ingredient.numericValue * scaleFactor
-                    listItem.displayText = formatScaledQuantity(value: scaledValue, unit: ingredient.standardUnit)
-                    listItem.numericValue = scaledValue
-                    listItem.standardUnit = ingredient.standardUnit
-                    listItem.isParseable = true
-                    listItem.parseConfidence = ingredient.parseConfidence
-                } else {
-                    listItem.displayText = ingredient.displayText ?? ""
-                    listItem.numericValue = ingredient.numericValue
-                    listItem.standardUnit = ingredient.standardUnit
-                    listItem.isParseable = ingredient.isParseable
-                    listItem.parseConfidence = ingredient.parseConfidence
-                }
-
-                listItem.addToSourceRecipes(recipe)
-                totalIngredientsAdded += 1
+            // M9.16: Delegate to GroceryListItemService for consistent template,
+            // category, cross-store safety, and merge logic
+            let added = await MainActor.run {
+                groceryListItemService.addIngredients(
+                    ingredients,
+                    to: weeklyList,
+                    scaleFactor: scaleFactor,
+                    sourceRecipe: recipe,
+                    mergeWithExisting: true
+                )
             }
+            totalIngredientsAdded += added.count
 
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
 
-        MealPlanService.shared.saveContext()
         await MainActor.run {
             isBulkAdding = false
             showingBulkAddSheet = false
@@ -681,35 +678,6 @@ struct MealPlanDetailView: View {
         }
     }
 
-    private func formatScaledQuantity(value: Double, unit: String?) -> String {
-        let fractionString = formatToFraction(value)
-        if let unit = unit, !unit.isEmpty {
-            return "\(fractionString) \(unit)"
-        }
-        return fractionString
-    }
-
-    private func formatToFraction(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-
-        let fractions: [(Double, String)] = [
-            (0.125, "⅛"), (0.25, "¼"), (0.333, "⅓"), (0.375, "⅜"),
-            (0.5, "½"), (0.625, "⅝"), (0.666, "⅔"), (0.75, "¾"), (0.875, "⅞")
-        ]
-
-        let wholePart = Int(value)
-        let fractionalPart = value - Double(wholePart)
-
-        for (decimal, fraction) in fractions {
-            if abs(fractionalPart - decimal) < 0.01 {
-                return wholePart > 0 ? "\(wholePart) \(fraction)" : fraction
-            }
-        }
-
-        return String(format: "%.2f", value)
-    }
 
 }
 
