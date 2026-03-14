@@ -918,8 +918,28 @@ class MealPlanService: ObservableObject {
                     listItem.sortOrder = sortIndex
                     sortIndex += 1
 
-                    // M9.12: Category from ingredient template relationship
-                    listItem.categoryEntity = ingredient.ingredientTemplate?.categoryEntity
+                    // M9.12: Category from ingredient template relationship — with cross-store safety
+                    if let templateCat = ingredient.ingredientTemplate?.categoryEntity {
+                        let listStore = newList.objectID.persistentStore
+                        let catStore = templateCat.objectID.persistentStore
+                        if listStore == catStore || listStore == nil {
+                            listItem.categoryEntity = templateCat
+                        } else {
+                            // Cross-store: look up category by name in the list's scope
+                            let catReq: NSFetchRequest<Category> = Category.fetchRequest()
+                            let catName = templateCat.name ?? ""
+                            if let key = newList.householdKey {
+                                catReq.predicate = NSPredicate(format: "name == %@ AND householdKey == %@", catName, key)
+                            } else {
+                                catReq.predicate = NSPredicate(format: "name == %@ AND householdKey == nil", catName)
+                            }
+                            catReq.fetchLimit = 1
+                            listItem.categoryEntity = try? context.fetch(catReq).first
+                        }
+                        DiagnosticLogger.shared.debug("MealPlanGrocery '\(ingredient.name ?? "?")': cat=\(templateCat.name ?? "nil"), listStore=\(listStore?.url?.lastPathComponent ?? "nil"), catStore=\(catStore?.url?.lastPathComponent ?? "nil")", category: .household)
+                    } else {
+                        DiagnosticLogger.shared.debug("MealPlanGrocery '\(ingredient.name ?? "?")': template=\(ingredient.ingredientTemplate?.name ?? "nil"), cat=nil", category: .household)
+                    }
 
                     newList.addToItems(listItem)
                     // M9.15: GroceryListItem is now HouseholdScoped — inherit from parent WeeklyList

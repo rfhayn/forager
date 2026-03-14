@@ -1000,36 +1000,77 @@ class HouseholdService: ObservableObject {
     /// M7.2.2 FIX: Now includes categories and ingredient templates
     /// - Parameter household: The household to migrate from
     private func migrateHouseholdDataToPersonal(_ household: Household) async throws {
-        let recipeSet = household.recipes as? Set<Recipe> ?? []
-        let listSet = household.weeklyLists as? Set<WeeklyList> ?? []
-        let mealPlanSet = household.mealPlans as? Set<MealPlan> ?? []
-        let categorySet = household.categories as? Set<Category> ?? []
-        let templateSet = household.ingredientTemplates as? Set<IngredientTemplate> ?? []
+        // M9.15.3: Fetch by householdKey predicate instead of relationship
+        // IngredientTemplateService.findOrCreateTemplate sets householdKey but NOT the
+        // household relationship, so relationship-based fetches miss those entities.
+        let householdKey = household.id?.uuidString ?? ""
+
+        let recipeSet: Set<Recipe> = {
+            let req: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
+        let listSet: Set<WeeklyList> = {
+            let req: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
+        let mealPlanSet: Set<MealPlan> = {
+            let req: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
+        let categorySet: Set<Category> = {
+            let req: NSFetchRequest<Category> = Category.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
+        let templateSet: Set<IngredientTemplate> = {
+            let req: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
 
         // M7.2.2: Fetch existing personal categories and templates to avoid duplicates
         // When a user joins a household, their personal data stays in the private store.
         // Migrating without dedup would create duplicates of everything they already had.
-        let existingCategoryNames: Set<String> = {
+        // M9.15.3 FIX: Build lookup maps so skipped items still get mapped for downstream re-linking
+        let existingCategoriesByName: [String: Category] = {
             let req: NSFetchRequest<Category> = Category.fetchRequest()
             req.predicate = NSPredicate(format: "householdKey == nil")
             let results = (try? viewContext.fetch(req)) ?? []
-            return Set(results.compactMap { $0.normalizedName ?? $0.name?.lowercased() })
+            var map: [String: Category] = [:]
+            for cat in results {
+                let key = cat.normalizedName ?? cat.name?.lowercased() ?? ""
+                if !key.isEmpty { map[key] = cat }
+            }
+            return map
         }()
 
-        let existingTemplateNames: Set<String> = {
+        let existingTemplatesByName: [String: IngredientTemplate] = {
             let req: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
             req.predicate = NSPredicate(format: "householdKey == nil")
             let results = (try? viewContext.fetch(req)) ?? []
-            return Set(results.compactMap { $0.canonicalName ?? $0.name?.lowercased() })
+            var map: [String: IngredientTemplate] = [:]
+            for tmpl in results {
+                let key = tmpl.canonicalName ?? tmpl.name?.lowercased() ?? ""
+                if !key.isEmpty { map[key] = tmpl }
+            }
+            return map
         }()
 
         // Migrate categories first (needed for ingredient templates)
         // Skip categories that already exist in personal store by normalized name
+        // M9.15.3: Map skipped categories to existing personal copies so templates keep their links
         var categoryMapping: [UUID: Category] = [:]
         var skippedCategories = 0
         for oldCategory in categorySet {
             let normalizedName = oldCategory.normalizedName ?? oldCategory.name?.lowercased() ?? ""
-            if existingCategoryNames.contains(normalizedName) {
+            if let existingPersonal = existingCategoriesByName[normalizedName] {
+                // Category exists — map old household ID → existing personal entity
+                if let oldId = oldCategory.id {
+                    categoryMapping[oldId] = existingPersonal
+                }
                 skippedCategories += 1
                 continue
             }
@@ -1051,6 +1092,9 @@ class HouseholdService: ObservableObject {
             }
         }
 
+        let diag = DiagnosticLogger.shared
+        diag.debug("Migration: \(categorySet.count) categories — \(categorySet.count - skippedCategories) new, \(skippedCategories) mapped to existing", category: .household)
+
         // M10.6.20: Re-link GroceryItem.categoryEntity to new personal Categories
         let groceryItemRequest: NSFetchRequest<GroceryItem> = GroceryItem.fetchRequest()
         let groceryItems = try viewContext.fetch(groceryItemRequest)
@@ -1064,11 +1108,23 @@ class HouseholdService: ObservableObject {
         }
 
         // Migrate ingredient templates, skipping those that already exist by canonical name
+        // M9.15.3: Map skipped templates to existing personal copies so ingredients keep their links
         var templateMapping: [UUID: IngredientTemplate] = [:]
         var skippedTemplates = 0
         for oldTemplate in templateSet {
             let canonicalName = oldTemplate.canonicalName ?? oldTemplate.name?.lowercased() ?? ""
-            if existingTemplateNames.contains(canonicalName) {
+            if let existingPersonal = existingTemplatesByName[canonicalName] {
+                // Template exists — map old household ID → existing personal entity
+                if let oldId = oldTemplate.id {
+                    templateMapping[oldId] = existingPersonal
+                }
+                // M9.15.3: If existing personal template lacks a category but the household
+                // one has one, adopt the household's category (mapped to personal)
+                if existingPersonal.categoryEntity == nil,
+                   let oldCat = oldTemplate.categoryEntity, let oldCatId = oldCat.id,
+                   let newCat = categoryMapping[oldCatId] {
+                    existingPersonal.categoryEntity = newCat
+                }
                 skippedTemplates += 1
                 continue
             }
@@ -1094,6 +1150,8 @@ class HouseholdService: ObservableObject {
                 templateMapping[oldId] = newTemplate
             }
         }
+
+        diag.debug("Migration: \(templateSet.count) templates — \(templateSet.count - skippedTemplates) new, \(skippedTemplates) mapped to existing", category: .household)
 
         // Fetch existing personal recipe titles to avoid duplicates
         let existingRecipeTitles: Set<String> = {

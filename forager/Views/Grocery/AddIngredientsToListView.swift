@@ -289,6 +289,10 @@ struct AddIngredientsToListView: View {
 
             let cleanName = IngredientParsingService.extractCleanIngredientName(from: fullName)
             let template = templateService.findOrCreateTemplate(name: cleanName)
+            let prevTemplate = ingredient.ingredientTemplate
+            let prevCat = prevTemplate?.categoryEntity?.name ?? "nil"
+            let newCat = template.categoryEntity?.name ?? "nil"
+            DiagnosticLogger.shared.debug("PrepareTemplate '\(cleanName)': prevCat=\(prevCat), newCat=\(newCat), sameTemplate=\(prevTemplate === template)", category: .household)
             ingredient.ingredientTemplate = template
         }
 
@@ -532,25 +536,30 @@ struct AddIngredientsToListView: View {
                 // M9.12: Use category entity relationship — with cross-store safety.
                 // Template may be in private store while list is in shared store (household).
                 // Look up a matching category in the list's scope to avoid cross-store failures.
+                let diag = DiagnosticLogger.shared
+                let hasTemplate = ingredient.ingredientTemplate != nil
+                let templateCatName = ingredient.ingredientTemplate?.categoryEntity?.name
+                diag.debug("AddToList '\(cleanName)': hasTemplate=\(hasTemplate), templateCat=\(templateCatName ?? "nil")", category: .household)
+
                 if let template = ingredient.ingredientTemplate,
                    let categoryName = template.categoryEntity?.name {
                     let targetStore = targetList.objectID.persistentStore
                     let templateStore = template.categoryEntity?.objectID.persistentStore
+                    let targetURL = targetStore?.url?.lastPathComponent ?? "nil"
+                    let catURL = templateStore?.url?.lastPathComponent ?? "nil"
+                    diag.debug("  stores: target=\(targetURL), cat=\(catURL), match=\(targetStore == templateStore)", category: .household)
+
                     if targetStore == templateStore || targetStore == nil {
                         // Same store — safe to link directly
                         listItem.categoryEntity = template.categoryEntity
                     } else {
                         // Cross-store — look up category by name in the list's scope
-                        listItem.categoryEntity = findCategory(named: categoryName, householdKey: recipe.householdKey)
+                        let found = findCategory(named: categoryName, householdKey: recipe.householdKey)
+                        listItem.categoryEntity = found
+                        diag.debug("  cross-store fallback: found=\(found?.name ?? "nil")", category: .household)
                     }
-                    #if DEBUG
-                    print("Assigned category '\(categoryName)' to '\(cleanName)'")
-                    #endif
                 } else {
-                    // Leave categoryEntity nil for uncategorized
-                    #if DEBUG
-                    print("Assigned uncategorized to '\(cleanName)'")
-                    #endif
+                    diag.debug("  → uncategorized (template=\(hasTemplate), catName=\(templateCatName ?? "nil"))", category: .household)
                 }
                 
                 targetList.addToItems(listItem)

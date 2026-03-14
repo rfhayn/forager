@@ -6,6 +6,45 @@
 
 ---
 
+## Session 83 — March 14, 2026
+**Milestone**: M9.15.3 — Migration & Category Assignment Fixes
+**Focus**: Fix ALL shopping list items showing as "Uncategorized" after household create/delete cycles (build 40+)
+**Branch**: main (direct bugfixes)
+
+### What Happened
+
+Build 40 revealed that 39/40 shopping list items showed "Uncategorized" even though ingredient templates in IngredientsView had correct categories. Three distinct bugs were found and fixed:
+
+**Bug 1: Migration dedup-skip without mapping** — `migrateHouseholdDataToPersonal()` skipped categories/templates that already existed personally (dedup), but never mapped the old household UUID → existing personal entity. Downstream UUID-based `categoryMapping`/`templateMapping` dicts had no entries for skipped items, so all migrated templates lost their category links and all migrated grocery list items lost their category assignments. Fix: changed `Set<String>` tracking to `[String: Entity]` lookup maps, mapping skipped items to their existing personal copies.
+
+**Bug 2: Relationship vs key fetch mismatch** — `migrateHouseholdDataToPersonal()` fetched household-scoped entities via Core Data relationships (`household.ingredientTemplates`), but `IngredientTemplateService.findOrCreateTemplate()` only sets `householdKey` (String), never the `household` relationship. Templates created during recipe import were invisible to migration. Fix: replaced all 5 relationship-based fetches with `NSPredicate(format: "householdKey == %@")` queries.
+
+**Bug 3: Missing cross-store safety check** — `MealPlanService.generateGroceryList()` directly assigned `listItem.categoryEntity = template.categoryEntity` without checking persistent store compatibility. In dual-store setups this creates silent cross-store relationship failures. Fix: added the same store-comparison pattern already used in `AddIngredientsToListView`.
+
+Also added comprehensive diagnostic logging to `AddIngredientsToListView` and `MealPlanService` to trace category assignment at every step — this will make future debugging faster.
+
+### Key Decisions
+
+- **Predicate-based fetch over relationships**: The `household` Core Data relationship is unreliable because not all creation paths set it. `householdKey` (String) is the universal truth — every creation path sets it. This is a permanent architectural lesson.
+
+- **Diagnostic logging before shipping**: Added 15+ debug log points before committing, so the next TestFlight build will definitively confirm which code path is responsible if any issues remain.
+
+### Learning
+
+- **Multiple bugs compounding**: The "all uncategorized" symptom had three independent root causes. Fixing any one alone wouldn't have fully resolved it — you need the migration to correctly find entities (bug 2), correctly map skipped duplicates (bug 1), AND correctly handle cross-store assignments (bug 3).
+
+- **Relationship ≠ key**: Core Data relationships are bidirectional pointers that must be explicitly set from at least one side. String-based `householdKey` is a simple attribute set independently. When multiple services create the same entity type, only the universally-set field is reliable for queries.
+
+### AI Tooling Observations
+
+Context compaction preserved the full investigation arc from the previous session, allowing immediate continuation into the `householdKey` predicate fix without re-reading files. The summary accurately captured all three bugs and the exact line numbers, making the fix surgical.
+
+### What's Next
+
+Commit these fixes, build and archive for TestFlight. User will test the full household create/delete cycle to verify categories survive. If the diagnostic logging reveals any remaining issues, iterate.
+
+---
+
 ## Session 82 — March 13, 2026
 **Milestone**: M9.15.3 — Scope Resolution Fix
 **Focus**: Fix entities not appearing after household creation (builds 37→38→39 rapid iteration)
