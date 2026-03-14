@@ -17,6 +17,15 @@ class RegexIngredientParser: IngredientParser {
 
     let parserName = "regex"
 
+    // MARK: - Measurement Modifiers
+
+    /// M8.5: Words that modify a measurement but aren't units themselves
+    /// "2 heaping tablespoons" → strip "heaping" so parser sees "2 tablespoons"
+    private static let measurementModifiers: Set<String> = [
+        "heaping", "rounded", "scant", "generous", "level",
+        "packed", "lightly", "loosely", "firmly", "overflowing"
+    ]
+
     // MARK: - Unicode Fraction Map
 
     /// Maps Unicode fraction characters to decimal values
@@ -79,11 +88,15 @@ class RegexIngredientParser: IngredientParser {
 
         // Pre-process: Insert space between leading digits and letters
         // Handles concatenated qty+unit like "16oz" → "16 oz", "2tbsp" → "2 tbsp"
-        let normalized = textWithoutParenPrep.replacingOccurrences(
+        let spacedDigits = textWithoutParenPrep.replacingOccurrences(
             of: #"^(\d+(?:\.\d+)?)\s*([a-zA-Z])"#,
             with: "$1 $2",
             options: .regularExpression
         )
+
+        // M8.5: Strip measurement modifiers before known units
+        // "2 heaping tablespoons tomato paste" → "2 tablespoons tomato paste"
+        let normalized = Self.stripMeasurementModifiers(spacedDigits)
 
         // Try patterns in priority order (highest specificity first)
         // Each returns non-nil if it matched
@@ -736,27 +749,53 @@ class RegexIngredientParser: IngredientParser {
         return results.isEmpty ? nil : results
     }
 
+    // MARK: - Helper: Strip Measurement Modifiers
+
+    /// M8.5: Remove modifier words that appear between a quantity and a known unit
+    /// "2 heaping tablespoons tomato paste" → "2 tablespoons tomato paste"
+    /// Only strips when the word after the modifier IS a known unit (safety check)
+    static func stripMeasurementModifiers(_ text: String) -> String {
+        let words = text.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+        guard words.count >= 3 else { return text }
+
+        // Check if first word looks like a quantity (starts with digit or fraction)
+        guard let first = words.first,
+              first.first?.isNumber == true || first.first?.isWholeNumber == true else {
+            return text
+        }
+
+        // Check if second word is a modifier and third word is a known unit
+        let potentialModifier = words[1].lowercased()
+        guard measurementModifiers.contains(potentialModifier) else { return text }
+
+        let potentialUnit = words[2].lowercased()
+        guard knownUnitSet.contains(potentialUnit) else { return text }
+
+        // Strip the modifier: keep word[0], skip word[1], keep word[2...]
+        var result = [words[0]]
+        result.append(contentsOf: words[2...])
+        return result.joined(separator: " ")
+    }
+
     // MARK: - Helper: Known Unit Check
 
+    /// All recognized units as a static set (used by both isKnownUnit and stripMeasurementModifiers)
+    private static let knownUnitSet: Set<String> = {
+        let volume: Set<String> = ["cup", "cups", "c", "tablespoon", "tablespoons", "tbsp", "tbs", "t",
+                      "teaspoon", "teaspoons", "tsp", "ts", "ml", "milliliter", "milliliters",
+                      "l", "liter", "liters", "oz", "fl oz", "fluid ounce", "fluid ounces",
+                      "pint", "pints", "pt", "quart", "quarts", "qt", "gallon", "gallons", "gal"]
+        let weight: Set<String> = ["lb", "lbs", "pound", "pounds", "oz", "ounce", "ounces",
+                      "g", "gram", "grams", "kg", "kilogram", "kilograms"]
+        let count: Set<String> = ["piece", "pieces", "pc", "clove", "cloves", "slice", "slices",
+                     "can", "cans", "package", "packages", "pkg", "bunch", "bunches",
+                     "head", "heads", "stick", "sticks", "bag", "bags", "bottle", "bottles",
+                     "box", "boxes", "jar", "jars", "sprig", "sprigs"]
+        return volume.union(weight).union(count)
+    }()
+
     func isKnownUnit(_ unit: String) -> Bool {
-        let lowercased = unit.lowercased()
-
-        let volumeUnits: Set<String> = ["cup", "cups", "c", "tablespoon", "tablespoons", "tbsp", "tbs", "t",
-                          "teaspoon", "teaspoons", "tsp", "ts", "ml", "milliliter", "milliliters",
-                          "l", "liter", "liters", "oz", "fl oz", "fluid ounce", "fluid ounces",
-                          "pint", "pints", "pt", "quart", "quarts", "qt", "gallon", "gallons", "gal"]
-
-        let weightUnits: Set<String> = ["lb", "lbs", "pound", "pounds", "oz", "ounce", "ounces",
-                          "g", "gram", "grams", "kg", "kilogram", "kilograms"]
-
-        let countUnits: Set<String> = ["piece", "pieces", "pc", "clove", "cloves", "slice", "slices",
-                         "can", "cans", "package", "packages", "pkg", "bunch", "bunches",
-                         "head", "heads", "stick", "sticks", "bag", "bags", "bottle", "bottles",
-                         "box", "boxes", "jar", "jars", "sprig", "sprigs"]
-
-        return volumeUnits.contains(lowercased) ||
-               weightUnits.contains(lowercased) ||
-               countUnits.contains(lowercased)
+        Self.knownUnitSet.contains(unit.lowercased())
     }
 
     // MARK: - Helper: Numeric Conversion
