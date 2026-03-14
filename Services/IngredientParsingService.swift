@@ -214,8 +214,8 @@ class IngredientParsingService: ObservableObject {
         return results?.first
     }
 
-    /// Parse a batch of ingredients via LLM. Returns nil on any failure or count mismatch.
-    /// Caller should keep existing local results on nil return.
+    /// Parse a batch of ingredients via LLM. Returns nil only on total failure (no API key, network error).
+    /// On partial results (AI returns fewer than expected), pads with local-parse fallback.
     /// Sets `lastLLMError` with a descriptive message on failure.
     /// Tuple per result: (parsed, structured, aiCategory)
     func parseBatchWithLLM(texts: [String], source: ParsingTelemetryEvent.ParsingSource, categories: [String] = []) async -> [(ParsedIngredient, StructuredQuantity, String?)]? {
@@ -249,8 +249,8 @@ class IngredientParsingService: ObservableObject {
             let rawCount = rawResults.count
             let inputCount = texts.count
 
-            // Tolerant validation: truncate if AI returned extra (e.g., split a compound line),
-            // but fail if it returned too few (something went wrong).
+            // Tolerant validation: truncate extras, pad shortfall with local parse.
+            // Never discard all AI results because of a single missing ingredient.
             let llmResults: [LLMParserResult]
             if rawCount > inputCount {
                 #if DEBUG
@@ -262,17 +262,17 @@ class IngredientParsingService: ObservableObject {
             } else if rawCount < inputCount {
                 #if DEBUG
                 await MainActor.run {
-                    DebugLogService.shared.log("parseBatchWithLLM: count mismatch — got \(rawCount) results for \(inputCount) inputs", category: "LLM")
+                    DebugLogService.shared.log("parseBatchWithLLM: AI returned \(rawCount) results for \(inputCount) inputs — will pad with local parse", category: "LLM")
                 }
                 #endif
-                await MainActor.run { lastLLMError = "AI returned fewer results than expected" }
-                return nil
+                llmResults = rawResults
             } else {
                 llmResults = rawResults
             }
 
             var output: [(ParsedIngredient, StructuredQuantity, String?)] = []
 
+            // Process AI results for the positions we have
             for (index, llmResult) in llmResults.enumerated() {
                 let originalText = texts[index]
                 let parserResult = llmResult.toParserResult(originalText: originalText, provider: parser.providerName)
@@ -280,7 +280,6 @@ class IngredientParsingService: ObservableObject {
                 let parsed = Self.mapToParsedIngredient(parserResult)
                 let structured = Self.mapToStructuredQuantity(parserResult, text: originalText)
 
-                // Log telemetry per ingredient
                 _ = ParsingTelemetryService.shared.logParsingEvent(
                     rawInput: originalText,
                     parsedName: parserResult.name,
@@ -294,10 +293,25 @@ class IngredientParsingService: ObservableObject {
                 output.append((parsed, structured, llmResult.category))
             }
 
+            // Pad remaining positions with local parse (AI dropped these ingredients)
+            if llmResults.count < inputCount {
+                for index in llmResults.count..<inputCount {
+                    let originalText = texts[index]
+                    let localResult = parseIngredient(text: originalText)
+                    let structured = parseToStructured(text: originalText)
+                    output.append((localResult, structured, nil))
+                }
+            }
+
             #if DEBUG
             let resultCount = output.count
+            let llmCount = llmResults.count
             await MainActor.run {
-                DebugLogService.shared.log("parseBatchWithLLM: success — \(resultCount) results", category: "LLM")
+                if llmCount < inputCount {
+                    DebugLogService.shared.log("parseBatchWithLLM: \(llmCount) AI + \(inputCount - llmCount) local fallback = \(resultCount) total", category: "LLM")
+                } else {
+                    DebugLogService.shared.log("parseBatchWithLLM: success — \(resultCount) results", category: "LLM")
+                }
             }
             #endif
             await MainActor.run { lastLLMError = nil }
