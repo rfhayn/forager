@@ -293,6 +293,14 @@ struct AddIngredientsToListView: View {
             let prevCat = prevTemplate?.categoryEntity?.name ?? "nil"
             let newCat = template.categoryEntity?.name ?? "nil"
             DiagnosticLogger.shared.debug("PrepareTemplate '\(cleanName)': prevCat=\(prevCat), newCat=\(newCat), sameTemplate=\(prevTemplate === template)", category: .household)
+
+            // M9.15.3: If findOrCreateTemplate returned a different template, carry over
+            // the previous template's category when the new one lacks one
+            if template !== prevTemplate,
+               let prevCatEntity = prevTemplate?.categoryEntity,
+               template.categoryEntity == nil || template.categoryEntity?.name == "Uncategorized" {
+                template.categoryEntity = prevCatEntity
+            }
             ingredient.ingredientTemplate = template
         }
 
