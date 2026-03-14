@@ -1250,9 +1250,12 @@ class HouseholdService: ObservableObject {
                 newItem.numericValue = oldItem.numericValue
                 newItem.standardUnit = oldItem.standardUnit
                 // M9.12: Link categoryEntity using categoryMapping instead of copying string
-                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id,
-                   let newCat = categoryMapping[oldCatId] {
-                    newItem.categoryEntity = newCat
+                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id {
+                    if let newCat = categoryMapping[oldCatId] {
+                        newItem.categoryEntity = newCat
+                    } else {
+                        diag.debug("  ⚠️ Migrate GroceryListItem '\(oldItem.name ?? "?")' category '\(oldCat.name ?? "?")' (id=\(oldCatId)) NOT in categoryMapping — \(categoryMapping.count) entries", category: .household)
+                    }
                 }
                 newItem.sortOrder = oldItem.sortOrder
                 newItem.isCompleted = oldItem.isCompleted
@@ -1807,9 +1810,14 @@ class HouseholdService: ObservableObject {
                 newItem.household = household
                 newItem.householdKey = householdKey
                 // Re-link category to new copy
-                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id,
-                   let newCat = categoryMapping[oldCatId] {
-                    newItem.categoryEntity = newCat
+                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id {
+                    if let newCat = categoryMapping[oldCatId] {
+                        newItem.categoryEntity = newCat
+                    } else {
+                        diag.debug("  ⚠️ GroceryListItem '\(oldItem.name ?? "?")' category '\(oldCat.name ?? "?")' (id=\(oldCatId)) NOT in categoryMapping — \(categoryMapping.count) entries", category: .household)
+                    }
+                } else {
+                    diag.debug("  GroceryListItem '\(oldItem.name ?? "?")' has no category", category: .household)
                 }
                 copiedCount += 1
             }

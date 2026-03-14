@@ -870,12 +870,16 @@ class MealPlanService: ObservableObject {
     // and creates a WeeklyList + GroceryListItems grouped by category.
     @discardableResult
     func generateGroceryList(from plan: MealPlan) -> WeeklyList? {
+        let diag = DiagnosticLogger.shared
+        diag.info("=== GENERATE GROCERY LIST from plan '\(plan.name ?? "?")' ===", category: .household)
+
         let fetchRequest: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "mealPlan == %@", plan)
         fetchRequest.relationshipKeyPathsForPrefetching = ["recipe", "recipe.ingredients"]
 
         do {
             let meals = try context.fetch(fetchRequest)
+            diag.debug("  Found \(meals.count) planned meals", category: .household)
 
             // M9.13: Route through factory for correct store assignment (ADR 014)
             let newList: WeeklyList
