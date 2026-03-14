@@ -915,12 +915,14 @@ class MealPlanService: ObservableObject {
                 for meal in meals {
                     guard let recipe = meal.recipe,
                           let ingredients = recipe.ingredients?.allObjects as? [Ingredient] else { continue }
+                    // skipSave: let generateGroceryList own the single save transaction
                     itemService.addIngredients(
                         ingredients,
                         to: newList,
                         scaleFactor: 1.0,
                         sourceRecipe: recipe,
-                        mergeWithExisting: true
+                        mergeWithExisting: true,
+                        skipSave: true
                     )
                 }
             } else {

@@ -104,15 +104,16 @@ struct MealPlanDetailView: View {
         .overlay {
             if isBulkAdding { bulkAddOverlay }
         }
-        .sheet(isPresented: $showingBulkAddSheet) {
+        .sheet(isPresented: $showingBulkAddSheet, onDismiss: {
+            // M9.16: After list selection sheet dismisses, present ingredient selection wizard
+            if selectedTargetList != nil {
+                showingIngredientSelection = true
+            }
+        }) {
             SelectListSheet(
                 onSelect: { selectedList, _ in
-                    // M9.16: Present ingredient selection wizard instead of direct bulk add
                     selectedTargetList = selectedList
                     showingBulkAddSheet = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showingIngredientSelection = true
-                    }
                 },
                 recipes: plannedMeals.compactMap { meal in
                     guard let recipe = meal.recipe else { return nil }
@@ -612,6 +613,7 @@ struct MealPlanDetailView: View {
 
     // MARK: - Bulk Add
 
+    @MainActor
     private func performBulkAdd(to weeklyList: WeeklyList, adjustedServings: [UUID: Int16] = [:]) async {
         let recipesWithIngredients = plannedMeals.filter { meal in
             guard let recipe = meal.recipe,
@@ -620,14 +622,12 @@ struct MealPlanDetailView: View {
         }
 
         guard !recipesWithIngredients.isEmpty else {
-            await MainActor.run { showingBulkAddSheet = false }
+            showingBulkAddSheet = false
             return
         }
 
-        await MainActor.run {
-            isBulkAdding = true
-            bulkAddProgress = 0.0
-        }
+        isBulkAdding = true
+        bulkAddProgress = 0.0
 
         var totalIngredientsAdded = 0
         let totalMeals = recipesWithIngredients.count
@@ -635,10 +635,8 @@ struct MealPlanDetailView: View {
         for (index, plannedMeal) in recipesWithIngredients.enumerated() {
             guard let recipe = plannedMeal.recipe else { continue }
 
-            await MainActor.run {
-                bulkAddProgress = Double(index) / Double(totalMeals)
-                bulkAddMessage = "Processing \(recipe.title ?? "recipe")..."
-            }
+            bulkAddProgress = Double(index) / Double(totalMeals)
+            bulkAddMessage = "Processing \(recipe.title ?? "recipe")..."
 
             let targetServings: Int
             if let recipeID = recipe.id, let adjusted = adjustedServings[recipeID] {
@@ -653,29 +651,26 @@ struct MealPlanDetailView: View {
 
             // M9.16: Delegate to GroceryListItemService for consistent template,
             // category, cross-store safety, and merge logic
-            let added = await MainActor.run {
-                groceryListItemService.addIngredients(
-                    ingredients,
-                    to: weeklyList,
-                    scaleFactor: scaleFactor,
-                    sourceRecipe: recipe,
-                    mergeWithExisting: true
-                )
-            }
+            let added = groceryListItemService.addIngredients(
+                ingredients,
+                to: weeklyList,
+                scaleFactor: scaleFactor,
+                sourceRecipe: recipe,
+                mergeWithExisting: true
+            )
             totalIngredientsAdded += added.count
 
+            // Yield to allow UI updates between recipes
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
 
-        await MainActor.run {
-            isBulkAdding = false
-            showingBulkAddSheet = false
-            bulkAddResults = BulkAddResults(
-                totalRecipes: totalMeals,
-                totalIngredients: totalIngredientsAdded,
-                listName: weeklyList.name ?? "shopping list"
-            )
-        }
+        isBulkAdding = false
+        showingBulkAddSheet = false
+        bulkAddResults = BulkAddResults(
+            totalRecipes: totalMeals,
+            totalIngredients: totalIngredientsAdded,
+            listName: weeklyList.name ?? "shopping list"
+        )
     }
 
 

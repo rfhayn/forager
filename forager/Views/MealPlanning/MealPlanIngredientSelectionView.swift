@@ -293,32 +293,38 @@ struct MealPlanIngredientSelectionView: View {
         isAdding = true
         addingMessage = "Adding ingredients..."
 
-        var total = 0
-        for (index, entry) in recipes.enumerated() {
-            let selected = selectedIngredients[index] ?? Set()
-            guard !selected.isEmpty else { continue }
+        // Run in Task so SwiftUI renders the loading overlay before blocking work begins
+        Task { @MainActor in
+            // Yield to let SwiftUI render the isAdding state change
+            try? await Task.sleep(nanoseconds: 50_000_000)
 
-            let ingredients = sortedIngredients(for: entry.recipe)
-                .filter { selected.contains($0.id ?? UUID()) }
+            var total = 0
+            for (index, entry) in recipes.enumerated() {
+                let selected = selectedIngredients[index] ?? Set()
+                guard !selected.isEmpty else { continue }
 
-            let servings = adjustedServings[index] ?? Int(entry.servings)
-            let scaleFactor = entry.recipe.servings > 0
-                ? Double(servings) / Double(entry.recipe.servings) : 1.0
+                let ingredients = sortedIngredients(for: entry.recipe)
+                    .filter { selected.contains($0.id ?? UUID()) }
 
-            let added = groceryListItemService.addIngredients(
-                ingredients,
-                to: targetList,
-                scaleFactor: scaleFactor,
-                sourceRecipe: entry.recipe,
-                mergeWithExisting: true
-            )
-            total += added.count
+                let servings = adjustedServings[index] ?? Int(entry.servings)
+                let scaleFactor = entry.recipe.servings > 0
+                    ? Double(servings) / Double(entry.recipe.servings) : 1.0
+
+                let added = groceryListItemService.addIngredients(
+                    ingredients,
+                    to: targetList,
+                    scaleFactor: scaleFactor,
+                    sourceRecipe: entry.recipe,
+                    mergeWithExisting: true
+                )
+                total += added.count
+            }
+
+            totalAdded = total
+            isAdding = false
+            // Move past last recipe to show completion view
+            currentRecipeIndex = recipes.count
         }
-
-        totalAdded = total
-        isAdding = false
-        // Move past last recipe to show completion view
-        currentRecipeIndex = recipes.count
     }
 
     private func addAllRemainingAndFinish() {

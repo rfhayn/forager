@@ -107,7 +107,8 @@ struct foragerApp: App {
         _ingredientTemplateService = StateObject(wrappedValue: templateService)
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
         _ingredientMatchService = StateObject(wrappedValue: IngredientMatchService(parsingService: parsingService, templateService: templateService))
-        _groceryListItemService = StateObject(wrappedValue: GroceryListItemService(context: context, templateService: templateService, parsingService: parsingService))
+        let groceryItemSvc = GroceryListItemService(context: context, templateService: templateService, parsingService: parsingService)
+        _groceryListItemService = StateObject(wrappedValue: groceryItemSvc)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
 
@@ -147,7 +148,7 @@ struct foragerApp: App {
         weeklyList.configure(factory: factory)
         templateService.configure(factory: factory)
         MealPlanService.shared.configure(factory: factory)
-        MealPlanService.shared.configure(groceryListItemService: GroceryListItemService(context: context, templateService: templateService, parsingService: parsingService))
+        MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)

@@ -160,13 +160,18 @@ class GroceryListItemService: ObservableObject {
 
     /// Add multiple ingredients from a recipe to a grocery list.
     /// Handles template resolution, category assignment, scaling, and merge.
+    /// Add multiple ingredients from a recipe to a grocery list.
+    /// Handles template resolution, category assignment, scaling, and merge.
+    /// Pass `skipSave: true` when the caller manages the save transaction
+    /// (e.g., MealPlanService.generateGroceryList which saves the entire list at once).
     @discardableResult
     func addIngredients(
         _ ingredients: [Ingredient],
         to list: WeeklyList,
         scaleFactor: Double = 1.0,
         sourceRecipe: Recipe? = nil,
-        mergeWithExisting: Bool = true
+        mergeWithExisting: Bool = true,
+        skipSave: Bool = false
     ) -> [GroceryListItem] {
         var results: [GroceryListItem] = []
 
@@ -203,7 +208,7 @@ class GroceryListItemService: ObservableObject {
             }
         }
 
-        save("add ingredients batch")
+        if !skipSave { save("add ingredients batch") }
         return results
     }
 
