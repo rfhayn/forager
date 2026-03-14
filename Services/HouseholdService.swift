@@ -1550,10 +1550,10 @@ class HouseholdService: ObservableObject {
             // stamp householdKey on existing objects in the private store. CloudKit
             // will move them to the shared zone when it's ready.
             if moveExistingData {
-                diag.info("Step 7: Stamping personal data with householdKey", category: .household)
+                diag.info("Step 7: Copying personal data to household", category: .household)
                 creationStatus = "Linking your data to household…"
-                try stampPersonalDataWithHouseholdKey(household: household)
-                diag.info("Step 7: Data stamp complete", category: .household)
+                try copyPersonalDataToHousehold(household: household)
+                diag.info("Step 7: Data copy complete", category: .household)
             } else {
                 diag.info("Step 7: Skipped (moveExistingData=false)", category: .household)
             }
@@ -1570,7 +1570,7 @@ class HouseholdService: ObservableObject {
             CloudKitLogger.householdCreated(name)
             CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
             if moveExistingData {
-                CloudKitLogger.debug("Personal data stamped with householdKey — CloudKit will migrate to shared zone")
+                CloudKitLogger.debug("Personal data copied to household — CloudKit will migrate to shared zone")
             }
 
             return household
@@ -1585,49 +1585,240 @@ class HouseholdService: ObservableObject {
         }
     }
 
-    // MARK: - M9.15.3: Stamp-in-Place Helpers
+    // MARK: - M9.15.3: Copy-and-Delete Household Data Helpers
 
-    /// M9.15.3: Stamp existing personal data with householdKey and household relationship.
-    /// Instead of copying objects to the shared store (which requires waiting for CloudKit
-    /// to migrate the Household to the shared zone — can take >60s), we stamp the existing
-    /// objects in the private store. CloudKit's mirroring delegate will migrate them to the
-    /// shared zone when it processes the CKShare.
+    /// M9.15.3: Copy personal data into the household by creating NEW objects with
+    /// householdKey set, then deleting the originals.
     ///
-    /// This is faster and more reliable than the copy-then-delete pattern because:
-    /// 1. No waiting for shared store readiness
-    /// 2. No duplicate objects (old + new) during the transition
-    /// 3. CloudKit handles the zone migration atomically
-    private func stampPersonalDataWithHouseholdKey(household: Household) throws {
+    /// Why copy-and-delete instead of stamp-in-place:
+    /// Stamping modifies existing objects that may have stale CKRecord zone metadata
+    /// from a previous household. CloudKit's mirroring delegate tracks zone assignments
+    /// by persistent ID. When SQLite reuses row IDs for deleted+recreated objects,
+    /// the delegate finds the new object in BOTH the old shared zone and the private
+    /// zone → error 134060. Creating fresh objects guarantees persistent IDs the
+    /// delegate has never seen → no zone conflicts.
+    ///
+    /// Copy order respects the entity dependency graph (parents before children):
+    /// Categories → IngredientTemplates → Recipes → Ingredients
+    /// → WeeklyLists → GroceryListItems → MealPlans → PlannedMeals
+    private func copyPersonalDataToHousehold(household: Household) throws {
         let diag = DiagnosticLogger.shared
         guard let householdKey = household.id?.uuidString else {
             throw HouseholdError.copyFailed("Household missing ID")
         }
 
         let persistence = PersistenceController.shared
-        var stampedCount = 0
+        var copiedCount = 0
 
-        // Stamp all HouseholdScoped entities that don't already have a householdKey
-        // Order doesn't matter since we're updating in-place, not creating new objects
-        let entityNames = ["Category", "IngredientTemplate", "Recipe", "Ingredient",
-                           "WeeklyList", "GroceryListItem", "MealPlan", "PlannedMeal"]
-
-        for entityName in entityNames {
-            let request = NSFetchRequest<NSManagedObject>(entityName: entityName)
-            request.predicate = NSPredicate(format: "householdKey == nil")
-            request.affectedStores = [persistence.privateStore]
-
-            if let objects = try? viewContext.fetch(request), !objects.isEmpty {
-                for obj in objects {
-                    obj.setValue(householdKey, forKey: "householdKey")
-                    obj.setValue(household, forKey: "household")
-                    stampedCount += 1
-                }
-                diag.debug("Stamped \(objects.count) \(entityName)(s) with householdKey", category: .household)
-            }
+        // --- Categories ---
+        var categoryMapping: [UUID: Category] = [:]
+        let categoryReq: NSFetchRequest<Category> = Category.fetchRequest()
+        categoryReq.predicate = NSPredicate(format: "householdKey == nil")
+        categoryReq.affectedStores = [persistence.privateStore]
+        let oldCategories = (try? viewContext.fetch(categoryReq)) ?? []
+        for old in oldCategories {
+            let new = Category(context: viewContext)
+            new.id = UUID()
+            new.name = old.name
+            new.sortOrder = old.sortOrder
+            new.color = old.color
+            new.isDefault = old.isDefault
+            new.dateCreated = old.dateCreated
+            new.normalizedName = old.normalizedName
+            new.updatedAt = old.updatedAt
+            new.household = household
+            new.householdKey = householdKey
+            if let oldId = old.id { categoryMapping[oldId] = new }
+            copiedCount += 1
+        }
+        if !oldCategories.isEmpty {
+            diag.debug("Copied \(oldCategories.count) Category(s) to household", category: .household)
         }
 
+        // --- IngredientTemplates ---
+        var templateMapping: [UUID: IngredientTemplate] = [:]
+        let templateReq: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        templateReq.predicate = NSPredicate(format: "householdKey == nil")
+        templateReq.affectedStores = [persistence.privateStore]
+        let oldTemplates = (try? viewContext.fetch(templateReq)) ?? []
+        for old in oldTemplates {
+            let new = IngredientTemplate(context: viewContext)
+            new.id = UUID()
+            new.name = old.name
+            new.canonicalName = old.canonicalName
+            new.usageCount = old.usageCount
+            new.dateCreated = old.dateCreated
+            new.updatedAt = old.updatedAt
+            new.isStaple = old.isStaple
+            new.household = household
+            new.householdKey = householdKey
+            // Re-link category to new copy
+            if let oldCat = old.categoryEntity, let oldCatId = oldCat.id,
+               let newCat = categoryMapping[oldCatId] {
+                new.categoryEntity = newCat
+            }
+            if let oldId = old.id { templateMapping[oldId] = new }
+            copiedCount += 1
+        }
+        if !oldTemplates.isEmpty {
+            diag.debug("Copied \(oldTemplates.count) IngredientTemplate(s) to household", category: .household)
+        }
+
+        // --- Recipes + Ingredients ---
+        var recipeMapping: [UUID: Recipe] = [:]
+        let recipeReq: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        recipeReq.predicate = NSPredicate(format: "householdKey == nil")
+        recipeReq.affectedStores = [persistence.privateStore]
+        let oldRecipes = (try? viewContext.fetch(recipeReq)) ?? []
+        for old in oldRecipes {
+            let new = Recipe(context: viewContext)
+            new.id = UUID()
+            new.title = old.title
+            new.instructions = old.instructions
+            new.servings = old.servings
+            new.cookTime = old.cookTime
+            new.prepTime = old.prepTime
+            new.sourceURL = old.sourceURL
+            new.tags = old.tags
+            new.dateCreated = old.dateCreated
+            new.isFavorite = old.isFavorite
+            new.usageCount = old.usageCount
+            new.household = household
+            new.householdKey = householdKey
+            if let oldId = old.id { recipeMapping[oldId] = new }
+            copiedCount += 1
+
+            // Copy child Ingredients
+            let ingredientSet = old.ingredients as? Set<Ingredient> ?? []
+            for oldIng in ingredientSet {
+                let newIng = Ingredient(context: viewContext)
+                newIng.id = UUID()
+                newIng.name = oldIng.name
+                newIng.displayText = oldIng.displayText
+                newIng.numericValue = oldIng.numericValue
+                newIng.standardUnit = oldIng.standardUnit
+                newIng.notes = oldIng.notes
+                newIng.sortOrder = oldIng.sortOrder
+                newIng.isParseable = oldIng.isParseable
+                newIng.parseConfidence = oldIng.parseConfidence
+                newIng.recipe = new
+                newIng.household = household
+                newIng.householdKey = householdKey
+                // Re-link template to new copy
+                if let oldTemplateId = oldIng.ingredientTemplate?.id,
+                   let newTemplate = templateMapping[oldTemplateId] {
+                    newIng.ingredientTemplate = newTemplate
+                }
+                copiedCount += 1
+            }
+        }
+        if !oldRecipes.isEmpty {
+            diag.debug("Copied \(oldRecipes.count) Recipe(s) to household", category: .household)
+        }
+
+        // --- WeeklyLists + GroceryListItems ---
+        let listReq: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
+        listReq.predicate = NSPredicate(format: "householdKey == nil")
+        listReq.affectedStores = [persistence.privateStore]
+        let oldLists = (try? viewContext.fetch(listReq)) ?? []
+        for old in oldLists {
+            let new = WeeklyList(context: viewContext)
+            new.id = UUID()
+            new.name = old.name
+            new.notes = old.notes
+            new.dateCreated = old.dateCreated
+            new.isCompleted = old.isCompleted
+            new.household = household
+            new.householdKey = householdKey
+            copiedCount += 1
+
+            // Copy child GroceryListItems
+            let itemSet = old.items as? Set<GroceryListItem> ?? []
+            for oldItem in itemSet {
+                let newItem = GroceryListItem(context: viewContext)
+                newItem.id = UUID()
+                newItem.name = oldItem.name
+                newItem.displayText = oldItem.displayText
+                newItem.numericValue = oldItem.numericValue
+                newItem.standardUnit = oldItem.standardUnit
+                newItem.sortOrder = oldItem.sortOrder
+                newItem.isCompleted = oldItem.isCompleted
+                newItem.isParseable = oldItem.isParseable
+                newItem.parseConfidence = oldItem.parseConfidence
+                newItem.weeklyList = new
+                newItem.household = household
+                newItem.householdKey = householdKey
+                // Re-link category to new copy
+                if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id,
+                   let newCat = categoryMapping[oldCatId] {
+                    newItem.categoryEntity = newCat
+                }
+                copiedCount += 1
+            }
+        }
+        if !oldLists.isEmpty {
+            diag.debug("Copied \(oldLists.count) WeeklyList(s) to household", category: .household)
+        }
+
+        // --- MealPlans + PlannedMeals ---
+        let planReq: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        planReq.predicate = NSPredicate(format: "householdKey == nil")
+        planReq.affectedStores = [persistence.privateStore]
+        let oldPlans = (try? viewContext.fetch(planReq)) ?? []
+        var mealPlanMapping: [UUID: MealPlan] = [:]
+        for old in oldPlans {
+            let new = MealPlan(context: viewContext)
+            new.id = UUID()
+            new.name = old.name
+            new.startDate = old.startDate
+            new.createdDate = old.createdDate
+            new.duration = old.duration
+            new.isActive = old.isActive
+            new.isCompleted = old.isCompleted
+            new.household = household
+            new.householdKey = householdKey
+            if let oldId = old.id { mealPlanMapping[oldId] = new }
+            copiedCount += 1
+        }
+        // Copy PlannedMeals (second pass to use mealPlanMapping + recipeMapping)
+        for old in oldPlans {
+            guard let oldId = old.id, let newPlan = mealPlanMapping[oldId] else { continue }
+            let oldMeals = old.plannedMeals as? Set<PlannedMeal> ?? []
+            for oldMeal in oldMeals {
+                let newMeal = PlannedMeal(context: viewContext)
+                newMeal.id = UUID()
+                newMeal.date = oldMeal.date
+                newMeal.mealType = oldMeal.mealType
+                newMeal.notes = oldMeal.notes
+                newMeal.isCompleted = oldMeal.isCompleted
+                newMeal.scaleFactor = oldMeal.scaleFactor
+                newMeal.servings = oldMeal.servings
+                newMeal.quickOption = oldMeal.quickOption
+                newMeal.slotKey = oldMeal.slotKey
+                newMeal.mealPlan = newPlan
+                newMeal.household = household
+                newMeal.householdKey = householdKey
+                // Re-link recipe to new copy
+                if let oldRecipeId = oldMeal.recipe?.id,
+                   let newRecipe = recipeMapping[oldRecipeId] {
+                    newMeal.recipe = newRecipe
+                }
+                copiedCount += 1
+            }
+        }
+        if !oldPlans.isEmpty {
+            diag.debug("Copied \(oldPlans.count) MealPlan(s) to household", category: .household)
+        }
+
+        // --- Delete originals (children first via cascade, but explicit for safety) ---
+        for old in oldCategories { viewContext.delete(old) }
+        for old in oldTemplates { viewContext.delete(old) }
+        for old in oldRecipes { viewContext.delete(old) }
+        for old in oldLists { viewContext.delete(old) }
+        for old in oldPlans { viewContext.delete(old) }
+
         try viewContext.save()
-        diag.info("Stamped \(stampedCount) total objects with householdKey \(householdKey)", category: .household)
+        diag.info("Copied \(copiedCount) total objects to household \(householdKey) (originals deleted)", category: .household)
     }
 
     // MARK: - M9.15: Create-Empty-Then-Copy Helpers (Legacy)
