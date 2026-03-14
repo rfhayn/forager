@@ -118,6 +118,27 @@ final class DefaultSeeder {
         #endif
     }
     
+    // MARK: - Restore Default Categories
+
+    /// M9.15.3: Reset the seeding flag so seedDefaultsIfNeeded will run again.
+    /// Used after clean household delete (which removes all categories) and
+    /// from Settings > Restore Default Categories.
+    static func resetSeedingForRestore() {
+        UserDefaults.standard.removeObject(forKey: defaultsSeedingKey)
+    }
+
+    /// M9.15.3: User-facing restore that re-creates any missing default categories.
+    /// Idempotent — existing categories are not duplicated (repository checks by name).
+    /// Returns the number of categories created.
+    @discardableResult
+    static func restoreDefaultCategories(in context: NSManagedObjectContext) throws -> Int {
+        let before = (try? context.count(for: Category.fetchRequest())) ?? 0
+        resetSeedingForRestore()
+        try seedDefaultsIfNeeded(in: context)
+        let after = (try? context.count(for: Category.fetchRequest())) ?? 0
+        return max(0, after - before)
+    }
+
     // MARK: - Uncategorized Safety Net
 
     /// M9.12: Ensure "Uncategorized" category exists in the personal store.

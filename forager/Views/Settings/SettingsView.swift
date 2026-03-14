@@ -113,6 +113,9 @@ struct SettingsView: View {
     
     // MARK: - M15.1: Data Management Section (relocated from tabs — ADR 011)
 
+    @State private var showingRestoreConfirmation = false
+    @State private var restoreResultMessage: String?
+
     private var dataManagementSection: some View {
         Section {
             NavigationLink {
@@ -124,6 +127,36 @@ struct SettingsView: View {
                 ManageCategoriesView(popToRoot: .constant(false))
             } label: {
                 Label("Categories", systemImage: "folder.badge.gearshape")
+            }
+            Button {
+                showingRestoreConfirmation = true
+            } label: {
+                Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
+            }
+            .confirmationDialog("Restore Default Categories?",
+                                isPresented: $showingRestoreConfirmation,
+                                titleVisibility: .visible) {
+                Button("Restore") {
+                    do {
+                        let created = try DefaultSeeder.restoreDefaultCategories(in: viewContext)
+                        restoreResultMessage = created > 0
+                            ? "Restored \(created) missing categories."
+                            : "All default categories already exist."
+                    } catch {
+                        restoreResultMessage = "Failed to restore: \(error.localizedDescription)"
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will re-create any missing default categories (Produce, Pantry, Dairy & Fridge, etc.). Existing categories won't be affected.")
+            }
+            .alert("Categories", isPresented: Binding(
+                get: { restoreResultMessage != nil },
+                set: { if !$0 { restoreResultMessage = nil } }
+            )) {
+                Button("OK") { restoreResultMessage = nil }
+            } message: {
+                Text(restoreResultMessage ?? "")
             }
         } header: {
             Text("Data")

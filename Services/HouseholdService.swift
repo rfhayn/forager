@@ -663,6 +663,13 @@ class HouseholdService: ObservableObject {
             // Clean delete: remove all data with this householdKey from private store
             let deletedCount = deleteHouseholdLinkedData(householdKey: householdKey)
             CloudKitLogger.debug("Deleted \(deletedCount) household-linked objects (clean delete)")
+
+            // M9.15.3: Restore default categories after clean delete
+            // copyPersonalDataToHousehold moved all personal categories into the household,
+            // so a clean delete leaves zero categories. Re-seed so the user has defaults.
+            try DefaultSeeder.ensureUncategorizedExists(in: viewContext)
+            DefaultSeeder.resetSeedingForRestore()
+            try DefaultSeeder.seedDefaultsIfNeeded(in: viewContext)
         }
 
         // Step 2: Delete CKShare from private database (revokes all participants' access)
