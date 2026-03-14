@@ -66,6 +66,9 @@ struct foragerApp: App {
     @StateObject private var ingredientTemplateService: IngredientTemplateService
     @StateObject private var ingredientParsingService: IngredientParsingService
 
+    // M9.16: Unified grocery list item creation service
+    @StateObject private var groceryListItemService: GroceryListItemService
+
     // M10.6.8: Shared ingredient matching service
     @StateObject private var ingredientMatchService: IngredientMatchService
 
@@ -104,6 +107,8 @@ struct foragerApp: App {
         _ingredientTemplateService = StateObject(wrappedValue: templateService)
         _ingredientParsingService = StateObject(wrappedValue: parsingService)
         _ingredientMatchService = StateObject(wrappedValue: IngredientMatchService(parsingService: parsingService, templateService: templateService))
+        let groceryItemSvc = GroceryListItemService(context: context, templateService: templateService, parsingService: parsingService)
+        _groceryListItemService = StateObject(wrappedValue: groceryItemSvc)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
 
@@ -143,6 +148,7 @@ struct foragerApp: App {
         weeklyList.configure(factory: factory)
         templateService.configure(factory: factory)
         MealPlanService.shared.configure(factory: factory)
+        MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
@@ -203,6 +209,7 @@ struct foragerApp: App {
                     .environmentObject(ingredientTemplateService)
                     .environmentObject(ingredientParsingService)
                     .environmentObject(ingredientMatchService)
+                    .environmentObject(groceryListItemService)
                     .environmentObject(importService)
                     .task {
                         // Reload household now that stores are loaded (isReady gate

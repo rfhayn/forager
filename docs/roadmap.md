@@ -1248,6 +1248,17 @@ Originally planned after M5, M6 was strategically deferred to execute after M7 c
 
 ---
 
+### **✅ M9.16: Unified GroceryListItemService — COMPLETE (~4h)**
+
+**Status**: ✅ COMPLETE (March 14, 2026)
+**Actual Time**: ~4 hours (1 session)
+**Branch**: `feature/M9.16-grocery-list-item-service`
+**PRD**: [M9.16 PRD](prds/active/m9.16-grocery-list-item-service.md)
+
+Consolidated 6 independent GroceryListItem creation paths into `GroceryListItemService` with consistent template resolution, cross-store category assignment, merge logic, and householdKey inheritance. Built `MealPlanIngredientSelectionView` recipe-by-recipe wizard for meal plan → grocery list flow. Migrated MealPlanDetailView.performBulkAdd (zero categories) and MealPlanService.generateGroceryList (inline category resolution). 3 working paths pragmatically left as-is.
+
+---
+
 ### **✅ M9.13: ManagedObjectFactory Enforcement — COMPLETE (~3h)**
 
 **Status**: ✅ COMPLETE (March 11, 2026)

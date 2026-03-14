@@ -1,11 +1,11 @@
 # Forager - Project Index
 
-**Last Updated**: March 11, 2026
+**Last Updated**: March 14, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M16 🔄 **ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 **ACTIVE** (M10.6.5 docs remaining) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
+**Current Milestone**: M9.16 ✅ **COMPLETE** | M16 🔄 **ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 **ACTIVE** (M10.6.5 docs remaining) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
 **Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration (near complete, M10.6.5 docs remaining)
-**Next Priority**: M10.6.5 (docs) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
-**Execution Order**: M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Next Priority**: M9.15.3 → M10.6.5 → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Execution Order**: M9.15.3 → M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
 
 ---
 
@@ -50,6 +50,14 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **March 14, 2026** - M9.16 ✅ COMPLETE — Unified GroceryListItemService & Ingredient Selection
+- **New**: `GroceryListItemService` — unified pipeline consolidating 6 independent GroceryListItem creation paths
+- **New**: `MealPlanIngredientSelectionView` — recipe-by-recipe wizard for meal plan → grocery list flow
+- **Migrated**: MealPlanDetailView.performBulkAdd (had zero categories) + MealPlanService.generateGroceryList (inline resolution)
+- **Code review**: Fixed duplicate service instance, rollback hazard (skipSave), loading spinner rendering, sheet sequencing
+- **Build**: 0 warnings, 359/360 tests pass
+- **Branch**: `feature/M9.16-grocery-list-item-service`
 
 ### **March 11, 2026** - M9.13 ✅ COMPLETE — ManagedObjectFactory Enforcement & Hardening
 - **Fixed**: TestFlight crash from `viewContext.assign()` after leaving household

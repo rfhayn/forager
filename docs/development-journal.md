@@ -6,6 +6,51 @@
 
 ---
 
+## Session 84 — March 14, 2026
+**Milestone**: M9.16 — Unified GroceryListItemService & Meal Plan Ingredient Selection
+**Focus**: Consolidate 6 independent GroceryListItem creation paths into a single service; add ingredient selection UI for meal plan → grocery list flow
+**Branch**: feature/M9.16-grocery-list-item-service
+
+### What Happened
+
+After fixing the same "items show uncategorized" bug 4 times across different code paths in M9.15.3, the root cause became clear: 6 independent GroceryListItem creation paths with inconsistent category resolution, template handling, cross-store safety, and merge logic. Created `GroceryListItemService` as a unified pipeline that all paths can call.
+
+Built the service with: clean name extraction, template resolution via `findOrCreateTemplate`, cross-store safe category resolution (extracted from AddIngredientsToListView's proven pattern), merge with existing items via `GroceryMergeService`, scaling support, and `householdKey` inheritance. Three entry points: `addItem()` for single items, `addIngredients()` for batch recipe ingredients, and `addStaples()` for staple templates.
+
+Migrated the two most broken paths:
+- **MealPlanDetailView.performBulkAdd** — had zero category assignment, zero merge logic. Now uses `addIngredients()` for full pipeline. Deleted ~50 lines of inline creation + 30 lines of helper methods.
+- **MealPlanService.generateGroceryList** — had its own 70-line inline category resolution (added in M9.15.3). Now delegates to the service with a fallback for unmigrated state.
+
+Built `MealPlanIngredientSelectionView` — a recipe-by-recipe wizard that shows ingredients with checkboxes before adding to a grocery list. Users can deselect items they already have, adjust servings per recipe, and use "Add All Remaining" to skip the wizard for remaining recipes.
+
+Deliberately did NOT migrate three paths: WeeklyListsView staples generation (uses `performScopedWrite` background context — service is MainActor/viewContext), AddListItemView/GroceryListDetailView (already working correctly with user-selected categories), and AddIngredientsToListView (already has full pipeline, most complex — risky to migrate with no bug).
+
+### Key Decisions
+
+- **Don't migrate working paths unnecessarily**: The plan called for migrating all 6 paths, but 3 of them already work correctly. The value of M9.16 is fixing the broken paths (MealPlanDetailView, MealPlanService), not touching working code for architectural purity. Pragmatism > symmetry.
+
+- **Background context paths stay inline**: `WeeklyListsView.generateListFromStaples` uses `performScopedWrite` which creates a background context. The service is `@MainActor` with `viewContext`. Rather than making the service context-agnostic (complex, risky), kept the inline creation for this path — it's correct and simple.
+
+- **Option A (Recipe-by-Recipe Wizard)**: Chose the simplest ingredient selection UX. Each recipe gets its own screen with checkboxes. "Add All Remaining" escape hatch prevents tedium for users with many recipes. Can upgrade to consolidated view in a follow-up if feedback warrants.
+
+- **`skipSave` parameter for batch performance**: Single-item `addItem()` saves immediately, but `addIngredients()` passes `skipSave: true` and does one batch save at the end. This avoids N saves for N ingredients.
+
+### Learning
+
+- **Service injection into singletons**: `MealPlanService` is a singleton with `private init()`. Can't take `GroceryListItemService` as a constructor parameter. Used the same `configure()` pattern already established for `ManagedObjectFactory` injection — called from `foragerApp.init()`.
+
+- **Cross-store category resolution is the #1 source of bugs**: Every time a new creation path is added without the `persistentStore` comparison + name-based fallback, categories break in household mode. Making this a service method means it's impossible to forget.
+
+### AI Tooling Observations
+
+The plan provided a complete PRD and step-by-step implementation guide. The exploration agent efficiently analyzed all 6 creation paths in parallel, saving significant context-reading time. Having the exact code snippets from each path made it easy to identify which paths were broken vs. working, leading to the pragmatic decision to only migrate the broken ones.
+
+### What's Next
+
+All 7 core docs updated. PR created and merged to main. Next: M9.15.3 returning user detection (on-device testing), then M10.6.5 docs.
+
+---
+
 ## Session 83 — March 14, 2026
 **Milestone**: M9.15.3 — Migration & Category Assignment Fixes
 **Focus**: Fix ALL shopping list items showing as "Uncategorized" after household create/delete cycles (build 40+)

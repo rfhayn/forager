@@ -1,12 +1,30 @@
 # Current Development Story
 
-**Last Updated**: March 13, 2026
-**Status**: **M9.15.3 🔄 ACTIVE** | **M9.15 P1+P2 ✅ COMPLETE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
-**Total Progress**: ~270 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.15.3-returning-user-detection`
-**Current Milestone**: M9.15.3 🔄 ACTIVE — Returning User Detection
+**Last Updated**: March 14, 2026
+**Status**: **M9.16 ✅ COMPLETE** | **M9.15.3 🔄 ACTIVE** | **M9.15 P1+P2 ✅ COMPLETE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
+**Total Progress**: ~274 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.16-grocery-list-item-service`
+**Current Milestone**: M9.16 ✅ COMPLETE — Unified GroceryListItemService
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
 **Next Priority**: M9.15.3 → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
+
+---
+
+## ✅ **M9.16: UNIFIED GROCERYLISTITEMSERVICE - COMPLETE**
+
+**Status**: ✅ COMPLETE (March 14, 2026)
+**Actual**: ~4 hours
+**PRD**: `docs/prds/active/m9.16-grocery-list-item-service.md`
+**Branch**: `feature/M9.16-grocery-list-item-service`
+
+Consolidated 6 independent GroceryListItem creation paths into a single `GroceryListItemService` with consistent template resolution, category assignment, cross-store safety, and merge logic. Built `MealPlanIngredientSelectionView` — a recipe-by-recipe wizard for meal plan → grocery list flow with ingredient selection, servings adjustment, and "Add All Remaining" escape hatch.
+
+### What was delivered
+- **GroceryListItemService** — unified pipeline: clean name → template → category (cross-store safe) → scale → merge → create
+- **MealPlanIngredientSelectionView** — recipe-by-recipe ingredient selection wizard
+- **Migrated 2 broken paths**: MealPlanDetailView.performBulkAdd (had zero categories), MealPlanService.generateGroceryList (had inline category resolution)
+- **Pragmatic scope**: 3 working paths left as-is (WeeklyListsView uses background context; AddListItemView/AddIngredientsToListView already correct)
+- 0 build warnings, 359/360 tests pass (1 pre-existing)
 
 ---
 
