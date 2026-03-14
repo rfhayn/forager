@@ -881,6 +881,24 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ---
 
+## ✅ **M9.16: UNIFIED GROCERYLISTITEMSERVICE - COMPLETE**
+
+**Status**: ✅ Complete - March 14, 2026 (~4 hours)
+**Summary**: Consolidate 6 independent GroceryListItem creation paths into unified service; add ingredient selection UI for meal plan → grocery list flow
+
+| ID | Requirement | Implementation | Milestone | Value |
+|----|-------------|----------------|-----------|-------|
+| **FR-GIS-001** | **Unified GroceryListItem creation pipeline** | ✅ `GroceryListItemService` with `addItem()`, `addIngredients()`, `addStaples()` | M9.16 | 🎯 **Consistency** |
+| **FR-GIS-002** | **Cross-store safe category resolution** | ✅ `resolveCategory()` compares `persistentStore`, falls back to name-based lookup | M9.16 | 🎯 **Store correctness** |
+| **FR-GIS-003** | **Merge with existing list items** | ✅ Normalized name matching + `GroceryMergeService` integration in unified pipeline | M9.16 | 🎯 **Deduplication** |
+| **FR-GIS-004** | **Meal plan ingredient selection wizard** | ✅ `MealPlanIngredientSelectionView` — recipe-by-recipe with checkboxes, servings stepper, "Add All Remaining" | M9.16 | 🎯 **User control** |
+| **FR-GIS-005** | **MealPlanDetailView category fix** | ✅ `performBulkAdd` migrated from inline creation (zero categories) to `addIngredients()` | M9.16 | 🎯 **Bug fix** |
+| **FR-GIS-006** | **MealPlanService category fix** | ✅ `generateGroceryList` migrated from 70-line inline resolution to `addIngredients(skipSave: true)` | M9.16 | 🎯 **Bug fix** |
+
+**M9.16 Summary (COMPLETE)**: 6 requirements. Unified 6 creation paths (migrated 2 broken, 3 working left as-is, 1 background-context path incompatible). Built ingredient selection wizard. 0 build warnings.
+
+---
+
 ## 📊 **REQUIREMENTS SUMMARY**
 
 ### **By Status**

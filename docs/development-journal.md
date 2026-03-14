@@ -47,7 +47,7 @@ The plan provided a complete PRD and step-by-step implementation guide. The expl
 
 ### What's Next
 
-Commit and push. Code review. Then manual testing: create a meal plan with multiple recipes, use ingredient selection wizard, verify categories appear on grocery list. If all good, update docs and prepare for PR.
+All 7 core docs updated. PR created and merged to main. Next: M9.15.3 returning user detection (on-device testing), then M10.6.5 docs.
 
 ---
 
