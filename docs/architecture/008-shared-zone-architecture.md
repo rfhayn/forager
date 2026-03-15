@@ -17,6 +17,8 @@
 
 **Decision**: Implement CloudKit **Shared Zone** architecture for household collaboration, not CKShare individual item sharing.
 
+**Prior Architecture (M1-M6)**: Forager was entirely local — single-store Core Data (`forager.sqlite`) with no CloudKit, no sync, no household concept. All entities were personal-only. M7 introduced `NSPersistentCloudKitContainer`, the dual-store architecture (private + shared), the Household entity, and `householdKey` scoping on all data entities.
+
 **Rationale**: Users want a shared household database where all data (recipes, lists, meal plans, ingredients, categories) automatically syncs between household members. This is fundamentally different from selectively sharing individual items.
 
 **Impact**: 
