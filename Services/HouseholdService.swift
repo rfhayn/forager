@@ -2488,8 +2488,18 @@ class HouseholdService: ObservableObject {
             #endif
             return isParticipant
         } catch HouseholdError.noShareRecord {
-            // M7.3.3: noShareRecord means the share is gone — user was likely removed
-            // Don't assume participant just because data is in shared store
+            // noShareRecord can mean two things:
+            // 1. User was removed from the share (genuine ghost)
+            // 2. Household was just created and CloudKit hasn't migrated it
+            //    to the shared zone yet (false negative — still in private store)
+            // Check which store the household is in to distinguish the cases.
+            let privateStore = PersistenceController.shared.privateStore
+            if household.objectID.persistentStore == privateStore {
+                #if DEBUG
+                print("⚠️ noShareRecord but household is in private store — assuming owner (CloudKit migration pending)")
+                #endif
+                return true
+            }
             #if DEBUG
             print("⚠️ Could not check participant status: noShareRecord")
             print("   Share not found — user was likely removed")
