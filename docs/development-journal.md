@@ -6,6 +6,29 @@
 
 ---
 
+## Session 86 — March 15, 2026
+**Milestone**: M9.20 — Copy data to shared store for household member visibility
+**Focus**: Fix household member not seeing any data after joining
+**Branch**: bugfix/M9.20-copy-to-shared-store
+
+### What Happened
+
+Wife joined the household successfully (CKShare shows 2 participants, IS member) but saw no data. Diagnostic logs revealed the root cause: all copied data was in `forager.sqlite` (private store → private CloudKit zone), invisible to household members who only see `forager_shared.sqlite` (shared store → shared CloudKit zone).
+
+The M9.15.3 stamp-in-place approach was fundamentally wrong: it assumed CloudKit would "migrate" private-zone records to the shared zone after setting `householdKey`. But CloudKit zone assignment is determined by which *persistent store* the object is in locally — not by any attribute value. `householdKey` is a Core Data attribute that CloudKit doesn't interpret.
+
+Fix: Added `viewContext.assign(entity, to: sharedStore)` for every copied entity in `copyPersonalDataToHousehold()`. After `container.share()`, the shared zone exists, so objects assigned to the shared store export to the shared CloudKit zone where household members can see them.
+
+### Key Decisions
+
+- **Explicit store assignment over factory**: Used `viewContext.assign()` directly rather than going back to `ManagedObjectFactory` (which requires the Household to be discoverable in the shared store first). Simpler, no timing dependency.
+
+### Learning
+
+- **Zone assignment = store assignment**: An object's CloudKit zone is determined solely by which `NSPersistentStore` it's assigned to locally. `forager.sqlite` → private zone, `forager_shared.sqlite` → shared zone. No attribute, relationship, or API call changes this — only `context.assign(object, to: store)`.
+
+---
+
 ## Session 85 — March 14, 2026
 **Milestone**: M9.19 — Fix CloudKit data loss on reinstall (cross-store household relationship)
 **Focus**: Investigate and fix why household-scoped data disappears after app delete + reinstall

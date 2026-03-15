@@ -1611,12 +1611,11 @@ class HouseholdService: ObservableObject {
             viewContext.refreshAllObjects()
             try viewContext.save()
 
-            // 7. Wait for the shared store to be ready (CloudKit zone setup)
-            // 7. Stamp existing personal data with householdKey (if requested)
-            // M9.15.3: Don't wait for shared store — CloudKit migrates records
-            // from private→shared zone asynchronously (can take >60s). Instead,
-            // stamp householdKey on existing objects in the private store. CloudKit
-            // will move them to the shared zone when it's ready.
+            // 7. Copy personal data to shared store (if requested)
+            // M9.20: Objects MUST be in the shared store (forager_shared.sqlite) to
+            // be visible to household members. Entity(context:) defaults to the private
+            // store → private CloudKit zone (invisible to members). After container.share()
+            // the shared zone exists, so we can assign copies directly to the shared store.
             if moveExistingData {
                 diag.info("Step 7: Copying personal data to household", category: .household)
                 creationStatus = "Linking your data to household…"
@@ -1676,11 +1675,20 @@ class HouseholdService: ObservableObject {
         }
 
         let persistence = PersistenceController.shared
+        let sharedStore = persistence.sharedStore
         var copiedCount = 0
 
         // M9.19: Log store identity — household should be in shared store after container.share()
         let householdStore = household.objectID.persistentStore?.url?.lastPathComponent ?? "unknown"
-        diag.info("copyPersonalData: household store=\(householdStore), householdKey=\(householdKey)", category: .household)
+        diag.info("copyPersonalData: household store=\(householdStore), target=\(sharedStore.url?.lastPathComponent ?? "?"), householdKey=\(householdKey)", category: .household)
+
+        // M9.20: Helper to assign each new entity to the shared store.
+        // Entity(context:) defaults to the private store. Objects in forager.sqlite
+        // export to the private CloudKit zone (invisible to household members).
+        // Objects must be in forager_shared.sqlite → shared CloudKit zone to be visible.
+        func assignToShared(_ object: NSManagedObject) {
+            viewContext.assign(object, to: sharedStore)
+        }
 
         // --- Categories ---
         var categoryMapping: [UUID: Category] = [:]
@@ -1690,6 +1698,7 @@ class HouseholdService: ObservableObject {
         let oldCategories = (try? viewContext.fetch(categoryReq)) ?? []
         for old in oldCategories {
             let new = Category(context: viewContext)
+            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.sortOrder = old.sortOrder
@@ -1698,10 +1707,7 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.normalizedName = old.normalizedName
             new.updatedAt = old.updatedAt
-            // M9.19: Do NOT set new.household = household — household is in the
-            // shared store after container.share(), creating a cross-store relationship
-            // that prevents CloudKit mirroring delegate from exporting these records.
-            // householdKey (String) is sufficient for all fetch predicates (ADR 013).
+            // M9.19: householdKey only — no cross-store household relationship
             new.householdKey = householdKey
             if let oldId = old.id { categoryMapping[oldId] = new }
             copiedCount += 1
@@ -1718,6 +1724,7 @@ class HouseholdService: ObservableObject {
         let oldTemplates = (try? viewContext.fetch(templateReq)) ?? []
         for old in oldTemplates {
             let new = IngredientTemplate(context: viewContext)
+            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.canonicalName = old.canonicalName
@@ -1747,6 +1754,7 @@ class HouseholdService: ObservableObject {
         let oldRecipes = (try? viewContext.fetch(recipeReq)) ?? []
         for old in oldRecipes {
             let new = Recipe(context: viewContext)
+            assignToShared(new)
             new.id = UUID()
             new.title = old.title
             new.instructions = old.instructions
@@ -1767,6 +1775,7 @@ class HouseholdService: ObservableObject {
             let ingredientSet = old.ingredients as? Set<Ingredient> ?? []
             for oldIng in ingredientSet {
                 let newIng = Ingredient(context: viewContext)
+                assignToShared(newIng)
                 newIng.id = UUID()
                 newIng.name = oldIng.name
                 newIng.displayText = oldIng.displayText
@@ -1798,6 +1807,7 @@ class HouseholdService: ObservableObject {
         let oldLists = (try? viewContext.fetch(listReq)) ?? []
         for old in oldLists {
             let new = WeeklyList(context: viewContext)
+            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.notes = old.notes
@@ -1811,6 +1821,7 @@ class HouseholdService: ObservableObject {
             let itemSet = old.items as? Set<GroceryListItem> ?? []
             for oldItem in itemSet {
                 let newItem = GroceryListItem(context: viewContext)
+                assignToShared(newItem)
                 newItem.id = UUID()
                 newItem.name = oldItem.name
                 newItem.displayText = oldItem.displayText
@@ -1848,6 +1859,7 @@ class HouseholdService: ObservableObject {
         var mealPlanMapping: [UUID: MealPlan] = [:]
         for old in oldPlans {
             let new = MealPlan(context: viewContext)
+            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.startDate = old.startDate
@@ -1866,6 +1878,7 @@ class HouseholdService: ObservableObject {
             let oldMeals = old.plannedMeals as? Set<PlannedMeal> ?? []
             for oldMeal in oldMeals {
                 let newMeal = PlannedMeal(context: viewContext)
+                assignToShared(newMeal)
                 newMeal.id = UUID()
                 newMeal.date = oldMeal.date
                 newMeal.mealType = oldMeal.mealType
