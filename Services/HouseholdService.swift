@@ -1678,6 +1678,10 @@ class HouseholdService: ObservableObject {
         let persistence = PersistenceController.shared
         var copiedCount = 0
 
+        // M9.19: Log store identity — household should be in shared store after container.share()
+        let householdStore = household.objectID.persistentStore?.url?.lastPathComponent ?? "unknown"
+        diag.info("copyPersonalData: household store=\(householdStore), householdKey=\(householdKey)", category: .household)
+
         // --- Categories ---
         var categoryMapping: [UUID: Category] = [:]
         let categoryReq: NSFetchRequest<Category> = Category.fetchRequest()
@@ -1694,7 +1698,10 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.normalizedName = old.normalizedName
             new.updatedAt = old.updatedAt
-            new.household = household
+            // M9.19: Do NOT set new.household = household — household is in the
+            // shared store after container.share(), creating a cross-store relationship
+            // that prevents CloudKit mirroring delegate from exporting these records.
+            // householdKey (String) is sufficient for all fetch predicates (ADR 013).
             new.householdKey = householdKey
             if let oldId = old.id { categoryMapping[oldId] = new }
             copiedCount += 1
@@ -1718,7 +1725,7 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.updatedAt = old.updatedAt
             new.isStaple = old.isStaple
-            new.household = household
+            // M9.19: householdKey only — no cross-store household relationship
             new.householdKey = householdKey
             // Re-link category to new copy
             if let oldCat = old.categoryEntity, let oldCatId = oldCat.id,
@@ -1751,7 +1758,7 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.isFavorite = old.isFavorite
             new.usageCount = old.usageCount
-            new.household = household
+            // M9.19: householdKey only — no cross-store household relationship
             new.householdKey = householdKey
             if let oldId = old.id { recipeMapping[oldId] = new }
             copiedCount += 1
@@ -1770,7 +1777,7 @@ class HouseholdService: ObservableObject {
                 newIng.isParseable = oldIng.isParseable
                 newIng.parseConfidence = oldIng.parseConfidence
                 newIng.recipe = new
-                newIng.household = household
+                // M9.19: householdKey only — no cross-store household relationship
                 newIng.householdKey = householdKey
                 // Re-link template to new copy
                 if let oldTemplateId = oldIng.ingredientTemplate?.id,
@@ -1796,7 +1803,7 @@ class HouseholdService: ObservableObject {
             new.notes = old.notes
             new.dateCreated = old.dateCreated
             new.isCompleted = old.isCompleted
-            new.household = household
+            // M9.19: householdKey only — no cross-store household relationship
             new.householdKey = householdKey
             copiedCount += 1
 
@@ -1814,7 +1821,7 @@ class HouseholdService: ObservableObject {
                 newItem.isParseable = oldItem.isParseable
                 newItem.parseConfidence = oldItem.parseConfidence
                 newItem.weeklyList = new
-                newItem.household = household
+                // M9.19: householdKey only — no cross-store household relationship
                 newItem.householdKey = householdKey
                 // Re-link category to new copy
                 if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id {
@@ -1848,7 +1855,7 @@ class HouseholdService: ObservableObject {
             new.duration = old.duration
             new.isActive = old.isActive
             new.isCompleted = old.isCompleted
-            new.household = household
+            // M9.19: householdKey only — no cross-store household relationship
             new.householdKey = householdKey
             if let oldId = old.id { mealPlanMapping[oldId] = new }
             copiedCount += 1
@@ -1869,7 +1876,7 @@ class HouseholdService: ObservableObject {
                 newMeal.quickOption = oldMeal.quickOption
                 newMeal.slotKey = oldMeal.slotKey
                 newMeal.mealPlan = newPlan
-                newMeal.household = household
+                // M9.19: householdKey only — no cross-store household relationship
                 newMeal.householdKey = householdKey
                 // Re-link recipe to new copy
                 if let oldRecipeId = oldMeal.recipe?.id,
