@@ -49,9 +49,24 @@ This worked through M7 because the views that crash (`AddIngredientsToListView`,
 ```swift
 let ingredient = Ingredient(context: viewContext)
 ingredient.recipe = recipe
-ingredient.household = recipe.household
+ingredient.household = recipe.household      // ✅ Safe — parent is in same store
 ingredient.householdKey = recipe.householdKey
 ```
+
+> **⚠️ M9.19 CRITICAL — Cross-Store Relationship Rule**: The `household` relationship
+> is safe in the child pattern above ONLY because `recipe.household` is guaranteed to be
+> in the same store as the recipe (and therefore the ingredient). **NEVER set
+> `entity.household = household` when the Household object may be in a different store
+> than the entity being created.**
+>
+> After `container.share()`, the Household moves to the **shared store**. Any
+> private-store entity with a `household` relationship to it creates a cross-store link
+> that the CloudKit mirroring delegate **silently refuses to export** — data saves locally
+> but never uploads to CloudKit, causing permanent data loss on reinstall.
+>
+> **Rule**: When creating entities where the Household's store is uncertain (e.g., during
+> `copyPersonalDataToHousehold`), use `householdKey` (String) only. The `household`
+> relationship is redundant — all fetch predicates use `householdKey` per ADR 013.
 
 ## Non-HouseholdScoped Entities (Safe for Direct Creation)
 - `Household`, `HouseholdMember` — manage their own store placement

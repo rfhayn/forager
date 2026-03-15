@@ -2,8 +2,8 @@
 
 **Document Type**: Architecture Decision & Technical Framework
 **Created**: December 21, 2025
-**Last Updated**: March 13, 2026
-**Status**: ✅ IMPLEMENTED - M9.15 Updated (create-empty-then-copy pattern)
+**Last Updated**: March 14, 2026
+**Status**: ✅ IMPLEMENTED - M9.19 Updated (cross-store relationship fix + stamp-in-place pattern)
 **Related Learning Notes**:
 - [25-m7-architecture-pivot-ckshare-vs-shared-zone.md](../learning-notes/25-m7-architecture-pivot-ckshare-vs-shared-zone.md)
 - [26-m7.2.2-public-link-sharing.md](../learning-notes/26-m7.2.2-public-link-sharing.md)
@@ -427,6 +427,39 @@ try copyPersonalDataToSharedStore(household: household)
 **Why this works**: Step 2 shares only the Household entity (no relationships = no graph
 to walk). Step 4 creates brand new objects with fresh CKRecords in the shared zone.
 The old private-zone CKRecords are deleted in step 5.
+
+> **⚠️ M9.19 CRITICAL**: After step 2, the Household is in the **shared store**.
+> Copied entities (step 4) are in the **private store**. Setting `new.household = household`
+> on copies creates a **cross-store Core Data relationship** that the CloudKit mirroring
+> delegate **silently refuses to export**. Data saves locally but never uploads to CloudKit —
+> permanently lost on reinstall. Copies must use `householdKey` (String) only, NEVER the
+> `household` relationship. See M9.15.3 stamp-in-place variant below.
+
+#### M9.15.3 Variant: Stamp-In-Place (Current Production Pattern)
+
+The M9.15 create-empty-then-copy pattern was simplified in M9.15.3. Instead of waiting
+for the shared store and copying via ManagedObjectFactory (which had timing issues with
+CloudKit's >60s zone migration), the current approach stamps existing private-store objects
+with `householdKey` directly. CloudKit's mirroring delegate handles zone migration
+asynchronously:
+
+```swift
+// After steps 1-3 (create + share + save):
+// 4. Stamp personal data with householdKey (NO household relationship!)
+for entity in personalEntities {
+    entity.householdKey = householdKey  // ✅ String — store-independent
+    // entity.household = household     // ❌ FORBIDDEN — cross-store relationship
+}
+try viewContext.save()
+// CloudKit mirroring delegate exports records; zone migration happens server-side
+```
+
+**Why `householdKey` over `household` relationship**: (1) String attributes are
+store-independent — no cross-store risk. (2) All fetch predicates use `householdKey`
+per ADR 013 — the relationship is redundant for queries. (3) Not all creation paths
+set the relationship (`IngredientTemplateService.findOrCreateTemplate` only sets
+`householdKey`). (4) The relationship creates a cross-store link when Household migrates
+stores after `container.share()`.
 
 ### Key Components Built
 
