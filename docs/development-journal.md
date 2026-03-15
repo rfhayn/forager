@@ -6,6 +6,39 @@
 
 ---
 
+## Session 85 — March 14, 2026
+**Milestone**: M9.19 — Fix CloudKit data loss on reinstall (cross-store household relationship)
+**Focus**: Investigate and fix why household-scoped data disappears after app delete + reinstall
+**Branch**: bugfix/M9.19-cross-store-household-rel
+
+### What Happened
+
+User reported that after deleting and reinstalling the app, the Household entity came back from CloudKit but ALL associated data (recipes, templates, categories, lists) was permanently gone — 28 copied objects lost. Force-quit worked fine, confirming data was saved locally.
+
+Root cause: `copyPersonalDataToHousehold()` sets `new.household = household` on every copied entity. But by this point in the `createHouseholdAndShare()` flow, `container.share([household])` has already moved the Household to the **shared store**. So every `new.household = household` creates a **cross-store Core Data relationship** (private-store copy → shared-store Household). NSPersistentCloudKitContainer's mirroring delegate silently fails to export records with cross-store relationships — they're saved locally but never uploaded to CloudKit. After reinstall, they never come back.
+
+Fix: Removed all 10 `new.household = household` assignments in `copyPersonalDataToHousehold()`. The `householdKey` string attribute is sufficient — all fetch predicates already use `householdKey` per ADR 013. Added diagnostic logging to track store identity during copy.
+
+### Key Decisions
+
+- **Remove relationship entirely, don't nil-then-set**: Could have set `household = nil` after save, but simpler to never set it. `householdKey` (String) is the canonical scoping mechanism. The `household` relationship on copied objects is redundant.
+
+### Learning
+
+- **`container.share()` moves objects immediately on save**: After calling `container.share([household])` + `save()`, the Household is in the shared store. Any subsequent `Entity(context: viewContext)` with a relationship to it creates a cross-store link. The debug log even says "Should show Shared Store after share" — the bug was hiding in plain sight.
+
+- **Cross-store relationships fail silently**: No crash, no error, no warning. Records just never export to CloudKit. The only symptom is data loss after reinstall — the hardest kind of bug to reproduce and diagnose.
+
+### AI Tooling Observations
+
+This bug required tracing through a multi-step async flow (create → share → save → copy) and understanding NSPersistentCloudKitContainer internals. The previous sessions had already narrowed it from "data loss" → "ghost detection" → "data never uploaded" — this session identified the exact line of code causing the export failure.
+
+### What's Next
+
+Ship build 50 to TestFlight for the user to verify data survives delete + reinstall.
+
+---
+
 ## Session 84 — March 14, 2026
 **Milestone**: M9.16 — Unified GroceryListItemService & Meal Plan Ingredient Selection
 **Focus**: Consolidate 6 independent GroceryListItem creation paths into a single service; add ingredient selection UI for meal plan → grocery list flow
