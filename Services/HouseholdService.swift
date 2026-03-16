@@ -1611,11 +1611,11 @@ class HouseholdService: ObservableObject {
             viewContext.refreshAllObjects()
             try viewContext.save()
 
-            // 7. Copy personal data to shared store (if requested)
-            // M9.20: Objects MUST be in the shared store (forager_shared.sqlite) to
-            // be visible to household members. Entity(context:) defaults to the private
-            // store → private CloudKit zone (invisible to members). After container.share()
-            // the shared zone exists, so we can assign copies directly to the shared store.
+            // 7. Copy personal data with household relationship (if requested)
+            // M9.21: Copies stay in the private store (default). On the owner's phone,
+            // the shared store is for OTHER users' data, not the owner's. The mirroring
+            // delegate uses Core Data relationships to determine CloudKit zone assignment.
+            // Setting new.household = household places copies in the same shared zone.
             if moveExistingData {
                 diag.info("Step 7: Copying personal data to household", category: .household)
                 creationStatus = "Linking your data to household…"
@@ -1675,20 +1675,19 @@ class HouseholdService: ObservableObject {
         }
 
         let persistence = PersistenceController.shared
-        let sharedStore = persistence.sharedStore
         var copiedCount = 0
 
-        // M9.19: Log store identity — household should be in shared store after container.share()
+        // M9.21: Log store identity for diagnostics
         let householdStore = household.objectID.persistentStore?.url?.lastPathComponent ?? "unknown"
-        diag.info("copyPersonalData: household store=\(householdStore), target=\(sharedStore.url?.lastPathComponent ?? "?"), householdKey=\(householdKey)", category: .household)
+        diag.info("copyPersonalData: household store=\(householdStore), householdKey=\(householdKey)", category: .household)
 
-        // M9.20: Helper to assign each new entity to the shared store.
-        // Entity(context:) defaults to the private store. Objects in forager.sqlite
-        // export to the private CloudKit zone (invisible to household members).
-        // Objects must be in forager_shared.sqlite → shared CloudKit zone to be visible.
-        func assignToShared(_ object: NSManagedObject) {
-            viewContext.assign(object, to: sharedStore)
-        }
+        // M9.21: Copies stay in the PRIVATE store (default for Entity(context:)).
+        // On the owner's phone, the shared store mirrors OTHER users' shares — not the owner's.
+        // The owner's shared zone lives in the private CloudKit database.
+        // The mirroring delegate uses Core Data RELATIONSHIPS (not string attributes) to
+        // determine zone assignment. Setting new.household = household tells the mirroring
+        // delegate to place each copy's CKRecord in the same shared zone as the household.
+        // This is safe because both household and copies are in the private store at copy time.
 
         // --- Categories ---
         var categoryMapping: [UUID: Category] = [:]
@@ -1698,7 +1697,6 @@ class HouseholdService: ObservableObject {
         let oldCategories = (try? viewContext.fetch(categoryReq)) ?? []
         for old in oldCategories {
             let new = Category(context: viewContext)
-            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.sortOrder = old.sortOrder
@@ -1707,7 +1705,8 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.normalizedName = old.normalizedName
             new.updatedAt = old.updatedAt
-            // M9.19: householdKey only — no cross-store household relationship
+            // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+            new.household = household
             new.householdKey = householdKey
             if let oldId = old.id { categoryMapping[oldId] = new }
             copiedCount += 1
@@ -1724,7 +1723,6 @@ class HouseholdService: ObservableObject {
         let oldTemplates = (try? viewContext.fetch(templateReq)) ?? []
         for old in oldTemplates {
             let new = IngredientTemplate(context: viewContext)
-            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.canonicalName = old.canonicalName
@@ -1732,7 +1730,8 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.updatedAt = old.updatedAt
             new.isStaple = old.isStaple
-            // M9.19: householdKey only — no cross-store household relationship
+            // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+            new.household = household
             new.householdKey = householdKey
             // Re-link category to new copy
             if let oldCat = old.categoryEntity, let oldCatId = oldCat.id,
@@ -1754,7 +1753,6 @@ class HouseholdService: ObservableObject {
         let oldRecipes = (try? viewContext.fetch(recipeReq)) ?? []
         for old in oldRecipes {
             let new = Recipe(context: viewContext)
-            assignToShared(new)
             new.id = UUID()
             new.title = old.title
             new.instructions = old.instructions
@@ -1766,7 +1764,8 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.isFavorite = old.isFavorite
             new.usageCount = old.usageCount
-            // M9.19: householdKey only — no cross-store household relationship
+            // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+            new.household = household
             new.householdKey = householdKey
             if let oldId = old.id { recipeMapping[oldId] = new }
             copiedCount += 1
@@ -1775,7 +1774,6 @@ class HouseholdService: ObservableObject {
             let ingredientSet = old.ingredients as? Set<Ingredient> ?? []
             for oldIng in ingredientSet {
                 let newIng = Ingredient(context: viewContext)
-                assignToShared(newIng)
                 newIng.id = UUID()
                 newIng.name = oldIng.name
                 newIng.displayText = oldIng.displayText
@@ -1786,7 +1784,8 @@ class HouseholdService: ObservableObject {
                 newIng.isParseable = oldIng.isParseable
                 newIng.parseConfidence = oldIng.parseConfidence
                 newIng.recipe = new
-                // M9.19: householdKey only — no cross-store household relationship
+                // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+                newIng.household = household
                 newIng.householdKey = householdKey
                 // Re-link template to new copy
                 if let oldTemplateId = oldIng.ingredientTemplate?.id,
@@ -1807,13 +1806,13 @@ class HouseholdService: ObservableObject {
         let oldLists = (try? viewContext.fetch(listReq)) ?? []
         for old in oldLists {
             let new = WeeklyList(context: viewContext)
-            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.notes = old.notes
             new.dateCreated = old.dateCreated
             new.isCompleted = old.isCompleted
-            // M9.19: householdKey only — no cross-store household relationship
+            // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+            new.household = household
             new.householdKey = householdKey
             copiedCount += 1
 
@@ -1821,7 +1820,6 @@ class HouseholdService: ObservableObject {
             let itemSet = old.items as? Set<GroceryListItem> ?? []
             for oldItem in itemSet {
                 let newItem = GroceryListItem(context: viewContext)
-                assignToShared(newItem)
                 newItem.id = UUID()
                 newItem.name = oldItem.name
                 newItem.displayText = oldItem.displayText
@@ -1832,7 +1830,8 @@ class HouseholdService: ObservableObject {
                 newItem.isParseable = oldItem.isParseable
                 newItem.parseConfidence = oldItem.parseConfidence
                 newItem.weeklyList = new
-                // M9.19: householdKey only — no cross-store household relationship
+                // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+                newItem.household = household
                 newItem.householdKey = householdKey
                 // Re-link category to new copy
                 if let oldCat = oldItem.categoryEntity, let oldCatId = oldCat.id {
@@ -1859,7 +1858,6 @@ class HouseholdService: ObservableObject {
         var mealPlanMapping: [UUID: MealPlan] = [:]
         for old in oldPlans {
             let new = MealPlan(context: viewContext)
-            assignToShared(new)
             new.id = UUID()
             new.name = old.name
             new.startDate = old.startDate
@@ -1867,7 +1865,8 @@ class HouseholdService: ObservableObject {
             new.duration = old.duration
             new.isActive = old.isActive
             new.isCompleted = old.isCompleted
-            // M9.19: householdKey only — no cross-store household relationship
+            // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+            new.household = household
             new.householdKey = householdKey
             if let oldId = old.id { mealPlanMapping[oldId] = new }
             copiedCount += 1
@@ -1878,7 +1877,6 @@ class HouseholdService: ObservableObject {
             let oldMeals = old.plannedMeals as? Set<PlannedMeal> ?? []
             for oldMeal in oldMeals {
                 let newMeal = PlannedMeal(context: viewContext)
-                assignToShared(newMeal)
                 newMeal.id = UUID()
                 newMeal.date = oldMeal.date
                 newMeal.mealType = oldMeal.mealType
@@ -1889,7 +1887,8 @@ class HouseholdService: ObservableObject {
                 newMeal.quickOption = oldMeal.quickOption
                 newMeal.slotKey = oldMeal.slotKey
                 newMeal.mealPlan = newPlan
-                // M9.19: householdKey only — no cross-store household relationship
+                // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
+                newMeal.household = household
                 newMeal.householdKey = householdKey
                 // Re-link recipe to new copy
                 if let oldRecipeId = oldMeal.recipe?.id,
