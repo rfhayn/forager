@@ -6,6 +6,42 @@
 
 ---
 
+## Session 87 — March 16, 2026
+**Milestone**: M9.21 — Fix CloudKit zone assignment via relationship instead of shared store
+**Focus**: Third attempt at making copied household data visible to members
+**Branch**: bugfix/M9.21-cloudkit-zone-assignment
+
+### What Happened
+
+Build 51 (M9.20) still didn't work. Even after a clean delete → reinstall → fresh household creation, the wife's phone showed the household (correct store, 2 participants) but zero data. The diagnostic logs confirmed the household was created fresh on build 51 with `copyPersonalDataToHousehold()` running and copying 195 objects — yet nothing reached the participant.
+
+The breakthrough came from understanding the **asymmetry of the dual-store model**: on the owner's phone, the shared store (`forager_shared.sqlite`) mirrors the shared CloudKit *database*, which is specifically for data shared **by other users with the owner**. The owner's own shared zones live in the private CloudKit database, mirrored by `forager.sqlite`. M9.20's `assignToShared()` was sending copies to a store that mirrors the wrong CloudKit database entirely.
+
+Meanwhile, M9.19's removal of `new.household = household` broke CloudKit zone routing. The mirroring delegate uses Core Data **relationships** (not string attributes) to determine which shared zone a new CKRecord belongs to. Without the relationship, copies went to the default private zone — not the shared zone created by `container.share()`. The `householdKey` string is invisible to CloudKit's zone assignment logic.
+
+Fix: Removed all `assignToShared()` calls (copies stay in private store, correct for owner). Restored `new.household = household` on all 10 entity types. At copy time (Step 7), both household and copies are in the private store — same store, no cross-store issue. The relationship tells the mirroring delegate to place copies in the household's shared zone.
+
+### Key Decisions
+
+- **Restore the relationship M9.19 removed**: The relationship is safe at copy time because both household and copies are in the same private store. The M9.19 cross-store concern was valid for a different scenario (household already migrated to shared store), but in the `createHouseholdAndShare` flow the household never moves to the shared store on the owner's phone.
+- **Keep householdKey alongside household relationship**: The string is still needed for fetch predicates (ADR 013). The relationship is for CloudKit zone routing. Different concerns, both required.
+
+### Learning
+
+- **The dual-store model is asymmetric**: Owner's shared store ≠ "where my shared data goes." It's "where data shared by others with me arrives." This is the fundamental misunderstanding that M9.20 was built on.
+- **CloudKit zone routing uses Core Data relationships, not attributes**: String attributes like `householdKey` are opaque data to the mirroring delegate. Only Core Data relationships create the graph that determines zone assignment.
+- **Three sessions (M9.19, M9.20, M9.21) to understand one concept**: Each fix was locally logical but globally wrong. M9.19 correctly identified cross-store relationships as dangerous, but removed a safe one. M9.20 correctly identified "wrong store" as the problem, but targeted the wrong store. M9.21 required understanding the full CloudKit ownership model to see both previous fixes were based on incomplete mental models.
+
+### AI Tooling Observations
+
+This session required Claude Code to reason through the NSPersistentCloudKitContainer ownership model — private vs shared database scoping, how the mirroring delegate determines zone assignment, and why `viewContext.assign()` to the shared store on the owner's phone is wrong. The analysis was built from reading 4 diagnostic logs across 2 devices, cross-referencing with the copy code and Apple's CloudKit container architecture. The key insight emerged from asking "what does the shared store actually mirror on the owner's phone?"
+
+### What's Next
+
+Ship build 52 to TestFlight. Same testing procedure: delete household on owner phone, create fresh, invite wife, verify data appears on her phone. If this works, update Learning Note 44 with M9.21 as the resolution and update the "Rules (Hard-Won)" section.
+
+---
+
 ## Session 86 — March 15, 2026
 **Milestone**: M9.20 — Copy data to shared store for household member visibility
 **Focus**: Fix household member not seeing any data after joining
