@@ -406,6 +406,23 @@ class RecipeImportService: ObservableObject {
         do {
             try childContext.save()
             DebugLogService.shared.log("persistAndFinish: child save=ok", category: "Import")
+
+            // M9.23: On member devices, templates synced from the owner live in
+            // the shared store. The import may have modified those templates
+            // (usageCount, category). Writing to the shared store can fail with
+            // "model configuration incompatible" because CloudKit-mirrored stores
+            // may have stale model metadata. Fix: assign new objects to the private
+            // store and discard modifications to shared-store objects.
+            let privateStore = PersistenceController.shared.privateStore
+            for obj in viewContext.insertedObjects {
+                viewContext.assign(obj, to: privateStore)
+            }
+            for obj in viewContext.updatedObjects where !obj.isInserted {
+                if let store = obj.objectID.persistentStore, store != privateStore {
+                    viewContext.refresh(obj, mergeChanges: false)
+                }
+            }
+
             try viewContext.save()
             DebugLogService.shared.log("persistAndFinish: parent save=ok", category: "Import")
 
