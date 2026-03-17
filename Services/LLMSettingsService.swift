@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import CoreData
 
 @MainActor
 class LLMSettingsService: ObservableObject {
@@ -25,9 +26,26 @@ class LLMSettingsService: ObservableObject {
 
     // MARK: - API Key Resolution
 
-    /// M10.6.16: API key is always per-user, stored in iOS Keychain.
+    /// M9.22: API key resolution order:
+    /// 1. Per-user Keychain (local override, takes priority)
+    /// 2. Household.llmAPIKey (shared via CloudKit, set by owner)
     var resolvedAPIKey: String? {
-        KeychainHelper.getLLMAPIKey()
+        if let keychainKey = KeychainHelper.getLLMAPIKey(), !keychainKey.isEmpty {
+            return keychainKey
+        }
+        return householdAPIKey
+    }
+
+    /// Fetch the household's shared API key from Core Data
+    private var householdAPIKey: String? {
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<Household> = Household.fetchRequest()
+        request.fetchLimit = 1
+        guard let household = (try? context.fetch(request))?.first,
+              let key = household.llmAPIKey, !key.isEmpty else {
+            return nil
+        }
+        return key
     }
 
     // MARK: - Constants
@@ -50,18 +68,32 @@ class LLMSettingsService: ObservableObject {
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         KeychainHelper.saveLLMAPIKey(trimmed)
+        // M9.22: Also save to Household for sharing via CloudKit
+        saveToHousehold(trimmed)
         #if DEBUG
-        DebugLogService.shared.log("saveAPIKey: saved \(trimmed.count)-char key to Keychain", category: "Settings")
+        DebugLogService.shared.log("saveAPIKey: saved \(trimmed.count)-char key to Keychain + Household", category: "Settings")
         #endif
         objectWillChange.send()
     }
 
     func deleteAPIKey() {
         KeychainHelper.deleteLLMAPIKey()
+        // M9.22: Also clear from Household
+        saveToHousehold(nil)
         #if DEBUG
-        DebugLogService.shared.log("deleteAPIKey: cleared Keychain", category: "Settings")
+        DebugLogService.shared.log("deleteAPIKey: cleared Keychain + Household", category: "Settings")
         #endif
         objectWillChange.send()
+    }
+
+    /// M9.22: Save API key to Household entity for CloudKit sharing
+    private func saveToHousehold(_ key: String?) {
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<Household> = Household.fetchRequest()
+        request.fetchLimit = 1
+        guard let household = (try? context.fetch(request))?.first else { return }
+        household.llmAPIKey = key
+        try? context.save()
     }
 
     /// Returns a masked indicator that a key is configured (no key content revealed)

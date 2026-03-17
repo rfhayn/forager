@@ -13,7 +13,7 @@ Full pipeline: push branch → create PR → squash merge → archive → TestFl
 ## Current State
 
 - Branch: !`git branch --show-current`
-- Remote tracking: !`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>&1`
+- Remote tracking: !`git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || echo "no upstream (will push with -u)"`
 - Uncommitted changes: !`git status --short`
 - Commits since main: !`git log main..HEAD --oneline 2>&1`
 
