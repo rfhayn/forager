@@ -441,7 +441,23 @@ class RecipeImportService: ObservableObject {
             state = .saved(objectID)
             return ImportSaveResult(recipeObjectID: objectID, uncategorizedTemplateIDs: uniqueIDs)
         } catch {
-            DebugLogService.shared.log("persistAndFinish: FAILED — \(error.localizedDescription)", category: "Import")
+            // M9.23: Log detailed error info for diagnosing save failures
+            let nsError = error as NSError
+            DebugLogService.shared.log(
+                "persistAndFinish: FAILED — \(nsError.localizedDescription) "
+                + "domain=\(nsError.domain) code=\(nsError.code) "
+                + "userInfo=\(nsError.userInfo.keys.joined(separator: ","))",
+                category: "Import"
+            )
+            // Log cross-store diagnostic: list inserted objects and their stores
+            for obj in viewContext.insertedObjects {
+                let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
+                let entity = obj.entity.name ?? "?"
+                DebugLogService.shared.log(
+                    "  inserted: \(entity) store=\(store) tempID=\(obj.objectID.isTemporaryID)",
+                    category: "Import"
+                )
+            }
             viewContext.rollback()
             state = .failed(.saveError(error.localizedDescription))
             return nil
@@ -452,21 +468,46 @@ class RecipeImportService: ObservableObject {
 
     /// On member devices, templates and categories synced from the owner live in the
     /// shared store. New recipe/ingredient objects will be assigned to the private store.
-    /// Core Data forbids cross-store relationships, so this method re-points any
-    /// ingredient → template (and template → category) references to private-store copies.
+    /// Core Data forbids cross-store relationships, so this method re-points ALL
+    /// cross-store references on inserted objects to private-store equivalents.
     private func resolveSharedStoreReferences(privateStore: NSPersistentStore) throws {
         for obj in viewContext.insertedObjects {
-            guard let ingredient = obj as? Ingredient,
-                  let template = ingredient.ingredientTemplate,
-                  !template.objectID.isTemporaryID,
-                  let templateStore = template.objectID.persistentStore,
-                  templateStore != privateStore else { continue }
+            // Fix Ingredient → IngredientTemplate (shared-store template)
+            if let ingredient = obj as? Ingredient,
+               let template = ingredient.ingredientTemplate,
+               !template.objectID.isTemporaryID,
+               let templateStore = template.objectID.persistentStore,
+               templateStore != privateStore {
+                let privateTemplate = try findOrCreatePrivateTemplate(
+                    matching: template, store: privateStore)
+                ingredient.ingredientTemplate = privateTemplate
+            }
 
-            // Template is in shared store — find or create a private-store copy
-            let privateTemplate = try findOrCreatePrivateTemplate(
-                matching: template, store: privateStore)
-            ingredient.ingredientTemplate = privateTemplate
+            // Fix IngredientTemplate → Category (shared-store category)
+            // Applies to BOTH new templates and private copies — any template
+            // whose categoryEntity points to a shared-store category.
+            if let template = obj as? IngredientTemplate,
+               let category = template.categoryEntity,
+               !category.objectID.isTemporaryID,
+               let catStore = category.objectID.persistentStore,
+               catStore != privateStore {
+                template.categoryEntity = resolvePrivateCategory(
+                    matching: category, store: privateStore)
+            }
         }
+    }
+
+    /// Find a matching Category in the private store by name.
+    private func resolvePrivateCategory(
+        matching source: Category,
+        store: NSPersistentStore
+    ) -> Category? {
+        let request: NSFetchRequest<Category> = Category.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "name ==[c] %@", source.name ?? "")
+        request.affectedStores = [store]
+        request.fetchLimit = 1
+        return (try? viewContext.fetch(request))?.first
     }
 
     /// Find an existing template in the private store by canonical name, or create a copy.
