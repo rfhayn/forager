@@ -151,15 +151,13 @@ Use the Write tool to create `/tmp/ForagerExportOptions.plist` with this content
 </plist>
 ```
 
-Then run export as a separate call:
+Then run export as a separate call. **CRITICAL: Always include API key auth flags** — without them, `xcodebuild` cannot find App Store Connect credentials from CLI:
 ```bash
-xcodebuild -exportArchive -archivePath ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive -exportOptionsPlist /tmp/ForagerExportOptions.plist -exportPath ~/Desktop/forager-export -allowProvisioningUpdates
+source ~/.appstoreconnect/config
+xcodebuild -exportArchive -archivePath ~/Desktop/forager-$MARKETING_VERSION-$NEW_BUILD.xcarchive -exportOptionsPlist /tmp/ForagerExportOptions.plist -exportPath ~/Desktop/forager-export -allowProvisioningUpdates -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_$KEY_ID.p8 -authenticationKeyID $KEY_ID -authenticationKeyIssuerID $ISSUER_ID
 ```
 
-The `destination: upload` auto-uploads to App Store Connect. If upload fails, fall back to:
-```bash
-xcrun notarytool submit ... # or Transporter.app / Xcode Organizer
-```
+The `destination: upload` auto-uploads to App Store Connect.
 
 ## Step 7: TestFlight Distribution (Automated Script)
 
