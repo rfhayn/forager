@@ -407,16 +407,18 @@ class RecipeImportService: ObservableObject {
             try childContext.save()
             DebugLogService.shared.log("persistAndFinish: child save=ok", category: "Import")
 
-            // M9.23: On member devices, templates synced from the owner live in
-            // the shared store. The import may have modified those templates
-            // (usageCount, category). Writing to the shared store can fail with
-            // "model configuration incompatible" because CloudKit-mirrored stores
-            // may have stale model metadata. Fix: assign new objects to the private
-            // store and discard modifications to shared-store objects.
+            // M9.23: On member devices, templates/categories synced from the
+            // owner live in the shared store. New recipe/ingredients go to the
+            // private store. Cross-store relationships are forbidden, so we must
+            // resolve any shared-store template/category references into the
+            // private store before saving.
             let privateStore = PersistenceController.shared.privateStore
+            try resolveSharedStoreReferences(privateStore: privateStore)
+
             for obj in viewContext.insertedObjects {
                 viewContext.assign(obj, to: privateStore)
             }
+            // Discard modifications to shared-store objects (usageCount, etc.)
             for obj in viewContext.updatedObjects where !obj.isInserted {
                 if let store = obj.objectID.persistentStore, store != privateStore {
                     viewContext.refresh(obj, mergeChanges: false)
@@ -444,6 +446,67 @@ class RecipeImportService: ObservableObject {
             state = .failed(.saveError(error.localizedDescription))
             return nil
         }
+    }
+
+    // MARK: - M9.23: Cross-Store Reference Resolution
+
+    /// On member devices, templates and categories synced from the owner live in the
+    /// shared store. New recipe/ingredient objects will be assigned to the private store.
+    /// Core Data forbids cross-store relationships, so this method re-points any
+    /// ingredient → template (and template → category) references to private-store copies.
+    private func resolveSharedStoreReferences(privateStore: NSPersistentStore) throws {
+        for obj in viewContext.insertedObjects {
+            guard let ingredient = obj as? Ingredient,
+                  let template = ingredient.ingredientTemplate,
+                  !template.objectID.isTemporaryID,
+                  let templateStore = template.objectID.persistentStore,
+                  templateStore != privateStore else { continue }
+
+            // Template is in shared store — find or create a private-store copy
+            let privateTemplate = try findOrCreatePrivateTemplate(
+                matching: template, store: privateStore)
+            ingredient.ingredientTemplate = privateTemplate
+        }
+    }
+
+    /// Find an existing template in the private store by canonical name, or create a copy.
+    private func findOrCreatePrivateTemplate(
+        matching source: IngredientTemplate,
+        store: NSPersistentStore
+    ) throws -> IngredientTemplate {
+        let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+        request.predicate = NSPredicate(
+            format: "canonicalName ==[c] %@", source.canonicalName ?? "")
+        request.affectedStores = [store]
+        request.fetchLimit = 1
+
+        if let existing = (try? viewContext.fetch(request))?.first {
+            return existing
+        }
+
+        // Create a copy in the private store
+        let copy = IngredientTemplate(context: viewContext)
+        copy.id = UUID()
+        copy.name = source.name
+        copy.canonicalName = source.canonicalName
+        copy.isStaple = source.isStaple
+        copy.usageCount = 1
+        copy.dateCreated = Date()
+        copy.updatedAt = Date()
+        copy.householdKey = source.householdKey
+
+        // Resolve category into private store (avoid another cross-store ref)
+        if let sourceCat = source.categoryEntity {
+            let catRequest: NSFetchRequest<Category> = Category.fetchRequest()
+            catRequest.predicate = NSPredicate(
+                format: "name ==[c] %@", sourceCat.name ?? "")
+            catRequest.affectedStores = [store]
+            catRequest.fetchLimit = 1
+            copy.categoryEntity = (try? viewContext.fetch(catRequest))?.first
+        }
+
+        viewContext.assign(copy, to: store)
+        return copy
     }
 
     // MARK: - Duplicate Detection
