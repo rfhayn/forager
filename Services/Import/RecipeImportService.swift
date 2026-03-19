@@ -432,12 +432,16 @@ class RecipeImportService: ObservableObject {
             for obj in viewContext.insertedObjects {
                 viewContext.assign(obj, to: privateStore)
             }
-            // Discard modifications to shared-store objects (usageCount, etc.)
+            // Discard ALL modifications to pre-existing objects.
+            // Private-store Categories get dirtied by inverse relationships when
+            // template.categoryEntity is set. Core Data then validates ALL relationships
+            // on those dirty Categories during save — including pre-existing cross-store
+            // template refs — causing 134040 errors. Refreshing everything is safe because
+            // inserted objects (our new recipe data) are excluded.
             for obj in viewContext.updatedObjects where !obj.isInserted {
-                if let store = obj.objectID.persistentStore, store != privateStore {
-                    diag.debug("  refreshing shared-store obj: \(obj.entity.name ?? "?") store=\(store.url?.lastPathComponent ?? "?")", category: .import_)
-                    viewContext.refresh(obj, mergeChanges: false)
-                }
+                let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
+                diag.debug("  refreshing updated obj: \(obj.entity.name ?? "?") store=\(store)", category: .import_)
+                viewContext.refresh(obj, mergeChanges: false)
             }
 
             try viewContext.save()
