@@ -403,9 +403,10 @@ class RecipeImportService: ObservableObject {
         createdIngredients: [Ingredient],
         childContext: NSManagedObjectContext
     ) -> ImportSaveResult? {
+        let diag = DiagnosticLogger.shared
         do {
             try childContext.save()
-            DebugLogService.shared.log("persistAndFinish: child save=ok", category: "Import")
+            diag.info("persistAndFinish: child save=ok", category: .import_)
 
             // M9.23: On member devices, templates/categories synced from the
             // owner live in the shared store. New recipe/ingredients go to the
@@ -415,18 +416,32 @@ class RecipeImportService: ObservableObject {
             let privateStore = PersistenceController.shared.privateStore
             try resolveSharedStoreReferences(privateStore: privateStore)
 
+            // Log pre-save state for diagnostics
+            for obj in viewContext.insertedObjects {
+                let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
+                let entity = obj.entity.name ?? "?"
+                let tempID = obj.objectID.isTemporaryID
+                diag.debug("  pre-save inserted: \(entity) store=\(store) tempID=\(tempID)", category: .import_)
+            }
+            for obj in viewContext.updatedObjects {
+                let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
+                let entity = obj.entity.name ?? "?"
+                diag.debug("  pre-save updated: \(entity) store=\(store)", category: .import_)
+            }
+
             for obj in viewContext.insertedObjects {
                 viewContext.assign(obj, to: privateStore)
             }
             // Discard modifications to shared-store objects (usageCount, etc.)
             for obj in viewContext.updatedObjects where !obj.isInserted {
                 if let store = obj.objectID.persistentStore, store != privateStore {
+                    diag.debug("  refreshing shared-store obj: \(obj.entity.name ?? "?") store=\(store.url?.lastPathComponent ?? "?")", category: .import_)
                     viewContext.refresh(obj, mergeChanges: false)
                 }
             }
 
             try viewContext.save()
-            DebugLogService.shared.log("persistAndFinish: parent save=ok", category: "Import")
+            diag.info("persistAndFinish: parent save=ok", category: .import_)
 
             let uncategorizedIDs = createdIngredients.compactMap { ingredient -> NSManagedObjectID? in
                 guard let template = ingredient.ingredientTemplate else { return nil }
@@ -441,22 +456,30 @@ class RecipeImportService: ObservableObject {
             state = .saved(objectID)
             return ImportSaveResult(recipeObjectID: objectID, uncategorizedTemplateIDs: uniqueIDs)
         } catch {
-            // M9.23: Log detailed error info for diagnosing save failures
+            // M9.23: Log detailed error info to file-based DiagnosticLogger
             let nsError = error as NSError
-            DebugLogService.shared.log(
+            diag.error(
                 "persistAndFinish: FAILED — \(nsError.localizedDescription) "
-                + "domain=\(nsError.domain) code=\(nsError.code) "
-                + "userInfo=\(nsError.userInfo.keys.joined(separator: ","))",
-                category: "Import"
+                + "domain=\(nsError.domain) code=\(nsError.code)",
+                category: .import_
             )
-            // Log cross-store diagnostic: list inserted objects and their stores
+            // Log all userInfo keys for debugging
+            for (key, value) in nsError.userInfo {
+                diag.error("  userInfo[\(key)]: \(value)", category: .import_)
+            }
+            // Log inserted objects and their relationships
             for obj in viewContext.insertedObjects {
                 let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
                 let entity = obj.entity.name ?? "?"
-                DebugLogService.shared.log(
-                    "  inserted: \(entity) store=\(store) tempID=\(obj.objectID.isTemporaryID)",
-                    category: "Import"
-                )
+                diag.error("  inserted: \(entity) store=\(store) tempID=\(obj.objectID.isTemporaryID)", category: .import_)
+                // Log all relationships and their target stores
+                for (relName, _) in obj.entity.relationshipsByName {
+                    if let target = obj.value(forKey: relName) as? NSManagedObject {
+                        let targetStore = target.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
+                        let targetTemp = target.objectID.isTemporaryID
+                        diag.error("    rel.\(relName) → \(target.entity.name ?? "?") store=\(targetStore) tempID=\(targetTemp)", category: .import_)
+                    }
+                }
             }
             viewContext.rollback()
             state = .failed(.saveError(error.localizedDescription))

@@ -28,6 +28,7 @@ class DiagnosticLogger: ObservableObject {
         case store = "Store"
         case discovery = "Discovery"
         case app = "App"
+        case import_ = "Import"
         case error = "ERROR"
     }
 
