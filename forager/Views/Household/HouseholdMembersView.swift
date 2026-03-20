@@ -52,6 +52,8 @@ struct HouseholdMembersView: View {
                 List {
                     ForEach(participants) { participant in
                         ShareParticipantRow(participant: participant)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 // M7.3.3: Owner can remove non-owner, non-self members
                                 if isCurrentUserOwner && !participant.isOwner && !participant.isCurrentUser {
@@ -65,8 +67,12 @@ struct HouseholdMembersView: View {
                             }
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             }
         }
+        .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
         .navigationTitle("Household Members")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -202,6 +208,7 @@ struct ShareParticipantRow: View {
             }
         }
         .padding(.vertical, 4)
+        .foragerGlassCard()
     }
 
     /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)

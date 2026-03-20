@@ -276,7 +276,7 @@ struct MealPlanSummaryCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+        VStack(spacing: ForagerTheme.Spacing.md) {
             // Name + status
             HStack {
                 Text(mealPlan.name ?? "Unnamed Plan")
@@ -299,7 +299,7 @@ struct MealPlanSummaryCard: View {
                 .font(ForagerTheme.captionFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
-            // Day dots
+            // Day dots — centered
             dayDotsRow
 
             // Tonight snippet (active only)
@@ -308,7 +308,7 @@ struct MealPlanSummaryCard: View {
                 tonightSnippet(todayMeal)
             }
 
-            // Generate button (active only)
+            // Generate button — centered
             if status == .active, let action = onGenerateGroceryList {
                 Button(action: action) {
                     HStack(spacing: ForagerTheme.Spacing.xs) {

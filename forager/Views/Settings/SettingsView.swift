@@ -36,33 +36,50 @@ struct SettingsView: View {
 
     var body: some View {
         // M15.1: NavigationView removed — SettingsView is inside NavigationStack from TabView
-        Form {
+        List {
             // M7.2.1: Household Management
             householdSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M15.1: Data Management (Ingredients & Categories relocated from tabs)
             dataManagementSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M4.1: Meal Planning Preferences
             mealPlanningSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M4.3.1: Display Options
             displayOptionsSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M10.6: AI Integration (optional Claude API)
             aiImportSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M9.15.3: Diagnostic Log (available in Release + Debug)
             diagnosticLogSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
             // M10.6.18: Developer tools hidden in Release builds for launch
             #if DEBUG
             developerToolsSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             #endif
 
             // M7.0.2: About & Privacy
             aboutSection
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
         }
+        .listStyle(.plain)
         .navigationTitle("Settings")
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
@@ -106,6 +123,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .foragerGlassCard()
         } header: {
             Text("Household")
         }
@@ -118,21 +136,26 @@ struct SettingsView: View {
 
     private var dataManagementSection: some View {
         Section {
-            NavigationLink {
-                IngredientsView(popToRoot: .constant(false))
-            } label: {
-                Label("Ingredients", systemImage: "leaf.circle")
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                NavigationLink {
+                    IngredientsView(popToRoot: .constant(false))
+                } label: {
+                    Label("Ingredients", systemImage: "leaf.circle")
+                }
+                Divider()
+                NavigationLink {
+                    ManageCategoriesView(popToRoot: .constant(false))
+                } label: {
+                    Label("Categories", systemImage: "folder.badge.gearshape")
+                }
+                Divider()
+                Button {
+                    showingRestoreConfirmation = true
+                } label: {
+                    Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
+                }
             }
-            NavigationLink {
-                ManageCategoriesView(popToRoot: .constant(false))
-            } label: {
-                Label("Categories", systemImage: "folder.badge.gearshape")
-            }
-            Button {
-                showingRestoreConfirmation = true
-            } label: {
-                Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
-            }
+            .foragerGlassCard()
             .confirmationDialog("Restore Default Categories?",
                                 isPresented: $showingRestoreConfirmation,
                                 titleVisibility: .visible) {
@@ -169,41 +192,47 @@ struct SettingsView: View {
     // Controls meal plan duration, start day, and display options
     private var mealPlanningSection: some View {
         Section {
-            // Duration stepper (3-14 days)
-            // Controls how many days appear in meal plan calendar
-            Stepper(
-                "Plan Duration: \(preferencesService.mealPlanDuration) days",
-                value: $preferencesService.mealPlanDuration,
-                in: 3...14
-            )
-            
-            // Start day picker (Sunday-Saturday)
-            // Determines which day meal plan calendar begins on
-            Picker("Start Day", selection: $preferencesService.mealPlanStartDay) {
-                ForEach(0..<7) { day in
-                    Text(dayName(for: day)).tag(day)
-                }
-            }
-            
-            // Auto-name toggle
-            // When enabled, generates names like "Week of Oct 23"
-            HStack {
-                Toggle("Auto-name Meal Plans", isOn: $preferencesService.autoNameMealPlans)
-                Button {
-                    showingAutoNameInfo = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .font(.body)
-                }
-                .buttonStyle(.plain)
-            }
-            .alert("Auto-name Meal Plans", isPresented: $showingAutoNameInfo) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Automatically names new meal plans based on their start date — for example, \"Week of Mar 3\" for a 7-day plan. When off, you'll name each plan yourself.")
-            }
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                // Duration stepper (3-14 days)
+                // Controls how many days appear in meal plan calendar
+                Stepper(
+                    "Plan Duration: \(preferencesService.mealPlanDuration) days",
+                    value: $preferencesService.mealPlanDuration,
+                    in: 3...14
+                )
 
+                Divider()
+
+                // Start day picker (Sunday-Saturday)
+                // Determines which day meal plan calendar begins on
+                Picker("Start Day", selection: $preferencesService.mealPlanStartDay) {
+                    ForEach(0..<7) { day in
+                        Text(dayName(for: day)).tag(day)
+                    }
+                }
+
+                Divider()
+
+                // Auto-name toggle
+                // When enabled, generates names like "Week of Oct 23"
+                HStack {
+                    Toggle("Auto-name Meal Plans", isOn: $preferencesService.autoNameMealPlans)
+                    Button {
+                        showingAutoNameInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                            .font(.body)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .alert("Auto-name Meal Plans", isPresented: $showingAutoNameInfo) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Automatically names new meal plans based on their start date — for example, \"Week of Mar 3\" for a 7-day plan. When off, you'll name each plan yourself.")
+                }
+            }
+            .foragerGlassCard()
         } header: {
             Text("Meal Planning")
         } footer: {
@@ -218,25 +247,27 @@ struct SettingsView: View {
     // Controls whether recipe sources appear throughout the app
     private var displayOptionsSection: some View {
         Section {
-            // Show recipe sources toggle
-            // When enabled, shows recipe tags like "[Tacos] [Spaghetti]"
-            HStack {
-                Toggle("Show Recipe Sources", isOn: $preferencesService.showRecipeSources)
-                Button {
-                    showingRecipeSourcesInfo = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .font(.body)
+            VStack {
+                // Show recipe sources toggle
+                // When enabled, shows recipe tags like "[Tacos] [Spaghetti]"
+                HStack {
+                    Toggle("Show Recipe Sources", isOn: $preferencesService.showRecipeSources)
+                    Button {
+                        showingRecipeSourcesInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                            .font(.body)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                .alert("Show Recipe Sources", isPresented: $showingRecipeSourcesInfo) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Shows which recipes each grocery item came from — for example, \"Ground beef\" will display [Tacos] [Spaghetti] tags. Helpful when your grocery list is generated from a meal plan.")
+                }
             }
-            .alert("Show Recipe Sources", isPresented: $showingRecipeSourcesInfo) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Shows which recipes each grocery item came from — for example, \"Ground beef\" will display [Tacos] [Spaghetti] tags. Helpful when your grocery list is generated from a meal plan.")
-            }
-
+            .foragerGlassCard()
         } header: {
             Text("Display Options")
         }
@@ -250,80 +281,89 @@ struct SettingsView: View {
 
     private var aiImportSection: some View {
         Section {
-            HStack {
-                Toggle("Enable AI for Ingredients", isOn: $llmSettings.isEnabled)
-                Button {
-                    showingAIInfo = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .font(.body)
-                }
-                .buttonStyle(.plain)
-            }
-            .alert("AI for Ingredients", isPresented: $showingAIInfo) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Uses Claude AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an Anthropic API key. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain on your device.\n\nThe app works fully without this — it's an optional enhancement.")
-            }
-
-            if llmSettings.isEnabled {
-                // Provider (disabled — Claude only in M10.6)
+            VStack(spacing: ForagerTheme.Spacing.sm) {
                 HStack {
-                    Text("Provider")
-                    Spacer()
-                    Text("Claude (API Key)")
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                }
-
-                // M10.6.16: API Key row — per-user, stored in Keychain
-                if llmSettings.hasAPIKey {
-                    HStack {
-                        Text("API Key")
-                        Spacer()
-                        Text(llmSettings.maskedAPIKey ?? "")
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                        Button("Clear") {
-                            clearAPIKey()
-                            apiKeyInput = ""
-                        }
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                    }
-                } else {
-                    SecureField("Paste API key", text: $apiKeyInput)
-                        .textContentType(.password)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .onSubmit {
-                            saveAPIKey(apiKeyInput)
-                            apiKeyInput = ""
-                        }
-                }
-
-                HStack {
-                    Link(destination: URL(string: "https://console.anthropic.com/settings/keys")!) {
-                        Label("Get API Key", systemImage: "arrow.up.right.square")
-                            .font(.caption)
-                    }
-                    Spacer()
+                    Toggle("Enable AI for Ingredients", isOn: $llmSettings.isEnabled)
                     Button {
-                        Task { await llmSettings.testConnection() }
+                        showingAIInfo = true
                     } label: {
-                        if llmSettings.isTestingConnection {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                            .font(.body)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .alert("AI for Ingredients", isPresented: $showingAIInfo) {
+                    Button("OK", role: .cancel) { }
+                } message: {
+                    Text("Uses Claude AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an Anthropic API key. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain on your device.\n\nThe app works fully without this — it's an optional enhancement.")
+                }
+
+                if llmSettings.isEnabled {
+                    Divider()
+
+                    // Provider (disabled — Claude only in M10.6)
+                    HStack {
+                        Text("Provider")
+                        Spacer()
+                        Text("Claude (API Key)")
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+
+                    Divider()
+
+                    // M10.6.16: API Key row — per-user, stored in Keychain
+                    if llmSettings.hasAPIKey {
+                        HStack {
+                            Text("API Key")
+                            Spacer()
+                            Text(llmSettings.maskedAPIKey ?? "")
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                            Button("Clear") {
+                                clearAPIKey()
+                                apiKeyInput = ""
+                            }
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                        }
+                    } else {
+                        SecureField("Paste API key", text: $apiKeyInput)
+                            .textContentType(.password)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .onSubmit {
+                                saveAPIKey(apiKeyInput)
+                                apiKeyInput = ""
+                            }
+                    }
+
+                    Divider()
+
+                    HStack {
+                        Link(destination: URL(string: "https://console.anthropic.com/settings/keys")!) {
+                            Label("Get API Key", systemImage: "arrow.up.right.square")
                                 .font(.caption)
                         }
+                        Spacer()
+                        Button {
+                            Task { await llmSettings.testConnection() }
+                        } label: {
+                            if llmSettings.isTestingConnection {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Label("Test Connection", systemImage: "antenna.radiowaves.left.and.right")
+                                    .font(.caption)
+                            }
+                        }
+                        .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
                     }
-                    .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
-                }
 
-                // Connection status
-                connectionStatusRow
+                    // Connection status
+                    connectionStatusRow
+                }
             }
+            .foragerGlassCard()
         } header: {
             Text("AI Integration")
         } footer: {
@@ -378,24 +418,29 @@ struct SettingsView: View {
 
     private var diagnosticLogSection: some View {
         Section {
-            NavigationLink {
-                DiagnosticLogView()
-            } label: {
-                HStack {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Diagnostic Log")
-                            .font(ForagerTheme.bodyFont)
-                        Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.textSecondary)
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                NavigationLink {
+                    DiagnosticLogView()
+                } label: {
+                    HStack {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Diagnostic Log")
+                                .font(ForagerTheme.bodyFont)
+                            Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
                     }
                 }
-            }
 
-            Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
-                .font(ForagerTheme.bodyFont)
+                Divider()
+
+                Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
+                    .font(ForagerTheme.bodyFont)
+            }
+            .foragerGlassCard()
         } header: {
             Text("Diagnostics")
         } footer: {
@@ -411,132 +456,143 @@ struct SettingsView: View {
     // Provides access to sync status monitoring and validation
     private var developerToolsSection: some View {
         Section {
-            // M10.6.5: Debug log toggle + viewer
-            // M10.6.13: Ungated for Release builds
-            Toggle("Debug Mode", isOn: Binding(
-                get: { DebugLogService.shared.isEnabled },
-                set: { DebugLogService.shared.isEnabled = $0 }
-            ))
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                // M10.6.5: Debug log toggle + viewer
+                // M10.6.13: Ungated for Release builds
+                Toggle("Debug Mode", isOn: Binding(
+                    get: { DebugLogService.shared.isEnabled },
+                    set: { DebugLogService.shared.isEnabled = $0 }
+                ))
 
-            if DebugLogService.shared.isEnabled {
+                if DebugLogService.shared.isEnabled {
+                    Divider()
+                    NavigationLink {
+                        DebugLogView()
+                    } label: {
+                        HStack {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .foregroundStyle(ForagerTheme.accentSecondary)
+                            VStack(alignment: .leading) {
+                                Text("Debug Log")
+                                    .font(.headline)
+                                Text("\(DebugLogService.shared.entries.count) entries")
+                                    .font(.caption)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                            }
+                        }
+                    }
+                }
+
+                Divider()
+
+                // CloudKit Sync Status link
+                // Opens test interface for monitoring CloudKit sync events
                 NavigationLink {
-                    DebugLogView()
+                    CloudKitSyncTestView()
                 } label: {
                     HStack {
-                        Image(systemName: "doc.text.magnifyingglass")
+                        Image(systemName: "icloud.and.arrow.up")
                             .foregroundStyle(ForagerTheme.accentSecondary)
                         VStack(alignment: .leading) {
-                            Text("Debug Log")
+                            Text("CloudKit Sync Status")
                                 .font(.headline)
-                            Text("\(DebugLogService.shared.entries.count) entries")
+                            Text("Monitor sync events and test CloudKit")
                                 .font(.caption)
                                 .foregroundStyle(ForagerTheme.textSecondary)
                         }
                     }
                 }
-            }
 
-            // CloudKit Sync Status link
-            // Opens test interface for monitoring CloudKit sync events
-            NavigationLink {
-                CloudKitSyncTestView()
-            } label: {
-                HStack {
-                    Image(systemName: "icloud.and.arrow.up")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    VStack(alignment: .leading) {
-                        Text("CloudKit Sync Status")
-                            .font(.headline)
-                        Text("Monitor sync events and test CloudKit")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                }
-            }
-            
-            #if DEBUG
-            // M7.2.3 Phase 3.5: CloudKit Test Harness
-            // Comprehensive testing UI for duplicate prevention validation
-            NavigationLink {
-                CloudKitTestHarnessView()
-            } label: {
-                HStack {
-                    Image(systemName: "wrench.and.screwdriver")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    VStack(alignment: .leading) {
-                        Text("CloudKit Test Harness")
-                            .font(.headline)
-                        Text("Test duplicate prevention and repository patterns")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                }
-            }
-            #endif
-            
-            // M7.2.2: Household Debug link - TEMPORARILY DISABLED
-            // Shows all households in database for debugging sync issues
-            // TODO: Add HouseholdDebugView.swift to Xcode project
-            /*
-            NavigationLink {
-                HouseholdDebugView()
-            } label: {
-                HStack {
-                    Image(systemName: "house.circle")
-                        .foregroundStyle(ForagerTheme.statusWarningFG)
-                    VStack(alignment: .leading) {
-                        Text("Household Debug")
-                            .font(.headline)
-                        Text("View all households in database")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                }
-            }
-            */
-            
-            #if DEBUG
-            // M7.3.3: Category Sync Diagnostic
-            // Dumps all categories with their store location and householdKey
-            // Use to troubleshoot why categories aren't syncing to members
-            Button {
-                householdService.dumpCategorySyncDiagnostics()
-            } label: {
-                HStack {
-                    Image(systemName: "stethoscope")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    VStack(alignment: .leading) {
-                        Text("Category Sync Diagnostic")
-                            .font(.headline)
-                        Text("Dump category store & householdKey info")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                    }
-                }
-            }
+                #if DEBUG
+                Divider()
 
-            // M8.4 Phase 7: Correction corpus gate status
-            let correctionCount = ParsingTelemetryService.shared.getTotalCorrectionCount()
-            let retrainingThreshold = 50
-            HStack {
-                Image(systemName: "brain")
-                    .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
-                VStack(alignment: .leading) {
-                    Text("Correction Corpus")
-                        .font(.headline)
-                    Text(correctionCount >= retrainingThreshold
-                        ? "Ready for retraining (\(correctionCount) corrections)"
-                        : "Need \(retrainingThreshold - correctionCount) more corrections (\(correctionCount)/\(retrainingThreshold))")
-                        .font(.caption)
-                        .foregroundStyle(ForagerTheme.textSecondary)
+                // M7.2.3 Phase 3.5: CloudKit Test Harness
+                // Comprehensive testing UI for duplicate prevention validation
+                NavigationLink {
+                    CloudKitTestHarnessView()
+                } label: {
+                    HStack {
+                        Image(systemName: "wrench.and.screwdriver")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading) {
+                            Text("CloudKit Test Harness")
+                                .font(.headline)
+                            Text("Test duplicate prevention and repository patterns")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                    }
                 }
-                Spacer()
-                Text("\(correctionCount)")
-                    .font(.title2.monospacedDigit())
-                    .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                #endif
+
+                // M7.2.2: Household Debug link - TEMPORARILY DISABLED
+                // Shows all households in database for debugging sync issues
+                // TODO: Add HouseholdDebugView.swift to Xcode project
+                /*
+                NavigationLink {
+                    HouseholdDebugView()
+                } label: {
+                    HStack {
+                        Image(systemName: "house.circle")
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
+                        VStack(alignment: .leading) {
+                            Text("Household Debug")
+                                .font(.headline)
+                            Text("View all households in database")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                    }
+                }
+                */
+
+                #if DEBUG
+                Divider()
+
+                // M7.3.3: Category Sync Diagnostic
+                // Dumps all categories with their store location and householdKey
+                // Use to troubleshoot why categories aren't syncing to members
+                Button {
+                    householdService.dumpCategorySyncDiagnostics()
+                } label: {
+                    HStack {
+                        Image(systemName: "stethoscope")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading) {
+                            Text("Category Sync Diagnostic")
+                                .font(.headline)
+                            Text("Dump category store & householdKey info")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                    }
+                }
+
+                Divider()
+
+                // M8.4 Phase 7: Correction corpus gate status
+                let correctionCount = ParsingTelemetryService.shared.getTotalCorrectionCount()
+                let retrainingThreshold = 50
+                HStack {
+                    Image(systemName: "brain")
+                        .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                    VStack(alignment: .leading) {
+                        Text("Correction Corpus")
+                            .font(.headline)
+                        Text(correctionCount >= retrainingThreshold
+                            ? "Ready for retraining (\(correctionCount) corrections)"
+                            : "Need \(retrainingThreshold - correctionCount) more corrections (\(correctionCount)/\(retrainingThreshold))")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                    Spacer()
+                    Text("\(correctionCount)")
+                        .font(.title2.monospacedDigit())
+                        .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                }
+                #endif
             }
-            #endif
-            
+            .foragerGlassCard()
         } header: {
             Text("Developer Tools")
         } footer: {
@@ -551,34 +607,39 @@ struct SettingsView: View {
     // Provides access to privacy policy and app version
     private var aboutSection: some View {
         Section {
-            // M7.6.3: Replay Onboarding (signals foragerApp via notification)
-            Button {
-                NotificationCenter.default.post(name: .replayOnboarding, object: nil)
-            } label: {
-                HStack {
-                    Image(systemName: "hand.wave")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    Text("Replay Onboarding")
-                        .foregroundStyle(.primary)
-                    Spacer()
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                // M7.6.3: Replay Onboarding (signals foragerApp via notification)
+                Button {
+                    NotificationCenter.default.post(name: .replayOnboarding, object: nil)
+                } label: {
+                    HStack {
+                        Image(systemName: "hand.wave")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        Text("Replay Onboarding")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
                 }
-            }
 
-            // Privacy Policy link
-            Button {
-                showingPrivacyPolicy = true
-            } label: {
-                HStack {
-                    Image(systemName: "hand.raised")
-                        .foregroundStyle(ForagerTheme.statusSuccessFG)
-                    Text("Privacy Policy")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                        .font(.caption)
+                Divider()
+
+                // Privacy Policy link
+                Button {
+                    showingPrivacyPolicy = true
+                } label: {
+                    HStack {
+                        Image(systemName: "hand.raised")
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        Text("Privacy Policy")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .font(.caption)
+                    }
                 }
             }
+            .foragerGlassCard()
         } header: {
             Text("About")
         } footer: {
