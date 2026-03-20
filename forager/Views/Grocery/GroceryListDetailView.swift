@@ -217,8 +217,13 @@ struct GroceryListDetailView: View {
             }
 
             HStack(spacing: ForagerTheme.Spacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(ForagerTheme.textTertiary)
+                    .font(ForagerTheme.captionFont)
+
                 TextField("Quick add (e.g., \"2 cups flour\")", text: $quickAddText)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
+                    .font(ForagerTheme.bodyFont)
                     .textInputAutocapitalization(.words)
                     .autocorrectionDisabled()
                     .accessibilityLabel("Quick add item")
@@ -257,6 +262,9 @@ struct GroceryListDetailView: View {
                 }
                 .disabled(quickAddText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
+            .padding(ForagerTheme.Spacing.sm)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
             .padding(.horizontal, ForagerTheme.Spacing.lg)
             .padding(.vertical, ForagerTheme.Spacing.md)
         }
@@ -723,8 +731,14 @@ struct GroceryListItemRow: View {
                 }
             }
         }
-        .padding(.vertical, ForagerTheme.Spacing.xs)
-        .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : .clear)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : ForagerTheme.surfacePrimary)
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
         .contentShape(Rectangle())
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
         .accessibilityElement(children: .combine)
