@@ -196,7 +196,7 @@ struct GroceryListDetailView: View {
             // Quick-add bar
             quickAddBar
         }
-        .background(.regularMaterial)
+        .background(ForagerTheme.surfacePrimary)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Shopping progress and quick add")
     }
@@ -319,6 +319,7 @@ struct GroceryListDetailView: View {
                             GroceryListItemRow(item: item) {
                                 toggleItemCompletion(item)
                             }
+                            .listRowBackground(Color.clear)
                             .swipeActions(edge: .leading) {
                                 Button {
                                     toggleItemCompletion(item)
@@ -349,6 +350,7 @@ struct GroceryListDetailView: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
     }
 

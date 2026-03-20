@@ -42,17 +42,32 @@ struct HouseholdView: View {
     @State private var sharedTemplateCount = 0
 
     var body: some View {
-        Form {
+        List {
             if let household = householdService.currentHousehold {
                 householdHeader(household)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 membersSection(household)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 inviteSection
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 sharingStatsSection
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
                 dangerZoneSection
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             } else {
                 noHouseholdSection
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
         .navigationTitle("Household")
         .navigationBarTitleDisplayMode(.large)
         // M10.6.16: Re-run when currentHousehold changes (e.g., after accepting invitation)
@@ -106,43 +121,48 @@ struct HouseholdView: View {
 
     private func householdHeader(_ household: Household) -> some View {
         Section {
-            // Editable name row
-            HStack {
-                if isEditingName {
-                    TextField("Household Name", text: $editedName)
-                        .font(ForagerTheme.cardTitle)
-                        .onSubmit { saveHouseholdName(household) }
-                } else {
-                    Text(household.name ?? "My Household")
-                        .font(ForagerTheme.cardTitle)
-                        .foregroundStyle(ForagerTheme.textPrimary)
-                }
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                // Editable name row
+                HStack {
+                    if isEditingName {
+                        TextField("Household Name", text: $editedName)
+                            .font(ForagerTheme.cardTitle)
+                            .onSubmit { saveHouseholdName(household) }
+                    } else {
+                        Text(household.name ?? "My Household")
+                            .font(ForagerTheme.cardTitle)
+                            .foregroundStyle(ForagerTheme.textPrimary)
+                    }
 
-                Spacer()
+                    Spacer()
 
-                if isOwner {
-                    Button {
-                        if isEditingName {
-                            saveHouseholdName(household)
-                        } else {
-                            editedName = household.name ?? ""
-                            isEditingName = true
+                    if isOwner {
+                        Button {
+                            if isEditingName {
+                                saveHouseholdName(household)
+                            } else {
+                                editedName = household.name ?? ""
+                                isEditingName = true
+                            }
+                        } label: {
+                            Image(systemName: isEditingName ? "checkmark" : "pencil")
+                                .foregroundStyle(ForagerTheme.accentPrimary)
                         }
-                    } label: {
-                        Image(systemName: isEditingName ? "checkmark" : "pencil")
-                            .foregroundStyle(ForagerTheme.accentPrimary)
                     }
                 }
-            }
 
-            if let error = renameError {
-                Text(error)
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.statusDangerFG)
-            }
+                if let error = renameError {
+                    Text(error)
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
+                }
 
-            // M9.15.3: Live sync status from CloudKitSyncMonitor
-            syncStatusRow
+                Divider()
+
+                // M9.15.3: Live sync status from CloudKitSyncMonitor
+                syncStatusRow
+            }
+            .foragerGlassCard()
         }
     }
 
@@ -150,33 +170,41 @@ struct HouseholdView: View {
 
     private func membersSection(_ household: Household) -> some View {
         Section {
-            if isLoadingParticipants {
-                HStack {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                    Text("Loading members...")
-                        .font(ForagerTheme.secondaryFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                if isLoadingParticipants {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Loading members...")
+                            .font(ForagerTheme.secondaryFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                } else {
+                    ForEach(participants) { participant in
+                        memberRow(participant)
+                        if participant.id != participants.last?.id {
+                            Divider()
+                        }
+                    }
                 }
-            } else {
-                ForEach(participants) { participant in
-                    memberRow(participant)
-                }
-            }
 
-            NavigationLink {
-                HouseholdMembersView(household: household, service: householdService)
-            } label: {
-                HStack {
-                    Text("Manage Members")
-                        .font(ForagerTheme.secondaryFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                    Spacer()
-                    Text("\(participants.count)")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
+                Divider()
+
+                NavigationLink {
+                    HouseholdMembersView(household: household, service: householdService)
+                } label: {
+                    HStack {
+                        Text("Manage Members")
+                            .font(ForagerTheme.secondaryFont)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+                        Spacer()
+                        Text("\(participants.count)")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
                 }
             }
+            .foragerGlassCard()
         } header: {
             Text("Members")
         }
@@ -248,7 +276,6 @@ struct HouseholdView: View {
                 .padding(.vertical, ForagerTheme.Spacing.sm)
             }
             .buttonStyle(ForagerPrimaryButtonStyle())
-            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
         }
     }
 
@@ -273,7 +300,7 @@ struct HouseholdView: View {
                     Color.clear.frame(maxWidth: .infinity)
                 }
             }
-            .padding(.vertical, ForagerTheme.Spacing.sm)
+            .foragerGlassCard()
         } header: {
             Text("Shared Data")
         }
@@ -298,19 +325,22 @@ struct HouseholdView: View {
 
     private var dangerZoneSection: some View {
         Section {
-            if isOwner {
-                Button(role: .destructive) {
-                    showDeleteConfirmation = true
-                } label: {
-                    Label("Delete Household", systemImage: "trash")
-                }
-            } else {
-                Button(role: .destructive) {
-                    showLeaveConfirmation = true
-                } label: {
-                    Label("Leave Household", systemImage: "rectangle.portrait.and.arrow.right")
+            VStack {
+                if isOwner {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Label("Delete Household", systemImage: "trash")
+                    }
+                } else {
+                    Button(role: .destructive) {
+                        showLeaveConfirmation = true
+                    } label: {
+                        Label("Leave Household", systemImage: "rectangle.portrait.and.arrow.right")
+                    }
                 }
             }
+            .foragerGlassCard()
         } header: {
             Text("Danger Zone")
         } footer: {
@@ -345,7 +375,7 @@ struct HouseholdView: View {
                 .buttonStyle(ForagerPrimaryButtonStyle())
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, ForagerTheme.Spacing.xl)
+            .foragerGlassCard()
         } footer: {
             if householdService.discoveryState == .checking {
                 Text("If you were previously in a household, your data is syncing from iCloud. You can create a new household at any time.")

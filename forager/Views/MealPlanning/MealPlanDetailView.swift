@@ -206,8 +206,8 @@ struct MealPlanDetailView: View {
                         .id(date)
                     }
                 }
-                .padding(.horizontal, ForagerTheme.Spacing.lg)
                 .padding(.vertical, ForagerTheme.Spacing.sm)
+                .frame(maxWidth: .infinity)
             }
             .background(ForagerTheme.surfacePrimary)
             .onAppear {

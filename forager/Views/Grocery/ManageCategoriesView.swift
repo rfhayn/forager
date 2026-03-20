@@ -57,6 +57,7 @@ struct ManageCategoriesView: View {
             headerSection
             categoriesListSection
         }
+        .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
         .navigationTitle("Manage Categories")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -120,14 +121,14 @@ struct ManageCategoriesView: View {
                 .font(.subheadline)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack {
                 Text("Arrange categories to match your store layout")
                     .font(.caption)
                     .foregroundStyle(ForagerTheme.textSecondary)
-                
+
                 Spacer()
-                
+
                 Button("Reset to Default") {
                     resetToDefaultOrder()
                 }
@@ -137,7 +138,7 @@ struct ManageCategoriesView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
-        .background(Color(.systemGroupedBackground))
+        .background(ForagerTheme.backgroundCanvas)
     }
     
     private var categoriesListSection: some View {
@@ -151,6 +152,8 @@ struct ManageCategoriesView: View {
                     }
                 )
                 .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
             .onMove(perform: moveCategories)
             .onDelete(perform: deleteCategories)
@@ -162,7 +165,9 @@ struct ManageCategoriesView: View {
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        .listStyle(InsetGroupedListStyle())
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas)
         .environment(\.editMode, .constant(isReordering ? .active : .inactive))
     }
     
@@ -743,8 +748,9 @@ struct CategoryRowView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
+        .foragerGlassCard()
     }
-    
+
 }
 
 #Preview {
