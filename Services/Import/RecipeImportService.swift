@@ -40,6 +40,10 @@ class RecipeImportService: ObservableObject {
     // M10.6.11: Household key for scoping templates created during import
     var householdKeyProvider: (() -> String?)?
 
+    // M9.24: Scope provider for store-aware import — determines whether
+    // new objects go to private store (owner/personal) or shared store (member)
+    var scopeProvider: ScopeProvider?
+
     // Extractors (strategy pattern — tried in priority order)
     private let extractors: [RecipeExtractor] = [
         RecipeJSONLDExtractor(),
@@ -408,13 +412,25 @@ class RecipeImportService: ObservableObject {
             try childContext.save()
             diag.info("persistAndFinish: child save=ok", category: .import_)
 
-            // M9.23: On member devices, templates/categories synced from the
-            // owner live in the shared store. New recipe/ingredients go to the
-            // private store. Cross-store relationships are forbidden, so we must
-            // resolve any shared-store template/category references into the
-            // private store before saving.
-            let privateStore = PersistenceController.shared.privateStore
-            try resolveSharedStoreReferences(privateStore: privateStore)
+            // M9.24: Determine target store based on household scope.
+            // Owner device (household in private store) → private store (zone routing via relationships)
+            // Member device (household in shared store) → shared store (shared CloudKit database)
+            // No household → private store (personal data)
+            let persistence = PersistenceController.shared
+            let targetStore: NSPersistentStore
+            if let provider = scopeProvider,
+               case .household(_, let storeID) = provider.activeScope {
+                targetStore = persistence.store(for: storeID)
+                diag.info("  target store: \(storeID) (household scope)", category: .import_)
+            } else {
+                targetStore = persistence.privateStore
+                diag.info("  target store: private (personal/no household)", category: .import_)
+            }
+
+            // M9.23→M9.24: Resolve cross-store references to the TARGET store.
+            // On owner: shared-store templates/categories → private-store copies
+            // On member: private-store templates/categories → shared-store equivalents
+            try resolveCrossStoreReferences(targetStore: targetStore)
 
             // Log pre-save state for diagnostics
             for obj in viewContext.insertedObjects {
@@ -430,7 +446,7 @@ class RecipeImportService: ObservableObject {
             }
 
             for obj in viewContext.insertedObjects {
-                viewContext.assign(obj, to: privateStore)
+                viewContext.assign(obj, to: targetStore)
             }
             // Discard ALL modifications to pre-existing objects.
             // Private-store Categories get dirtied by inverse relationships when
@@ -491,43 +507,44 @@ class RecipeImportService: ObservableObject {
         }
     }
 
-    // MARK: - M9.23: Cross-Store Reference Resolution
+    // MARK: - M9.24: Cross-Store Reference Resolution
 
-    /// On member devices, templates and categories synced from the owner live in the
-    /// shared store. New recipe/ingredient objects will be assigned to the private store.
-    /// Core Data forbids cross-store relationships, so this method re-points ALL
-    /// cross-store references on inserted objects to private-store equivalents.
-    private func resolveSharedStoreReferences(privateStore: NSPersistentStore) throws {
+    /// Resolve cross-store relationships on inserted objects to point to the target store.
+    /// On owner (target=private): shared-store templates/categories → private-store copies
+    /// On member (target=shared): private-store templates/categories → shared-store equivalents
+    /// Core Data forbids cross-store relationships — all refs must be same-store.
+    private func resolveCrossStoreReferences(targetStore: NSPersistentStore) throws {
+        let diag = DiagnosticLogger.shared
         for obj in viewContext.insertedObjects {
-            // Fix Ingredient → IngredientTemplate (shared-store template)
+            // Fix Ingredient → IngredientTemplate (wrong-store template)
             if let ingredient = obj as? Ingredient,
                let template = ingredient.ingredientTemplate,
                !template.objectID.isTemporaryID,
                let templateStore = template.objectID.persistentStore,
-               templateStore != privateStore {
-                let privateTemplate = try findOrCreatePrivateTemplate(
-                    matching: template, store: privateStore)
-                ingredient.ingredientTemplate = privateTemplate
+               templateStore != targetStore {
+                diag.debug("  cross-store fix: Ingredient→Template in \(templateStore.url?.lastPathComponent ?? "?")", category: .import_)
+                let resolved = try findOrCreateTemplate(
+                    matching: template, inStore: targetStore)
+                ingredient.ingredientTemplate = resolved
             }
 
-            // Fix IngredientTemplate → Category (shared-store category)
-            // Applies to BOTH new templates and private copies — any template
-            // whose categoryEntity points to a shared-store category.
+            // Fix IngredientTemplate → Category (wrong-store category)
             if let template = obj as? IngredientTemplate,
                let category = template.categoryEntity,
                !category.objectID.isTemporaryID,
                let catStore = category.objectID.persistentStore,
-               catStore != privateStore {
-                template.categoryEntity = resolvePrivateCategory(
-                    matching: category, store: privateStore)
+               catStore != targetStore {
+                diag.debug("  cross-store fix: Template→Category in \(catStore.url?.lastPathComponent ?? "?")", category: .import_)
+                template.categoryEntity = resolveCategory(
+                    matching: category, inStore: targetStore)
             }
         }
     }
 
-    /// Find a matching Category in the private store by name.
-    private func resolvePrivateCategory(
+    /// Find a matching Category in the target store by name.
+    private func resolveCategory(
         matching source: Category,
-        store: NSPersistentStore
+        inStore store: NSPersistentStore
     ) -> Category? {
         let request: NSFetchRequest<Category> = Category.fetchRequest()
         request.predicate = NSPredicate(
@@ -537,10 +554,10 @@ class RecipeImportService: ObservableObject {
         return (try? viewContext.fetch(request))?.first
     }
 
-    /// Find an existing template in the private store by canonical name, or create a copy.
-    private func findOrCreatePrivateTemplate(
+    /// Find an existing template in the target store by canonical name, or create a copy.
+    private func findOrCreateTemplate(
         matching source: IngredientTemplate,
-        store: NSPersistentStore
+        inStore store: NSPersistentStore
     ) throws -> IngredientTemplate {
         let request: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
         request.predicate = NSPredicate(
@@ -552,7 +569,7 @@ class RecipeImportService: ObservableObject {
             return existing
         }
 
-        // Create a copy in the private store
+        // Create a copy in the target store
         let copy = IngredientTemplate(context: viewContext)
         copy.id = UUID()
         copy.name = source.name
@@ -563,7 +580,7 @@ class RecipeImportService: ObservableObject {
         copy.updatedAt = Date()
         copy.householdKey = source.householdKey
 
-        // Resolve category into private store (avoid another cross-store ref)
+        // Resolve category into same target store
         if let sourceCat = source.categoryEntity {
             let catRequest: NSFetchRequest<Category> = Category.fetchRequest()
             catRequest.predicate = NSPredicate(

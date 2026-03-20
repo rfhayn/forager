@@ -151,6 +151,10 @@ struct foragerApp: App {
         MealPlanService.shared.configure(factory: factory)
         MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 
+        // M9.24: Wire scope provider so import assigns to correct store
+        // (shared store on member devices, private store on owner/personal)
+        importSvc.scopeProvider = sp
+
         // M8.4: CoreML warmup — triggers lazy model loading off main thread
         // Prevents first-prediction latency spike (100-500ms JIT compilation)
         DispatchQueue.global(qos: .utility).async {
