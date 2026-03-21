@@ -56,9 +56,13 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - Empty states: `ContentUnavailableView`
 - Design system: `docs/prds/complete/m15-ux-design-system.md` + `docs/mockups/forager-design-system.html`
 
-### Ingredient Parsing (M8.4)
-- 3-tier: RegexParser (≥0.9) → MLParser (≥0.8) → NLPParser (fallback, capped 0.75)
+### Ingredient Parsing (M8.4 + M10.6)
+- 3-tier local: RegexParser (≥0.9) → MLParser (≥0.8) → NLPParser (fallback, capped 0.75)
+- Optional Claude API (M10.6): `ClaudeIngredientParser` fills ~7-8% semantic gap. OFF by default.
 - `IngredientParsingService` is the public API — callers never use parsers directly
+- LLM methods: `.isLLMAvailable`, `.parseSingleWithLLM()`, `.parseBatchWithLLM()`
+- API key stored in Keychain via `LLMSettingsService`, shared across household via CloudKit (M10.6.7)
+- Settings > AI Integration: toggle, API key field, test button
 
 ## Git Workflow
 

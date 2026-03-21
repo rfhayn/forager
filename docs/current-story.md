@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 21, 2026
-**Status**: **M9.15.3 COMPLETE** | **M9.24 COMPLETE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
-**Total Progress**: ~287 hours | 89% planning accuracy
-**Current Branch**: `main`
-**Launch Path**: M9.26 -> M10.6.5 -> M9.28 -> M9.29 -> M7.7
+**Status**: **M10.6.5 COMPLETE** | **M10.6 COMPLETE** | **M9.15.3 COMPLETE** | **M9.24 COMPLETE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
+**Total Progress**: ~288 hours | 89% planning accuracy
+**Current Branch**: `feature/M10.6.5-docs-verification`
+**Launch Path**: M9.26 -> M9.28 -> M9.29 -> M7.7
 
 ---
 
@@ -15,7 +15,7 @@
 | **M9.24** | Member device import -> shared store routing | 0.5h | COMPLETE (PR #89, build 62 confirmed) |
 | **M9.15.3** | Returning user detection after reinstall | 1h | COMPLETE (build 62, 6s discovery) |
 | **M9.26** | Launch prep bug fixes (round 2) | 2-4h | READY |
-| **M10.6.5** | Claude API documentation + verification | 1-2h | READY |
+| **M10.6.5** | Claude API documentation + verification | 1-2h | COMPLETE |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M9.29** | Refine Claude/AI logo and branding | 1-3h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
