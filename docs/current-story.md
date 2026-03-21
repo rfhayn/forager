@@ -1,12 +1,88 @@
 # Current Development Story
 
-**Last Updated**: March 14, 2026
-**Status**: **M9.16 ✅ COMPLETE** | **M9.15.3 🔄 ACTIVE** | **M9.15 P1+P2 ✅ COMPLETE** | **M9.14 ✅ COMPLETE** | **M9.13 ✅ COMPLETE** | **M16 🔄 ACTIVE** (M16.1-M16.2 ✅, M16.3 PLANNED) | M10.8 ✅ **COMPLETE** | M10.3 ✅ **DEV COMPLETE** | M10.6 🔄 **ACTIVE**
-**Total Progress**: ~274 hours | 89% planning accuracy
-**Current Branch**: `feature/M9.16-grocery-list-item-service`
-**Current Milestone**: M9.16 ✅ COMPLETE — Unified GroceryListItemService
+**Last Updated**: March 21, 2026
+**Status**: **M9.27 ✅ COMPLETE** | **M9.24 🔄 ACTIVE** | **M9.15.3 🔄 ACTIVE** | **M10.6 🔄 ACTIVE** (M10.6.5 remaining)
+**Total Progress**: ~284 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.27-walkthrough-redesign`
+**Current Milestone**: M9.27 ✅ COMPLETE — First Launch Walkthrough Redesign
 **Implementation Plans**: `docs/prds/complete/plans/` — 8 detailed plans, cross-validated and externally reviewed
-**Next Priority**: M9.15.3 → M10.6.5 → M10.4 → M7.7 → M6 → M9 → M11+ (M16.3 when needed)
+**Launch Path**: M9.24 → M9.15.3 → M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7
+
+---
+
+## 🚀 **LAUNCH PATH**
+
+| Milestone | Description | Est. Hours | Status |
+|-----------|-------------|-----------|--------|
+| **M9.24** | Member device import → shared store routing | 0.5h | Built, needs merge + device test |
+| **M9.15.3** | Returning user detection after reinstall | 1h | Device testing only |
+| **M9.26** | Launch prep bug fixes (round 2) | 2-4h | 🚀 READY |
+| **M10.6.5** | Claude API documentation + verification | 1-2h | 🚀 READY |
+| **M9.27** | First launch walkthrough redesign | 3-6h | ✅ COMPLETE (~4h) |
+| **M9.28** | Remove diagnostic logging for production | 1-2h | ⏳ PLANNED |
+| **M9.29** | Refine Claude/AI logo and branding | 1-3h | ⏳ PLANNED — legal/branding review |
+| **M7.7** | App Store submission | 3-5h | ⏳ PLANNED |
+
+---
+
+## ✅ **M9.25/M9.25.1: LAUNCH PREP UI FIXES - COMPLETE**
+
+**Status**: ✅ COMPLETE (March 21, 2026)
+**Actual**: ~1 hour
+**Branch**: merged to main (PRs #86, #87)
+
+Unified visual styling across all views. Converted Settings, Household, HouseholdMembers, ManageCategories, Help from native Form/List to glass card pattern. Centered meal plan day dots and calendar strip. Styled grocery list items as boxed cards matching recipe detail. Fixed quick-add bar background.
+
+---
+
+## 🔄 **M9.24: MEMBER DEVICE IMPORT STORE ROUTING - ACTIVE**
+
+**Status**: 🔄 Built on branch, needs merge + device test
+**Branch**: `feature/M9.24-member-import-store-routing`
+
+Recipe import on member devices saves to private store (invisible to owner). Fix: scope-aware store assignment in persistAndFinish — member devices route to shared store. Generalized cross-store reference resolver to work in both directions.
+
+---
+
+## ⏳ **M9.26: LAUNCH PREP BUG FIXES (ROUND 2) - PLANNED**
+
+**Status**: ⏳ PLANNED
+**Estimated**: 2-4 hours
+
+Second round of bug fixes discovered during TestFlight testing. Scope TBD based on testing builds 59-60.
+
+---
+
+## ✅ **M9.27: FIRST LAUNCH WALKTHROUGH REDESIGN - COMPLETE**
+
+**Status**: ✅ COMPLETE (March 21, 2026)
+**Actual**: ~4 hours
+**PRD**: `docs/prds/active/m9.27-first-launch-walkthrough-redesign.md`
+**Branch**: `feature/M9.27-walkthrough-redesign`
+
+Replaced 6-step coach mark overlay + sample data with a 3-screen welcome carousel. Deleted SampleDataSeeder (~700 lines). Screen 1: Welcome with app icon. Screen 2: How It Works (Import → Plan → Shop with AI callout). Screen 3: Power Up (AI API key + Household Sharing). Coach marks retained for "Replay Onboarding" in Settings. All fonts and colors use ForagerTheme tokens.
+
+---
+
+## ⏳ **M9.28: REMOVE DIAGNOSTIC LOGGING FOR PRODUCTION - PLANNED**
+
+**Status**: ⏳ PLANNED
+**Estimated**: 1-2 hours
+
+Strip DiagnosticLogger, DebugLogService, and CloudKitLogger output that was added during M9.15-M9.23 debugging. These are invaluable for TestFlight debugging but shouldn't ship in the App Store build. Determine what to keep behind `#if DEBUG` vs remove entirely.
+
+---
+
+## ⏳ **M9.29: REFINE CLAUDE/AI LOGO AND BRANDING - PLANNED**
+
+**Status**: ⏳ PLANNED (legal/branding review needed)
+**Estimated**: 1-3 hours
+
+Review how we reference Claude and display the AI branding within the app. Concerns:
+- Using Anthropic's Claude logo may cause trademark/legal issues
+- Need to determine what's allowed under Anthropic's brand guidelines
+- Consider generic AI iconography (sparkle, etc.) vs brand-specific marks
+- Audit all AI-related UI: Settings AI section, parse buttons, toast labels
 
 ---
 

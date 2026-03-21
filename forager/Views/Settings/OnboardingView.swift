@@ -74,22 +74,18 @@ struct CoachMarkOverlay: View {
     @Binding var isActive: Bool
     @Binding var selectedTab: NavigationTab
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-    @Environment(\.managedObjectContext) private var viewContext
 
     @State private var currentStep = 0
     @State private var anchors: [String: CGRect] = [:]
     @State private var cardVisible = false
     @State private var screenHeight: CGFloat = 0
 
-    // M15.1: Updated for 5-tab navigation (removed Ingredients tab and hamburger menu steps)
+    // M9.27: Simplified for replay-only (first launch uses WelcomeWalkthroughView)
     private var steps: [CoachMarkStep] {
-        let hasSampleData = SampleDataSeeder.hasSampleData
-        return [
+        [
             CoachMarkStep(
-                title: "Welcome to forager",
-                description: hasSampleData
-                    ? "We've loaded sample data so you can explore each feature.\nTap anywhere to continue."
-                    : "Let's take a quick tour of each feature.\nTap anywhere to continue."
+                title: "Quick Tour",
+                description: "Let's walk through each section.\nTap anywhere to continue."
             ),
             CoachMarkStep(
                 tab: .lists,
@@ -99,7 +95,7 @@ struct CoachMarkOverlay: View {
             CoachMarkStep(
                 tab: .recipes,
                 title: "Recipes",
-                description: "Add recipes — forager parses ingredients automatically. Add to your grocery list with one tap."
+                description: "Import recipes from the web or create your own. Add ingredients to your grocery list with one tap."
             ),
             CoachMarkStep(
                 tab: .mealPlans,
@@ -109,13 +105,11 @@ struct CoachMarkOverlay: View {
             CoachMarkStep(
                 tab: .settings,
                 title: "Settings",
-                description: "App settings, ingredient library, and categories. Set up a household to share with family."
+                description: "Household sharing, AI integration, ingredient library, and categories."
             ),
             CoachMarkStep(
-                title: "You're Ready",
-                description: hasSampleData
-                    ? "Explore the sample data, or clear it and start fresh."
-                    : "You're all set — happy cooking!",
+                title: "That's It!",
+                description: "You're all set — happy cooking!",
                 isFinal: true
             ),
         ]
@@ -314,25 +308,13 @@ struct CoachMarkOverlay: View {
             Button {
                 completeOnboarding()
             } label: {
-                Text("Keep Exploring")
+                Text("Got It")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(ForagerTheme.accentPrimary)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-            }
-
-            // Only show "Clear Sample Data" when sample data actually exists
-            if SampleDataSeeder.hasSampleData {
-                Button {
-                    SampleDataSeeder.clearSampleData(in: viewContext)
-                    completeOnboarding()
-                } label: {
-                    Text("Clear Sample Data")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
             }
         }
         .padding(.top, 8)

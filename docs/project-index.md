@@ -1,11 +1,10 @@
 # Forager - Project Index
 
-**Last Updated**: March 14, 2026
+**Last Updated**: March 21, 2026
 **Purpose**: Central navigation hub for all project documentation
-**Current Milestone**: M9.16 ✅ **COMPLETE** | M16 🔄 **ACTIVE** (M16.1-M16.2 ✅, M16.3 planned) | M10.6 🔄 **ACTIVE** (M10.6.5 docs remaining) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M10.1 ✅ | M10.2 ✅ | M10.5 ✅ | M8.4 ✅ | M15 ✅ | M7.5 ✅
-**Current Phase**: M10.6 🔄 **ACTIVE** — Claude API Integration (near complete, M10.6.5 docs remaining)
-**Next Priority**: M9.15.3 → M10.6.5 → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
-**Execution Order**: M9.15.3 → M10.6.5 (1-2h) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Current Milestone**: M9.27 ✅ **COMPLETE** | M9.25.1 ✅ | M9.24 🔄 | M10.6 🔄 **ACTIVE** (M10.6.5 docs remaining)
+**Current Phase**: Launch Prep — M9.24-M9.29 + M7.7
+**Launch Path**: M9.24 → M9.15.3 → M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7 (~10-18h to App Store)
 
 ---
 
@@ -50,6 +49,18 @@
 ---
 
 ## 🔥 **RECENT ACTIVITY**
+
+### **March 21, 2026** - M9.27 ✅ COMPLETE — First Launch Walkthrough Redesign
+- **New**: `WelcomeWalkthroughView` — 3-screen welcome carousel (Welcome → How It Works → Power Up)
+- **Deleted**: `SampleDataSeeder.swift` (~700 lines of sample data removed)
+- **Updated**: Coach marks simplified for replay-only use, onboarding references AI + household sharing
+- **PRD**: `docs/prds/active/m9.27-first-launch-walkthrough-redesign.md`
+
+### **March 21, 2026** - M9.25/M9.25.1 ✅ COMPLETE — Launch Prep UI Fixes
+- Glass card styling unified across Settings, Household, HouseholdMembers, ManageCategories, Help
+- Grocery list items styled as boxed cards matching recipe detail
+- Meal plan day dots and calendar strip centered
+- Quick-add bar background fixed
 
 ### **March 14, 2026** - M9.16 ✅ COMPLETE — Unified GroceryListItemService & Ingredient Selection
 - **New**: `GroceryListItemService` — unified pipeline consolidating 6 independent GroceryListItem creation paths

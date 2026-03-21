@@ -620,6 +620,7 @@ struct SettingsView: View {
                         Spacer()
                     }
                 }
+                .buttonStyle(.borderless)
 
                 Divider()
 
@@ -638,6 +639,7 @@ struct SettingsView: View {
                             .font(.caption)
                     }
                 }
+                .buttonStyle(.borderless)
             }
             .foragerGlassCard()
         } header: {
