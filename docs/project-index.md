@@ -1,8 +1,8 @@
 # Forager - Project Index
 
 **Last Updated**: March 21, 2026
-**Current Milestone**: M9.27 COMPLETE | M9.24 ACTIVE | M10.6 ACTIVE
-**Launch Path**: M9.24 → M9.15.3 → M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7 (~10-18h to App Store)
+**Current Milestone**: M9.15.3 ✅ | M9.24 ✅ | M9.27 ✅ | M17.1 ✅
+**Launch Path**: M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7 (~8-15h to App Store)
 
 ---
 
@@ -16,6 +16,11 @@
 ---
 
 ## Recent Activity
+
+### March 21, 2026 - M9.15.3 ✅ COMPLETE — Returning User Detection
+- Household auto-discovers in ~6 seconds after delete+reinstall (attempt 3/30)
+- CKShare membership validated, 2 participants restored
+- All M9.15 phases now complete (schema v9 + create-empty-then-copy + returning user detection)
 
 ### March 21, 2026 - M9.27 COMPLETE — First Launch Walkthrough Redesign
 - New `WelcomeWalkthroughView` (3-screen carousel), deleted `SampleDataSeeder.swift` (~700 lines)

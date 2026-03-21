@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 21, 2026
-**Status**: **M9.24 COMPLETE** | **M9.15.3 ACTIVE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
-**Total Progress**: ~286 hours | 89% planning accuracy
+**Status**: **M9.15.3 COMPLETE** | **M9.24 COMPLETE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
+**Total Progress**: ~287 hours | 89% planning accuracy
 **Current Branch**: `main`
-**Launch Path**: M9.15.3 -> M9.26 -> M10.6.5 -> M9.28 -> M9.29 -> M7.7
+**Launch Path**: M9.26 -> M10.6.5 -> M9.28 -> M9.29 -> M7.7
 
 ---
 
@@ -13,7 +13,7 @@
 | Milestone | Description | Est. Hours | Status |
 |-----------|-------------|-----------|--------|
 | **M9.24** | Member device import -> shared store routing | 0.5h | COMPLETE (PR #89, build 62 confirmed) |
-| **M9.15.3** | Returning user detection after reinstall | 1h | Device testing only |
+| **M9.15.3** | Returning user detection after reinstall | 1h | COMPLETE (build 62, 6s discovery) |
 | **M9.26** | Launch prep bug fixes (round 2) | 2-4h | READY |
 | **M10.6.5** | Claude API documentation + verification | 1-2h | READY |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
@@ -31,12 +31,12 @@ Scope-aware store assignment in persistAndFinish. Member devices route to shared
 
 ---
 
-## ACTIVE: M9.15.3 — Returning User Detection After Reinstall
+## COMPLETE: M9.15.3 — Returning User Detection After Reinstall
 
-**Status**: Device testing only
-**Parent**: M9.15 (Household Creation Architecture Fix)
+**Status**: COMPLETE (March 21, 2026, build 62)
+**Actual**: ~1h (code) + device testing
 
-Phase 3 of M9.15: auto-discover household on reinstall. Phases 1-2 complete (schema v9 promoting Ingredient/GroceryListItem to HouseholdScoped, household creation rewritten to create empty -> share -> copy -> delete pattern).
+Household auto-discovers in ~6 seconds after reinstall (attempt 3/30 of polling loop). CKShare membership confirmed, 2 participants restored. Owner device correctly finds Household in private store with valid CKShare. All M9.15 phases now complete (P1: schema v9, P2: create-empty-then-copy, P3: returning user detection).
 
 ---
 
