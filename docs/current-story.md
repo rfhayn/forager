@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 21, 2026
-**Status**: **M9.24 ACTIVE** | **M9.15.3 ACTIVE** | **M9.27 COMPLETE**
-**Total Progress**: ~284 hours | 89% planning accuracy
+**Status**: **M9.24 COMPLETE** | **M9.15.3 ACTIVE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
+**Total Progress**: ~286 hours | 89% planning accuracy
 **Current Branch**: `main`
-**Launch Path**: M9.24 -> M9.15.3 -> M9.26 -> M10.6.5 -> M9.28 -> M9.29 -> M7.7
+**Launch Path**: M9.15.3 -> M9.26 -> M10.6.5 -> M9.28 -> M9.29 -> M7.7
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Milestone | Description | Est. Hours | Status |
 |-----------|-------------|-----------|--------|
-| **M9.24** | Member device import -> shared store routing | 0.5h | Built, needs merge + device test |
+| **M9.24** | Member device import -> shared store routing | 0.5h | COMPLETE (PR #89, build 62 confirmed) |
 | **M9.15.3** | Returning user detection after reinstall | 1h | Device testing only |
 | **M9.26** | Launch prep bug fixes (round 2) | 2-4h | READY |
 | **M10.6.5** | Claude API documentation + verification | 1-2h | READY |
@@ -22,12 +22,12 @@
 
 ---
 
-## ACTIVE: M9.24 — Member Device Import Store Routing
+## COMPLETE: M9.24 — Member Device Import Store Routing
 
-**Status**: Built on branch, needs merge + device test
-**Branch**: `feature/M9.24-member-import-store-routing`
+**Status**: COMPLETE (March 21, 2026, PR #89, build 62)
+**Actual**: 0.5h
 
-Recipe import on member devices saves to private store (invisible to owner). Fix: scope-aware store assignment in persistAndFinish — member devices route to shared store. Generalized cross-store reference resolver to work in both directions.
+Scope-aware store assignment in persistAndFinish. Member devices route to shared store, owner devices to private store. Confirmed working via mary.log (target store: shared, parent save=ok, recipe visible to owner).
 
 ---
 
