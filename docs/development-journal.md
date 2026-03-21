@@ -6,6 +6,82 @@
 
 ---
 
+## Session 89 — March 21, 2026
+**Milestone**: M9.24, M9.25, M9.25.1, M9.27 — Launch prep sprint
+**Focus**: Member import store routing, UI unification, walkthrough redesign
+**Branch**: `feature/M9.24-member-import-store-routing`, `feature/M9.25-launch-prep-bug-fixes`, `feature/M9.27-walkthrough-redesign`
+
+### What Happened
+
+Massive launch prep session covering 4 milestones:
+
+**M9.24** — Identified why recipe imports on member devices don't sync to the owner. `persistAndFinish` hardcodes `viewContext.assign(obj, to: privateStore)` — correct for owner (zone routing via relationships) but wrong for members (private store = personal CloudKit database). Fix: scope-aware store assignment using `HouseholdScopeProvider.activeScope`. Built on branch, pending merge + device test.
+
+**M9.25/M9.25.1** — Unified visual styling across all views. Converted Settings, Household, HouseholdMembers, ManageCategories, Help from native Form/List to glass card pattern. Styled grocery list items as boxed cards matching recipe detail. Centered meal plan day dots and calendar strip. Fixed quick-add bar from `.regularMaterial` to `ForagerTheme.surfacePrimary`. Two builds shipped (59, 60).
+
+**M9.27** — Redesigned first-launch onboarding. Researched mobile onboarding patterns (Paprika, AnyList, Mealime, Apple HIG). Replaced 6-step coach mark overlay + 12 sample recipes with a 3-screen welcome carousel: Welcome → How It Works (with AI import callout) → Power Up (API key + Household). Deleted SampleDataSeeder (~700 lines). Coach marks retained for Settings replay. Built HTML mockup first, iterated on fonts, colors, and icon.
+
+### Key Decisions
+
+- **Remove sample data entirely**: Research showed 15-25% higher Day 1 retention but higher Day 7 churn. The ~700 lines also violated ADR 014 (no factory) and created household-scoping edge cases. Empty states with action buttons are sufficient.
+- **AI parsing on Screen 2 (workflow), not Screen 3 (optional)**: User correctly identified that AI import is the core workflow, not an afterthought. Screen 2 now shows "Paste a URL and AI parses every ingredient automatically."
+- **Lowercase "forager"**: Brand consistency — the app name is lowercase.
+- **ForagerTheme colors throughout**: Initial mockup used bright Material Design greens. Updated to forest/sage palette matching the app's warm earth tones.
+
+### AI Tooling Observations
+
+- Parallel agents for glass card conversion (7 views) while working on centering fixes — significant time savings
+- HTML mockup → SwiftUI implementation loop worked well for design iteration
+- Onboarding research agent provided comprehensive competitive analysis that directly shaped the PRD
+- Simulator CLI automation (install/launch/appearance) enabled rapid testing without Xcode
+
+### What's Next
+
+Launch path: M9.24 (merge + device test) → M9.15.3 → M9.26 (bug fixes TBD) → M10.6.5 → M9.28 (strip diagnostic logging) → M9.29 (Claude/AI branding) → M7.7 (App Store)
+
+---
+
+## Session 88 — March 19, 2026
+**Milestone**: M9.23 — Fix recipe import save failure on household member devices
+**Focus**: Five-build investigation into cross-store relationship validation errors during recipe import
+**Branch**: main (hotfix commits directly)
+
+### What Happened
+
+Builds 53-57 all failed recipe import on Mary's phone (household member) with "Save Failed" — NSCocoaErrorDomain 134040 (cross-store relationships). Each build peeled back one layer of the onion:
+
+- **Build 53**: Import modified shared-store templates (usageCount++), viewContext.save() tried to write to shared store. Fix: assign inserted objects to private store, refresh shared-store updated objects.
+- **Build 54**: Ingredients assigned to private store still had `ingredientTemplate` pointing to shared-store templates. Fix: added `resolveSharedStoreReferences()` to find/create private-store template copies.
+- **Build 55**: New IngredientTemplates had `categoryEntity` pointing to shared-store Categories. Fix: extended resolver to handle Template→Category cross-store refs.
+- **Build 56**: No diagnostic visibility — DebugLogService requires manual enable and is in-memory only. Fix: switched all import logging to DiagnosticLogger (file-based, enabled by default).
+- **Build 57**: Logs revealed the real root cause. ALL inserted objects were correctly in `forager.sqlite`, but **private-store Categories were dirtied by inverse relationships** when `template.categoryEntity` was set. Core Data validates ALL relationships on dirty objects during save — including pre-existing cross-store template refs on those Categories.
+
+**Build 58** (the fix): Changed the refresh loop from "refresh shared-store objects only" to "refresh ALL updated non-inserted objects." This discards the inverse-relationship dirtying on Categories, preventing Core Data from validating their pre-existing cross-store refs.
+
+### Key Decisions
+
+- **Refresh everything, not just shared-store objects**: The insight is that inverse relationships dirty objects you didn't touch. A private-store Category can have pre-existing refs to shared-store templates (from CloudKit sync), and setting `template.categoryEntity` on a *different* template dirties the Category's inverse set. The only safe approach is to refresh all pre-existing objects.
+- **DiagnosticLogger over DebugLogService for import**: DebugLogService defaults to disabled and is in-memory — useless for TestFlight debugging. DiagnosticLogger writes to disk, enabled by default, and survives app restarts. Two builds were wasted because of invisible logging.
+
+### Learning
+
+- **Inverse relationships are invisible side effects**: Setting `a.relationship = b` also dirties `b` via its inverse. Core Data's save validation then walks ALL of `b`'s relationships — including ones from completely unrelated code paths. This is the subtlest form of the cross-store problem.
+- **Diagnostic logging must be always-on for TestFlight**: Two builds were wasted because DebugLogService required manual user action to enable. The file-based DiagnosticLogger should be the default for any code path that fails on remote devices.
+- **Owner vs member device asymmetry strikes again**: Recipe import works perfectly on the owner's phone because the private store has no shared-store templates. The bug only manifests on member devices where CloudKit sync populates both stores.
+
+### AI Tooling Observations
+
+- Context ran out during the investigation — the 5-build debugging cycle consumed the full context window. The conversation summary preserved enough detail to continue seamlessly.
+- The archive skill with API key auth flags (added this session) eliminated the manual Xcode Organizer upload step — full CLI automation from build to TestFlight distribution.
+
+### What's Next
+
+- Verify build 58 on Mary's phone — recipe import should save successfully
+- If confirmed working, consider logging this as a Learning Note (7+ insights on cross-store topics)
+- Resume M9.16 (GroceryListItemService) work from the plan
+
+---
+
 ## Session 87 — March 16, 2026
 **Milestone**: M9.21 — Fix CloudKit zone assignment via relationship instead of shared store
 **Focus**: Third attempt at making copied household data visible to members

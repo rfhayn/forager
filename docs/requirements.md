@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: March 3, 2026
-**Version**: 7.1
-**Current Milestone**: M10.6 🔄 ACTIVE (M10.6.1-M10.6.4 + M10.6.6-M10.6.10 ✅) | M10.8 ✅ COMPLETE | M10.3 ✅ DEV COMPLETE | M8.4.1 ✅ | M15 ✅
-**Execution Order**: M10.6 (remaining: M10.6.5 docs) → M10.4 → M7.7 (3-5h) → M6 (20-30h) → M9 (~120h) → M11+
+**Last Updated**: March 21, 2026
+**Version**: 7.2
+**Current Milestone**: M9.27 ✅ COMPLETE | M9.25.1 ✅ | M9.24 🔄 | M10.6 🔄 (M10.6.5 remaining)
+**Launch Path**: M9.24 → M9.15.3 → M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7
 
 ---
 

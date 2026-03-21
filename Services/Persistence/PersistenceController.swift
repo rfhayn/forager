@@ -442,9 +442,6 @@ final class PersistenceController: ObservableObject {
                 // M9.12: Ensure "Uncategorized" always exists (survives leave-household)
                 try DefaultSeeder.ensureUncategorizedExists(in: context)
 
-                // M7.6.3: Seed sample data for onboarding (after categories exist)
-                SampleDataSeeder.seedSampleDataIfNeeded(in: context)
-
                 // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
                 Self.migrateSourceURLTagsIfNeeded(in: context)
 

@@ -79,8 +79,9 @@ struct foragerApp: App {
     private let scopeProvider: HouseholdScopeProvider
     private let objectFactory: ManagedObjectFactory
 
-    // Coach mark onboarding
+    // M9.27: Onboarding — welcome carousel for first launch, coach marks for replay
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var showWelcome = false
     @State private var showCoachMarks = false
     @State private var selectedTab: NavigationTab = .lists
 
@@ -230,13 +231,17 @@ struct foragerApp: App {
                         }
                     }
                     .onAppear {
+                        // M9.27: Show welcome carousel on first launch
                         if !hasCompletedOnboarding {
-                            showCoachMarks = true
+                            showWelcome = true
                         }
                     }
+                    .fullScreenCover(isPresented: $showWelcome) {
+                        WelcomeWalkthroughView()
+                    }
                     .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
-                        hasCompletedOnboarding = false
-                        showCoachMarks = true
+                        // M9.27: Replay shows the welcome carousel
+                        showWelcome = true
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .cloudKitShareAccepted)) { _ in
                         #if DEBUG
