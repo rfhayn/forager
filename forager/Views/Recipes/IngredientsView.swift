@@ -352,7 +352,7 @@ struct IngredientsView: View {
                     Button {
                         Task { await batchLLMReparseTemplates() }
                     } label: {
-                        ClaudeParseLabel()
+                        AIParseLabel()
                             .font(ForagerTheme.footnoteFont)
                     }
                 }

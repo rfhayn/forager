@@ -2,9 +2,9 @@
 
 **Last Updated**: March 21, 2026
 **For Milestone**: Launch Path
-**Status**: **M9.15.3 ✅** | **M9.24 ✅** | **M9.27 ✅** | **M17.1 ✅** | M9.26 🚀 | M10.6.5 🚀 | M9.28-M9.29 ⏳ | M7.7 ⏳
+**Status**: **M9.29 ✅** | **M10.6.5 ✅** | **M9.15.3 ✅** | **M9.24 ✅** | **M9.27 ✅** | **M17.1 ✅** | M9.26 🚀 | M9.28 ⏳ | M7.7 ⏳
 
-**Launch Path**: M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7 (~8-15h to App Store)
+**Launch Path**: M9.26 → M9.28 → M7.7 (~6-11h to App Store)
 
 ---
 
