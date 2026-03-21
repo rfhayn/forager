@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 21, 2026
-**Status**: **M10.6.5 COMPLETE** | **M10.6 COMPLETE** | **M9.15.3 COMPLETE** | **M9.24 COMPLETE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
-**Total Progress**: ~288 hours | 89% planning accuracy
-**Current Branch**: `feature/M10.6.5-docs-verification`
-**Launch Path**: M9.26 -> M9.28 -> M9.29 -> M7.7
+**Status**: **M9.29 COMPLETE** | **M10.6.5 COMPLETE** | **M9.15.3 COMPLETE** | **M9.24 COMPLETE** | **M9.27 COMPLETE** | **M17.1 COMPLETE**
+**Total Progress**: ~289 hours | 89% planning accuracy
+**Current Branch**: `feature/M9.29-ai-branding-cleanup`
+**Launch Path**: M9.26 -> M9.28 -> M7.7
 
 ---
 
@@ -17,7 +17,7 @@
 | **M9.26** | Launch prep bug fixes (round 2) | 2-4h | READY |
 | **M10.6.5** | Claude API documentation + verification | 1-2h | COMPLETE |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
-| **M9.29** | Refine Claude/AI logo and branding | 1-3h | PLANNED |
+| **M9.29** | Refine Claude/AI logo and branding | 1-3h | COMPLETE (~0.5h) |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
 ---
@@ -52,9 +52,12 @@ Household auto-discovers in ~6 seconds after reinstall (attempt 3/30 of polling 
 
 ---
 
-## PLANNED: M9.29 — Refine Claude/AI Logo and Branding
+## COMPLETE: M9.29 — Refine Claude/AI Logo and Branding
 
-**Estimated**: 1-3 hours (legal/branding review needed). Audit AI-related UI for trademark/branding compliance with Anthropic guidelines.
+**Status**: COMPLETE (March 21, 2026)
+**Actual**: ~0.5h
+
+Removed Claude logo PNGs from asset catalog. Renamed ClaudeParseLabel → AIParseLabel, ClaudeLogo → AISparkleIcon across 13 call sites in 9 files. Replaced with `sparkles` SF Symbol. Updated Settings text to remove "Claude" and "Anthropic" from user-facing strings. Internal ClaudeIngredientParser class name kept (accurately describes API).
 
 ---
 

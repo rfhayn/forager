@@ -412,7 +412,7 @@ struct EditRecipeView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            ClaudeParseLabel()
+                            AIParseLabel()
                                 .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(formData.ingredients.isEmpty)
@@ -549,7 +549,7 @@ struct EditRecipeView: View {
                 Button {
                     Task { await singleLLMParse(ingredient: ingredient) }
                 } label: {
-                    ClaudeParseLabel()
+                    AIParseLabel()
                 }
             }
             Button(role: .destructive) {

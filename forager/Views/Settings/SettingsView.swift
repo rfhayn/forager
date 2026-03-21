@@ -57,7 +57,7 @@ struct SettingsView: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-            // M10.6: AI Integration (optional Claude API)
+            // M10.6: AI Integration (optional LLM API)
             aiImportSection
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
@@ -296,17 +296,17 @@ struct SettingsView: View {
                 .alert("AI for Ingredients", isPresented: $showingAIInfo) {
                     Button("OK", role: .cancel) { }
                 } message: {
-                    Text("Uses Claude AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an Anthropic API key. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain on your device.\n\nThe app works fully without this — it's an optional enhancement.")
+                    Text("Uses AI to parse complex ingredient text that the built-in parser can't handle — things like \"juice of 2 lemons\" or \"salt and pepper to taste.\"\n\nRequires an API key from your AI provider. Your ingredient text is sent to the API for parsing. Estimated cost is ~$0.0005 per recipe. Your key is stored securely in iOS Keychain on your device.\n\nThe app works fully without this — it's an optional enhancement.")
                 }
 
                 if llmSettings.isEnabled {
                     Divider()
 
-                    // Provider (disabled — Claude only in M10.6)
+                    // Provider
                     HStack {
                         Text("Provider")
                         Spacer()
-                        Text("Claude (API Key)")
+                        Text("AI (API Key)")
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
 

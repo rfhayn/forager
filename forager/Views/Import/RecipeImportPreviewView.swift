@@ -598,7 +598,7 @@ struct RecipeImportPreviewView: View {
                         Button {
                             Task { await batchLLMParse() }
                         } label: {
-                            ClaudeParseLabel()
+                            AIParseLabel()
                                 .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(draft.ingredients.value.isEmpty)
@@ -690,7 +690,7 @@ struct RecipeImportPreviewView: View {
                 Button {
                     Task { await singleLLMParse(index: index) }
                 } label: {
-                    ClaudeParseLabel()
+                    AIParseLabel()
                 }
             }
         }

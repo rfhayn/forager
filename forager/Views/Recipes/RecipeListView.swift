@@ -1498,7 +1498,7 @@ struct RecipeDetailView: View {
                         Button {
                             Task { await batchLLMReparse() }
                         } label: {
-                            ClaudeParseLabel()
+                            AIParseLabel()
                                 .font(ForagerTheme.secondaryFont)
                         }
                     }

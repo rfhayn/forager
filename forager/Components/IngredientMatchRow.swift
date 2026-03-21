@@ -178,7 +178,7 @@ struct IngredientMatchRow: View {
                 .lineLimit(1)
 
             if result.wasAIParsed {
-                ClaudeLogo(size: 12)
+                AISparkleIcon(size: 12)
             }
         }
     }
