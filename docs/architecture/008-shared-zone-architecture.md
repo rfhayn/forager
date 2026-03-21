@@ -2,8 +2,8 @@
 
 **Document Type**: Architecture Decision & Technical Framework
 **Created**: December 21, 2025
-**Last Updated**: March 14, 2026
-**Status**: ✅ IMPLEMENTED - M9.19 Updated (cross-store relationship fix + stamp-in-place pattern)
+**Last Updated**: March 21, 2026
+**Status**: ✅ IMPLEMENTED - M9.24 Updated (owner/member store asymmetry + scope-aware assignment)
 **Related Learning Notes**:
 - [25-m7-architecture-pivot-ckshare-vs-shared-zone.md](../learning-notes/25-m7-architecture-pivot-ckshare-vs-shared-zone.md)
 - [26-m7.2.2-public-link-sharing.md](../learning-notes/26-m7.2.2-public-link-sharing.md)
@@ -462,6 +462,36 @@ per ADR 013 — the relationship is redundant for queries. (3) Not all creation 
 set the relationship (`IngredientTemplateService.findOrCreateTemplate` only sets
 `householdKey`). (4) The relationship creates a cross-store link when Household migrates
 stores after `container.share()`.
+
+#### M9.21 Update: Relationship Restored for Owner Zone Routing
+
+M9.21 discovered that `new.household = household` IS safe and REQUIRED at copy time
+(step 4 of create-empty-then-copy) because both the copies and the Household are in
+the same private store at that point. The mirroring delegate uses Core Data relationships
+(not string attributes) to determine which shared zone a CKRecord belongs to. Without
+the relationship, copies go to the default private zone — invisible to members. The
+`householdKey` string is still needed for fetch predicates (ADR 013). Different concerns,
+both required.
+
+#### M9.24 Update: Owner vs Member Store Asymmetry
+
+> **⚠️ M9.24 CRITICAL**: The dual-store model is **asymmetric** between owner and member.
+
+**Owner device** (`container.share()` was called here):
+- Private store (`forager.sqlite`) holds BOTH personal data AND the shared zone data
+- `container.share()` created a shared zone within the private CloudKit database
+- Core Data relationships route CKRecords to the shared zone
+- New household-scoped objects → assign to **private store** (correct)
+
+**Member device** (accepted a share, never called `container.share()`):
+- Shared store (`forager_shared.sqlite`) mirrors the shared CloudKit database
+- Private store (`forager.sqlite`) mirrors the member's personal CloudKit database
+- New household-scoped objects → assign to **shared store** (correct)
+
+**Rule**: Never hardcode store assignment. Use `HouseholdScopeProvider.activeScope`
+which returns `.household(_, .private)` on owner devices and `.household(_, .shared)`
+on member devices. `ManagedObjectFactory.make()` and `RecipeImportService.persistAndFinish`
+both use this pattern.
 
 ### Key Components Built
 

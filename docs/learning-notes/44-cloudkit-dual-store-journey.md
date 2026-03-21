@@ -1,7 +1,7 @@
 # Learning Note 44: The CloudKit Dual-Store Journey
 
-**Date**: March 14, 2026
-**Milestones**: M7 → M7.6 → M9.12 → M9.13 → M9.14 → M9.15 → M9.15.3 → M9.18 → M9.19
+**Date**: March 14, 2026 (updated March 21, 2026)
+**Milestones**: M7 → M7.6 → M9.12 → M9.13 → M9.14 → M9.15 → M9.15.3 → M9.18 → M9.19 → M9.20 → M9.21 → M9.23 → M9.24
 **Status**: Living document — updated as CloudKit lessons continue
 
 ---
@@ -144,6 +144,30 @@ The fix was removing ten lines of code: every `new.household = household` in the
 
 ---
 
+### Act 10: Owner vs. Member Asymmetry (M9.20 - M9.24, March 2026)
+
+With the owner's data finally syncing to CloudKit (M9.19), a new problem appeared: the owner's wife joined the household, could see the owner's recipes, but when she imported a recipe herself, the owner couldn't see it.
+
+Three sessions (M9.20, M9.21, M9.23), each with a locally logical fix that was globally wrong:
+
+**M9.20**: Diagnosed "data not in shared zone" → added `viewContext.assign(entity, to: sharedStore)` to the copy function. Wrong: on the owner's phone, the shared store mirrors the shared CloudKit *database* (data shared BY OTHERS with the owner), not the owner's own shared data. Owner's shared zone lives in the private CloudKit database.
+
+**M9.21**: Realized the store asymmetry. Owner's data belongs in private store — `container.share()` creates a shared zone *within* the private database, and Core Data relationships route CKRecords there. Restored `new.household = household` (safe at copy time, both in private store). This fixed the owner's data syncing to members.
+
+**M9.23**: Member imports a recipe — save fails with error 134040. Five builds (53-58) peeling the onion: cross-store template refs, cross-store category refs, and finally inverse-relationship dirtying. Fixed by refreshing ALL updated non-inserted objects before save.
+
+**M9.24**: The save now succeeds on the member's phone, but the recipe is invisible to the owner. Root cause: `persistAndFinish` hardcodes `viewContext.assign(obj, to: privateStore)`. On the owner's phone, this is correct (zone routing via relationships handles the rest). On the member's phone, the private store mirrors their personal CloudKit database — invisible to everyone else. Member's imported recipes need to go to `forager_shared.sqlite` (shared store → shared CloudKit database → visible to all participants).
+
+**The fix**: Scope-aware store assignment. `HouseholdScopeProvider.activeScope` already distinguishes:
+- Owner (Household in `forager.sqlite`): `.household(_, .private)` → assign to private store
+- Member (Household in `forager_shared.sqlite`): `.household(_, .shared)` → assign to shared store
+
+`ManagedObjectFactory.make()` used this pattern since M7.2.3. The import pipeline just bypassed it with a hardcoded `privateStore`.
+
+**The lesson**: The dual-store model is fundamentally asymmetric. On the owner's phone, the private store holds BOTH personal data AND the owner's shared zone data. On the member's phone, shared data lives exclusively in the shared store. Any code that hardcodes a store assignment is wrong for one side.
+
+---
+
 ## The Pattern
 
 Every CloudKit bug in Forager follows the same pattern: **a single-store assumption surviving into a dual-store world**.
@@ -153,6 +177,8 @@ Every CloudKit bug in Forager follows the same pattern: **a single-store assumpt
 - "Is it in the shared store?" → wrong question when migration is asynchronous
 - "No CKShare found" → doesn't mean ghost when the entity hasn't migrated yet
 - `viewContext.save()` after cross-store assignment → silent rollback, no error
+- `assign(obj, to: privateStore)` on member device → data in personal CloudKit, invisible to owner
+- Inverse relationships dirty objects you didn't touch → triggers cross-store validation on unrelated refs
 
 The pre-M7 codebase had none of these problems because there was only one store. M7 introduced the dual-store architecture but couldn't retroactively make every line of code store-aware. Each subsequent milestone exposed another assumption.
 
@@ -174,6 +200,12 @@ The pre-M7 codebase had none of these problems because there was only one store.
 
 7. **Test with delete+reinstall, not just force-quit.** Local persistence masks CloudKit export failures. The only way to verify data actually uploaded is to destroy the local copy and see if it comes back.
 
+8. **Never hardcode store assignment.** Use `HouseholdScopeProvider.activeScope` to resolve the target store. Owner and member devices route to different stores for the same household data.
+
+9. **The dual-store model is asymmetric.** On the owner's phone, the private store holds both personal AND shared-zone data. On the member's phone, shared data lives exclusively in `forager_shared.sqlite`. Code that assumes "private store = safe for everyone" is wrong for members.
+
+10. **Inverse relationships are invisible side effects.** Setting `a.relationship = b` dirties `b` via its inverse. Core Data's save validation then walks ALL of `b`'s relationships — including unrelated cross-store refs that have nothing to do with your change. Refresh all pre-existing objects before save.
+
 ---
 
 ## The Numbers
@@ -183,10 +215,13 @@ The pre-M7 codebase had none of these problems because there was only one store.
 | Original M7 estimate | 27-37 hours |
 | Actual M7 time | 60+ hours |
 | Time wasted on wrong approaches | ~12 hours |
-| CloudKit-related bugfix milestones after M7 | 7 (M9.12, M9.13, M9.14, M9.15, M9.15.3, M9.18, M9.19) |
+| CloudKit-related bugfix milestones after M7 | 12 (M9.12-M9.15.3, M9.17-M9.24) |
+| TestFlight builds for member import alone (M9.23-M9.24) | 6 (builds 53-58, 62) |
 | TestFlight builds for M9.15.3 alone | 5 (builds 37-41) |
 | Lines of code that caused permanent data loss | 10 (`new.household = household` × 10 entity types) |
+| Lines of code that caused member invisibility | 1 (`viewContext.assign(obj, to: privateStore)`) |
 | Time to find root cause of data loss (M9.19) | ~3 hours across 2 sessions |
+| Sessions to understand owner vs member asymmetry | 5 (M9.19-M9.24) |
 | ADRs created for CloudKit decisions | 4 (008, 009, 013, 014) |
 | Schema versions for CloudKit changes | 4 (v6, v7, v8, v9) |
 

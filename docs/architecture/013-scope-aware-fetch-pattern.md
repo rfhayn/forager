@@ -97,15 +97,41 @@ This is implemented in `HouseholdService.cleanOrphanedHouseholdData()`.
 
 ---
 
+### M9.24 Extension: Scope-Aware Store Assignment
+
+ADR 013 originally addressed **fetches** (read path). M9.24 extends the same principle to
+**store assignment** (write path): never hardcode which persistent store objects are assigned to.
+
+```swift
+// ❌ WRONG — hardcoded store, breaks on member devices
+viewContext.assign(obj, to: privateStore)
+
+// ✅ CORRECT — scope-aware, works for owner AND member
+let targetStore: NSPersistentStore
+if case .household(_, let storeID) = scopeProvider.activeScope {
+    targetStore = persistence.store(for: storeID)
+} else {
+    targetStore = persistence.privateStore
+}
+viewContext.assign(obj, to: targetStore)
+```
+
+**Why**: On the owner's phone, the private store is correct (zone routing via relationships).
+On a member's phone, the shared store is correct (shared CloudKit database). The scope
+provider already knows which device role we're on — use it.
+
+---
+
 ## Compliance Checklist
 
-When creating or modifying a service that fetches household-scoped entities:
+When creating or modifying a service that fetches or creates household-scoped entities:
 
 - [ ] Does every `fetchRequest()` include a `householdKey` predicate?
 - [ ] Is `householdKey` passed in (not assumed from global state)?
 - [ ] Does the `replaceExistingRecipe`-style overwrite validate store accessibility?
 - [ ] Before `container.share()`, is `cleanOrphanedHouseholdData()` called?
 - [ ] Are all household-scoped entity creations using `ManagedObjectFactory`? (ADR 014)
+- [ ] Is store assignment resolved via `HouseholdScopeProvider`, not hardcoded? (M9.24)
 
 Add this to the `/forager-core-data-audit` checklist for any entity with `householdKey`.
 
