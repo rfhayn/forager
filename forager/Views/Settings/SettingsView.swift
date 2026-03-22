@@ -326,6 +326,7 @@ struct SettingsView: View {
                                 clearAPIKey()
                                 apiKeyInput = ""
                             }
+                            .buttonStyle(.borderless)
                             .foregroundStyle(.red)
                             .font(.caption)
                         }
@@ -356,6 +357,7 @@ struct SettingsView: View {
                             Label("Get API Key", systemImage: "arrow.up.right.square")
                                 .font(.caption)
                         }
+                        .buttonStyle(.borderless)
                         Spacer()
                         Button {
                             Task { await llmSettings.testConnection() }
@@ -368,6 +370,7 @@ struct SettingsView: View {
                                     .font(.caption)
                             }
                         }
+                        .buttonStyle(.borderless)
                         .disabled(!llmSettings.hasAPIKey || llmSettings.isTestingConnection)
                     }
 
