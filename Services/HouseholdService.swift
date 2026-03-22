@@ -36,6 +36,8 @@ enum HouseholdError: LocalizedError {
     case alreadyInHousehold
     case sharedStoreTimeout
     case copyFailed(String)
+    case memberCapReached(Int)    // M9.30: Household at maximum capacity
+    case invitationExpired        // M9.30: Invitation older than 24 hours
 
     var errorDescription: String? {
         switch self {
@@ -77,6 +79,10 @@ enum HouseholdError: LocalizedError {
             return "iCloud took too long to set up sharing. Please try again."
         case .copyFailed(let reason):
             return "Failed to move data to household: \(reason)"
+        case .memberCapReached(let max):
+            return "Household has reached the maximum of \(max) members"
+        case .invitationExpired:
+            return "This invitation has expired. Ask the household owner for a new one."
         }
     }
 }
@@ -335,6 +341,10 @@ class HouseholdService: ObservableObject {
                         let participantCount = await getParticipantCount(for: household)
                         CloudKitLogger.debug("Participants: \(participantCount) (could not init departure tracking)")
                     }
+
+                    // M9.30: Clean expired invitations and auto-revert public permission
+                    cleanExpiredInvitations(household: household)
+                    await revertPublicPermissionIfNeeded(household: household)
 
                     // M7.2.2: Check for member departures via CKShare polling (owner-only)
                     await checkForMemberDepartures()
@@ -2364,6 +2374,17 @@ class HouseholdService: ObservableObject {
         // Get live share from CloudKit
         let share = try await getShare(for: household)
 
+        // M9.30: Member cap — check accepted + pending < 10
+        let acceptedCount = share.participants.count
+        let pendingCount = household.memberArray.filter { $0.isPending && !$0.isExpired }.count
+        let maxMembers = 10
+        guard acceptedCount + pendingCount < maxMembers else {
+            throw HouseholdError.memberCapReached(maxMembers)
+        }
+
+        // M9.30: Clean expired invitations before generating new URL
+        cleanExpiredInvitations(household: household)
+
         #if DEBUG
         print("📝 Creating shareable invitation URL...")
         print("   Current participants: \(share.participants.count)")
@@ -2389,6 +2410,10 @@ class HouseholdService: ObservableObject {
             #endif
         }
 
+        // M9.30: Track when invite was created for 24-hour expiration
+        household.lastInviteDate = Date()
+        try viewContext.save()
+
         // Persist share metadata and permission changes
         let persistenceController = PersistenceController.shared
         let privateStore = persistenceController.privateStore
@@ -2411,6 +2436,118 @@ class HouseholdService: ObservableObject {
         #endif
 
         return invitationURL
+    }
+
+    // MARK: - M9.30: Invitation Security
+
+    /// Revert publicPermission to .none after a member accepts or after 24h expiry.
+    /// OWNER-ONLY — only the CKShare owner can modify share permissions.
+    func revertPublicPermissionIfNeeded(household: Household) async {
+        guard await isOwner(household: household) else { return }
+
+        // Check if invite has expired (>24 hours since last invite URL was generated)
+        if let lastInvite = household.lastInviteDate,
+           Date().timeIntervalSince(lastInvite) > 86400 {
+            do {
+                let share = try await getShare(for: household)
+                if share.publicPermission == .readWrite {
+                    share.publicPermission = .none
+                    let persistenceController = PersistenceController.shared
+                    try await persistenceController.container.persistUpdatedShare(
+                        share, in: persistenceController.privateStore)
+                    DiagnosticLogger.shared.info(
+                        "M9.30: Reverted publicPermission to .none (24h expired)",
+                        category: .household)
+                }
+            } catch {
+                DiagnosticLogger.shared.error(
+                    "M9.30: Failed to revert permission: \(error.localizedDescription)",
+                    category: .household)
+            }
+        }
+    }
+
+    /// Cancel a single pending invitation. Owner-only.
+    /// Deletes the pending HouseholdMember record and reverts share permission if no more pending.
+    func cancelInvitation(member: HouseholdMember, household: Household) async throws {
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+        guard member.isPending else { return }
+
+        viewContext.delete(member)
+        try viewContext.save()
+
+        // If no more pending members, close the public link
+        let remainingPending = household.memberArray.filter { $0.isPending && !$0.isExpired }
+        if remainingPending.isEmpty {
+            do {
+                let share = try await getShare(for: household)
+                if share.publicPermission == .readWrite {
+                    share.publicPermission = .none
+                    let persistenceController = PersistenceController.shared
+                    try await persistenceController.container.persistUpdatedShare(
+                        share, in: persistenceController.privateStore)
+                }
+            } catch {
+                // Non-fatal — member was already removed
+                DiagnosticLogger.shared.error(
+                    "M9.30: Failed to revert permission after cancel: \(error.localizedDescription)",
+                    category: .household)
+            }
+        }
+    }
+
+    /// Revoke all pending invitations and close public link. Owner-only.
+    func revokeAllPendingInvitations(household: Household) async throws {
+        guard await isOwner(household: household) else {
+            throw HouseholdError.notOwner
+        }
+
+        // Delete all pending members
+        let pending = household.memberArray.filter { $0.isPending }
+        for member in pending {
+            viewContext.delete(member)
+        }
+        try viewContext.save()
+
+        // Close public link
+        do {
+            let share = try await getShare(for: household)
+            if share.publicPermission == .readWrite {
+                share.publicPermission = .none
+                let persistenceController = PersistenceController.shared
+                try await persistenceController.container.persistUpdatedShare(
+                    share, in: persistenceController.privateStore)
+                DiagnosticLogger.shared.info(
+                    "M9.30: Revoked all invitations, publicPermission = .none",
+                    category: .household)
+            }
+        } catch {
+            DiagnosticLogger.shared.error(
+                "M9.30: Failed to revert permission after revoke: \(error.localizedDescription)",
+                category: .household)
+        }
+    }
+
+    /// Clean up expired pending invitations on app launch. Owner-only.
+    func cleanExpiredInvitations(household: Household) {
+        let expired = household.memberArray.filter { $0.isExpired }
+        guard !expired.isEmpty else { return }
+
+        for member in expired {
+            viewContext.delete(member)
+        }
+        do {
+            try viewContext.save()
+            DiagnosticLogger.shared.info(
+                "M9.30: Cleaned \(expired.count) expired invitation(s)",
+                category: .household)
+        } catch {
+            DiagnosticLogger.shared.error(
+                "M9.30: Failed to clean expired invitations: \(error.localizedDescription)",
+                category: .household)
+        }
     }
 
     // MARK: - M7.2.2 Refactor: CKShare-based Participant Access

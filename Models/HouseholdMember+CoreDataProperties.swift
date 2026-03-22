@@ -18,6 +18,7 @@ extension HouseholdMember {
     @NSManaged public var id: UUID?
     @NSManaged public var email: String?
     @NSManaged public var displayName: String?
+    @NSManaged public var invitedDate: Date?    // M9.30: When invitation was created (24h expiry)
     @NSManaged public var joinedDate: Date?
     @NSManaged public var role: String?
     @NSManaged public var status: String?

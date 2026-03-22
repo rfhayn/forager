@@ -36,16 +36,26 @@ class LLMSettingsService: ObservableObject {
         return householdAPIKey
     }
 
-    /// Fetch the household's shared API key from Core Data
+    /// Fetch the household's shared API key from Core Data (M9.30: decrypts if encrypted)
     private var householdAPIKey: String? {
         let context = PersistenceController.shared.container.viewContext
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         request.fetchLimit = 1
         guard let household = (try? context.fetch(request))?.first,
-              let key = household.llmAPIKey, !key.isEmpty else {
+              let storedKey = household.llmAPIKey, !storedKey.isEmpty else {
             return nil
         }
-        return key
+
+        // M9.30: Decrypt if encrypted, return plaintext if legacy
+        guard let householdID = household.id else { return storedKey }
+        do {
+            return try HouseholdKeyEncryption.decrypt(storedKey, householdID: householdID)
+        } catch {
+            #if DEBUG
+            print("⚠️ LLMSettingsService: Failed to decrypt API key: \(error)")
+            #endif
+            return nil
+        }
     }
 
     // MARK: - Constants
@@ -86,14 +96,42 @@ class LLMSettingsService: ObservableObject {
         objectWillChange.send()
     }
 
-    /// M9.22: Save API key to Household entity for CloudKit sharing
+    /// M9.22+M9.30: Save API key to Household entity (encrypted) for CloudKit sharing
     private func saveToHousehold(_ key: String?) {
         let context = PersistenceController.shared.container.viewContext
         let request: NSFetchRequest<Household> = Household.fetchRequest()
         request.fetchLimit = 1
         guard let household = (try? context.fetch(request))?.first else { return }
-        household.llmAPIKey = key
+
+        if let plaintext = key, let householdID = household.id {
+            // M9.30: Encrypt before storing
+            household.llmAPIKey = try? HouseholdKeyEncryption.encrypt(plaintext, householdID: householdID)
+        } else {
+            household.llmAPIKey = nil
+        }
         try? context.save()
+    }
+
+    /// M9.30: Migrate unencrypted API key to encrypted on first launch after update
+    func migrateAPIKeyEncryptionIfNeeded() {
+        let context = PersistenceController.shared.container.viewContext
+        let request: NSFetchRequest<Household> = Household.fetchRequest()
+        request.fetchLimit = 1
+        guard let household = (try? context.fetch(request))?.first,
+              let storedKey = household.llmAPIKey, !storedKey.isEmpty,
+              let householdID = household.id,
+              !HouseholdKeyEncryption.isEncrypted(storedKey) else {
+            return
+        }
+
+        // Legacy plaintext — encrypt in place
+        do {
+            household.llmAPIKey = try HouseholdKeyEncryption.encrypt(storedKey, householdID: householdID)
+            try context.save()
+            DiagnosticLogger.shared.info("M9.30: Migrated API key to encrypted storage", category: .household)
+        } catch {
+            DiagnosticLogger.shared.error("M9.30: Failed to migrate API key encryption: \(error.localizedDescription)", category: .household)
+        }
     }
 
     /// Returns a masked indicator that a key is configured (no key content revealed)

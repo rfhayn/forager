@@ -16,6 +16,7 @@ extension Household {
     }
 
     @NSManaged public var id: UUID?
+    @NSManaged public var lastInviteDate: Date?  // M9.30: When last invitation URL was generated (24h expiry)
     @NSManaged public var llmAPIKey: String?
     @NSManaged public var name: String?
     @NSManaged public var createdDate: Date?

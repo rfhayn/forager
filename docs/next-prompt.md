@@ -2,9 +2,24 @@
 
 **Last Updated**: March 21, 2026
 **For Milestone**: Launch Path
-**Status**: **M9.29 ✅** | **M10.6.5 ✅** | **M9.15.3 ✅** | **M9.24 ✅** | **M9.27 ✅** | **M17.1 ✅** | M9.26 🚀 | M9.28 ⏳ | M7.7 ⏳
+**Status**: **M9.30 🔄 ACTIVE** | **M9.29 ✅** | **M10.6.5 ✅** | **M9.15.3 ✅** | **M9.24 ✅** | **M9.27 ✅** | **M17.1 ✅**
 
-**Launch Path**: M9.26 → M9.28 → M7.7 (~6-11h to App Store)
+**Launch Path**: M9.30 → M9.26 → M9.28 → M7.7 (~9-16h to App Store)
+
+---
+
+## M9.30 — Household Invitation Security Hardening
+
+**PRD**: `docs/prds/active/m9.30-household-invitation-security.md`
+**Branch**: `feature/M9.30-invite-security-hardening`
+
+5 phases: Schema v10 (invitedDate) → Permission revert (owner-only) → 10-member cap → API key encryption (AES-GCM) → Duplicate prevention.
+
+Key CloudKit rules to follow:
+- Permission revert MUST be guarded by `isOwner` (only owner can modify CKShare)
+- Member cap must check `participants.count + pendingCount` (public link sharing doesn't add pending to CKShare)
+- HouseholdMember is Non-HouseholdScoped (ADR 014 exempt, direct creation OK)
+- Schema v10 is additive optional field — safe lightweight migration
 
 ---
 
