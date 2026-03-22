@@ -2382,6 +2382,9 @@ class HouseholdService: ObservableObject {
             throw HouseholdError.memberCapReached(maxMembers)
         }
 
+        // M9.30: Clean expired invitations before generating new URL
+        cleanExpiredInvitations(household: household)
+
         #if DEBUG
         print("📝 Creating shareable invitation URL...")
         print("   Current participants: \(share.participants.count)")
