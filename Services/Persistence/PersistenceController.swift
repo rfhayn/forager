@@ -448,6 +448,9 @@ final class PersistenceController: ObservableObject {
                 // M15: Re-normalize template names (cleans up "/ black pepper", "cloves garlic", etc.)
                 IngredientTemplateService(context: context).migrateExistingTemplates()
 
+                // M9.30: Migrate unencrypted API keys to AES-GCM encrypted storage
+                LLMSettingsService.shared.migrateAPIKeyEncryptionIfNeeded()
+
                 // Save if any changes were made
                 if context.hasChanges {
                     try context.save()
