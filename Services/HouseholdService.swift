@@ -710,15 +710,24 @@ class HouseholdService: ObservableObject {
             CloudKitLogger.warning("Proceeding with local cleanup")
         }
 
-        // Step 3: Clear current household FIRST so UI stops referencing shared objects
+        // Step 3: Mark household as deleted in Keychain so ghost detection
+        // treats it as a ghost if CloudKit re-syncs it after reinstall (M9.30)
+        if let householdID = household.id?.uuidString {
+            KeychainHelper.markHouseholdAsLeft(householdID)
+            DiagnosticLogger.shared.info(
+                "M9.30: Marked household \(householdID) as deleted in Keychain",
+                category: .household)
+        }
+
+        // Step 4: Clear current household FIRST so UI stops referencing shared objects
         currentHousehold = nil
         knownParticipantRecordIDs = nil
 
-        // Step 4: Delete household entity
+        // Step 5: Delete household entity
         viewContext.delete(household)
         try viewContext.save()
 
-        // Step 5: Purge shared store objects from context
+        // Step 6: Purge shared store objects from context
         // Don't destroy store - causes crashes if user creates a new household later
         let deletedCount = PersistenceController.shared.purgeAllSharedStoreObjects(from: viewContext)
         CloudKitLogger.debug("Purged \(deletedCount) shared store objects")
@@ -2648,9 +2657,19 @@ class HouseholdService: ObservableObject {
             // 1. User was removed from the share (genuine ghost)
             // 2. Household was just created and CloudKit hasn't migrated it
             //    to the shared zone yet (false negative — still in private store)
-            // Check which store the household is in to distinguish the cases.
+            // 3. M9.30: Deleted household re-synced from CloudKit (ghost)
+            //
+            // Check which store the household is in AND whether it was
+            // previously deleted/left to distinguish the cases.
             let privateStore = PersistenceController.shared.privateStore
             if household.objectID.persistentStore == privateStore {
+                // M9.30: Check if this household was deleted or left — if so, it's a ghost
+                if let householdID = household.id?.uuidString, hasLeftHousehold(householdID) {
+                    #if DEBUG
+                    print("⚠️ noShareRecord + private store + marked as left/deleted → ghost")
+                    #endif
+                    return false
+                }
                 #if DEBUG
                 print("⚠️ noShareRecord but household is in private store — assuming owner (CloudKit migration pending)")
                 #endif
