@@ -306,7 +306,7 @@ struct SettingsView: View {
                     HStack {
                         Text("Provider")
                         Spacer()
-                        Text("AI (API Key)")
+                        Text("Claude (API Key)")
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
 
