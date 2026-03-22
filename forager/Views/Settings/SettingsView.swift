@@ -331,9 +331,18 @@ struct SettingsView: View {
                             .textContentType(.password)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
+                            .submitLabel(.done)
                             .onSubmit {
                                 saveAPIKey(apiKeyInput)
                                 apiKeyInput = ""
+                            }
+                            .onChange(of: apiKeyInput) { _, newValue in
+                                // Auto-save when a valid API key is pasted (starts with sk-)
+                                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmed.hasPrefix("sk-") && trimmed.count > 20 {
+                                    saveAPIKey(trimmed)
+                                    apiKeyInput = ""
+                                }
                             }
                     }
 
