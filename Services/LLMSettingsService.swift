@@ -33,11 +33,7 @@ class LLMSettingsService: ObservableObject {
         if let keychainKey = KeychainHelper.getLLMAPIKey(), !keychainKey.isEmpty {
             return keychainKey
         }
-        let hhKey = householdAPIKey
-        if hhKey == nil {
-            DiagnosticLogger.shared.debug("resolvedAPIKey: keychain=nil, household=nil", category: .household)
-        }
-        return hhKey
+        return householdAPIKey
     }
 
     /// Fetch the household's shared API key from Core Data (M9.30: decrypts if encrypted)
@@ -86,9 +82,9 @@ class LLMSettingsService: ObservableObject {
         saveToHousehold(trimmed)
         // Verify the save worked
         let verified = KeychainHelper.getLLMAPIKey()
-        DiagnosticLogger.shared.info(
-            "saveAPIKey: saved \(trimmed.count)-char key, verify=\(verified != nil ? "OK (\(verified!.count) chars)" : "FAILED")",
-            category: .household)
+        #if DEBUG
+        print("🔑 saveAPIKey: saved \(trimmed.count)-char key, verify=\(verified != nil ? "OK" : "FAILED")")
+        #endif
         objectWillChange.send()
     }
 
