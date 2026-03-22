@@ -257,11 +257,14 @@ struct MealPlansListView: View {
 
 struct MealPlanSummaryCard: View {
     @ObservedObject var mealPlan: MealPlan
+    @Environment(\.managedObjectContext) private var viewContext
     let status: MealPlanStatus
     var onGenerateGroceryList: (() -> Void)? = nil
 
     @FetchRequest private var plannedMeals: FetchedResults<PlannedMeal>
     @ScaledMetric(relativeTo: .caption) private var dayCircleSize: CGFloat = 22
+    @State private var isEditingName = false
+    @State private var editedName = ""
 
     init(mealPlan: MealPlan, status: MealPlanStatus, onGenerateGroceryList: (() -> Void)? = nil) {
         self.mealPlan = mealPlan
@@ -279,9 +282,22 @@ struct MealPlanSummaryCard: View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
             // Name + status
             HStack {
-                Text(mealPlan.name ?? "Unnamed Plan")
-                    .font(ForagerTheme.cardTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
+                if isEditingName {
+                    TextField("Plan name", text: $editedName)
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .textFieldStyle(.plain)
+                        .submitLabel(.done)
+                        .onSubmit { saveName() }
+                } else {
+                    Text(mealPlan.name ?? "Unnamed Plan")
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .onLongPressGesture {
+                            editedName = mealPlan.name ?? ""
+                            isEditingName = true
+                        }
+                }
                 Spacer()
                 if status == .active {
                     Text("Active")
@@ -330,6 +346,15 @@ struct MealPlanSummaryCard: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(mealPlan.name ?? "Unnamed Plan"), \(dateRangeText), \(plannedMeals.count) of \(Int(mealPlan.duration)) days planned")
         .accessibilityHint("Double tap to open meal plan")
+    }
+
+    private func saveName() {
+        let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            mealPlan.name = trimmed
+            try? viewContext.save()
+        }
+        isEditingName = false
     }
 
     // MARK: - Day Dots
