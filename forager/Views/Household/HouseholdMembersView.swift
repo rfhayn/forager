@@ -22,6 +22,9 @@ struct HouseholdMembersView: View {
     @State private var memberToRemove: ShareParticipant?
     @State private var showRemoveConfirmation = false
 
+    // M9.30: Pending invitation management
+    @State private var showRevokeConfirmation = false
+
     var body: some View {
         Group {
             if isLoading {
@@ -50,6 +53,7 @@ struct HouseholdMembersView: View {
                 }
             } else {
                 List {
+                    // Active members from CKShare
                     ForEach(participants) { participant in
                         ShareParticipantRow(participant: participant)
                             .listRowBackground(Color.clear)
@@ -65,6 +69,78 @@ struct HouseholdMembersView: View {
                                     }
                                 }
                             }
+                    }
+
+                    // M9.30: Pending invitations section (owner-only)
+                    if isCurrentUserOwner {
+                        let pendingMembers = household.memberArray.filter { $0.isPending && !$0.isExpired }
+                        if !pendingMembers.isEmpty {
+                            Section {
+                                ForEach(pendingMembers, id: \.id) { member in
+                                    HStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(ForagerTheme.statusWarningFG.opacity(0.2))
+                                                .frame(width: 44, height: 44)
+                                            Image(systemName: "envelope.fill")
+                                                .foregroundStyle(ForagerTheme.statusWarningFG)
+                                                .font(.title3)
+                                        }
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Pending Invitation")
+                                                .font(.headline)
+                                            if let invited = member.invitedDate {
+                                                let remaining = max(0, 86400 - Date().timeIntervalSince(invited))
+                                                let hours = Int(remaining / 3600)
+                                                Text("Expires in \(hours)h")
+                                                    .font(.caption)
+                                                    .foregroundStyle(ForagerTheme.textTertiary)
+                                            }
+                                        }
+                                        Spacer()
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "clock.fill")
+                                                .font(.caption)
+                                            Text("Pending")
+                                                .font(.caption)
+                                        }
+                                        .foregroundStyle(ForagerTheme.statusWarningFG)
+                                    }
+                                    .padding(.vertical, 4)
+                                    .foragerGlassCard()
+                                    .listRowBackground(Color.clear)
+                                    .listRowSeparator(.hidden)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            cancelPendingInvitation(member)
+                                        } label: {
+                                            Label("Cancel", systemImage: "xmark.circle")
+                                        }
+                                    }
+                                }
+
+                                // Revoke all button
+                                Button {
+                                    showRevokeConfirmation = true
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "xmark.shield")
+                                        Text("Revoke All Invitations")
+                                    }
+                                    .font(ForagerTheme.captionFont)
+                                    .foregroundStyle(.red)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, ForagerTheme.Spacing.sm)
+                                }
+                                .buttonStyle(.borderless)
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                            } header: {
+                                Text("Pending Invitations")
+                                    .font(ForagerTheme.captionFont)
+                                    .foregroundStyle(ForagerTheme.textSecondary)
+                            }
+                        }
                     }
                 }
                 .listStyle(.plain)
@@ -84,6 +160,14 @@ struct HouseholdMembersView: View {
         }
         .onAppear {
             loadParticipants()
+        }
+        .alert("Revoke All Invitations?", isPresented: $showRevokeConfirmation) {
+            Button("Revoke All", role: .destructive) {
+                revokeAllInvitations()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This will cancel all pending invitations and close the sharing link. You can create a new invitation later.")
         }
         .alert("Remove Member?", isPresented: $showRemoveConfirmation) {
             Button("Remove", role: .destructive) {
@@ -124,6 +208,28 @@ struct HouseholdMembersView: View {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
                 }
+            }
+        }
+    }
+
+    // M9.30: Cancel a single pending invitation
+    private func cancelPendingInvitation(_ member: HouseholdMember) {
+        Task {
+            do {
+                try await service.cancelInvitation(member: member, household: household)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    // M9.30: Revoke all pending invitations and close public link
+    private func revokeAllInvitations() {
+        Task {
+            do {
+                try await service.revokeAllPendingInvitations(household: household)
+            } catch {
+                errorMessage = error.localizedDescription
             }
         }
     }
