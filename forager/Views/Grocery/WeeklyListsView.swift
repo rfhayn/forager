@@ -323,14 +323,30 @@ struct WeeklyListRowView: View {
             .sorted { $0.name < $1.name }
     }
 
+    @State private var isEditingName = false
+    @State private var editedName = ""
+
     var body: some View {
         VStack(spacing: 0) {
             // Main card body: text info + progress ring
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                    Text(weeklyList.name ?? "Unnamed List")
-                        .font(ForagerTheme.cardTitle)
-                        .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
+                    if isEditingName {
+                        TextField("List name", text: $editedName)
+                            .font(ForagerTheme.cardTitle)
+                            .foregroundStyle(ForagerTheme.textPrimary)
+                            .textFieldStyle(.plain)
+                            .submitLabel(.done)
+                            .onSubmit { saveName() }
+                    } else {
+                        Text(weeklyList.name ?? "Unnamed List")
+                            .font(ForagerTheme.cardTitle)
+                            .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
+                            .onLongPressGesture {
+                                editedName = weeklyList.name ?? ""
+                                isEditingName = true
+                            }
+                    }
 
                     if let date = weeklyList.dateCreated {
                         Text(date, style: .date)
@@ -366,6 +382,15 @@ struct WeeklyListRowView: View {
             // properties (like categoryName via ingredientTemplate) refresh
             viewContext.refreshAllObjects()
         }
+    }
+
+    private func saveName() {
+        let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            weeklyList.name = trimmed
+            try? viewContext.save()
+        }
+        isEditingName = false
     }
 }
 
