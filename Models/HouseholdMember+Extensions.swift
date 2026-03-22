@@ -22,4 +22,10 @@ extension HouseholdMember {
     public var isActive: Bool {
         return status == "active"
     }
+
+    /// M9.30: Returns true if pending invitation has expired (>24 hours)
+    public var isExpired: Bool {
+        guard isPending, let invited = invitedDate else { return false }
+        return Date().timeIntervalSince(invited) > 86400 // 24 hours
+    }
 }
