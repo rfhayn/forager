@@ -142,18 +142,21 @@ struct SettingsView: View {
                 } label: {
                     Label("Ingredients", systemImage: "leaf.circle")
                 }
+                .buttonStyle(.borderless)
                 Divider()
                 NavigationLink {
                     ManageCategoriesView(popToRoot: .constant(false))
                 } label: {
                     Label("Categories", systemImage: "folder.badge.gearshape")
                 }
+                .buttonStyle(.borderless)
                 Divider()
                 Button {
                     showingRestoreConfirmation = true
                 } label: {
                     Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
                 }
+                .buttonStyle(.borderless)
             }
             .foragerGlassCard()
             .confirmationDialog("Restore Default Categories?",
@@ -443,6 +446,7 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .buttonStyle(.borderless)
 
                 Divider()
 
