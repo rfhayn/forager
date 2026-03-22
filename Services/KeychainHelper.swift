@@ -154,22 +154,34 @@ enum KeychainHelper {
     }
 
     private static func write(key: String, data: Data) {
-        // Delete existing item first
-        let deleteQuery: [String: Any] = [
+        let baseQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: key
         ]
-        SecItemDelete(deleteQuery as CFDictionary)
 
-        // Add new item
-        let addQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
+        // Try update first (most common case — item already exists)
+        let updateAttributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
         ]
-        SecItemAdd(addQuery as CFDictionary, nil)
+        let updateStatus = SecItemUpdate(baseQuery as CFDictionary, updateAttributes as CFDictionary)
+
+        if updateStatus == errSecItemNotFound {
+            // Item doesn't exist — add it
+            var addQuery = baseQuery
+            addQuery[kSecValueData as String] = data
+            addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            #if DEBUG
+            if addStatus != errSecSuccess {
+                print("⚠️ Keychain write failed (add): \(addStatus)")
+            }
+            #endif
+        } else if updateStatus != errSecSuccess {
+            #if DEBUG
+            print("⚠️ Keychain write failed (update): \(updateStatus)")
+            #endif
+        }
     }
 }
