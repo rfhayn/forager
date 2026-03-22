@@ -276,7 +276,7 @@ struct MealPlanSummaryCard: View {
     }
 
     var body: some View {
-        VStack(spacing: ForagerTheme.Spacing.md) {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
             // Name + status
             HStack {
                 Text(mealPlan.name ?? "Unnamed Plan")
@@ -299,7 +299,7 @@ struct MealPlanSummaryCard: View {
                 .font(ForagerTheme.captionFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
-            // Day dots — centered
+            // Day dots — left-aligned to match Lists/Recipes card style
             dayDotsRow
 
             // Tonight snippet (active only)
@@ -308,7 +308,7 @@ struct MealPlanSummaryCard: View {
                 tonightSnippet(todayMeal)
             }
 
-            // Generate button — centered
+            // Generate button — left-aligned to match card style
             if status == .active, let action = onGenerateGroceryList {
                 Button(action: action) {
                     HStack(spacing: ForagerTheme.Spacing.xs) {
@@ -325,14 +325,6 @@ struct MealPlanSummaryCard: View {
             }
         }
         .foragerGlassCard()
-        .overlay(alignment: .leading) {
-            if status == .active {
-                Rectangle()
-                    .fill(ForagerTheme.accentPrimary)
-                    .frame(width: 4)
-                    .clipShape(RoundedRectangle(cornerRadius: 2))
-            }
-        }
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
         .accessibilityElement(children: .combine)
