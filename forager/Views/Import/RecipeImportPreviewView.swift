@@ -475,66 +475,70 @@ struct RecipeImportPreviewView: View {
         }
     }
 
-    /// M9.33: Split text on " and " or " or ", distributing quantity prefix
+    /// M9.33: Split text on " and " only (NOT "or" — those are alternatives, not multiples).
+    /// Handles "each X and Y" pattern by stripping "each" and distributing quantity.
     private func localSplitText(_ text: String) -> [String] {
         let lower = text.lowercased()
-        let separators = [" and ", " or "]
 
-        for separator in separators {
-            guard let range = lower.range(of: separator) else { continue }
+        // Only split on " and " — NOT " or " (alternatives should stay as one line)
+        guard let range = lower.range(of: " and ") else { return [text] }
 
-            let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-            let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+        let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+        let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
 
-            guard !beforeSep.isEmpty, !afterSep.isEmpty else { continue }
+        guard !beforeSep.isEmpty, !afterSep.isEmpty else { return [text] }
 
-            // Extract quantity prefix from the first part to apply to the second
-            let cleanName = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
-            let qtyPrefix: String
-            if let nameRange = beforeSep.lowercased().range(of: cleanName.lowercased()) {
-                qtyPrefix = String(beforeSep[beforeSep.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            } else {
-                qtyPrefix = ""
+        // Handle "each" pattern: "2 teaspoons each chili powder and cumin"
+        // Strip "each" from the first part and distribute the quantity
+        var firstPart = beforeSep
+        let eachPattern = #"^([\d/.\s]+\w+)\s+each\s+(.+)$"#
+        if let eachMatch = firstPart.range(of: eachPattern, options: .regularExpression) {
+            let matched = String(firstPart[eachMatch])
+            if let eachRange = matched.lowercased().range(of: " each ") {
+                let qty = String(matched[matched.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+                let ingredient = String(matched[eachRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+                return ["\(qty) \(ingredient)", "\(qty) \(afterSep)"]
             }
-
-            let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
-            return [beforeSep, secondLine]
         }
 
-        return [text] // No split found
+        // Also handle "each" in the middle without regex: simpler check
+        if let eachRange = lower.range(of: " each ") {
+            let qtyPart = String(text[text.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+            let afterEach = String(text[eachRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            // afterEach is "chili powder and cumin" — split on " and "
+            if let andRange = afterEach.lowercased().range(of: " and ") {
+                let first = String(afterEach[afterEach.startIndex..<andRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+                let second = String(afterEach[andRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+                return ["\(qtyPart) \(first)", "\(qtyPart) \(second)"]
+            }
+        }
+
+        // Standard split: extract quantity prefix from the first part
+        let cleanName = IngredientParsingService.extractCleanIngredientName(from: firstPart)
+        let qtyPrefix: String
+        if let nameRange = firstPart.lowercased().range(of: cleanName.lowercased()) {
+            qtyPrefix = String(firstPart[firstPart.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+        } else {
+            qtyPrefix = ""
+        }
+
+        let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
+        return [firstPart, secondLine]
     }
 
-    /// M9.33: Local fallback split — simple text split on " and " / " or " without AI
+    /// M9.33: Local fallback split — uses localSplitText for consistency
     private func localSplitIngredient(at index: Int, text: String) {
-        // Try splitting on " and " first, then " or "
-        let separators = [" and ", " or "]
-        for separator in separators {
-            if let range = text.lowercased().range(of: separator) {
-                let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-                let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+        let splits = localSplitText(text)
+        guard splits.count > 1 else { return }
 
-                guard !beforeSep.isEmpty, !afterSep.isEmpty else { continue }
-
-                // Check if the first part has a quantity — if so, apply it to the second part too
-                let parsed = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
-                let qtyPrefix: String
-                if let qtyRange = beforeSep.lowercased().range(of: parsed.lowercased()) {
-                    qtyPrefix = String(beforeSep[beforeSep.startIndex..<qtyRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-                } else {
-                    qtyPrefix = ""
-                }
-
-                let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
-
-                var ingredients = draft.ingredients.value
-                ingredients.remove(at: index)
-                ingredients.insert(beforeSep, at: index)
-                ingredients.insert(secondLine, at: index + 1)
-                draft.ingredients.value = ingredients
-
-                computeIngredientMatches()
-                return
+        do {
+            var ingredients = draft.ingredients.value
+            ingredients.remove(at: index)
+            for (j, split) in splits.enumerated() {
+                ingredients.insert(split, at: index + j)
             }
+            draft.ingredients.value = ingredients
+            computeIngredientMatches()
         }
     }
 

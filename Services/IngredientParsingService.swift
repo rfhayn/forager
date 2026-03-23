@@ -385,15 +385,11 @@ class IngredientParsingService: ObservableObject {
             if lower.contains(prep) { return false }
         }
 
-        // Pattern: " and " or " or " between word characters (not at start/end)
-        // Must have ingredient-like words on both sides
+        // Pattern: " and " between word characters — NOT " or " (alternatives, not multiples)
+        // Also detect "each X and Y" pattern
         let andPattern = #"[a-z]{3,}\s+and\s+[a-z]{3,}"#
-        let orPattern = #"[a-z]{3,}\s+or\s+[a-z]{3,}"#
 
         if let _ = lower.range(of: andPattern, options: .regularExpression) {
-            return true
-        }
-        if let _ = lower.range(of: orPattern, options: .regularExpression) {
             return true
         }
 
