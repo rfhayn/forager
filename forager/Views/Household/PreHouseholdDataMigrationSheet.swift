@@ -113,7 +113,7 @@ struct PreHouseholdDataMigrationSheet: View {
                         .padding(.horizontal)
 
                         // Explanation
-                        Text("Moving data to the household makes it visible to all members. You can keep it personal if you prefer.")
+                        Text("Your existing data will be shared with all household members.")
                             .font(.subheadline)
                             .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
@@ -128,7 +128,7 @@ struct PreHouseholdDataMigrationSheet: View {
                 VStack(spacing: 10) {
                     Divider()
                     
-                    // Move to Household (Primary action)
+                    // Move to Household (only action — Keep Personal hidden for launch)
                     Button(action: {
                         onMoveAll()
                         dismiss()
@@ -138,16 +138,6 @@ struct PreHouseholdDataMigrationSheet: View {
                             .font(.headline)
                     }
                     .buttonStyle(.borderedProminent)
-                    
-                    // Keep Personal (Secondary action)
-                    Button(action: {
-                        onKeepPersonal()
-                        dismiss()
-                    }) {
-                        Text("Keep Personal")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 12)
