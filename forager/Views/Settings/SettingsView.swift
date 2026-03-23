@@ -30,6 +30,9 @@ struct SettingsView: View {
     // M10.6.3: API key entry state
     @State private var apiKeyInput = ""
 
+    // M9.26: Navigation state for Settings destinations
+    @State private var showingIngredients = false
+    @State private var showingCategories = false
 
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
@@ -136,32 +139,53 @@ struct SettingsView: View {
 
     private var dataManagementSection: some View {
         Section {
-            NavigationLink {
+            VStack(spacing: 0) {
+                // Ingredients row
+                Button { showingIngredients = true } label: {
+                    HStack {
+                        Label("Ingredients", systemImage: "leaf.circle")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
+                // Categories row
+                Button { showingCategories = true } label: {
+                    HStack {
+                        Label("Categories", systemImage: "folder.badge.gearshape")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
+                // Restore row
+                Button { showingRestoreConfirmation = true } label: {
+                    Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .foragerGlassCard()
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .navigationDestination(isPresented: $showingIngredients) {
                 IngredientsView(popToRoot: .constant(false))
-            } label: {
-                Label("Ingredients", systemImage: "leaf.circle")
             }
-            .foragerGlassCard()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-
-            NavigationLink {
+            .navigationDestination(isPresented: $showingCategories) {
                 ManageCategoriesView(popToRoot: .constant(false))
-            } label: {
-                Label("Categories", systemImage: "folder.badge.gearshape")
             }
-            .foragerGlassCard()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-
-            Button {
-                showingRestoreConfirmation = true
-            } label: {
-                Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
-            }
-            .foragerGlassCard()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
             .confirmationDialog("Restore Default Categories?",
                                 isPresented: $showingRestoreConfirmation,
                                 titleVisibility: .visible) {
@@ -434,32 +458,42 @@ struct SettingsView: View {
 
     @ObservedObject private var diagnosticLogger = DiagnosticLogger.shared
 
+    @State private var showingDiagnosticLog = false
+
     private var diagnosticLogSection: some View {
         Section {
-            NavigationLink {
-                DiagnosticLogView()
-            } label: {
-                HStack {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Diagnostic Log")
-                            .font(ForagerTheme.bodyFont)
-                        Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.textSecondary)
+            VStack(spacing: 0) {
+                Button { showingDiagnosticLog = true } label: {
+                    HStack {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Diagnostic Log")
+                                .font(ForagerTheme.bodyFont)
+                            Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
+                                .font(ForagerTheme.captionFont)
+                                .foregroundStyle(ForagerTheme.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
                     }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
+                Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
+                    .font(ForagerTheme.bodyFont)
             }
             .foragerGlassCard()
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
-
-            Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
-                .font(ForagerTheme.bodyFont)
-                .foragerGlassCard()
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+            .navigationDestination(isPresented: $showingDiagnosticLog) {
+                DiagnosticLogView()
+            }
         } header: {
             Text("Diagnostics")
         } footer: {
@@ -626,36 +660,41 @@ struct SettingsView: View {
     // Provides access to privacy policy and app version
     private var aboutSection: some View {
         Section {
-            // M7.6.3: Replay Onboarding
-            Button {
-                NotificationCenter.default.post(name: .replayOnboarding, object: nil)
-            } label: {
-                HStack {
-                    Image(systemName: "hand.wave")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    Text("Replay Onboarding")
-                        .foregroundStyle(.primary)
-                    Spacer()
+            VStack(spacing: 0) {
+                // Replay Onboarding
+                Button {
+                    NotificationCenter.default.post(name: .replayOnboarding, object: nil)
+                } label: {
+                    HStack {
+                        Image(systemName: "hand.wave")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        Text("Replay Onboarding")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
                 }
-            }
-            .foragerGlassCard()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+                .buttonStyle(.plain)
 
-            // Privacy Policy link
-            Button {
-                showingPrivacyPolicy = true
-            } label: {
-                HStack {
-                    Image(systemName: "hand.raised")
-                        .foregroundStyle(ForagerTheme.statusSuccessFG)
-                    Text("Privacy Policy")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                        .font(.caption)
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
+                // Privacy Policy link
+                Button {
+                    showingPrivacyPolicy = true
+                } label: {
+                    HStack {
+                        Image(systemName: "hand.raised")
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                        Text("Privacy Policy")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                            .font(.caption)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
             .foragerGlassCard()
             .listRowBackground(Color.clear)
