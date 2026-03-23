@@ -304,6 +304,11 @@ class HouseholdService: ObservableObject {
                 if isMember {
                     currentHousehold = household
 
+                    // M9.31: Clear ghost detection counter on successful membership check
+                    if let householdID = household.id?.uuidString {
+                        UserDefaults.standard.removeObject(forKey: "ghostDetectionCount_\(householdID)")
+                    }
+
                     // M7.6.5: One-time migration from ownerEmail to ownerRecordName
                     if household.ownerRecordName == nil, let legacy = household.ownerEmail, !legacy.isEmpty {
                         household.ownerRecordName = legacy
@@ -349,14 +354,43 @@ class HouseholdService: ObservableObject {
                     // M7.2.2: Check for member departures via CKShare polling (owner-only)
                     await checkForMemberDepartures()
                 } else {
-                    // M9.15.3: Ghost Household — exists locally but user has no CKShare.
-                    // This happens when a previous createHouseholdAndShare() failed mid-way:
-                    // the Household was saved to private store and synced to CloudKit,
-                    // but the share step failed. On reinstall, CloudKit re-downloads it.
-                    // Delete it so the deletion syncs to CloudKit and it stops coming back.
-                    CloudKitLogger.warning("Deleting ghost Household '\(household.name ?? "Unknown")' — no CKShare, user is not a participant")
+                    // M9.31: Layered ghost detection — prevent false positives from
+                    // transient fetchShares failures (e.g., during share acceptance sync).
+
+                    // Fix 1: Owner's household is NEVER ghost-detected
+                    // Use the isOwner() method which already handles the CKContainer lookup
+                    let isOwnerDevice = await isOwner(household: household)
+                    if isOwnerDevice {
+                        diag.warning("M9.31: Owner's getShare failed but household is ours — loading anyway", category: .household)
+                        currentHousehold = household
+                        return
+                    }
+
+                    // Fix 3: Never ghost-delete a household with real data
+                    let hasData = (household.recipes?.count ?? 0) > 0
+                        || (household.weeklyLists?.count ?? 0) > 0
+                        || (household.categories?.count ?? 0) > 0
+                    if hasData {
+                        diag.warning("M9.31: Household has data (\(household.recipes?.count ?? 0) recipes) — not a ghost, loading anyway", category: .household)
+                        currentHousehold = household
+                        return
+                    }
+
+                    // Fix 4: Require 3 consecutive launch failures before ghost deletion
+                    let ghostKey = "ghostDetectionCount_\(household.id?.uuidString ?? "unknown")"
+                    let consecutiveFailures = UserDefaults.standard.integer(forKey: ghostKey) + 1
+                    if consecutiveFailures < 3 {
+                        UserDefaults.standard.set(consecutiveFailures, forKey: ghostKey)
+                        diag.warning("M9.31: Ghost detection attempt \(consecutiveFailures)/3 — loading anyway", category: .household)
+                        currentHousehold = household
+                        return
+                    }
+
+                    // 3+ consecutive failures on an empty, non-owner household — genuinely a ghost
+                    UserDefaults.standard.removeObject(forKey: ghostKey)
+                    diag.warning("M9.31: Ghost confirmed after 3 launches — deleting '\(household.name ?? "Unknown")'", category: .household)
+                    CloudKitLogger.warning("Deleting ghost Household '\(household.name ?? "Unknown")' — no CKShare after 3 attempts")
                     viewContext.delete(household)
-                    // Also delete any associated HouseholdMember ghosts
                     let memberRequest: NSFetchRequest<HouseholdMember> = HouseholdMember.fetchRequest()
                     if let members = try? viewContext.fetch(memberRequest) {
                         for member in members { viewContext.delete(member) }
@@ -2684,11 +2718,26 @@ class HouseholdService: ObservableObject {
                 #endif
                 return true
             }
+            // M9.31: Shared-store household with no share — could be transient
+            // (mirroring delegate mid-import during sync) or genuine removal.
+            // Retry once after 2 seconds before concluding non-participant.
             #if DEBUG
-            print("⚠️ Could not check participant status: noShareRecord")
-            print("   Share not found — user was likely removed")
+            print("⚠️ noShareRecord for shared-store household — retrying in 2s")
             #endif
-            return false
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            do {
+                let retryShare = try await getShare(for: household)
+                let isParticipant = retryShare.currentUserParticipant != nil
+                #if DEBUG
+                print("   Retry result: \(isParticipant ? "IS participant" : "NOT participant")")
+                #endif
+                return isParticipant
+            } catch {
+                #if DEBUG
+                print("   Retry failed: \(error) — concluding not a participant")
+                #endif
+                return false
+            }
         } catch {
             #if DEBUG
             print("⚠️ Could not check participant status: \(error)")
