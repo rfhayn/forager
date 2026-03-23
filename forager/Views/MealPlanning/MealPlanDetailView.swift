@@ -182,40 +182,26 @@ struct MealPlanDetailView: View {
     // MARK: - Day Strip
 
     private var dayStripView: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ForagerTheme.Spacing.md) {
-                    ForEach(daysInPlan, id: \.self) { date in
-                        Button {
-                            // no-op: tapping strip circles is decorative
-                        } label: {
-                            VStack(spacing: ForagerTheme.Spacing.xs) {
-                                Text(dayAbbreviation(date))
-                                    .font(ForagerTheme.captionFont)
-                                    .foregroundStyle(ForagerTheme.textTertiary)
-                                Text("\(Calendar.current.component(.day, from: date))")
-                                    .font(ForagerTheme.bodyFont.bold())
-                                    .foregroundStyle(isToday(date) ? .white : ForagerTheme.textPrimary)
-                                    .frame(width: 36, height: 36)
-                                    .background(
-                                        Circle()
-                                            .fill(isToday(date) ? ForagerTheme.accentPrimary : .clear)
-                                    )
-                            }
-                        }
-                        .id(date)
-                    }
-                }
-                .padding(.vertical, ForagerTheme.Spacing.sm)
-                .frame(maxWidth: .infinity)
-            }
-            .background(ForagerTheme.surfacePrimary)
-            .onAppear {
-                if let today = daysInPlan.first(where: { Calendar.current.isDateInToday($0) }) {
-                    proxy.scrollTo(today, anchor: .center)
+        HStack(spacing: ForagerTheme.Spacing.md) {
+            ForEach(daysInPlan, id: \.self) { date in
+                VStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(dayAbbreviation(date))
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text("\(Calendar.current.component(.day, from: date))")
+                        .font(ForagerTheme.bodyFont.bold())
+                        .foregroundStyle(isToday(date) ? .white : ForagerTheme.textPrimary)
+                        .frame(width: 36, height: 36)
+                        .background(
+                            Circle()
+                                .fill(isToday(date) ? ForagerTheme.accentPrimary : .clear)
+                        )
                 }
             }
         }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .background(ForagerTheme.surfacePrimary)
     }
 
     // MARK: - Day Card
