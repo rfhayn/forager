@@ -327,4 +327,69 @@ class ClaudeIngredientParser: LLMIngredientParser {
             "required": ["ingredients"]
         ] as [String: Any]
     ]
+
+    // MARK: - M9.33: Multi-Ingredient Split Detection
+
+    /// Detect if an ingredient line contains multiple ingredients and split them.
+    /// Returns nil if the line is a single ingredient, or an array of split ingredient strings.
+    func splitMultiIngredient(_ line: String) async throws -> [String]? {
+        let prompt = """
+        Determine if this ingredient line contains multiple distinct ingredients.
+        If yes, return each as a separate complete ingredient string with appropriate quantities.
+        If no (single ingredient with modifiers), return an empty array.
+
+        Rules:
+        - Distribute shared quantities: "1/2 tbsp garlic powder and onion powder" \
+        becomes ["1/2 tbsp garlic powder", "1/2 tbsp onion powder"]
+        - Handle alternatives: "2 tbsp soy sauce or fish sauce" \
+        becomes ["2 tbsp soy sauce", "2 tbsp fish sauce"]
+        - Split "X and Y to taste" → ["X", "Y"]
+        - Do NOT split prep descriptions: "peeled and deveined shrimp" is ONE ingredient → []
+        - Do NOT split compound foods: "salt and pepper", "macaroni and cheese" → []
+        - Do NOT split descriptors: "fresh and crispy lettuce" is ONE ingredient → []
+
+        Return JSON: {"splits": ["ingredient 1", "ingredient 2"]} or {"splits": []} if single ingredient.
+        """
+
+        var request = URLRequest(url: baseURL)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+
+        let body: [String: Any] = [
+            "model": model,
+            "max_tokens": 256,
+            "system": prompt,
+            "messages": [
+                ["role": "user", "content": "Split this ingredient line if it contains multiple ingredients: \"\(line)\""]
+            ]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            return nil
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = (json["content"] as? [[String: Any]])?.first,
+              let text = content["text"] as? String else {
+            return nil
+        }
+
+        // Parse the JSON response
+        guard let responseData = text.data(using: .utf8),
+              let result = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let splits = result["splits"] as? [String] else {
+            return nil
+        }
+
+        // Empty array means single ingredient — return nil
+        guard splits.count > 1 else { return nil }
+        return splits
+    }
 }

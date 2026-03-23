@@ -352,4 +352,52 @@ class IngredientParsingService: ObservableObject {
         return name.isEmpty ? trimmed.capitalized : name.capitalized
     }
 
+    // MARK: - M9.33: Multi-Ingredient Detection
+
+    /// Known compound ingredients that should NOT be split
+    private static let compoundIngredients: Set<String> = [
+        "salt and pepper", "oil and vinegar", "bread and butter",
+        "macaroni and cheese", "peanut butter and jelly",
+        "chips and salsa", "rice and beans", "franks and beans"
+    ]
+
+    /// Prep phrases containing "and" that should NOT trigger splitting
+    private static let prepPhrases: [String] = [
+        "peeled and deveined", "washed and dried", "seeded and diced",
+        "cored and sliced", "trimmed and cut", "rinsed and drained",
+        "pitted and sliced", "halved and seeded", "cleaned and chopped",
+        "stemmed and seeded", "thawed and drained", "drained and rinsed"
+    ]
+
+    /// Detect if an ingredient line likely contains multiple distinct ingredients.
+    /// Returns true for lines like "garlic powder and onion powder" but NOT
+    /// "salt and pepper" (known compound) or "peeled and deveined" (prep phrase).
+    static func detectMultiIngredient(_ text: String) -> Bool {
+        let lower = text.lowercased()
+
+        // Check known compound exclusions
+        for compound in compoundIngredients {
+            if lower.contains(compound) { return false }
+        }
+
+        // Check prep phrase exclusions
+        for prep in prepPhrases {
+            if lower.contains(prep) { return false }
+        }
+
+        // Pattern: " and " or " or " between word characters (not at start/end)
+        // Must have ingredient-like words on both sides
+        let andPattern = #"[a-z]{3,}\s+and\s+[a-z]{3,}"#
+        let orPattern = #"[a-z]{3,}\s+or\s+[a-z]{3,}"#
+
+        if let _ = lower.range(of: andPattern, options: .regularExpression) {
+            return true
+        }
+        if let _ = lower.range(of: orPattern, options: .regularExpression) {
+            return true
+        }
+
+        return false
+    }
+
 }
