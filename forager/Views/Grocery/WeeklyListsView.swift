@@ -339,13 +339,18 @@ struct WeeklyListRowView: View {
                             .submitLabel(.done)
                             .onSubmit { saveName() }
                     } else {
-                        Text(weeklyList.name ?? "Unnamed List")
-                            .font(ForagerTheme.cardTitle)
-                            .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
-                            .onLongPressGesture {
-                                editedName = weeklyList.name ?? ""
-                                isEditingName = true
-                            }
+                        HStack(spacing: ForagerTheme.Spacing.xs) {
+                            Text(weeklyList.name ?? "Unnamed List")
+                                .font(ForagerTheme.cardTitle)
+                                .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
+                            Image(systemName: "pencil")
+                                .font(.caption)
+                                .foregroundStyle(ForagerTheme.textTertiary)
+                        }
+                        .onTapGesture {
+                            editedName = weeklyList.name ?? ""
+                            isEditingName = true
+                        }
                     }
 
                     if let date = weeklyList.dateCreated {
