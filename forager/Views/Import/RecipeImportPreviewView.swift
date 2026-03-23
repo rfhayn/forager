@@ -508,19 +508,7 @@ struct RecipeImportPreviewView: View {
         guard !beforeSep.isEmpty, !afterSep.isEmpty else { return [text] }
 
         // Handle "each" pattern: "2 teaspoons each chili powder and cumin"
-        // Strip "each" from the first part and distribute the quantity
-        var firstPart = beforeSep
-        let eachPattern = #"^([\d/.\s]+\w+)\s+each\s+(.+)$"#
-        if let eachMatch = firstPart.range(of: eachPattern, options: .regularExpression) {
-            let matched = String(firstPart[eachMatch])
-            if let eachRange = matched.lowercased().range(of: " each ") {
-                let qty = String(matched[matched.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-                let ingredient = String(matched[eachRange.upperBound...]).trimmingCharacters(in: .whitespaces)
-                return ["\(qty) \(ingredient)", "\(qty) \(afterSep)"]
-            }
-        }
-
-        // Also handle "each" in the middle without regex: simpler check
+        // Check the FULL text (not just beforeSep) for " each "
         if let eachRange = lower.range(of: " each ") {
             let qtyPart = String(text[text.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespaces)
             let afterEach = String(text[eachRange.upperBound...]).trimmingCharacters(in: .whitespaces)
@@ -533,16 +521,16 @@ struct RecipeImportPreviewView: View {
         }
 
         // Standard split: extract quantity prefix from the first part
-        let cleanName = IngredientParsingService.extractCleanIngredientName(from: firstPart)
+        let cleanName = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
         let qtyPrefix: String
-        if let nameRange = firstPart.lowercased().range(of: cleanName.lowercased()) {
-            qtyPrefix = String(firstPart[firstPart.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+        if let nameRange = beforeSep.lowercased().range(of: cleanName.lowercased()) {
+            qtyPrefix = String(beforeSep[beforeSep.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
         } else {
             qtyPrefix = ""
         }
 
         let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
-        return [firstPart, secondLine]
+        return [beforeSep, secondLine]
     }
 
     /// M9.33: Local fallback split — uses localSplitText for consistency
@@ -760,7 +748,8 @@ struct RecipeImportPreviewView: View {
             ingredientMatchSummary
 
             ForEach(draft.ingredients.value.indices, id: \.self) { index in
-                let text = draft.ingredients.value[index]
+                // M9.33: Use edited text if available, otherwise original
+                let text = editedIngredientNames[index] ?? draft.ingredients.value[index]
                 ingredientRow(
                     index: index,
                     text: text,
@@ -771,7 +760,9 @@ struct RecipeImportPreviewView: View {
                 // M9.33: Split action row below detected multi-ingredient lines
                 if IngredientParsingService.detectMultiIngredient(text) {
                     Button {
-                        let splits = localSplitText(text)
+                        // Use the current text (may be edited)
+                        let currentText = editedIngredientNames[index] ?? draft.ingredients.value[index]
+                        let splits = localSplitText(currentText)
                         if splits.count > 1 {
                             var ingredients = draft.ingredients.value
                             ingredients.remove(at: index)
@@ -779,7 +770,13 @@ struct RecipeImportPreviewView: View {
                                 ingredients.insert(split, at: index + j)
                             }
                             draft.ingredients.value = ingredients
+                            // Clear edited names for affected indices
+                            editedIngredientNames.removeAll()
                             computeIngredientMatches()
+                        } else {
+                            #if DEBUG
+                            print("⚠️ M9.33: Split detected but localSplitText returned 1 result for: '\(currentText)'")
+                            #endif
                         }
                     } label: {
                         HStack(spacing: ForagerTheme.Spacing.sm) {
