@@ -11,6 +11,7 @@
 import SwiftUI
 import SafariServices
 import CoreData
+import CloudKit
 
 struct SettingsView: View {
     // M4.1: User preferences service for meal planning settings
@@ -36,6 +37,11 @@ struct SettingsView: View {
 
     // M9.34: Import guide replay
     @State private var importGuideReset = false
+
+    // Debug: Share URL acceptance
+    @State private var shareURLInput = ""
+    @State private var isAcceptingShare = false
+    @State private var shareAcceptResult: String?
 
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
@@ -429,6 +435,45 @@ struct SettingsView: View {
         llmSettings.deleteAPIKey()
     }
 
+    // Debug: Accept a CloudKit share invitation from a pasted URL
+    private func acceptShareFromURL() async {
+        let trimmed = shareURLInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: trimmed) else {
+            shareAcceptResult = "❌ Invalid URL"
+            return
+        }
+
+        isAcceptingShare = true
+        shareAcceptResult = nil
+
+        let container = CKContainer(identifier: "iCloud.com.richhayn.forager")
+
+        do {
+            let metadata = try await container.shareMetadata(for: url)
+
+            let persistence = PersistenceController.shared
+            let sharedStore = persistence.sharedStore
+
+            persistence.container.acceptShareInvitations(
+                from: [metadata],
+                into: sharedStore
+            ) { _, error in
+                DispatchQueue.main.async {
+                    isAcceptingShare = false
+                    if let error = error {
+                        shareAcceptResult = "❌ \(error.localizedDescription)"
+                    } else {
+                        shareAcceptResult = "✅ Share accepted — restart app to load household"
+                        shareURLInput = ""
+                    }
+                }
+            }
+        } catch {
+            isAcceptingShare = false
+            shareAcceptResult = "❌ \(error.localizedDescription)"
+        }
+    }
+
     @ViewBuilder
     private var connectionStatusRow: some View {
         if let result = llmSettings.connectionTestResult {
@@ -645,6 +690,36 @@ struct SettingsView: View {
                     Text("\(correctionCount)")
                         .font(.title2.monospacedDigit())
                         .foregroundStyle(correctionCount >= retrainingThreshold ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
+                }
+
+                Divider()
+
+                // Debug: Accept share invitation by pasting URL
+                VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                    Text("Accept Share URL")
+                        .font(.headline)
+                    TextField("Paste iCloud share URL", text: $shareURLInput)
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .font(.caption)
+                    if isAcceptingShare {
+                        ProgressView("Accepting...")
+                            .font(.caption)
+                    } else if let result = shareAcceptResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(result.contains("✅") ? ForagerTheme.statusSuccessFG : .red)
+                    }
+                    Button {
+                        Task { await acceptShareFromURL() }
+                    } label: {
+                        Text("Accept Invitation")
+                            .font(.caption)
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(shareURLInput.isEmpty || isAcceptingShare)
                 }
                 #endif
             }
