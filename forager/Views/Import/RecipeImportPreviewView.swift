@@ -497,34 +497,34 @@ struct RecipeImportPreviewView: View {
     /// M9.33: Split text on " and " only (NOT "or" — those are alternatives, not multiples).
     /// Handles "each X and Y" pattern by stripping "each" and distributing quantity.
     private func localSplitText(_ text: String) -> [String] {
-        let lower = text.lowercased()
-
         // Only split on " and " — NOT " or " (alternatives should stay as one line)
-        guard let range = lower.range(of: " and ") else { return [text] }
+        // Use .caseInsensitive so range is valid for the original string
+        guard let andRange = text.range(of: " and ", options: .caseInsensitive) else { return [text] }
 
-        let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
-        let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+        // Handle "each" pattern FIRST: "2 teaspoons each chili powder and cumin"
+        if let eachRange = text.range(of: " each ", options: .caseInsensitive) {
+            let qtyPart = text[text.startIndex..<eachRange.lowerBound].trimmingCharacters(in: .whitespaces)
+            let afterEach = text[eachRange.upperBound...].trimmingCharacters(in: .whitespaces)
 
-        guard !beforeSep.isEmpty, !afterSep.isEmpty else { return [text] }
-
-        // Handle "each" pattern: "2 teaspoons each chili powder and cumin"
-        // Check the FULL text (not just beforeSep) for " each "
-        if let eachRange = lower.range(of: " each ") {
-            let qtyPart = String(text[text.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-            let afterEach = String(text[eachRange.upperBound...]).trimmingCharacters(in: .whitespaces)
             // afterEach is "chili powder and cumin" — split on " and "
-            if let andRange = afterEach.lowercased().range(of: " and ") {
-                let first = String(afterEach[afterEach.startIndex..<andRange.lowerBound]).trimmingCharacters(in: .whitespaces)
-                let second = String(afterEach[andRange.upperBound...]).trimmingCharacters(in: .whitespaces)
+            if let innerAnd = afterEach.range(of: " and ", options: .caseInsensitive) {
+                let first = afterEach[afterEach.startIndex..<innerAnd.lowerBound].trimmingCharacters(in: .whitespaces)
+                let second = afterEach[innerAnd.upperBound...].trimmingCharacters(in: .whitespaces)
+                guard !first.isEmpty, !second.isEmpty else { return [text] }
                 return ["\(qtyPart) \(first)", "\(qtyPart) \(second)"]
             }
         }
 
-        // Standard split: extract quantity prefix from the first part
+        // Standard split on " and "
+        let beforeSep = text[text.startIndex..<andRange.lowerBound].trimmingCharacters(in: .whitespaces)
+        let afterSep = text[andRange.upperBound...].trimmingCharacters(in: .whitespaces)
+        guard !beforeSep.isEmpty, !afterSep.isEmpty else { return [text] }
+
+        // Extract quantity prefix from the first part to distribute
         let cleanName = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
         let qtyPrefix: String
-        if let nameRange = beforeSep.lowercased().range(of: cleanName.lowercased()) {
-            qtyPrefix = String(beforeSep[beforeSep.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+        if let nameRange = beforeSep.range(of: cleanName, options: .caseInsensitive) {
+            qtyPrefix = beforeSep[beforeSep.startIndex..<nameRange.lowerBound].trimmingCharacters(in: .whitespaces)
         } else {
             qtyPrefix = ""
         }
