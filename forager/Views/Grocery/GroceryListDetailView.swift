@@ -22,6 +22,10 @@ struct GroceryListDetailView: View {
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
 
+    // M9.26: Editable title
+    @State private var isEditingTitle = false
+    @State private var editedTitle = ""
+
     // Quick-add state
     @State private var quickAddText = ""
     @State private var showingAutocomplete = false
@@ -106,7 +110,6 @@ struct GroceryListDetailView: View {
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .navigationTitle(weeklyList.name ?? "Grocery List")
         .navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             stickyBottomBar
@@ -398,11 +401,36 @@ struct GroceryListDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .principal) {
+            if isEditingTitle {
+                TextField("List name", text: $editedTitle)
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                    .submitLabel(.done)
+                    .onSubmit { saveTitle() }
+            } else {
+                Text(weeklyList.name ?? "Grocery List")
+                    .font(.headline)
+                    .onLongPressGesture {
+                        editedTitle = weeklyList.name ?? ""
+                        isEditingTitle = true
+                    }
+            }
+        }
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: { showingAddItem = true }) {
                 Label("Add with Options", systemImage: "plus.square")
             }
         }
+    }
+
+    private func saveTitle() {
+        let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            weeklyList.name = trimmed
+            try? viewContext.save()
+        }
+        isEditingTitle = false
     }
 
     // MARK: - Actions
