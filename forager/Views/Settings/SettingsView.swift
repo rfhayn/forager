@@ -660,62 +660,47 @@ struct SettingsView: View {
     // Provides access to privacy policy and app version
     private var aboutSection: some View {
         Section {
-            VStack(spacing: 0) {
-                // Replay Onboarding
-                Button {
-                    NotificationCenter.default.post(name: .replayOnboarding, object: nil)
-                } label: {
-                    HStack {
-                        Image(systemName: "hand.wave")
-                            .foregroundStyle(ForagerTheme.accentSecondary)
-                        Text("Replay Onboarding")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
+            // Replay Onboarding
+            Button {
+                NotificationCenter.default.post(name: .replayOnboarding, object: nil)
+            } label: {
+                HStack {
+                    Image(systemName: "hand.wave")
+                        .foregroundStyle(ForagerTheme.accentSecondary)
+                    Text("Replay Onboarding")
+                    Spacer()
                 }
-                .buttonStyle(.plain)
-
-                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
-
-                // M9.34: Replay Import Guide
-                Button {
-                    NotificationCenter.default.post(name: .replayImportGuide, object: nil)
-                } label: {
-                    HStack {
-                        Image(systemName: "book.pages")
-                            .foregroundStyle(ForagerTheme.accentSecondary)
-                        Text("Replay Import Guide")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
-
-                // Privacy Policy link
-                Button {
-                    showingPrivacyPolicy = true
-                } label: {
-                    HStack {
-                        Image(systemName: "hand.raised")
-                            .foregroundStyle(ForagerTheme.statusSuccessFG)
-                        Text("Privacy Policy")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "arrow.up.right.square")
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                            .font(.caption)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
             }
-            .foragerGlassCard()
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
+            .listRowBackground(ForagerTheme.surfacePrimary)
+
+            // M9.34: Replay Import Guide
+            Button {
+                NotificationCenter.default.post(name: .replayImportGuide, object: nil)
+            } label: {
+                HStack {
+                    Image(systemName: "book.pages")
+                        .foregroundStyle(ForagerTheme.accentSecondary)
+                    Text("Replay Import Guide")
+                    Spacer()
+                }
+            }
+            .listRowBackground(ForagerTheme.surfacePrimary)
+
+            // Privacy Policy link
+            Button {
+                showingPrivacyPolicy = true
+            } label: {
+                HStack {
+                    Image(systemName: "hand.raised")
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
+                    Text("Privacy Policy")
+                    Spacer()
+                    Image(systemName: "arrow.up.right.square")
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                        .font(.caption)
+                }
+            }
+            .listRowBackground(ForagerTheme.surfacePrimary)
         } header: {
             Text("About")
         } footer: {
