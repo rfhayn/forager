@@ -330,14 +330,22 @@ struct HouseholdView: View {
                     Button(role: .destructive) {
                         showDeleteConfirmation = true
                     } label: {
-                        Label("Delete Household", systemImage: "trash")
+                        HStack {
+                            Label("Delete Household", systemImage: "trash")
+                            Spacer()
+                        }
                     }
+                    .buttonStyle(.borderless)
                 } else {
                     Button(role: .destructive) {
                         showLeaveConfirmation = true
                     } label: {
-                        Label("Leave Household", systemImage: "rectangle.portrait.and.arrow.right")
+                        HStack {
+                            Label("Leave Household", systemImage: "rectangle.portrait.and.arrow.right")
+                            Spacer()
+                        }
                     }
+                    .buttonStyle(.borderless)
                 }
             }
             .foragerGlassCard()
