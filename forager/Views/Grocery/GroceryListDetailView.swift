@@ -26,6 +26,9 @@ struct GroceryListDetailView: View {
     @State private var isEditingTitle = false
     @State private var editedTitle = ""
 
+    // M9.26: Toggle recipe source display
+    @State private var showRecipeSources = false
+
     // Quick-add state
     @State private var quickAddText = ""
     @State private var showingAutocomplete = false
@@ -327,9 +330,9 @@ struct GroceryListDetailView: View {
                 Section {
                     if !collapsedCategories.contains(categoryName) {
                         ForEach(items, id: \.self) { item in
-                            GroceryListItemRow(item: item) {
+                            GroceryListItemRow(item: item, onToggle: {
                                 toggleItemCompletion(item)
-                            }
+                            }, showRecipeSources: showRecipeSources)
                             .listRowBackground(Color.clear)
                             .swipeActions(edge: .leading) {
                                 Button {
@@ -418,8 +421,16 @@ struct GroceryListDetailView: View {
             }
         }
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button(action: { showingAddItem = true }) {
-                Label("Add with Options", systemImage: "plus.square")
+            HStack(spacing: ForagerTheme.Spacing.sm) {
+                Button {
+                    withAnimation { showRecipeSources.toggle() }
+                } label: {
+                    Image(systemName: showRecipeSources ? "book.fill" : "book")
+                        .foregroundStyle(showRecipeSources ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                }
+                Button(action: { showingAddItem = true }) {
+                    Image(systemName: "plus.square")
+                }
             }
         }
     }
@@ -701,6 +712,7 @@ struct GroceryListItemRow: View {
     @ObservedObject var item: GroceryListItem
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let onToggle: () -> Void
+    var showRecipeSources: Bool = false
 
     /// Parsed ingredient name for bold highlighting (matches recipe detail pattern)
     private var parsedIngredientName: String? {
@@ -749,17 +761,16 @@ struct GroceryListItemRow: View {
                 .padding(.leading, 22) // Align under text, past checkbox
             }
 
-            // Recipe source badges
-            if !item.sourceRecipeNames.isEmpty {
-                HStack(spacing: ForagerTheme.Spacing.xs) {
+            // Recipe sources — subtle gray text, toggled
+            if showRecipeSources && !item.sourceRecipeNames.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
                     ForEach(item.sourceRecipeNames, id: \.self) { recipeName in
-                        Text(recipeName)
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.accentPrimary)
-                            .padding(.horizontal, ForagerTheme.Spacing.sm)
-                            .padding(.vertical, 2)
-                            .background(ForagerTheme.accentTint)
-                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
+                        HStack(spacing: ForagerTheme.Spacing.xs) {
+                            Text("•")
+                            Text(recipeName)
+                        }
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                     }
                 }
                 .padding(.leading, 22)
