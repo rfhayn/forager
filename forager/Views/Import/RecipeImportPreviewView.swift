@@ -233,8 +233,9 @@ struct RecipeImportPreviewView: View {
 
     private var titleSection: some View {
         HStack(alignment: .top, spacing: ForagerTheme.Spacing.sm) {
-            TextField("Recipe title", text: $draft.title.value)
+            TextField("Recipe title", text: $draft.title.value, axis: .vertical)
                 .font(ForagerTheme.detailTitle)
+                .lineLimit(1...4)
                 .onChange(of: draft.title.value) { _, _ in
                     draft.title.wasEdited = true
                 }
