@@ -156,7 +156,11 @@ struct RecipeImportPreviewView: View {
         }
         .onAppear { scrollProxy = proxy }
         } // ScrollViewReader
-        .task { computeIngredientMatches() }
+        .task {
+            // M9.33: Auto-split multi-ingredient lines before computing matches
+            autoSplitMultiIngredients()
+            computeIngredientMatches()
+        }
         // M10.6.10: Configure autocomplete with current household
         .onAppear {
             autocompleteService.configure(householdKey: householdService.currentHouseholdKey)
@@ -442,6 +446,64 @@ struct RecipeImportPreviewView: View {
         }
     }
 
+    /// M9.33: Auto-split all detected multi-ingredient lines on preview load
+    private func autoSplitMultiIngredients() {
+        var ingredients = draft.ingredients.value
+        var didSplit = false
+        var i = 0
+
+        while i < ingredients.count {
+            let text = ingredients[i]
+            if IngredientParsingService.detectMultiIngredient(text) {
+                // Try to split on " and " or " or "
+                let splits = localSplitText(text)
+                if splits.count > 1 {
+                    ingredients.remove(at: i)
+                    for (j, split) in splits.enumerated() {
+                        ingredients.insert(split, at: i + j)
+                    }
+                    i += splits.count
+                    didSplit = true
+                    continue
+                }
+            }
+            i += 1
+        }
+
+        if didSplit {
+            draft.ingredients.value = ingredients
+        }
+    }
+
+    /// M9.33: Split text on " and " or " or ", distributing quantity prefix
+    private func localSplitText(_ text: String) -> [String] {
+        let lower = text.lowercased()
+        let separators = [" and ", " or "]
+
+        for separator in separators {
+            guard let range = lower.range(of: separator) else { continue }
+
+            let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+            let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+
+            guard !beforeSep.isEmpty, !afterSep.isEmpty else { continue }
+
+            // Extract quantity prefix from the first part to apply to the second
+            let cleanName = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
+            let qtyPrefix: String
+            if let nameRange = beforeSep.lowercased().range(of: cleanName.lowercased()) {
+                qtyPrefix = String(beforeSep[beforeSep.startIndex..<nameRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+            } else {
+                qtyPrefix = ""
+            }
+
+            let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
+            return [beforeSep, secondLine]
+        }
+
+        return [text] // No split found
+    }
+
     /// M9.33: Local fallback split — simple text split on " and " / " or " without AI
     private func localSplitIngredient(at index: Int, text: String) {
         // Try splitting on " and " first, then " or "
@@ -681,13 +743,21 @@ struct RecipeImportPreviewView: View {
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
-                // M9.33: Visual indicator for multi-ingredient lines (no AI needed for detection)
+                // M9.33: Visual indicator for multi-ingredient lines
                 .overlay(alignment: .topTrailing) {
                     if IngredientParsingService.detectMultiIngredient(text) {
-                        Image(systemName: "square.split.2x1")
-                            .font(.system(size: 10))
-                            .foregroundStyle(ForagerTheme.statusWarningFG)
-                            .padding(4)
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.system(size: 10, weight: .bold))
+                            Text("Split")
+                                .font(.system(size: 9, weight: .bold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.statusWarningFG)
+                        .clipShape(Capsule())
+                        .padding(4)
                     }
                 }
                 // M10.6.10: Autocomplete dropdown after editing row
