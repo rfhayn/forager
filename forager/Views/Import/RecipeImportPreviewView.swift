@@ -414,6 +414,34 @@ struct RecipeImportPreviewView: View {
         llmParsingIngredients.remove(index)
     }
 
+    // MARK: - M9.33: Multi-Ingredient Splitting
+
+    /// Split a multi-ingredient line into separate entries using AI
+    private func splitIngredient(at index: Int, text: String) async {
+        guard let parser = LLMSettingsService.shared.activeParser() else { return }
+        guard let claudeParser = parser as? ClaudeIngredientParser else { return }
+
+        do {
+            guard let splits = try await claudeParser.splitMultiIngredient(text) else { return }
+
+            // Replace the single line with multiple lines
+            var ingredients = draft.ingredients.value
+            ingredients.remove(at: index)
+            for (i, split) in splits.enumerated() {
+                ingredients.insert(split, at: index + i)
+            }
+            draft.ingredients.value = ingredients
+
+            // Recompute all matches (simplest — indices shifted)
+            computeIngredientMatches()
+
+        } catch {
+            #if DEBUG
+            print("⚠️ M9.33: Split failed: \(error)")
+            #endif
+        }
+    }
+
     /// Parse each ingredient line, look up existing templates, and pre-fill category assignments.
     // M10.6.8: Delegates to shared IngredientMatchService
     private func computeIngredientMatches() {
@@ -612,12 +640,22 @@ struct RecipeImportPreviewView: View {
             ingredientMatchSummary
 
             ForEach(draft.ingredients.value.indices, id: \.self) { index in
+                let text = draft.ingredients.value[index]
                 ingredientRow(
                     index: index,
-                    text: draft.ingredients.value[index],
+                    text: text,
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
+                // M9.33: Visual indicator for multi-ingredient lines
+                .overlay(alignment: .topTrailing) {
+                    if IngredientParsingService.detectMultiIngredient(text) && parsingService.isLLMAvailable {
+                        Image(systemName: "square.split.2x1")
+                            .font(.system(size: 10))
+                            .foregroundStyle(ForagerTheme.statusWarningFG)
+                            .padding(4)
+                    }
+                }
                 // M10.6.10: Autocomplete dropdown after editing row
                 if editingIndex == index {
                     importAutocompleteDropdown(index: index)
@@ -692,6 +730,15 @@ struct RecipeImportPreviewView: View {
                     Task { await singleLLMParse(index: index) }
                 } label: {
                     AIParseLabel()
+                }
+
+                // M9.33: Split multi-ingredient line
+                if IngredientParsingService.detectMultiIngredient(text) {
+                    Button {
+                        Task { await splitIngredient(at: index, text: text) }
+                    } label: {
+                        Label("Split Ingredients", systemImage: "square.split.2x1")
+                    }
                 }
             }
         }
