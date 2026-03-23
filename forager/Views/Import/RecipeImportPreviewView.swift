@@ -776,6 +776,21 @@ struct RecipeImportPreviewView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                // M9.33: Alternative ingredient indicator ("X or Y" — user should pick one)
+                if IngredientParsingService.detectAlternativeIngredient(text) {
+                    HStack(spacing: ForagerTheme.Spacing.sm) {
+                        Image(systemName: "arrow.triangle.swap")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("Contains alternatives — consider choosing one")
+                            .font(ForagerTheme.captionFont)
+                        Spacer()
+                    }
+                    .foregroundStyle(ForagerTheme.statusWarningFG)
+                    .padding(.vertical, ForagerTheme.Spacing.sm)
+                    .padding(.horizontal, ForagerTheme.Spacing.md)
+                    .background(ForagerTheme.surfaceWarning)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                }
                 // M10.6.10: Autocomplete dropdown after editing row
                 if editingIndex == index {
                     importAutocompleteDropdown(index: index)

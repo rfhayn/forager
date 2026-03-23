@@ -386,10 +386,27 @@ class IngredientParsingService: ObservableObject {
         }
 
         // Pattern: " and " between word characters — NOT " or " (alternatives, not multiples)
-        // Also detect "each X and Y" pattern
         let andPattern = #"[a-z]{3,}\s+and\s+[a-z]{3,}"#
 
         if let _ = lower.range(of: andPattern, options: .regularExpression) {
+            return true
+        }
+
+        return false
+    }
+
+    /// Detect if an ingredient line contains alternatives ("X or Y").
+    /// These need user attention — pick one or keep both.
+    static func detectAlternativeIngredient(_ text: String) -> Bool {
+        let lower = text.lowercased()
+
+        // Check known compound exclusions
+        for compound in compoundIngredients {
+            if lower.contains(compound) { return false }
+        }
+
+        let orPattern = #"[a-z]{3,}\s+or\s+[a-z]{3,}"#
+        if let _ = lower.range(of: orPattern, options: .regularExpression) {
             return true
         }
 
