@@ -1653,6 +1653,15 @@ class HouseholdService: ObservableObject {
             creationStatus = "Done!"
             diag.info("=== CREATE HOUSEHOLD COMPLETE ===", category: .household)
 
+            // M9.30: Push existing Keychain API key to new Household (encrypted)
+            // so the user doesn't have to re-enter it after creating a household
+            if let existingKey = KeychainHelper.getLLMAPIKey(), !existingKey.isEmpty,
+               let householdID = household.id {
+                household.llmAPIKey = try? HouseholdKeyEncryption.encrypt(existingKey, householdID: householdID)
+                try? viewContext.save()
+                diag.info("M9.30: Pushed existing API key to new household (encrypted)", category: .household)
+            }
+
             CloudKitLogger.householdCreated(name)
             CloudKitLogger.shareCreated(recordID: share.recordID.recordName)
             if moveExistingData {
