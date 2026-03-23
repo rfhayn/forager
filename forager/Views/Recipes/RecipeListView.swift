@@ -194,10 +194,15 @@ struct RecipeListView: View {
             ForagerTheme.backgroundCanvas
                 .ignoresSafeArea()
 
-            if filteredRecipes.isEmpty {
-                enhancedEmptyStateView
-            } else {
-                recipeListContent
+            VStack(spacing: 0) {
+                // M9.26: Filter pills always visible (even when empty)
+                filterPillRow
+
+                if filteredRecipes.isEmpty {
+                    enhancedEmptyStateView
+                } else {
+                    recipeListContent
+                }
             }
         }
         .navigationTitle("Recipes")
@@ -339,9 +344,6 @@ struct RecipeListView: View {
     
     private var recipeListContent: some View {
         VStack(spacing: 0) {
-            // M15.4: Filter pills
-            filterPillRow
-
             if !searchText.isEmpty {
                 searchResultHeader
             }
