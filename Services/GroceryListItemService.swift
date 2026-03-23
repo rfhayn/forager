@@ -118,9 +118,18 @@ class GroceryListItemService: ObservableObject {
         }
 
         // Step 7: Create new item
+        // M9.32: Use clean name with quantity for grocery display — strip qualifiers/prep notes
+        let groceryDisplayName: String
+        let qtyText = resolvedStructured.displayText
+        if qtyText.isEmpty || qtyText == "0" {
+            groceryDisplayName = resolvedCleanName
+        } else {
+            groceryDisplayName = "\(qtyText) \(resolvedCleanName)"
+        }
+
         let item = GroceryListItem(context: viewContext)
         item.id = UUID()
-        item.name = name
+        item.name = groceryDisplayName
         item.categoryEntity = category
         item.isCompleted = false
         item.source = source
@@ -316,13 +325,18 @@ class GroceryListItemService: ObservableObject {
     private func findExistingItem(named targetName: String, in list: WeeklyList) -> GroceryListItem? {
         guard let items = list.items as? Set<GroceryListItem> else { return nil }
         let normalizedTarget = templateService.normalize(name: targetName)
+        // M9.32: Also resolve the target's canonical name for template-based matching
+        let targetCanonical = IngredientTemplate.canonicalName(from: normalizedTarget)
 
         return items.first { item in
             guard !item.isCompleted else { return false }
             guard let itemName = item.name else { return false }
+
+            // M9.32: Extract clean name from stored text and compare normalized canonical
             let cleanItemName = IngredientParsingService.extractCleanIngredientName(from: itemName)
             let normalizedItem = templateService.normalize(name: cleanItemName)
-            return normalizedItem == normalizedTarget
+            let itemCanonical = IngredientTemplate.canonicalName(from: normalizedItem)
+            return itemCanonical == targetCanonical || normalizedItem == normalizedTarget
         }
     }
 
