@@ -442,6 +442,40 @@ struct RecipeImportPreviewView: View {
         }
     }
 
+    /// M9.33: Local fallback split — simple text split on " and " / " or " without AI
+    private func localSplitIngredient(at index: Int, text: String) {
+        // Try splitting on " and " first, then " or "
+        let separators = [" and ", " or "]
+        for separator in separators {
+            if let range = text.lowercased().range(of: separator) {
+                let beforeSep = String(text[text.startIndex..<range.lowerBound]).trimmingCharacters(in: .whitespaces)
+                let afterSep = String(text[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+
+                guard !beforeSep.isEmpty, !afterSep.isEmpty else { continue }
+
+                // Check if the first part has a quantity — if so, apply it to the second part too
+                let parsed = IngredientParsingService.extractCleanIngredientName(from: beforeSep)
+                let qtyPrefix: String
+                if let qtyRange = beforeSep.lowercased().range(of: parsed.lowercased()) {
+                    qtyPrefix = String(beforeSep[beforeSep.startIndex..<qtyRange.lowerBound]).trimmingCharacters(in: .whitespaces)
+                } else {
+                    qtyPrefix = ""
+                }
+
+                let secondLine = qtyPrefix.isEmpty ? afterSep : "\(qtyPrefix) \(afterSep)"
+
+                var ingredients = draft.ingredients.value
+                ingredients.remove(at: index)
+                ingredients.insert(beforeSep, at: index)
+                ingredients.insert(secondLine, at: index + 1)
+                draft.ingredients.value = ingredients
+
+                computeIngredientMatches()
+                return
+            }
+        }
+    }
+
     /// Parse each ingredient line, look up existing templates, and pre-fill category assignments.
     // M10.6.8: Delegates to shared IngredientMatchService
     private func computeIngredientMatches() {
@@ -647,9 +681,9 @@ struct RecipeImportPreviewView: View {
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
-                // M9.33: Visual indicator for multi-ingredient lines
+                // M9.33: Visual indicator for multi-ingredient lines (no AI needed for detection)
                 .overlay(alignment: .topTrailing) {
-                    if IngredientParsingService.detectMultiIngredient(text) && parsingService.isLLMAvailable {
+                    if IngredientParsingService.detectMultiIngredient(text) {
                         Image(systemName: "square.split.2x1")
                             .font(.system(size: 10))
                             .foregroundStyle(ForagerTheme.statusWarningFG)
@@ -731,14 +765,18 @@ struct RecipeImportPreviewView: View {
                 } label: {
                     AIParseLabel()
                 }
+            }
 
-                // M9.33: Split multi-ingredient line
-                if IngredientParsingService.detectMultiIngredient(text) {
-                    Button {
+            // M9.33: Split multi-ingredient line (works with or without AI)
+            if IngredientParsingService.detectMultiIngredient(text) {
+                Button {
+                    if parsingService.isLLMAvailable {
                         Task { await splitIngredient(at: index, text: text) }
-                    } label: {
-                        Label("Split Ingredients", systemImage: "square.split.2x1")
+                    } else {
+                        localSplitIngredient(at: index, text: text)
                     }
+                } label: {
+                    Label("Split Ingredients", systemImage: "square.split.2x1")
                 }
             }
         }
