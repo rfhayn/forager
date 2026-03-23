@@ -747,22 +747,34 @@ struct RecipeImportPreviewView: View {
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
-                // M9.33: Visual indicator for multi-ingredient lines
-                .overlay(alignment: .topTrailing) {
-                    if IngredientParsingService.detectMultiIngredient(text) {
-                        HStack(spacing: 3) {
-                            Image(systemName: "arrow.triangle.branch")
-                                .font(.system(size: 10, weight: .bold))
-                            Text("Split")
-                                .font(.system(size: 9, weight: .bold))
+                // M9.33: Split action row below detected multi-ingredient lines
+                if IngredientParsingService.detectMultiIngredient(text) {
+                    Button {
+                        let splits = localSplitText(text)
+                        if splits.count > 1 {
+                            var ingredients = draft.ingredients.value
+                            ingredients.remove(at: index)
+                            for (j, split) in splits.enumerated() {
+                                ingredients.insert(split, at: index + j)
+                            }
+                            draft.ingredients.value = ingredients
+                            computeIngredientMatches()
                         }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(ForagerTheme.statusWarningFG)
-                        .clipShape(Capsule())
-                        .padding(4)
+                    } label: {
+                        HStack(spacing: ForagerTheme.Spacing.sm) {
+                            Image(systemName: "arrow.triangle.branch")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("Tap to split into separate ingredients")
+                                .font(ForagerTheme.captionFont)
+                            Spacer()
+                        }
+                        .foregroundStyle(ForagerTheme.accentPrimary)
+                        .padding(.vertical, ForagerTheme.Spacing.sm)
+                        .padding(.horizontal, ForagerTheme.Spacing.md)
+                        .background(ForagerTheme.accentTint)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                     }
+                    .buttonStyle(.plain)
                 }
                 // M10.6.10: Autocomplete dropdown after editing row
                 if editingIndex == index {
