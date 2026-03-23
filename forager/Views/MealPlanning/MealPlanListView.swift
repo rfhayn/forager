@@ -290,18 +290,13 @@ struct MealPlanSummaryCard: View {
                         .submitLabel(.done)
                         .onSubmit { saveName() }
                 } else {
-                    HStack(spacing: ForagerTheme.Spacing.xs) {
-                        Text(mealPlan.name ?? "Unnamed Plan")
-                            .font(ForagerTheme.cardTitle)
-                            .foregroundStyle(ForagerTheme.textPrimary)
-                        Image(systemName: "pencil")
-                            .font(.caption)
-                            .foregroundStyle(ForagerTheme.textTertiary)
-                    }
-                    .onTapGesture {
-                        editedName = mealPlan.name ?? ""
-                        isEditingName = true
-                    }
+                    Text(mealPlan.name ?? "Unnamed Plan")
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                        .onLongPressGesture {
+                            editedName = mealPlan.name ?? ""
+                            isEditingName = true
+                        }
                 }
                 Spacer()
                 if status == .active {
