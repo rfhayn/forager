@@ -42,6 +42,7 @@ extension View {
 
 extension Notification.Name {
     static let replayOnboarding = Notification.Name("replayOnboarding")
+    static let replayImportGuide = Notification.Name("replayImportGuide")
 }
 
 // MARK: - Coach Mark Step Definition
