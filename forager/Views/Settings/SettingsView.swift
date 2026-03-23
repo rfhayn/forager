@@ -681,13 +681,15 @@ struct SettingsView: View {
                 UserDefaults.standard.set(false, forKey: "hasSeenImportGuide")
                 importGuideReset = true
             } label: {
-                HStack {
-                    Image(systemName: "book.pages")
-                        .foregroundStyle(ForagerTheme.accentSecondary)
-                    Text("Replay Import Guide")
-                    Spacer()
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Image(systemName: "book.pages")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        Text("Replay Import Guide")
+                        Spacer()
+                    }
                     if importGuideReset {
-                        Text("Ready")
+                        Text("Guide will show next time you import a recipe")
                             .font(.caption)
                             .foregroundStyle(ForagerTheme.statusSuccessFG)
                     }
