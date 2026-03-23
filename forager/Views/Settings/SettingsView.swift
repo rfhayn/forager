@@ -34,6 +34,9 @@ struct SettingsView: View {
     @State private var showingIngredients = false
     @State private var showingCategories = false
 
+    // M9.34: Import guide replay
+    @State private var importGuideReset = false
+
     // M7.0.2: Privacy policy URL presentation state
     @State private var showingPrivacyPolicy = false
 
@@ -673,15 +676,21 @@ struct SettingsView: View {
             }
             .listRowBackground(ForagerTheme.surfacePrimary)
 
-            // M9.34: Replay Import Guide
+            // M9.34: Replay Import Guide — resets the flag so next import shows guide
             Button {
-                NotificationCenter.default.post(name: .replayImportGuide, object: nil)
+                UserDefaults.standard.set(false, forKey: "hasSeenImportGuide")
+                importGuideReset = true
             } label: {
                 HStack {
                     Image(systemName: "book.pages")
                         .foregroundStyle(ForagerTheme.accentSecondary)
                     Text("Replay Import Guide")
                     Spacer()
+                    if importGuideReset {
+                        Text("Ready")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.statusSuccessFG)
+                    }
                 }
             }
             .listRowBackground(ForagerTheme.surfacePrimary)
