@@ -29,6 +29,9 @@ struct RecipeImportPreviewView: View {
     @EnvironmentObject private var matchService: IngredientMatchService
 
     @State private var showAllSteps = false
+    // M9.34: Import guide overlay
+    @AppStorage("hasSeenImportGuide") private var hasSeenImportGuide = false
+    @State private var showImportGuide = false
     @State private var ingredientMatches: [Int: IngredientMatchResult] = [:]
     /// User's category selections per ingredient index (inline assignment)
     @State private var categoryAssignments: [Int: String] = [:]
@@ -120,6 +123,7 @@ struct RecipeImportPreviewView: View {
 
                 // Recipe title (editable)
                 titleSection
+                    .coachMarkAnchor("importTitle")
 
                 // Warning banner for partial extractions (wireframe screen 3)
                 if draft.successLevel == .partial {
@@ -160,6 +164,20 @@ struct RecipeImportPreviewView: View {
             // M9.33: Auto-split multi-ingredient lines before computing matches
             autoSplitMultiIngredients()
             computeIngredientMatches()
+            // M9.34: Show import guide on first use
+            if !hasSeenImportGuide {
+                // Short delay to let the view render with anchors
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                showImportGuide = true
+            }
+        }
+        .overlay {
+            if showImportGuide {
+                ImportGuideOverlay(isActive: $showImportGuide)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .replayImportGuide)) { _ in
+            showImportGuide = true
         }
         // M10.6.10: Configure autocomplete with current household
         .onAppear {
@@ -216,6 +234,7 @@ struct RecipeImportPreviewView: View {
                 Button("Save") { saveWithCategories() }
                     .fontWeight(.semibold)
                     .disabled(draft.successLevel == .failure)
+                    .coachMarkAnchor("saveButton")
             }
         }
         .llmParsingToast(message: $llmToastMessage)
@@ -731,6 +750,7 @@ struct RecipeImportPreviewView: View {
                                 .font(ForagerTheme.secondaryFont)
                         }
                         .disabled(draft.ingredients.value.isEmpty)
+                        .coachMarkAnchor("aiParseButton")
                     }
                 }
             }
@@ -747,6 +767,7 @@ struct RecipeImportPreviewView: View {
                     confidence: draft.ingredients.confidence,
                     matchInfo: ingredientMatches[index]
                 )
+                .coachMarkAnchor(index == 0 ? "ingredientRow" : "")
                 // M9.33: Split action row below detected multi-ingredient lines
                 if IngredientParsingService.detectMultiIngredient(text) {
                     Button {
@@ -775,6 +796,7 @@ struct RecipeImportPreviewView: View {
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                     }
                     .buttonStyle(.plain)
+                    .coachMarkAnchor("smartIndicator")
                 }
                 // M9.33: Alternative ingredient indicator ("X or Y" — user should pick one)
                 if IngredientParsingService.detectAlternativeIngredient(text) {

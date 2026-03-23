@@ -678,6 +678,23 @@ struct SettingsView: View {
 
                 Divider().padding(.vertical, ForagerTheme.Spacing.sm)
 
+                // M9.34: Replay Import Guide
+                Button {
+                    NotificationCenter.default.post(name: .replayImportGuide, object: nil)
+                } label: {
+                    HStack {
+                        Image(systemName: "book.pages")
+                            .foregroundStyle(ForagerTheme.accentSecondary)
+                        Text("Replay Import Guide")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
                 // Privacy Policy link
                 Button {
                     showingPrivacyPolicy = true
