@@ -818,9 +818,11 @@ struct RecipeImportPreviewView: View {
                     .background(ForagerTheme.accentTint)
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                     .contentShape(Rectangle())
-                    .onTapGesture {
-                        performSplit(at: index)
-                    }
+                    .highPriorityGesture(
+                        TapGesture().onEnded {
+                            performSplit(at: index)
+                        }
+                    )
                     .coachMarkAnchor("smartIndicator")
                 }
                 // M9.33: Alternative ingredient indicator ("X or Y" — user should pick one)
@@ -915,14 +917,10 @@ struct RecipeImportPreviewView: View {
                 }
             }
 
-            // M9.33: Split multi-ingredient line (works with or without AI)
+            // M9.33: Split multi-ingredient line — always use local split (reliable)
             if IngredientParsingService.detectMultiIngredient(text) {
                 Button {
-                    if parsingService.isLLMAvailable {
-                        Task { await splitIngredient(at: index, text: text) }
-                    } else {
-                        localSplitIngredient(at: index, text: text)
-                    }
+                    performSplit(at: index)
                 } label: {
                     Label("Split Ingredients", systemImage: "square.split.2x1")
                 }
