@@ -513,14 +513,15 @@ struct RecipeImportPreviewView: View {
             let text = ingredients[i]
             let detected = IngredientParsingService.detectMultiIngredient(text)
             #if DEBUG
-            if detected {
-                print("🔀 Detected multi-ingredient at \(i): '\(text)'")
+            // Log EVERY ingredient so we can see what text we're working with
+            if text.lowercased().contains(" and ") || text.lowercased().contains(" each ") {
+                print("🔀 [\(i)] has 'and'/'each': '\(text)' detected=\(detected)")
             }
             #endif
             if detected {
                 let splits = localSplitText(text)
                 #if DEBUG
-                print("🔀 Split result: \(splits)")
+                print("🔀 Split result for [\(i)]: \(splits)")
                 #endif
                 if splits.count > 1 {
                     ingredients.remove(at: i)
