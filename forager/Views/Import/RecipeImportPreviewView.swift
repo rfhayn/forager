@@ -543,9 +543,18 @@ struct RecipeImportPreviewView: View {
 
     /// M9.33: Split text on " and " only (NOT "or" — those are alternatives, not multiples).
     /// Handles "each X and Y" pattern by stripping "each" and distributing quantity.
-    private func localSplitText(_ text: String) -> [String] {
-        // M9.33: Normalize Unicode whitespace (non-breaking spaces from web scraping)
-        let text = text.replacingOccurrences(of: "[\\s\\x{00A0}]+", with: " ", options: .regularExpression)
+    private func localSplitText(_ originalText: String) -> [String] {
+        // M9.33: Normalize ALL Unicode whitespace (non-breaking spaces, thin spaces, etc. from web scraping)
+        // Use \p{Z} (Unicode space separator) + standard \s to catch every variant
+        let text = originalText.replacingOccurrences(of: "[\\s\\p{Z}\\x{00A0}\\x{200B}\\x{FEFF}]+", with: " ", options: .regularExpression).trimmingCharacters(in: .whitespaces)
+
+        #if DEBUG
+        if text != originalText {
+            print("🔀 localSplitText: NORMALIZED whitespace — original had non-ASCII spaces")
+            print("🔀   original scalars: \(originalText.unicodeScalars.map { String(format: "U+%04X", $0.value) }.joined(separator: " "))")
+        }
+        print("🔀 localSplitText input: '\(text)'")
+        #endif
 
         // Only split on " and " — NOT " or " (alternatives should stay as one line)
         guard let andRange = text.range(of: " and ", options: .caseInsensitive) else {
