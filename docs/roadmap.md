@@ -1,8 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: March 21, 2026
-**Current Phase**: Launch prep — M9.26 → M9.28 → M7.7 (~6-11h to App Store)
-**Recently Completed**: M9.29 ✅ | M10.6.5 ✅ | M9.15.3 ✅ | M9.24 ✅ | M9.27 ✅ | M17.1 ✅
+**Last Updated**: March 23, 2026
+**Current Phase**: Launch prep — M9.28 → M7.7 (~4-7h to App Store)
+**Recently Completed**: M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | M9.29 ✅ | M9.27 ✅ | M9.26 ✅ | M9.24 ✅ | M9.15.3 ✅ | M17.1 ✅ | M10.6.5 ✅
+**Session Stats**: March 21-23 — 29 builds (59-87), 16 PRs (#86-101), ~20 hours
 **Post-Launch**: M10.4 → M6 → M9 remaining → M11+
 
 ---

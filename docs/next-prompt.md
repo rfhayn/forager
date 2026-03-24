@@ -1,155 +1,62 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 21, 2026
+**Last Updated**: March 23, 2026
 **For Milestone**: Launch Path
-**Status**: **M9.30 🔄 ACTIVE** | **M9.29 ✅** | **M10.6.5 ✅** | **M9.15.3 ✅** | **M9.24 ✅** | **M9.27 ✅** | **M17.1 ✅**
+**Status**: **M9.34 ✅** | **M9.33 ✅** | **M9.32 ✅** | **M9.31 ✅** | **M9.30 ✅** | **M9.29 ✅** | **M9.27 ✅** | **M9.26 ✅** | **M9.24 ✅** | **M9.15.3 ✅** | **M17.1 ✅** | **M10.6.5 ✅**
 
-**Launch Path**: M9.30 → M9.26 → M9.28 → M7.7 (~9-16h to App Store)
-
----
-
-## M9.30 — Household Invitation Security Hardening
-
-**PRD**: `docs/prds/active/m9.30-household-invitation-security.md`
-**Branch**: `feature/M9.30-invite-security-hardening`
-
-5 phases: Schema v10 (invitedDate) → Permission revert (owner-only) → 10-member cap → API key encryption (AES-GCM) → Duplicate prevention.
-
-Key CloudKit rules to follow:
-- Permission revert MUST be guarded by `isOwner` (only owner can modify CKShare)
-- Member cap must check `participants.count + pendingCount` (public link sharing doesn't add pending to CKShare)
-- HouseholdMember is Non-HouseholdScoped (ADR 014 exempt, direct creation OK)
-- Schema v10 is additive optional field — safe lightweight migration
+**Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
 
 ---
 
-## **M9.15.3 — 🔄 ACTIVE: Returning User Detection**
+## M9.28 — Remove Diagnostic Logging for Production
 
-**PRD**: `docs/prds/active/m9.15-household-creation-architecture-fix.md` (Phase 3)
-**Branch**: `feature/M9.15.3-returning-user-detection`
-**Problem**: After app reinstall, UserDefaults is lost → `currentHousehold` is nil → shared data invisible
+**Status**: PLANNED
+**Estimated**: 1-2 hours
 
-### What's Done (Phase 3)
-- `discoverExistingHousehold()` — background polling loop (30 attempts × 2s = 60s)
-- `DiscoveryState` enum + `@Published` for UI consumption
-- `cancelDiscovery()` — stops background task when user creates household
-- `foragerApp.swift` — kicks off discovery after initial `loadCurrentHousehold()` finds nothing
-- `HouseholdView` — discovery status in no-household section + live sync indicator from CloudKitSyncMonitor
-- Build succeeds
+Strip DiagnosticLogger, DebugLogService, and CloudKitLogger output from Release builds. Determine what to keep behind `#if DEBUG` vs remove entirely. The diagnostic logging was invaluable during M9.15-M9.31 debugging but should not ship in the App Store build.
 
-### What's Left
-- Test on device with real CloudKit (delete app, reinstall, verify household restores)
-- Verify edge cases: left-household flag (Keychain survives reinstall), multiple households
-- Consider: should `checkForAcceptedInvitations()` also run after discovery timeout?
-
-### Key Design Decisions
-1. **Trust CloudKit membership**: If Household is in shared store, user is a participant (CloudKit guarantees this)
-2. **Non-blocking**: App loads instantly with empty state, discovery runs in background
-3. **Re-uses `loadCurrentHousehold()`**: No new fetch logic — the existing method already validates CKShare + left-household flags
-4. **Pre-creation guard**: `createHouseholdAndShare()` already checks for existing households (M7.3.3), plus we cancel discovery
-
-### Previous Phases (Complete, merged as PR #73)
-- **Phase 1**: Promoted Ingredient + GroceryListItem to HouseholdScoped (schema v9)
-- **Phase 2**: Rewrote household creation with create-empty-then-copy pattern
+Key files to audit:
+- `Services/DiagnosticLogger.swift` — the main logger
+- `Services/CloudKitLogger.swift` — CloudKit-specific logging
+- `Services/DebugLogService.swift` — debug log service
+- All `diag.info/warning/error` calls in HouseholdService.swift
+- Settings > Diagnostics section — may need to be hidden or removed
 
 ---
 
-## **M16 — 🔄 ACTIVE: Knowledge MCP Server (M16.3 remaining)**
+## M7.7 — App Store Submission
 
-**PRD**: `docs/prds/active/m16-knowledge-mcp-server.md`
-**Branch**: Merged to main (PR #63)
-**Location**: `Tools/mcp-knowledge/`
+**Status**: PLANNED
+**Estimated**: 3-5h
 
-Python MCP server that indexes all project knowledge (182 docs, 2,472 chunks) for search/retrieval in Claude Desktop. Deployed and operational. 7 MCP tools across core search and newsletter drafting.
-
-### M16.1: Foundation (2-3h) — ✅ COMPLETE
-### M16.2: Newsletter + Status Tools (2-3h) — ✅ COMPLETE
-
-### M16.3: Polish (1-2h) — PLANNED
-- Tune chunking/search quality based on real usage
-- Test with real newsletter writing session
-- Verify README accuracy
+Screenshots, metadata, App Store Connect configuration, privacy policy, review submission.
 
 ---
 
-## **M10.8 — ✅ COMPLETE**
+## Recently Completed (This Session — March 21-23, 2026)
 
-Inline ingredient + instruction + metadata editing across RecipeDetailView, CreateRecipeView, EditRecipeView, and RecipeImportPreviewView. Edit Recipe modal removed. TestFlight build 29 deployed.
+**29 builds shipped (59-87), 16 PRs (#86-101)**
 
-**PRD**: `docs/prds/complete/m10.8-inline-ingredient-editing.md`
-
----
-
-## **M10.3 — DEV COMPLETE (Ready to Merge)**
-
-### What's Done
-- ✅ `ImageOCRService.swift` — VNRecognizeTextRequest wrapper → [OCRLine] with real boundingBox
-- ✅ `DocumentScannerView.swift` — VNDocumentCameraViewController UIViewControllerRepresentable
-- ✅ `PhotoImportView.swift` — Full local phase state machine with dual extraction path
-- ✅ `.photo` ImportMode added to RecipeImportSheet
-- ✅ "Import from Photo" menu button in RecipeListView
-- ✅ `NSCameraUsageDescription` in Info.plist
-- ✅ Build succeeds with zero warnings
-- ✅ Bug fixes: PhotoImportPhase Equatable, auto-dismiss, CategoryAssignmentModal, cold launch, label fix
-- ✅ M10.3.8: Import preview ingredient matching — parse + template lookup + status display
-
-### What Still Needs Manual Testing
-- Clean printed recipes (cookbooks, magazines)
-- Screenshot recipes from websites
-- Handwritten recipes (expect lower accuracy)
-- Multi-page scans via document scanner
-- Error paths: no text, camera denied, scanner cancelled
-- FM path vs heuristic path on FM-capable device
-- M10.3.8 ingredient matching display (verify ✓/?/○ icons + category labels)
+| Milestone | What |
+|-----------|------|
+| M9.24 | Member import store routing (scope-aware assignment) |
+| M9.25/25.1 | Glass card UI unification + grocery styling |
+| M9.26 | Bug fixes x4 (cards, tap targets, favorites, names, calendar) |
+| M9.27 | Welcome walkthrough redesign (3-screen carousel) |
+| M9.29 | Claude/AI branding cleanup (sparkle icons) |
+| M9.30 | Household security (schema v10, encryption, expiry, caps) |
+| M9.31 | Ghost detection resilience (4-layer protection) |
+| M9.32 | Grocery item name cleanup (clean names for aggregation) |
+| M9.33 | AI multi-ingredient splitting (auto-split + indicators) |
+| M9.34 | Import guide walkthrough (5-step coach marks) |
+| M10.6.5 | Claude API documentation complete |
+| M17.1 | Doc slimming 91% + PRD archival |
 
 ---
 
-## **M10.6 — 🔄 ACTIVE: Claude API Integration (17.5-24h)**
-
-**PRD**: `docs/prds/active/m10.6-claude-api-integration.md`
-**Branch**: `feature/M10.6-claude-api-integration`
-
-Optional Claude API for ingredient parsing (fills ~7-8% semantic gap). M10.6.6 adds user-triggered AI parsing across all views. App fully functional without it — toggle OFF by default. Zero Core Data schema changes.
-
-### Sub-phases
-
-| Sub-phase | Scope | Hours | Status |
-|-----------|-------|-------|--------|
-| M10.6.1 | Protocol + ClaudeIngredientParser + mock + tests | 2-3h | ✅ |
-| M10.6.2 | KeychainHelper extension + LLMSettingsService + tests | 1.5-2h | ✅ |
-| M10.6.3 | Settings UI — AI Import section | 1.5-2h | ✅ |
-| M10.6.4 | RecipeImportService integration + telemetry + tests | 2-3h | ✅ |
-| M10.6.5 | Documentation + full verification | 1-2h | READY |
-| M10.6.6 | User-triggered AI parsing across all views | 9-12h | ✅ |
-| M10.6.7 | Household-shared API key via CloudKit | 3-4h | ✅ |
-| M10.6.8 | Shared IngredientMatchService + IngredientMatchRow | 4-5h | ✅ |
-| M10.6.9 | AI category validation + import persistence fixes | 2-3h | ✅ |
-| M10.6.10 | Ingredient autocomplete + three-state match icons | 1-2h | ✅ |
-
-### What's Done (M10.6.6-M10.6.10)
-- `IngredientParsingService` LLM public API: `isLLMAvailable`, `parseSingleWithLLM()`, `parseBatchWithLLM()`
-- `LLMParsingToast` reusable view modifier (capsule, auto-dismiss 2s)
-- CreateRecipeView + EditRecipeView: batch sparkle + per-ingredient context menu
-- RecipeImportPreviewView: batch sparkle + per-ingredient context menu (index-keyed)
-- GroceryListDetailView: sparkle quick-add with local-parse fallback
-- AddListItemView: "AI Add" sparkle with local-parse fallback
-- M10.6.7: Household-shared API key stored in CloudKit Household entity (`llmAPIKey` field, v7 schema)
-- M10.6.8: Shared `IngredientMatchService` + `IngredientMatchRow` components across all 4 ingredient views
-- M10.6.9: AI category validation, index-based category persistence, grocery merge fix, inline add ingredient
-- M10.6.10: Autocomplete dropdowns in RecipeDetailView + RecipeImportPreviewView, three-state status icons (ready/needsCategory/needsTemplate)
-
-### What's Next (M10.6.5)
-- Update all 7 core docs with completion status
-- Final build verification
-- Create PR for squash merge to main
-
-### After M10.6
+## Post-Launch Priorities
 
 - M10.4: Polish & Integration (11-16h)
 - M7.7: App Store Submission (3-5h)
 - M6: Testing Foundation (20-30h)
 - M9 Remaining (~120h)
-
----
-
-**Dependencies**: M10.3 dev complete ✅ | M10.8 complete ✅ | M10.6 PRD audited ✅ | All 267+ existing tests expected to pass (no schema changes)

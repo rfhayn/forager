@@ -1,8 +1,8 @@
 # Forager - Project Index
 
-**Last Updated**: March 21, 2026
-**Current Milestone**: M9.15.3 ✅ | M9.24 ✅ | M9.27 ✅ | M17.1 ✅
-**Launch Path**: M9.26 → M10.6.5 → M9.28 → M9.29 → M7.7 (~8-15h to App Store)
+**Last Updated**: March 23, 2026
+**Current Milestone**: M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | All launch milestones through M9.34 complete
+**Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
 
 ---
 
@@ -16,6 +16,16 @@
 ---
 
 ## Recent Activity
+
+### March 21-23, 2026 — Epic Launch Prep Sprint (29 builds, 16 PRs)
+- **M9.30**: Household security hardening (schema v10, 24h invite expiry, AES-GCM encryption, 10-member cap)
+- **M9.31**: Ghost detection resilience (4-layer protection against transient CKShare failures)
+- **M9.32**: Grocery item name cleanup (clean names for aggregation, template matching)
+- **M9.33**: AI multi-ingredient splitting (auto-split "X and Y", alternative indicators)
+- **M9.34**: Import guide walkthrough (5-step coach marks on first import)
+- **M9.26**: Bug fixes x4 (Settings tap targets, card consistency, favorites, editable names, calendar)
+- **M9.29**: Claude/AI branding cleanup (sparkle icons, logo removed)
+- **M17.1**: Doc slimming 91% (6,729 → 601 lines) + 17 PRDs archived
 
 ### March 21, 2026 - M9.15.3 ✅ COMPLETE — Returning User Detection
 - Household auto-discovers in ~6 seconds after delete+reinstall (attempt 3/30)
