@@ -546,19 +546,35 @@ struct RecipeImportPreviewView: View {
     private func localSplitText(_ text: String) -> [String] {
         // Only split on " and " — NOT " or " (alternatives should stay as one line)
         // Use .caseInsensitive so range is valid for the original string
-        guard let andRange = text.range(of: " and ", options: .caseInsensitive) else { return [text] }
+        guard let andRange = text.range(of: " and ", options: .caseInsensitive) else {
+            #if DEBUG
+            print("🔀 localSplitText: no ' and ' found in '\(text)'")
+            #endif
+            return [text]
+        }
 
         // Handle "each" pattern FIRST: "2 teaspoons each chili powder and cumin"
         if let eachRange = text.range(of: " each ", options: .caseInsensitive) {
-            let qtyPart = text[text.startIndex..<eachRange.lowerBound].trimmingCharacters(in: .whitespaces)
-            let afterEach = text[eachRange.upperBound...].trimmingCharacters(in: .whitespaces)
+            let qtyPart = String(text[text.startIndex..<eachRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            let afterEach = String(text[eachRange.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+
+            #if DEBUG
+            print("🔀 localSplitText 'each' pattern: qty='\(qtyPart)' afterEach='\(afterEach)'")
+            #endif
 
             // afterEach is "chili powder and cumin" — split on " and "
             if let innerAnd = afterEach.range(of: " and ", options: .caseInsensitive) {
-                let first = afterEach[afterEach.startIndex..<innerAnd.lowerBound].trimmingCharacters(in: .whitespaces)
-                let second = afterEach[innerAnd.upperBound...].trimmingCharacters(in: .whitespaces)
+                let first = String(afterEach[afterEach.startIndex..<innerAnd.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+                let second = String(afterEach[innerAnd.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                #if DEBUG
+                print("🔀 localSplitText split: first='\(first)' second='\(second)'")
+                #endif
                 guard !first.isEmpty, !second.isEmpty else { return [text] }
                 return ["\(qtyPart) \(first)", "\(qtyPart) \(second)"]
+            } else {
+                #if DEBUG
+                print("🔀 localSplitText: no ' and ' in afterEach='\(afterEach)' chars=\(afterEach.unicodeScalars.map { String(format: "%04X", $0.value) })")
+                #endif
             }
         }
 
