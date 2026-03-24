@@ -7,11 +7,46 @@
 
 ---
 
-## Setup
+## CRITICAL: Test Procedure (Read This First)
 
-1. Build and run from Xcode to iPhone 17 Pro simulator
-2. Skip welcome walkthrough
-3. For each recipe: Import → check preview → note issues → Cancel (don't save)
+The simulator has connectivity issues with sustained testing. You MUST follow this cycle for EVERY recipe:
+
+### Per-Recipe Cycle
+
+1. **Build and run** Forager from Xcode (Product > Run) to iPhone 17 Pro simulator
+2. Skip welcome walkthrough if it appears
+3. Import the recipe URL → check import preview → record results
+4. Tap Cancel (do NOT save)
+5. **Write results** — append the recipe's row to the results file immediately
+6. **Delete the app** from the simulator:
+   ```
+   xcrun simctl uninstall booted com.richhayn.forager
+   ```
+7. **Quit the simulator completely** — Simulator > Quit Simulator (Cmd+Q)
+8. **Wait 3 seconds**
+9. **Relaunch from Xcode** — Product > Run (this reopens the simulator and installs a fresh copy)
+10. Repeat from step 2 for the next recipe
+
+### Why This Matters
+
+- The simulator's network stack degrades after multiple web fetches in one session
+- Recipe sites may throttle or block repeated requests from the same session
+- A fresh install ensures no cached data interferes with parsing results
+- Writing results after each recipe prevents data loss if the simulator crashes
+
+### Results File
+
+Write results incrementally to: `/Users/rich/Development/forager/docs/testing/stress-test-v2-results.md`
+
+Start the file with this header:
+```markdown
+# Parsing Stress Test v2 — Results
+**Date**: [today's date]
+**Branch**: feature/M9.35-parsing-pipeline-hardening
+**Tester**: Claude Desktop (computer use)
+```
+
+Then append each recipe's row to the results table after testing it. Do NOT wait until all 50 are done.
 
 ---
 
