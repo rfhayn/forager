@@ -544,8 +544,10 @@ struct RecipeImportPreviewView: View {
     /// M9.33: Split text on " and " only (NOT "or" — those are alternatives, not multiples).
     /// Handles "each X and Y" pattern by stripping "each" and distributing quantity.
     private func localSplitText(_ text: String) -> [String] {
+        // M9.33: Normalize Unicode whitespace (non-breaking spaces from web scraping)
+        let text = text.replacingOccurrences(of: "[\\s\\x{00A0}]+", with: " ", options: .regularExpression)
+
         // Only split on " and " — NOT " or " (alternatives should stay as one line)
-        // Use .caseInsensitive so range is valid for the original string
         guard let andRange = text.range(of: " and ", options: .caseInsensitive) else {
             #if DEBUG
             print("🔀 localSplitText: no ' and ' found in '\(text)'")
