@@ -465,17 +465,63 @@ struct RecipeImportPreviewView: View {
         }
     }
 
+    /// M9.33: Perform split on a detected multi-ingredient line
+    private func performSplit(at index: Int) {
+        guard index < draft.ingredients.value.count else { return }
+        let currentText = editedIngredientNames[index] ?? draft.ingredients.value[index]
+
+        #if DEBUG
+        print("🔀 performSplit at \(index): '\(currentText)'")
+        #endif
+
+        let splits = localSplitText(currentText)
+
+        #if DEBUG
+        print("🔀 Split result: \(splits)")
+        #endif
+
+        guard splits.count > 1 else {
+            #if DEBUG
+            print("⚠️ M9.33: localSplitText returned 1 result — no split performed")
+            #endif
+            return
+        }
+
+        var ingredients = draft.ingredients.value
+        ingredients.remove(at: index)
+        for (j, split) in splits.enumerated() {
+            ingredients.insert(split, at: index + j)
+        }
+        draft.ingredients.value = ingredients
+        editedIngredientNames.removeAll()
+        categoryAssignments.removeAll()
+        ingredientMatches.removeAll()
+        computeIngredientMatches()
+    }
+
     /// M9.33: Auto-split all detected multi-ingredient lines on preview load
     private func autoSplitMultiIngredients() {
         var ingredients = draft.ingredients.value
         var didSplit = false
         var i = 0
 
+        #if DEBUG
+        print("🔀 M9.33: Auto-split scanning \(ingredients.count) ingredients")
+        #endif
+
         while i < ingredients.count {
             let text = ingredients[i]
-            if IngredientParsingService.detectMultiIngredient(text) {
-                // Try to split on " and " or " or "
+            let detected = IngredientParsingService.detectMultiIngredient(text)
+            #if DEBUG
+            if detected {
+                print("🔀 Detected multi-ingredient at \(i): '\(text)'")
+            }
+            #endif
+            if detected {
                 let splits = localSplitText(text)
+                #if DEBUG
+                print("🔀 Split result: \(splits)")
+                #endif
                 if splits.count > 1 {
                     ingredients.remove(at: i)
                     for (j, split) in splits.enumerated() {
@@ -759,40 +805,22 @@ struct RecipeImportPreviewView: View {
                 .coachMarkAnchor(index == 0 ? "ingredientRow" : "")
                 // M9.33: Split action row below detected multi-ingredient lines
                 if IngredientParsingService.detectMultiIngredient(text) {
-                    Button {
-                        // Use the current text (may be edited)
-                        let currentText = editedIngredientNames[index] ?? draft.ingredients.value[index]
-                        let splits = localSplitText(currentText)
-                        if splits.count > 1 {
-                            var ingredients = draft.ingredients.value
-                            ingredients.remove(at: index)
-                            for (j, split) in splits.enumerated() {
-                                ingredients.insert(split, at: index + j)
-                            }
-                            draft.ingredients.value = ingredients
-                            // Clear edited names for affected indices
-                            editedIngredientNames.removeAll()
-                            computeIngredientMatches()
-                        } else {
-                            #if DEBUG
-                            print("⚠️ M9.33: Split detected but localSplitText returned 1 result for: '\(currentText)'")
-                            #endif
-                        }
-                    } label: {
-                        HStack(spacing: ForagerTheme.Spacing.sm) {
-                            Image(systemName: "arrow.triangle.branch")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Tap to split into separate ingredients")
-                                .font(ForagerTheme.captionFont)
-                            Spacer()
-                        }
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .padding(.vertical, ForagerTheme.Spacing.sm)
-                        .padding(.horizontal, ForagerTheme.Spacing.md)
-                        .background(ForagerTheme.accentTint)
-                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    HStack(spacing: ForagerTheme.Spacing.sm) {
+                        Image(systemName: "arrow.triangle.branch")
+                            .font(.system(size: 14, weight: .semibold))
+                        Text("Tap to split into separate ingredients")
+                            .font(ForagerTheme.captionFont)
+                        Spacer()
                     }
-                    .buttonStyle(.plain)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                    .padding(.vertical, ForagerTheme.Spacing.sm)
+                    .padding(.horizontal, ForagerTheme.Spacing.md)
+                    .background(ForagerTheme.accentTint)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        performSplit(at: index)
+                    }
                     .coachMarkAnchor("smartIndicator")
                 }
                 // M9.33: Alternative ingredient indicator ("X or Y" — user should pick one)
