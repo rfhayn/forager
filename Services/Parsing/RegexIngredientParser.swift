@@ -342,8 +342,8 @@ class RegexIngredientParser: IngredientParser {
             )
         }
 
-        // "3 to 4 cups flour" style ranges
-        let wordRangePattern = #"^(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+([a-zA-Z]+)\s+(.+)$"#
+        // "3 to 4 cups flour" or "2 or 3 cups flour" style ranges
+        let wordRangePattern = #"^(\d+(?:\.\d+)?)\s+(?:to|or)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z]+)\s+(.+)$"#
         if let match = matchPattern(wordRangePattern, in: text) {
             let highValue = match[2]
             let potentialUnit = match[3]
@@ -364,6 +364,24 @@ class RegexIngredientParser: IngredientParser {
                 unit: standardUnit,
                 notes: "range: \(match[1])-\(match[2])",
                 confidence: (standardUnit != nil) ? 0.95 : 0.92,
+                originalText: original,
+                parserUsed: parserName
+            )
+        }
+
+        // M9.35 P4A: "6 to 8 carrots" or "2 or 3 sprigs rosemary" — word range without unit
+        let wordRangeNoUnitPattern = #"^(\d+(?:\.\d+)?)\s+(?:to|or)\s+(\d+(?:\.\d+)?)\s+(.+)$"#
+        if let match = matchPattern(wordRangeNoUnitPattern, in: text) {
+            let highValue = match[2]
+            let name = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
+            let numericValue = Double(highValue)
+
+            return ParserResult(
+                name: name,
+                quantity: numericValue,
+                unit: nil,
+                notes: "range: \(match[1])-\(match[2])",
+                confidence: 0.90,
                 originalText: original,
                 parserUsed: parserName
             )
