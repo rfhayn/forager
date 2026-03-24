@@ -127,8 +127,14 @@ class MLIngredientParser: IngredientParser {
 
         let quantity = parseQuantity(qtyTokens)
         let unit = standardizeUnit(unitTokens.joined(separator: " "))
-        let name = nameTokens.joined(separator: " ")
-        let notes: String? = noteTokens.isEmpty ? nil : noteTokens.joined(separator: " ")
+
+        // M9.35 P2: Merge single-character orphan tokens back into preceding word.
+        // Fixes: "eg"+"g"→"egg", "lemo"+"n"→"lemon", "jalape"+"ño"→"jalapeño"
+        // Root cause: NFKD normalization + diacritic stripping in tokenizer can split
+        // Unicode characters across token boundaries, and BIO tagging can isolate
+        // the last character of a word.
+        let name = mergeOrphanTokens(nameTokens).joined(separator: " ")
+        let notes: String? = noteTokens.isEmpty ? nil : mergeOrphanTokens(noteTokens).joined(separator: " ")
         let confidence = calculateConfidence(emissions: emissions)
 
         return ParserResult(
@@ -140,6 +146,25 @@ class MLIngredientParser: IngredientParser {
             originalText: originalText,
             parserUsed: parserName
         )
+    }
+
+    // MARK: - M9.35 Orphan Token Merge
+
+    /// Merge single-character tokens back into the preceding word.
+    /// Handles tokenizer artifacts where NFKD + diacritic stripping splits
+    /// the last 1-2 characters: ["eg", "g"] → ["egg"], ["jalape", "ño"] → ["jalapeño"]
+    private func mergeOrphanTokens(_ tokens: [String]) -> [String] {
+        guard tokens.count > 1 else { return tokens }
+        var merged: [String] = []
+        for token in tokens {
+            if token.count <= 2, let last = merged.last, last.count > 1 {
+                // Merge short orphan into preceding word
+                merged[merged.count - 1] = last + token
+            } else {
+                merged.append(token)
+            }
+        }
+        return merged
     }
 
     // MARK: - Quantity Parsing
