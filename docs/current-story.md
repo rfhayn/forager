@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 23, 2026
-**Status**: **M9.34 COMPLETE** | **M9.33 COMPLETE** | **M9.32 COMPLETE** | **M9.31 COMPLETE** | **M9.30 COMPLETE**
-**Total Progress**: ~310 hours
-**Current Branch**: `main`
-**Launch Path**: M9.28 -> M7.7
+**Last Updated**: March 24, 2026
+**Status**: **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE** | **M9.32 COMPLETE**
+**Total Progress**: ~312 hours
+**Current Branch**: `feature/M9.35-parsing-pipeline-hardening`
+**Launch Path**: M9.35 -> M9.28 -> M7.7
 
 ---
 
