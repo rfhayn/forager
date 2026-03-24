@@ -395,6 +395,13 @@ class IngredientParsingService: ObservableObject {
         return false
     }
 
+    /// Phrases containing "or" that are NOT ingredient alternatives
+    private static let nonAlternativePhrases: [String] = [
+        "more or less", "more or fewer",
+        "or to taste", "or as needed", "or until",
+        "or so", "or more", "or less"
+    ]
+
     /// Detect if an ingredient line contains alternatives ("X or Y").
     /// These need user attention — pick one or keep both.
     static func detectAlternativeIngredient(_ text: String) -> Bool {
@@ -403,6 +410,11 @@ class IngredientParsingService: ObservableObject {
         // Check known compound exclusions
         for compound in compoundIngredients {
             if lower.contains(compound) { return false }
+        }
+
+        // Exclude quantity/instruction phrases with "or"
+        for phrase in nonAlternativePhrases {
+            if lower.contains(phrase) { return false }
         }
 
         let orPattern = #"[a-z]{3,}\s+or\s+[a-z]{3,}"#
