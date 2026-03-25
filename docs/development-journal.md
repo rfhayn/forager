@@ -6,6 +6,38 @@
 
 ---
 
+## Session 91 — March 25, 2026
+**Milestone**: M9.35.3 — Leading Comma Display Fix
+**Focus**: Fix "(, melted)" display artifact in import preview
+**Branch**: `bugfix/M9.35.3-leading-comma-display-fix`
+
+### What Happened
+
+Joe reported that ingredient qualifiers in the import preview were displaying with a leading comma inside parentheses — e.g., "(, melted)", "(, about 2 pounds)", "(, to taste)". The IngredientPreprocessor already had `fixLeadingCommaInParens()` (added in M9.35) that strips these artifacts during parsing, but the display text bypassed the parsing pipeline entirely.
+
+The root cause: `IngredientMatchService.buildResult()` stored the original trimmed text as `rawText` in `IngredientMatchResult`, which the UI then displayed directly. The preprocessor only ran inside `HybridIngredientParser.parse()`, so the parsed fields (name, quantity, notes) were clean but the display text was still raw.
+
+Fix: one line in `buildResult()` — apply `IngredientPreprocessor.sanitize()` to `rawText` before storing. This covers all three entry paths (single match, AI single, AI batch) through the single shared method.
+
+### Key Decisions
+
+- **Sanitize at the service layer, not the view**: Could have fixed this in `IngredientMatchRow` (view) or `IngredientPreprocessor` (add a new step), but the service layer is the right boundary — it's where raw input becomes structured result. One fix point, three callers covered.
+- **Full sanitize, not just comma fix**: Used `IngredientPreprocessor.sanitize()` rather than just the comma fix, so all scraping artifacts (prices, footnotes, HTML fractions, etc.) are also cleaned from display text. The sanitizer is idempotent so double-application is safe.
+
+### Learning
+
+- Display text and parsed text can diverge when preprocessing only runs in the parsing pipeline — always consider whether the raw/display path also needs sanitization.
+
+### AI Tooling Observations
+
+- Screenshot from Joe's phone was the key input — immediately identified the pattern across 4 ingredients. Log wasn't needed since the visual made the bug obvious.
+
+### What's Next
+
+Ship to TestFlight for Joe to verify. Then M9.28 (strip diagnostic logging) → M7.7 (App Store).
+
+---
+
 ## Session 90 — March 25, 2026
 **Milestone**: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
 **Focus**: Five targeted fixes for stress-test findings from build 88 phone testing
