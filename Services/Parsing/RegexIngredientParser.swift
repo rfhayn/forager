@@ -26,6 +26,24 @@ class RegexIngredientParser: IngredientParser {
         "packed", "lightly", "loosely", "firmly", "overflowing"
     ]
 
+    // MARK: - M9.35 P3B: Comma-Qualifier Prep Detection
+
+    /// First words that signal the text after a comma is prep, not part of the name
+    private static let commaQualifierPrepWords: Set<String> = [
+        "minced", "diced", "chopped", "sliced", "crushed", "grated", "shredded",
+        "julienned", "peeled", "seeded", "trimmed", "halved", "quartered", "torn",
+        "roughly", "finely", "thinly", "coarsely", "lightly", "freshly",
+        "cut", "at room", "room temp", "plus more", "or more",
+        "divided", "separated", "whisked", "beaten", "sifted"
+    ]
+
+    /// Exact multi-word prep phrases after comma
+    private static let commaQualifierExactPhrases: Set<String> = [
+        "room temperature", "at room temperature", "optional",
+        "packed", "to taste", "for garnish", "for serving",
+        "fresh", "dried", "frozen", "thawed", "softened", "melted"
+    ]
+
     // MARK: - Unicode Fraction Map
 
     /// Maps Unicode fraction characters to decimal values
@@ -153,14 +171,31 @@ class RegexIngredientParser: IngredientParser {
         let prepContent = String(text[contentRange]).trimmingCharacters(in: .whitespaces)
 
         // Only treat as prep if it looks like a prep method, not a size/weight note like "(14.5 oz)"
+        // M9.35 P3A: Expanded from 31 to 55+ prep keywords
         let prepKeywords: Set<String> = [
+            // Single-word prep methods
             "softened", "melted", "diced", "cubed", "chopped", "sliced", "crushed",
             "grated", "shredded", "minced", "julienned", "peeled", "seeded", "trimmed",
-            "halved", "quartered", "torn", "thawed", "drained", "rinsed",
-            "room temperature", "at room temperature", "optional", "packed",
-            "fresh", "dried", "frozen", "toasted", "roasted", "ground",
-            "cut into chunks", "cut into pieces", "thinly sliced", "finely chopped",
-            "finely diced", "roughly chopped", "coarsely chopped"
+            "halved", "quartered", "torn", "thawed", "drained", "rinsed", "crumbled",
+            "mashed", "sifted", "whisked", "beaten", "warmed", "chilled",
+            // State/condition
+            "room temperature", "at room temperature", "at room temp",
+            "optional", "packed", "divided", "separated",
+            "fresh", "dried", "frozen", "toasted", "roasted", "ground", "smashed",
+            // Multi-word prep
+            "cut into chunks", "cut into pieces", "cut into cubes", "cut into strips",
+            "cut into wedges", "cut into bite-size pieces",
+            "thinly sliced", "finely chopped", "finely diced", "finely minced",
+            "roughly chopped", "coarsely chopped",
+            "peeled and deveined", "cored and sliced", "seeded and diced",
+            "stemmed and seeded", "halved and seeded",
+            // Serving/garnish context
+            "for garnish", "for serving", "for dusting", "for dipping", "for topping",
+            "for drizzling",
+            // Quantity modifiers
+            "plus more to taste", "plus more for serving", "plus more for garnish",
+            "plus more as needed", "or more to taste", "or to taste", "to taste",
+            "if needed", "if desired", "as needed"
         ]
 
         let lowerPrep = prepContent.lowercased()
@@ -307,8 +342,8 @@ class RegexIngredientParser: IngredientParser {
             )
         }
 
-        // "3 to 4 cups flour" style ranges
-        let wordRangePattern = #"^(\d+(?:\.\d+)?)\s+to\s+(\d+(?:\.\d+)?)\s+([a-zA-Z]+)\s+(.+)$"#
+        // "3 to 4 cups flour" or "2 or 3 cups flour" style ranges
+        let wordRangePattern = #"^(\d+(?:\.\d+)?)\s+(?:to|or)\s+(\d+(?:\.\d+)?)\s+([a-zA-Z]+)\s+(.+)$"#
         if let match = matchPattern(wordRangePattern, in: text) {
             let highValue = match[2]
             let potentialUnit = match[3]
@@ -329,6 +364,24 @@ class RegexIngredientParser: IngredientParser {
                 unit: standardUnit,
                 notes: "range: \(match[1])-\(match[2])",
                 confidence: (standardUnit != nil) ? 0.95 : 0.92,
+                originalText: original,
+                parserUsed: parserName
+            )
+        }
+
+        // M9.35 P4A: "6 to 8 carrots" or "2 or 3 sprigs rosemary" — word range without unit
+        let wordRangeNoUnitPattern = #"^(\d+(?:\.\d+)?)\s+(?:to|or)\s+(\d+(?:\.\d+)?)\s+(.+)$"#
+        if let match = matchPattern(wordRangeNoUnitPattern, in: text) {
+            let highValue = match[2]
+            let name = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
+            let numericValue = Double(highValue)
+
+            return ParserResult(
+                name: name,
+                quantity: numericValue,
+                unit: nil,
+                notes: "range: \(match[1])-\(match[2])",
+                confidence: 0.90,
                 originalText: original,
                 parserUsed: parserName
             )
@@ -658,21 +711,27 @@ class RegexIngredientParser: IngredientParser {
             )
         }
 
-        // "garlic, minced" or "onion, diced"
-        let commaQualifierPattern = #"^([a-zA-Z\s]+?)\s*,\s*(minced|diced|chopped|sliced|crushed|grated|shredded|julienned|peeled|seeded|trimmed|halved|quartered|torn|fresh|dried|frozen|thawed|softened|melted|room temperature|packed)$"#
-        if let match = matchPattern(commaQualifierPattern, in: text) {
-            let name = match[1].trimmingCharacters(in: .whitespacesAndNewlines)
-            let prep = match[2]
+        // M9.35 P3B: Procedural comma-qualifier detection (replaces single-word regex)
+        // Handles multi-word preps: "finely minced", "peeled and deveined", "cut into pieces"
+        if let commaIndex = text.firstIndex(of: ",") {
+            let name = String(text[text.startIndex..<commaIndex]).trimmingCharacters(in: .whitespaces)
+            let qualifier = String(text[text.index(after: commaIndex)...]).trimmingCharacters(in: .whitespaces)
+            let lowerQualifier = qualifier.lowercased()
 
-            return ParserResult(
-                name: name,
-                quantity: nil,
-                unit: nil,
-                notes: prep,
-                confidence: 0.70,
-                originalText: original,
-                parserUsed: parserName
-            )
+            let isPrep = Self.commaQualifierPrepWords.contains(where: { lowerQualifier.hasPrefix($0) }) ||
+                         Self.commaQualifierExactPhrases.contains(lowerQualifier)
+
+            if isPrep && !name.isEmpty {
+                return ParserResult(
+                    name: name,
+                    quantity: nil,
+                    unit: nil,
+                    notes: qualifier,
+                    confidence: 0.70,
+                    originalText: original,
+                    parserUsed: parserName
+                )
+            }
         }
 
         return nil

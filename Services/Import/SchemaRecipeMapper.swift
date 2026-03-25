@@ -176,6 +176,12 @@ enum SchemaRecipeMapper {
                     return false
                 }
             }
+
+            // M9.35 P3C: Filter orphan prep fragments (no ingredient name)
+            if IngredientPreprocessor.isOrphanFragment(trimmed) {
+                return false
+            }
+
             return true
         }
     }

@@ -44,6 +44,9 @@ class HybridIngredientParser: IngredientParser {
     // MARK: - IngredientParser Protocol
 
     func parse(_ input: String) -> ParserResult {
+        // M9.35: Sanitize input before any parser sees it
+        let input = IngredientPreprocessor.sanitize(input)
+
         // Step 1: Regex fast path (microseconds)
         let regexResult = regexParser.parse(input)
         if regexResult.confidence >= regexConfidenceThreshold {
