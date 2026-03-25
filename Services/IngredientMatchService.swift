@@ -187,6 +187,8 @@ class IngredientMatchService: ObservableObject {
         aiParsedName: String?,
         aiCategory: String? = nil
     ) -> IngredientMatchResult {
+        // Sanitize rawText for display — strips "(, melted)" → "(melted)" and other scraping artifacts
+        let displayRawText = IngredientPreprocessor.sanitize(rawText)
         let cleanName = parsed.displayName
         let candidates = templateService.searchTemplates(query: cleanName, limit: 5)
         let exactMatch = candidates.first(where: {
@@ -223,7 +225,7 @@ class IngredientMatchService: ObservableObject {
         }
 
         return IngredientMatchResult(
-            rawText: rawText,
+            rawText: displayRawText,
             parsedName: cleanName,
             parsedQuantity: parsed.quantity,
             parsedUnit: parsed.unit,
