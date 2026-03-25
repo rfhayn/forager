@@ -33,6 +33,13 @@ enum IngredientPreprocessor {
         // Step 5: Strip parenthetical metric measurements (SeriousEats/SallysBaking "(90g)", "(450g)")
         result = stripParentheticalMetric(result)
 
+        // Step 5b: Strip parenthetical can/package sizes ("(28 ounce) can" → "can")
+        result = stripCanPackageSizes(result)
+
+        // Step 5c: Convert IEEE 754 float quantities to slash fractions
+        // AllRecipes stores ⅓ as 0.33333334326744 in JSON-LD
+        result = convertIEEE754FloatQuantities(result)
+
         // Step 6: Unicode fractions → slash fractions (⅔ → 2/3)
         result = convertUnicodeFractions(result)
 
@@ -174,6 +181,79 @@ enum IngredientPreprocessor {
         return result
     }
 
+    /// Step 5b: Strip parenthetical can/package sizes
+    /// "1 (28 ounce) can crushed tomatoes" → "1 can crushed tomatoes"
+    /// "2 (8 oz) boxes cream cheese" → "2 boxes cream cheese"
+    private static func stripCanPackageSizes(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"\((\d+\.?\d*)\s*(?:ounce|ounces|oz)\)\s*(can|cans|box|boxes|package|packages|jar|jars|bottle|bottles|bag|bags|carton|cartons)"#,
+            with: "$2",
+            options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
+    /// Step 5c: Convert IEEE 754 float quantities to slash fractions
+    /// AllRecipes stores ⅓ as 0.33333334326744 in JSON-LD — detect by 8+ decimal digits
+    private static func convertIEEE754FloatQuantities(_ text: String) -> String {
+        // Match numbers with 8+ digits after decimal point (IEEE 754 artifacts)
+        guard let regex = try? NSRegularExpression(
+            pattern: #"(\d+)\.(\d{8,})"#
+        ) else { return text }
+
+        let nsText = text as NSString
+        var result = text
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+
+        // Process matches in reverse to preserve string indices
+        for match in matches.reversed() {
+            guard let wholeRange = Range(match.range(at: 1), in: result),
+                  let fullRange = Range(match.range(at: 0), in: result) else { continue }
+
+            let wholePart = Int(result[wholeRange]) ?? 0
+            let fullValue = Double(result[fullRange]) ?? 0
+
+            let fractionalPart = fullValue - Double(wholePart)
+            let fraction = closestFraction(fractionalPart)
+
+            let replacement: String
+            if wholePart == 0 {
+                replacement = fraction
+            } else if fraction == "0" {
+                replacement = "\(wholePart)"
+            } else {
+                replacement = "\(wholePart) \(fraction)"
+            }
+
+            result = result.replacingCharacters(in: fullRange, with: replacement)
+        }
+
+        return result
+    }
+
+    /// Find the closest common fraction for a decimal value
+    private static func closestFraction(_ value: Double) -> String {
+        let fractions: [(Double, String)] = [
+            (0.0, "0"),
+            (1.0/8.0, "1/8"), (1.0/6.0, "1/6"), (1.0/4.0, "1/4"),
+            (1.0/3.0, "1/3"), (3.0/8.0, "3/8"), (1.0/2.0, "1/2"),
+            (5.0/8.0, "5/8"), (2.0/3.0, "2/3"), (3.0/4.0, "3/4"),
+            (5.0/6.0, "5/6"), (7.0/8.0, "7/8"), (1.0, "1")
+        ]
+
+        var bestMatch = "0"
+        var bestDelta = Double.greatestFiniteMagnitude
+
+        for (fracValue, fracString) in fractions {
+            let delta = abs(value - fracValue)
+            if delta < bestDelta {
+                bestDelta = delta
+                bestMatch = fracString
+            }
+        }
+
+        return bestMatch
+    }
+
     /// Step 7: Decode HTML fraction entities that weren't caught during extraction
     /// "&frac12;" → "1/2", "&frac14;" → "1/4", etc.
     private static func decodeHTMLFractions(_ text: String) -> String {
@@ -242,11 +322,22 @@ enum IngredientPreprocessor {
     ]
 
     /// Words that indicate a line is an orphan prep fragment (no ingredient name)
+    /// M9.35.2: Expanded with connecting words so multi-word phrases like
+    /// "cut into wedges" are detected (previously "into" and "wedges" failed allSatisfy)
     private static let orphanPrepWords: Set<String> = [
+        // Prep verbs/adjectives
         "diced", "chopped", "sliced", "minced", "crushed", "grated",
         "shredded", "halved", "quartered", "torn", "crumbled",
         "roughly", "finely", "thinly", "coarsely", "lightly",
         "freshly", "seeds", "removed", "divided", "separated",
-        "stemmed", "seeded", "cored", "trimmed", "peeled"
+        "stemmed", "seeded", "cored", "trimmed", "peeled",
+        "pitted", "deveined", "deboned", "rinsed", "drained",
+        "thawed", "softened", "melted", "warmed", "chilled",
+        // Connecting words (allow multi-word phrases to match)
+        "into", "of", "the", "and", "for", "with", "until", "to",
+        "cut", "or", "about", "as", "at",
+        // Common shape/size nouns in prep phrases
+        "wedges", "pieces", "chunks", "strips", "rounds", "slices",
+        "cubes", "rings", "halves", "quarters", "dice", "bits"
     ]
 }

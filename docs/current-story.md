@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 24, 2026
-**Status**: **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE** | **M9.32 COMPLETE**
-**Total Progress**: ~312 hours
-**Current Branch**: `feature/M9.35-parsing-pipeline-hardening`
-**Launch Path**: M9.35 -> M9.28 -> M7.7
+**Last Updated**: March 25, 2026
+**Status**: **M9.35.2 ACTIVE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
+**Total Progress**: ~314 hours
+**Current Branch**: `feature/M9.35.2-confidence-float-fixes`
+**Launch Path**: M9.35.2 -> M9.28 -> M7.7
 
 ---
 
@@ -22,6 +22,22 @@
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
+
+---
+
+## ACTIVE: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
+
+**Status**: ACTIVE (March 25, 2026)
+**Estimated**: 3-4 hours
+**Branch**: `feature/M9.35.2-confidence-float-fixes`
+**PRD**: `docs/prds/active/m9.35.2-confidence-float-fixes.md`
+
+Phone stress test (27 recipes, build 88) confirmed M9.35 P1-P4 code is in the build. Five remaining fixes:
+1. Comma-qualifier confidence 0.70→0.92 (fixes ~145 prep-in-name issues)
+2. IEEE 754 float→fraction conversion (fixes 12+ AllRecipes display bugs)
+3. "egg" word-split prevention in standard pattern (fixes 8 instances)
+4. Can/package size stripping in preprocessor (fixes 8+ instances)
+5. Orphan fragment detection expansion (filters 8+ garbage ingredients)
 
 ---
 

@@ -6,6 +6,47 @@
 
 ---
 
+## Session 90 — March 25, 2026
+**Milestone**: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
+**Focus**: Five targeted fixes for stress-test findings from build 88 phone testing
+**Branch**: `feature/M9.35.2-confidence-float-fixes`
+
+### What Happened
+
+Phone stress test (27 recipes, build 88) confirmed M9.35 Phase 1 code is deployed and working, but revealed five remaining parsing issues. This session implements all five fixes in just two files:
+
+**Fix 1 — Confidence boost (0.70→0.92)**: The comma-qualifier pattern in `tryQualifierPattern` correctly parses "garlic, crushed" → name "garlic" + notes "crushed", but returned 0.70 confidence. The hybrid router's auto-accept threshold is 0.9, so the correct regex parse was being overridden by the ML parser at ~0.75 with the wrong result "garlic crushed". Simply raising confidence to 0.92 fixes ~145 prep-in-name instances.
+
+**Fix 2 — IEEE 754 float→fraction**: AllRecipes stores ⅓ as `0.33333334326744` in JSON-LD. Added `convertIEEE754FloatQuantities()` to the preprocessor — detects 8+ digit decimals (user input never has this precision) and maps to nearest cooking fraction via a lookup table.
+
+**Fix 3 — "egg" word-split prevention**: Discovered the *real* root cause differs from the plan. The plan said to boost count-noun confidence, but the standard pattern (`tryStandardPatternInternal`) runs first and greedily splits "egg" as unit="eg" + name="g", producing "eg g". Fixed by rejecting matches where the captured unit is unknown AND the remaining name is ≤1 character, letting `tryCountNounPattern` handle it correctly.
+
+**Fix 4 — Can/package size stripping**: Added `stripCanPackageSizes()` to preprocessor to handle "(28 ounce) can" → "can".
+
+**Fix 5 — Orphan fragment expansion**: Expanded `orphanPrepWords` with connecting words ("into", "of", "to", etc.) and shape nouns ("wedges", "chunks", "slices") so multi-word phrases like "cut into wedges" are detected.
+
+### Key Decisions
+
+- **Fix 3 diverged from plan**: The plan assumed the count-noun pattern was the right place to fix "egg" splitting, but tracing the code revealed the standard pattern matches first due to priority ordering. The surgical fix (reject ≤1 char name) is more correct than the plan's approach and doesn't require reordering patterns.
+- **IEEE 754 uses closest-fraction lookup, not exact match**: Different platforms produce slightly different float artifacts for the same fraction, so mapping by minimum distance to 13 common cooking fractions is more robust than hardcoding exact values.
+- **8+ digit threshold is conservative by design**: Humans type "0.5" or "1.75" — never "0.33333334326744". The 8-digit cutoff ensures zero false positives on user input.
+
+### Learning
+
+- Greedy regex backtracking creates surprising word splits on short words — `([a-zA-Z]+)?\s*(.+)$` splits "egg" into "eg"+"g" because the greedy group consumes as much as possible, then backtracks just enough for `.+` to match ≥1 char.
+- Confidence thresholds in multi-tier parser routing are load-bearing — a correct parse at 0.70 loses to a wrong parse at 0.75 when the auto-accept threshold is 0.9. The confidence value IS the routing decision.
+
+### AI Tooling Observations
+
+- Plan mode produced a solid analysis of root causes and fix locations, though Fix 3's mechanism was wrong (identified the symptom correctly but misattributed the cause to count-noun confidence instead of standard pattern greediness)
+- All 5 fixes implemented and building in a single pass — the plan's file-level guidance was accurate even when the mechanism was off
+
+### What's Next
+
+Commit and ship to TestFlight for phone stress test verification. Then M9.28 (strip diagnostic logging) → M7.7 (App Store).
+
+---
+
 ## Session 89 — March 21, 2026
 **Milestone**: M9.24, M9.25, M9.25.1, M9.27 — Launch prep sprint
 **Focus**: Member import store routing, UI unification, walkthrough redesign

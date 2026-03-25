@@ -8,6 +8,25 @@
 
 ---
 
+## M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
+
+**Status**: ACTIVE
+**Estimated**: 3-4 hours
+**Branch**: `feature/M9.35.2-confidence-float-fixes`
+**PRD**: `docs/prds/active/m9.35.2-confidence-float-fixes.md`
+
+Five targeted fixes in two files:
+
+| Fix | File | Change |
+|-----|------|--------|
+| 1. Confidence boost | RegexIngredientParser.swift | `tryQualifierPattern` confidence 0.70→0.92 |
+| 2. IEEE 754 floats | IngredientPreprocessor.swift | New `convertIEEE754FloatQuantities()` step |
+| 3. "egg" word-split | RegexIngredientParser.swift | Reject single-char name in `tryStandardPatternInternal` |
+| 4. Can/package sizes | IngredientPreprocessor.swift | New `stripCanPackageSizes()` step |
+| 5. Orphan fragments | IngredientPreprocessor.swift | Expand `orphanPrepWords` set |
+
+---
+
 ## M9.28 — Remove Diagnostic Logging for Production
 
 **Status**: PLANNED
