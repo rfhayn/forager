@@ -30,16 +30,22 @@ enum IngredientPreprocessor {
         // Step 4: Fix leading comma in parens (RecipeTinEats "(, minced)" → "(minced)")
         result = fixLeadingCommaInParens(result)
 
-        // Step 5: Unicode fractions → slash fractions (⅔ → 2/3)
+        // Step 5: Strip parenthetical metric measurements (SeriousEats/SallysBaking "(90g)", "(450g)")
+        result = stripParentheticalMetric(result)
+
+        // Step 6: Unicode fractions → slash fractions (⅔ → 2/3)
         result = convertUnicodeFractions(result)
 
-        // Step 6: Strip trailing periods on units ("1 tsp." → "1 tsp")
+        // Step 7: Decode HTML fraction entities (&frac12; → 1/2)
+        result = decodeHTMLFractions(result)
+
+        // Step 8: Strip trailing periods on units ("1 tsp." → "1 tsp")
         result = stripTrailingUnitPeriods(result)
 
-        // Step 7: Fix space-before-punctuation ("avocado , sliced" → "avocado, sliced")
+        // Step 9: Fix space-before-punctuation ("avocado , sliced" → "avocado, sliced")
         result = fixSpaceBeforePunctuation(result)
 
-        // Step 8: Normalize whitespace (Unicode spaces, multiple spaces, trim)
+        // Step 10: Normalize whitespace (Unicode spaces, multiple spaces, trim)
         result = normalizeWhitespace(result)
 
         return result
@@ -139,7 +145,18 @@ enum IngredientPreprocessor {
         )
     }
 
-    /// Step 5: Convert Unicode fraction characters to slash fractions for consistent parsing
+    /// Step 5: Strip parenthetical metric measurements from dual-unit recipes
+    /// "6 tablespoons (90g) butter" → "6 tablespoons butter"
+    /// "3 pounds (1.4kg) onions" → "3 pounds onions"
+    private static func stripParentheticalMetric(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
+    /// Step 6: Convert Unicode fraction characters to slash fractions for consistent parsing
     private static func convertUnicodeFractions(_ text: String) -> String {
         var result = text
         for (unicode, slash) in unicodeFractionToSlash {
@@ -157,7 +174,17 @@ enum IngredientPreprocessor {
         return result
     }
 
-    /// Step 6: Strip trailing periods on abbreviated units ("1 tsp." → "1 tsp")
+    /// Step 7: Decode HTML fraction entities that weren't caught during extraction
+    /// "&frac12;" → "1/2", "&frac14;" → "1/4", etc.
+    private static func decodeHTMLFractions(_ text: String) -> String {
+        var result = text
+        for (entity, slash) in htmlFractionEntities {
+            result = result.replacingOccurrences(of: entity, with: slash, options: .caseInsensitive)
+        }
+        return result
+    }
+
+    /// Step 8: Strip trailing periods on abbreviated units ("1 tsp." → "1 tsp")
     private static func stripTrailingUnitPeriods(_ text: String) -> String {
         text.replacingOccurrences(
             of: #"\b(tsp|tbsp|oz|lb|lbs|pt|qt|gal|ml|cl|dl|kg|mg)\."#,
@@ -202,6 +229,16 @@ enum IngredientPreprocessor {
         ("⅕", "1/5"), ("⅖", "2/5"), ("⅗", "3/5"), ("⅘", "4/5"),
         ("⅙", "1/6"), ("⅚", "5/6"),
         ("⅛", "1/8"), ("⅜", "3/8"), ("⅝", "5/8"), ("⅞", "7/8")
+    ]
+
+    /// HTML fraction entity → slash fraction mapping
+    private static let htmlFractionEntities: [(String, String)] = [
+        ("&frac12;", "1/2"), ("&frac13;", "1/3"), ("&frac23;", "2/3"),
+        ("&frac14;", "1/4"), ("&frac34;", "3/4"),
+        ("&frac15;", "1/5"), ("&frac16;", "1/6"), ("&frac18;", "1/8"),
+        ("&frac38;", "3/8"), ("&frac58;", "5/8"), ("&frac78;", "7/8"),
+        ("&#xBD;", "1/2"), ("&#xBC;", "1/4"), ("&#xBE;", "3/4"),
+        ("&#189;", "1/2"), ("&#188;", "1/4"), ("&#190;", "3/4")
     ]
 
     /// Words that indicate a line is an orphan prep fragment (no ingredient name)

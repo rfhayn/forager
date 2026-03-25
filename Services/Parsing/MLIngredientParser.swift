@@ -150,15 +150,25 @@ class MLIngredientParser: IngredientParser {
 
     // MARK: - M9.35 Orphan Token Merge
 
-    /// Merge single-character tokens back into the preceding word.
+    /// Merge orphan tokens back into the preceding word.
     /// Handles tokenizer artifacts where NFKD + diacritic stripping splits
     /// the last 1-2 characters: ["eg", "g"] → ["egg"], ["jalape", "ño"] → ["jalapeño"]
+    /// Does NOT merge legitimate short words like "or", "of", "a", "to", "in".
+    private static let legitimateShortWords: Set<String> = [
+        "a", "an", "or", "of", "to", "in", "on", "no", "is", "it",
+        "at", "by", "as", "if", "up", "so", "do", "be", "we", "he",
+        "me", "my", "us", "am", "oz", "lb", "ml", "qt", "pt"
+    ]
+
     private func mergeOrphanTokens(_ tokens: [String]) -> [String] {
         guard tokens.count > 1 else { return tokens }
         var merged: [String] = []
         for token in tokens {
-            if token.count <= 2, let last = merged.last, last.count > 1 {
-                // Merge short orphan into preceding word
+            let lower = token.lowercased()
+            if token.count <= 2,
+               !Self.legitimateShortWords.contains(lower),
+               let last = merged.last, last.count > 1 {
+                // Merge orphan fragment into preceding word
                 merged[merged.count - 1] = last + token
             } else {
                 merged.append(token)
