@@ -8,18 +8,19 @@
 
 ## CRITICAL: Test Procedure
 
+**IMPORTANT: AI parsing must be DISABLED for this test.**
+Before starting, go to Settings > AI Integration > toggle "Enable AI for Ingredients" OFF.
+This tests only the local parser (regex → ML → NLP) without the Claude API masking bugs.
+
+**Testing on real device via iPhone Mirroring** (not simulator).
+
 Follow this cycle for EVERY recipe:
 
-1. **Build and run** from Xcode (Product > Run)
-2. Skip welcome walkthrough if it appears
-3. Import the recipe URL → check import preview → record results
-4. Tap Cancel (do NOT save)
-5. **Write results** — append to results file immediately
-6. **Delete the app**: `xcrun simctl uninstall booted com.richhayn.forager`
-7. **Quit simulator**: Simulator > Quit Simulator (Cmd+Q)
-8. **Wait 3 seconds**
-9. **Relaunch from Xcode** — Product > Run
-10. Repeat for next recipe
+1. Open Forager on the phone
+2. Import the recipe URL → check import preview → record results
+3. Tap Cancel (do NOT save)
+4. **Write results** — append to results file immediately
+5. Repeat for next recipe (no need to delete/reinstall on real device)
 
 Write results to: `/Users/rich/Development/forager/docs/testing/stress-test-v3-results.md`
 
