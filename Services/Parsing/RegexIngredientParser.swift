@@ -571,6 +571,11 @@ class RegexIngredientParser: IngredientParser {
             var name = match[3].trimmingCharacters(in: .whitespacesAndNewlines)
 
             if let capturedUnit = unit, !isKnownUnit(capturedUnit) {
+                // M9.35.2: If name part is ≤1 char, the regex greedily split a short word
+                // e.g., "1 egg" → unit="eg", name="g" — reject so tryCountNounPattern handles it
+                if name.count <= 1 {
+                    return nil
+                }
                 let combinedName = "\(capturedUnit) \(name)".trimmingCharacters(in: .whitespacesAndNewlines)
                 name = combinedName
                 unit = nil
@@ -705,7 +710,7 @@ class RegexIngredientParser: IngredientParser {
                 quantity: nil,
                 unit: nil,
                 notes: qualifier,
-                confidence: 0.70,
+                confidence: 0.92,
                 originalText: original,
                 parserUsed: parserName
             )
@@ -727,7 +732,7 @@ class RegexIngredientParser: IngredientParser {
                     quantity: nil,
                     unit: nil,
                     notes: qualifier,
-                    confidence: 0.70,
+                    confidence: 0.92,
                     originalText: original,
                     parserUsed: parserName
                 )

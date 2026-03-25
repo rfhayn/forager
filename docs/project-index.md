@@ -1,7 +1,7 @@
 # Forager - Project Index
 
-**Last Updated**: March 23, 2026
-**Current Milestone**: M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | All launch milestones through M9.34 complete
+**Last Updated**: March 25, 2026
+**Current Milestone**: M9.35.2 ✅ | M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | All launch milestones through M9.35.2 complete
 **Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
 
 ---
@@ -16,6 +16,10 @@
 ---
 
 ## Recent Activity
+
+### March 25, 2026 — M9.35.2 Parsing Pipeline Fixes
+- **M9.35.2**: Confidence fix (0.70→0.92), IEEE 754 float→fraction, egg word-split prevention, can/package size stripping, orphan fragment expansion
+- 5 targeted fixes in 2 files, ~1 hour
 
 ### March 21-23, 2026 — Epic Launch Prep Sprint (29 builds, 16 PRs)
 - **M9.30**: Household security hardening (schema v10, 24h invite expiry, AES-GCM encryption, 10-member cap)
@@ -67,7 +71,7 @@
 
 ## Project Metrics
 
-- **Total Development Time**: ~227 hours
+- **Total Development Time**: ~315 hours
 - **Planning Accuracy**: 89%
 - **Tests**: 267 unit tests across 19 test files
 - **Technical Debt**: NONE
@@ -79,7 +83,7 @@
 
 **Complete**: M1 (Grocery), M2 (Recipes), M3 (Quantities), M3.5 (Validation), M4 (Meal Planning), M5.0 (TestFlight), M7.0-M7.6 (CloudKit/Household), M7.5 (Architecture), M8.1-M8.3 (Parsing), M8.4 (ML Parsing), M9.0-M9.5 (Prerequisites), M10.1-M10.9 (Import), M15 (UX Design System), M16.1-M16.2 (MCP)
 
-**Active**: M9.24 (Launch Prep), M10.6 (Claude API)
+**Active**: M9.35 (Parsing Pipeline Hardening)
 
 **Queued**: M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
 

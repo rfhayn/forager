@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 24, 2026
-**Status**: **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE** | **M9.32 COMPLETE**
-**Total Progress**: ~312 hours
-**Current Branch**: `feature/M9.35-parsing-pipeline-hardening`
-**Launch Path**: M9.35 -> M9.28 -> M7.7
+**Last Updated**: March 25, 2026
+**Status**: **M9.35.2 COMPLETE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
+**Total Progress**: ~315 hours
+**Current Branch**: `main` (after merge)
+**Launch Path**: M9.28 -> M7.7
 
 ---
 
@@ -22,6 +22,13 @@
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
+
+---
+
+## COMPLETE: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion (March 25, 2026)
+
+Five targeted fixes from phone stress test (27 recipes, build 88): comma-qualifier confidence 0.70→0.92 (~145 prep-in-name fixes), IEEE 754 float→fraction conversion (12+ AllRecipes display bugs), "egg" word-split prevention, can/package size stripping, orphan fragment expansion. Two files changed.
+**Actual**: ~1h
 
 ---
 
@@ -140,6 +147,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: March 23, 2026 — M9.26-M9.34 COMPLETE (builds 59-87, PRs #86-101)
+**Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
 **Next Action**: M9.28 (strip diagnostic logging) → M7.7 (App Store submission)
 **Confidence**: GREEN
