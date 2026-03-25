@@ -1,29 +1,10 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 23, 2026
+**Last Updated**: March 25, 2026
 **For Milestone**: Launch Path
-**Status**: **M9.34 ✅** | **M9.33 ✅** | **M9.32 ✅** | **M9.31 ✅** | **M9.30 ✅** | **M9.29 ✅** | **M9.27 ✅** | **M9.26 ✅** | **M9.24 ✅** | **M9.15.3 ✅** | **M17.1 ✅** | **M10.6.5 ✅**
+**Status**: **M9.35.2 ✅** | **M9.34 ✅** | **M9.33 ✅** | **M9.32 ✅** | **M9.31 ✅** | **M9.30 ✅** | **M9.29 ✅** | **M9.27 ✅** | **M9.26 ✅** | **M9.24 ✅** | **M9.15.3 ✅** | **M17.1 ✅** | **M10.6.5 ✅**
 
 **Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
-
----
-
-## M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
-
-**Status**: ACTIVE
-**Estimated**: 3-4 hours
-**Branch**: `feature/M9.35.2-confidence-float-fixes`
-**PRD**: `docs/prds/active/m9.35.2-confidence-float-fixes.md`
-
-Five targeted fixes in two files:
-
-| Fix | File | Change |
-|-----|------|--------|
-| 1. Confidence boost | RegexIngredientParser.swift | `tryQualifierPattern` confidence 0.70→0.92 |
-| 2. IEEE 754 floats | IngredientPreprocessor.swift | New `convertIEEE754FloatQuantities()` step |
-| 3. "egg" word-split | RegexIngredientParser.swift | Reject single-char name in `tryStandardPatternInternal` |
-| 4. Can/package sizes | IngredientPreprocessor.swift | New `stripCanPackageSizes()` step |
-| 5. Orphan fragments | IngredientPreprocessor.swift | Expand `orphanPrepWords` set |
 
 ---
 

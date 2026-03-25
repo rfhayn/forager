@@ -1,9 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: March 23, 2026
+**Last Updated**: March 25, 2026
 **Current Phase**: Launch prep — M9.28 → M7.7 (~4-7h to App Store)
-**Recently Completed**: M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | M9.29 ✅ | M9.27 ✅ | M9.26 ✅ | M9.24 ✅ | M9.15.3 ✅ | M17.1 ✅ | M10.6.5 ✅
-**Session Stats**: March 21-23 — 29 builds (59-87), 16 PRs (#86-101), ~20 hours
+**Recently Completed**: M9.35.2 ✅ | M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | M9.29 ✅ | M9.27 ✅ | M9.26 ✅ | M9.24 ✅ | M9.15.3 ✅ | M17.1 ✅ | M10.6.5 ✅
+**Session Stats**: March 21-25 — 30+ builds (59-88+), 16+ PRs, ~21 hours
 **Post-Launch**: M10.4 → M6 → M9 remaining → M11+
 
 ---
@@ -52,10 +52,11 @@
 | M10.6 | Claude API Integration (M10.6.1-10) | ~22h | Mar 2026 |
 | M15 | UX Design System & Visual Refresh | ~60h | Feb-Mar 2026 |
 | M16.1-16.2 | Knowledge MCP Server | ~6h | Mar 2026 |
+| M9.35.2 | Parsing: Confidence Fix + Float Conversion | ~1h | Mar 2026 |
 
 ---
 
-## Launch Path (Remaining ~10-18h)
+## Launch Path (Remaining ~4-7h)
 
 | Milestone | Description | Est. Hours | Status |
 |-----------|-------------|------------|--------|
@@ -89,7 +90,7 @@
 
 ## Timeline Summary
 
-- **Total completed**: ~295 hours across 40+ milestones
+- **Total completed**: ~315 hours across 40+ milestones
 - **Remaining to App Store**: ~10-18 hours
 - **Post-launch backlog**: ~180-210 hours
 - **267 unit tests**, 19 test files

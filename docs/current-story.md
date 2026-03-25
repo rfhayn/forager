@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 25, 2026
-**Status**: **M9.35.2 ACTIVE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
-**Total Progress**: ~314 hours
-**Current Branch**: `feature/M9.35.2-confidence-float-fixes`
-**Launch Path**: M9.35.2 -> M9.28 -> M7.7
+**Status**: **M9.35.2 COMPLETE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
+**Total Progress**: ~315 hours
+**Current Branch**: `main` (after merge)
+**Launch Path**: M9.28 -> M7.7
 
 ---
 
@@ -25,19 +25,10 @@
 
 ---
 
-## ACTIVE: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion
+## COMPLETE: M9.35.2 — Parsing Pipeline: Confidence Fix + Float Conversion (March 25, 2026)
 
-**Status**: ACTIVE (March 25, 2026)
-**Estimated**: 3-4 hours
-**Branch**: `feature/M9.35.2-confidence-float-fixes`
-**PRD**: `docs/prds/active/m9.35.2-confidence-float-fixes.md`
-
-Phone stress test (27 recipes, build 88) confirmed M9.35 P1-P4 code is in the build. Five remaining fixes:
-1. Comma-qualifier confidence 0.70→0.92 (fixes ~145 prep-in-name issues)
-2. IEEE 754 float→fraction conversion (fixes 12+ AllRecipes display bugs)
-3. "egg" word-split prevention in standard pattern (fixes 8 instances)
-4. Can/package size stripping in preprocessor (fixes 8+ instances)
-5. Orphan fragment detection expansion (filters 8+ garbage ingredients)
+Five targeted fixes from phone stress test (27 recipes, build 88): comma-qualifier confidence 0.70→0.92 (~145 prep-in-name fixes), IEEE 754 float→fraction conversion (12+ AllRecipes display bugs), "egg" word-split prevention, can/package size stripping, orphan fragment expansion. Two files changed.
+**Actual**: ~1h
 
 ---
 
@@ -156,6 +147,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: March 23, 2026 — M9.26-M9.34 COMPLETE (builds 59-87, PRs #86-101)
+**Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
 **Next Action**: M9.28 (strip diagnostic logging) → M7.7 (App Store submission)
 **Confidence**: GREEN
