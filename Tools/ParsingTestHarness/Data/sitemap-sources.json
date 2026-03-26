@@ -1,0 +1,9 @@
+[
+  {"site": "allrecipes", "sitemap": "https://www.allrecipes.com/sitemap.xml"},
+  {"site": "budgetbytes", "sitemap": "https://www.budgetbytes.com/post-sitemap.xml"},
+  {"site": "simplyrecipes", "sitemap": "https://www.simplyrecipes.com/sitemap.xml"},
+  {"site": "recipetineats", "sitemap": "https://www.recipetineats.com/post-sitemap.xml"},
+  {"site": "pinchofyum", "sitemap": "https://pinchofyum.com/post-sitemap.xml"},
+  {"site": "cookieandkate", "sitemap": "https://cookieandkate.com/post-sitemap.xml"},
+  {"site": "damndelicious", "sitemap": "https://damndelicious.net/post-sitemap.xml"}
+]

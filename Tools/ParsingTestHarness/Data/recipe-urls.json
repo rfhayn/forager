@@ -1,0 +1,406 @@
+{
+  "entries" : [
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/24074\/alysias-basic-meat-lasagna\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/229293\/korean-ground-beef-rice-bowls\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/246628\/slow-cooker-chicken-taco-soup\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/16354\/easy-meatloaf\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/228285\/teriyaki-chicken\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/219173\/simple-macaroni-and-cheese\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/23600\/worlds-best-lasagna\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/213742\/meatball-subs\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/25473\/the-best-banana-pudding\/"
+    },
+    {
+      "broken" : false,
+      "site" : "allrecipes",
+      "url" : "https:\/\/www.allrecipes.com\/recipe\/24002\/easy-chicken-pot-pie\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/one-pot-creamy-cajun-chicken-pasta\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/slow-cooker-white-chicken-chili\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/dragon-noodles\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/creamy-spinach-tomato-pasta\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/sesame-noodles\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/chicken-yakisoba\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/beef-cabbage-stir-fry\/"
+    },
+    {
+      "broken" : false,
+      "site" : "budgetbytes",
+      "url" : "https:\/\/www.budgetbytes.com\/garlic-parmesan-pasta\/"
+    },
+    {
+      "broken" : false,
+      "site" : "simplyrecipes",
+      "url" : "https:\/\/www.simplyrecipes.com\/recipes\/homemade_pizza\/"
+    },
+    {
+      "broken" : false,
+      "site" : "simplyrecipes",
+      "url" : "https:\/\/www.simplyrecipes.com\/recipes\/grilled_cheese_sandwich\/"
+    },
+    {
+      "broken" : false,
+      "site" : "simplyrecipes",
+      "url" : "https:\/\/www.simplyrecipes.com\/recipes\/chicken_cacciatore\/"
+    },
+    {
+      "broken" : false,
+      "site" : "simplyrecipes",
+      "url" : "https:\/\/www.simplyrecipes.com\/recipes\/baked_ziti\/"
+    },
+    {
+      "broken" : false,
+      "site" : "simplyrecipes",
+      "url" : "https:\/\/www.simplyrecipes.com\/recipes\/pesto_pasta\/"
+    },
+    {
+      "broken" : false,
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/honey-garlic-chicken\/"
+    },
+    {
+      "broken" : false,
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/chicken-stir-fry\/"
+    },
+    {
+      "broken" : false,
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/slow-cooker-beef-stew\/"
+    },
+    {
+      "broken" : false,
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/chicken-fried-rice\/"
+    },
+    {
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/meatballs-in-tomato-sauce\/"
+    },
+    {
+      "broken" : false,
+      "site" : "recipetineats",
+      "url" : "https:\/\/www.recipetineats.com\/creamy-garlic-prawns-shrimp\/"
+    },
+    {
+      "broken" : false,
+      "site" : "pinchofyum",
+      "url" : "https:\/\/pinchofyum.com\/the-best-soft-chocolate-chip-cookies"
+    },
+    {
+      "broken" : false,
+      "site" : "pinchofyum",
+      "url" : "https:\/\/pinchofyum.com\/creamy-tomato-basil-pasta-bake"
+    },
+    {
+      "broken" : false,
+      "site" : "pinchofyum",
+      "url" : "https:\/\/pinchofyum.com\/quick-homemade-ramen"
+    },
+    {
+      "broken" : false,
+      "site" : "pinchofyum",
+      "url" : "https:\/\/pinchofyum.com\/cashew-chicken"
+    },
+    {
+      "broken" : false,
+      "site" : "pinchofyum",
+      "url" : "https:\/\/pinchofyum.com\/spicy-peanut-noodles"
+    },
+    {
+      "broken" : false,
+      "site" : "seriouseats",
+      "url" : "https:\/\/www.seriouseats.com\/the-best-chicken-parmesan-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "seriouseats",
+      "url" : "https:\/\/www.seriouseats.com\/classic-lasagna-meat-sauce-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "seriouseats",
+      "url" : "https:\/\/www.seriouseats.com\/chicken-tikka-masala"
+    },
+    {
+      "broken" : false,
+      "site" : "seriouseats",
+      "url" : "https:\/\/www.seriouseats.com\/easy-creamy-mushroom-pasta-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "seriouseats",
+      "url" : "https:\/\/www.seriouseats.com\/classic-beef-chili-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "tastesbetterfromscratch",
+      "url" : "https:\/\/tastesbetterfromscratch.com\/chicken-cordon-bleu\/"
+    },
+    {
+      "broken" : false,
+      "site" : "tastesbetterfromscratch",
+      "url" : "https:\/\/tastesbetterfromscratch.com\/cilantro-lime-chicken\/"
+    },
+    {
+      "broken" : false,
+      "site" : "tastesbetterfromscratch",
+      "url" : "https:\/\/tastesbetterfromscratch.com\/slow-cooker-pot-roast\/"
+    },
+    {
+      "broken" : false,
+      "site" : "tastesbetterfromscratch",
+      "url" : "https:\/\/tastesbetterfromscratch.com\/chicken-enchiladas\/"
+    },
+    {
+      "broken" : false,
+      "site" : "tastesbetterfromscratch",
+      "url" : "https:\/\/tastesbetterfromscratch.com\/banana-bread\/"
+    },
+    {
+      "broken" : false,
+      "site" : "cookieandkate",
+      "url" : "https:\/\/cookieandkate.com\/best-lentil-soup-recipe\/"
+    },
+    {
+      "broken" : false,
+      "site" : "cookieandkate",
+      "url" : "https:\/\/cookieandkate.com\/best-chili-recipe\/"
+    },
+    {
+      "broken" : false,
+      "site" : "cookieandkate",
+      "url" : "https:\/\/cookieandkate.com\/vegetable-stir-fry-recipe\/"
+    },
+    {
+      "broken" : false,
+      "site" : "halfbakedharvest",
+      "url" : "https:\/\/www.halfbakedharvest.com\/better-than-takeout-kung-pao-chicken\/"
+    },
+    {
+      "broken" : false,
+      "site" : "halfbakedharvest",
+      "url" : "https:\/\/www.halfbakedharvest.com\/one-pot-creamy-tuscan-orzo\/"
+    },
+    {
+      "broken" : false,
+      "site" : "halfbakedharvest",
+      "url" : "https:\/\/www.halfbakedharvest.com\/crispy-lemon-butter-chicken\/"
+    },
+    {
+      "broken" : false,
+      "site" : "justonecookbook",
+      "url" : "https:\/\/www.justonecookbook.com\/simple-chicken-curry\/"
+    },
+    {
+      "broken" : false,
+      "site" : "justonecookbook",
+      "url" : "https:\/\/www.justonecookbook.com\/vegetable-tempura\/"
+    },
+    {
+      "broken" : false,
+      "site" : "justonecookbook",
+      "url" : "https:\/\/www.justonecookbook.com\/teriyaki-salmon\/"
+    },
+    {
+      "broken" : false,
+      "site" : "maangchi",
+      "url" : "https:\/\/www.maangchi.com\/recipe\/kimchi-jjigae"
+    },
+    {
+      "broken" : false,
+      "site" : "maangchi",
+      "url" : "https:\/\/www.maangchi.com\/recipe\/japchae"
+    },
+    {
+      "broken" : false,
+      "site" : "kingarthurbaking",
+      "url" : "https:\/\/www.kingarthurbaking.com\/recipes\/chocolate-chip-cookies-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "kingarthurbaking",
+      "url" : "https:\/\/www.kingarthurbaking.com\/recipes\/banana-bread-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "kingarthurbaking",
+      "url" : "https:\/\/www.kingarthurbaking.com\/recipes\/pizza-crust-recipe"
+    },
+    {
+      "broken" : false,
+      "site" : "foodnetwork",
+      "url" : "https:\/\/www.foodnetwork.com\/recipes\/ree-drummond\/perfect-pot-roast-recipe-2118771"
+    },
+    {
+      "broken" : false,
+      "site" : "foodnetwork",
+      "url" : "https:\/\/www.foodnetwork.com\/recipes\/food-network-kitchen\/pancakes-recipe-1913844"
+    },
+    {
+      "broken" : false,
+      "site" : "foodnetwork",
+      "url" : "https:\/\/www.foodnetwork.com\/recipes\/alton-brown\/baked-macaroni-and-cheese-recipe-1939524"
+    },
+    {
+      "broken" : false,
+      "site" : "damndelicious",
+      "url" : "https:\/\/damndelicious.net\/2019\/04\/21\/korean-beef-bowl\/"
+    },
+    {
+      "broken" : false,
+      "site" : "damndelicious",
+      "url" : "https:\/\/damndelicious.net\/2013\/07\/07\/one-pot-garlic-parmesan-pasta\/"
+    },
+    {
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
+      "site" : "damndelicious",
+      "url" : "https:\/\/damndelicious.net\/2014\/10\/13\/easy-chicken-stir-fry\/"
+    },
+    {
+      "broken" : false,
+      "site" : "sallysbakingaddiction",
+      "url" : "https:\/\/sallysbakingaddiction.com\/best-sugar-cookies\/"
+    },
+    {
+      "broken" : false,
+      "site" : "sallysbakingaddiction",
+      "url" : "https:\/\/sallysbakingaddiction.com\/chocolate-cake\/"
+    },
+    {
+      "broken" : false,
+      "site" : "cafedelites",
+      "url" : "https:\/\/cafedelites.com\/crispy-honey-garlic-chicken-wings\/"
+    },
+    {
+      "broken" : false,
+      "site" : "cafedelites",
+      "url" : "https:\/\/cafedelites.com\/chicken-alfredo-pasta\/"
+    },
+    {
+      "broken" : false,
+      "site" : "skinnytaste",
+      "url" : "https:\/\/www.skinnytaste.com\/baked-chicken-cutlets\/"
+    },
+    {
+      "broken" : false,
+      "site" : "skinnytaste",
+      "url" : "https:\/\/www.skinnytaste.com\/turkey-taco-lettuce-wraps\/"
+    },
+    {
+      "broken" : false,
+      "site" : "minimalistbaker",
+      "url" : "https:\/\/minimalistbaker.com\/1-pot-red-lentil-chili\/"
+    },
+    {
+      "broken" : false,
+      "site" : "minimalistbaker",
+      "url" : "https:\/\/minimalistbaker.com\/easy-vegan-fried-rice\/"
+    },
+    {
+      "broken" : false,
+      "site" : "loveandlemons",
+      "url" : "https:\/\/www.loveandlemons.com\/pasta-salad\/"
+    },
+    {
+      "broken" : false,
+      "site" : "loveandlemons",
+      "url" : "https:\/\/www.loveandlemons.com\/vegetable-soup\/"
+    },
+    {
+      "broken" : false,
+      "site" : "hostthetoast",
+      "url" : "https:\/\/hostthetoast.com\/the-best-garlic-bread\/"
+    },
+    {
+      "broken" : false,
+      "site" : "gimmesomeoven",
+      "url" : "https:\/\/www.gimmesomeoven.com\/chicken-tortilla-soup\/"
+    },
+    {
+      "broken" : false,
+      "site" : "gimmesomeoven",
+      "url" : "https:\/\/www.gimmesomeoven.com\/pad-thai-recipe\/"
+    },
+    {
+      "broken" : false,
+      "site" : "onceuponachef",
+      "url" : "https:\/\/www.onceuponachef.com\/recipes\/chicken-noodle-soup.html"
+    },
+    {
+      "broken" : false,
+      "site" : "onceuponachef",
+      "url" : "https:\/\/www.onceuponachef.com\/recipes\/pan-seared-salmon.html"
+    },
+    {
+      "broken" : false,
+      "site" : "smittenkitchen",
+      "url" : "https:\/\/smittenkitchen.com\/2019\/03\/perfect-blueberry-muffins\/"
+    }
+  ]
+}

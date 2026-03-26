@@ -6,6 +6,45 @@
 
 ---
 
+## Session 92 — March 26, 2026
+**Milestone**: M16 — Parsing Test Harness
+**Focus**: Build standalone CLI tool for automated ingredient parsing evaluation
+**Branch**: `feature/M16-parsing-test-harness`
+
+### What Happened
+
+Built the entire M16 parsing test harness in one session — from PRD through working end-to-end pipeline. The harness is a standalone SPM package at `Tools/ParsingTestHarness/` that fetches recipe URLs, extracts ingredients via JSON-LD, and parses them with all three local parsers (regex, NLP, hybrid) independently. It also supports Claude API parsing for side-by-side comparison, though that's optional (controlled by `ANTHROPIC_API_KEY` env var).
+
+Also shipped M9.35.3 (build 90 to TestFlight) — a one-line fix for the "(, melted)" display bug Joe found in import preview. The fix sanitizes `rawText` in `IngredientMatchService.buildResult()` before storing it in the display result.
+
+### Key Decisions
+
+- **Copy files, don't symlink**: The harness gets its own copies of `Services/Parsing/` files. This means the app's code stays untouched during experimentation. Fixes are refined in the harness copies, then ported back to the app in a separate future milestone. Rich specifically requested this for safety — he wants hands-on review before changes hit the app.
+- **~80 curated seed URLs with sitemap discovery**: Seeded the `recipe-urls.json` with URLs across 20+ recipe sites. When the seed list runs low, the harness can auto-discover new URLs from recipe site sitemaps. Broken links are permanently marked and replaced on the fly.
+- **Run all parsers independently**: Instead of just running the hybrid router, the harness stores regex, NLP, AND hybrid results separately per ingredient. This reveals routing issues (where NLP beats regex but threshold prevents it from being used).
+- **Full PRD first**: Went through detailed plan mode with multiple rounds of user feedback before building. This was critical because Rich's vision evolved significantly from "unit test suite" → "full automated evaluation pipeline with dynamic discovery and issue tracking."
+
+### Learning
+
+- The parsing stack is remarkably clean for CLI extraction — 9 files, all Foundation-only (plus NaturalLanguage for NLP). Zero Core Data, UIKit, or SwiftUI dependencies. Only needed 2 small stubs: DebugLogService no-op and ParsedIngredient struct.
+- `import-spike` was an ideal bootstrap — its JSON-LD extraction code worked perfectly when copied into the new package.
+- SPM executables with `main.swift` can't use `@main` attribute — they conflict. Top-level async code with `await runHarness()` works cleanly.
+- The ML parser gracefully returns nil when CoreML resources aren't in the bundle, and HybridIngredientParser handles `mlParser: nil` by falling to 2-tier (regex/NLP). No special handling needed.
+
+### AI Tooling Observations
+
+- Plan mode with multiple user feedback rounds was essential. The initial plan was a simple test suite; through 4 rounds of back-and-forth, it evolved into a much more ambitious automated pipeline. Without that iteration the PRD would have missed key requirements (copy-not-symlink, dynamic URL discovery, broken link recovery, commit-per-loop).
+- Building the full harness (7 new Swift files, Package.swift, seed data, shell script) in one pass was efficient. Most compilation errors were predictable (missing types, function signature mismatches) and fixable in minutes.
+
+### What's Next
+
+- Run the harness with `--count 50` for a full test run
+- If Rich provides `ANTHROPIC_API_KEY`, run with AI comparison for side-by-side evaluation
+- Start ralph loop: identify top issues → fix parsing in harness copies → retest → commit
+- Each fix iteration gets its own commit via `/forager-commit`
+
+---
+
 ## Session 91 — March 25, 2026
 **Milestone**: M9.35.3 — Leading Comma Display Fix
 **Focus**: Fix "(, melted)" display artifact in import preview
