@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 25, 2026
-**Status**: **M9.35.2 COMPLETE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
+**Last Updated**: March 26, 2026
+**Status**: **M16 ACTIVE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
 **Total Progress**: ~315 hours
-**Current Branch**: `main` (after merge)
-**Launch Path**: M9.28 -> M7.7
+**Current Branch**: `feature/M16-parsing-test-harness`
+**Launch Path**: M9.28 -> M7.7 (paused for M16)
 
 ---
 
@@ -22,6 +22,23 @@
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
+
+---
+
+## ACTIVE: M16 — Parsing Test Harness (March 26, 2026)
+
+Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 recipes from the internet, parses with both local (regex/NLP/hybrid) and Claude API, compares results side-by-side, identifies issues. Designed for ralph loop: run → read report → fix code → retest → commit. Harness uses copied parsing files — app code stays untouched until fixes are validated and ported in a future milestone.
+
+**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
+**Branch**: `feature/M16-parsing-test-harness`
+
+Sub-milestones: M16.1 (scaffold) → M16.2 (fetch/extract) → M16.3 (local parse) → M16.4 (AI parse) → M16.5 (compare/report) → M16.6 (CLI/ralph loop) → M16.7+ (fix iterations)
+
+---
+
+## COMPLETE: M9.35.3 — Leading Comma Display Fix (March 25, 2026)
+
+One-line fix: sanitize rawText in IngredientMatchService.buildResult() so import preview shows "(melted)" instead of "(, melted)". PR #103, build 90.
 
 ---
 

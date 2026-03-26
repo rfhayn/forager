@@ -1,10 +1,41 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 25, 2026
-**For Milestone**: Launch Path
-**Status**: **M9.35.2 ✅** | **M9.34 ✅** | **M9.33 ✅** | **M9.32 ✅** | **M9.31 ✅** | **M9.30 ✅** | **M9.29 ✅** | **M9.27 ✅** | **M9.26 ✅** | **M9.24 ✅** | **M9.15.3 ✅** | **M17.1 ✅** | **M10.6.5 ✅**
+**Last Updated**: March 26, 2026
+**For Milestone**: M16 — Parsing Test Harness
+**Status**: **M16 ACTIVE** | **M9.35.3 ✅** | **M9.35.2 ✅**
 
-**Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
+**Current**: M16 (parsing test harness) | **Launch Path**: M9.28 → M7.7 (paused)
+
+---
+
+## M16 — Parsing Test Harness (ACTIVE)
+
+**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
+**Branch**: `feature/M16-parsing-test-harness`
+
+### What's Done
+- PRD written and approved
+- Feature branch created
+
+### What to Build (in order)
+1. **M16.1**: SPM package scaffold at `Tools/ParsingTestHarness/`, copy 13 source files, verify `swift build`
+2. **M16.2**: RecipeDiscovery + RecipeFetcher — URL selection, HTTP fetch, JSON-LD extraction
+3. **M16.3**: ParsingEvaluator — run regex/NLP/hybrid on each ingredient independently
+4. **M16.4**: Claude API batching — add AI parsing, handle missing API key
+5. **M16.5**: ResultComparer + ReportGenerator + ResultStore — comparison, reporting, persistence
+6. **M16.6**: CLI entry point, ralph loop script, curate ~200 seed URLs + sitemap sources
+
+### Key Files
+- Copy from: `Services/Parsing/*.swift` (9 files), `Tools/import-spike/Sources/ImportSpike/` (4 files)
+- New code in: `Tools/ParsingTestHarness/Sources/Harness/`
+- Seed data in: `Tools/ParsingTestHarness/Data/`
+
+### Critical Rules
+- **Copy files, don't symlink** — app code stays untouched until future porting milestone
+- **Commit after each ralph loop** — `/forager-commit` with fix description
+- **Issue log**: `Tools/ParsingTestHarness/Results/issue-log.md` tracks every finding and fix
+- **Broken link recovery**: always deliver 50 recipes, replace broken URLs from seed pool
+- **Dynamic discovery**: crawl sitemaps when seed list runs low
 
 ---
 
