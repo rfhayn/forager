@@ -44,14 +44,10 @@ Update ALL 7 core documentation files. This is mandatory after every milestone c
 - Verify all links are correct
 
 ### 6. `docs/insights-log.md`
-- Review: are there any unlogged insights from this milestone?
-- Check promotion rules: 3+ insights on same topic → suggest Learning Note
-- Ensure all insights from the session are captured
+Ask the user if there are any unlogged insights from this milestone. If yes, invoke `/forager-log-insight` via an Agent (background) to handle it. This delegates to the canonical skill so format stays consistent.
 
 ### 7. `docs/development-journal.md`
-- Write or update the narrative session entry for this milestone completion
-- Include: what was accomplished, key decisions, learning, what's next
-- Format: reverse chronological, newest entry at top
+Invoke `/forager-dev-journal` via an Agent (background) to write the milestone completion narrative. This delegates to the canonical skill so format stays consistent. Pass context: milestone completed, what was accomplished, key decisions.
 
 ## Cleanup
 
