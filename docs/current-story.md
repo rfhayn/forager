@@ -39,7 +39,7 @@ Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training 
 |-----|-------------|--------|
 | M16.9.1 | Harness data converter (field→token alignment) | COMPLETE |
 | M16.9.2 | Data accumulation + quality review | COMPLETE |
-| M16.9.3 | Full retrain (combined dataset + vocab rebuild) | READY |
+| M16.9.3 | Full retrain (combined dataset + vocab rebuild) | COMPLETE |
 | M16.9.4 | A/B model comparison + regression check | READY |
 | M16.9.5 | Deploy retrained model to app + validate | READY |
 | M16.9.6 | Port parser fixes to app + validate | READY |
