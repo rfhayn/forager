@@ -113,6 +113,13 @@ class RunLogger {
         }
     }
 
+    func logTrainingDataCollection(newEntries: Int, totalEntries: Int) {
+        write("")
+        write("TRAINING DATA COLLECTION")
+        write("New entries this run: \(newEntries)")
+        write("Total accumulated entries: \(totalEntries)")
+    }
+
     func logSummary(summary: ResultStore.RunSummary, recipeCount: Int, failureCount: Int) {
         step(6, "SUMMARY")
         write("Recipes: \(recipeCount) extracted (\(failureCount) failed)")

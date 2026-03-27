@@ -106,6 +106,8 @@ This means the harness can run indefinitely — as links break, fresh ones are d
 - `--reuse 40` — reuse percentage (default 40%)
 - `--rerun-last` — 100% reuse (exact same URLs as last run)
 - `--urls "url1,url2"` — test specific URLs only
+- `--export-training-data` — export accumulated ML training data and exit (no recipe fetching)
+- `--include-flagged` — include `needs_review` entries in training data export
 
 **Output**: Array of `{url, source: "reuse"|"new", siteTag, status}` written to stdout as progress.
 
@@ -261,6 +263,12 @@ TOP ISSUES (local parser):
   3. Word merge in name            ×3  (e.g., "butteror")
   4. Quantity range not parsed      ×2  (e.g., "1-2 tsp")
 
+TRAINING DATA:
+  New examples:      487
+  Corpus total:      2,847
+  Flagged for review:  197 (6.9%)
+  Avg quality:       0.91
+
 REGRESSIONS vs baseline: 0
 IMPROVEMENTS vs baseline: 3
 ═══════════════════════════════════════════════════════
@@ -283,6 +291,79 @@ IMPROVEMENTS vs baseline: 3
 
 ---
 
+### Step 8: ML Training Data Collection
+
+**What happens**: When AI parsing is enabled, every run automatically accumulates labeled training data for the BiLSTM-CRF model (M8.4). The Claude API results serve as high-quality silver-standard labels.
+
+**Why this matters**: The ML parser (tier 2 in the confidence routing chain) was trained on a fixed dataset. The harness produces hundreds of new labeled examples per run — essentially free training data. Over multiple ralph loop iterations, this builds a large, diverse corpus that can significantly improve the ML parser's accuracy.
+
+**Process per ingredient** (runs only when AI results are available):
+1. Tokenize the raw ingredient text using `foragerTokenize()` (same tokenizer the ML model uses)
+2. Align AI-parsed spans (name, quantity, unit, notes) back to token boundaries
+3. Produce a label for each token: `QTY`, `UNIT`, `NAME`, `MODIFIER`, `PREP`, `COMMENT`, `OTHER`
+4. Compute a quality score for the alignment (0.0-1.0) based on:
+   - Token coverage: what percentage of tokens got a label from the AI result?
+   - Span alignment: did AI field boundaries land cleanly on token boundaries?
+   - AI-local agreement: do local and AI parsers agree? (agreement = higher trust)
+
+**Label alignment strategy**:
+The AI returns structured fields (name, quantity, unit, notes), not token-level labels. Alignment works by:
+1. Tokenize each AI field value using the same `foragerTokenize()`
+2. Find the best matching token subsequence in the full ingredient tokens
+3. Assign labels to matched tokens: quantity tokens → `QTY`, unit tokens → `UNIT`, name tokens → `NAME`, note tokens → `PREP`/`COMMENT`
+4. Unmatched tokens get `OTHER`
+5. If alignment quality < 0.7, flag the entry for human review
+
+**Storage format** (`Results/training-data/training-data.jsonl`):
+```jsonl
+{"tokens": ["6", "tablespoons", "butter", ",", "melted"], "labels": ["QTY", "UNIT", "NAME", "OTHER", "PREP"], "source_url": "https://...", "ai_provider": "claude", "quality_score": 0.95, "needs_review": false, "timestamp": "2026-03-26T14:30:00Z"}
+{"tokens": ["1", "14.5", "oz", "can", "diced", "tomatoes"], "labels": ["QTY", "QTY", "UNIT", "UNIT", "PREP", "NAME"], "source_url": "https://...", "ai_provider": "claude", "quality_score": 0.82, "needs_review": false, "timestamp": "2026-03-26T14:30:00Z"}
+```
+
+Note: JSONL (one JSON object per line) for easy appending across runs. The label set matches the BiLSTM-CRF's 7-class scheme: `QTY`, `UNIT`, `NAME`, `MODIFIER`, `PREP`, `COMMENT`, `OTHER`.
+
+**Deduplication**: Same ingredient text (after lowercasing + trimming) = same entry. Latest AI result wins. Dedup key is a SHA-256 hash of the normalized text. This means re-running the same recipes updates labels rather than duplicating them.
+
+**Human review flagging**: Entries with `needs_review: true` are written but excluded from training export by default. Criteria for flagging:
+- Quality score < 0.7 (poor token-label alignment)
+- AI and local parsers disagree on name field (ambiguous ground truth)
+- Token count mismatch between tokenized ingredient and sum of labeled spans
+
+**Accumulation across runs**: Each harness run appends to the same `training-data.jsonl` file (after dedup). Over N runs of 50 recipes (~600 ingredients each), the corpus grows to thousands of labeled examples. The file includes timestamps so you can filter by recency.
+
+**Export for training** (`--export-training-data`):
+```bash
+swift run --package-path Tools/ParsingTestHarness ParsingHarness --export-training-data
+```
+This reads `Results/training-data/training-data.jsonl` and exports in the format the ML training pipeline expects:
+- Output: `Results/training-data/export-{timestamp}.json`
+- Format:
+  ```json
+  {
+    "version": 1,
+    "exported": "2026-03-26T16:00:00Z",
+    "total_examples": 2847,
+    "reviewed_examples": 2650,
+    "flagged_examples": 197,
+    "examples": [
+      {"tokens": ["6", "tablespoons", "butter", ",", "melted"], "labels": ["QTY", "UNIT", "NAME", "OTHER", "PREP"]}
+    ]
+  }
+  ```
+- By default, excludes `needs_review: true` entries. Use `--include-flagged` to include them.
+- Compatible with `Tools/ml-training/` pipeline (same tokenizer, same label set).
+
+**Training data stats** (printed in report when AI is enabled):
+```
+TRAINING DATA:
+  New examples this run:  487
+  Total corpus size:      2,847
+  Flagged for review:     197 (6.9%)
+  Avg quality score:      0.91
+```
+
+---
+
 ## Ralph Loop Workflow
 
 This is how Claude Code operates the harness in a ralph loop:
@@ -293,6 +374,8 @@ This is how Claude Code operates the harness in a ralph loop:
 │     swift run --package-path                     │
 │       Tools/ParsingTestHarness ParsingHarness    │
 │     → produces report with issues                │
+│     → if AI enabled: accumulates training data   │
+│       in Results/training-data/training-data.jsonl│
 └─────────────────┬───────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────────────┐
@@ -300,6 +383,7 @@ This is how Claude Code operates the harness in a ralph loop:
 │     Parse the JSON output                        │
 │     Identify top issues by frequency             │
 │     Check for regressions                        │
+│     Note training data stats (corpus growth)     │
 └─────────────────┬───────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────────────┐
@@ -395,7 +479,9 @@ Tools/ParsingTestHarness/
 │   │   ├── ParsingEvaluator.swift
 │   │   ├── ResultComparer.swift
 │   │   ├── ResultStore.swift
-│   │   └── ReportGenerator.swift
+│   │   ├── ReportGenerator.swift
+│   │   ├── TrainingDataCollector.swift  # Token-label alignment from AI results (M16.8)
+│   │   └── TrainingDataExporter.swift   # Export corpus for ML training pipeline (M16.8)
 │   └── Stubs/
 │       └── DebugLogServiceStub.swift
 ├── Data/
@@ -403,6 +489,9 @@ Tools/ParsingTestHarness/
 │   ├── sitemap-sources.json     # Sitemap URLs for dynamic discovery
 │   └── unit-normalization.json  # unit synonym map for comparison
 ├── Results/                     # gitignored, persisted between runs
+│   └── training-data/           # ML training corpus (accumulates across runs)
+│       ├── training-data.jsonl  # Raw labeled examples (JSONL, deduped)
+│       └── export-{timestamp}.json  # Exported training sets
 └── run-harness.sh               # ralph loop entry point
 ```
 
@@ -436,6 +525,7 @@ Sub-milestones:
 - **M16.5**: Comparison, reporting, result storage
 - **M16.6**: CLI, ralph loop, seed URL curation
 - **M16.7+**: Each ralph loop fix iteration
+- **M16.8**: ML training data collection + export pipeline
 
 ---
 
@@ -472,6 +562,16 @@ Sub-milestones:
 - run-harness.sh (wrapper script)
 - Curate seed URL list (200 URLs)
 - End-to-end verification with full 50-recipe run
+
+### Phase 7 (M16.8): ML training data collection + export
+- `TrainingDataCollector.swift` — token-label alignment from AI results, quality scoring, dedup
+- `TrainingDataExporter.swift` — read JSONL corpus, filter flagged entries, export in ML pipeline format
+- Add `--export-training-data` and `--include-flagged` CLI flags to main.swift
+- Wire training data accumulation into the post-AI-parse step of each run
+- Add training data stats section to ReportGenerator output
+- Verify: run harness with AI → check `Results/training-data/training-data.jsonl` grows → export → validate format matches `Tools/ml-training/` expectations
+- Verify: dedup works across multiple runs (same ingredient = updated, not duplicated)
+- Verify: flagged entries excluded from default export, included with `--include-flagged`
 
 ---
 
@@ -515,3 +615,7 @@ Sub-milestones:
 5. Editing harness copies → `swift build` picks up changes immediately
 6. Ralph loop cycle works: run → identify issues → fix → retest → verify improvement → commit
 7. Issue log tracks every finding and fix for audit trail
+8. AI-enabled runs accumulate training data in `Results/training-data/training-data.jsonl`
+9. Training data deduplication works: re-running same recipes updates entries, doesn't duplicate
+10. `--export-training-data` produces a JSON file compatible with the ML training pipeline (same tokenizer, same 7-class label set)
+11. Low-quality alignments (score < 0.7) are flagged for review and excluded from default export

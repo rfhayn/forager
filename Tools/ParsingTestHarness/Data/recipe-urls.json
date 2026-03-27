@@ -6,12 +6,14 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/24074\/alysias-basic-meat-lasagna\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/229293\/korean-ground-beef-rice-bowls\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/246628\/slow-cooker-chicken-taco-soup\/"
     },
@@ -21,12 +23,14 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/16354\/easy-meatloaf\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/228285\/teriyaki-chicken\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/219173\/simple-macaroni-and-cheese\/"
     },
@@ -36,17 +40,20 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/23600\/worlds-best-lasagna\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/213742\/meatball-subs\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/25473\/the-best-banana-pudding\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/24002\/easy-chicken-pot-pie\/"
     },
@@ -66,7 +73,8 @@
       "url" : "https:\/\/www.budgetbytes.com\/dragon-noodles\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "budgetbytes",
       "url" : "https:\/\/www.budgetbytes.com\/creamy-spinach-tomato-pasta\/"
     },
@@ -86,7 +94,8 @@
       "url" : "https:\/\/www.budgetbytes.com\/beef-cabbage-stir-fry\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "budgetbytes",
       "url" : "https:\/\/www.budgetbytes.com\/garlic-parmesan-pasta\/"
     },
@@ -96,12 +105,14 @@
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/homemade_pizza\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "simplyrecipes",
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/grilled_cheese_sandwich\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "simplyrecipes",
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/chicken_cacciatore\/"
     },
@@ -111,7 +122,8 @@
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/baked_ziti\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "simplyrecipes",
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/pesto_pasta\/"
     },
@@ -126,7 +138,8 @@
       "url" : "https:\/\/www.recipetineats.com\/chicken-stir-fry\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "recipetineats",
       "url" : "https:\/\/www.recipetineats.com\/slow-cooker-beef-stew\/"
     },
@@ -152,7 +165,8 @@
       "url" : "https:\/\/pinchofyum.com\/the-best-soft-chocolate-chip-cookies"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "pinchofyum",
       "url" : "https:\/\/pinchofyum.com\/creamy-tomato-basil-pasta-bake"
     },
@@ -167,7 +181,8 @@
       "url" : "https:\/\/pinchofyum.com\/cashew-chicken"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "pinchofyum",
       "url" : "https:\/\/pinchofyum.com\/spicy-peanut-noodles"
     },
@@ -177,22 +192,26 @@
       "url" : "https:\/\/www.seriouseats.com\/the-best-chicken-parmesan-recipe"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "seriouseats",
       "url" : "https:\/\/www.seriouseats.com\/classic-lasagna-meat-sauce-recipe"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "seriouseats",
       "url" : "https:\/\/www.seriouseats.com\/chicken-tikka-masala"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "seriouseats",
       "url" : "https:\/\/www.seriouseats.com\/easy-creamy-mushroom-pasta-recipe"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "seriouseats",
       "url" : "https:\/\/www.seriouseats.com\/classic-beef-chili-recipe"
     },
@@ -202,7 +221,8 @@
       "url" : "https:\/\/tastesbetterfromscratch.com\/chicken-cordon-bleu\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "tastesbetterfromscratch",
       "url" : "https:\/\/tastesbetterfromscratch.com\/cilantro-lime-chicken\/"
     },
@@ -227,27 +247,32 @@
       "url" : "https:\/\/cookieandkate.com\/best-lentil-soup-recipe\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "cookieandkate",
       "url" : "https:\/\/cookieandkate.com\/best-chili-recipe\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "cookieandkate",
       "url" : "https:\/\/cookieandkate.com\/vegetable-stir-fry-recipe\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "halfbakedharvest",
       "url" : "https:\/\/www.halfbakedharvest.com\/better-than-takeout-kung-pao-chicken\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "halfbakedharvest",
       "url" : "https:\/\/www.halfbakedharvest.com\/one-pot-creamy-tuscan-orzo\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "halfbakedharvest",
       "url" : "https:\/\/www.halfbakedharvest.com\/crispy-lemon-butter-chicken\/"
     },
@@ -262,17 +287,20 @@
       "url" : "https:\/\/www.justonecookbook.com\/vegetable-tempura\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "Could not decode HTML",
       "site" : "justonecookbook",
       "url" : "https:\/\/www.justonecookbook.com\/teriyaki-salmon\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "No JSON-LD recipe found",
       "site" : "maangchi",
       "url" : "https:\/\/www.maangchi.com\/recipe\/kimchi-jjigae"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "No JSON-LD recipe found",
       "site" : "maangchi",
       "url" : "https:\/\/www.maangchi.com\/recipe\/japchae"
     },
@@ -307,12 +335,14 @@
       "url" : "https:\/\/www.foodnetwork.com\/recipes\/alton-brown\/baked-macaroni-and-cheese-recipe-1939524"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "damndelicious",
       "url" : "https:\/\/damndelicious.net\/2019\/04\/21\/korean-beef-bowl\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "damndelicious",
       "url" : "https:\/\/damndelicious.net\/2013\/07\/07\/one-pot-garlic-parmesan-pasta\/"
     },
@@ -333,17 +363,20 @@
       "url" : "https:\/\/sallysbakingaddiction.com\/chocolate-cake\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "cafedelites",
       "url" : "https:\/\/cafedelites.com\/crispy-honey-garlic-chicken-wings\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "cafedelites",
       "url" : "https:\/\/cafedelites.com\/chicken-alfredo-pasta\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "skinnytaste",
       "url" : "https:\/\/www.skinnytaste.com\/baked-chicken-cutlets\/"
     },
@@ -373,7 +406,8 @@
       "url" : "https:\/\/www.loveandlemons.com\/vegetable-soup\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "hostthetoast",
       "url" : "https:\/\/hostthetoast.com\/the-best-garlic-bread\/"
     },
@@ -383,7 +417,8 @@
       "url" : "https:\/\/www.gimmesomeoven.com\/chicken-tortilla-soup\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "gimmesomeoven",
       "url" : "https:\/\/www.gimmesomeoven.com\/pad-thai-recipe\/"
     },
@@ -398,7 +433,8 @@
       "url" : "https:\/\/www.onceuponachef.com\/recipes\/pan-seared-salmon.html"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "smittenkitchen",
       "url" : "https:\/\/smittenkitchen.com\/2019\/03\/perfect-blueberry-muffins\/"
     }

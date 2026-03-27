@@ -11,6 +11,7 @@ let rerunLast = args.contains("--rerun-last")
 let localOnly = args.contains("--local-only")
 let updateBaseline = args.contains("--update-baseline")
 let jsonOnly = args.contains("--json")
+let exportTrainingData = args.contains("--export-training-data")
 let specificURLs = stringArg("--urls", from: args)?.components(separatedBy: ",")
 
 // Resolve paths relative to package root
@@ -20,6 +21,21 @@ let resultsDir = packageDir.appendingPathComponent("Results")
 
 // Ensure Results directory exists
 try? FileManager.default.createDirectory(at: resultsDir, withIntermediateDirectories: true)
+
+// Handle --export-training-data: export and exit immediately
+if exportTrainingData {
+    let trainingDataURL = resultsDir.appendingPathComponent("training-data.json")
+    let exportURL = resultsDir.appendingPathComponent("training-export-bio.json")
+    let collector = TrainingDataCollector()
+    let count = collector.exportForMLTraining(from: trainingDataURL, to: exportURL)
+    if count > 0 {
+        printErr("Exported \(count) BIO-tagged samples to \(exportURL.path)")
+    } else {
+        printErr("No training data to export. Run the harness with AI enabled first.")
+    }
+    // Exit — no harness run needed
+    _exit(0)
+}
 
 let apiKey = ProcessInfo.processInfo.environment["ANTHROPIC_API_KEY"]
 let aiEnabled = !localOnly && apiKey != nil && !(apiKey?.isEmpty ?? true)
@@ -100,6 +116,20 @@ func runHarness() async {
         await evaluator.addAIParsing(to: &recipeResults, apiKey: key, logger: log)
     } else {
         log.logAISkipped()
+    }
+
+    // Step 4b: Collect training data from AI results
+    if aiEnabled {
+        let collector = TrainingDataCollector()
+        let newEntries = collector.collect(from: recipeResults)
+        if !newEntries.isEmpty {
+            let trainingDataURL = resultsDir.appendingPathComponent("training-data.json")
+            let totalCount = collector.save(newEntries: newEntries, to: trainingDataURL)
+            log.logTrainingDataCollection(newEntries: newEntries.count, totalEntries: totalCount)
+            if !jsonOnly {
+                printErr("\n🧠 Training data: \(newEntries.count) new entries collected (\(totalCount) total accumulated)")
+            }
+        }
     }
 
     // Step 5: Compare & Evaluate
