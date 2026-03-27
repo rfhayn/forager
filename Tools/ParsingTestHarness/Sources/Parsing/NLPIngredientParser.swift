@@ -251,7 +251,13 @@ class NLPIngredientParser: IngredientParser {
             }
         }
 
-        let name = nameTokens.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        // Normalize multi-space artifacts from NLP tokenization
+        let rawName = nameTokens.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = rawName.replacingOccurrences(
+            of: #"\s+"#,
+            with: " ",
+            options: .regularExpression
+        )
         let notes = detectedNotes ?? (noteTokens.isEmpty ? nil : noteTokens.joined(separator: ", "))
 
         return (name, notes)

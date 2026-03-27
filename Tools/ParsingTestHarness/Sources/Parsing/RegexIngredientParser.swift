@@ -565,7 +565,8 @@ class RegexIngredientParser: IngredientParser {
     /// Internal standard pattern that returns a ParsedIngredient (used by unicode fraction too)
     private func tryStandardPatternInternal(_ text: String) -> ParsedIngredient? {
         // "2 cups flour", "1 1/2 tbsp olive oil", "2-1/2 cups chicken stock"
-        let pattern = #"^([0-9]+(?:\.\d+)?(?:[-\s]+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([a-zA-Z]+)?\s*(.+)$"#
+        // Use \p{L} (Unicode letter) to handle accented characters like jalapeño, crème fraîche
+        let pattern = #"^([0-9]+(?:\.\d+)?(?:[-\s]+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([\p{L}]+)?\s*(.+)$"#
         if let match = matchPattern(pattern, in: text) {
             let quantity = match[1]
             var unit = match[2].isEmpty ? nil : match[2]
@@ -577,7 +578,10 @@ class RegexIngredientParser: IngredientParser {
                 if name.count <= 1 {
                     return nil
                 }
-                let combinedName = "\(capturedUnit) \(name)".trimmingCharacters(in: .whitespacesAndNewlines)
+                // When name starts with "-", rejoin without space to preserve hyphenated words
+                // "9 no-boil lasagna" → unit="no", name="-boil lasagna" → "no-boil lasagna"
+                let separator = name.hasPrefix("-") ? "" : " "
+                let combinedName = "\(capturedUnit)\(separator)\(name)".trimmingCharacters(in: .whitespacesAndNewlines)
                 name = combinedName
                 unit = nil
             }

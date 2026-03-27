@@ -39,6 +39,10 @@ enum IngredientPreprocessor {
         // Step 5d: Strip leading "about" / "optional" qualifiers before quantities
         result = stripLeadingQualifiers(result)
 
+        // Step 5g: Strip leading dual-unit metric prefix
+        // "500g / 1lb peeled prawns" → "1lb peeled prawns"
+        result = stripLeadingDualUnitMetric(result)
+
         // Step 5e: Normalize "X and Y/Z" fractions to "X Y/Z"
         // "2 and 1/4 cups flour" → "2 1/4 cups flour"
         result = normalizeAndFractions(result)
@@ -64,7 +68,10 @@ enum IngredientPreprocessor {
         // Step 9: Fix space-before-punctuation ("avocado , sliced" → "avocado, sliced")
         result = fixSpaceBeforePunctuation(result)
 
-        // Step 10: Normalize whitespace (Unicode spaces, multiple spaces, trim)
+        // Step 10: Normalize curly quotes/apostrophes to straight ASCII
+        result = normalizeCurlyQuotes(result)
+
+        // Step 11: Normalize whitespace (Unicode spaces, multiple spaces, trim)
         result = normalizeWhitespace(result)
 
         return result
@@ -239,6 +246,19 @@ enum IngredientPreprocessor {
         return "\(digit) \(words[1])"
     }
 
+    /// Step 5g: Strip leading dual-unit metric prefix before an imperial measurement
+    /// "500g / 1lb peeled prawns" → "1lb peeled prawns"
+    /// "500 g / 1 lb peeled prawns" → "1 lb peeled prawns"
+    /// Only strips when the first measurement is metric (g/kg/ml/l) followed by "/" or "/"
+    /// and the second measurement is imperial (lb/lbs/oz/ounce/pound/cup/etc.)
+    private static func stripLeadingDualUnitMetric(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"^\d+\.?\d*\s*(?:g|kg|ml|l)\s*/\s*"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
     /// Step 5e: Normalize "X and Y/Z" fractions to standard mixed fraction "X Y/Z"
     /// "2 and 1/4 cups flour" → "2 1/4 cups flour"
     private static func normalizeAndFractions(_ text: String) -> String {
@@ -359,7 +379,22 @@ enum IngredientPreprocessor {
         return result
     }
 
-    /// Step 8: Normalize all whitespace variants to single ASCII spaces
+    /// Step 10: Normalize curly/smart quotes and apostrophes to straight ASCII
+    /// "confectioners\u{2019} sugar" → "confectioners' sugar"
+    private static func normalizeCurlyQuotes(_ text: String) -> String {
+        var result = text
+        // Curly single quotes / apostrophes → straight apostrophe
+        result = result.replacingOccurrences(of: "\u{2018}", with: "'") // left single quote
+        result = result.replacingOccurrences(of: "\u{2019}", with: "'") // right single quote (apostrophe)
+        result = result.replacingOccurrences(of: "\u{201A}", with: "'") // single low-9 quote
+        // Curly double quotes → straight double quote
+        result = result.replacingOccurrences(of: "\u{201C}", with: "\"") // left double quote
+        result = result.replacingOccurrences(of: "\u{201D}", with: "\"") // right double quote
+        result = result.replacingOccurrences(of: "\u{201E}", with: "\"") // double low-9 quote
+        return result
+    }
+
+    /// Step 11: Normalize all whitespace variants to single ASCII spaces
     private static func normalizeWhitespace(_ text: String) -> String {
         text.replacingOccurrences(
             of: #"[\s\x{00A0}\x{200B}\x{FEFF}]+"#,

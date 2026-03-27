@@ -50,6 +50,16 @@ struct ResultComparer {
         "slice": "slice", "slices": "slice", "piece": "piece", "pieces": "piece",
         "bunch": "bunch", "head": "head", "stalk": "stalk", "stalks": "stalk",
         "sprig": "sprig", "sprigs": "sprig",
+        "inch": "inch", "inches": "inch",
+        "jar": "jar", "jars": "jar",
+        "bottle": "bottle", "bottles": "bottle",
+        "box": "box", "boxes": "box",
+        "bag": "bag", "bags": "bag",
+        "container": "container", "containers": "container",
+        "loaf": "loaf", "loaves": "loaf",
+        "stick": "stick", "sticks": "stick",
+        "serving": "serving", "servings": "serving",
+        "handful": "handful",
     ]
 
     static func normalizeUnit(_ unit: String?) -> String? {
@@ -88,7 +98,45 @@ struct ResultComparer {
             return true
         }
 
+        // Normalize slashes as "or" and parens-with-or: "stock/broth" ↔ "stock or broth"
+        // "(or basil)" → "or basil", "heavy/thickened" → "heavy or thickened"
+        let localNormalized = normalizeAlternatives(local)
+        let aiNormalized = normalizeAlternatives(ai)
+        if localNormalized == aiNormalized ||
+           localNormalized.contains(aiNormalized) ||
+           aiNormalized.contains(localNormalized) {
+            return true
+        }
+        // Also try with depluralization
+        let aiNormalizedSingular = depluralize(aiNormalized)
+        let localNormalizedSingular = depluralize(localNormalized)
+        if localNormalized.contains(aiNormalizedSingular) ||
+           localNormalizedSingular.contains(aiNormalized) ||
+           localNormalizedSingular.contains(aiNormalizedSingular) {
+            return true
+        }
+
         return false
+    }
+
+    /// Normalize alternative expressions: slash to "or", strip "(or ...)" parens
+    private static func normalizeAlternatives(_ name: String) -> String {
+        var result = name
+        // "(or basil)" → "or basil", "(OR Mirin)" → "or mirin"
+        result = result.replacingOccurrences(
+            of: #"\((?:or\s+)([^)]+)\)"#,
+            with: "or $1",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        // "stock/broth" → "stock or broth"
+        result = result.replacingOccurrences(of: "/", with: " or ")
+        // Collapse multiple spaces
+        result = result.replacingOccurrences(
+            of: #"\s+"#,
+            with: " ",
+            options: .regularExpression
+        )
+        return result.lowercased().trimmingCharacters(in: .whitespaces)
     }
 
     /// Common descriptor words that local parser keeps but AI strips.
@@ -113,7 +161,15 @@ struct ResultComparer {
         return stripped.joined(separator: " ")
     }
 
-    private static func depluralize(_ word: String) -> String {
+    private static func depluralize(_ text: String) -> String {
+        // Apply word-level depluralization so multi-word phrases work:
+        // "collard greens or kale" → "collard green or kale"
+        let words = text.split(separator: " ").map(String.init)
+        let depluralized = words.map { depluralizeWord($0) }
+        return depluralized.joined(separator: " ")
+    }
+
+    private static func depluralizeWord(_ word: String) -> String {
         if word.hasSuffix("ies") && word.count > 4 {
             return String(word.dropLast(3)) + "y"  // berries → berry
         }
@@ -262,14 +318,21 @@ struct ResultComparer {
         }
 
         // Word merge (no space between words that should be separate)
+        // Exclude hyphenated words (e.g. "Italian-American") — those are valid compound words
         let nameWords = local.name.split(separator: " ")
-        for word in nameWords where word.count > 15 {
+        for word in nameWords where word.count > 15 && !word.contains("-") {
             issues.append("possible_word_merge: \"\(word)\"")
         }
 
         // Unparsed raw text (name equals raw input, nothing extracted)
+        // Exclude short single-word ingredient names (e.g. "Avocado", "Pesto") — these are valid
+        // name-only ingredients, not parsing failures
         if local.name == ingredient.sanitized && local.quantity == nil && local.unit == nil {
-            issues.append("unparsed_raw_text")
+            let wordCount = ingredient.sanitized.split(separator: " ").count
+            let hasDigit = ingredient.sanitized.contains(where: { $0.isNumber })
+            if wordCount > 2 || hasDigit {
+                issues.append("unparsed_raw_text")
+            }
         }
 
         // Very low confidence
