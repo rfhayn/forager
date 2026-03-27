@@ -22,11 +22,12 @@ Update ALL 7 core documentation files. This is mandatory after every milestone c
 - Add actual hours spent
 - Update "Last Updated" date to today
 - Move to completed section if appropriate
+- Other milestones may remain ACTIVE (multi-session support)
 
-### 2. `docs/next-prompt.md`
-- Remove completed milestone guidance
-- Add guidance for the next milestone in the priority queue
-- Update status line at top
+### 2. Branch-Specific Next Prompt
+- If `docs/next-prompt-M#.#.md` exists for this milestone, move it to `docs/prds/complete/` (rename to `next-prompt-M#.#-complete.md`) for historical reference, or delete it
+- Update the shared `docs/next-prompt.md` to remove the pointer to this milestone's next-prompt
+- If this was the only active milestone, update `docs/next-prompt.md` with guidance for the next milestone in the priority queue
 
 ### 3. `docs/roadmap.md`
 - Mark milestone as COMPLETE with actual hours
@@ -52,6 +53,11 @@ Update ALL 7 core documentation files. This is mandatory after every milestone c
 - Include: what was accomplished, key decisions, learning, what's next
 - Format: reverse chronological, newest entry at top
 
+## Cleanup
+
+- Remove the branch-keyed status file: `rm ~/.claude/forager-status-feature-M#.#-*.txt`
+- This prevents stale status from appearing if the branch name is reused
+
 ## Verification
 
 After updating all 7 files:
@@ -60,3 +66,4 @@ After updating all 7 files:
 - [ ] Actual hours are recorded
 - [ ] Next milestone is identified and documented
 - [ ] No contradictions between files
+- [ ] Branch-specific next-prompt cleaned up

@@ -58,6 +58,6 @@ Bad:
 
 ## Post-Commit
 
-After committing, remind about:
-- `docs/insights-log.md` — any unlogged technical insights this session?
-- `docs/development-journal.md` — is the journal entry current?
+After committing, automatically check and prompt:
+1. **Journal**: Read the top of `docs/development-journal.md` — if the latest entry doesn't reference today's date or the current milestone, invoke `/forager-dev-journal` to update it
+2. **Insights**: Ask the user if there are any unlogged technical insights from this session. If yes, invoke `/forager-log-insight`

@@ -7,44 +7,48 @@
 ---
 
 ## Session 94 — March 27, 2026
-**Milestone**: M16.9.1 — Harness Data Converter
-**Focus**: Building the bridge between harness field-level AI labels and BiLSTM-CRF token-level training format
+**Milestone**: M16.9.1–M16.9.3 — Data Converter, Quality Review, Full Retrain
+**Focus**: End-to-end ML retraining pipeline: convert harness data → quality review → retrain BiLSTM-CRF
 **Branch**: `feature/M16.9-ml-model-retraining`
 
 ### What Happened
 
-Built `convert_harness_data.py` — the critical data conversion script that transforms the harness's field-level AI labels (name/qty/unit/notes per ingredient) into the token-level label sequences (QTY/UNIT/NAME/MODIFIER/PREP/COMMENT/OTHER per token) that `train_model.py` expects.
+Three sub-milestones completed in one session, building on each other:
 
-The initial version converted 1,059 of 1,440 entries (73.5%). Three rounds of alignment fixes brought it to 1,319 unique samples (98.8%):
+**M16.9.1 — Harness Data Converter**: Built `convert_harness_data.py` to transform field-level AI labels (name/qty/unit/notes) into token-level label sequences (7 labels) for `train_model.py`. Initial 73.5% conversion rate improved to 98.8% (1,319/1,440) across three fix rounds: fuzzy plural matching (egg→eggs, leaf→leaves), skip-claimed indices in notes tagging, and container unit recovery (cloves/cans after QTY).
 
-1. **Fuzzy plural matching**: AI canonicalizes names ("egg" vs raw "eggs"). Added singular/plural matching including irregular plurals (leaf→leaves, loaf→loaves).
-2. **Skip-claimed indices in notes tagging**: Notes spans (range-based) were overwriting already-claimed NAME tokens. Fix: check `claimed[i]` before labeling.
-3. **Container unit recovery**: When AI drops units like "cloves" or "cans", detect unclaimed unit tokens adjacent to QTY/UNIT and label them.
+**M16.9.2 — Quality Review**: Spot-checked 50 random samples, found 5 systematic issues. Fixed: range quantities ("2-3" → QTY), MODIFIER reclassification (frozen/large before NAME), container units before notes tagging (stems → UNIT), combined number+unit tokens (120g → UNIT), added 8 more unit synonyms. All 1,319 samples pass `validate_samples()`.
 
-The remaining 17 failures (1.2%) are genuinely ambiguous — slash-separated alternatives ("prawns/shrimp"), asterisk annotations ("carrot*"), complex diacritics. Correct to exclude these from training data.
+**M16.9.3 — Full Retrain**: Built `retrain_full.py` orchestrator. First attempt with 8x oversampling (13.3% harness) failed 2/8 strangetom criteria. Reduced to 4x (7.1%) — **all 8 criteria pass**: token accuracy 98.54%, sentence accuracy 95.34%, all per-class F1 above minimums. Vocabulary expanded 5,372→5,454 (+82 new words). Trained 26 epochs on MPS in 43.8 min.
+
+Also during this session: updated M10.4 PRD (reduced 11-16h→4-5h), added M16.9.6 to PRD (port parser fixes), added recipe image cache to M10.4.5b, updated roadmap, adopted multi-session infrastructure (per-milestone next-prompt files).
 
 ### Key Decisions
 
-- **Used Python (not Swift) for the converter**: Even though the harness has a Swift BIO exporter, the training pipeline is all Python. Keeping the converter in Python means it can import the tokenizer directly and validate against `prepare_dataset.py`'s `validate_samples()`.
-- **Flat 7-label format, not BIO tags**: The Swift exporter uses B-/I- prefixed tags (9 tags), but `train_model.py` expects flat labels (7 tags). The converter outputs the exact format the training pipeline consumes.
-- **MODIFIER vs NAME disambiguation via word list**: Since the AI merges modifiers into the name field, we recover the distinction using a curated modifier word list (fresh, frozen, large, small, etc.) applied to pre-name tokens.
-- **PREP vs COMMENT classification for notes**: Default to PREP (most common), with a COMMENT pattern set for purpose/optional phrases ("to taste", "for garnish", "optional").
-- **Stats logged to conversion_stats.json**: Per user request, all conversion outcomes (counts, distributions, failures) are persisted as JSON for tracking across runs.
+- **Python converter over Swift BIO exporter**: Training pipeline is Python; keeping the converter in Python allows direct validation against `validate_samples()` and uses the frozen tokenizer reference implementation.
+- **4x oversampling, not 8x**: 8x made harness 13.3% of effective training — too aggressive. 4x (7.1%) preserves strangetom quality while still incorporating new vocabulary. The model trained 26 epochs vs 14 with 8x, suggesting better gradient balance.
+- **M10.4 scope reduction**: M16 harness absorbed most of M10.4's original value (telemetry, regression testing, performance). Revised from 11-16h to 4-5h: just attribution + image cache + legal gates.
+- **M18 moved to pre-launch**: User decision — store-aware shopping is a key differentiator that should ship with v1.
+- **Recipe image linking, not downloading**: Store URL reference, not the image itself. Legal (fair use), storage (CloudKit limits), simplicity (AsyncImage), freshness (auto-updates). Disk cache with 30-day expiry for offline use.
 
 ### Learning
 
-- The tokenizer's punctuation splitting means "1.5" becomes three tokens ["1", ".", "5"] — quantity matching must handle this by tokenizing candidates through the same pipeline.
-- AI canonicalization is pervasive: singular names, normalized units ("tbsp" for "tablespoons"), stripped descriptors. Every field needs fuzzy matching, not just names.
+- Oversampling ratio matters more than expected when supplementing a large dataset with a small one. The dominant distribution needs to stay dominant.
+- The tokenizer's punctuation splitting means "1.5" → ["1", ".", "5"]. Every numeric matching path must tokenize candidates through the same pipeline.
+- AI canonicalization is pervasive: singular names, normalized units, stripped descriptors. Every alignment field needs fuzzy matching.
 
 ### AI Tooling Observations
 
-- Parallel research agents at session start (one for the training pipeline, one for the harness format) compressed 15+ minutes of sequential file reading into one round trip. This gave me complete context for both sides of the bridge before writing any code.
-- Three iterative runs of the converter with targeted fixes between each was efficient — the failure examples in the output directly pointed to what needed fixing.
+- Parallel research agents at session start compressed 15+ minutes of file reading into one round trip — gave complete context for both sides of the bridge before writing code.
+- Background training runs while doing PRD/roadmap work was efficient — ~70 min of training produced zero idle time.
+- Iterative converter runs with targeted fixes between each was the right pattern — failure examples in output directly pointed to what needed fixing.
 
 ### What's Next
 
-- **M16.9.2**: Run more harness cycles with AI enabled to accumulate additional data, then merge and quality-review
-- **M16.9.3**: Full retrain combining strangetom (55K) + harness data (1.3K) with oversampling
+- **M16.9.4**: A/B model comparison (v1 vs v2) — or skip straight to deploy
+- **M16.9.5**: Deploy retrained model artifacts to app
+- **M16.9.6**: Port harness parser fixes (regex, preprocessor) to app
+- **M18**: Store-aware shopping (pre-launch)
 
 ---
 

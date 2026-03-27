@@ -1,6 +1,6 @@
 ---
 name: forager-architecture-audit
-description: Check codebase for architectural violations (factory bypass, raw assign, scope compliance, service layer)
+description: Check codebase for architectural violations (factory bypass, raw assign, scope compliance, service layer). TRIGGER when the user discusses creating Core Data objects in production code, adding new entity creation sites, or before PR creation on milestones that touch the service/model layer.
 user_invocable: true
 ---
 

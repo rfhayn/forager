@@ -803,67 +803,79 @@ Deterministic contract for URL handoff between share extension and main app:
 
 ---
 
-### M10.4: Polish & Integration — 11-16h
+### M10.4: Recipe Attribution & Legal Gates — 3-4h (Revised March 27, 2026)
 
-**Objective**: Production hardening: import history, household sharing, telemetry dashboard, performance optimization, legal compliance, and regression testing.
+**Objective**: Persist recipe source attribution (URL + image), add legal compliance for scraped content. Scope reduced from original 11-16h — import history (M10.4.1), household sharing (M10.4.2), telemetry dashboard (M10.4.3), performance optimization (M10.4.4), and regression testing (M10.4.6) are either already done through other milestones or deprioritized.
+
+**What was cut and why:**
+- **M10.4.1 Import history**: Skipped — low user value, adds complexity without clear benefit
+- **M10.4.2 Household sharing**: Already works via factory + scope-aware saves (M9.24)
+- **M10.4.3 Telemetry dashboard**: M16 harness now serves as the quality dashboard
+- **M10.4.4 Performance optimization**: M16 harness already profiled/optimized (0.93→0.97 confidence, NLP 7%→0.5%)
+- **M10.4.6 Regression testing**: M16 harness IS the regression tool (242 URLs, 23 sites)
 
 #### Sub-phases
 
 | # | Sub-phase | Hours | Depends On |
 |---|-----------|-------|------------|
-| M10.4.1 | Import history & queue | 3-4h | M10.1-M10.3 |
-| M10.4.2 | Household import sharing | 2-3h | M10.4.1 |
-| M10.4.3 | Import telemetry dashboard | 2-3h | M10.4.1 |
-| M10.4.4 | Performance optimization | 1-2h | M10.1-M10.3 |
-| M10.4.5 | Legal review gates | 1-2h | — |
-| M10.4.6 | Regression testing | 2-3h | All |
+| M10.4.5a | Recipe image URL persistence (schema v11) | 1-1.5h | — |
+| M10.4.5b | Source attribution UI (link to original + image display) | 1-1.5h | M10.4.5a |
+| M10.4.5c | Legal review gates (scraping disclaimer, attribution) | 1h | — |
 
-#### New Files
+#### M10.4.5a: Recipe Image URL Persistence
 
-**`Services/Import/ImportHistoryService.swift`** (~150 lines)
-- `@MainActor class ImportHistoryService: ObservableObject`
-- Storage: `UserDefaults` JSON array (not Core Data — diagnostic/ephemeral, not user data)
-- `ImportHistoryEntry`: id, timestamp, sourceURL, sourceType, status, recipeTitle, extractionMethod, latencyMs, fieldsCorrected
-- Retention: last 100 imports, auto-pruned
+**Core Data schema change → v11** (requires `/forager-core-data-audit` before implementation):
 
-**`Services/Import/ImportTelemetryService.swift`** (~180 lines)
-- Read-only aggregation layer over `ParsingTelemetryService` import events
-- Computes KPIs: success rate, partial rate, median latency, cancel-after-preview rate, correction rate per field, failure reasons by domain
-- Does NOT store its own data — reads from PTS Documents directory JSON
+Add `imageURL: String?` attribute to Recipe entity. The data is already extracted by `SchemaRecipeMapper` and available in `ImportDraftRecipe.imageURL`, but currently discarded on save.
 
-**`forager/ImportHistoryView.swift`** (~200 lines)
-- List of past imports with status icons, tap for details, swipe to retry/delete
+**Existing state:**
+- `sourceURL: String?` — already on Recipe, already populated on import. No changes needed.
+- `imageURL` — exists in `ImportDraftRecipe` (extracted from schema.org `image` field: URL strings, ImageObject, arrays). NOT persisted.
 
-**`forager/ImportTelemetryDebugView.swift`** (~120 lines)
-- Debug-only view showing import KPIs, accessible from Settings > Debug
+**Changes:**
+| File | Change |
+|------|--------|
+| `forager.xcdatamodeld` | Add `imageURL: String?` to Recipe entity (optional, no default) |
+| `Recipe+CoreDataProperties.swift` | Add `@NSManaged public var imageURL: String?` |
+| `RecipeImportService.swift` | Persist `draft.imageURL.value` on save (~2 lines, both save paths) |
+| `RecipeService.swift` | Add `imageURL` param to `createRecipe()` and `updateRecipe()` |
+| `HouseholdService.swift` | Copy `imageURL` in recipe migration/duplication paths |
 
-#### Modified Files
+**CloudKit**: Append-only schema — adding a new optional String attribute is safe. No destructive migration.
 
-| File | Change | Lines |
-|------|--------|-------|
-| `SettingsView.swift` | "Import History" row, debug telemetry link | +15 |
-| `RecipeImportService.swift` | Integration with ImportHistoryService, household scope | +30 |
+#### M10.4.5b: Source Attribution UI + Image Cache (2-2.5h)
 
-#### Household Integration
+Display the recipe source and image in the recipe detail view:
+- **Source link**: Tappable URL below recipe title showing the domain (e.g. "From allrecipes.com"). Opens in Safari.
+- **Recipe image**: Loaded from `imageURL` at top of recipe detail. Placeholder for nil/failed loads.
 
-Imported recipes are created via `factory.make(Recipe.self, in: scope) { ... }`, which automatically assigns the object to the correct persistent store based on `HouseholdScopeProvider` and `DataScope`. This handles `householdKey` assignment and store placement. CloudKit dual-store architecture handles sync automatically. **No special import sharing logic needed.**
+**`RecipeImageCache`** (~80-100 lines):
+- Disk cache in `Caches/` directory (auto-purged by iOS under storage pressure)
+- Cache key: SHA-256 hash of URL string → JPEG file on disk
+- 30-day expiry (check file modification date on read)
+- `func image(for url: URL) async -> UIImage?` — returns cached or fetches + caches
+- Memory layer: `NSCache` for in-session deduplication (avoids redundant disk reads)
 
-**Important**: `RecipeService.importRecipe()` must use `ManagedObjectFactory` (not raw `Recipe(context:)`) to ensure scope-safe creation — see `Services/Persistence/ManagedObjectFactory.swift`.
+**`CachedRecipeImage`** SwiftUI view (~30 lines):
+- Wraps `RecipeImageCache` with `.task` modifier
+- States: loading (placeholder), loaded (image), failed (icon fallback)
+- Used in recipe detail and recipe card views
 
-#### Test Files
+#### M10.4.5c: Legal Review Gates
 
-| File | Tests | Coverage |
-|------|-------|----------|
-| `ImportHistoryServiceTests.swift` | ~8 | Log/retrieve/retention/retry/JSON serialization |
-| **Total M10.4** | **~8** | |
+- Attribution text on imported recipes: "Recipe from [domain]" with link
+- Settings disclaimer: "Forager imports recipes from public websites for personal use"
+- No full recipe text scraping — only structured data (JSON-LD schema.org)
+- Review App Store guidelines for recipe aggregation apps
 
 #### Acceptance Criteria
 
-- Import history tracks 100% of imports
-- All 282 existing tests pass (zero regressions)
-- All ~119 new M10 tests pass
-- Performance within CLAUDE.md targets
-- 28-site regression matrix meets M10.1 extraction rate targets
+- [ ] `imageURL` persisted on Recipe entity (schema v11)
+- [ ] Imported recipes show source link and image in detail view
+- [ ] `sourceURL` clickable, opens Safari
+- [ ] Legal attribution text visible on imported recipes
+- [ ] App builds with 0 errors, existing tests pass
+- [ ] CloudKit schema compatible (append-only)
 
 ---
 

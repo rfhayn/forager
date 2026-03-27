@@ -4,7 +4,7 @@
 **Status**: **M16.9 ACTIVE** | **M16 COMPLETE**
 **Total Progress**: ~320 hours
 **Current Branch**: `feature/M16.9-ml-model-retraining`
-**Launch Path**: M9.28 -> M7.7 | **Active**: M16.9 (ML retraining)
+**Launch Path**: M18 -> M10.4 -> M9.28 -> M7.7 | **Active**: M16.9 (ML retraining)
 
 ---
 
@@ -20,6 +20,8 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
+| **M18** | Store-aware shopping (preferred store, grouped lists) | 12-18h | PLANNED |
+| **M10.4** | Recipe attribution, image cache, legal gates | 4-5h | PLANNED |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
@@ -35,11 +37,12 @@ Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training 
 
 | Sub | Description | Status |
 |-----|-------------|--------|
-| M16.9.1 | Harness data converter (field→token alignment) | READY |
-| M16.9.2 | Data accumulation + quality review | READY |
+| M16.9.1 | Harness data converter (field→token alignment) | COMPLETE |
+| M16.9.2 | Data accumulation + quality review | COMPLETE |
 | M16.9.3 | Full retrain (combined dataset + vocab rebuild) | READY |
 | M16.9.4 | A/B model comparison + regression check | READY |
 | M16.9.5 | Deploy retrained model to app + validate | READY |
+| M16.9.6 | Port parser fixes to app + validate | READY |
 
 ---
 
@@ -173,10 +176,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**M9.24**: Merge branch + device test member import store routing (0.5h), then **M9.15.3**: Device test returning user detection (1h).
+After M16.9 completes: **M18** Store-Aware Shopping (12-18h, 2 phases). Store entity + preferredStore on IngredientTemplate, grocery list grouped by store with color indicators. PRD: `docs/prds/active/m18-store-aware-shopping.md`. Origin: beta tester feedback (Joe). Requires Core Data schema change. Then M10.4 → M9.28 → M7.7.
 
 ---
 
 **Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
-**Next Action**: M9.28 (strip diagnostic logging) → M7.7 (App Store submission)
+**Next Action**: M18 (store-aware shopping) → M10.4 → M9.28 → M7.7 (App Store submission)
 **Confidence**: GREEN
