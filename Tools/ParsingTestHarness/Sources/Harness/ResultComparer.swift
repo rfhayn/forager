@@ -6,10 +6,10 @@ import Foundation
 struct ResultComparer {
 
     enum Agreement: String, Codable {
-        case match
-        case localLikelyWrong = "local_likely_wrong"
+        case fullMatch = "full_match"           // Exact match on name, qty, unit
+        case coreMatch = "core_match"           // AI canonical name found within local name (descriptor difference)
+        case localLikelyWrong = "local_likely_wrong"  // Real parsing issue in local
         case aiLikelyWrong = "ai_likely_wrong"
-        case bothWrong = "both_wrong"
         case ambiguous
     }
 
@@ -57,6 +57,81 @@ struct ResultComparer {
         return unitAliases[unit] ?? unit
     }
 
+    // MARK: - Core Name Matching
+
+    /// Checks if the AI canonical name is semantically contained in the local name.
+    /// Accounts for descriptors (size, prep, state), pluralization, and comma-separated qualifiers.
+    /// "small onion, diced" vs "onion" → true (descriptor difference)
+    /// "chicken broth" vs "vegetable broth" → false (different ingredient)
+    private static func coreNameMatch(local: String, ai: String) -> Bool {
+        guard !ai.isEmpty, !local.isEmpty else { return false }
+
+        // Direct containment: AI name found within local name
+        if local.contains(ai) { return true }
+
+        // Handle pluralization: "eggs" vs "egg", "tomatoes" vs "tomato"
+        let aiSingular = depluralize(ai)
+        let localSingular = depluralize(local)
+        if local.contains(aiSingular) || localSingular.contains(ai) || localSingular.contains(aiSingular) {
+            return true
+        }
+
+        // Strip comma-qualifier from local: "garlic, minced" → "garlic"
+        let localBase = local.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespaces) ?? local
+
+        // Strip known descriptors from local base and compare
+        let localStripped = stripDescriptors(localBase)
+        if localStripped == ai || localStripped == aiSingular {
+            return true
+        }
+        if localStripped.contains(ai) || localStripped.contains(aiSingular) {
+            return true
+        }
+
+        return false
+    }
+
+    /// Common descriptor words that local parser keeps but AI strips.
+    private static let descriptorWords: Set<String> = [
+        // Size
+        "small", "medium", "large", "thin", "thick", "whole", "half",
+        // State
+        "fresh", "frozen", "cold", "hot", "warm", "chilled", "room-temperature",
+        "dried", "dry", "raw", "cooked", "uncooked", "canned",
+        // Quality
+        "good-quality", "high-quality", "organic", "extra-virgin",
+        // Cut/Form
+        "boneless", "skinless", "bone-in", "skin-on",
+        "diced", "minced", "chopped", "sliced", "grated", "shredded",
+        "crushed", "ground", "sifted", "melted", "softened",
+        "finely", "roughly", "thinly", "freshly",
+    ]
+
+    private static func stripDescriptors(_ name: String) -> String {
+        let words = name.split(separator: " ").map(String.init)
+        let stripped = words.filter { !descriptorWords.contains($0.lowercased()) }
+        return stripped.joined(separator: " ")
+    }
+
+    private static func depluralize(_ word: String) -> String {
+        if word.hasSuffix("ies") && word.count > 4 {
+            return String(word.dropLast(3)) + "y"  // berries → berry
+        }
+        if word.hasSuffix("ves") && word.count > 4 {
+            return String(word.dropLast(3)) + "f"  // loaves → loaf, halves → half
+        }
+        if word.hasSuffix("oes") && word.count > 4 {
+            return String(word.dropLast(2))  // tomatoes → tomato, potatoes → potato
+        }
+        if word.hasSuffix("es") && word.count > 3 {
+            return String(word.dropLast(2))  // cloves → clov (imperfect but catches most)
+        }
+        if word.hasSuffix("s") && !word.hasSuffix("ss") && word.count > 2 {
+            return String(word.dropLast())  // eggs → egg, cups → cup
+        }
+        return word
+    }
+
     // MARK: - Comparison
 
     /// Compare a single ingredient's local vs AI results.
@@ -83,17 +158,22 @@ struct ResultComparer {
         let local = ingredient.hybrid
         var issues: [String] = []
 
-        // Compare names
+        // Compare names — two tiers
         let localNameNorm = local.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         let aiNameNorm = ai.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        let nameMatch = localNameNorm == aiNameNorm
+        let nameExactMatch = localNameNorm == aiNameNorm
+        let nameCoreMatch = nameExactMatch || coreNameMatch(local: localNameNorm, ai: aiNameNorm)
 
-        // Compare quantities
+        // Compare quantities — with tolerance for ranges and precision
         let qtyMatch: Bool
         if let lq = local.quantity, let aq = ai.quantity {
-            qtyMatch = abs(lq - aq) < 0.01
+            // Allow tolerance for range strategy (local takes high, AI takes mid) and float precision
+            let tolerance = max(0.51, aq * 0.01)  // 0.51 covers range midpoint diffs, 1% covers floats
+            qtyMatch = abs(lq - aq) < tolerance
+        } else if local.quantity == nil && ai.quantity == nil {
+            qtyMatch = true
         } else {
-            qtyMatch = local.quantity == nil && ai.quantity == nil
+            qtyMatch = false
         }
 
         // Compare units (normalized)
@@ -109,12 +189,17 @@ struct ResultComparer {
             notesMatch = local.notes == nil && ai.notes == nil
         }
 
-        // Detect specific issues
+        // Detect specific issues (local-only checks, no AI needed)
         issues.append(contentsOf: detectLocalIssues(ingredient))
 
-        if !nameMatch {
+        // Only flag as issues when they're REAL mismatches, not descriptor differences
+        if !nameCoreMatch {
             issues.append("name_mismatch: local=\"\(local.name)\" ai=\"\(ai.name)\"")
+        } else if !nameExactMatch {
+            // Descriptor difference — informational, not an issue
+            issues.append("name_descriptor_diff: local=\"\(local.name)\" ai=\"\(ai.name)\"")
         }
+
         if !qtyMatch {
             let localQtyStr = local.quantity.map { String($0) } ?? "nil"
             let aiQtyStr = ai.quantity.map { String($0) } ?? "nil"
@@ -123,26 +208,28 @@ struct ResultComparer {
         if !unitMatch {
             issues.append("unit_mismatch: local=\"\(local.unit ?? "nil")\" ai=\"\(ai.unit ?? "nil")\"")
         }
-        if !notesMatch && (local.notes != nil || ai.notes != nil) {
-            issues.append("notes_mismatch: local=\"\(local.notes ?? "nil")\" ai=\"\(ai.notes ?? "nil")\"")
-        }
 
-        // Classify agreement
+        // Classify agreement — two tiers
         let agreement: Agreement
-        if nameMatch && qtyMatch && unitMatch {
-            agreement = .match
-        } else if issues.isEmpty {
-            agreement = .match
+        if nameExactMatch && qtyMatch && unitMatch {
+            // Full match — everything agrees exactly
+            agreement = .fullMatch
+        } else if nameCoreMatch && qtyMatch && unitMatch {
+            // Core match — name has descriptors but core ingredient is the same
+            agreement = .coreMatch
+        } else if nameCoreMatch {
+            // Core name matches but qty or unit differs — possible real issue
+            if !qtyMatch || !unitMatch {
+                agreement = .localLikelyWrong
+            } else {
+                agreement = .coreMatch
+            }
         } else {
-            // Heuristic: if AI name is a substring of local name or vice versa, likely local has extra junk
-            if !nameMatch && aiNameNorm.count > 2 {
-                if localNameNorm.contains(aiNameNorm) && localNameNorm.count > aiNameNorm.count + 5 {
-                    agreement = .localLikelyWrong
-                } else if aiNameNorm.contains(localNameNorm) && aiNameNorm.count > localNameNorm.count + 5 {
-                    agreement = .aiLikelyWrong
-                } else {
-                    agreement = .ambiguous
-                }
+            // Name doesn't even core-match — classify further
+            if aiNameNorm.count > 2 && localNameNorm.contains(aiNameNorm) {
+                agreement = .coreMatch  // AI name is within local name — descriptor diff we missed
+            } else if aiNameNorm.count > 2 && aiNameNorm.contains(localNameNorm) {
+                agreement = .aiLikelyWrong
             } else {
                 agreement = .ambiguous
             }

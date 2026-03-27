@@ -25,7 +25,9 @@ struct ResultStore {
         let avgLocalConfidence: Double
         let parserDistribution: [String: Int]
         let totalIngredients: Int
-        let matchCount: Int
+        let fullMatchCount: Int      // Exact name + qty + unit match
+        let coreMatchCount: Int      // AI canonical name within local name (descriptor diff)
+        let matchCount: Int          // fullMatch + coreMatch combined
         let localLikelyWrongCount: Int
         let aiLikelyWrongCount: Int
         let ambiguousCount: Int

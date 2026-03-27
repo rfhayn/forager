@@ -26,8 +26,10 @@ struct ReportGenerator {
             distribution[ing.hybrid.parserUsed, default: 0] += 1
         }
 
-        // Comparison counts
-        let matchCount = comparisons.filter { $0.agreement == .match }.count
+        // Comparison counts — two tiers
+        let fullMatchCount = comparisons.filter { $0.agreement == .fullMatch }.count
+        let coreMatchCount = comparisons.filter { $0.agreement == .coreMatch }.count
+        let matchCount = fullMatchCount + coreMatchCount  // combined for backward compat
         let localWrong = comparisons.filter { $0.agreement == .localLikelyWrong }.count
         let aiWrong = comparisons.filter { $0.agreement == .aiLikelyWrong }.count
         let ambiguous = comparisons.filter { $0.agreement == .ambiguous }.count
@@ -40,6 +42,8 @@ struct ReportGenerator {
             avgLocalConfidence: avgConfidence,
             parserDistribution: distribution,
             totalIngredients: totalIngredients,
+            fullMatchCount: fullMatchCount,
+            coreMatchCount: coreMatchCount,
             matchCount: matchCount,
             localLikelyWrongCount: localWrong,
             aiLikelyWrongCount: aiWrong,
@@ -77,18 +81,24 @@ struct ReportGenerator {
 
         if summary.aiEnabled {
             let total = summary.totalIngredients
-            let compared = summary.matchCount + summary.localLikelyWrongCount + summary.aiLikelyWrongCount + summary.ambiguousCount
+            let compared = summary.fullMatchCount + summary.coreMatchCount + summary.localLikelyWrongCount + summary.aiLikelyWrongCount + summary.ambiguousCount
             printErr("AI PARSING:")
             printErr("  Compared:        \(compared)/\(total)")
             printErr("")
-            printErr("COMPARISON:")
+            printErr("COMPARISON (two-tier):")
             if compared > 0 {
-                let pct = String(format: "%.1f", Double(summary.matchCount) / Double(compared) * 100)
-                printErr("  Agreement:       \(summary.matchCount)/\(compared) (\(pct)%)")
+                let corePct = String(format: "%.1f", Double(summary.fullMatchCount + summary.coreMatchCount) / Double(compared) * 100)
+                let fullPct = String(format: "%.1f", Double(summary.fullMatchCount) / Double(compared) * 100)
+                printErr("  Core agreement:  \(summary.fullMatchCount + summary.coreMatchCount)/\(compared) (\(corePct)%)  ← AI name within local name")
+                printErr("  Full agreement:  \(summary.fullMatchCount)/\(compared) (\(fullPct)%)  ← exact match")
+                printErr("  Descriptor diffs:  \(summary.coreMatchCount)  (expected — local keeps qualifiers)")
             }
-            printErr("  Local likely wrong: \(summary.localLikelyWrongCount)")
-            printErr("  AI likely wrong:    \(summary.aiLikelyWrongCount)")
-            printErr("  Ambiguous:          \(summary.ambiguousCount)")
+            printErr("  Real issues:       \(summary.localLikelyWrongCount + summary.ambiguousCount)")
+            printErr("    Local wrong:     \(summary.localLikelyWrongCount)")
+            printErr("    Ambiguous:       \(summary.ambiguousCount)")
+            if summary.aiLikelyWrongCount > 0 {
+                printErr("    AI wrong:        \(summary.aiLikelyWrongCount)")
+            }
         } else {
             printErr("AI PARSING:        Skipped (no ANTHROPIC_API_KEY)")
         }
