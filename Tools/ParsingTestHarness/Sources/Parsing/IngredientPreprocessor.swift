@@ -39,6 +39,9 @@ enum IngredientPreprocessor {
         // Step 5d: Strip leading "about" / "optional" qualifiers before quantities
         result = stripLeadingQualifiers(result)
 
+        // Step 5h: Normalize leading decimal without zero ("".5 ounces" → "0.5 ounces")
+        result = normalizeLeadingDecimal(result)
+
         // Step 5g: Strip leading dual-unit metric prefix
         // "500g / 1lb peeled prawns" → "1lb peeled prawns"
         result = stripLeadingDualUnitMetric(result)
@@ -181,6 +184,18 @@ enum IngredientPreprocessor {
             with: "",
             options: [.regularExpression, .caseInsensitive]
         )
+        // Metric ranges inside parens: "(198g to 255g)", "(100g - 200g)"
+        result = result.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s+(?:to|-|–)\s+\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        // Metric with semicolon equivalents: "(15g; about 1 1/2 tablespoons)", "(10g; about 2 teaspoons)"
+        result = result.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*;[^)]*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
         // Also strip parenthetical imperial when primary unit is already present
         // "(16 oz)", "(6 ounces)", "(281g)" — only when they appear mid-string or at end
         result = result.replacingOccurrences(
@@ -266,6 +281,16 @@ enum IngredientPreprocessor {
             of: #"(\d+)\s+and\s+(\d+/\d+)"#,
             with: "$1 $2",
             options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
+    /// Step 5h: Normalize leading decimal without zero (".5 ounces" → "0.5 ounces")
+    /// Serious Eats uses ".5 ounces" and ".35 ounces" which regex patterns can't match
+    private static func normalizeLeadingDecimal(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"^\.(\d)"#,
+            with: "0.$1",
+            options: .regularExpression
         )
     }
 

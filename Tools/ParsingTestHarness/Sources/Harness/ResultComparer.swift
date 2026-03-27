@@ -33,6 +33,16 @@ struct ResultComparer {
         let examples: [String]
     }
 
+    // MARK: - Count/Container Units (AI often drops these)
+
+    /// Units that AI frequently omits because it treats the ingredient as a direct count.
+    /// When local has one of these and AI has nil, it's a design difference, not an error.
+    private static let countContainerUnits: Set<String> = [
+        "clove", "bunch", "head", "slice", "sprig", "stalk",
+        "can", "jar", "bottle", "box", "bag", "package", "container", "loaf",
+        "piece", "stick", "handful", "pinch", "dash"
+    ]
+
     // MARK: - Unit Normalization
 
     private static let unitAliases: [String: String] = [
@@ -45,7 +55,8 @@ struct ResultComparer {
         "kilogram": "kg", "kilograms": "kg", "kg": "kg",
         "liter": "l", "liters": "l", "l": "l",
         "milliliter": "ml", "milliliters": "ml", "ml": "ml",
-        "pinch": "pinch", "dash": "dash", "clove": "clove", "cloves": "clove",
+        "pinch": "pinch", "pinches": "pinch", "dash": "dash", "dashes": "dash",
+        "clove": "clove", "cloves": "clove",
         "can": "can", "cans": "can", "package": "package", "packages": "package",
         "slice": "slice", "slices": "slice", "piece": "piece", "pieces": "piece",
         "bunch": "bunch", "head": "head", "stalk": "stalk", "stalks": "stalk",
@@ -116,6 +127,29 @@ struct ResultComparer {
             return true
         }
 
+        // Strip descriptors from both sides and re-compare
+        let localStrippedFull = stripDescriptors(local)
+        let aiStrippedFull = stripDescriptors(ai)
+        if !localStrippedFull.isEmpty && !aiStrippedFull.isEmpty {
+            let localStrippedDepluralized = depluralize(localStrippedFull)
+            let aiStrippedDepluralized = depluralize(aiStrippedFull)
+            if localStrippedFull == aiStrippedFull ||
+               localStrippedDepluralized == aiStrippedDepluralized ||
+               localStrippedFull.contains(aiStrippedFull) ||
+               aiStrippedFull.contains(localStrippedFull) {
+                return true
+            }
+        }
+
+        // Normalize commas as "or" for alternative lists:
+        // "crema, sour cream or fraiche" ↔ "crema or sour cream or fraiche"
+        let localCommaToOr = local.replacingOccurrences(of: ", ", with: " or ")
+        let aiCommaToOr = ai.replacingOccurrences(of: ", ", with: " or ")
+        if localCommaToOr == aiCommaToOr ||
+           depluralize(localCommaToOr) == depluralize(aiCommaToOr) {
+            return true
+        }
+
         return false
     }
 
@@ -147,7 +181,7 @@ struct ResultComparer {
         "fresh", "frozen", "cold", "hot", "warm", "chilled", "room-temperature",
         "dried", "dry", "raw", "cooked", "uncooked", "canned",
         // Quality
-        "good-quality", "high-quality", "organic", "extra-virgin",
+        "good-quality", "high-quality", "organic", "extra-virgin", "good",
         // Cut/Form
         "boneless", "skinless", "bone-in", "skin-on",
         "diced", "minced", "chopped", "sliced", "grated", "shredded",
@@ -237,6 +271,18 @@ struct ResultComparer {
         let aiUnitNorm = normalizeUnit(ai.unit)
         let unitMatch = localUnitNorm == aiUnitNorm
 
+        // Check if unit difference is just AI dropping a count/container unit (design difference)
+        let unitIsDesignDiff: Bool
+        if !unitMatch, let localU = localUnitNorm, aiUnitNorm == nil,
+           countContainerUnits.contains(localU) {
+            unitIsDesignDiff = true
+        } else if !unitMatch, localUnitNorm == nil, let aiU = aiUnitNorm,
+                  countContainerUnits.contains(aiU) {
+            unitIsDesignDiff = true
+        } else {
+            unitIsDesignDiff = false
+        }
+
         // Compare notes (fuzzy)
         let notesMatch: Bool
         if let ln = local.notes?.lowercased(), let an = ai.notes?.lowercased() {
@@ -262,20 +308,27 @@ struct ResultComparer {
             issues.append("qty_mismatch: local=\(localQtyStr) ai=\(aiQtyStr)")
         }
         if !unitMatch {
-            issues.append("unit_mismatch: local=\"\(local.unit ?? "nil")\" ai=\"\(ai.unit ?? "nil")\"")
+            if unitIsDesignDiff {
+                issues.append("unit_design_diff: local=\"\(local.unit ?? "nil")\" ai=\"\(ai.unit ?? "nil")\"")
+            } else {
+                issues.append("unit_mismatch: local=\"\(local.unit ?? "nil")\" ai=\"\(ai.unit ?? "nil")\"")
+            }
         }
 
         // Classify agreement — two tiers
+        // Treat unit design diffs (count/container unit vs nil) as effectively matching
+        let effectiveUnitMatch = unitMatch || unitIsDesignDiff
         let agreement: Agreement
         if nameExactMatch && qtyMatch && unitMatch {
             // Full match — everything agrees exactly
             agreement = .fullMatch
-        } else if nameCoreMatch && qtyMatch && unitMatch {
+        } else if nameCoreMatch && qtyMatch && effectiveUnitMatch {
             // Core match — name has descriptors but core ingredient is the same
+            // (includes cases where AI dropped a count/container unit)
             agreement = .coreMatch
         } else if nameCoreMatch {
             // Core name matches but qty or unit differs — possible real issue
-            if !qtyMatch || !unitMatch {
+            if !qtyMatch || !effectiveUnitMatch {
                 agreement = .localLikelyWrong
             } else {
                 agreement = .coreMatch
@@ -318,9 +371,10 @@ struct ResultComparer {
         }
 
         // Word merge (no space between words that should be separate)
-        // Exclude hyphenated words (e.g. "Italian-American") — those are valid compound words
+        // Exclude hyphenated words (e.g. "Italian-American") and slash alternatives
+        // (e.g. "Coriander/cilantro", "thickened/heavy,") — those are valid compound words
         let nameWords = local.name.split(separator: " ")
-        for word in nameWords where word.count > 15 && !word.contains("-") {
+        for word in nameWords where word.count > 15 && !word.contains("-") && !word.contains("/") {
             issues.append("possible_word_merge: \"\(word)\"")
         }
 
