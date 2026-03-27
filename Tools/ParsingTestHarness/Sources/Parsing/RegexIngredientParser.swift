@@ -23,7 +23,8 @@ class RegexIngredientParser: IngredientParser {
     /// "2 heaping tablespoons" → strip "heaping" so parser sees "2 tablespoons"
     private static let measurementModifiers: Set<String> = [
         "heaping", "rounded", "scant", "generous", "level",
-        "packed", "lightly", "loosely", "firmly", "overflowing"
+        "packed", "lightly", "loosely", "firmly", "overflowing",
+        "thin", "thick", "large", "small", "medium", "whole"
     ]
 
     // MARK: - M9.35 P3B: Comma-Qualifier Prep Detection
@@ -854,7 +855,10 @@ class RegexIngredientParser: IngredientParser {
         let count: Set<String> = ["piece", "pieces", "pc", "clove", "cloves", "slice", "slices",
                      "can", "cans", "package", "packages", "pkg", "bunch", "bunches",
                      "head", "heads", "stick", "sticks", "bag", "bags", "bottle", "bottles",
-                     "box", "boxes", "jar", "jars", "sprig", "sprigs"]
+                     "box", "boxes", "jar", "jars", "sprig", "sprigs",
+                     "container", "containers", "loaf", "loaves",
+                     "serving", "servings", "handful",
+                     "inch", "inches"]
         return volume.union(weight).union(count)
     }()
 
@@ -947,7 +951,12 @@ class RegexIngredientParser: IngredientParser {
             "bottle": "bottle", "bottles": "bottle",
             "box": "box", "boxes": "box",
             "jar": "jar", "jars": "jar",
-            "sprig": "sprig", "sprigs": "sprig"
+            "sprig": "sprig", "sprigs": "sprig",
+            "container": "container", "containers": "container",
+            "loaf": "loaf", "loaves": "loaf",
+            "serving": "serving", "servings": "serving",
+            "handful": "handful",
+            "inch": "inch", "inches": "inch"
         ]
 
         if let standard = volumeMap[unit] { return standard }
