@@ -37,6 +37,8 @@ MODIFIER_WORDS = {
     "thin", "thick", "lean", "boneless", "skinless", "skin-on", "bone-in",
     "organic", "unsalted", "salted", "sweetened", "unsweetened",
     "plain", "smoked", "roasted", "toasted",
+    "uncooked", "cooked",
+    "extra", "virgin", "extra-virgin",
 }
 
 # Notes tokens that map to COMMENT (purpose/optional) rather than PREP (action)
@@ -74,12 +76,20 @@ UNIT_SYNONYMS = {
     "piece": {"piece", "pieces"},
     "head": {"head", "heads"},
     "stalk": {"stalk", "stalks"},
+    "stem": {"stem", "stems"},
     "pinch": {"pinch", "pinches"},
     "dash": {"dash", "dashes"},
     "handful": {"handful", "handfuls"},
     "box": {"box", "boxes"},
     "bottle": {"bottle", "bottles"},
     "drop": {"drop", "drops"},
+    "rib": {"rib", "ribs"},
+    "ear": {"ear", "ears"},
+    "link": {"link", "links"},
+    "strip": {"strip", "strips"},
+    "sheet": {"sheet", "sheets"},
+    "rack": {"rack", "racks"},
+    "scoop": {"scoop", "scoops"},
 }
 
 # Build reverse lookup: raw token -> normalized form
@@ -251,6 +261,16 @@ def find_qty_span(qty: float, source_tokens: list[str], claimed: list[bool]) -> 
                 return range(i, i + 1)
         except ValueError:
             continue
+
+    # Range quantities: "2-3" as a single token — match if qty falls in range
+    for i, tok in enumerate(source_tokens):
+        if claimed[i]:
+            continue
+        m = re.match(r'^(\d+)-(\d+)$', tok)
+        if m:
+            lo, hi = float(m.group(1)), float(m.group(2))
+            if lo <= qty <= hi or abs(qty - lo) < 0.01:
+                return range(i, i + 1)
 
     return None
 
@@ -452,7 +472,36 @@ def align_entry(entry: dict) -> dict | None:
                     labels[i] = "NAME"
                 claimed[i] = True
 
-    # 4. Tag NOTES tokens (PREP vs COMMENT) — skip already-claimed tokens
+    # 4. Detect units before notes — prevents notes from claiming unit tokens
+    # 4a. Combined number+unit tokens (e.g. "120g", "15-ounce", "15oz")
+    for i, tok in enumerate(tokens):
+        if claimed[i]:
+            continue
+        # Pattern: digits followed by unit abbreviation (e.g. "120g", "15oz", "500ml")
+        m = re.match(r'^(\d+(?:\.\d+)?)(g|kg|ml|l|oz|lb)$', tok)
+        if m:
+            labels[i] = "UNIT"
+            claimed[i] = True
+            continue
+        # Combined with hyphen: "15-ounce", "6-inch"
+        m = re.match(r'^(\d+)-(\w+)$', tok)
+        if m:
+            unit_part = m.group(2)
+            if unit_part in _UNIT_LOOKUP or unit_part in {"ounce", "inch", "pound", "oz", "lb"}:
+                labels[i] = "UNIT"
+                claimed[i] = True
+                continue
+
+    # 4b. Unclaimed container units: when AI drops the unit (e.g. "cloves", "cans", "stems")
+    # tag them as UNIT if they appear after QTY or another UNIT (e.g. "4 oz can")
+    for i, tok in enumerate(tokens):
+        if claimed[i]:
+            continue
+        if tok in _UNIT_LOOKUP and i > 0 and labels[i - 1] in ("QTY", "UNIT"):
+            labels[i] = "UNIT"
+            claimed[i] = True
+
+    # 5. Tag NOTES tokens (PREP vs COMMENT) — skip already-claimed tokens
     if ai_notes:
         span = find_notes_tokens(ai_notes, tokens, claimed)
         if span:
@@ -465,16 +514,7 @@ def align_entry(entry: dict) -> dict | None:
                     labels[i] = classify_note_token(tokens[i], tokens, i)
                 claimed[i] = True
 
-    # 5. Unclaimed container units: when AI drops the unit (e.g. "cloves", "cans")
-    # tag them as UNIT if they appear after QTY or another UNIT (e.g. "4 oz can")
-    for i, tok in enumerate(tokens):
-        if claimed[i]:
-            continue
-        if tok in _UNIT_LOOKUP and i > 0 and labels[i - 1] in ("QTY", "UNIT"):
-            labels[i] = "UNIT"
-            claimed[i] = True
-
-    # 6. Unclaimed MODIFIER words before the first NAME token
+    # 6. Reclassify: MODIFIER words labeled PREP that appear before first NAME → MODIFIER
     first_name_idx = None
     for i, lbl in enumerate(labels):
         if lbl == "NAME":
@@ -483,9 +523,10 @@ def align_entry(entry: dict) -> dict | None:
 
     if first_name_idx is not None:
         for i in range(first_name_idx):
-            if not claimed[i] and tokens[i] in MODIFIER_WORDS:
-                labels[i] = "MODIFIER"
-                claimed[i] = True
+            if tokens[i] in MODIFIER_WORDS:
+                if labels[i] in ("OTHER", "PREP"):
+                    labels[i] = "MODIFIER"
+                    claimed[i] = True
 
     # 7. Remaining unclaimed punctuation -> OTHER (already defaulted)
 
