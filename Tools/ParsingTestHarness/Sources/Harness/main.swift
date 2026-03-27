@@ -38,6 +38,9 @@ await runHarness()
 // MARK: - Main Pipeline
 
 func runHarness() async {
+    // Create run logger
+    let log = RunLogger(resultsDir: resultsDir)
+
     // Step 1: Select URLs
     if !jsonOnly { printErr("📋 Step 1: Selecting recipe URLs...") }
     let discovery = RecipeDiscovery(
@@ -57,16 +60,21 @@ func runHarness() async {
     let newCount = selectedURLs.count - reuseCount
     if !jsonOnly { printErr("  Selected \(selectedURLs.count) URLs (\(reuseCount) reuse, \(newCount) new)") }
 
+    log.logURLSelection(selected: selectedURLs, reuseCount: reuseCount, newCount: newCount)
+
     // Step 2: Fetch & Extract
     if !jsonOnly { printErr("\n🌐 Step 2: Fetching recipes...") }
+    log.step(2, "FETCH & EXTRACT")
     let fetcher = RecipeFetcher()
     let (fetchResults, failures) = await fetcher.fetchAll(
         urls: selectedURLs,
         discovery: discovery,
-        targetCount: count
+        targetCount: count,
+        logger: log
     )
 
     if !jsonOnly { printErr("  Fetched \(fetchResults.count) recipes (\(failures.count) failed)") }
+    log.logFetchSummary(success: fetchResults.count, failed: failures.count, total: count)
 
     guard !fetchResults.isEmpty else {
         printErr("❌ No recipes extracted. Check your seed URLs.")
@@ -75,10 +83,11 @@ func runHarness() async {
 
     // Step 3: Parse locally
     if !jsonOnly { printErr("\n🔬 Step 3: Parsing ingredients (local)...") }
+    log.step(3, "LOCAL PARSING")
     let evaluator = ParsingEvaluator()
     var recipeResults = fetchResults.map { fetch in
         let source = selectedURLs.first(where: { $0.url == fetch.url })?.source.rawValue ?? "new"
-        return evaluator.parseLocal(fetchResult: fetch, source: source)
+        return evaluator.parseLocal(fetchResult: fetch, source: source, logger: log)
     }
 
     let totalIngredients = recipeResults.reduce(0) { $0 + $1.ingredientCount }
@@ -87,12 +96,21 @@ func runHarness() async {
     // Step 4: AI parsing (optional)
     if aiEnabled, let key = apiKey {
         if !jsonOnly { printErr("\n🤖 Step 4: Parsing ingredients (Claude API)...") }
-        await evaluator.addAIParsing(to: &recipeResults, apiKey: key)
+        log.step(4, "AI PARSING (Claude API)")
+        await evaluator.addAIParsing(to: &recipeResults, apiKey: key, logger: log)
+    } else {
+        log.logAISkipped()
     }
 
     // Step 5: Compare & Evaluate
     if !jsonOnly { printErr("\n📊 Step 5: Comparing results...") }
+    log.step(5, "COMPARISON & EVALUATION")
     let comparisons = recipeResults.flatMap(\.ingredients).map { ResultComparer.compare(ingredient: $0) }
+
+    // Log all comparisons with issues
+    for comp in comparisons where !comp.issues.isEmpty {
+        log.logComparison(raw: comp.raw, agreement: comp.agreement, issues: comp.issues)
+    }
 
     // Build summary
     let summary = ReportGenerator.buildSummary(
@@ -132,6 +150,9 @@ func runHarness() async {
             baseline: baseline
         )
     }
+
+    // Log summary
+    log.logSummary(summary: summary, recipeCount: recipeResults.count, failureCount: failures.count)
 
     // Save results
     store.saveRun(runData)

@@ -81,7 +81,8 @@ struct RecipeFetcher {
     func fetchAll(
         urls: [RecipeDiscovery.SelectedURL],
         discovery: RecipeDiscovery,
-        targetCount: Int
+        targetCount: Int,
+        logger: RunLogger? = nil
     ) async -> (results: [FetchResult], failures: [(url: String, reason: String)]) {
         var results: [FetchResult] = []
         var failures: [(url: String, reason: String)] = []
@@ -98,24 +99,31 @@ struct RecipeFetcher {
             }
 
             printErr("  [\(results.count + 1)/\(targetCount)] \(selected.site): \(selected.url.prefix(80))...")
+            logger?.logFetchStart(url: selected.url, index: results.count + 1, total: targetCount)
 
             do {
                 let result = try await fetch(url: selected.url)
                 results.append(result)
                 printErr("    ✓ \(result.ingredients.count) ingredients — \(result.title ?? "untitled")")
+                logger?.logFetchSuccess(url: selected.url, title: result.title, ingredientCount: result.ingredients.count, method: result.extractionMethod, timeMs: result.extractionTimeMs)
             } catch let error as FetchError {
                 failures.append((url: selected.url, reason: error.reason))
                 discovery.markBroken(url: selected.url, reason: error.reason)
                 printErr("    ✗ \(error.reason) — pulling replacement")
 
-                // Pull replacement
+                let replaced: Bool
                 if let replacement = discovery.getReplacement(excluding: usedURLs) {
                     queue.append(replacement)
                     usedURLs.insert(replacement.url)
+                    replaced = true
+                } else {
+                    replaced = false
                 }
+                logger?.logFetchFailure(url: selected.url, reason: error.reason, replaced: replaced)
             } catch {
                 failures.append((url: selected.url, reason: error.localizedDescription))
                 printErr("    ✗ \(error.localizedDescription)")
+                logger?.logFetchFailure(url: selected.url, reason: error.localizedDescription, replaced: false)
             }
         }
 

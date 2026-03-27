@@ -50,8 +50,10 @@ struct ParsingEvaluator {
     private let hybridParser = HybridIngredientParser(mlParser: nil)
 
     /// Parse all ingredients from a fetched recipe using local parsers.
-    func parseLocal(fetchResult: RecipeFetcher.FetchResult, source: String) -> RecipeResult {
+    func parseLocal(fetchResult: RecipeFetcher.FetchResult, source: String, logger: RunLogger? = nil) -> RecipeResult {
         var ingredientResults: [IngredientResult] = []
+
+        logger?.logRecipeParseSummary(title: fetchResult.title, url: fetchResult.url, ingredientCount: fetchResult.ingredients.count)
 
         for raw in fetchResult.ingredients {
             let sanitized = IngredientPreprocessor.sanitize(raw)
@@ -59,6 +61,8 @@ struct ParsingEvaluator {
             let regexResult = regexParser.parse(sanitized)
             let nlpResult = nlpParser.parse(sanitized)
             let hybridResult = hybridParser.parse(sanitized)
+
+            logger?.logIngredientParse(raw: raw, sanitized: sanitized, regex: regexResult, nlp: nlpResult, hybrid: hybridResult)
 
             ingredientResults.append(IngredientResult(
                 raw: raw,
@@ -103,7 +107,7 @@ struct ParsingEvaluator {
     // MARK: - AI Parsing
 
     /// Add AI parse results to existing recipe results. Modifies in place.
-    func addAIParsing(to results: inout [RecipeResult], apiKey: String) async {
+    func addAIParsing(to results: inout [RecipeResult], apiKey: String, logger: RunLogger? = nil) async {
         let parser = ClaudeIngredientParser(apiKey: apiKey)
 
         for i in results.indices {
@@ -111,6 +115,7 @@ struct ParsingEvaluator {
             guard !ingredients.isEmpty else { continue }
 
             printErr("  AI parsing: \(results[i].title ?? results[i].url.prefix(60).description) (\(ingredients.count) ingredients)...")
+            logger?.logRecipeParseSummary(title: results[i].title, url: results[i].url, ingredientCount: ingredients.count)
 
             do {
                 let aiResults = try await parser.parseBatch(ingredients, categories: [])
@@ -125,13 +130,16 @@ struct ParsingEvaluator {
                         notes: ai.notes,
                         provider: "claude"
                     )
+                    logger?.logAIParseResult(index: j + 1, raw: ingredients[j], aiName: ai.name, aiQty: ai.quantity, aiUnit: ai.unit, aiNotes: ai.notes)
                 }
 
                 if aiResults.count != ingredients.count {
                     printErr("    ⚠️  AI returned \(aiResults.count) results for \(ingredients.count) ingredients")
+                    logger?.write("    ⚠️  AI count mismatch: returned \(aiResults.count) for \(ingredients.count) inputs")
                 }
             } catch {
                 printErr("    ✗ AI parsing failed: \(error)")
+                logger?.write("    ✗ AI parsing failed: \(error)")
             }
 
             // Brief pause between API calls
