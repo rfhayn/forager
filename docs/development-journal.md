@@ -6,6 +6,48 @@
 
 ---
 
+## Session 94 — March 27, 2026
+**Milestone**: M16.9.1 — Harness Data Converter
+**Focus**: Building the bridge between harness field-level AI labels and BiLSTM-CRF token-level training format
+**Branch**: `feature/M16.9-ml-model-retraining`
+
+### What Happened
+
+Built `convert_harness_data.py` — the critical data conversion script that transforms the harness's field-level AI labels (name/qty/unit/notes per ingredient) into the token-level label sequences (QTY/UNIT/NAME/MODIFIER/PREP/COMMENT/OTHER per token) that `train_model.py` expects.
+
+The initial version converted 1,059 of 1,440 entries (73.5%). Three rounds of alignment fixes brought it to 1,319 unique samples (98.8%):
+
+1. **Fuzzy plural matching**: AI canonicalizes names ("egg" vs raw "eggs"). Added singular/plural matching including irregular plurals (leaf→leaves, loaf→loaves).
+2. **Skip-claimed indices in notes tagging**: Notes spans (range-based) were overwriting already-claimed NAME tokens. Fix: check `claimed[i]` before labeling.
+3. **Container unit recovery**: When AI drops units like "cloves" or "cans", detect unclaimed unit tokens adjacent to QTY/UNIT and label them.
+
+The remaining 17 failures (1.2%) are genuinely ambiguous — slash-separated alternatives ("prawns/shrimp"), asterisk annotations ("carrot*"), complex diacritics. Correct to exclude these from training data.
+
+### Key Decisions
+
+- **Used Python (not Swift) for the converter**: Even though the harness has a Swift BIO exporter, the training pipeline is all Python. Keeping the converter in Python means it can import the tokenizer directly and validate against `prepare_dataset.py`'s `validate_samples()`.
+- **Flat 7-label format, not BIO tags**: The Swift exporter uses B-/I- prefixed tags (9 tags), but `train_model.py` expects flat labels (7 tags). The converter outputs the exact format the training pipeline consumes.
+- **MODIFIER vs NAME disambiguation via word list**: Since the AI merges modifiers into the name field, we recover the distinction using a curated modifier word list (fresh, frozen, large, small, etc.) applied to pre-name tokens.
+- **PREP vs COMMENT classification for notes**: Default to PREP (most common), with a COMMENT pattern set for purpose/optional phrases ("to taste", "for garnish", "optional").
+- **Stats logged to conversion_stats.json**: Per user request, all conversion outcomes (counts, distributions, failures) are persisted as JSON for tracking across runs.
+
+### Learning
+
+- The tokenizer's punctuation splitting means "1.5" becomes three tokens ["1", ".", "5"] — quantity matching must handle this by tokenizing candidates through the same pipeline.
+- AI canonicalization is pervasive: singular names, normalized units ("tbsp" for "tablespoons"), stripped descriptors. Every field needs fuzzy matching, not just names.
+
+### AI Tooling Observations
+
+- Parallel research agents at session start (one for the training pipeline, one for the harness format) compressed 15+ minutes of sequential file reading into one round trip. This gave me complete context for both sides of the bridge before writing any code.
+- Three iterative runs of the converter with targeted fixes between each was efficient — the failure examples in the output directly pointed to what needed fixing.
+
+### What's Next
+
+- **M16.9.2**: Run more harness cycles with AI enabled to accumulate additional data, then merge and quality-review
+- **M16.9.3**: Full retrain combining strangetom (55K) + harness data (1.3K) with oversampling
+
+---
+
 ## Session 93 — March 26, 2026 (continued)
 **Milestone**: M16 COMPLETE — Parsing Test Harness + 3 Ralph Loop Iterations
 **Focus**: First runs, comparison logic overhaul, parser fixes, ML training data accumulation
