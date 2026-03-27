@@ -6,6 +6,68 @@
 
 ---
 
+## Session 93 — March 26, 2026 (continued)
+**Milestone**: M16.7-M16.8 — First Harness Run, Parser Fixes, ML Training Data
+**Focus**: First real 50-recipe run, comparison analysis, parser bug fixes, ML training pipeline
+**Branch**: `feature/M16-parsing-test-harness`
+
+### What Happened
+
+Ran the first real harness execution: 42 recipes, 560 ingredients, with Claude API comparison enabled. The run took ~8 minutes and immediately surfaced results that would have taken hours of manual device testing.
+
+**The headline number was alarming: 37% agreement between local and AI parsing.** But the real story was more nuanced — and more interesting for the newsletter.
+
+### The Faulty Metric Discovery
+
+The 37% agreement rate was a false signal. Analysis revealed that 284 of the 351 "mismatches" were **design differences, not bugs**:
+
+- Local parser: `"small onion, diced"` — preserves descriptors for the user
+- Claude API: `"onion"` — normalizes to canonical grocery name
+
+The comparison logic did exact string matching, which flagged every descriptor difference as a failure. This buried the 7 real parser bugs under a mountain of false positives.
+
+**Before state (for newsletter)**:
+- 560 ingredients tested across 42 recipes from 20+ sites
+- 37.3% full agreement (sounds terrible)
+- 284 name mismatches (mostly descriptor differences)
+- 44 unit mismatches, 38 qty mismatches
+- 213 classified as "local likely wrong" (most weren't actually wrong)
+
+**Real bugs found (7)**:
+1. Hyphenated can sizes `(15-ounce)` not stripped
+2. Reversed container format `1 large can (28 ounces)` not handled
+3. Missing units: servings, inch, container, loaf, handful
+4. "about"/"optional" prefix blocking quantity parsing
+5. "2 and 1/4 cups" fraction connector not normalized
+6. Number words "One", "Six" not converted to digits
+7. Modifier words "thin" blocking unit recognition
+
+### Key Decisions
+
+- **Two-tier comparison (Option C)**: Instead of exact matching, implement "core agreement" (AI name found within local name) and "full agreement" (exact match). This separates design differences from real bugs. Projected: ~85% core agreement vs 37% full.
+- **ML training data collection built into every AI run**: 514 labeled ingredients collected from this first run alone. After 3-5 runs we'll have enough to retrain the BiLSTM-CRF model.
+- **Copy-not-symlink validated**: The agent found and fixed 7 parser bugs in the harness copies without touching the app. This safety model works exactly as intended.
+
+### Learning
+
+- **Comparison metrics can be worse than no metric if they conflate design differences with bugs.** The 37% number would have sent us chasing 284 phantom issues. The two-tier approach is essential.
+- **Automated testing at scale reveals systemic bugs that manual testing misses.** Hyphenated can sizes affected dozens of recipes across multiple sites — you'd never catch that importing one recipe at a time on a phone.
+- **The AI comparison is most valuable for unit/quantity mismatches**, not name mismatches. Name differences are expected (descriptor vs canonical). But when local says qty=1 and AI says qty=15, that's a real bug worth fixing.
+
+### AI Tooling Observations
+
+- Running 3 background agents in parallel (PRD update, ML retraining PRD, training data builder) was highly effective. All three completed within 5 minutes and produced clean, mergeable work.
+- The parser fix agent analyzed 97 mismatches from the JSON results, categorized them into patterns, and fixed 7 real bugs — all autonomously. This is the harness + agent combination working exactly as designed.
+
+### What's Next
+
+- Implement Option C (two-tier comparison) for accurate metrics
+- Rerun harness to get "after" numbers with fixed parsers + better comparison
+- Continue ralph loop iterations for remaining real issues
+- Replenish seed URL list (many URLs went 404, only 42/80 worked)
+
+---
+
 ## Session 92 — March 26, 2026
 **Milestone**: M16 — Parsing Test Harness
 **Focus**: Build standalone CLI tool for automated ingredient parsing evaluation

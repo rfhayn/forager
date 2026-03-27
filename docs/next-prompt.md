@@ -2,40 +2,49 @@
 
 **Last Updated**: March 26, 2026
 **For Milestone**: M16 — Parsing Test Harness
-**Status**: **M16 ACTIVE** | **M9.35.3 ✅** | **M9.35.2 ✅**
+**Status**: **M16.9 ACTIVE** | **M16.7 ✅** | **M16.8 ✅** | **M16.1-M16.6 ✅**
 
 **Current**: M16 (parsing test harness) | **Launch Path**: M9.28 → M7.7 (paused)
 
 ---
 
-## M16 — Parsing Test Harness (ACTIVE)
+## M16.9 — Two-Tier Comparison Logic (ACTIVE)
 
-**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
-**Branch**: `feature/M16-parsing-test-harness`
+**What**: Implement Option C comparison in `ResultComparer.swift` — "core agreement" (AI canonical name found within local name) + "full agreement" (exact match). This separates descriptor differences from real parsing bugs.
 
-### What's Done
-- PRD written and approved
-- Feature branch created
+**Why**: First run showed 37.3% agreement which was misleading. ~284 of 351 "mismatches" were descriptor differences (local: "small onion, diced" vs AI: "onion"), not bugs. The exact-match logic buried 7 real parser bugs under false positives.
 
-### What to Build (in order)
-1. **M16.1**: SPM package scaffold at `Tools/ParsingTestHarness/`, copy 13 source files, verify `swift build`
-2. **M16.2**: RecipeDiscovery + RecipeFetcher — URL selection, HTTP fetch, JSON-LD extraction
-3. **M16.3**: ParsingEvaluator — run regex/NLP/hybrid on each ingredient independently
-4. **M16.4**: Claude API batching — add AI parsing, handle missing API key
-5. **M16.5**: ResultComparer + ReportGenerator + ResultStore — comparison, reporting, persistence
-6. **M16.6**: CLI entry point, ralph loop script, curate ~200 seed URLs + sitemap sources
+**Before state** (newsletter snapshot):
+- 42 recipes, 560 ingredients, 37.3% agreement
+- 284 name mismatches (mostly descriptor diffs), 44 unit, 38 qty
+- 213 classified "local likely wrong" (most weren't)
 
-### Key Files
-- Copy from: `Services/Parsing/*.swift` (9 files), `Tools/import-spike/Sources/ImportSpike/` (4 files)
-- New code in: `Tools/ParsingTestHarness/Sources/Harness/`
-- Seed data in: `Tools/ParsingTestHarness/Data/`
+**What to implement**:
+1. Update `ResultComparer.swift` — add `core_match` agreement level, containment-based name matching
+2. Update `ReportGenerator.swift` — show both core and full agreement in report
+3. Rerun harness with `--rerun-last` to get "after" numbers
+4. Replenish seed URL list (many 404s reduced pool to ~42 healthy URLs)
 
-### Critical Rules
-- **Copy files, don't symlink** — app code stays untouched until future porting milestone
-- **Commit after each ralph loop** — `/forager-commit` with fix description
-- **Issue log**: `Tools/ParsingTestHarness/Results/issue-log.md` tracks every finding and fix
-- **Broken link recovery**: always deliver 50 recipes, replace broken URLs from seed pool
-- **Dynamic discovery**: crawl sitemaps when seed list runs low
+**File**: `Tools/ParsingTestHarness/Sources/Harness/ResultComparer.swift`
+
+---
+
+## M16 — Completed Sub-Milestones
+
+| Sub | Description | Status |
+|-----|-------------|--------|
+| M16.1-M16.6 | Harness build (scaffold, fetch, parse, compare, CLI) | ✅ |
+| M16.7 | First loop: 7 parser bug fixes | ✅ |
+| M16.8 | ML training data collection + retraining PRD | ✅ |
+
+### Key Context for Next Session
+- Harness at `Tools/ParsingTestHarness/`, run with `bash Tools/ParsingTestHarness/run-harness.sh`
+- Parser copies in `Tools/ParsingTestHarness/Sources/Parsing/` — app code untouched
+- API key needed for AI comparison: `ANTHROPIC_API_KEY=sk-... swift run ParsingHarness`
+- Run results + logs in `Results/` (gitignored)
+- 514 ML training data entries accumulated in `Results/training-data.json`
+- Seed URL list at `Data/recipe-urls.json` — needs replenishing (many 404s)
+- PRDs: `docs/prds/active/m16-parsing-test-harness.md`, `docs/prds/active/m16.9-ml-model-retraining.md`
 
 ---
 

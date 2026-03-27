@@ -32,7 +32,18 @@ Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 reci
 **PRD**: `docs/prds/active/m16-parsing-test-harness.md`
 **Branch**: `feature/M16-parsing-test-harness`
 
-Sub-milestones: M16.1 (scaffold) → M16.2 (fetch/extract) → M16.3 (local parse) → M16.4 (AI parse) → M16.5 (compare/report) → M16.6 (CLI/ralph loop) → M16.7+ (fix iterations)
+Sub-milestones: M16.1-M16.6 (harness build) COMPLETE | M16.7 (first loop fixes) COMPLETE | M16.8 (ML training data) COMPLETE | M16.9 (comparison logic) ACTIVE
+
+### First Run Results (Before — Newsletter Snapshot)
+- **42 recipes, 560 ingredients** tested across 20+ recipe sites
+- **37.3% agreement** — misleading due to exact-match comparison logic
+- 284 name "mismatches" were actually **descriptor differences** (local keeps "small onion, diced", AI normalizes to "onion")
+- 7 real parser bugs found and fixed (hyphenated can sizes, missing units, number words, etc.)
+- 514 ML training data entries collected for future model retraining
+- **Key insight**: comparison metric conflated design differences with bugs — two-tier scoring needed
+
+### Next: Option C Two-Tier Comparison
+Implement "core agreement" (~85%) + "full agreement" (37%) to separate signal from noise
 
 ---
 
