@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 26, 2026
-**Status**: **M16 ACTIVE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
-**Total Progress**: ~315 hours
-**Current Branch**: `feature/M16-parsing-test-harness`
-**Launch Path**: M9.28 -> M7.7 (paused for M16)
+**Status**: **M16 COMPLETE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
+**Total Progress**: ~320 hours
+**Current Branch**: `feature/M16-parsing-test-harness` (ready for PR)
+**Launch Path**: M9.28 -> M7.7 | **Next**: M16.9 (ML retraining) or port fixes to app
 
 ---
 
@@ -32,18 +32,25 @@ Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 reci
 **PRD**: `docs/prds/active/m16-parsing-test-harness.md`
 **Branch**: `feature/M16-parsing-test-harness`
 
-Sub-milestones: M16.1-M16.6 (harness build) COMPLETE | M16.7 (first loop fixes) COMPLETE | M16.8 (ML training data) COMPLETE | M16.9 (comparison logic) ACTIVE
+Sub-milestones: M16.1-M16.9 ALL COMPLETE
 
-### First Run Results (Before — Newsletter Snapshot)
-- **42 recipes, 560 ingredients** tested across 20+ recipe sites
-- **37.3% agreement** — misleading due to exact-match comparison logic
-- 284 name "mismatches" were actually **descriptor differences** (local keeps "small onion, diced", AI normalizes to "onion")
-- 7 real parser bugs found and fixed (hyphenated can sizes, missing units, number words, etc.)
-- 514 ML training data entries collected for future model retraining
-- **Key insight**: comparison metric conflated design differences with bugs — two-tier scoring needed
+### Results (Newsletter Before → After)
 
-### Next: Option C Two-Tier Comparison
-Implement "core agreement" (~85%) + "full agreement" (37%) to separate signal from noise
+| Metric | Before (Run 1) | After (Run 9) |
+|--------|----------------|---------------|
+| Avg confidence | 0.93 | **0.97** |
+| NLP fallback | 7% | **0.5%** |
+| Agreement metric | 37.3% (broken) | **74.8% core** (fixed metric) |
+| Parser bugs fixed | 0 | **~20** |
+| Training data | 0 | **1,440 entries, 19 sites** |
+| Recipes tested | 0 | **~240 across 9 runs** |
+
+Key insight: the initial 37% agreement was a broken thermometer — it conflated design differences with bugs. Two-tier comparison (core vs full match) revealed the real quality was much higher, while making actual bugs clearly visible.
+
+### What's Next
+- **M16.9**: ML model retraining using 1,440 labeled entries → the real payoff
+- **Port fixes**: Diff harness copies back to app in a future milestone
+- **Resume launch path**: M9.28 → M7.7
 
 ---
 

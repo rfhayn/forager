@@ -1,50 +1,55 @@
 # Next Implementation Prompt
 
 **Last Updated**: March 26, 2026
-**For Milestone**: M16 — Parsing Test Harness
-**Status**: **M16.9 ACTIVE** | **M16.7 ✅** | **M16.8 ✅** | **M16.1-M16.6 ✅**
+**For Milestone**: M16.9 — ML Model Retraining
+**Status**: **M16 ✅ COMPLETE** | **M16.9 READY**
 
-**Current**: M16 (parsing test harness) | **Launch Path**: M9.28 → M7.7 (paused)
-
----
-
-## M16.9 — Two-Tier Comparison Logic (ACTIVE)
-
-**What**: Implement Option C comparison in `ResultComparer.swift` — "core agreement" (AI canonical name found within local name) + "full agreement" (exact match). This separates descriptor differences from real parsing bugs.
-
-**Why**: First run showed 37.3% agreement which was misleading. ~284 of 351 "mismatches" were descriptor differences (local: "small onion, diced" vs AI: "onion"), not bugs. The exact-match logic buried 7 real parser bugs under false positives.
-
-**Before state** (newsletter snapshot):
-- 42 recipes, 560 ingredients, 37.3% agreement
-- 284 name mismatches (mostly descriptor diffs), 44 unit, 38 qty
-- 213 classified "local likely wrong" (most weren't)
-
-**What to implement**:
-1. Update `ResultComparer.swift` — add `core_match` agreement level, containment-based name matching
-2. Update `ReportGenerator.swift` — show both core and full agreement in report
-3. Rerun harness with `--rerun-last` to get "after" numbers
-4. Replenish seed URL list (many 404s reduced pool to ~42 healthy URLs)
-
-**File**: `Tools/ParsingTestHarness/Sources/Harness/ResultComparer.swift`
+**Current**: M16.9 (ML retraining) | **Launch Path**: M9.28 → M7.7 (paused)
 
 ---
 
-## M16 — Completed Sub-Milestones
+## M16.9 — ML Model Retraining (READY)
+
+**PRD**: `docs/prds/active/m16.9-ml-model-retraining.md`
+**Training data**: 1,440 labeled entries across 19 sites in `Tools/ParsingTestHarness/Results/training-data.json`
+
+**What**: Retrain the BiLSTM-CRF ingredient parsing model using AI-labeled training data collected by the harness. The existing Python pipeline is at `Tools/ml-training/`.
+
+**Why**: The ML parser (tier 2) was trained on initial data from M8.4. The harness collected 1,440 new labeled examples from diverse recipe sites. Retraining should improve the ML tier's accuracy, reducing the NLP fallback rate even further and handling edge cases that regex can't.
+
+**Sub-milestones** (from PRD):
+1. **M16.9.1**: `convert_harness_data.py` — alignment algorithm converting AI field labels to BIO-tagged token sequences
+2. **M16.9.2**: Data accumulation + quality review (1,440 entries ready)
+3. **M16.9.3**: Full retrain combining strangetom (55K) + harness data, vocabulary rebuild
+4. **M16.9.4**: A/B model comparison + regression checking
+5. **M16.9.5**: Deploy retrained model to app and validate
+
+**Key files**:
+- Training data: `Tools/ParsingTestHarness/Results/training-data.json`
+- Export: `swift run ParsingHarness --export-training-data` (from `Tools/ParsingTestHarness/`)
+- Training scripts: `Tools/ml-training/` (prepare_dataset.py, train_model.py, convert_to_coreml.py)
+- Tokenizer spec: `Tools/ml-training/TOKENIZER_SPEC.md`
+- Model: `Services/Parsing/MLIngredientParser.swift` + vocabulary.json + transitions.json
+
+---
+
+## M16 — COMPLETE (Parsing Test Harness)
 
 | Sub | Description | Status |
 |-----|-------------|--------|
 | M16.1-M16.6 | Harness build (scaffold, fetch, parse, compare, CLI) | ✅ |
-| M16.7 | First loop: 7 parser bug fixes | ✅ |
+| M16.7 | Loop 1: 7 parser bug fixes | ✅ |
 | M16.8 | ML training data collection + retraining PRD | ✅ |
+| M16.9 | Two-tier comparison + loops 2-3 + name-only pattern | ✅ |
 
-### Key Context for Next Session
-- Harness at `Tools/ParsingTestHarness/`, run with `bash Tools/ParsingTestHarness/run-harness.sh`
+### Harness Quick Reference
+- **Run**: `cd Tools/ParsingTestHarness && ANTHROPIC_API_KEY=sk-... swift run ParsingHarness --count 50`
+- **Local only**: `swift run ParsingHarness --count 50 --local-only`
+- **Retest same**: `swift run ParsingHarness --rerun-last`
+- **Export training data**: `swift run ParsingHarness --export-training-data`
 - Parser copies in `Tools/ParsingTestHarness/Sources/Parsing/` — app code untouched
-- API key needed for AI comparison: `ANTHROPIC_API_KEY=sk-... swift run ParsingHarness`
-- Run results + logs in `Results/` (gitignored)
-- 514 ML training data entries accumulated in `Results/training-data.json`
-- Seed URL list at `Data/recipe-urls.json` — needs replenishing (many 404s)
-- PRDs: `docs/prds/active/m16-parsing-test-harness.md`, `docs/prds/active/m16.9-ml-model-retraining.md`
+- 242 seed URLs across 23 sites in `Data/recipe-urls.json`
+- Results + logs in `Results/` (gitignored)
 
 ---
 

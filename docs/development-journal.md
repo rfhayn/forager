@@ -7,9 +7,55 @@
 ---
 
 ## Session 93 — March 26, 2026 (continued)
-**Milestone**: M16.7-M16.8 — First Harness Run, Parser Fixes, ML Training Data
-**Focus**: First real 50-recipe run, comparison analysis, parser bug fixes, ML training pipeline
+**Milestone**: M16 COMPLETE — Parsing Test Harness + 3 Ralph Loop Iterations
+**Focus**: First runs, comparison logic overhaul, parser fixes, ML training data accumulation
 **Branch**: `feature/M16-parsing-test-harness`
+
+### What Happened (continued from Session 92)
+
+Ran 9 harness iterations total. The story arc:
+
+1. **First run (42 recipes, 560 ingredients)**: 37.3% agreement — alarming. Found 7 real parser bugs.
+2. **The metric was broken**: 284 of 351 "mismatches" were descriptor differences (local: "small onion, diced" vs AI: "onion"). Built two-tier comparison (Option C): core agreement (AI name within local) vs full agreement (exact match).
+3. **Loop 1 fixes**: Hyphenated can sizes, missing units, number words, "about" prefix, fraction connectors. 7 bugs fixed.
+4. **Loop 2 fixes**: Curly quotes, Unicode letters (jalapeño), NLP whitespace, slash/paren alternatives, depluralization. ~10 improvements.
+5. **Fresh recipe validation**: Replenished seed list to 242 URLs across 23 sites. Fresh recipes showed 74.4% core agreement — fixes generalized (didn't overfit).
+6. **Loop 3 fixes**: Leading decimals (.5→0.5), metric range parens, pinch/dash as units, mixed fraction ranges, count/container unit design diff classification.
+7. **Name-only pattern**: Added Pattern 8 for no-quantity ingredients ("Salt and pepper", "Extra virgin olive oil"). NLP fallback dropped from 7% to 0.5%.
+8. **ML training data**: 1,440 entries accumulated across 19 sites, 90.5% agreement rate. Ready for model retraining.
+
+### Key Decisions
+
+- **Two-tier comparison was essential**: Without it, every iteration would have chased phantom issues. The broken 37% metric would have wasted hours.
+- **Fresh recipe validation after fixes**: Running only the same 42 recipes risked overfitting. The fresh run confirmed fixes generalized but also revealed new patterns (HTML entities, leading decimals).
+- **Count/container unit design diff**: Reclassifying "clove"/"can"/"jar" as design differences (not bugs) was correct — these are valid parsing strategies, not errors.
+- **Name-only pattern at 0.85 confidence**: Placing it last in the priority chain and at 0.85 (below regex's 0.92-1.0 but above NLP's 0.75 cap) was the right confidence level. It catches everything regex misses without stealing from specific patterns.
+
+### Final Numbers
+
+| Metric | Start | End |
+|--------|-------|-----|
+| Avg confidence | 0.93 | 0.97-0.98 |
+| NLP fallback | 7% | 0.5% |
+| Parser bugs fixed | 0 | ~20 |
+| Training entries | 0 | 1,440 |
+| Recipe sites tested | 0 | 19 |
+
+### AI Tooling Observations
+
+- Background agents for parallel work were transformative. Running PRD updates, ML retraining PRDs, training data builders, URL replenishment, and parser fix agents simultaneously — each completing in 3-7 minutes — compressed what would be hours of sequential work.
+- The ralph loop pattern (run → read → fix → rerun) worked exactly as designed. Each iteration produced measurable improvement.
+- Having the AI compare its own parsing results against the local parser created a powerful feedback loop — the AI is essentially grading the parser's homework.
+
+### What's Next
+
+- **M16.9**: ML model retraining using the 1,440 labeled entries (PRD ready at `docs/prds/active/m16.9-ml-model-retraining.md`)
+- **Port fixes back to app**: Future milestone to diff harness copies vs app files, review, and merge
+- **M9.28 → M7.7**: Resume launch path
+
+---
+
+### Session 93 (original entry below — first half of session)
 
 ### What Happened
 
