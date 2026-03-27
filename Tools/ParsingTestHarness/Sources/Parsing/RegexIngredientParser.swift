@@ -129,6 +129,7 @@ class RegexIngredientParser: IngredientParser {
         if let result = tryPrefixQuantityPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryQualifierPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryDescriptiveAmountPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
+        if let result = tryNameOnlyPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
 
         // Fallback: just ingredient name (with parenthetical prep if extracted)
         return ParserResult(
@@ -790,6 +791,59 @@ class RegexIngredientParser: IngredientParser {
         }
 
         return nil
+    }
+
+    // MARK: - Pattern 8: Name Only (no quantity)
+    // Handles: "Salt and pepper", "Freshly ground black pepper", "Extra virgin olive oil", "Pesto"
+    // These are ingredients with no quantity or unit — just a name.
+    // Must run LAST (lowest priority) to avoid stealing from other patterns.
+
+    private func tryNameOnlyPattern(_ text: String, original: String) -> ParserResult? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        // Must NOT start with a digit — those should have been caught by earlier patterns
+        let first = trimmed.unicodeScalars.first!
+        if CharacterSet.decimalDigits.contains(first) { return nil }
+
+        // Must be mostly letters/spaces/hyphens (not a section header or HTML junk)
+        let letterCount = trimmed.filter { $0.isLetter || $0 == " " || $0 == "-" }.count
+        let ratio = Double(letterCount) / Double(trimmed.count)
+        guard ratio > 0.7 else { return nil }
+
+        // Extract comma qualifier if present: "Feta cheese, crumbled" → name="Feta cheese", notes="crumbled"
+        var name = trimmed
+        var notes: String? = nil
+        if let commaIndex = trimmed.firstIndex(of: ",") {
+            let before = String(trimmed[trimmed.startIndex..<commaIndex]).trimmingCharacters(in: .whitespaces)
+            let after = String(trimmed[trimmed.index(after: commaIndex)...]).trimmingCharacters(in: .whitespaces)
+
+            let lowerAfter = after.lowercased()
+            let isPrep = Self.commaQualifierPrepWords.contains(where: { lowerAfter.hasPrefix($0) }) ||
+                         Self.commaQualifierExactPhrases.contains(lowerAfter)
+
+            if isPrep && !before.isEmpty {
+                name = before
+                notes = after
+            }
+        }
+
+        // Strip parenthetical notes from name: "all-purpose flour (plain flour)" → "all-purpose flour"
+        let parenPattern = #"\s*\([^)]*\)\s*$"#
+        name = name.replacingOccurrences(of: parenPattern, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+
+        guard !name.isEmpty else { return nil }
+
+        return ParserResult(
+            name: name,
+            quantity: nil,
+            unit: nil,
+            notes: notes,
+            confidence: 0.85,
+            originalText: original,
+            parserUsed: parserName
+        )
     }
 
     // MARK: - Helper: Pattern Matching
