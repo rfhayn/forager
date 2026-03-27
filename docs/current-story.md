@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 25, 2026
-**Status**: **M9.35.2 COMPLETE** | **M9.35 ACTIVE** | **M9.34 COMPLETE** | **M9.33 COMPLETE**
-**Total Progress**: ~315 hours
-**Current Branch**: `main` (after merge)
-**Launch Path**: M9.28 -> M7.7
+**Last Updated**: March 26, 2026
+**Status**: **M16 COMPLETE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
+**Total Progress**: ~320 hours
+**Current Branch**: `feature/M16-parsing-test-harness` (ready for PR)
+**Launch Path**: M9.28 -> M7.7 | **Next**: M16.9 (ML retraining) or port fixes to app
 
 ---
 
@@ -22,6 +22,41 @@
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
+
+---
+
+## ACTIVE: M16 — Parsing Test Harness (March 26, 2026)
+
+Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 recipes from the internet, parses with both local (regex/NLP/hybrid) and Claude API, compares results side-by-side, identifies issues. Designed for ralph loop: run → read report → fix code → retest → commit. Harness uses copied parsing files — app code stays untouched until fixes are validated and ported in a future milestone.
+
+**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
+**Branch**: `feature/M16-parsing-test-harness`
+
+Sub-milestones: M16.1-M16.9 ALL COMPLETE
+
+### Results (Newsletter Before → After)
+
+| Metric | Before (Run 1) | After (Run 9) |
+|--------|----------------|---------------|
+| Avg confidence | 0.93 | **0.97** |
+| NLP fallback | 7% | **0.5%** |
+| Agreement metric | 37.3% (broken) | **74.8% core** (fixed metric) |
+| Parser bugs fixed | 0 | **~20** |
+| Training data | 0 | **1,440 entries, 19 sites** |
+| Recipes tested | 0 | **~240 across 9 runs** |
+
+Key insight: the initial 37% agreement was a broken thermometer — it conflated design differences with bugs. Two-tier comparison (core vs full match) revealed the real quality was much higher, while making actual bugs clearly visible.
+
+### What's Next
+- **M16.9**: ML model retraining using 1,440 labeled entries → the real payoff
+- **Port fixes**: Diff harness copies back to app in a future milestone
+- **Resume launch path**: M9.28 → M7.7
+
+---
+
+## COMPLETE: M9.35.3 — Leading Comma Display Fix (March 25, 2026)
+
+One-line fix: sanitize rawText in IngredientMatchService.buildResult() so import preview shows "(melted)" instead of "(, melted)". PR #103, build 90.
 
 ---
 

@@ -1,7 +1,7 @@
 # Forager - Project Index
 
-**Last Updated**: March 25, 2026
-**Current Milestone**: M9.35.2 ✅ | M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | All launch milestones through M9.35.2 complete
+**Last Updated**: March 26, 2026
+**Current Milestone**: M16 COMPLETE ✅ | M9.35.3 ✅ | **Next**: M16.9 (ML retraining) or M9.28 (launch path)
 **Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
 
 ---
@@ -16,6 +16,15 @@
 ---
 
 ## Recent Activity
+
+### March 26, 2026 — M16 Parsing Test Harness + M9.35.3
+- **M16**: Standalone CLI tool for automated ingredient parsing evaluation (~5h)
+  - 9 harness runs, ~240 recipes tested across 19 sites
+  - ~20 parser bugs found and fixed in 3 ralph loop iterations
+  - Two-tier comparison logic (37% broken metric → 75% core agreement)
+  - 1,440 ML training data entries collected for model retraining
+  - PRDs: `docs/prds/active/m16-parsing-test-harness.md`, `docs/prds/active/m16.9-ml-model-retraining.md`
+- **M9.35.3**: Leading comma display fix "(, melted)" → "(melted)" (PR #103, build 90)
 
 ### March 25, 2026 — M9.35.2 Parsing Pipeline Fixes
 - **M9.35.2**: Confidence fix (0.70→0.92), IEEE 754 float→fraction, egg word-split prevention, can/package size stripping, orphan fragment expansion

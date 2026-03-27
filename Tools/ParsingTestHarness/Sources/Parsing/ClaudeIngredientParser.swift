@@ -1,0 +1,367 @@
+//
+//  ClaudeIngredientParser.swift
+//  forager
+//
+//  M10.6.1: Anthropic Messages API adapter for batch ingredient parsing.
+//  Uses tool_use for structured output. Retries on 429/529 with exponential backoff.
+//  Silent fallback to deterministic pipeline on any error.
+//
+
+import Foundation
+
+class ClaudeIngredientParser: LLMIngredientParser {
+
+    let providerName = "claude"
+
+    private let apiKey: String
+    private let session: URLSession
+    private let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    private let model = "claude-haiku-4-5-20251001"
+    private let maxRetries = 3
+    private let requestTimeout: TimeInterval = 15
+
+    var isConfigured: Bool { !apiKey.isEmpty }
+
+    init(apiKey: String, session: URLSession = .shared) {
+        self.apiKey = apiKey
+        self.session = session
+    }
+
+    // MARK: - LLMIngredientParser
+
+    func parseBatch(_ lines: [String], categories: [String]) async throws -> [LLMParserResult] {
+        guard !lines.isEmpty else { return [] }
+        guard isConfigured else {
+            throw LLMParserError.invalidAPIKey
+        }
+
+        let requestBody = buildRequestBody(lines: lines, categories: categories)
+        let request = try buildURLRequest(body: requestBody)
+
+        let data: Data
+        do {
+            data = try await executeWithRetry(request: request)
+        } catch {
+            throw error
+        }
+
+        let results = try parseResponse(data: data)
+        try validateResults(results)
+
+        return results
+    }
+
+    // MARK: - Request Building
+
+    private func buildRequestBody(lines: [String], categories: [String]) -> [String: Any] {
+        let numberedLines = lines.enumerated().map { "\($0.offset + 1). \($0.element)" }
+        let userMessage = "Parse these ingredient lines:\n" + numberedLines.joined(separator: "\n")
+
+        var prompt = systemPrompt
+        if !categories.isEmpty {
+            let categoryList = categories.joined(separator: ", ")
+            prompt += "\n\nThe user has these grocery categories: [\(categoryList)]. " +
+                "For each ingredient, assign the most appropriate category from this exact list. " +
+                "You MUST only use category names that appear in this list — do not invent or modify category names. " +
+                "Use null if no category from the list fits well.\n\n" +
+                "Common category guidance: cooking oils, vinegars, soy sauce, hot sauce, honey, sugar, " +
+                "flour, cornstarch, broth/stock, and canned goods are typically \"Pantry\" (or equivalent). " +
+                "Spices and dried herbs are typically \"Spices & Seasonings\" (or equivalent). " +
+                "Salt and pepper are \"Spices & Seasonings\". Do not leave common items uncategorized."
+        } else {
+            // No user categories available — ask AI to suggest standard grocery categories
+            prompt += "\n\nFor each ingredient, suggest the most appropriate grocery store category " +
+                "(e.g., Produce, Dairy, Meat & Seafood, Bakery, Pantry, Frozen, Spices & Seasonings, Beverages). " +
+                "Use null only if truly uncertain."
+        }
+
+        return [
+            "model": model,
+            "max_tokens": 1024,
+            "system": prompt,
+            "tools": [toolDefinitionWithCategory],
+            "tool_choice": ["type": "tool", "name": "parse_ingredients"],
+            "messages": [
+                ["role": "user", "content": userMessage]
+            ]
+        ]
+    }
+
+    private func buildURLRequest(body: [String: Any]) throws -> URLRequest {
+        var request = URLRequest(url: baseURL)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.timeoutInterval = requestTimeout
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            throw LLMParserError.malformedResponse("Failed to serialize request: \(error.localizedDescription)")
+        }
+        return request
+    }
+
+    // MARK: - Retry Logic
+
+    private func executeWithRetry(request: URLRequest) async throws -> Data {
+        var lastError: LLMParserError?
+
+        for attempt in 0..<maxRetries {
+            do {
+                let (data, response) = try await session.data(for: request)
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw LLMParserError.malformedResponse("Non-HTTP response")
+                }
+
+                switch httpResponse.statusCode {
+                case 200:
+                    return data
+                case 401:
+                    throw LLMParserError.invalidAPIKey
+                case 429:
+                    lastError = .rateLimited
+                case 529:
+                    lastError = .serverOverloaded
+                case 500...599:
+                    throw LLMParserError.serverError(httpResponse.statusCode)
+                default:
+                    throw LLMParserError.serverError(httpResponse.statusCode)
+                }
+            } catch let error as LLMParserError {
+                if !error.isRetryable { throw error }
+                lastError = error
+            } catch let error as URLError where error.code == .timedOut {
+                throw LLMParserError.timeout
+            } catch {
+                throw LLMParserError.networkError(error)
+            }
+
+            // Exponential backoff: 1s, 2s, 4s
+            if attempt < maxRetries - 1 {
+                let delay = UInt64(pow(2.0, Double(attempt))) * 1_000_000_000
+                try await Task.sleep(nanoseconds: delay)
+            }
+        }
+
+        throw lastError ?? LLMParserError.serverError(0)
+    }
+
+    // MARK: - Response Parsing
+
+    private func parseResponse(data: Data) throws -> [LLMParserResult] {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = json["content"] as? [[String: Any]] else {
+            throw LLMParserError.malformedResponse("Missing content array")
+        }
+
+        // Find the tool_use block
+        guard let toolUse = content.first(where: { ($0["type"] as? String) == "tool_use" }),
+              let input = toolUse["input"] as? [String: Any],
+              let ingredients = input["ingredients"] as? [[String: Any]] else {
+            throw LLMParserError.malformedResponse("Missing tool_use with parse_ingredients")
+        }
+
+        var droppedCount = 0
+        let results = ingredients.compactMap { item -> LLMParserResult? in
+            guard let name = item["name"] as? String, !name.isEmpty else {
+                droppedCount += 1
+                return nil
+            }
+
+            let quantity = item["quantity"] as? Double
+            let unit = item["unit"] as? String
+            let notes = item["notes"] as? String
+            let category = item["category"] as? String
+
+            return LLMParserResult(
+                name: name,
+                quantity: quantity,
+                unit: unit,
+                notes: notes,
+                confidence: 0.95,
+                category: category
+            )
+        }
+
+        if droppedCount > 0 {
+            throw LLMParserError.validationFailed("Dropped \(droppedCount) items with missing/empty name")
+        }
+
+        return results
+    }
+
+    // MARK: - Validation
+
+    private func validateResults(_ results: [LLMParserResult]) throws {
+        if results.isEmpty {
+            throw LLMParserError.validationFailed("Empty results array")
+        }
+
+        for result in results {
+            if result.name.isEmpty {
+                throw LLMParserError.validationFailed("Empty ingredient name")
+            }
+            if result.name.count > 250 {
+                throw LLMParserError.validationFailed("Ingredient name exceeds 250 characters")
+            }
+            if let qty = result.quantity, qty <= 0 {
+                throw LLMParserError.validationFailed("Non-positive quantity: \(qty)")
+            }
+        }
+    }
+
+    // MARK: - Prompts
+
+    private let systemPrompt = """
+        You are an ingredient parser for a grocery/recipe app. Parse each ingredient line \
+        into structured components. Be precise with quantities and units.
+
+        Rules:
+        - Extract quantity as a decimal number (e.g., "1/2" → 0.5, "2 1/2" → 2.5)
+        - Standardize common abbreviations: tablespoon/tbsp/tbs → "tbsp", \
+        teaspoon/tsp → "tsp", ounce/oz → "oz", pound/lb → "lb"
+        - Keep metric units as-is: g, kg, ml, L
+        - Separate preparation notes from the ingredient name \
+        (e.g., "2 cups flour, sifted" → name: "flour", notes: "sifted")
+        - Count items (2 eggs) have quantity but null unit
+        - Bare names (salt, pepper) have null quantity and null unit
+        - "X to taste/to serve" → quantity null, notes: "to taste"/"to serve"
+        - Use SINGULAR form for ingredient names (e.g., "avocado" not "avocados", \
+        "pepper" not "peppers", "tomato" not "tomatoes", "egg" not "eggs")
+        - The ingredient name must be ONLY the food item — never include count/unit \
+        words like "clove", "slice", "piece", "wedge", "head", "stalk", "sprig", \
+        "bunch", "ear" in the name. Examples: "2 cloves garlic" → name: "garlic" \
+        (not "garlic clove"), "3 stalks celery" → name: "celery" (not "celery stalk"), \
+        "1 head cauliflower" → name: "cauliflower" (not "cauliflower head")
+        - For "juice of" or "zest of" patterns, the ingredient is the fruit: \
+        "juice of 2 limes" → name: "lime", notes: "juice of". \
+        "zest of 1 lemon" → name: "lemon", notes: "zest of"
+        - Strip any parenthetical qualifiers from the ingredient name and move them to notes. \
+        "shrimp (peeled and deveined, tails removed)" → name: "shrimp", notes: "peeled and deveined, tails removed". \
+        "Greek yogurt or sour cream (if needed, to thin sauce)" → name: "greek yogurt or sour cream", \
+        notes: "if needed, to thin sauce"
+        - Fix obvious spelling errors in ingredient names
+        - Do NOT convert between unit systems (keep grams as grams, cups as cups)
+        - CRITICAL: Return EXACTLY one result per numbered input line. Never split a line \
+        into multiple results. Lines like "2 teaspoons each chili powder and cumin" are ONE \
+        ingredient (name: "chili powder and cumin", quantity: 2, unit: "tsp"). \
+        Lines like "salt and pepper" are ONE ingredient (name: "salt and pepper").
+        """
+
+    private let toolDefinition: [String: Any] = [
+        "name": "parse_ingredients",
+        "description": "Parse ingredient lines into structured components",
+        "input_schema": [
+            "type": "object",
+            "properties": [
+                "ingredients": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Ingredient name"],
+                            "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
+                            "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
+                            "notes": ["type": ["string", "null"], "description": "Preparation notes or null"]
+                        ],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ] as [String: Any],
+            "required": ["ingredients"]
+        ] as [String: Any]
+    ]
+
+    /// Tool definition with category field — used when user's categories are available
+    private let toolDefinitionWithCategory: [String: Any] = [
+        "name": "parse_ingredients",
+        "description": "Parse ingredient lines into structured components with category assignment",
+        "input_schema": [
+            "type": "object",
+            "properties": [
+                "ingredients": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "name": ["type": "string", "description": "Ingredient name"],
+                            "quantity": ["type": ["number", "null"], "description": "Numeric quantity or null"],
+                            "unit": ["type": ["string", "null"], "description": "Unit of measurement or null"],
+                            "notes": ["type": ["string", "null"], "description": "Preparation notes or null"],
+                            "category": ["type": ["string", "null"], "description": "Grocery category from the provided list, or null"]
+                        ],
+                        "required": ["name"]
+                    ] as [String: Any]
+                ] as [String: Any]
+            ] as [String: Any],
+            "required": ["ingredients"]
+        ] as [String: Any]
+    ]
+
+    // MARK: - M9.33: Multi-Ingredient Split Detection
+
+    /// Detect if an ingredient line contains multiple ingredients and split them.
+    /// Returns nil if the line is a single ingredient, or an array of split ingredient strings.
+    func splitMultiIngredient(_ line: String) async throws -> [String]? {
+        let prompt = """
+        Determine if this ingredient line contains multiple distinct ingredients.
+        If yes, return each as a separate complete ingredient string with appropriate quantities.
+        If no (single ingredient with modifiers), return an empty array.
+
+        Rules:
+        - Distribute shared quantities: "1/2 tbsp garlic powder and onion powder" \
+        becomes ["1/2 tbsp garlic powder", "1/2 tbsp onion powder"]
+        - Handle alternatives: "2 tbsp soy sauce or fish sauce" \
+        becomes ["2 tbsp soy sauce", "2 tbsp fish sauce"]
+        - Split "X and Y to taste" → ["X", "Y"]
+        - Do NOT split prep descriptions: "peeled and deveined shrimp" is ONE ingredient → []
+        - Do NOT split compound foods: "salt and pepper", "macaroni and cheese" → []
+        - Do NOT split descriptors: "fresh and crispy lettuce" is ONE ingredient → []
+
+        Return JSON: {"splits": ["ingredient 1", "ingredient 2"]} or {"splits": []} if single ingredient.
+        """
+
+        var request = URLRequest(url: baseURL)
+        request.httpMethod = "POST"
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("application/json", forHTTPHeaderField: "content-type")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+
+        let body: [String: Any] = [
+            "model": model,
+            "max_tokens": 256,
+            "system": prompt,
+            "messages": [
+                ["role": "user", "content": "Split this ingredient line if it contains multiple ingredients: \"\(line)\""]
+            ]
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            return nil
+        }
+
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = (json["content"] as? [[String: Any]])?.first,
+              let text = content["text"] as? String else {
+            return nil
+        }
+
+        // Parse the JSON response
+        guard let responseData = text.data(using: .utf8),
+              let result = try JSONSerialization.jsonObject(with: responseData) as? [String: Any],
+              let splits = result["splits"] as? [String] else {
+            return nil
+        }
+
+        // Empty array means single ingredient — return nil
+        guard splits.count > 1 else { return nil }
+        return splits
+    }
+}

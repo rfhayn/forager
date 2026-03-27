@@ -6,6 +6,153 @@
 
 ---
 
+## Session 93 — March 26, 2026 (continued)
+**Milestone**: M16 COMPLETE — Parsing Test Harness + 3 Ralph Loop Iterations
+**Focus**: First runs, comparison logic overhaul, parser fixes, ML training data accumulation
+**Branch**: `feature/M16-parsing-test-harness`
+
+### What Happened (continued from Session 92)
+
+Ran 9 harness iterations total. The story arc:
+
+1. **First run (42 recipes, 560 ingredients)**: 37.3% agreement — alarming. Found 7 real parser bugs.
+2. **The metric was broken**: 284 of 351 "mismatches" were descriptor differences (local: "small onion, diced" vs AI: "onion"). Built two-tier comparison (Option C): core agreement (AI name within local) vs full agreement (exact match).
+3. **Loop 1 fixes**: Hyphenated can sizes, missing units, number words, "about" prefix, fraction connectors. 7 bugs fixed.
+4. **Loop 2 fixes**: Curly quotes, Unicode letters (jalapeño), NLP whitespace, slash/paren alternatives, depluralization. ~10 improvements.
+5. **Fresh recipe validation**: Replenished seed list to 242 URLs across 23 sites. Fresh recipes showed 74.4% core agreement — fixes generalized (didn't overfit).
+6. **Loop 3 fixes**: Leading decimals (.5→0.5), metric range parens, pinch/dash as units, mixed fraction ranges, count/container unit design diff classification.
+7. **Name-only pattern**: Added Pattern 8 for no-quantity ingredients ("Salt and pepper", "Extra virgin olive oil"). NLP fallback dropped from 7% to 0.5%.
+8. **ML training data**: 1,440 entries accumulated across 19 sites, 90.5% agreement rate. Ready for model retraining.
+
+### Key Decisions
+
+- **Two-tier comparison was essential**: Without it, every iteration would have chased phantom issues. The broken 37% metric would have wasted hours.
+- **Fresh recipe validation after fixes**: Running only the same 42 recipes risked overfitting. The fresh run confirmed fixes generalized but also revealed new patterns (HTML entities, leading decimals).
+- **Count/container unit design diff**: Reclassifying "clove"/"can"/"jar" as design differences (not bugs) was correct — these are valid parsing strategies, not errors.
+- **Name-only pattern at 0.85 confidence**: Placing it last in the priority chain and at 0.85 (below regex's 0.92-1.0 but above NLP's 0.75 cap) was the right confidence level. It catches everything regex misses without stealing from specific patterns.
+
+### Final Numbers
+
+| Metric | Start | End |
+|--------|-------|-----|
+| Avg confidence | 0.93 | 0.97-0.98 |
+| NLP fallback | 7% | 0.5% |
+| Parser bugs fixed | 0 | ~20 |
+| Training entries | 0 | 1,440 |
+| Recipe sites tested | 0 | 19 |
+
+### AI Tooling Observations
+
+- Background agents for parallel work were transformative. Running PRD updates, ML retraining PRDs, training data builders, URL replenishment, and parser fix agents simultaneously — each completing in 3-7 minutes — compressed what would be hours of sequential work.
+- The ralph loop pattern (run → read → fix → rerun) worked exactly as designed. Each iteration produced measurable improvement.
+- Having the AI compare its own parsing results against the local parser created a powerful feedback loop — the AI is essentially grading the parser's homework.
+
+### What's Next
+
+- **M16.9**: ML model retraining using the 1,440 labeled entries (PRD ready at `docs/prds/active/m16.9-ml-model-retraining.md`)
+- **Port fixes back to app**: Future milestone to diff harness copies vs app files, review, and merge
+- **M9.28 → M7.7**: Resume launch path
+
+---
+
+### Session 93 (original entry below — first half of session)
+
+### What Happened
+
+Ran the first real harness execution: 42 recipes, 560 ingredients, with Claude API comparison enabled. The run took ~8 minutes and immediately surfaced results that would have taken hours of manual device testing.
+
+**The headline number was alarming: 37% agreement between local and AI parsing.** But the real story was more nuanced — and more interesting for the newsletter.
+
+### The Faulty Metric Discovery
+
+The 37% agreement rate was a false signal. Analysis revealed that 284 of the 351 "mismatches" were **design differences, not bugs**:
+
+- Local parser: `"small onion, diced"` — preserves descriptors for the user
+- Claude API: `"onion"` — normalizes to canonical grocery name
+
+The comparison logic did exact string matching, which flagged every descriptor difference as a failure. This buried the 7 real parser bugs under a mountain of false positives.
+
+**Before state (for newsletter)**:
+- 560 ingredients tested across 42 recipes from 20+ sites
+- 37.3% full agreement (sounds terrible)
+- 284 name mismatches (mostly descriptor differences)
+- 44 unit mismatches, 38 qty mismatches
+- 213 classified as "local likely wrong" (most weren't actually wrong)
+
+**Real bugs found (7)**:
+1. Hyphenated can sizes `(15-ounce)` not stripped
+2. Reversed container format `1 large can (28 ounces)` not handled
+3. Missing units: servings, inch, container, loaf, handful
+4. "about"/"optional" prefix blocking quantity parsing
+5. "2 and 1/4 cups" fraction connector not normalized
+6. Number words "One", "Six" not converted to digits
+7. Modifier words "thin" blocking unit recognition
+
+### Key Decisions
+
+- **Two-tier comparison (Option C)**: Instead of exact matching, implement "core agreement" (AI name found within local name) and "full agreement" (exact match). This separates design differences from real bugs. Projected: ~85% core agreement vs 37% full.
+- **ML training data collection built into every AI run**: 514 labeled ingredients collected from this first run alone. After 3-5 runs we'll have enough to retrain the BiLSTM-CRF model.
+- **Copy-not-symlink validated**: The agent found and fixed 7 parser bugs in the harness copies without touching the app. This safety model works exactly as intended.
+
+### Learning
+
+- **Comparison metrics can be worse than no metric if they conflate design differences with bugs.** The 37% number would have sent us chasing 284 phantom issues. The two-tier approach is essential.
+- **Automated testing at scale reveals systemic bugs that manual testing misses.** Hyphenated can sizes affected dozens of recipes across multiple sites — you'd never catch that importing one recipe at a time on a phone.
+- **The AI comparison is most valuable for unit/quantity mismatches**, not name mismatches. Name differences are expected (descriptor vs canonical). But when local says qty=1 and AI says qty=15, that's a real bug worth fixing.
+
+### AI Tooling Observations
+
+- Running 3 background agents in parallel (PRD update, ML retraining PRD, training data builder) was highly effective. All three completed within 5 minutes and produced clean, mergeable work.
+- The parser fix agent analyzed 97 mismatches from the JSON results, categorized them into patterns, and fixed 7 real bugs — all autonomously. This is the harness + agent combination working exactly as designed.
+
+### What's Next
+
+- Implement Option C (two-tier comparison) for accurate metrics
+- Rerun harness to get "after" numbers with fixed parsers + better comparison
+- Continue ralph loop iterations for remaining real issues
+- Replenish seed URL list (many URLs went 404, only 42/80 worked)
+
+---
+
+## Session 92 — March 26, 2026
+**Milestone**: M16 — Parsing Test Harness
+**Focus**: Build standalone CLI tool for automated ingredient parsing evaluation
+**Branch**: `feature/M16-parsing-test-harness`
+
+### What Happened
+
+Built the entire M16 parsing test harness in one session — from PRD through working end-to-end pipeline. The harness is a standalone SPM package at `Tools/ParsingTestHarness/` that fetches recipe URLs, extracts ingredients via JSON-LD, and parses them with all three local parsers (regex, NLP, hybrid) independently. It also supports Claude API parsing for side-by-side comparison, though that's optional (controlled by `ANTHROPIC_API_KEY` env var).
+
+Also shipped M9.35.3 (build 90 to TestFlight) — a one-line fix for the "(, melted)" display bug Joe found in import preview. The fix sanitizes `rawText` in `IngredientMatchService.buildResult()` before storing it in the display result.
+
+### Key Decisions
+
+- **Copy files, don't symlink**: The harness gets its own copies of `Services/Parsing/` files. This means the app's code stays untouched during experimentation. Fixes are refined in the harness copies, then ported back to the app in a separate future milestone. Rich specifically requested this for safety — he wants hands-on review before changes hit the app.
+- **~80 curated seed URLs with sitemap discovery**: Seeded the `recipe-urls.json` with URLs across 20+ recipe sites. When the seed list runs low, the harness can auto-discover new URLs from recipe site sitemaps. Broken links are permanently marked and replaced on the fly.
+- **Run all parsers independently**: Instead of just running the hybrid router, the harness stores regex, NLP, AND hybrid results separately per ingredient. This reveals routing issues (where NLP beats regex but threshold prevents it from being used).
+- **Full PRD first**: Went through detailed plan mode with multiple rounds of user feedback before building. This was critical because Rich's vision evolved significantly from "unit test suite" → "full automated evaluation pipeline with dynamic discovery and issue tracking."
+
+### Learning
+
+- The parsing stack is remarkably clean for CLI extraction — 9 files, all Foundation-only (plus NaturalLanguage for NLP). Zero Core Data, UIKit, or SwiftUI dependencies. Only needed 2 small stubs: DebugLogService no-op and ParsedIngredient struct.
+- `import-spike` was an ideal bootstrap — its JSON-LD extraction code worked perfectly when copied into the new package.
+- SPM executables with `main.swift` can't use `@main` attribute — they conflict. Top-level async code with `await runHarness()` works cleanly.
+- The ML parser gracefully returns nil when CoreML resources aren't in the bundle, and HybridIngredientParser handles `mlParser: nil` by falling to 2-tier (regex/NLP). No special handling needed.
+
+### AI Tooling Observations
+
+- Plan mode with multiple user feedback rounds was essential. The initial plan was a simple test suite; through 4 rounds of back-and-forth, it evolved into a much more ambitious automated pipeline. Without that iteration the PRD would have missed key requirements (copy-not-symlink, dynamic URL discovery, broken link recovery, commit-per-loop).
+- Building the full harness (7 new Swift files, Package.swift, seed data, shell script) in one pass was efficient. Most compilation errors were predictable (missing types, function signature mismatches) and fixable in minutes.
+
+### What's Next
+
+- Run the harness with `--count 50` for a full test run
+- If Rich provides `ANTHROPIC_API_KEY`, run with AI comparison for side-by-side evaluation
+- Start ralph loop: identify top issues → fix parsing in harness copies → retest → commit
+- Each fix iteration gets its own commit via `/forager-commit`
+
+---
+
 ## Session 91 — March 25, 2026
 **Milestone**: M9.35.3 — Leading Comma Display Fix
 **Focus**: Fix "(, melted)" display artifact in import preview

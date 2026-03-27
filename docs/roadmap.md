@@ -53,6 +53,17 @@
 | M15 | UX Design System & Visual Refresh | ~60h | Feb-Mar 2026 |
 | M16.1-16.2 | Knowledge MCP Server | ~6h | Mar 2026 |
 | M9.35.2 | Parsing: Confidence Fix + Float Conversion | ~1h | Mar 2026 |
+| M9.35.3 | Leading Comma Display Fix | <0.5h | Mar 2026 |
+| M16 | Parsing Test Harness (CLI tool + 3 ralph loops) | ~5h | Mar 2026 |
+
+---
+
+## Active / Planned
+
+| Milestone | Description | Est. Hours | Status |
+|-----------|-------------|------------|--------|
+| **M16.9** | ML Model Retraining (using 1,440 harness-collected labels) | 14-20h | READY |
+| **M16→App** | Port harness parsing fixes back to app | 2-3h | PLANNED |
 
 ---
 
