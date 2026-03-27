@@ -325,14 +325,10 @@ struct ResultComparer {
         }
 
         // Unparsed raw text (name equals raw input, nothing extracted)
-        // Exclude short single-word ingredient names (e.g. "Avocado", "Pesto") — these are valid
-        // name-only ingredients, not parsing failures
-        if local.name == ingredient.sanitized && local.quantity == nil && local.unit == nil {
-            let wordCount = ingredient.sanitized.split(separator: " ").count
-            let hasDigit = ingredient.sanitized.contains(where: { $0.isNumber })
-            if wordCount > 2 || hasDigit {
-                issues.append("unparsed_raw_text")
-            }
+        // Only flag if confidence is very low — the name-only pattern returns 0.85 for
+        // valid no-quantity ingredients like "salt and freshly ground black pepper"
+        if local.name == ingredient.sanitized && local.quantity == nil && local.unit == nil && local.confidence < 0.5 {
+            issues.append("unparsed_raw_text")
         }
 
         // Very low confidence
