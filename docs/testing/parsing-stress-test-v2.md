@@ -84,7 +84,7 @@ For EACH recipe, record:
 
 ### Italian (11-15)
 11. `https://www.simplyrecipes.com/pasta-carbonara-recipe-7643664`
-12. `https://www.recipetineats.com/chicken-parmesan/`
+12. `https://www.recipetineats.com/chicken-parmigiana/`
 13. `https://www.loveandlemons.com/caprese-salad/`
 14. `https://www.seriouseats.com/the-best-slow-cooked-bolognese-sauce-recipe`
 15. `https://www.budgetbytes.com/creamy-tomato-spinach-pasta/`
@@ -97,7 +97,7 @@ For EACH recipe, record:
 20. `https://www.skinnytaste.com/chicken-burrito-bowls/`
 
 ### Asian (21-30)
-21. `https://www.recipetineats.com/chicken-stir-fry/`
+21. `https://www.recipetineats.com/easy-everyday-chicken-stir-fry/`
 22. `https://www.budgetbytes.com/pad-thai/`
 23. `https://damndelicious.net/2019/02/16/korean-beef-bowl/`
 24. `https://www.simplyrecipes.com/recipes/chicken_fried_rice/`
