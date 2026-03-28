@@ -160,14 +160,14 @@ A structured spike validated assumptions before this PRD was written. All target
 | `cookTimeMinutes` | **Persisted** → `Recipe.cookTime` (Int16) | Existing property; draft uses `Int?`, narrowed to `Int16` at save |
 | `servings` | **Persisted** → `Recipe.servings` | Existing property |
 | `sourceURL` | **Persisted** → `Recipe.sourceURL` | Existing property |
-| `imageURL` | **Preview-only** — shown via AsyncImage during review, not persisted | Recipe entity has no image property; avoids schema change |
-| `author` | **Preview-only** — shown for context during review, not persisted | Recipe entity has no author property |
-| `description` | **Preview-only** — shown for context during review, not persisted | Recipe entity has no description property |
-| `cuisine` | **Preview-only** — not persisted | Recipe entity has no cuisine property |
-| `category` | **Preview-only** — not persisted | Recipe entity has no category property |
+| `imageURL` | **Persisted** → `Recipe.imageURL` (schema v11, M18) | Added in M18 combined migration. Stored but not rendered as image yet. |
+| `author` | **Persisted** → `Recipe.author` (schema v11, M18) | Added in M18 combined migration. For legal attribution. |
+| `description` | **Preview-only** — shown for context during review, not persisted | Recipe entity has no description property. Deferred to future milestone. |
+| `cuisine` | **Preview-only** — not persisted | Recipe entity has no cuisine property. Deferred to future milestone. |
+| `category` | **Preview-only** — not persisted | Recipe entity has no category property. Deferred to future milestone. |
 | `tags` | **Persisted** → `Recipe.tags` | Existing property (`String?`); extracted tags joined as comma-separated string |
 
-**Future milestone**: Add `imageURL`, `author`, `cuisine`, `category` properties to `Recipe` entity (Core Data schema v7 + CloudKit migration). This is explicitly deferred to avoid schema changes in M10.
+**Update (March 2026)**: `imageURL` and `author` now persisted on Recipe entity as of schema v11 (M18 combined migration). Remaining fields (`description`, `cuisine`, `category`) still deferred to a future milestone. See `docs/prds/active/m18-store-aware-shopping.md` for the v11 schema details.
 
 #### Decision 4: Flat Ingredient Groups (Codex Finding #4)
 
