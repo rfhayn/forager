@@ -1,35 +1,16 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 26, 2026
-**For Milestone**: M16.9 — ML Model Retraining
-**Status**: **M16 ✅ COMPLETE** | **M16.9 READY**
+**Last Updated**: March 28, 2026
+**Active Milestones**: M18 (store-aware shopping) | M16.9 (ML retraining)
+**Launch Path**: M18 → M10.4 → M9.28 → M7.7
 
-**Current**: M16.9 (ML retraining) | **Launch Path**: M9.28 → M7.7 (paused)
+## M18 — Store-Aware Shopping
+See `docs/next-prompt-M18.md` for full implementation guidance.
 
 ---
 
-## M16.9 — ML Model Retraining (READY)
-
-**PRD**: `docs/prds/active/m16.9-ml-model-retraining.md`
-**Training data**: 1,440 labeled entries across 19 sites in `Tools/ParsingTestHarness/Results/training-data.json`
-
-**What**: Retrain the BiLSTM-CRF ingredient parsing model using AI-labeled training data collected by the harness. The existing Python pipeline is at `Tools/ml-training/`.
-
-**Why**: The ML parser (tier 2) was trained on initial data from M8.4. The harness collected 1,440 new labeled examples from diverse recipe sites. Retraining should improve the ML tier's accuracy, reducing the NLP fallback rate even further and handling edge cases that regex can't.
-
-**Sub-milestones** (from PRD):
-1. **M16.9.1**: `convert_harness_data.py` — alignment algorithm converting AI field labels to BIO-tagged token sequences
-2. **M16.9.2**: Data accumulation + quality review (1,440 entries ready)
-3. **M16.9.3**: Full retrain combining strangetom (55K) + harness data, vocabulary rebuild
-4. **M16.9.4**: A/B model comparison + regression checking
-5. **M16.9.5**: Deploy retrained model to app and validate
-
-**Key files**:
-- Training data: `Tools/ParsingTestHarness/Results/training-data.json`
-- Export: `swift run ParsingHarness --export-training-data` (from `Tools/ParsingTestHarness/`)
-- Training scripts: `Tools/ml-training/` (prepare_dataset.py, train_model.py, convert_to_coreml.py)
-- Tokenizer spec: `Tools/ml-training/TOKENIZER_SPEC.md`
-- Model: `Services/Parsing/MLIngredientParser.swift` + vocabulary.json + transitions.json
+## M16.9 — ML Model Retraining (ACTIVE)
+See `docs/next-prompt-M16.9.md` for full implementation guidance.
 
 ---
 

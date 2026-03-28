@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 26, 2026
-**Status**: **M16 COMPLETE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
+**Last Updated**: March 28, 2026
+**Status**: **M18 ACTIVE** | **M16.9 ACTIVE** | **M16 COMPLETE**
 **Total Progress**: ~320 hours
-**Current Branch**: `feature/M16-parsing-test-harness` (ready for PR)
-**Launch Path**: M9.28 -> M7.7 | **Next**: M16.9 (ML retraining) or port fixes to app
+**Active Branches**: `feature/M18-store-aware-shopping` | `feature/M16.9-ml-model-retraining`
+**Launch Path**: M18 -> M10.4 -> M9.28 -> M7.7
 
 ---
 
@@ -20,12 +20,48 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
+| **M18** | Store-aware shopping (preferred store, grouped lists) | 12-18h | ACTIVE |
+| **M10.4** | Recipe attribution, image cache, legal gates | 4-5h | PLANNED |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
 ---
 
-## ACTIVE: M16 — Parsing Test Harness (March 26, 2026)
+## ACTIVE: M18 — Store-Aware Shopping (March 28, 2026)
+
+Users shop at multiple stores and mentally track which items to buy where. M18 adds a Store entity, store preferences on ingredient templates, store snapshots on grocery list items, and a "Group by Store" view mode. Organic learning — users assign store preferences as they shop.
+
+**PRD**: `docs/prds/active/m18-store-aware-shopping.md`
+**Branch**: `feature/M18-store-aware-shopping`
+**Estimated**: 12-18 hours (2 phases, starting Phase 1)
+
+| Sub | Description | Status |
+|-----|-------------|--------|
+| M18.1.1 | Store entity + Core Data schema v11 | READY |
+| M18.1.2 | StoreService (CRUD, assignment, query) | READY |
+| M18.1.3 | Store management UI (Settings > Stores) | READY |
+| M18.1.4 | Store assignment UX (long-press, color dots) | READY |
+| M18.1.5 | "Group by Store" view mode | READY |
+| M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
+
+---
+
+## ACTIVE: M16.9 — ML Model Retraining (March 27, 2026)
+
+Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training entries. In progress on separate branch.
+
+**Branch**: `feature/M16.9-ml-model-retraining`
+
+| Sub | Description | Status |
+|-----|-------------|--------|
+| M16.9.1-M16.9.3 | Converter, data accumulation, full retrain | COMPLETE |
+| M16.9.4 | A/B model comparison + regression check | READY |
+| M16.9.5 | Deploy retrained model to app + validate | READY |
+| M16.9.6 | Port parser fixes to app + validate | READY |
+
+---
+
+## COMPLETE: M16 — Parsing Test Harness (March 26, 2026)
 
 Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 recipes from the internet, parses with both local (regex/NLP/hybrid) and Claude API, compares results side-by-side, identifies issues. Designed for ralph loop: run → read report → fix code → retest → commit. Harness uses copied parsing files — app code stays untouched until fixes are validated and ported in a future milestone.
 
@@ -178,10 +214,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**M9.24**: Merge branch + device test member import store routing (0.5h), then **M9.15.3**: Device test returning user detection (1h).
+After M18 + M16.9 complete: **M10.4** (recipe attribution) → **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission)
 
 ---
 
-**Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
-**Next Action**: M9.28 (strip diagnostic logging) → M7.7 (App Store submission)
+**Last Session**: March 28, 2026 — M18 milestone setup
+**Next Action**: M18.1.1 (Store entity + schema v11)
 **Confidence**: GREEN
