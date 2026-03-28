@@ -1,10 +1,9 @@
 # Forager - Development Roadmap
 
-**Last Updated**: March 25, 2026
-**Current Phase**: Launch prep — M9.28 → M7.7 (~4-7h to App Store)
-**Recently Completed**: M9.35.2 ✅ | M9.34 ✅ | M9.33 ✅ | M9.32 ✅ | M9.31 ✅ | M9.30 ✅ | M9.29 ✅ | M9.27 ✅ | M9.26 ✅ | M9.24 ✅ | M9.15.3 ✅ | M17.1 ✅ | M10.6.5 ✅
-**Session Stats**: March 21-25 — 30+ builds (59-88+), 16+ PRs, ~21 hours
-**Post-Launch**: M10.4 → M6 → M9 remaining → M11+
+**Last Updated**: March 28, 2026
+**Current Phase**: M18 ACTIVE (store-aware shopping + recipe attribution) | Launch path: M18 → M9.28 → M7.7
+**Recently Completed**: M16.9 ✅ | M16 ✅ | M9.35.3 ✅ | M9.35.2 ✅ | M9.34 ✅ | M9.33 ✅ | M9.32 ✅
+**Post-Launch**: M6 → M9 remaining → M11+
 
 ---
 
@@ -55,31 +54,20 @@
 | M9.35.2 | Parsing: Confidence Fix + Float Conversion | ~1h | Mar 2026 |
 | M9.35.3 | Leading Comma Display Fix | <0.5h | Mar 2026 |
 | M16 | Parsing Test Harness (CLI tool + 3 ralph loops) | ~5h | Mar 2026 |
+| M16.9 | ML Model Retraining (BiLSTM-CRF v2 + parser fixes) | ~15h | Mar 2026 |
+| M17.1 | Doc Slimming + PRD Archival | ~1h | Mar 2026 |
 
 ---
 
-## Active / Planned
+## Launch Path (~11-18h remaining)
 
 | Milestone | Description | Est. Hours | Status |
 |-----------|-------------|------------|--------|
-| **M16.9** | ML Model Retraining (using 1,440 harness-collected labels) | 14-20h | READY |
-| **M16→App** | Port harness parsing fixes back to app | 2-3h | PLANNED |
+| **M18** | Store-aware shopping + recipe attribution (combined schema v11) | 7-10h | ACTIVE |
+| **M9.28** | Strip diagnostic logging for production | 1-2h | PLANNED |
+| **M7.7** | App Store submission (screenshots, metadata, listing) | 3-5h | PLANNED |
 
----
-
-## Launch Path (Remaining ~4-7h)
-
-| Milestone | Description | Est. Hours | Status |
-|-----------|-------------|------------|--------|
-| M9.24 | *Current sprint task* | TBD | ACTIVE |
-| M9.15.3 | *Current sprint task* | TBD | READY |
-| M9.26 | *Current sprint task* | TBD | READY |
-| M10.6.5 | Claude API docs & verification | 1-2h | READY |
-| M9.28 | *Current sprint task* | TBD | READY |
-| M9.29 | *Current sprint task* | TBD | READY |
-| M7.7 | App Store Submission & Public Presence | 3-5h | QUEUED |
-
-**M7.7 sub-phases**: Landing page, GitHub README, App Store listing, submission
+**M18 combined scope**: Store entity + preferredStore on IngredientTemplate + store snapshot on GroceryListItem + Recipe.imageURL/author. Single v10→v11 migration. M10.4 attribution schema absorbed. PRD: `docs/prds/active/m18-store-aware-shopping.md`
 
 ---
 
@@ -87,22 +75,23 @@
 
 | Milestone | Description | Est. Hours |
 |-----------|-------------|------------|
-| M10.4 | Recipe Import Polish & Integration | 11-16h |
+| M10.4 | Recipe import polish (history, telemetry — schema done in M18) | 6-8h |
 | M6 | Testing Foundation & AI Augmentation | 12-18h |
 | M9 (remaining) | Technical Debt & Optimization | ~120h |
 | M11 | Analytics & Insights | 8-12h |
 | M16.3 | MCP Server Polish | 1-2h |
 | M12-M14 | Health, Budget, AI Assistant | 30-45h |
 
-**Feature Ideas (Backlog):**
-- M10.7: Alternative Ingredient Splitting ("X or Y" parsing) — 3-4h
+**Future considerations**:
+- Recipe description, cuisine, category on Recipe entity — deferred to future milestone
+- Recipe image rendering from imageURL — deferred to future milestone
+- M10.7: Alternative Ingredient Splitting — 3-4h
 
 ---
 
 ## Timeline Summary
 
-- **Total completed**: ~315 hours across 40+ milestones
-- **Remaining to App Store**: ~10-18 hours
-- **Post-launch backlog**: ~180-210 hours
-- **267 unit tests**, 19 test files
-- **Build 58** on TestFlight, ML parser live, zero warnings
+- **Total completed**: ~320 hours across 40+ milestones
+- **Remaining to App Store**: ~11-18 hours
+- **Post-launch backlog**: ~160-200 hours
+- **Build 91** on TestFlight, ML parser v2 live, zero warnings

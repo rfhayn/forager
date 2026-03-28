@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: March 28, 2026
-**Status**: **M18 ACTIVE** | **M16.9 ACTIVE** | **M16 COMPLETE**
+**Status**: **M18 ACTIVE** | **M16.9 COMPLETE** | **M16 COMPLETE**
 **Total Progress**: ~320 hours
-**Active Branches**: `feature/M18-store-aware-shopping` | `feature/M16.9-ml-model-retraining`
-**Launch Path**: M18 -> M10.4 -> M9.28 -> M7.7
+**Current Branch**: `feature/M18-store-aware-shopping`
+**Launch Path**: M18 -> M9.28 -> M7.7
 
 ---
 
@@ -20,8 +20,7 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
-| **M18** | Store-aware shopping (preferred store, grouped lists) | 12-18h | ACTIVE |
-| **M10.4** | Recipe attribution, image cache, legal gates | 4-5h | PLANNED |
+| **M18** | Store-aware shopping + recipe attribution (combined schema v11) | 7-10h | ACTIVE |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
@@ -29,35 +28,29 @@
 
 ## ACTIVE: M18 — Store-Aware Shopping (March 28, 2026)
 
-Users shop at multiple stores and mentally track which items to buy where. M18 adds a Store entity, store preferences on ingredient templates, store snapshots on grocery list items, and a "Group by Store" view mode. Organic learning — users assign store preferences as they shop.
+Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema changes (M10.4.0) batched into a single Core Data v11 migration. Store entity, store preferences on templates, store snapshots on grocery items, "Group by Store" view, plus persisting imageURL/author on Recipe.
 
 **PRD**: `docs/prds/active/m18-store-aware-shopping.md`
 **Branch**: `feature/M18-store-aware-shopping`
-**Estimated**: 12-18 hours (2 phases, starting Phase 1)
+**Estimated**: 7-10 hours (6 sub-milestones)
 
 | Sub | Description | Status |
 |-----|-------------|--------|
-| M18.1.1 | Store entity + Core Data schema v11 | READY |
-| M18.1.2 | StoreService (CRUD, assignment, query) | READY |
+| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | READY |
+| M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | READY |
+| M18.1.2 | Store snapshot wiring in GroceryListItemService | READY |
 | M18.1.3 | Store management UI (Settings > Stores) | READY |
-| M18.1.4 | Store assignment UX (long-press, color dots) | READY |
-| M18.1.5 | "Group by Store" view mode | READY |
+| M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
+| M10.4.0 | Recipe attribution wiring (imageURL + author) | READY |
 | M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
 
 ---
 
-## ACTIVE: M16.9 — ML Model Retraining (March 27, 2026)
+## COMPLETE: M16.9 — ML Model Retraining (March 28, 2026)
 
-Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training entries. In progress on separate branch.
+Retrained BiLSTM-CRF v2 with 1,440 harness-labeled entries + strangetom data. Deployed v2 model to app, ported parser fixes + 3 new test classes. PR #105 merged.
 
-**Branch**: `feature/M16.9-ml-model-retraining`
-
-| Sub | Description | Status |
-|-----|-------------|--------|
-| M16.9.1-M16.9.3 | Converter, data accumulation, full retrain | COMPLETE |
-| M16.9.4 | A/B model comparison + regression check | READY |
-| M16.9.5 | Deploy retrained model to app + validate | READY |
-| M16.9.6 | Port parser fixes to app + validate | READY |
+**Branch**: `feature/M16.9-ml-model-retraining` (merged)
 
 ---
 
@@ -214,10 +207,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-After M18 + M16.9 complete: **M10.4** (recipe attribution) → **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission)
+After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission). M10.4 recipe attribution schema changes absorbed into M18. Remaining M10.4 scope (import history, telemetry) deferred post-launch.
 
 ---
 
-**Last Session**: March 28, 2026 — M18 milestone setup
-**Next Action**: M18.1.1 (Store entity + schema v11)
+**Last Session**: March 28, 2026 — Combined M18 + M10.4 PRD, Core Data audit
+**Next Action**: M18.1.0 (Schema v11 migration)
 **Confidence**: GREEN

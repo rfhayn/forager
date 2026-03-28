@@ -6,6 +6,43 @@
 
 ---
 
+## Session 94 — March 28, 2026
+**Milestone**: M18 setup — Store-Aware Shopping + Recipe Attribution (combined)
+**Focus**: Milestone planning, Core Data audit, PRD consolidation
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Planning session — no code written. M16.9 completed in a parallel session (all sub-milestones done, PR #105 merged, build 91). Turned attention to the launch path: M18 (store-aware shopping) was next, followed by M10.4 (recipe attribution).
+
+During planning, realized both M18 and M10.4 require Core Data schema changes. M18 needs a new Store entity + relationships. M10.4 needs `imageURL` and `author` on Recipe (the import pipeline already extracts these but drops them at save time). Two separate schema bumps would be wasteful — so we combined them into a single v10→v11 migration under the M18 umbrella.
+
+Ran a full Core Data audit (ADR 007) across Recipe, IngredientTemplate, GroceryListItem, and the new Store entity. Documented all affected files, services, views, and tests. Rewrote the M18 PRD to include the combined scope with a full impact analysis checklist.
+
+Also validated that the remaining M10.4 scope (import history, telemetry dashboard) does NOT need schema changes — it uses UserDefaults and read-only aggregation. Those features are deferred post-launch.
+
+### Key Decisions
+
+- **Batch schema changes into one migration**: Two v-bumps (v11 for Store, v12 for Recipe attribution) would be unnecessary churn. One lightweight migration is cleaner, especially with CloudKit's append-only constraint.
+- **Drop `isDefault` from Store entity**: Unlike Category (which needs a protected "Uncategorized"), Store has no equivalent. Deletion protection is runtime — show reassignment dialog when templates reference the store.
+- **Defer Recipe.description/cuisine/category**: Only `imageURL` and `author` are needed for attribution. The rest can wait for a future milestone without another schema change since they'd also be optional strings.
+- **imageURL stored but not rendered**: Persisting the URL now means we won't need another migration when we add image display later. Zero-cost future-proofing.
+
+### Learning
+
+- **Multi-session branch management works well**: M16.9 ran in parallel on its own branch while this session planned M18 on a separate branch. The `/forager-new-milestone` skill's branch-specific next-prompt files prevent conflicts between sessions.
+- **Core Data audits pay for themselves**: The ADR 007 process took ~20 minutes but produced a complete file checklist that will prevent surprise build errors during implementation. The audit revealed that `toRecipeFormData()` explicitly drops `imageURL` and `author` with a comment — the decision to defer was intentional in M10, but now we're ready to close that gap.
+
+### AI Tooling Observations
+
+Used 3 parallel Explore agents to audit the codebase (Core Data model, grocery list UI, recipe save path) — each returned comprehensive results in one pass. The Plan agent produced a detailed implementation breakdown that became the PRD's core structure. Multi-agent parallelism is highly effective for broad codebase exploration before planning.
+
+### What's Next
+
+Implementation starts with M18.1.0 (schema v11). The PRD has a complete file checklist — work through it in dependency order: schema → model files → DataScope conformance → services → UI → tests.
+
+---
+
 ## Session 93 — March 26, 2026 (continued)
 **Milestone**: M16 COMPLETE — Parsing Test Harness + 3 Ralph Loop Iterations
 **Focus**: First runs, comparison logic overhaul, parser fixes, ML training data accumulation
