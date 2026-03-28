@@ -495,7 +495,8 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/45396\/easy-slow-cooker-french-dip\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/22918\/mississippi-mud-cake-i\/"
     },
@@ -577,7 +578,8 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/223042\/chicken-parmesan\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/234534\/buffalo-chicken-dip\/"
     },
@@ -587,7 +589,8 @@
       "url" : "https:\/\/www.allrecipes.com\/recipe\/213268\/classic-goulash\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "allrecipes",
       "url" : "https:\/\/www.allrecipes.com\/recipe\/246569\/easy-one-pot-chicken-and-rice\/"
     },
@@ -842,7 +845,8 @@
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/shakshuka\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "simplyrecipes",
       "url" : "https:\/\/www.simplyrecipes.com\/recipes\/stuffed_peppers\/"
     },
@@ -1292,7 +1296,8 @@
       "url" : "https:\/\/www.justonecookbook.com\/japanese-beef-curry\/"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "HTTP 404",
       "site" : "justonecookbook",
       "url" : "https:\/\/www.justonecookbook.com\/tonkatsu-recipe\/"
     },
@@ -1340,7 +1345,8 @@
       "url" : "https:\/\/www.maangchi.com\/recipe\/sundubu-jjigae"
     },
     {
-      "broken" : false,
+      "broken" : true,
+      "brokenReason" : "No JSON-LD recipe found",
       "site" : "maangchi",
       "url" : "https:\/\/www.maangchi.com\/recipe\/doenjang-jjigae"
     },

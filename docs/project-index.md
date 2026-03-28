@@ -1,8 +1,8 @@
 # Forager - Project Index
 
-**Last Updated**: March 26, 2026
+**Last Updated**: March 27, 2026
 **Current Milestone**: M16 COMPLETE ✅ | M9.35.3 ✅ | **Next**: M16.9 (ML retraining) or M9.28 (launch path)
-**Launch Path**: M9.28 → M7.7 (~4-7h to App Store)
+**Launch Path**: M18 → M10.4 → M9.28 → M7.7 (~22-32h to App Store)
 
 ---
 
@@ -94,7 +94,7 @@
 
 **Active**: M9.35 (Parsing Pipeline Hardening)
 
-**Queued**: M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
+**Queued**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md)), M10.4 (Recipe Attribution), M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
 
 **Future**: M11 (Analytics), M12 (Health), M13 (Budget), M14 (AI Assistant)
 

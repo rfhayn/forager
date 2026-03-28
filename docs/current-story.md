@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 26, 2026
-**Status**: **M16 COMPLETE** | **M9.35.3 COMPLETE** | **M9.35.2 COMPLETE**
+**Last Updated**: March 27, 2026
+**Status**: **M16.9 ACTIVE** | **M16 COMPLETE**
 **Total Progress**: ~320 hours
-**Current Branch**: `feature/M16-parsing-test-harness` (ready for PR)
-**Launch Path**: M9.28 -> M7.7 | **Next**: M16.9 (ML retraining) or port fixes to app
+**Current Branch**: `feature/M16.9-ml-model-retraining`
+**Launch Path**: M18 -> M10.4 -> M9.28 -> M7.7 | **Active**: M16.9 (ML retraining)
 
 ---
 
@@ -20,37 +20,35 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
+| **M18** | Store-aware shopping (preferred store, grouped lists) | 12-18h | PLANNED |
+| **M10.4** | Recipe attribution, image cache, legal gates | 4-5h | PLANNED |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
 ---
 
-## ACTIVE: M16 — Parsing Test Harness (March 26, 2026)
+## ACTIVE: M16.9 — ML Model Retraining (March 27, 2026)
 
-Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 recipes from the internet, parses with both local (regex/NLP/hybrid) and Claude API, compares results side-by-side, identifies issues. Designed for ralph loop: run → read report → fix code → retest → commit. Harness uses copied parsing files — app code stays untouched until fixes are validated and ported in a future milestone.
+Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training entries collected by the M16 harness. Bridge harness field-level labels (name/qty/unit/notes) to token-level BIO tags, combine with strangetom dataset (55K), rebuild vocabulary, retrain from scratch with oversampling, deploy to app.
 
-**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
-**Branch**: `feature/M16-parsing-test-harness`
+**PRD**: `docs/prds/active/m16.9-ml-model-retraining.md`
+**Branch**: `feature/M16.9-ml-model-retraining`
+**Estimated**: 14-20 hours across 5 sub-milestones
 
-Sub-milestones: M16.1-M16.9 ALL COMPLETE
+| Sub | Description | Status |
+|-----|-------------|--------|
+| M16.9.1 | Harness data converter (field→token alignment) | COMPLETE |
+| M16.9.2 | Data accumulation + quality review | COMPLETE |
+| M16.9.3 | Full retrain (combined dataset + vocab rebuild) | COMPLETE |
+| M16.9.4 | A/B model comparison + regression check | COMPLETE |
+| M16.9.5 | Deploy v2 model to app + test infra fix | COMPLETE |
+| M16.9.6 | Port parser fixes + 3 new test classes | COMPLETE |
 
-### Results (Newsletter Before → After)
+---
 
-| Metric | Before (Run 1) | After (Run 9) |
-|--------|----------------|---------------|
-| Avg confidence | 0.93 | **0.97** |
-| NLP fallback | 7% | **0.5%** |
-| Agreement metric | 37.3% (broken) | **74.8% core** (fixed metric) |
-| Parser bugs fixed | 0 | **~20** |
-| Training data | 0 | **1,440 entries, 19 sites** |
-| Recipes tested | 0 | **~240 across 9 runs** |
+## COMPLETE: M16 — Parsing Test Harness (March 26, 2026)
 
-Key insight: the initial 37% agreement was a broken thermometer — it conflated design differences with bugs. Two-tier comparison (core vs full match) revealed the real quality was much higher, while making actual bugs clearly visible.
-
-### What's Next
-- **M16.9**: ML model retraining using 1,440 labeled entries → the real payoff
-- **Port fixes**: Diff harness copies back to app in a future milestone
-- **Resume launch path**: M9.28 → M7.7
+Standalone CLI tool for automated ingredient parsing evaluation. 9 runs, ~240 recipes, ~20 parser bugs fixed. Produced 1,440 labeled training entries across 19 sites. Core agreement metric: 74.8%.
 
 ---
 
@@ -178,10 +176,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**M9.24**: Merge branch + device test member import store routing (0.5h), then **M9.15.3**: Device test returning user detection (1h).
+After M16.9 completes: **M18** Store-Aware Shopping (12-18h, 2 phases). Store entity + preferredStore on IngredientTemplate, grocery list grouped by store with color indicators. PRD: `docs/prds/active/m18-store-aware-shopping.md`. Origin: beta tester feedback (Joe). Requires Core Data schema change. Then M10.4 → M9.28 → M7.7.
 
 ---
 
 **Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
-**Next Action**: M9.28 (strip diagnostic logging) → M7.7 (App Store submission)
+**Next Action**: M18 (store-aware shopping) → M10.4 → M9.28 → M7.7 (App Store submission)
 **Confidence**: GREEN

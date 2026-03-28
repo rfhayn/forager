@@ -37,6 +37,9 @@
 		M106T004IMPORTLLMTEST0A /* RecipeImportServiceLLMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */; };
 		M84P6001VTDTEST0000000A /* ViterbiDecoderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */; };
 		M84P6002MLPTEST0000000A /* MLIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */; };
+		M169T001PREPROCESSTEST0A /* IngredientPreprocessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M169T001PREPROCESSTEST0B /* IngredientPreprocessorTests.swift */; };
+		M169T002REGEXNEWPATT00A /* RegexParserNewPatternsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M169T002REGEXNEWPATT00B /* RegexParserNewPatternsTests.swift */; };
+		M169T003MLMODELV2TEST0A /* MLModelV2Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M169T003MLMODELV2TEST0B /* MLModelV2Tests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,6 +93,9 @@
 		M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeImportServiceLLMTests.swift; sourceTree = "<group>"; };
 		M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViterbiDecoderTests.swift; sourceTree = "<group>"; };
 		M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLIngredientParserTests.swift; sourceTree = "<group>"; };
+		M169T001PREPROCESSTEST0B /* IngredientPreprocessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientPreprocessorTests.swift; sourceTree = "<group>"; };
+		M169T002REGEXNEWPATT00B /* RegexParserNewPatternsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegexParserNewPatternsTests.swift; sourceTree = "<group>"; };
+		M169T003MLMODELV2TEST0B /* MLModelV2Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLModelV2Tests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -157,6 +163,9 @@
 				D522278D54DA01CCBE6339C5 /* HybridParserRoutingTests.swift */,
 				M84P6001VTDTEST0000000B /* ViterbiDecoderTests.swift */,
 				M84P6002MLPTEST0000000B /* MLIngredientParserTests.swift */,
+				M169T001PREPROCESSTEST0B /* IngredientPreprocessorTests.swift */,
+				M169T002REGEXNEWPATT00B /* RegexParserNewPatternsTests.swift */,
+				M169T003MLMODELV2TEST0B /* MLModelV2Tests.swift */,
 			);
 			path = Parsing;
 			sourceTree = "<group>";
@@ -421,6 +430,9 @@
 				M106T003LLMSETTINGS0000A /* LLMSettingsServiceTests.swift in Sources */,
 				M106T004IMPORTLLMTEST0A /* RecipeImportServiceLLMTests.swift in Sources */,
 				M1068T01MATCHSVC00000A /* IngredientMatchServiceTests.swift in Sources */,
+				M169T001PREPROCESSTEST0A /* IngredientPreprocessorTests.swift in Sources */,
+				M169T002REGEXNEWPATT00A /* RegexParserNewPatternsTests.swift in Sources */,
+				M169T003MLMODELV2TEST0A /* MLModelV2Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

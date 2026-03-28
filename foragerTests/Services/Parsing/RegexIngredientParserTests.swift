@@ -63,7 +63,8 @@ final class RegexIngredientParserTests: XCTestCase {
         XCTAssertNil(result.quantity)
         XCTAssertNil(result.unit)
         XCTAssertEqual(result.name, "flour")
-        XCTAssertEqual(result.confidence, 0.0)
+        // M16.9.6: Pattern 8 (name-only) now handles single-word names at 0.85
+        XCTAssertEqual(result.confidence, 0.85)
     }
 
     func testEmptyInput() {
