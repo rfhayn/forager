@@ -1,14 +1,21 @@
 # Next Implementation Prompt
 
-**Last Updated**: March 27, 2026
-**Launch Path**: M9.28 → M7.7 (paused)
+**Last Updated**: March 28, 2026
+**Launch Path**: M18 → M9.28 → M7.7
 
 ---
 
 ## Active Milestones
 
+### M18 — Store-Aware Shopping + Recipe Attribution
+See `docs/next-prompt-M18.md` for full implementation guidance.
+
+---
+
+## Completed (Recent)
+
 ### M16.9 — ML Model Retraining
-See `docs/next-prompt-M16.9.md` for full implementation guidance.
+COMPLETE (March 28, 2026). BiLSTM-CRF v2 deployed, parser fixes ported, 3 new test classes. PR #105 merged, build 91.
 
 ---
 
@@ -19,7 +26,7 @@ See `docs/next-prompt-M16.9.md` for full implementation guidance.
 **Status**: PLANNED
 **Estimated**: 1-2 hours
 
-Strip DiagnosticLogger, DebugLogService, and CloudKitLogger output from Release builds. Determine what to keep behind `#if DEBUG` vs remove entirely. The diagnostic logging was invaluable during M9.15-M9.31 debugging but should not ship in the App Store build.
+Strip DiagnosticLogger, DebugLogService, and CloudKitLogger output from Release builds. Determine what to keep behind `#if DEBUG` vs remove entirely.
 
 Key files to audit:
 - `Services/DiagnosticLogger.swift` — the main logger
@@ -41,7 +48,6 @@ Screenshots, metadata, App Store Connect configuration, privacy policy, review s
 
 ## Post-Launch Priorities
 
-- M10.4: Polish & Integration (11-16h)
-- M7.7: App Store Submission (3-5h)
-- M6: Testing Foundation (20-30h)
+- M10.4: Recipe import polish — history, telemetry (schema done in M18) (6-8h)
+- M6: Testing Foundation (12-18h)
 - M9 Remaining (~120h)

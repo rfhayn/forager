@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 27, 2026
-**Status**: **M16.9 ACTIVE** | **M16 COMPLETE**
+**Last Updated**: March 28, 2026
+**Status**: **M18 ACTIVE** | **M16.9 COMPLETE** | **M16 COMPLETE**
 **Total Progress**: ~320 hours
-**Current Branch**: `feature/M16.9-ml-model-retraining`
-**Launch Path**: M18 -> M10.4 -> M9.28 -> M7.7 | **Active**: M16.9 (ML retraining)
+**Current Branch**: `feature/M18-store-aware-shopping`
+**Launch Path**: M18 -> M9.28 -> M7.7
 
 ---
 
@@ -20,35 +20,66 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
-| **M18** | Store-aware shopping (preferred store, grouped lists) | 12-18h | PLANNED |
-| **M10.4** | Recipe attribution, image cache, legal gates | 4-5h | PLANNED |
+| **M18** | Store-aware shopping + recipe attribution (combined schema v11) | 7-10h | ACTIVE |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
 ---
 
-## ACTIVE: M16.9 — ML Model Retraining (March 27, 2026)
+## ACTIVE: M18 — Store-Aware Shopping (March 28, 2026)
 
-Retrain the BiLSTM-CRF ingredient parsing model using 1,440 AI-labeled training entries collected by the M16 harness. Bridge harness field-level labels (name/qty/unit/notes) to token-level BIO tags, combine with strangetom dataset (55K), rebuild vocabulary, retrain from scratch with oversampling, deploy to app.
+Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema changes (M10.4.0) batched into a single Core Data v11 migration. Store entity, store preferences on templates, store snapshots on grocery items, "Group by Store" view, plus persisting imageURL/author on Recipe.
 
-**PRD**: `docs/prds/active/m16.9-ml-model-retraining.md`
-**Branch**: `feature/M16.9-ml-model-retraining`
-**Estimated**: 14-20 hours across 5 sub-milestones
+**PRD**: `docs/prds/active/m18-store-aware-shopping.md`
+**Branch**: `feature/M18-store-aware-shopping`
+**Estimated**: 7-10 hours (6 sub-milestones)
 
 | Sub | Description | Status |
 |-----|-------------|--------|
-| M16.9.1 | Harness data converter (field→token alignment) | COMPLETE |
-| M16.9.2 | Data accumulation + quality review | COMPLETE |
-| M16.9.3 | Full retrain (combined dataset + vocab rebuild) | COMPLETE |
-| M16.9.4 | A/B model comparison + regression check | COMPLETE |
-| M16.9.5 | Deploy v2 model to app + test infra fix | COMPLETE |
-| M16.9.6 | Port parser fixes + 3 new test classes | COMPLETE |
+| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | READY |
+| M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | READY |
+| M18.1.2 | Store snapshot wiring in GroceryListItemService | READY |
+| M18.1.3 | Store management UI (Settings > Stores) | READY |
+| M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
+| M10.4.0 | Recipe attribution wiring (imageURL + author) | READY |
+| M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
+
+---
+
+## COMPLETE: M16.9 — ML Model Retraining (March 28, 2026)
+
+Retrained BiLSTM-CRF v2 with 1,440 harness-labeled entries + strangetom data. Deployed v2 model to app, ported parser fixes + 3 new test classes. PR #105 merged.
+
+**Branch**: `feature/M16.9-ml-model-retraining` (merged)
 
 ---
 
 ## COMPLETE: M16 — Parsing Test Harness (March 26, 2026)
 
-Standalone CLI tool for automated ingredient parsing evaluation. 9 runs, ~240 recipes, ~20 parser bugs fixed. Produced 1,440 labeled training entries across 19 sites. Core agreement metric: 74.8%.
+Standalone CLI tool for automated ingredient parsing evaluation. Fetches 50 recipes from the internet, parses with both local (regex/NLP/hybrid) and Claude API, compares results side-by-side, identifies issues. Designed for ralph loop: run → read report → fix code → retest → commit. Harness uses copied parsing files — app code stays untouched until fixes are validated and ported in a future milestone.
+
+**PRD**: `docs/prds/active/m16-parsing-test-harness.md`
+**Branch**: `feature/M16-parsing-test-harness`
+
+Sub-milestones: M16.1-M16.9 ALL COMPLETE
+
+### Results (Newsletter Before → After)
+
+| Metric | Before (Run 1) | After (Run 9) |
+|--------|----------------|---------------|
+| Avg confidence | 0.93 | **0.97** |
+| NLP fallback | 7% | **0.5%** |
+| Agreement metric | 37.3% (broken) | **74.8% core** (fixed metric) |
+| Parser bugs fixed | 0 | **~20** |
+| Training data | 0 | **1,440 entries, 19 sites** |
+| Recipes tested | 0 | **~240 across 9 runs** |
+
+Key insight: the initial 37% agreement was a broken thermometer — it conflated design differences with bugs. Two-tier comparison (core vs full match) revealed the real quality was much higher, while making actual bugs clearly visible.
+
+### What's Next
+- **M16.9**: ML model retraining using 1,440 labeled entries → the real payoff
+- **Port fixes**: Diff harness copies back to app in a future milestone
+- **Resume launch path**: M9.28 → M7.7
 
 ---
 
@@ -176,10 +207,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-After M16.9 completes: **M18** Store-Aware Shopping (12-18h, 2 phases). Store entity + preferredStore on IngredientTemplate, grocery list grouped by store with color indicators. PRD: `docs/prds/active/m18-store-aware-shopping.md`. Origin: beta tester feedback (Joe). Requires Core Data schema change. Then M10.4 → M9.28 → M7.7.
+After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission). M10.4 recipe attribution schema changes absorbed into M18. Remaining M10.4 scope (import history, telemetry) deferred post-launch.
 
 ---
 
-**Last Session**: March 25, 2026 — M9.35.2 COMPLETE (confidence fix + float conversion)
-**Next Action**: M18 (store-aware shopping) → M10.4 → M9.28 → M7.7 (App Store submission)
+**Last Session**: March 28, 2026 — Combined M18 + M10.4 PRD, Core Data audit
+**Next Action**: M18.1.0 (Schema v11 migration)
 **Confidence**: GREEN

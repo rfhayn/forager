@@ -1,10 +1,10 @@
-# M18: Store-Aware Shopping
+# M18: Store-Aware Shopping + Recipe Attribution
 
-**Status**: PLANNED
-**Estimated**: 12-18 hours (2 phases)
-**Priority**: Post-launch feature
-**Depends On**: M7.7 (App Store submission)
-**Last Updated**: March 25, 2026
+**Status**: ACTIVE
+**Estimated**: 7-10 hours (6 sub-milestones)
+**Priority**: Pre-launch feature
+**Last Updated**: March 28, 2026
+**Branch**: `feature/M18-store-aware-shopping`
 **Origin**: Beta tester feedback (Joe) — categories map to *what* you buy, but shopping decisions are about *where* you buy it.
 
 ---
@@ -19,7 +19,11 @@ Users shop at multiple stores (Costco, Heinen's, Target) and mentally track whic
 
 **Joe's insight**: "Perhaps a shopping preference tab that allows me to pre-populate where I buy most stuff. Then it creates either separate lists or lists that identify a store — like a color or something that tells you where you should be buying what."
 
-## Solution: Phased Store Preferences
+Additionally, the import pipeline already extracts `imageURL` and `author` from recipes but drops them at save time. These need persisting for legal attribution and future image display.
+
+## Solution: Combined Schema v11 Migration
+
+Both features require Core Data schema changes. We batch them into a single lightweight migration (v10 → v11) to avoid multiple version bumps.
 
 ### Design Principles
 
@@ -27,194 +31,225 @@ Users shop at multiple stores (Costco, Heinen's, Target) and mentally track whic
 - **Organic learning** — users assign store preferences as they shop, not in a bulk setup wizard
 - **Household-shared** — store preferences travel with the household (a family shares where they shop)
 - **Optional** — users who shop at one store never see store features
+- **Invisible by default** — zero stores = zero store UI. Feature has no footprint until first store created.
 
 ---
 
-## Phase 1: Store Preferences on Templates (M18.1)
+## Core Data Impact Analysis (ADR 007)
 
-**Estimated**: 6-8 hours (5 sub-phases)
-**Goal**: Users can tag ingredient templates with a preferred store and view their grocery list grouped by store.
+### Schema Changes Summary (v10 → v11)
 
-### M18.1.1: Store Entity + Schema (1-1.5h)
+- **Entities Added**: Store (1)
+- **Entities Modified**: Recipe, IngredientTemplate, GroceryListItem, Household (4)
+- **Properties Added**: 8 attributes on Store, 2 attributes on Recipe, 3 new relationships, 1 inverse on Household
+- **Properties Removed**: None
+- **Destructive Changes**: None
 
-**New Core Data entity: `Store`**
+### Migration Safety
+
+- **Type**: Lightweight (automatic). No mapping model needed.
+- **CloudKit safety**: All changes are append-only. New entity + optional relationships + optional attributes. No renames, deletions, or type changes.
+- **Existing data**: Zero stores post-migration. Recipe.imageURL and Recipe.author are nil for all existing recipes.
+
+### New Entity: `Store`
 
 | Property | Type | Notes |
 |----------|------|-------|
-| `id` | UUID | Primary key |
-| `name` | String | "Costco", "Heinen's", "Target" |
-| `color` | String | Hex color code for visual indicator |
-| `sortOrder` | Int16 | User-defined display order |
-| `isDefault` | Bool | Protected flag (prevent deletion if in use) |
+| `id` | UUID? | Primary key |
+| `name` | String? | "Costco", "Heinen's", "Target" |
+| `color` | String? | Hex color code for visual indicator |
+| `sortOrder` | Int16 | User-defined display order (default 0) |
 | `householdKey` | String? | Household scoping (ADR 008/013) |
 | `household` | Household? | Relationship for zone routing |
-| `dateCreated` | Date | |
-| `updatedAt` | Date | Conflict resolution |
+| `dateCreated` | Date? | |
+| `updatedAt` | Date? | Conflict resolution |
+| `ingredientTemplates` | NSSet? | Inverse of IngredientTemplate.preferredStore |
+| `groceryListItems` | NSSet? | Inverse of GroceryListItem.store |
 
-**New relationship on IngredientTemplate:**
-- `preferredStore: Store?` — optional to-one relationship
-- Inverse: `Store.ingredientTemplates: NSSet`
+**HouseholdScoped** → must use `ManagedObjectFactory.make()` (ADR 014).
+**Fetch index**: `byStoreSortOrder` on `(sortOrder ASC, name ASC)`.
 
-**New relationship on GroceryListItem:**
-- `store: Store?` — snapshot from template at list-add time (like category snapshot pattern from M9.12)
-- Inverse: `Store.groceryListItems: NSSet`
+### Modified Entity: `IngredientTemplate`
 
-**Schema version**: v11 (lightweight migration — new entity + optional relationships)
+- Add `preferredStore: Store?` — optional to-one relationship (inverse: `Store.ingredientTemplates`)
 
-**ADR 007 compliance**: New entity, new optional relationships, no destructive changes. CloudKit-safe.
+### Modified Entity: `GroceryListItem`
 
-**Factory enforcement**: Store is HouseholdScoped → must use `ManagedObjectFactory.make()` (ADR 014).
+- Add `store: Store?` — optional to-one relationship, snapshot at add-time (inverse: `Store.groceryListItems`)
 
-### M18.1.2: StoreService (1h)
+### Modified Entity: `Recipe`
 
-New service following established service layer pattern:
+- Add `imageURL: String?` — optional String (source recipe hero image URL)
+- Add `author: String?` — optional String (recipe creator name for attribution)
+
+### Modified Entity: `Household`
+
+- Add `stores: NSSet?` — to-many relationship (inverse: `Store.household`, nullify)
+
+### Comprehensive Search Results
+
+```
+".preferredStore"  → 0 results (new property)
+".store" on GroceryListItem → 0 results (new property; "store" is common word, filtered to entity context)
+"imageURL" → ImportDraftRecipe.swift:70, SchemaRecipeMapper.swift, extraction code — no Recipe entity references
+"author" → ImportDraftRecipe.swift:71, SchemaRecipeMapper.swift — no Recipe entity references
+"Store.fetchRequest" → 0 results (new entity)
+```
+
+### Affected Files Checklist
+
+#### Core Data Layer
+- [ ] `forager.xcdatamodeld/forager 11.xcdatamodel/contents` — CREATE new model version
+- [ ] `forager.xcdatamodeld/.xccurrentversion` — MODIFY to point to v11
+- [ ] `Models/Store+CoreDataClass.swift` — CREATE
+- [ ] `Models/Store+CoreDataProperties.swift` — CREATE (properties + generated accessors)
+- [ ] `Models/Store+Extensions.swift` — CREATE (displayName, displayColor computed properties)
+- [ ] `Models/Recipe+CoreDataProperties.swift` — MODIFY: add `@NSManaged public var imageURL: String?` and `@NSManaged public var author: String?`
+- [ ] `Models/IngredientTemplate+CoreDataProperties.swift` — MODIFY: add `@NSManaged public var preferredStore: Store?`
+- [ ] `Models/GroceryListItem+CoreDataProperties.swift` — MODIFY: add `@NSManaged public var store: Store?`
+- [ ] `Models/Household+CoreDataProperties.swift` — MODIFY: add `@NSManaged public var stores: NSSet?` + generated accessors
+- [ ] `Services/Persistence/DataScope.swift` — MODIFY: add `extension Store: HouseholdScoped {}`
+
+#### Service Layer
+- [ ] `Services/StoreService.swift` — CREATE: CRUD, assignment, query, resolveStore
+- [ ] `Services/GroceryListItemService.swift` — MODIFY: snapshot store in addItem (~line 133), addStaples, addIngredients
+- [ ] `Services/WeeklyListService.swift` — MODIFY: add optional store param to addItem
+- [ ] `Services/Import/RecipeImportService.swift` — MODIFY: persist imageURL + author at ~line 182
+- [ ] `Services/RecipeService.swift` — MODIFY: add optional imageURL + author params to createRecipe
+- [ ] `Services/RecipeFormModels.swift` — MODIFY: add imageURL + author to RecipeFormData
+
+#### UI Layer
+- [ ] `forager/Views/Grocery/ManageStoresView.swift` — CREATE (replicate ManageCategoriesView pattern)
+- [ ] `forager/Views/Grocery/AddStoreView.swift` — CREATE (name + color picker + suggested store chips)
+- [ ] `forager/Views/Settings/SettingsView.swift` — MODIFY: add Stores row in Data Management section
+- [ ] `forager/Views/Grocery/GroceryListDetailView.swift` — MODIFY: store grouping, context menu, toolbar toggle, color dots
+- [ ] `forager/Theme/ForagerSectionHeader.swift` — MODIFY: optional colorDot parameter
+- [ ] `forager/Theme/ForagerTheme+StoreColors.swift` — CREATE: hex→Color helper + default palette
+
+#### Tests
+- [ ] `foragerTests/Services/StoreServiceTests.swift` — CREATE
+- [ ] `foragerTests/Services/WeeklyListServiceTests.swift` — MODIFY: store snapshot test
+
+#### Docs
+- [ ] `CLAUDE.md` — Update entity count (12), model version (v11), add Store to HouseholdScoped list
+
+### Update Strategy (Dependency Order)
+
+1. Core Data schema + model files (v11)
+2. DataScope.swift (HouseholdScoped conformance)
+3. StoreService (service layer)
+4. GroceryListItemService + WeeklyListService (snapshot wiring)
+5. RecipeImportService + RecipeService (attribution wiring)
+6. UI views (ManageStoresView, GroceryListDetailView, SettingsView)
+7. Tests
+
+### Time Estimate (ADR 007 Formula)
+
+- Schema + model files (10 files): 70min
+- Service layer (6 files × 15min): 90min
+- UI layer (6 files × 10min): 60min
+- Tests (2 files × 15min): 30min
+- Subtotal: 250min
+- Buffer (30%): 75min
+- **Total: 325min (~5.4h)** — conservative; actual estimate 7-10h including iteration
+
+### Risk Assessment
+
+- **High Risk**: `GroceryListDetailView.swift` — most complex changes (grouping logic, context menus, toolbar toggle). Existing category grouping must remain default and unchanged.
+- **Medium Risk**: `GroceryListItemService.swift` — store snapshot must not break existing 3 creation paths (addItem, addIngredients batch, addStaples).
+- **Low Risk**: Recipe attribution — purely additive optional fields, no behavioral changes.
+
+---
+
+## Sub-Milestones
+
+### M18.1.0: Schema v11 + Model Files (1.2h)
+
+Create `forager 11.xcdatamodel` with all changes from both features in one shot.
+
+**Files**: See Core Data Layer checklist above.
+
+**Verification**: Build project. All existing tests pass. No runtime behavior changes (zero stores exist).
+
+### M18.1.1: StoreService + Factory Support (1.1h)
+
+New service following established service layer pattern.
 
 ```swift
 class StoreService {
-    // CRUD
     static func createStore(name:color:in:) -> Store
-    static func deleteStore(_:reassignTo:in:) // reassign templates to another store or nil
+    static func deleteStore(_:reassignTo:in:)
     static func reorderStores(_:in:)
-
-    // Query
     static func fetchStores(in:) -> [Store]
-    static func storeForTemplate(_:) -> Store?
-
-    // Assignment
-    static func assignStore(_:to template:in:)
-    static func assignStore(_:to groceryItem:in:)
-    static func bulkAssignStore(_:to templates:[IngredientTemplate]:in:)
+    static func assignStore(_:toTemplate:in:)
+    static func assignStore(_:toGroceryItem:in:)
+    static func resolveStore(for:targetList:) -> Store?  // cross-store safe
 }
 ```
 
-Run `/forager-service-check` before implementation to verify no overlap.
+Run `/forager-service-check` before implementation.
 
-### M18.1.3: Store Management UI (1.5-2h)
+**Key design**: `resolveStore(for:targetList:)` mirrors `GroceryListItemService.resolveCategory()` for cross-store CloudKit safety.
 
-**Settings > Stores** (new section, below Categories)
+### M18.1.2: Store Snapshot Wiring (0.6h)
 
-- List of stores with color dot + name
-- Drag to reorder (same pattern as ManageCategoriesView)
-- Swipe to delete (with reassignment dialog if templates are assigned)
-- Add store: name + color picker (same hex color pattern as Category)
-- Tap to edit name/color
+When a `GroceryListItem` is created, snapshot the template's `preferredStore` onto the item.
 
-**Empty state**: `ContentUnavailableView` — "Add stores you shop at to organize your grocery list by where you buy things."
+**Files**: `GroceryListItemService.swift` (3 creation paths), `WeeklyListService.swift`
 
-**Suggested stores on first use**: Offer common store names (Costco, Walmart, Target, Kroger, Whole Foods, Aldi, Trader Joe's) as quick-add chips. User taps to add, can rename.
+**Critical invariant**: `GroceryListItem.store` is a snapshot set at creation time, exactly like `categoryEntity`. Does NOT auto-update if template preference changes later.
 
-### M18.1.4: Store Assignment UX (1.5-2h)
+### M18.1.3: Store Management UI (1.75h)
 
-**How users assign stores to ingredients:**
+**Settings > Stores** (new section, below Categories in Data Management)
 
-1. **Long-press on grocery list item** → context menu includes "Buy at…" → store picker
-   - This sets the store on the underlying IngredientTemplate (learning for next time)
-   - Also tags the current GroceryListItem
+- List with color dot + name, drag to reorder
+- Swipe to delete (reassignment dialog if templates assigned)
+- Add store: name + color picker
+- Empty state: `ContentUnavailableView`
+- Suggested store chips on first use (Costco, Walmart, Target, Kroger, Whole Foods, Aldi, Trader Joe's)
 
-2. **Template detail** (if/when we add one) → store picker field
+Follow `ManageCategoriesView` pattern exactly.
 
-3. **Bulk assign on import** — after parsing, before save, user can tag items with a store
-   - Low priority for Phase 1 — can defer to Phase 2
+### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h)
 
-**Visual indicator on grocery list items:**
-- Small color dot (matching store color) to the left of the item name
-- Subtle, doesn't compete with category section headers
-- Only shown when item has a store assigned
+**Assignment**:
+- Long-press grocery list item → "Buy at..." → store picker
+- Sets store on IngredientTemplate (learning) + current GroceryListItem
+- Color dot indicator on items (only when store assigned, visible in both group modes)
 
-### M18.1.5: "Group by Store" View Mode (1.5-2h)
+**Grouping**:
+- Toolbar toggle: "Group by Category" (default) | "Group by Store"
+- Store sections: color dot + name + completion count in ForagerSectionHeader
+- "Unassigned" section at bottom for items without store
+- Sub-sort by category within each store section
+- Persistence: `UserDefaults` key `groceryListGroupMode`
 
-**New toggle in GroceryListDetailView toolbar:**
+**Invisibility rule**: If `stores.isEmpty`, toolbar toggle hidden, grouping defaults to category.
 
-Current: items grouped by Category (default, unchanged)
-New: items grouped by Store
+### M10.4.0: Recipe Attribution Wiring (0.75h)
 
-**"By Store" mode:**
-- Section headers show store name + store color dot + completion count
-- Items without a store go in an "Unassigned" section at the bottom
-- Within each store section, items are sub-sorted by category sortOrder (maintains aisle logic within a store)
-- Collapsible sections (same pattern as category sections)
+Persist `imageURL` and `author` from import extraction into Recipe entity.
 
-**Toggle persistence**: UserDefaults key `groceryListGroupMode` — values: `"category"` (default), `"store"`
+**Wiring points**:
+- `RecipeImportService.saveImport()` at ~line 182: add `recipe.imageURL = draft.imageURL.value` and `recipe.author = draft.author.value`
+- `RecipeService.createRecipe()`: add optional `imageURL` and `author` parameters
+- `RecipeFormModels.RecipeFormData`: add fields, update `toRecipeFormData()` mapping
 
-**Filter chips** (stretch goal for Phase 1):
-- Horizontal scroll row at top: "All | Costco | Heinen's | Target"
-- Tap to filter list to one store — "shopping trip mode"
-- Active chip highlighted with store color
+**Note**: `imageURL` is stored but NOT rendered as an image in this milestone. Image rendering deferred to future milestone. The URL is persisted so it's available when that ships.
 
 ---
 
-## Phase 2: Multi-Store + Shopping Trips (M18.2)
+## Phase 2: Multi-Store + Shopping Trips (M18.2) — Deferred
 
-**Estimated**: 6-10 hours
-**Goal**: Power features for multi-store households.
 **Status**: PLANNED (only if Phase 1 resonates with users)
+**Estimated**: 6-10 hours
 
-### M18.2.1: Multi-Store per Template
-
-- Change `preferredStore` from to-one to to-many via join entity `StorePreference`
-- `StorePreference`: IngredientTemplate ↔ Store + `priority: Int16` + `notes: String?`
-- Example: "Chicken breast" → Costco (primary, bulk), Heinen's (secondary, quick trip)
-- UI: store picker allows multiple selection with drag-to-prioritize
-
-### M18.2.2: Shopping Trip Mode
-
-- Dedicated "Start Trip" action: select a store → filtered list with only that store's items
-- Check-off experience optimized for single-store context
-- Trip history: when did you last shop at each store? (lightweight tracking)
-- "You're missing 3 Costco items that are on your list" nudge
-
-### M18.2.3: Smart Store Suggestions
-
-- After N items are manually assigned to a store, suggest the store for similar items
-- Leverage category as a signal: "You buy most Produce at Heinen's — assign this too?"
-- Optional, behind a toggle
-
-### M18.2.4: Staple Items per Store
-
-- Extend `isStaple` on IngredientTemplate to be store-aware
-- "Costco staples" vs "Weekly Heinen's staples"
-- Auto-populate list sections when starting a new weekly list
-
-### M18.2.5: Price Tracking (Stretch)
-
-- Optional price field on StorePreference
-- "You usually pay $X at Costco vs $Y at Heinen's"
-- Way out of scope for initial release — note for future ideation only
-
----
-
-## Data Model Summary
-
-### Phase 1 (M18.1)
-
-```
-Store (NEW)
-├── id: UUID
-├── name: String
-├── color: String (hex)
-├── sortOrder: Int16
-├── householdKey: String?
-├── household: Household?
-├── ingredientTemplates: [IngredientTemplate] (inverse of preferredStore)
-└── groceryListItems: [GroceryListItem] (inverse of store)
-
-IngredientTemplate (MODIFIED)
-└── + preferredStore: Store? (to-one, optional)
-
-GroceryListItem (MODIFIED)
-└── + store: Store? (to-one, optional, snapshot at add-time)
-```
-
-### Phase 2 (M18.2)
-
-```
-StorePreference (NEW — replaces direct relationship)
-├── id: UUID
-├── priority: Int16
-├── notes: String?
-├── ingredientTemplate: IngredientTemplate
-└── store: Store
-```
+- M18.2.1: Multi-store per template (StorePreference join entity)
+- M18.2.2: Shopping trip mode (single-store filtered view)
+- M18.2.3: Smart store suggestions based on category patterns
+- M18.2.4: Store-aware staple items
+- M18.2.5: Price tracking (stretch)
 
 ---
 
@@ -228,46 +263,56 @@ StorePreference (NEW — replaces direct relationship)
 ### Household Sharing
 - Stores are household-scoped: when a family member adds "Costco", all members see it
 - Store assignments on templates are shared — "we buy milk at Costco" is a household fact
-- Individual shopping trips could be per-user in Phase 2
-
-### Migration Path
-- Existing users get zero stores, zero store assignments — feature is invisible until they add a store
-- No data migration needed beyond schema version bump
-- Categories continue to work exactly as before
 
 ### Category vs. Store (they coexist)
 - **Category** = what it is + aisle position within a store (Produce, Dairy, Pantry)
 - **Store** = where you buy it (Costco, Heinen's, Target)
-- These are orthogonal dimensions — "Chicken breast" is always "Deli & Meat" category, but might be "Costco" store
+- Orthogonal dimensions — "Chicken breast" is always "Deli & Meat" category, but might be "Costco" store
 - "Group by Store" mode uses category as a sub-sort within each store section
+
+---
+
+## Design Decisions
+
+1. **No `isDefault` on Store** — Unlike Category ("Uncategorized" is protected), Store has no equivalent. Deletion protection is runtime: show reassignment dialog when `store.ingredientTemplates.count > 0`.
+2. **Store color dots visible in both group modes** — Useful context regardless of active grouping.
+3. **Filter chips deferred to Phase 2** — Section grouping sufficient for v1.
+4. **imageURL stored but not rendered** — Persisted for future image display milestone.
+5. **`GroceryListItem.store` is a snapshot** — Mirrors `categoryEntity` pattern exactly.
 
 ---
 
 ## Acceptance Criteria
 
-### Phase 1
-- [ ] User can create/edit/delete/reorder stores in Settings
+### M18.1 (Store-Aware Shopping Phase 1)
+- [ ] `forager 11.xcdatamodel` exists with Store entity and all new relationships
+- [ ] App launches and migrates from v10 without data loss
+- [ ] Store conforms to `HouseholdScoped` in DataScope.swift
+- [ ] User can create/edit/delete/reorder stores in Settings > Stores
 - [ ] User can assign a preferred store to any grocery list item via long-press
-- [ ] Store assignment persists to the IngredientTemplate for future lists
-- [ ] Grocery list has a "Group by Store" toggle
+- [ ] Store assignment persists to IngredientTemplate.preferredStore for future lists
+- [ ] New GroceryListItem snapshots preferredStore from template at creation time
+- [ ] Grocery list has "Group by Store" / "Group by Category" toggle
 - [ ] Store sections show color dot, store name, and completion count
 - [ ] Items without a store appear in "Unassigned" section
-- [ ] Stores are household-scoped and sync via CloudKit
-- [ ] Feature is invisible to users who haven't created any stores
-- [ ] Existing category grouping is unchanged and remains the default
+- [ ] Stores are household-scoped and created via ManagedObjectFactory (ADR 014)
+- [ ] All fetches include householdKey predicate (ADR 013)
+- [ ] Feature invisible to users with no stores (no toggle, no dots)
+- [ ] Existing category grouping unchanged and remains default
+- [ ] Store deletion offers reassignment dialog
+- [ ] Cross-store safety: resolveStore handles dual-store CloudKit correctly
 
-### Phase 2
-- [ ] Multi-store per template with priority ordering
-- [ ] Shopping trip mode (single-store filtered view)
-- [ ] Smart store suggestions based on category patterns
-- [ ] Store-aware staple items
+### M10.4.0 (Recipe Attribution)
+- [ ] Recipe entity has imageURL and author attributes
+- [ ] RecipeImportService.saveImport() persists imageURL and author from draft
+- [ ] RecipeService.createRecipe() accepts optional imageURL and author
+- [ ] Existing recipes unaffected (nil values)
 
 ---
 
-## Open Questions
+## Future Considerations
 
-1. **Should store color dots appear in "Group by Category" mode too?** Leaning yes — it's useful context even when not actively grouping by store.
-2. **Filter chips in Phase 1 or Phase 2?** Could be a quick win in Phase 1 if the section grouping alone feels incomplete.
-3. **Store suggestions on first launch?** Pre-populated list of common chains, or start empty? Leaning toward suggested chips that the user taps to add.
-4. **Price tracking scope** — Joe didn't mention price, but "where should I buy this" often implies "where is it cheapest." Park for now.
-5. **Aisle numbers within a store?** "Aisle 3 at Costco" — useful but significant scope creep. Category sort order already approximates this. Defer.
+- **Recipe description, cuisine, category** on Recipe entity — deferred to future milestone. Import pipeline extracts these but they are not persisted yet.
+- **Image rendering** from imageURL — deferred to future milestone (M11.1 Recipe Images)
+- **Author display** in recipe views — can be added incrementally
+- **M10.4 remaining scope** (import history, telemetry dashboard) — deferred, not needed for launch
