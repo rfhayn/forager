@@ -1,9 +1,9 @@
 # Model Card — Forager Ingredient Tagger
 
 **Model Name**: IngredientTaggerEmissions
-**Version**: 1.0
-**Date Trained**: 2026-02-21
-**Architecture**: Word-only BiLSTM emission scorer (v1)
+**Version**: 2.0
+**Date Trained**: 2026-03-27
+**Architecture**: Word-only BiLSTM emission scorer (v2)
 
 ---
 
@@ -25,12 +25,14 @@ The emission scorer is the BiLSTM + linear projection component of a BiLSTM-CRF 
 | LSTM layers | 2 |
 | Dropout | 0.5 |
 | Output labels | 7 |
-| Vocabulary size | 5,372 |
-| Total parameters | 1,348,934 |
+| Vocabulary size | 5,454 (+82 from v1) |
+| Total parameters | 1,359,430 |
 
-### v1 Decision: Word-Only
+### v1 → v2 Changes
 
-Character-level features (char CNN/LSTM) add dual-input CoreML conversion complexity and per-token character ID preprocessing with marginal accuracy gain on this vocabulary. strangetom CRF achieves 95.25% sentence accuracy without them.
+- Vocabulary expanded from 5,372 to 5,454 tokens (+82 from harness training data)
+- Retrained from scratch on combined dataset (strangetom + harness, 4x oversample)
+- No architecture changes — same embedding/hidden dims, same label set
 
 ---
 
@@ -40,12 +42,11 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 |-------|-------|
 | Primary dataset | strangetom/ingredient-parser (MIT) |
 | Supplement | NYT/ingredient-phrase-tagger (Apache 2.0) |
-| Total sentences | 81,316 |
-| Unique sentences (after dedup) | 68,846 |
-| Label mapping | strangetom 13 → Forager 7 |
-| Dataset snapshot SHA-256 | `ead59b783d4a8ff8...` |
-| Train/val/test split | 80/10/10 (stratified by source) |
-| Split hash | `de9b8c5cb0b7fdee...` |
+| Harness data | 1,440 AI-labeled entries from M16 parsing harness |
+| Total sentences | ~82,700 (68,846 strangetom + ~1,300 harness after dedup) |
+| Harness oversample | 4x (effective ~15% of training set) |
+| Label mapping | strangetom 13 → Forager 7; harness AI fields → BIO tokens |
+| Train/val/test split | 80/10/10 (stratified, harness proportional in all splits) |
 
 ---
 
@@ -60,23 +61,33 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 | Early stopping patience | 5 |
 | Dropout | 0.5 |
 | Random seed | 42 |
-| Training duration | 2326s (38.8 min) |
+| Best epoch | 26 |
+| Training duration | 2627s (43.8 min) |
 
 ---
 
 ## Evaluation Metrics
 
-| Metric | Value |
-|--------|-------|
-| Token-level accuracy (test) | 98.49% |
-| Sentence-level accuracy (test) | 95.40% |
-| Per-class F1 — QTY | 0.9968 |
-| Per-class F1 — UNIT | 0.9939 |
-| Per-class F1 — NAME | 0.9869 |
-| Per-class F1 — MODIFIER | 0.9261 |
-| Per-class F1 — PREP | 0.9789 |
-| Per-class F1 — COMMENT | 0.9463 |
-| Per-class F1 — OTHER | 0.9997 |
+### Strangetom Test Set (6,885 samples)
+
+| Metric | v1.0 | v2.0 | Delta |
+|--------|------|------|-------|
+| Token-level accuracy | 98.49% | 98.54% | +0.05% |
+| Sentence-level accuracy | 95.40% | 95.34% | -0.06% |
+| Per-class F1 — QTY | 0.9968 | 0.9970 | +0.0002 |
+| Per-class F1 — UNIT | 0.9939 | 0.9942 | +0.0003 |
+| Per-class F1 — NAME | 0.9869 | 0.9872 | +0.0003 |
+| Per-class F1 — MODIFIER | 0.9261 | 0.9283 | +0.0022 |
+| Per-class F1 — PREP | 0.9789 | 0.9790 | +0.0001 |
+| Per-class F1 — COMMENT | 0.9463 | 0.9486 | +0.0023 |
+| Per-class F1 — OTHER | 0.9997 | 0.9994 | -0.0003 |
+
+### Harness Test Set (132 samples)
+
+| Metric | v1.0 | v2.0 | Delta |
+|--------|------|------|-------|
+| Token-level accuracy | 65.77% | 79.22% | +13.45% |
+| Sentence-level accuracy | 15.91% | 49.24% | +33.33% |
 
 ---
 
@@ -86,13 +97,12 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 |-------|-------|
 | PyTorch version | 2.8.0 |
 | coremltools version | 9.0 |
-| CoreML model size (disk) | 5.15 MB |
+| CoreML model size (disk) | ~5.2 MB |
 | CoreML compute precision | FLOAT32 |
 | CoreML minimum deployment | iOS 18 |
 | CoreML compute units | ALL (CPU + Neural Engine) |
 | Input shape | `token_ids: (1, RangeDim(1, 64))` Int32 |
 | Output shape | `emissions: (1, seq_len, 7)` Float32 |
-| Emission parity (PyTorch vs CoreML) | max diff 4.77e-06 |
 
 ---
 
@@ -101,20 +111,6 @@ Character-level features (char CNN/LSTM) add dual-input CoreML conversion comple
 Exported separately (not in CoreML model):
 - `transitions.json` — 7×7 transition matrix + 1×7 start transitions + 1×7 end transitions + label names
 - Decoded by `ViterbiDecoder.swift` at runtime
-
----
-
-## Viterbi Parity
-
-| Metric | Value |
-|--------|-------|
-| Test samples | 1,000 held-out |
-| Token agreement (Python CRF vs Python Viterbi) | 100.0000% (8,030/8,030) |
-| Sentence agreement | 100.00% (1,000/1,000) |
-| End-to-end (CoreML + Viterbi vs CRF) | 100.0000% (794/794 on 100 samples) |
-| Gate threshold | >= 99.9% |
-| Gate status | **PASS** |
-| Disagreements | 0 |
 
 ---
 
@@ -130,3 +126,13 @@ On-device ingredient string parsing for the Forager iOS app. All inference runs 
 - Word-level embeddings only (no subword or character features)
 - Trained on recipe ingredient strings — may not generalize to other domains
 - Requires CRF parameter file and Viterbi decoder for label sequence decoding
+- v2 model may label unit tokens differently than v1 on some edge cases (e.g., "cups" as NAME); the hybrid router's regex tier handles standard inputs at higher confidence
+
+---
+
+## Version History
+
+| Version | Date | Vocab | Strangetom Token Acc | Harness Token Acc |
+|---------|------|-------|---------------------|-------------------|
+| v1.0 | 2026-02-21 | 5,372 | 98.49% | 65.77% |
+| v2.0 | 2026-03-27 | 5,454 | 98.54% | 79.22% |

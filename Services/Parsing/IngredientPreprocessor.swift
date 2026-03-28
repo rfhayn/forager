@@ -36,6 +36,25 @@ enum IngredientPreprocessor {
         // Step 5b: Strip parenthetical can/package sizes ("(28 ounce) can" → "can")
         result = stripCanPackageSizes(result)
 
+        // Step 5d: Strip leading "about" / "optional" qualifiers before quantities
+        result = stripLeadingQualifiers(result)
+
+        // Step 5h: Normalize leading decimal without zero ("".5 ounces" → "0.5 ounces")
+        result = normalizeLeadingDecimal(result)
+
+        // Step 5g: Strip leading dual-unit metric prefix
+        // "500g / 1lb peeled prawns" → "1lb peeled prawns"
+        result = stripLeadingDualUnitMetric(result)
+
+        // Step 5e: Normalize "X and Y/Z" fractions to "X Y/Z"
+        // "2 and 1/4 cups flour" → "2 1/4 cups flour"
+        result = normalizeAndFractions(result)
+
+        // Step 5f: Convert leading number words to digits
+        // "One 3-pound chuck roast" → "1 3-pound chuck roast"
+        // "Six fillets salmon" → "6 fillets salmon"
+        result = convertLeadingNumberWords(result)
+
         // Step 5c: Convert IEEE 754 float quantities to slash fractions
         // AllRecipes stores ⅓ as 0.33333334326744 in JSON-LD
         result = convertIEEE754FloatQuantities(result)
@@ -52,7 +71,10 @@ enum IngredientPreprocessor {
         // Step 9: Fix space-before-punctuation ("avocado , sliced" → "avocado, sliced")
         result = fixSpaceBeforePunctuation(result)
 
-        // Step 10: Normalize whitespace (Unicode spaces, multiple spaces, trim)
+        // Step 10: Normalize curly quotes/apostrophes to straight ASCII
+        result = normalizeCurlyQuotes(result)
+
+        // Step 11: Normalize whitespace (Unicode spaces, multiple spaces, trim)
         result = normalizeWhitespace(result)
 
         return result
@@ -152,15 +174,36 @@ enum IngredientPreprocessor {
         )
     }
 
-    /// Step 5: Strip parenthetical metric measurements from dual-unit recipes
+    /// Step 5: Strip parenthetical metric/imperial measurements from dual-unit recipes
     /// "6 tablespoons (90g) butter" → "6 tablespoons butter"
     /// "3 pounds (1.4kg) onions" → "3 pounds onions"
+    /// "2 cups chicken broth (16 oz)" → "2 cups chicken broth"
     private static func stripParentheticalMetric(_ text: String) -> String {
-        text.replacingOccurrences(
+        var result = text.replacingOccurrences(
             of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*\)"#,
             with: "",
             options: [.regularExpression, .caseInsensitive]
         )
+        // Metric ranges inside parens: "(198g to 255g)", "(100g - 200g)"
+        result = result.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s+(?:to|-|–)\s+\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        // Metric with semicolon equivalents: "(15g; about 1 1/2 tablespoons)", "(10g; about 2 teaspoons)"
+        result = result.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:g|kg|ml|l|cl|dl)\s*;[^)]*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        // Also strip parenthetical imperial when primary unit is already present
+        // "(16 oz)", "(6 ounces)", "(281g)" — only when they appear mid-string or at end
+        result = result.replacingOccurrences(
+            of: #"\s*\(\s*\d+\.?\d*\s*(?:oz|ounce|ounces|lb|lbs|pound|pounds)\s*\)"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        return result
     }
 
     /// Step 6: Convert Unicode fraction characters to slash fractions for consistent parsing
@@ -184,10 +227,86 @@ enum IngredientPreprocessor {
     /// Step 5b: Strip parenthetical can/package sizes
     /// "1 (28 ounce) can crushed tomatoes" → "1 can crushed tomatoes"
     /// "2 (8 oz) boxes cream cheese" → "2 boxes cream cheese"
+    /// "1 (15-ounce) can chickpeas" → "1 can chickpeas" (hyphenated form)
     private static func stripCanPackageSizes(_ text: String) -> String {
-        text.replacingOccurrences(
-            of: #"\((\d+\.?\d*)\s*(?:ounce|ounces|oz)\)\s*(can|cans|box|boxes|package|packages|jar|jars|bottle|bottles|bag|bags|carton|cartons)"#,
+        // Match "(28 ounce)", "(8 oz)", "(15-ounce)", "(14.5-ounce)" before container words
+        var result = text.replacingOccurrences(
+            of: #"\((\d+\.?\d*)\s*[-‐]?\s*(?:ounce|ounces|oz)\)\s*(can|cans|box|boxes|package|packages|jar|jars|bottle|bottles|bag|bags|carton|cartons|container|containers)"#,
             with: "$2",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        // Match "large can (28 ounces)" or "large jar (about 32 ounces)" — size AFTER container word
+        result = result.replacingOccurrences(
+            of: #"(can|cans|jar|jars|box|boxes|bottle|bottles|container|containers)\s+\((?:about\s+)?(\d+\.?\d*)\s*(?:ounce|ounces|oz)\)"#,
+            with: "$1",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        return result
+    }
+
+    /// Step 5f: Convert leading number words (One, Two, Six, etc.) to digits
+    /// "One 3-pound chuck roast" → "1 3-pound chuck roast"
+    /// Only converts the FIRST word to avoid corrupting ingredient names
+    private static func convertLeadingNumberWords(_ text: String) -> String {
+        let numberWords: [String: String] = [
+            "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+            "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10",
+            "eleven": "11", "twelve": "12"
+        ]
+        let words = text.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+        guard words.count == 2,
+              let digit = numberWords[words[0].lowercased()] else {
+            return text
+        }
+        // Don't convert when followed by "and a half/quarter/third" —
+        // the regex compound phrase pattern handles these natively
+        let rest = words[1].lowercased()
+        if rest.hasPrefix("and a half") || rest.hasPrefix("and a quarter") || rest.hasPrefix("and a third") {
+            return text
+        }
+        return "\(digit) \(words[1])"
+    }
+
+    /// Step 5g: Strip leading dual-unit metric prefix before an imperial measurement
+    /// "500g / 1lb peeled prawns" → "1lb peeled prawns"
+    /// "500 g / 1 lb peeled prawns" → "1 lb peeled prawns"
+    /// Only strips when the first measurement is metric (g/kg/ml/l) followed by "/" or "/"
+    /// and the second measurement is imperial (lb/lbs/oz/ounce/pound/cup/etc.)
+    private static func stripLeadingDualUnitMetric(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"^\d+\.?\d*\s*(?:g|kg|ml|l)\s*/\s*"#,
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
+    /// Step 5e: Normalize "X and Y/Z" fractions to standard mixed fraction "X Y/Z"
+    /// "2 and 1/4 cups flour" → "2 1/4 cups flour"
+    private static func normalizeAndFractions(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"(\d+)\s+and\s+(\d+/\d+)"#,
+            with: "$1 $2",
+            options: [.regularExpression, .caseInsensitive]
+        )
+    }
+
+    /// Step 5h: Normalize leading decimal without zero (".5 ounces" → "0.5 ounces")
+    /// Serious Eats uses ".5 ounces" and ".35 ounces" which regex patterns can't match
+    private static func normalizeLeadingDecimal(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"^\.(\d)"#,
+            with: "0.$1",
+            options: .regularExpression
+        )
+    }
+
+    /// Step 5d: Strip leading qualifier words that block quantity parsing
+    /// "about 1/2 cup vegetable oil" → "1/2 cup vegetable oil"
+    /// "optional 1/2 cup cheddar" → "1/2 cup cheddar"
+    private static func stripLeadingQualifiers(_ text: String) -> String {
+        text.replacingOccurrences(
+            of: #"^(?:about|approximately|optional|optionally|roughly)\s+"#,
+            with: "",
             options: [.regularExpression, .caseInsensitive]
         )
     }
@@ -291,7 +410,22 @@ enum IngredientPreprocessor {
         return result
     }
 
-    /// Step 8: Normalize all whitespace variants to single ASCII spaces
+    /// Step 10: Normalize curly/smart quotes and apostrophes to straight ASCII
+    /// "confectioners\u{2019} sugar" → "confectioners' sugar"
+    private static func normalizeCurlyQuotes(_ text: String) -> String {
+        var result = text
+        // Curly single quotes / apostrophes → straight apostrophe
+        result = result.replacingOccurrences(of: "\u{2018}", with: "'") // left single quote
+        result = result.replacingOccurrences(of: "\u{2019}", with: "'") // right single quote (apostrophe)
+        result = result.replacingOccurrences(of: "\u{201A}", with: "'") // single low-9 quote
+        // Curly double quotes → straight double quote
+        result = result.replacingOccurrences(of: "\u{201C}", with: "\"") // left double quote
+        result = result.replacingOccurrences(of: "\u{201D}", with: "\"") // right double quote
+        result = result.replacingOccurrences(of: "\u{201E}", with: "\"") // double low-9 quote
+        return result
+    }
+
+    /// Step 11: Normalize all whitespace variants to single ASCII spaces
     private static func normalizeWhitespace(_ text: String) -> String {
         text.replacingOccurrences(
             of: #"[\s\x{00A0}\x{200B}\x{FEFF}]+"#,

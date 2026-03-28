@@ -23,7 +23,8 @@ class RegexIngredientParser: IngredientParser {
     /// "2 heaping tablespoons" → strip "heaping" so parser sees "2 tablespoons"
     private static let measurementModifiers: Set<String> = [
         "heaping", "rounded", "scant", "generous", "level",
-        "packed", "lightly", "loosely", "firmly", "overflowing"
+        "packed", "lightly", "loosely", "firmly", "overflowing",
+        "thin", "thick", "large", "small", "medium", "whole"
     ]
 
     // MARK: - M9.35 P3B: Comma-Qualifier Prep Detection
@@ -128,6 +129,7 @@ class RegexIngredientParser: IngredientParser {
         if let result = tryPrefixQuantityPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryQualifierPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
         if let result = tryDescriptiveAmountPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
+        if let result = tryNameOnlyPattern(normalized, original: input) { return mergeParenPrep(result, parenPrepNote) }
 
         // Fallback: just ingredient name (with parenthetical prep if extracted)
         return ParserResult(
@@ -295,6 +297,61 @@ class RegexIngredientParser: IngredientParser {
     // Handles: "2-3 cloves garlic", "1-2 cups flour", "3 to 4 tbsp butter"
 
     private func tryRangePattern(_ text: String, original: String) -> ParserResult? {
+        // M9.35.3: Range with mixed fraction high end: "1 - 1 1/2 pounds salmon"
+        let rangeMixedFractionPattern = #"^(\d+(?:\.\d+)?(?:\s+\d+/\d+)?|(?:\d+/\d+))\s*[-–—]\s*(\d+\s+\d+/\d+)\s+([\p{L}]+)\s+(.+)$"#
+        if let match = matchPattern(rangeMixedFractionPattern, in: text) {
+            let highValue = match[2]
+            let potentialUnit = match[3]
+            var name = match[4].trimmingCharacters(in: .whitespacesAndNewlines)
+            var unit: String? = potentialUnit
+
+            if !isKnownUnit(potentialUnit) {
+                name = "\(potentialUnit) \(name)".trimmingCharacters(in: .whitespacesAndNewlines)
+                unit = nil
+            }
+
+            let numericValue = convertToNumeric(highValue)
+            let standardUnit = standardizeUnit(unit)
+
+            let confidence: Float = (standardUnit != nil) ? 0.95 : 0.92
+            return ParserResult(
+                name: name,
+                quantity: numericValue,
+                unit: standardUnit,
+                notes: "range: \(match[1])-\(match[2])",
+                confidence: confidence,
+                originalText: original,
+                parserUsed: parserName
+            )
+        }
+
+        // M9.35.3: "7/8 to 1 1/8 cups water" — word range with mixed fraction high end
+        let wordRangeMixedPattern = #"^(\d+(?:\.\d+)?(?:\s+\d+/\d+)?|(?:\d+/\d+))\s+(?:to|or)\s+(\d+\s+\d+/\d+)\s+([\p{L}]+)\s+(.+)$"#
+        if let match = matchPattern(wordRangeMixedPattern, in: text) {
+            let highValue = match[2]
+            let potentialUnit = match[3]
+            var name = match[4].trimmingCharacters(in: .whitespacesAndNewlines)
+            var unit: String? = potentialUnit
+
+            if !isKnownUnit(potentialUnit) {
+                name = "\(potentialUnit) \(name)".trimmingCharacters(in: .whitespacesAndNewlines)
+                unit = nil
+            }
+
+            let numericValue = convertToNumeric(highValue)
+            let standardUnit = standardizeUnit(unit)
+
+            return ParserResult(
+                name: name,
+                quantity: numericValue,
+                unit: standardUnit,
+                notes: "range: \(match[1])-\(match[2])",
+                confidence: (standardUnit != nil) ? 0.95 : 0.92,
+                originalText: original,
+                parserUsed: parserName
+            )
+        }
+
         // Pattern: number[-–—to]number followed by optional unit and name
         let rangePattern = #"^(\d+(?:\.\d+)?)\s*[-–—]\s*(\d+(?:\.\d+)?)\s+([a-zA-Z]+)\s+(.+)$"#
         if let match = matchPattern(rangePattern, in: text) {
@@ -564,7 +621,8 @@ class RegexIngredientParser: IngredientParser {
     /// Internal standard pattern that returns a ParsedIngredient (used by unicode fraction too)
     private func tryStandardPatternInternal(_ text: String) -> ParsedIngredient? {
         // "2 cups flour", "1 1/2 tbsp olive oil", "2-1/2 cups chicken stock"
-        let pattern = #"^([0-9]+(?:\.\d+)?(?:[-\s]+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([a-zA-Z]+)?\s*(.+)$"#
+        // Use \p{L} (Unicode letter) to handle accented characters like jalapeño, crème fraîche
+        let pattern = #"^([0-9]+(?:\.\d+)?(?:[-\s]+[0-9]+/[0-9]+|[/.][0-9]+)?)\s+([\p{L}]+)?\s*(.+)$"#
         if let match = matchPattern(pattern, in: text) {
             let quantity = match[1]
             var unit = match[2].isEmpty ? nil : match[2]
@@ -576,7 +634,10 @@ class RegexIngredientParser: IngredientParser {
                 if name.count <= 1 {
                     return nil
                 }
-                let combinedName = "\(capturedUnit) \(name)".trimmingCharacters(in: .whitespacesAndNewlines)
+                // When name starts with "-", rejoin without space to preserve hyphenated words
+                // "9 no-boil lasagna" → unit="no", name="-boil lasagna" → "no-boil lasagna"
+                let separator = name.hasPrefix("-") ? "" : " "
+                let combinedName = "\(capturedUnit)\(separator)\(name)".trimmingCharacters(in: .whitespacesAndNewlines)
                 name = combinedName
                 unit = nil
             }
@@ -674,8 +735,8 @@ class RegexIngredientParser: IngredientParser {
     private func tryPrefixQuantityPattern(_ text: String, original: String) -> ParserResult? {
         let lowered = text.lowercased()
 
-        // "Juice of 1/2 lemon", "Zest of 1 lemon", "Juice of 2 lemons"
-        let prefixPattern = #"^(juice|zest)\s+of\s+(\d+(?:\s*/\s*\d+)?)\s+(.+)$"#
+        // "Juice of 1/2 lemon", "Zest of 1 lemon", "Juice of 2 lemons", "juice from 1 lemon"
+        let prefixPattern = #"^(juice|zest)\s+(?:of|from)\s+(\d+(?:\s*/\s*\d+)?)\s+(.+)$"#
         guard let match = matchPattern(prefixPattern, in: lowered) else { return nil }
 
         let descriptor = match[1]
@@ -787,6 +848,59 @@ class RegexIngredientParser: IngredientParser {
         return nil
     }
 
+    // MARK: - Pattern 8: Name Only (no quantity)
+    // Handles: "Salt and pepper", "Freshly ground black pepper", "Extra virgin olive oil", "Pesto"
+    // These are ingredients with no quantity or unit — just a name.
+    // Must run LAST (lowest priority) to avoid stealing from other patterns.
+
+    private func tryNameOnlyPattern(_ text: String, original: String) -> ParserResult? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        // Must NOT start with a digit — those should have been caught by earlier patterns
+        let first = trimmed.unicodeScalars.first!
+        if CharacterSet.decimalDigits.contains(first) { return nil }
+
+        // Must be mostly letters/spaces/hyphens (not a section header or HTML junk)
+        let letterCount = trimmed.filter { $0.isLetter || $0 == " " || $0 == "-" }.count
+        let ratio = Double(letterCount) / Double(trimmed.count)
+        guard ratio > 0.7 else { return nil }
+
+        // Extract comma qualifier if present: "Feta cheese, crumbled" → name="Feta cheese", notes="crumbled"
+        var name = trimmed
+        var notes: String? = nil
+        if let commaIndex = trimmed.firstIndex(of: ",") {
+            let before = String(trimmed[trimmed.startIndex..<commaIndex]).trimmingCharacters(in: .whitespaces)
+            let after = String(trimmed[trimmed.index(after: commaIndex)...]).trimmingCharacters(in: .whitespaces)
+
+            let lowerAfter = after.lowercased()
+            let isPrep = Self.commaQualifierPrepWords.contains(where: { lowerAfter.hasPrefix($0) }) ||
+                         Self.commaQualifierExactPhrases.contains(lowerAfter)
+
+            if isPrep && !before.isEmpty {
+                name = before
+                notes = after
+            }
+        }
+
+        // Strip parenthetical notes from name: "all-purpose flour (plain flour)" → "all-purpose flour"
+        let parenPattern = #"\s*\([^)]*\)\s*$"#
+        name = name.replacingOccurrences(of: parenPattern, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespaces)
+
+        guard !name.isEmpty else { return nil }
+
+        return ParserResult(
+            name: name,
+            quantity: nil,
+            unit: nil,
+            notes: notes,
+            confidence: 0.85,
+            originalText: original,
+            parserUsed: parserName
+        )
+    }
+
     // MARK: - Helper: Pattern Matching
 
     func matchPattern(_ pattern: String, in text: String) -> [String]? {
@@ -854,7 +968,11 @@ class RegexIngredientParser: IngredientParser {
         let count: Set<String> = ["piece", "pieces", "pc", "clove", "cloves", "slice", "slices",
                      "can", "cans", "package", "packages", "pkg", "bunch", "bunches",
                      "head", "heads", "stick", "sticks", "bag", "bags", "bottle", "bottles",
-                     "box", "boxes", "jar", "jars", "sprig", "sprigs"]
+                     "box", "boxes", "jar", "jars", "sprig", "sprigs",
+                     "container", "containers", "loaf", "loaves",
+                     "serving", "servings", "handful",
+                     "inch", "inches",
+                     "pinch", "dash"]
         return volume.union(weight).union(count)
     }()
 
@@ -947,7 +1065,13 @@ class RegexIngredientParser: IngredientParser {
             "bottle": "bottle", "bottles": "bottle",
             "box": "box", "boxes": "box",
             "jar": "jar", "jars": "jar",
-            "sprig": "sprig", "sprigs": "sprig"
+            "sprig": "sprig", "sprigs": "sprig",
+            "container": "container", "containers": "container",
+            "loaf": "loaf", "loaves": "loaf",
+            "serving": "serving", "servings": "serving",
+            "handful": "handful",
+            "inch": "inch", "inches": "inch",
+            "pinch": "pinch", "dash": "dash"
         ]
 
         if let standard = volumeMap[unit] { return standard }
