@@ -1,8 +1,8 @@
 # Forager - Project Index
 
-**Last Updated**: March 27, 2026
-**Current Milestone**: M16 COMPLETE ✅ | M9.35.3 ✅ | **Next**: M16.9 (ML retraining) or M9.28 (launch path)
-**Launch Path**: M18 → M10.4 → M9.28 → M7.7 (~22-32h to App Store)
+**Last Updated**: March 28, 2026
+**Current Milestone**: M18 ACTIVE | M16.9 ✅ | M16 ✅
+**Launch Path**: M18 → M9.28 → M7.7
 
 ---
 
@@ -16,6 +16,13 @@
 ---
 
 ## Recent Activity
+
+### March 28, 2026 — M16.9 ML Model Retraining COMPLETE
+- **M16.9**: Retrained BiLSTM-CRF v2 with harness data (~15h across 2 sessions)
+  - v2 model: vocab 5,372→5,454, harness token accuracy +13.45pp, strangetom stable
+  - Ported 20+ parser fixes from harness to app (regex, preprocessor, NLP)
+  - Fixed test infrastructure (scheme Testables), added 67 new parser tests
+  - PR #105, build 91
 
 ### March 26, 2026 — M16 Parsing Test Harness + M9.35.3
 - **M16**: Standalone CLI tool for automated ingredient parsing evaluation (~5h)

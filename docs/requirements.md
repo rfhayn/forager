@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: March 26, 2026
+**Last Updated**: March 28, 2026
 **Version**: 7.5
-**Current Milestone**: M16 ✅ (Parsing Test Harness) | M16.9 READY (ML Retraining)
-**Launch Path**: M9.28 → M7.7
+**Current Milestone**: M18 ACTIVE (Store-Aware Shopping) | M16.9 ✅ (ML Retraining)
+**Launch Path**: M18 → M9.28 → M7.7
 
 ---
 
