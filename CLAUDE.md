@@ -77,7 +77,7 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 **7 core docs must stay synchronized.** Use `/forager-milestone-complete` after completions.
 
 1. `docs/current-story.md` — Current status and launch path
-2. `docs/next-prompt.md` — Implementation guidance
+2. `docs/next-prompt-M#.#.md` — Per-milestone implementation guidance (branch-specific)
 3. `docs/roadmap.md` — Milestone tracking
 4. `docs/requirements.md` — Requirements and completion
 5. `docs/project-index.md` — Navigation hub

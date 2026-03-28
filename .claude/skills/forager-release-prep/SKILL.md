@@ -38,35 +38,7 @@ If already pushed and up to date, skip.
 
 ## Step 2: Create Pull Request
 
-Detect milestone from branch name (e.g., `bugfix/M9.14-household-scope-fixes` → `M9.14`).
-
-Review all commits since main to draft the PR:
-```bash
-git log main..HEAD --oneline
-git diff main...HEAD --stat
-```
-
-Create PR using forager conventions:
-```bash
-gh pr create --title "M#.#.#: Brief Title" --body "$(cat <<'EOF'
-## Summary
-- [1-3 bullets]
-
-## Changes
-- [Specific changes]
-
-## Testing
-- [ ] Build succeeds with zero warnings
-- [ ] [Feature-specific tests]
-
-## Time
-- Estimated: Xh
-- Actual: Yh
-EOF
-)"
-```
-
-Report the PR URL.
+Invoke `/forager-pr` to create the PR. This delegates to the canonical skill so PR format stays consistent. Wait for the PR URL before proceeding to Step 3.
 
 ## Step 3: Squash Merge to Main
 
