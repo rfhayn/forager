@@ -252,11 +252,14 @@ For each of the 4 skills being renamed:
 3. Update `docs/insights-log.md` with any unlogged insights
 4. **Commit**: `FRMWK-1.8: Document framework migration`
 
-## Upstream Contributions
+### FRMWK-1.9: Upstream Contributions to Clauductor (15 min)
 
-After migration is complete, contribute back to clauductor:
-- **Agent-based post-commit automation**: Update `commit/SKILL.md` in clauductor to use Agent-based automatic journal/insights checks (smart "only if needed" logic) instead of passive reminders.
-- **Verification column in log-insight**: Add `| Verification |` column to insights table format.
+Contribute forager-discovered improvements back to the clauductor framework repo (`/Users/rich/Development/clauductor`):
+
+1. **Agent-based post-commit automation**: Update `template/.claude/skills/commit/SKILL.md` to use Agent-based automatic journal/insights checks (smart "only if needed" logic) instead of passive reminders.
+2. **Verification column in log-insight**: Update `template/.claude/skills/log-insight/SKILL.md` to add `| Verification |` column to the insights table format.
+3. Commit and merge to clauductor repo.
+4. **Commit** (in clauductor): `Upstream forager improvements to commit and log-insight skills`
 
 ## Rollback Plan
 
