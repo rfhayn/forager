@@ -115,3 +115,10 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 ## Quality Gates
 
 **Stop if:** >5 build errors, >20 min on one issue, breaking existing features, no factory for HouseholdScoped, on main instead of feature branch.
+
+
+## Clauductor Framework
+
+This project uses [Clauductor](https://github.com/rfhayn/clauductor) for orchestration.
+
+See `template/CLAUDE.md` in the framework repo for the full reference, or run `clauductor update` to sync skills.
