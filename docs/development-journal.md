@@ -6,6 +6,42 @@
 
 ---
 
+## Session 95 — March 29, 2026
+**Milestone**: FRMWK-1 — Clauductor Framework Migration
+**Focus**: Replace forager-* skills with framework equivalents, zero context loss
+**Branch**: `feature/FRMWK-1-clauductor-migration`
+
+### What Happened
+
+Framework migration session. Started with a deep analysis phase — three parallel agents explored the clauductor source, audited all forager documentation for staleness, and read all 15 forager skills + 2 agents for a complete inventory. This surfaced the key finding: 11 skills could be replaced with configured framework versions, 4 are domain-specific with no equivalent.
+
+The PRD went through significant refinement before execution. Original plan was additive (36 skills coexisting) but Rich decided to replace rather than duplicate — cleaner, less confusing. Adopted clauductor's PREFIX-#.# naming for this work (FRMWK-1). Each skill comparison was reviewed individually: what would be lost, what the framework adds, what's shared.
+
+Execution was methodical: backup branch → dry run → install → manual walkthroughs (CLAUDE.md, MEMORY-SETUP.md, settings.json) → skill replacement in batches (simplest first) → rename domain skills → update all cross-references → validate.
+
+Key discovery: `docs/development-guidelines.md` was critically stale (October 2025, still referencing the old `grocery-recipe-manager` repo name). Rewrote to v4.0 as part of the migration.
+
+### Key Decisions
+
+1. **Replace, don't coexist** — Having both `/commit` and `/forager-commit` causes ambiguity. Framework replaces forager entirely.
+2. **Port Agent-based post-commit** — Forager's smart journal/insights automation is genuinely useful and should go upstream to clauductor.
+3. **FRMWK prefix** — This is tooling work, not an app feature. Using a distinct prefix (not M#) makes it clear in git history.
+4. **Keep domain-specific skills as-is** — core-data-audit, architecture-audit, service-check, and archive have no generic equivalent. Just rename to drop the prefix.
+
+### Learning
+
+The skill comparison analysis was the most valuable part. Understanding exactly what each skill does — not just at a summary level but line-by-line — revealed subtle but important differences (Agent-based automation, branch-keyed status, save count verification). Without this analysis, context would have been silently lost.
+
+### AI Tooling Observations
+
+Parallel agent exploration was essential for this session. Three agents running simultaneously (clauductor source, documentation audit, skill inventory) produced the complete picture needed for informed decisions in ~3 minutes. The skill replacement agent handled 7 file customizations autonomously — reading both versions, making targeted edits, and deleting old files.
+
+### What's Next
+
+FRMWK-1.9 (upstream improvements to clauductor repo), then back to the launch path: M18 → M9.28 → M7.7.
+
+---
+
 ## Session 94 — March 28, 2026
 **Milestone**: M18 setup — Store-Aware Shopping + Recipe Attribution (combined)
 **Focus**: Milestone planning, Core Data audit, PRD consolidation

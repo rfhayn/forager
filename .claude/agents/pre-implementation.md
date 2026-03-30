@@ -2,9 +2,9 @@
 name: pre-implementation
 description: Run all pre-implementation checks before starting a new feature. Checks for duplicate services, audits PRDs, and runs Core Data impact analysis if schema changes are involved. Use when starting work on a new milestone or feature.
 skills:
-  - forager-service-check
-  - forager-prd-audit
-  - forager-core-data-audit
+  - service-check
+  - prd-audit
+  - core-data-audit
 ---
 
 # Pre-Implementation Checker

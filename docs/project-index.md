@@ -82,6 +82,19 @@
 **Knowledge**:
 - `docs/learning-notes/` — 37 implementation notes
 - `docs/prds/` — Product requirement documents
+- `docs/MEMORY-SETUP.md` — Claude Code memory system guide
+
+**Skills** (24 total via Clauductor framework):
+- Workflow: `/session-start`, `/new-milestone`, `/build`, `/commit`, `/pr`, `/release-prep`
+- Documentation: `/dev-journal`, `/log-insight`, `/milestone-complete`
+- Pre-development: `/prd-audit`, `/architecture-audit`, `/core-data-audit`, `/service-check`, `/review`
+- iOS deployment: `/archive`
+- Orchestration: `/claim`, `/release`, `/blocked`, `/status`, `/supervisor`, `/spawn`, `/handoff`, `/assign`
+- Meta: `/skills`
+
+**Agents**: `pre-implementation` (service-check + prd-audit + core-data-audit), `session-wrap` (journal + insights + commit)
+
+**Orchestration**: `orchestration/framework.db` — Clauductor multi-worker coordination (workers, locks, events, milestones)
 
 ---
 
