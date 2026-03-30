@@ -208,7 +208,13 @@ For each of the 4 skills being renamed:
 
 ### FRMWK-1.6: Post-Migration Customization (15 min)
 1. Update `skills/SKILL.md` to list all 24 skills (11 framework + 4 domain + 9 new)
-2. Update CLAUDE.md skills table to reference new skill names (drop `forager-` prefix)
+2. Update CLAUDE.md — ALL `forager-*` references must be updated:
+   - Line 7: `/forager-session-start` → `/session-start`
+   - Lines 73: skill references in Git Workflow section
+   - Lines 77: `/forager-milestone-complete` → `/milestone-complete`
+   - Lines 89-92: Pre-Development Checks section (all 4 skills)
+   - Lines 96-107: Skills table (all 10 entries)
+   - Line 48: Fix "v9" → "v10" (pre-existing stale reference)
 3. Update `docs/project-index.md` to reference new skill names and orchestration
 4. Update status file cleanup to be branch-scoped:
    ```bash

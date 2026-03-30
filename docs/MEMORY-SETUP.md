@@ -2,6 +2,16 @@
 
 Claude Code has a persistent memory system that survives across conversations. This framework uses it to capture user preferences, feedback, project context, and external references.
 
+## Forager's Memory System
+
+Forager already has an established memory system with 15+ memory files:
+
+**Location**: `~/.claude/projects/-Users-rich-Development-forager/memory/MEMORY.md`
+
+The memory covers behavioral rules, build configuration, project file structure, architecture patterns, design system conventions, deferred work, and key project conventions. It is actively maintained and updated each session.
+
+If you're new to this project, check the memory index above to understand what's already captured before adding new memories.
+
 ## How It Works
 
 Memory files live at `~/.claude/projects/<project-path-hash>/memory/`. Claude Code reads `MEMORY.md` from this directory at the start of every conversation, which acts as an index pointing to individual memory files.
