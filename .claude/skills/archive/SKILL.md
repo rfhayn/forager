@@ -1,5 +1,5 @@
 ---
-name: forager-archive
+name: archive
 description: Archive and distribute forager to TestFlight. Auto-increments build number, archives for Release, uploads to App Store Connect, waits for processing, sets export compliance, and adds to beta test group. TRIGGER when the user says "archive", "deploy to TestFlight", "upload to TestFlight", "release a build", "ship a build", or any request to distribute the app.
 allowed-tools: Read, Write, Bash(grep:*), Bash(awk:*), Bash(mv:*), Bash(git add:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git status:*), Bash(git branch:*), Bash(xcodebuild:*), Bash(cat:*), Bash(swift:*), Bash(curl:*), Bash(jq:*), Bash(sleep:*), Bash(test:*), Bash(Tools/appstore-connect:*), Bash(chmod:*)
 ---

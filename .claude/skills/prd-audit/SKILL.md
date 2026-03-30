@@ -21,14 +21,25 @@ For each function, method, or API referenced in the PRD:
 - Verify parameter names, types, and return values match
 - Check if the function still exists or was renamed/removed
 
-## Step 3: File Structure Verification
+### Step 3: Entity Verification (Core Data)
+
+For each Core Data entity referenced in the PRD:
+- Search `Models/<EntityName>+CoreDataProperties.swift` for actual property names and types
+- Compare with what the PRD describes
+- Flag any mismatches
+
+## Step 4: File Structure Verification
 
 For each file or module referenced in the PRD:
 - Verify the file exists at the stated path
 - Check if the structure matches the PRD description
 - Note any new or removed files since the PRD was written
 
-## Step 4: Report
+### Step 5: Save Count Verification
+
+Count the number of `context.save()` calls described in the PRD flow and compare with the actual service implementation. Mismatched save counts indicate architectural drift.
+
+## Step 6: Report
 
 ```markdown
 ## PRD Audit: [PRD Name]
@@ -38,11 +49,19 @@ For each file or module referenced in the PRD:
 - Last updated: [date]
 - Age: [days]
 
+### Entity Accuracy
+- [Entity]: [MATCH / MISMATCH — details]
+
 ### API Accuracy
 - [Module.function()]: [MATCH / MISMATCH — details]
 
 ### File Accuracy
 - [FileName]: [MATCH / MISMATCH — details]
+
+### Save Count Accuracy
+- PRD describes: [N] saves
+- Actual code: [N] saves
+- [MATCH / MISMATCH]
 
 ### Recommended PRD Updates
 - [List of specific corrections needed]

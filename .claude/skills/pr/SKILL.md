@@ -36,8 +36,8 @@ PREFIX-#.#: Brief Descriptive Title
 - [Specific change 3]
 
 ## Testing
-- [ ] Build succeeds
-- [ ] All existing tests pass
+- [ ] Build succeeds with zero warnings
+- [ ] All existing tests pass (267+)
 - [ ] [Feature-specific test items]
 
 ## Time

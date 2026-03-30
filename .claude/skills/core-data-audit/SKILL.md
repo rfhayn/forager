@@ -1,5 +1,5 @@
 ---
-name: forager-core-data-audit
+name: core-data-audit
 description: Run Core Data impact analysis before schema changes. Required by ADR 007. Searches all usage of affected entities, documents relationships, codegen, and migration impact. TRIGGER when the user discusses changing the Core Data schema, adding/removing entity attributes, modifying relationships, creating a new entity, or any database model changes.
 argument-hint: <EntityName>
 ---

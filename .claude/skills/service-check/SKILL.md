@@ -1,5 +1,5 @@
 ---
-name: forager-service-check
+name: service-check
 description: Search for existing services before creating new infrastructure. Prevents duplicate services. TRIGGER when the user says "create a service", "new service", "add a service class", "build a service for", or discusses creating any new service, manager, or helper class in the Services/ directory.
 argument-hint: <functionality description>
 ---

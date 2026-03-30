@@ -1,49 +1,71 @@
 ---
 name: architecture-audit
-description: "Check codebase for architectural violations. ⚠️ CONFIGURE FIRST: Define your project's architectural rules below. TRIGGER when the user says \"check architecture\", \"audit architecture\", \"run architecture check\", \"check for violations\", \"architecture review\", or any request to verify architectural patterns."
+description: Check codebase for architectural violations (factory bypass, raw assign, scope compliance, service layer). TRIGGER when the user discusses creating Core Data objects in production code, adding new entity creation sites, or before PR creation on milestones that touch the service/model layer.
 user_invocable: true
 ---
 
 # Architecture Audit
 
-## ⚠️ CONFIGURATION REQUIRED
+Run this audit before any milestone that creates Core Data objects, during code review, and as a quality gate.
 
-Define your project's architectural rules below. Examples of what to check:
+## Checks
 
-### Example Rules (replace with your own)
+### 1. Factory Bypass Detection (ADR 014)
+Search for direct creation of HouseholdScoped entities outside exempt files:
 
-**1. Service layer compliance**
 ```bash
-# Views should not call database directly
-# Search for direct DB calls in view files
-grep -rn 'db\.query\|db\.insert\|db\.delete' src/views/ --include='*.ts'
+# Search for direct Entity(context:) for HouseholdScoped types
+grep -rn 'WeeklyList(context:\|Recipe(context:\|PlannedMeal(context:\|MealPlan(context:\|Category(context:\|IngredientTemplate(context:' \
+  --include='*.swift' \
+  --exclude-dir=foragerTests \
+  --exclude-dir=foragerUITests \
+  --exclude='*Preview*' \
+  --exclude='DefaultSeeder.swift' \
+  --exclude='SampleDataSeeder.swift' \
+  --exclude='ManagedObjectFactory.swift' \
+  --exclude='HouseholdService.swift'
 ```
-Expected: Zero matches.
 
-**2. Import restrictions**
+**Expected**: Zero matches in non-exempt production files.
+**Exempt files**: Tests, previews, seeders, HouseholdService (migration), ManagedObjectFactory itself.
+**Note**: Repository files may have fallback paths with direct creation — these are acceptable IF they also have factory-first branches.
+
+### 2. Raw Assign Detection
+Search for `viewContext.assign(` or `context.assign(` outside `ManagedObjectFactory.swift`:
+
 ```bash
-# Feature modules should not import from other feature modules
-grep -rn "from '@features/" src/features/auth/ --include='*.ts' | grep -v "from '@features/auth"
+grep -rn 'viewContext\.assign(\|context\.assign(' --include='*.swift' --exclude='ManagedObjectFactory.swift'
 ```
-Expected: Zero matches.
 
-**3. API layer separation**
+**Expected**: Zero matches.
+
+### 3. ADR 013 Scope Compliance
+Search for HouseholdScoped fetch requests missing `householdKey` predicate:
+
 ```bash
-# Components should not call APIs directly
-grep -rn 'fetch(\|axios\.\|httpClient\.' src/components/ --include='*.tsx'
+# Look for fetch requests on HouseholdScoped entities
+grep -rn 'NSFetchRequest<WeeklyList>\|NSFetchRequest<Recipe>\|NSFetchRequest<MealPlan>\|NSFetchRequest<PlannedMeal>\|NSFetchRequest<Category>\|NSFetchRequest<IngredientTemplate>' \
+  --include='*.swift' \
+  --exclude-dir=foragerTests
 ```
-Expected: Zero matches.
 
-## How to Configure
+Then verify each fetch includes a `householdKey` predicate.
 
-1. Identify 3-5 architectural rules your project must follow
-2. Write grep/search patterns that detect violations
-3. Document the expected result (usually "Zero matches")
-4. Replace the examples above with your rules
+### 4. Service Layer Compliance
+Search for `context.save()` in view files (views should use services):
+
+```bash
+grep -rn 'context\.save()\|viewContext\.save()' forager/Views/ --include='*.swift'
+```
+
+**Expected**: Zero matches (all saves through service layer).
+
+## How to Run
+
+Use the Grep tool to execute each check. Report violations with file:line references.
 
 ## When to Run
-
-- Before starting any milestone that creates new modules/services
+- Before starting any milestone that creates Core Data objects
 - During code review / PR creation
-- After completing changes to core architectural layers
+- After completing service or view layer changes
 - As a quality gate before marking milestone complete

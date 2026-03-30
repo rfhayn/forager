@@ -1,25 +1,30 @@
 ---
 name: build
-description: "Build the project. ⚠️ CONFIGURE FIRST: Update the build command below for your project. TRIGGER when the user says \"build it\", \"build the app\", \"run a build\", \"compile\", \"does it build\", \"rebuild\", \"try building\", \"does it compile\", or any request to build or compile the project."
+description: "Build forager with the correct Xcode configuration. Uses iPhone 17 Pro simulator. Filters output for errors and warnings. TRIGGER when the user says \"build it\", \"build the app\", \"run a build\", \"compile\", \"does it build\", \"rebuild\", \"try building\", \"does it compile\", or any request to build or compile the project."
 ---
 
-# Build Project
+# Build Forager
 
 Build the project with the correct configuration.
 
-## ⚠️ CONFIGURATION REQUIRED
+## Build Command
 
-This skill needs your project's build command. Update the command below:
-
+Run the build script (executes without loading source into context):
 ```bash
-# TODO: Replace with your build command. Examples:
-#   npm run build
-#   cargo build --release
-#   xcodebuild -project MyApp.xcodeproj -scheme MyApp build
-#   ./gradlew build
-#   make build
-echo "BUILD COMMAND NOT CONFIGURED — edit .claude/skills/build/SKILL.md"
+.claude/skills/build/scripts/build.sh /Users/rich/Development/forager
 ```
+
+Or run directly:
+```bash
+xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -E "BUILD|error:|warning:" | head -30
+```
+
+## Configuration
+
+- **Simulator**: iPhone 17 Pro (not iPhone 16 Pro — it's unavailable)
+- **Scheme**: forager
+- **iOS target**: 26+
+- **CloudKit**: DISABLED in DEBUG, ENABLED in Release
 
 ## Pre-Build (if orchestration available)
 
@@ -44,6 +49,12 @@ clauductor event --worker-id [worker-name] --type "build_failure" --detail "Buil
 Report:
 - BUILD SUCCEEDED
 - Number of warnings (if any)
+- Build time
+
+## Notes
+
+- The `-quiet` flag suppresses output; avoid it when debugging
+- `CURRENT_PROJECT_VERSION` is managed by the user — never modify build numbers
 
 If orchestration available:
 ```bash

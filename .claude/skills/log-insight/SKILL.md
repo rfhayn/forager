@@ -28,13 +28,13 @@ Insights are non-obvious technical observations discovered during implementation
 
 Add a new row to the insights log table:
 
-| Date | Milestone | Topic | Insight | Status |
-|------|-----------|-------|---------|--------|
-| [today] | [from branch] | [hierarchical tag] | [the observation] | Raw |
+| Date | Milestone | Topic | Insight | Verification | Status |
+|------|-----------|-------|---------|--------------|--------|
+| [today] | [from branch] | [hierarchical tag] | [the observation] | [how to verify] | Raw |
 
 ### Topic Tags (Hierarchical)
 
-Use format like: `Platform/Area`, `Framework/Feature`, `Architecture/Pattern`, `Testing/Approach`
+Use format like: `iOS/Vision`, `Swift/Concurrency`, `CoreData/Schema`, `CloudKit/Sync`, `SwiftUI/Lifecycle`, `Parsing/Regex`, `Import/OCR`, `Platform/Area`, `Framework/Feature`, `Architecture/Pattern`, `Testing/Approach`
 
 ## After Logging
 

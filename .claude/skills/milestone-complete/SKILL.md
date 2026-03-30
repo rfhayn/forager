@@ -1,6 +1,6 @@
 ---
 name: milestone-complete
-description: "Update core documentation files after completing a milestone. Cleans up branch-specific next-prompt file. TRIGGER when the user says \"milestone done\", \"mark milestone complete\", \"finish milestone\", \"this is done\", \"wrap up this milestone\", \"close out milestone\", \"mark it complete\", or any indication that a milestone has been completed."
+description: "Update all 7 core documentation files after completing a milestone. Use when marking any M#.#.# as COMPLETE. Ensures documentation stays synchronized."
 argument-hint: <PREFIX-#.#>
 ---
 
@@ -13,38 +13,39 @@ argument-hint: <PREFIX-#.#>
 - Branch: !`git branch --show-current`
 - Uncommitted changes: !`git status --short`
 
-## Files to Update
+## Files to Update (All 7 Required)
 
-### 1. `docs/current-story.md` (source of truth for status)
-- Move milestone from Active to Recently Completed table
+### 1. `docs/current-story.md`
+- Change milestone status from ACTIVE to COMPLETE
 - Add actual hours spent
 - Update "Last Updated" date to today
-- Update priority queue (remove completed, add next)
+- Move to completed section if appropriate
+- Other milestones may remain ACTIVE (multi-session support)
 
-### 2. Branch-specific next-prompt file
-- **Delete** the branch-specific `docs/next-prompt-[milestone].md` file
-- Find the file matching the milestone ID (e.g., `next-prompt-AUTH-1.md` for AUTH-1)
-- If the file contains guidance for other sub-tasks still in progress, only remove the completed section
+### 2. Branch-Specific Next Prompt
+- If `docs/next-prompt-M#.#.md` exists for this milestone, move it to `docs/prds/complete/` (rename to `next-prompt-M#.#-complete.md`) for historical reference, or delete it
+- Update the shared `docs/next-prompt.md` to remove the pointer to this milestone's next-prompt
+- If this was the only active milestone, update `docs/next-prompt.md` with guidance for the next milestone in the priority queue
 
-### 3. `docs/next-prompt.md` (hub/index)
-- **Remove** the pointer to the completed milestone from the Active Milestones section
-- If there's a next milestone in the priority queue, add guidance for it (or note it as planned)
+### 3. `docs/roadmap.md`
+- Mark milestone as COMPLETE with actual hours
+- Update any dependent milestones that are now unblocked
+- Verify execution order is still correct
 
-### 4. `docs/roadmap.md`
-- Add milestone to Completed table with actual hours
-- Move from Active table if present
-- Update priority queue to match current-story
+### 4. `docs/requirements.md`
+- Mark related requirements as COMPLETE
+- Update completion percentages
 
-### 5. `docs/requirements.md`
-- Mark related requirements as COMPLETE (only if new requirements were fulfilled)
+### 5. `docs/project-index.md`
+- Add milestone to completed section with key achievements
+- Update recent activity section
+- Verify all links are correct
 
 ### 6. `docs/insights-log.md`
-- Review: are there any unlogged insights from this milestone?
-- Check promotion rules: 3+ insights on same topic → suggest Learning Note
+Ask the user if there are any unlogged insights from this milestone. If yes, invoke `/log-insight` via an Agent (background) to handle it. This delegates to the canonical skill so format stays consistent.
 
 ### 7. `docs/development-journal.md`
-- Write or update the narrative session entry for this milestone completion
-- Include the **Retro** section (see below)
+Invoke `/dev-journal` via an Agent (background) to write the milestone completion narrative. This delegates to the canonical skill so format stays consistent. Pass context: milestone completed, what was accomplished, key decisions.
 
 ### 8. Release Orchestration Locks (if orchestration is available)
 
@@ -60,6 +61,15 @@ Clear the session status:
 rm -f orchestration/.session-status
 ```
 
+## Cleanup
+
+- Remove the branch-keyed status file:
+```bash
+SLUG=$(git branch --show-current | tr '/' '-')
+rm -f ~/.claude/forager-status-${SLUG}.txt
+```
+- This prevents stale status from appearing if the branch name is reused
+
 ## Retrospective (mandatory)
 
 Add to the journal entry:
@@ -73,12 +83,14 @@ Add to the journal entry:
 
 ## Verification
 
-After updating:
-- [ ] `current-story.md` has milestone in Recently Completed table
-- [ ] Branch-specific next-prompt file deleted (or cleaned up)
+After updating all 7 files:
+- [ ] `current-story.md` has milestone marked COMPLETE
+- [ ] Branch-specific next-prompt archived to `docs/prds/complete/` or deleted
 - [ ] Pointer removed from `docs/next-prompt.md` Active Milestones section
+- [ ] `docs/project-index.md` updated with milestone in completed section
 - [ ] Priority queue is consistent across current-story and roadmap
 - [ ] Actual hours recorded
-- [ ] Journal has retro section
-- [ ] Any unlogged insights captured
+- [ ] Journal has retro section (via `/dev-journal` Agent)
+- [ ] Any unlogged insights captured (via `/log-insight` Agent)
+- [ ] Branch-keyed status file removed
 - [ ] Orchestration locks released (if applicable)

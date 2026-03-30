@@ -44,11 +44,23 @@ PREFIX-#.#: Brief imperative description
 5. Commit using HEREDOC format
 6. Do NOT push unless explicitly asked
 
+## Commit Message Quality
+
+Good:
+- `M10.3: Add photo import OCR service`
+- `M8.4: Fix confidence routing threshold`
+- `M7.5: Refactor service ownership pattern`
+
+Bad:
+- `Fixed stuff` (no milestone prefix)
+- `M10.3: Updated files` (vague)
+- `WIP` (not descriptive)
+
 ## Post-Commit
 
-After committing, remind about:
-- `docs/insights-log.md` — any unlogged technical insights this session?
-- `docs/development-journal.md` — is the journal entry current?
+After committing, automatically run these via Agents (background) for efficiency:
+1. **Journal**: Read the top of `docs/development-journal.md` — if the latest entry doesn't reference today's date or the current milestone, invoke `/dev-journal` via an Agent to update it
+2. **Insights**: Ask the user if there are any unlogged technical insights from this session. If yes, invoke `/log-insight` via an Agent
 
 If orchestration is available, log the commit event:
 ```bash
