@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Session Startup (MANDATORY)
 
-Run `/forager-session-start` at the beginning of every session. No exceptions.
+Run `/session-start` at the beginning of every session. No exceptions.
 
 ## Build & Run
 
@@ -45,8 +45,8 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - **All fetches on household-scoped entities MUST include `householdKey` predicate** (ADR 013)
 - Always search for existing services before creating new ones
 
-### Core Data Model (11 Entities, v9)
-- Schema v9 (current). Read `docs/architecture/007-core-data-change-process.md` before changes
+### Core Data Model (11 Entities, v10)
+- Schema v10 (current). Read `docs/architecture/007-core-data-change-process.md` before changes
 - CloudKit Production schema is append-only — no destructive changes
 
 ### UI Patterns
@@ -70,11 +70,11 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 
 - Branch: `feature/M#.#.#-brief-kebab-case`
 - Commit: `M#.#.#:` imperative mood. **No Co-Authored-By.**
-- Use skills: `/forager-commit`, `/forager-pr`, `/forager-build`, `/forager-release-prep`
+- Use skills: `/commit`, `/pr`, `/build`, `/release-prep`
 
 ## Documentation (After Every Session)
 
-**7 core docs must stay synchronized.** Use `/forager-milestone-complete` after completions.
+**7 core docs must stay synchronized.** Use `/milestone-complete` after completions.
 
 1. `docs/current-story.md` — Current status and launch path
 2. `docs/next-prompt-M#.#.md` — Per-milestone implementation guidance (branch-specific)
@@ -86,25 +86,31 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 
 ## Pre-Development Checks
 
-- `/forager-core-data-audit` — Before schema changes
-- `/forager-service-check` — Before creating new services
-- `/forager-prd-audit` — If PRD is >2 weeks old
-- `/forager-architecture-audit` — Before creating Core Data objects
+- `/core-data-audit` — Before schema changes
+- `/service-check` — Before creating new services
+- `/prd-audit` — If PRD is >2 weeks old
+- `/architecture-audit` — Before creating Core Data objects
 
 ## Skills
 
 | Skill | When |
 |-------|------|
-| `/forager-session-start` | Every session start |
-| `/forager-commit` | Every commit |
-| `/forager-build` | Build the project |
-| `/forager-pr` | Create pull request |
-| `/forager-release-prep` | Ship to TestFlight |
-| `/forager-archive` | Archive + upload |
-| `/forager-new-milestone` | Start new work |
-| `/forager-milestone-complete` | After completion |
-| `/forager-dev-journal` | Before commits |
-| `/forager-log-insight` | When discoveries are made |
+| `/session-start` | Every session start |
+| `/commit` | Every commit |
+| `/build` | Build the project |
+| `/pr` | Create pull request |
+| `/release-prep` | Ship to TestFlight |
+| `/archive` | Archive + upload |
+| `/new-milestone` | Start new work |
+| `/milestone-complete` | After completion |
+| `/dev-journal` | Before commits |
+| `/log-insight` | When discoveries are made |
+| `/core-data-audit` | Before schema changes |
+| `/service-check` | Before creating services |
+| `/architecture-audit` | Before creating Core Data objects |
+| `/prd-audit` | If PRD is >2 weeks old |
+| `/review` | Pre-PR quality check |
+| `/skills` | List all skills |
 
 ## ADRs (`docs/architecture/`)
 

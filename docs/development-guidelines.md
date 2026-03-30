@@ -11,7 +11,7 @@
 
 **Every development session begins with these actions in order:**
 
-1. **Run `/forager-session-start`** — Git status, current branch, milestone context, and dependency check
+1. **Run `/session-start`** — Git status, current branch, milestone context, and dependency check
 2. **Read [CLAUDE.md](/CLAUDE.md)** — Authoritative guidance on architecture, naming conventions, and session workflow
 3. **Read [current-story.md](current-story.md)** — Active milestone, launch path, and recent progress
 4. **Read branch-specific next-prompt** — Implementation plan for your current work session

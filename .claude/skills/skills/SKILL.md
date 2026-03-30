@@ -39,9 +39,19 @@ DOCUMENTATION — Knowledge capture
 
 PRE-DEVELOPMENT — Quality gates
   /prd-audit            Verify a PRD against current codebase. Use if PRD is >2 weeks old.
-  /architecture-audit   Check for architectural violations. Configure rules first.
+                        Includes Core Data entity + save count verification.
+  /architecture-audit   Check for factory bypass, raw assign, scope compliance,
+                        service layer violations (ADR 013/014).
+  /core-data-audit      Full Core Data impact analysis. Required by ADR 007 before
+                        schema changes. Checks entities, relationships, codegen, usage.
+  /service-check        Search 28+ existing services before creating new ones.
+                        Prevents duplication, enforces service layer pattern.
   /review               Pre-PR quality check. Validates naming, manifest, docs, code quality.
                         Usage: /review (branch) or /review 42 (PR number)
+
+iOS DEPLOYMENT — App Store / TestFlight
+  /archive              Full TestFlight automation: bump build, archive, upload,
+                        distribute. Handles API keys, export compliance, beta groups.
 
 ORCHESTRATION — Multi-worker coordination
   /claim                Declare session type (build/research), generate file manifest,
