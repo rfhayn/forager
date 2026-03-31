@@ -16,6 +16,10 @@ LIFE-1 adds lifecycle automation (skills, hooks, team startup) to the clauductor
 
 **Blocked on**: LIFE-1 (clauductor framework repo). Must be merged before this work begins. Note: LIFE-1.7a fixes HUD timestamp bug (00:00) and activity text wrapping alignment — verify both are resolved before adoption.
 
+**Known framework bugs** (discovered during FRMWK-2.1):
+1. `clauductor update` doesn't sync hooks — fixed in FRMWK-2.4.1
+2. `clauductor update` overwrites project-specific skill customizations (⚠️ CONFIGURE sections reset to template defaults) — tracked separately, not blocking this PRD
+
 Additionally, LIFE-1.8 adds:
 - New hook: `doc-freshness.sh` (PreToolUse sync, fires before `git commit`) — replaces `journal-check.sh`
 - Updated `/commit` skill with pre-commit doc freshness checks
@@ -150,6 +154,22 @@ These are added alongside the framework's lock-guard hook in the PreToolUse sect
 5. Test: Edit a `.xcdatamodeld` file — verify core-data-guard warns
 6. **Commit**: `FRMWK-2.4: Add forager-specific architecture and Core Data guard hooks`
 
+### FRMWK-2.4.1: Fix `clauductor update` hook syncing (30 min)
+**Repo**: `/Users/rich/Development/clauductor/` (framework repo, not forager)
+
+Bug discovered during FRMWK-2.1: `clauductor update` syncs skills but not hooks. The `FindDiffs` function in `template.go` has a hardcoded `comparePaths` list missing `.claude/hooks`.
+
+**Root cause**: `comparePaths` (template.go:145) lists `.claude/skills`, `.claude/agents`, `.claude/settings.json`, `.claude/statusline.sh` — but not `.claude/hooks`. The `install` command handles hooks correctly via `classifyFile`, but `update` was never updated to match.
+
+**Fix**:
+1. Add `".claude/hooks"` to `comparePaths` in `framework/internal/template/template.go:145`
+2. Enhance update output in `framework/internal/cmd/update.go` to group hooks separately from skills
+3. Add test: mock template with hook + project with that hook (outdated) + custom hook → assert framework hook in diffs, custom hook not
+4. Verify executable permissions preserved (existing `copyFile` uses `srcInfo.Mode()` — should work)
+5. **Commit in clauductor repo**: `LIFE-1.9: Fix clauductor update to sync hooks from template`
+
+**Design note**: No manifest file or naming convention needed. The template directory itself is the manifest — any file in `template/.claude/hooks/` is a framework hook. Project-specific hooks (e.g., architecture-guard.sh) are invisible to the update because they don't exist in the template. This matches the existing pattern used for skills.
+
 ### FRMWK-2.5: Validation (30 min)
 Full lifecycle test:
 - [ ] `clauductor start` creates HUD + supervisor + 3 worker panes with auto-claude
@@ -211,8 +231,10 @@ Full lifecycle test:
 ### Milestone Execution Order
 
 ```
-FRMWK-2.1 → 2.2 → 2.3 → 2.4 → 2.7 → 2.5 → 2.6
+FRMWK-2.1 → 2.2 → 2.3 → 2.4 → 2.4.1 → 2.7 → 2.5 → 2.6
 ```
+
+> **Note**: FRMWK-2.4.1 runs against the clauductor repo, not forager. All other milestones target forager.
 
 FRMWK-2.7 (roadmap migration) slots before validation so the migration can be verified in 2.5.
 
