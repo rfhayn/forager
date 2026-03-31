@@ -17,6 +17,14 @@
 
 ## Recent Activity
 
+### March 30, 2026 — FRMWK-2 Lifecycle Automation Adoption
+- **FRMWK-2**: Adopted clauductor lifecycle automation framework
+  - 7 hooks installed (5 framework + 2 forager-specific: architecture-guard, core-data-guard)
+  - 4 new skills (done, pane, start-project, start-work) — 28 total
+  - Roadmap.md migrated into current-story.md Planning Accuracy table
+  - Terminal auto-launch disabled; `clauductor start` is now the entry point
+  - doc-freshness.sh replaces journal-check.sh for pre-commit doc checks
+
 ### March 28, 2026 — M16.9 ML Model Retraining COMPLETE
 - **M16.9**: Retrained BiLSTM-CRF v2 with harness data (~15h across 2 sessions)
   - v2 model: vocab 5,372→5,454, harness token accuracy +13.45pp, strangetom stable
@@ -66,10 +74,9 @@
 
 ## Documentation Map
 
-**Core Docs** (7 mandatory):
-- `docs/current-story.md` — Current milestone status
+**Core Docs** (6 mandatory):
+- `docs/current-story.md` — Current milestone status + planning accuracy
 - `docs/next-prompt.md` — Implementation guidance
-- `docs/roadmap.md` — Milestone tracking
 - `docs/requirements.md` — Functional requirements
 - `docs/project-index.md` — This file
 - `docs/insights-log.md` — Technical insights
@@ -82,6 +89,19 @@
 **Knowledge**:
 - `docs/learning-notes/` — 37 implementation notes
 - `docs/prds/` — Product requirement documents
+- `docs/MEMORY-SETUP.md` — Claude Code memory system guide
+
+**Skills** (24 total via Clauductor framework):
+- Workflow: `/session-start`, `/new-milestone`, `/build`, `/commit`, `/pr`, `/release-prep`
+- Documentation: `/dev-journal`, `/log-insight`, `/milestone-complete`
+- Pre-development: `/prd-audit`, `/architecture-audit`, `/core-data-audit`, `/service-check`, `/review`
+- iOS deployment: `/archive`
+- Orchestration: `/claim`, `/release`, `/blocked`, `/status`, `/supervisor`, `/spawn`, `/handoff`, `/assign`
+- Meta: `/skills`
+
+**Agents**: `pre-implementation` (service-check + prd-audit + core-data-audit), `session-wrap` (journal + insights + commit)
+
+**Orchestration**: `orchestration/framework.db` — Clauductor multi-worker coordination (workers, locks, events, milestones)
 
 ---
 

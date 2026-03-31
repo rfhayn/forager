@@ -1,0 +1,4 @@
+{
+  "default_workers": 3,
+  "auto_claude": true
+}

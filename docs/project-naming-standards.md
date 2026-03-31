@@ -25,7 +25,7 @@ M7.2.3   = Task (CloudKit Hardening & Shared Data Architecture)
 
 ### Critical Rules
 1. **Always use full identifier**: "M4.1.1" not "Phase 1" or "Step 1"
-2. **Update status in ALL docs**: current-story.md, project-index.md, roadmap.md
+2. **Update status in ALL docs**: current-story.md, project-index.md
 3. **Include descriptive name**: "M4.1.1: Core Settings Service"
 4. **Maintain consistency**: Same naming everywhere, no variations
 

@@ -205,6 +205,45 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
+## Planning Accuracy
+
+| Milestone | Description | Estimated | Actual | Accuracy |
+|-----------|-------------|-----------|--------|----------|
+| M1 | Grocery Management | — | 32h | — |
+| M2 | Recipe Integration | — | 16.5h | — |
+| M3 | Structured Quantity Management | — | 10.5h | — |
+| M3.5 | Foundation Validation & Testing | — | 8.5h | — |
+| M4.1-4.3.5 | Settings + Meal Planning + Recipe Features | — | 19.25h | — |
+| M5.0 | App Renaming & TestFlight | — | 6h | — |
+| M7.0-7.1 | App Store + CloudKit Foundation | — | 13.5h | — |
+| M7.2.2 | Member Invitation & Leave Flow | — | ~25h | — |
+| M7.2.3 | CloudKit Hardening | — | 12.25h | — |
+| M7.3-7.4 | Household Mgmt + UI Polish | — | ~10h | — |
+| M7.5 | Architecture Hardening | — | ~5h | — |
+| M7.6 | Pre-Launch Prep & TestFlight | — | ~12h | — |
+| M8.1-8.4 | Parsing Intelligence (4 phases) | — | ~47h | — |
+| M9.x | Tech Debt (various) | — | ~14h | — |
+| M10.3 | Photo/Image Import | — | ~25h | — |
+| M10.5-10.6 | Pipeline Accuracy + Claude API | — | ~26h | — |
+| M15 | UX Design System & Visual Refresh | — | ~60h | — |
+| M16-16.9 | Parsing Test Harness + ML Retrain | — | ~26h | — |
+| M9.24 | Member Import Store Routing | 0.5h | 0.5h | 100% |
+| M9.15.3 | Returning User Detection | 1h | ~1h | ~100% |
+| M9.30 | Household Invitation Security | 3-5h | ~3h | 100% |
+| M9.31 | CKShare Acceptance Resilience | 2-3h | ~1h | 200% |
+| M9.32 | Grocery Item Name Cleanup | 1-2h | ~1h | 100% |
+| M9.33 | AI Multi-Ingredient Splitting | 3-4h | ~3h | 100% |
+| M9.34 | First Import Guide Walkthrough | 2-3h | ~2h | 100% |
+| M9.35.2 | Confidence Fix + Float Conversion | — | ~1h | — |
+| M9.35.3 | Leading Comma Display Fix | — | <0.5h | — |
+| M17.1 | Doc Slimming + PRD Archival | — | ~1h | — |
+
+**Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~11-18h (M18 → M9.28 → M7.7)
+
+**Post-launch backlog**: M10.4 (import polish), M6 (testing), M9 remaining, M11+ (~160-200h estimated)
+
+---
+
 ## Next Priority
 
 After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission). M10.4 recipe attribution schema changes absorbed into M18. Remaining M10.4 scope (import history, telemetry) deferred post-launch.
