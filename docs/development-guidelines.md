@@ -120,13 +120,12 @@ Household, HouseholdMember, Recipe, Ingredient, WeeklyList, GroceryListItem, Mea
 
 These files must stay synchronized. Use `/milestone-complete` after completions.
 
-1. **current-story.md** — Current milestone status and launch path
+1. **current-story.md** — Current milestone status, launch path, and planning accuracy
 2. **next-prompt-[milestone].md** — Branch-specific implementation guidance
-3. **roadmap.md** — Milestone tracking with hours
-4. **requirements.md** — Requirements and completion status
-5. **project-index.md** — Navigation hub for all documentation
-6. **insights-log.md** — Technical insights (log IMMEDIATELY, never defer)
-7. **development-journal.md** — Session narrative (MANDATORY before commits)
+3. **requirements.md** — Requirements and completion status
+4. **project-index.md** — Navigation hub for all documentation
+5. **insights-log.md** — Technical insights (log IMMEDIATELY, never defer)
+6. **development-journal.md** — Session narrative (MANDATORY before commits)
 
 ---
 

@@ -74,15 +74,14 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 
 ## Documentation (After Every Session)
 
-**7 core docs must stay synchronized.** Use `/milestone-complete` after completions.
+**6 core docs must stay synchronized.** Use `/milestone-complete` after completions.
 
-1. `docs/current-story.md` — Current status and launch path
+1. `docs/current-story.md` — Current status, launch path, and planning accuracy
 2. `docs/next-prompt-M#.#.md` — Per-milestone implementation guidance (branch-specific)
-3. `docs/roadmap.md` — Milestone tracking
-4. `docs/requirements.md` — Requirements and completion
-5. `docs/project-index.md` — Navigation hub
-6. `docs/insights-log.md` — Technical insights (log IMMEDIATELY, don't defer)
-7. `docs/development-journal.md` — Session narrative (MANDATORY before commits)
+3. `docs/requirements.md` — Requirements and completion
+4. `docs/project-index.md` — Navigation hub
+5. `docs/insights-log.md` — Technical insights (log IMMEDIATELY, don't defer)
+6. `docs/development-journal.md` — Session narrative (MANDATORY before commits)
 
 ## Pre-Development Checks
 

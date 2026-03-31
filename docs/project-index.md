@@ -66,10 +66,9 @@
 
 ## Documentation Map
 
-**Core Docs** (7 mandatory):
-- `docs/current-story.md` — Current milestone status
+**Core Docs** (6 mandatory):
+- `docs/current-story.md` — Current milestone status + planning accuracy
 - `docs/next-prompt.md` — Implementation guidance
-- `docs/roadmap.md` — Milestone tracking
 - `docs/requirements.md` — Functional requirements
 - `docs/project-index.md` — This file
 - `docs/insights-log.md` — Technical insights
