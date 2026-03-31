@@ -47,52 +47,78 @@ Example: `rich-AUTH-1-build`
 ```
 Example: `rich-agent-myapp-0329-1423`
 
-## Step 3: Prepare Initial Prompt
+## Step 3: Gather Orchestration Context
+
+Query the current orchestration state to embed in the initial prompt:
+```bash
+clauductor context
+```
+
+This returns workers, locks, milestones, and recent events. Include the relevant sections in the initial prompt so the spawned session has full awareness of what's happening.
+
+## Step 4: Prepare Initial Prompt
 
 **For build sessions**:
 ```
-You are a build worker. Run /session-start, then /claim [PREFIX-#.#].
+You are a build worker in a Clauductor-managed project.
 
 Your milestone: [PREFIX-#.#] - [description]
 Your branch: feature/[PREFIX-#.#]-[description]
 
-Read docs/next-prompt-[PREFIX-#].md for implementation guidance.
-Focus only on the files in your claimed manifest.
-Commit every 15-30 minutes. Do not push unless asked.
-When done, run /milestone-complete then /release.
+## Startup
+Run /start-work [PREFIX-#.#] to register, claim files, and load context.
+
+## Orchestration State
+Current workers:
+[paste worker list from clauductor context]
+
+Current locks:
+[paste lock list from clauductor context]
+
+## Rules
+- Focus only on files in your claimed manifest
+- If you need a locked file, run /blocked [file]
+- Commit every 15-30 minutes using /commit
+- Run /status periodically to check orchestration state
+- When done, run /done
 ```
 
 **For research sessions**:
 ```
-You are a research worker. Run /session-start.
+You are a research worker. Run /start-work [PREFIX-#.#] to register.
 
 Your topic: [PREFIX-#.#] - [description]
 Session type: research (read-only for source code, can modify docs/)
 
-Document findings in docs/ via /log-insight and /dev-journal.
-When done, run /release.
+## Orchestration State
+Current workers:
+[paste worker list from clauductor context]
+
+## Rules
+- Document findings in docs/ via /log-insight and /dev-journal
+- When done, run /release
 ```
 
-## Step 4: Create tmux Pane
+## Step 5: Create tmux Pane
 
 ```bash
 TMUX_SESSION=$(tmux list-sessions -F '#{session_name}' | grep '^clauductor-' | head -1)
 tmux new-window -t "$TMUX_SESSION" -c "$(pwd)" -n "[worker-name]"
 ```
 
-## Step 5: Launch Claude Code
+## Step 6: Launch Claude Code
 
 ```bash
 tmux send-keys -t "$TMUX_SESSION:[worker-name]" "claude '[initial-prompt]'" Enter
 ```
 
-## Step 6: Log the Spawn
+## Step 7: Log the Spawn
 
 ```bash
 clauductor event --worker-id supervisor --type "spawn" --detail "Spawned [worker-name] as [type] for [PREFIX-#.#]"
 ```
 
-## Step 7: Confirm
+## Step 8: Confirm
 
 ```
 Worker Spawned

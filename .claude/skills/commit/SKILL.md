@@ -37,9 +37,26 @@ PREFIX-#.#: Brief imperative description
 
 ## Process
 
+### Step 0: Doc Freshness Check
+
+Before staging, verify core docs are current. For each issue found, fix it before proceeding:
+
+1. **current-story.md**: Verify active milestone matches branch. If stale, update milestone status and progress.
+2. **next-prompt.md**: Verify hub has pointer for current milestone. Scaffold if missing.
+3. **next-prompt-PREFIX-#.md**: Verify file exists for branch's milestone. Scaffold if missing.
+4. **development-journal.md**: Check today's date in first 20 lines. If stale, run `/dev-journal` via Agent (background).
+5. **insights-log.md**: Verify file exists. Create if missing.
+6. **requirements.md**: Verify current milestone has a section.
+
+Prompt the user about insights: "Any technical insights worth logging from this session?" (optional, not blocking).
+
+**Include doc updates in the same commit as code changes** — stage them alongside the code.
+
+### Step 1: Review and Stage
+
 1. Review all changes (staged + unstaged + untracked)
 2. Identify which files should be committed (ask user if unclear)
-3. Stage the appropriate files by name
+3. Stage the appropriate files by name (including any doc updates from Step 0)
 4. Draft the commit message and show it to the user
 5. Commit using HEREDOC format
 6. Do NOT push unless explicitly asked

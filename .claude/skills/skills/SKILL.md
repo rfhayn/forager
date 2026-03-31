@@ -17,6 +17,14 @@ Print the following skills reference. Do not run any tools — just output the c
 Project Skills Reference
 ========================
 
+LIFECYCLE — Start and finish work
+  /start-project        Guided first-time setup wizard. Run once per new project.
+  /start-work           Pick up a milestone: session-start + claim + load context.
+                        Usage: /start-work AUTH-1.3
+  /done                 Wrap up: review → journal → commit → PR → milestone-complete → release.
+  /pane                 Open a new tmux pane. Optionally launch claude.
+                        Usage: /pane  or  /pane claude  or  /pane claude /start-work AUTH-1
+
 WORKFLOW — Daily development cycle
   /session-start        Start here. Every session. Loads context, registers worker,
                         reports status. MANDATORY.

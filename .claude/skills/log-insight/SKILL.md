@@ -34,7 +34,7 @@ Add a new row to the insights log table:
 
 ### Topic Tags (Hierarchical)
 
-Use format like: `iOS/Vision`, `Swift/Concurrency`, `CoreData/Schema`, `CloudKit/Sync`, `SwiftUI/Lifecycle`, `Parsing/Regex`, `Import/OCR`, `Platform/Area`, `Framework/Feature`, `Architecture/Pattern`, `Testing/Approach`
+Use format like: `Platform/Area`, `Framework/Feature`, `Architecture/Pattern`, `Testing/Approach`
 
 ## After Logging
 
