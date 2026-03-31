@@ -89,3 +89,4 @@ Tools/ml-training/venv/
 
 # Clauductor runtime state
 orchestration/
+!orchestration/config.json
