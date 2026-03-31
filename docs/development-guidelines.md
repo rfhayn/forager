@@ -116,7 +116,7 @@ Household, HouseholdMember, Recipe, Ingredient, WeeklyList, GroceryListItem, Mea
 
 ---
 
-## DOCUMENTATION STANDARDS (7 Core Docs)
+## DOCUMENTATION STANDARDS (6 Core Docs)
 
 These files must stay synchronized. Use `/milestone-complete` after completions.
 
@@ -167,6 +167,24 @@ These files must stay synchronized. Use `/milestone-complete` after completions.
 /architecture-audit         # Before creating Core Data objects
 /prd-audit                  # If PRD is >2 weeks old
 ```
+
+---
+
+## HOOKS (Clauductor Framework + Forager)
+
+Claude Code hooks run automatically on tool use events. Configured in `.claude/settings.json`.
+
+| Hook | Event | Mode | Matcher | Purpose |
+|------|-------|------|---------|---------|
+| `session-register.sh` | SessionStart | async | — | Register worker with orchestration |
+| `heartbeat.sh` | PostToolUse | async | Bash\|Edit\|Write | Keep worker alive in orchestration |
+| `status-sync.sh` | PostToolUse | async | Write | Sync session status to HUD |
+| `lock-guard.sh` | PreToolUse | sync | Edit\|Write | Warn on editing locked files |
+| `architecture-guard.sh` | PreToolUse | sync | Edit\|Write | ADR 014: factory bypass warning |
+| `core-data-guard.sh` | PreToolUse | sync | Edit\|Write | ADR 007: schema change warning |
+| `doc-freshness.sh` | PreToolUse | sync | Bash(git commit *) | Warn about stale docs before commit |
+
+**Framework hooks** (session-register, heartbeat, status-sync, lock-guard, doc-freshness) are synced from the clauductor template. **Forager hooks** (architecture-guard, core-data-guard) are project-specific and won't be overwritten by `clauductor update`.
 
 ---
 

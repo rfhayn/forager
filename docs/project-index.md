@@ -17,6 +17,14 @@
 
 ## Recent Activity
 
+### March 30, 2026 — FRMWK-2 Lifecycle Automation Adoption
+- **FRMWK-2**: Adopted clauductor lifecycle automation framework
+  - 7 hooks installed (5 framework + 2 forager-specific: architecture-guard, core-data-guard)
+  - 4 new skills (done, pane, start-project, start-work) — 28 total
+  - Roadmap.md migrated into current-story.md Planning Accuracy table
+  - Terminal auto-launch disabled; `clauductor start` is now the entry point
+  - doc-freshness.sh replaces journal-check.sh for pre-commit doc checks
+
 ### March 28, 2026 — M16.9 ML Model Retraining COMPLETE
 - **M16.9**: Retrained BiLSTM-CRF v2 with harness data (~15h across 2 sessions)
   - v2 model: vocab 5,372→5,454, harness token accuracy +13.45pp, strangetom stable
