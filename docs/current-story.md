@@ -250,6 +250,6 @@ After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store
 
 ---
 
-**Last Session**: March 28, 2026 — Combined M18 + M10.4 PRD, Core Data audit
+**Last Session**: March 31, 2026 — FRMWK-2 lifecycle adoption (hooks, skills, orchestration), ~16 clauductor commits, hook JSON protocol fixes, deny mode guards
 **Next Action**: M18.1.0 (Schema v11 migration)
 **Confidence**: GREEN

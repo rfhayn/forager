@@ -6,6 +6,44 @@
 
 ---
 
+## Session 96 — March 31, 2026
+**Milestone**: FRMWK-2/FRMWK-2.5 — Clauductor Lifecycle Adoption
+**Focus**: Hooks, skills, orchestration, roadmap migration, bug fixes
+**Branch**: `feature/FRMWK-2.5-hook-json-protocol`
+
+### What Happened
+
+Major framework integration session. Adopted Clauductor's full lifecycle: hooks (architecture-guard, core-data-guard, lock-guard, doc-freshness), skills (start-work with orchestration registration), and supervisor dispatching with lock conflict detection. This was the practical follow-through on FRMWK-1's migration — FRMWK-1 replaced skill files, FRMWK-2 made them actually enforce rules.
+
+Discovered and fixed several Clauductor bugs along the way: TTY passthrough (exec.Command defaults Stdin to os.DevNull, breaking tmux attach), hook syncing (clauductor update wasn't showing hooks in diff list), HUD formatting issues, and skill frontmatter vs body conflicts where Claude would follow the description rather than the body instructions.
+
+The biggest discovery was the hook JSON protocol. Claude Code hooks must output JSON via `hookSpecificOutput` — plain text `echo` output is silently discarded. All four hooks were rewritten to use the JSON protocol. Additionally, the `permissionDecision` field matters: `deny` blocks tool calls and cannot be bypassed (even with "allow all edits"), while `ask` can be bypassed. Guard hooks were switched to `deny` for true enforcement.
+
+The start-work skill revealed a chaining problem: when a skill says "Run /claim", Claude may skip it entirely. Critical commands must be inlined directly in the skill body with CRITICAL markers.
+
+### Key Decisions
+
+1. **deny over ask for guards** — Architecture guard, Core Data guard, and lock guard all use `deny` now. If a guard fires, the operation is blocked, period. `ask` was too permissive because users habitually click "allow all edits."
+2. **Inline critical commands** — The start-work skill no longer references other skills for its mandatory steps. Registration and claim commands are inlined directly to prevent skipping.
+3. **Workers spawn on demand** — Removed `default_workers` from orchestration config. The supervisor spawns workers when milestones are ready, rather than pre-allocating.
+4. **Separate branch for hook fixes** — These fixes are framework-level, not M18 feature work. Keeping them on their own branch means they can land on main independently.
+
+### Learning
+
+The hook JSON protocol issue was particularly insidious. Hooks appeared to work (the script ran, the conditions evaluated correctly) but their output was silently discarded because it was plain text instead of JSON. The only symptom was that guards didn't actually block anything. This is the kind of silent failure that can persist for weeks.
+
+The deny vs ask distinction is load-bearing. During testing, `ask` mode guards fired correctly but could be bypassed with a single "allow all edits" click, defeating the entire purpose. `deny` mode makes guards truly enforceable.
+
+### AI Tooling Observations
+
+Skill frontmatter is read by Claude before the body. If the frontmatter description says "degrades gracefully" but the body says "always register", Claude may follow the description. This means frontmatter descriptions must be carefully aligned with body instructions — they're not just metadata, they're behavioral directives.
+
+### What's Next
+
+Merge this to main, then return to M18 (store-aware shopping) implementation. The hooks and skills are now properly enforcing architectural rules.
+
+---
+
 ## Session 95 — March 29, 2026
 **Milestone**: FRMWK-1 — Clauductor Framework Migration
 **Focus**: Replace forager-* skills with framework equivalents, zero context loss
