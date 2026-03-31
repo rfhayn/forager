@@ -41,13 +41,13 @@ Read all context:
 3. All `docs/next-prompt-*.md` files for active milestones
 4. Current state: `clauductor status`
 
-## Step 4: Launch HUD
+## Step 4: Verify HUD
 
 ```bash
-clauductor start
+tmux list-windows -t clauductor-$(basename $(pwd)) 2>&1
 ```
 
-Creates a tmux session with the HUD in the first pane. If already running, attach.
+Verify the tmux session is running (it was created by `clauductor start` before this session launched). Do NOT run `clauductor start` from within claude — it requires a real TTY for `tmux attach`.
 
 ## Step 5: Present Dashboard
 
@@ -59,8 +59,8 @@ Project State:
   Active milestones: [list from current-story.md]
   Priority queue:    [ordered list]
 
-Workers:
-  [table of registered workers]
+Workers: (use plain text with aligned columns, NOT markdown tables — tables truncate in narrow terminals)
+  [worker-id]  [type]  [status]  [milestone]  [heartbeat]
 
 Available Work:
   [unclaimed milestones from priority queue]

@@ -1,6 +1,6 @@
 ---
 name: start-work
-description: "Pick up a piece of work. Chains session-start → claim → set status → report ready. Degrades to just session-start if no orchestration. TRIGGER when the user says \"start work\", \"pick up\", \"work on\", \"begin work\", \"take this milestone\", \"grab this\", \"I'll work on\", or any request to start working on a specific milestone."
+description: "Pick up a piece of work. Chains session-start → register → claim → set status → report ready. Always uses orchestration. TRIGGER when the user says \"start work\", \"pick up\", \"work on\", \"begin work\", \"take this milestone\", \"grab this\", \"I'll work on\", or any request to start working on a specific milestone."
 argument-hint: "[PREFIX-#.#]"
 ---
 
@@ -18,27 +18,29 @@ argument-hint: "[PREFIX-#.#]"
 
 Execute the `/session-start` checklist. This loads context, checks git state, and verifies the branch.
 
-## Step 3: Check Orchestration
+## Step 3: Register and Check Workers
 
-Check if orchestration is available:
+Register this session and check how many workers are active:
 ```bash
-test -d orchestration && echo "ORCHESTRATION_AVAILABLE" || echo "NO_ORCHESTRATION"
+clauductor register --name "$WORKER_NAME" --type build --milestone "[PREFIX-#.#]" --owner "$USER"
+clauductor query workers
 ```
 
-**If no orchestration**: Skip to Step 6 (report ready). The skill degrades gracefully.
+Count active workers (heartbeat within last 5 minutes). If only 1 worker (this session), it's a **solo session**.
 
-## Step 4: Claim Work (orchestration only)
+## Step 4: Claim Work
 
 Run `/claim build [PREFIX-#.#]` to:
 - Declare this as a build session
 - Generate the file manifest from the milestone's next-prompt
 - Lock claimed files in orchestration
 
+Always claim, even in a solo session — this tracks what files are being worked on.
+
 If `/claim` reports conflicts (files locked by another worker), warn the user and ask how to proceed.
 
-## Step 5: Set Status (orchestration only)
+## Step 5: Log Start Event
 
-Log the start event:
 ```bash
 clauductor event --worker-id "$WORKER_NAME" --type "start_work" --detail "Started work on [PREFIX-#.#]"
 ```
@@ -53,7 +55,7 @@ Ready to Work
 Milestone:  [PREFIX-#.#]: [title]
 Branch:     feature/[branch-name]
 Session:    build
-Files:      [N files claimed] (or "no orchestration")
+Orchestration: active ([N] files claimed)
 
 Next-prompt: docs/next-prompt-[PREFIX-#].md
 
@@ -62,7 +64,7 @@ Start implementing the tasks listed in the next-prompt file.
 
 ## Rules
 
-- **Always run /session-start** — even without orchestration
+- **Always run /session-start** — orchestration is always active
+- **Always register and claim** — every session registers, claims files, and logs events
 - **One build per milestone** — if another build session exists for this milestone, warn
-- **Graceful degradation** — without orchestration, this is just /session-start + a status report
 - **Default to build** — session type is always "build" (use /spawn for research sessions)
