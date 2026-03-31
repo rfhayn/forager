@@ -2,9 +2,9 @@
 name: session-wrap
 description: Wrap up a development session by ensuring all documentation is current. Updates the development journal, checks for unlogged insights, and verifies the commit is ready. Use at the end of a session or before the final commit.
 skills:
-  - forager-dev-journal
-  - forager-log-insight
-  - forager-commit
+  - dev-journal
+  - log-insight
+  - commit
 ---
 
 # Session Wrap-Up
