@@ -1010,7 +1010,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 ### **Planned: FUI-1 Dashboard, Navigation, Recipe UI** 📋
 
-- FUI-1.1: Tab restructure (5→4 tabs, add Home)
+- FUI-1.1: Tab restructure (5→4 tabs, add Home) — ✅ COMPLETE
 - FUI-1.2: Search relocation (global search sheet)
 - FUI-1.3: Settings relocation (gear icon)
 - FUI-1.4: Recipe detail hero image + source attribution — ✅ COMPLETE

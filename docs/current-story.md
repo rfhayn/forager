@@ -21,7 +21,7 @@
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (6/6 subs complete, pending PR) |
-| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (3/7 subs complete) |
+| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (4/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
@@ -92,7 +92,7 @@ Dashboard-first design inspired by Google Stitch mockups + Apple Health card mod
 
 | Sub | Description | Est. | Status |
 |-----|-------------|------|--------|
-| FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | READY |
+| FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | COMPLETE (~0.75h) |
 | FUI-1.2 | Search relocation (global search sheet) | 2-3h | READY (depends on FUI-1.1) |
 | FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | READY (depends on FUI-1.1) |
 | FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
@@ -304,8 +304,10 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | FUI-1.6 | Recipe Grid/List Toggle | 2-3h | ~2h | ~125% |
 | M18.1.3 | Store Management UI | 1.75h | ~1.5h | ~117% |
 | FUI-1.4 | Recipe Detail Hero Image + Attribution | 1-2h | ~0.5h | ~300% |
+| FUI-1.1 | Tab Restructuring (5→4 tabs) | 1h | ~0.75h | ~133% |
+| M18.1.4 | Store Assignment UX + Grouping | 1.75h | ~1h | ~175% |
 
-**Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~19-24h (M18 remaining + FUI-1 + M9.28 + M7.7)
+**Total**: ~322 hours across 40+ milestones | **Remaining to launch**: ~17-22h (FUI-1 remaining + M9.28 + M7.7)
 
 **Post-launch backlog**: M10.4 (import polish), M6 (testing), M9 remaining, M18.2 (multi-store), FUI-2 (calendar grid), M11+ (~160-200h estimated)
 
@@ -320,6 +322,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: April 1, 2026 — FUI-1.4 hero image + attribution complete (e8f983e).
-**Next Action**: FUI-1.1 (tab restructure 5→4) — no dependencies, can run parallel with M18.1.4.
+**Last Session**: April 1, 2026 — FUI-1.1 tab restructure complete (5156954).
+**Next Action**: FUI-1.2 (search relocation) or FUI-1.3 (settings relocation) — both depend on FUI-1.1 which is now done.
 **Confidence**: GREEN
