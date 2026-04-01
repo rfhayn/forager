@@ -6,6 +6,67 @@
 
 ---
 
+## Session 98 — April 1, 2026
+**Milestone**: M18.1.1 — StoreService (CRUD, assignment, query, cross-store resolution)
+**Focus**: Service layer implementation following established patterns
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Implemented StoreService with 7 methods: createStore, deleteStore (with template reassignment), reorderStores, fetchStores, assignStore (two overloads for template and grocery item), and resolveStore for cross-store CloudKit safety. The resolveStore method mirrors the battle-tested resolveCategory pattern from GroceryListItemService — when a Store entity lives in a different persistent store than the target WeeklyList, it falls back to a name-based lookup in the correct household scope.
+
+Service follows the established pattern: @MainActor ObservableObject with viewContext, optional ManagedObjectFactory injection for ADR 014 compliance, householdKey/householdKeyProvider for ADR 013 scoped fetches, and the standard save/clearError/rollback error handling.
+
+Wrote 13 unit tests covering all CRUD operations, household key scoping, delete with reassignment and nullification, reordering, store assignment to templates and grocery items, and cross-store resolution. Hit a test isolation gotcha: in-memory PersistenceController instances share the same /dev/null SQLite store within a test run, so data from earlier test methods leaks into later ones. Fixed by writing assertions against relative values rather than absolute counts.
+
+Parallel worker (opus-m10.4.0) was active on recipe attribution — no file conflicts thanks to orchestration locks.
+
+### Key Decisions
+
+1. **Relative test assertions** — Rather than asserting `sortOrder == 0`, assert `store2.sortOrder == store1.sortOrder + 1`. Prevents flaky tests from shared in-memory store state.
+2. **Explicit grocery item nullification in deleteStore** — Core Data's nullify rule handles this at save time, but explicitly clearing in-memory relationships ensures consistency for code that reads the item before save.
+
+### What's Next
+
+M18.1.2: Wire store snapshots into GroceryListItemService's 3 creation paths (addItem, addIngredients, addStaples).
+
+---
+
+## Session 97 — April 1, 2026
+**Milestone**: M18.1.0 — Schema v11 + Model Files + HouseholdScoped Conformance
+**Focus**: Core Data schema validation, Store entity model files, test coverage
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Schema and model foundation session for store-aware shopping. Validated the forager 11 xcdatamodel against the M18 PRD — all entities, attributes, relationships, and fetch indices match the spec. The Store entity landed with 7 attributes (id, name, color, sortOrder, householdKey, dateCreated, updatedAt), 3 relationships (household, ingredientTemplates, groceryListItems), and a byStoreSortOrder fetch index. New relationships were added across existing entities: IngredientTemplate.preferredStore, GroceryListItem.store, and Household.stores. Recipe also gained imageURL and author attributes for import attribution.
+
+Store was declared HouseholdScoped in DataScope.swift to integrate with the dual-store architecture. Wrote 21 StoreSchemaTests covering entity creation, persistence, relationships, delete-nullify rules, factory compatibility, computed properties, and entity count validation.
+
+Two discoveries came out of the test suite. First, the entity count is 13, not the 12 stated in CLAUDE.md — the test caught this immediately. Second, ManagedObjectFactory crashes in in-memory test contexts because `store(for:)` resolves persistent stores by URL filename (looking for `forager.sqlite`), but the in-memory PersistenceController uses `/dev/null`. Factory integration tests need either a dual-store test setup or must use personal scope to avoid the crash.
+
+Build succeeded and all 21 tests pass. Committed as 84c82cf.
+
+### Key Decisions
+
+1. **Test-first schema validation** — Rather than trusting the xcdatamodel visually, wrote tests that assert entity existence, attribute types, relationship cardinality, and delete rules programmatically. This caught the entity count discrepancy immediately.
+2. **Nullify delete rules for Store relationships** — When a Store is deleted, IngredientTemplate.preferredStore and GroceryListItem.store are set to nil rather than cascading. Items without a store are valid (they just have no store assignment).
+3. **Personal scope for factory tests** — Rather than building a complex dual-store test harness, factory integration tests use personal scope which doesn't require the filename-based store resolution.
+
+### Learning
+
+The in-memory PersistenceController vs ManagedObjectFactory incompatibility is a significant architectural gotcha. The factory's `store(for:)` method assumes it can find persistent stores by URL filename matching (`forager.sqlite` for private, `forager_shared.sqlite` for shared). In-memory contexts use `/dev/null` as their URL, so the filename check fails. This means any test that exercises factory code paths needs to either (a) set up actual file-backed stores, (b) use personal scope which bypasses store resolution, or (c) mock the store resolution. This is worth remembering for all future HouseholdScoped entity testing.
+
+### AI Tooling Observations
+
+The schema validation approach — writing tests that assert against the xcdatamodel programmatically rather than relying on visual inspection — proved its value immediately by catching the entity count mismatch. This is a pattern worth repeating for future schema changes: let the test suite be the source of truth, not the Xcode model editor.
+
+### What's Next
+
+Continue M18 implementation: StoreService (CRUD operations), Store management UI, and integration with GroceryListItem and IngredientTemplate views.
+
+---
+
 ## Session 96 — March 31, 2026
 **Milestone**: FRMWK-2/FRMWK-2.5 — Clauductor Lifecycle Adoption
 **Focus**: Hooks, skills, orchestration, roadmap migration, bug fixes
