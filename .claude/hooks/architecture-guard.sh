@@ -27,8 +27,13 @@ CONTENT=$(echo "$INPUT" | jq -r '.tool_input.content // .tool_input.new_string /
 ENTITIES="WeeklyList|Recipe|PlannedMeal|MealPlan|Category|IngredientTemplate|Ingredient|GroceryListItem"
 
 if echo "$CONTENT" | grep -qE "($ENTITIES)\(context:" ; then
-  echo "⚠️  Factory bypass detected — use ManagedObjectFactory.make() instead of direct init (ADR 014)"
-  echo "   HouseholdScoped entities must be created via the factory for proper scope assignment."
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: "⚠️ Factory bypass detected — use ManagedObjectFactory.make() instead of direct Entity(context:) init (ADR 014). HouseholdScoped entities must be created via the factory for proper scope assignment."
+    }
+  }'
 fi
 
 exit 0

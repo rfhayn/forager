@@ -14,8 +14,13 @@ FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
 # Check if path is a Core Data model file
 if [[ "$FILE_PATH" == *.xcdatamodeld* ]]; then
-  echo "⚠️  Core Data schema change detected. Run /core-data-audit before proceeding (ADR 007)."
-  echo "   CloudKit Production schema is append-only — no destructive changes allowed."
+  jq -n '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "deny",
+      permissionDecisionReason: "⚠️ Core Data schema change detected. Run /core-data-audit before proceeding (ADR 007). CloudKit Production schema is append-only — no destructive changes allowed."
+    }
+  }'
 fi
 
 exit 0

@@ -44,11 +44,15 @@ if [ "$LOCK_WORKER" = "$CURRENT_WORKER" ]; then
   exit 0
 fi
 
-# Locked by another worker — warn but allow (exit 0)
+# Locked by another worker — warn via JSON protocol
 LOCK_MILESTONE="$(echo "$LOCK_RESULT" | jq -r '.milestone' 2>/dev/null)"
-cat <<WARN
-WARNING: File '$FILE_PATH' is locked by worker '$LOCK_WORKER' (milestone: $LOCK_MILESTONE).
-Consider coordinating before editing. To enforce blocking, change this hook to exit 2.
-WARN
+MSG="⚠️ File '$FILE_PATH' is locked by worker '$LOCK_WORKER' (milestone: $LOCK_MILESTONE). Consider coordinating before editing."
+jq -n --arg msg "$MSG" '{
+  hookSpecificOutput: {
+    hookEventName: "PreToolUse",
+    permissionDecision: "deny",
+    permissionDecisionReason: $msg
+  }
+}'
 
 exit 0
