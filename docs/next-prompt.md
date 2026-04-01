@@ -48,6 +48,6 @@ Screenshots, metadata, App Store Connect configuration, privacy policy, review s
 
 ## Post-Launch Priorities
 
-- M10.4: Recipe import polish — history, telemetry (schema done in M18) (6-8h)
+- M10.4: Recipe import polish — history, telemetry (deferred post-launch; M10.4.0 attribution done in M18)
 - M6: Testing Foundation (12-18h)
 - M9 Remaining (~120h)

@@ -98,12 +98,9 @@ In `GroceryListItemService`: snapshot `template.preferredStore` onto new items i
 **Invisibility**: No toggle/dots if no stores created.
 **Persistence**: `UserDefaults` key `groceryListGroupMode`
 
-### M10.4.0: Recipe Attribution Wiring (0.75h)
+### M10.4.0: Recipe Attribution Wiring (0.75h) — COMPLETE
 
-- `RecipeImportService.saveImport()` ~line 182: add `recipe.imageURL = draft.imageURL.value` and `recipe.author = draft.author.value`
-- `RecipeService.createRecipe()`: add optional imageURL + author params
-- `RecipeFormModels.RecipeFormData`: add fields, update `toRecipeFormData()` mapping
-- imageURL stored but NOT rendered as image (deferred to future milestone)
+Wired imageURL + author through RecipeImportService (both save paths), RecipeService.createRecipe/duplicateRecipe, and RecipeFormModels. 5 unit tests added. Commit d5acc1f.
 
 ---
 

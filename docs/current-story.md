@@ -237,6 +237,7 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | M9.35.2 | Confidence Fix + Float Conversion | — | ~1h | — |
 | M9.35.3 | Leading Comma Display Fix | — | <0.5h | — |
 | M17.1 | Doc Slimming + PRD Archival | — | ~1h | — |
+| M10.4.0 | Recipe Attribution Wiring | 0.75h | ~0.5h | 150% |
 
 **Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~11-18h (M18 → M9.28 → M7.7)
 
@@ -250,6 +251,6 @@ After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store
 
 ---
 
-**Last Session**: March 31, 2026 — FRMWK-2 lifecycle adoption (hooks, skills, orchestration), ~16 clauductor commits, hook JSON protocol fixes, deny mode guards
-**Next Action**: M18.1.0 (Schema v11 migration)
+**Last Session**: April 1, 2026 — M10.4.0 recipe attribution wiring (imageURL + author), M18.1.1 StoreService
+**Next Action**: M18.1.3 (Store management UI)
 **Confidence**: GREEN

@@ -121,7 +121,9 @@
 
 **Active**: M9.35 (Parsing Pipeline Hardening)
 
-**Queued**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md)), M10.4 (Recipe Attribution), M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
+**Queued**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md)), M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
+
+**Recently Completed**: M10.4.0 (Recipe Attribution Wiring — imageURL + author persisted through import and service layer)
 
 **Future**: M11 (Analytics), M12 (Health), M13 (Budget), M14 (AI Assistant)
 
