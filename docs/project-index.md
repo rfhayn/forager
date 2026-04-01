@@ -1,8 +1,8 @@
 # Forager - Project Index
 
 **Last Updated**: April 1, 2026
-**Current Milestone**: M18 ACTIVE | FUI-1 ACTIVE
-**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
+**Current Milestone**: M18 ACTIVE (pending PR) | FUI-1 COMPLETE
+**Launch Path**: M9.28 → PR merge → M7.7
 
 ---
 
@@ -17,19 +17,18 @@
 
 ## Recent Activity
 
-### April 1, 2026 — M18 Build Sprint + FUI-1 Active
-- **FUI-1.1**: Tab restructure 5→4 (Home, Lists, Recipes, Meals) + DashboardView placeholder — COMPLETE (5156954)
-- **M18.1.4**: Store assignment UX, color dots, "Group by Store" toggle, context menu — COMPLETE (~1h, 9 tests)
-- **FUI-1.4**: Recipe detail hero image + source attribution — COMPLETE (e8f983e)
-- **M18.1.3**: Store management UI (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) — COMPLETE (e9e5307)
-- **FUI-1.6**: Recipe list grid/list toggle with image cards — COMPLETE (bdfedc3)
-- **FUI-1.5**: Recipe computed properties for attribution — COMPLETE (861e86a)
-- **M18.1.0-M18.1.2**: Schema v11, StoreService, snapshot wiring (3 parallel workers)
-- **M10.4.0**: Recipe attribution wiring (imageURL + author) — COMPLETE
+### April 1, 2026 — M18 + FUI-1 Complete
+- **FUI-1 COMPLETE** (~5.25h actual vs 12-15h estimated):
+  - FUI-1.1: Tab restructure 5→4 (Home, Lists, Recipes, Meals) + DashboardView placeholder
+  - FUI-1.2: Search relocation — SearchButtonModifier on all tabs, removed .searchable from RecipeListView
+  - FUI-1.3: Settings relocation — gear icon (built in FUI-1.1)
+  - FUI-1.4: Recipe detail hero image + source attribution
+  - FUI-1.5: Recipe computed properties for attribution
+  - FUI-1.6: Recipe list grid/list toggle with image cards
+  - FUI-1.7: Full DashboardView — TodaysMealsCard, GroceryRunCard, RecipeSpotlightCard, QuickActionsBar
+- **M18 COMPLETE** (all 6 sub-milestones): Schema v11, StoreService, snapshot wiring, store management UI, store assignment UX, recipe attribution
 - **Pre-launch manual testing doc**: 80+ test cases across all launch path milestones
-- **FUI-1**: PRD created for dashboard/navigation/recipe UI (7 sub-milestones, ~12-15h)
-- **PRD audits**: M7.7 (updated for iOS 26, ~320h), M9.28 (new PRD), FUI-1 (line refs validated)
-- **Launch plan revised**: M18 → FUI-1 → M9.28 → M7.7 (~19-24h remaining)
+- **Launch plan**: M9.28 → PR merge → M7.7 (~5-8h remaining)
 
 ### March 30, 2026 — FRMWK-2 Lifecycle Automation Adoption
 - **FRMWK-2**: Adopted clauductor lifecycle automation framework

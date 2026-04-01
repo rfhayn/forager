@@ -44,6 +44,12 @@ Three milestones in one session. FUI-1.2 was mechanical cleanup, FUI-1.3 was alr
 
 All FUI-1 sub-milestones complete. Ready for testing, then M9.28 (strip diagnostic logging) and PR merge.
 
+### Retro — FUI-1 Milestone Complete
+
+- **Estimate vs actual**: 12-15h estimated, ~5.25h actual (~250% efficiency)
+- **What surprised you**: The PRD's detailed line references and code snippets made implementation almost mechanical. FUI-1.3 was already done (gear icon built in FUI-1.1's placeholder). FUI-1.2's search removal was much simpler than estimated because the fullScreenCover was already wired. FUI-1.7 was surprisingly fast because all data sources (MealPlanService, @FetchRequest) were already battle-tested patterns.
+- **Process improvement**: Forward-looking placeholders (like FUI-1.1 including the gear icon) are powerful — they can absorb entire future milestones. Consider doing this intentionally when the marginal cost is near zero.
+
 ---
 
 ## Session 105 — April 1, 2026

@@ -2,7 +2,7 @@
 
 **Last Updated**: April 1, 2026
 **Version**: 8.0
-**Current Milestone**: M18 ACTIVE (Store-Aware Shopping) | FUI-1 ACTIVE (Dashboard/Navigation/Recipe UI)
+**Current Milestone**: M18 ACTIVE (Store-Aware Shopping) | FUI-1 COMPLETE (Dashboard/Navigation/Recipe UI)
 **Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
 
 ---
@@ -1008,15 +1008,15 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 - ✅ M18.1.3: Store management UI (Settings > Stores) — COMPLETE (~1.5h)
 - ✅ M18.1.4: Store assignment UX + color dots + grouping — COMPLETE (~1h, 9 unit tests)
 
-### **Planned: FUI-1 Dashboard, Navigation, Recipe UI** 📋
+### **✅ FUI-1 Dashboard, Navigation, Recipe UI — COMPLETE** (April 1, 2026, ~5.25h)
 
-- FUI-1.1: Tab restructure (5→4 tabs, add Home) — ✅ COMPLETE
-- FUI-1.2: Search relocation (global search sheet)
-- FUI-1.3: Settings relocation (gear icon)
-- FUI-1.4: Recipe detail hero image + source attribution — ✅ COMPLETE
-- FUI-1.5: Recipe computed properties for attribution — ✅ COMPLETE
-- FUI-1.6: Recipe list grid/list toggle — ✅ COMPLETE
-- FUI-1.7: DashboardView (greeting, cards, quick actions)
+- ✅ FUI-1.1: Tab restructure (5→4 tabs, add Home)
+- ✅ FUI-1.2: Search relocation (global search sheet via SearchButtonModifier)
+- ✅ FUI-1.3: Settings relocation (gear icon — built in FUI-1.1)
+- ✅ FUI-1.4: Recipe detail hero image + source attribution
+- ✅ FUI-1.5: Recipe computed properties for attribution
+- ✅ FUI-1.6: Recipe list grid/list toggle with image cards
+- ✅ FUI-1.7: DashboardView (greeting, TodaysMeals, GroceryRun, RecipeSpotlight, QuickActions)
 
 ### **Planned: M9.28 Strip Diagnostic Logging** 📋
 

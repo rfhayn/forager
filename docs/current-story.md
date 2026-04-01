@@ -1,7 +1,7 @@
 # Current Development Story
 
 **Last Updated**: April 1, 2026
-**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 ACTIVE (7/7 complete, pending PR)** | **M16.9 COMPLETE**
+**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 COMPLETE (7/7)** | **M16.9 COMPLETE**
 **Total Progress**: ~320 hours
 **Current Branch**: `feature/M18-store-aware-shopping`
 **Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
@@ -83,23 +83,23 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 
 ---
 
-## ACTIVE: FUI-1 — Dashboard, Navigation, Recipe UI (April 1, 2026)
+## COMPLETE: FUI-1 — Dashboard, Navigation, Recipe UI (April 1, 2026)
 
 Dashboard-first design inspired by Google Stitch mockups + Apple Health card model. Tab restructure (5→4), global search, recipe hero images, grid/list toggle, dashboard with contextual cards.
 
-**PRD**: `docs/prds/active/fui-1-dashboard-navigation-recipe-ui.md`
+**PRD**: `docs/prds/complete/fui-1-dashboard-navigation-recipe-ui.md`
 **Branch**: `feature/M18-store-aware-shopping` (same branch as M18)
-**Estimated**: 12-15 hours (7 sub-milestones)
+**Estimated**: 12-15 hours | **Actual**: ~5.25 hours
 
-| Sub | Description | Est. | Status |
-|-----|-------------|------|--------|
-| FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | COMPLETE (~0.75h) |
-| FUI-1.2 | Search relocation (global search sheet) | 2-3h | COMPLETE (~0.5h) |
-| FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | COMPLETE (built in FUI-1.1) |
-| FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
-| FUI-1.5 | Recipe computed properties for attribution | 0.5h | COMPLETE (~0.5h) |
-| FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | COMPLETE |
-| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | COMPLETE (~1h) |
+| Sub | Description | Est. | Actual | Status |
+|-----|-------------|------|--------|--------|
+| FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | ~0.75h | COMPLETE |
+| FUI-1.2 | Search relocation (global search sheet) | 2-3h | ~0.5h | COMPLETE |
+| FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | 0h | COMPLETE (built in FUI-1.1) |
+| FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | ~0.5h | COMPLETE |
+| FUI-1.5 | Recipe computed properties for attribution | 0.5h | ~0.5h | COMPLETE |
+| FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | ~2h | COMPLETE |
+| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | ~1h | COMPLETE |
 
 ---
 
@@ -307,8 +307,11 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | FUI-1.4 | Recipe Detail Hero Image + Attribution | 1-2h | ~0.5h | ~300% |
 | FUI-1.1 | Tab Restructuring (5→4 tabs) | 1h | ~0.75h | ~133% |
 | M18.1.4 | Store Assignment UX + Grouping | 1.75h | ~1h | ~175% |
+| FUI-1.2 | Search Relocation | 2-3h | ~0.5h | ~500% |
+| FUI-1.3 | Settings Relocation | 0.5h | 0h | ∞ (built in FUI-1.1) |
+| FUI-1.7 | DashboardView (full build) | 4-5h | ~1h | ~450% |
 
-**Total**: ~322 hours across 40+ milestones | **Remaining to launch**: ~17-22h (FUI-1 remaining + M9.28 + M7.7)
+**Total**: ~325 hours across 40+ milestones | **Remaining to launch**: ~5-8h (M9.28 + M7.7)
 
 **Post-launch backlog**: M10.4 (import polish), M6 (testing), M9 remaining, M18.2 (multi-store), FUI-2 (calendar grid), M11+ (~160-200h estimated)
 
@@ -316,9 +319,9 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**Phase 1** (parallel): M18.1.3+M18.1.4 (store UI) alongside FUI-1.5→1.4→1.1→1.2→1.3 (recipe UI + tab restructure) and FUI-1.6 (grid toggle).
-**Phase 2** (parallel): FUI-1.7 (dashboard) alongside M9.28 (strip logging).
-**Phase 3**: PR + merge.
+**Phase 1**: Testing pass on M18 + FUI-1 work.
+**Phase 2**: M9.28 (strip diagnostic logging).
+**Phase 3**: PR + merge (M18 + FUI-1 + M9.28 in one branch).
 **Phase 4**: M7.7 (App Store submission).
 
 ---
