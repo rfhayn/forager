@@ -89,7 +89,9 @@ class WeeklyListService: ObservableObject {
     // MARK: - GroceryListItem Operations
 
     /// Adds a grocery item using pre-parsed structured data (ADR 012: flat string snapshots)
+    /// M18.1.2: Added optional store parameter for store snapshot wiring
     func addItem(to list: WeeklyList, name: String, category: Category? = nil,
+                 store: Store? = nil,
                  numericValue: Double = 0, standardUnit: String? = nil,
                  displayText: String? = nil, isParseable: Bool = false,
                  parseConfidence: Float = 0, source: String? = nil) -> GroceryListItem? {
@@ -99,6 +101,7 @@ class WeeklyListService: ObservableObject {
         item.id = UUID()
         item.name = name
         item.categoryEntity = category
+        item.store = store
         item.numericValue = numericValue
         item.standardUnit = standardUnit
         item.displayText = displayText

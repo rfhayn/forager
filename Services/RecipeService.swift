@@ -35,7 +35,8 @@ class RecipeService: ObservableObject {
     /// Creates a new recipe with basic metadata
     /// M9.13: Routes through ManagedObjectFactory for correct store assignment (ADR 014)
     func createRecipe(title: String, servings: Int16, prepTime: Int16 = 0, cookTime: Int16 = 0,
-                      instructions: String? = nil, sourceURL: String? = nil) -> Recipe? {
+                      instructions: String? = nil, sourceURL: String? = nil,
+                      imageURL: String? = nil, author: String? = nil) -> Recipe? {
         clearError()
 
         let recipe: Recipe
@@ -49,6 +50,8 @@ class RecipeService: ObservableObject {
                     r.cookTime = cookTime
                     r.instructions = instructions
                     r.sourceURL = sourceURL
+                    r.imageURL = imageURL
+                    r.author = author
                     r.dateCreated = Date()
                     r.usageCount = 0
                     r.isFavorite = false
@@ -69,6 +72,8 @@ class RecipeService: ObservableObject {
             recipe.cookTime = cookTime
             recipe.instructions = instructions
             recipe.sourceURL = sourceURL
+            recipe.imageURL = imageURL
+            recipe.author = author
             recipe.dateCreated = Date()
             recipe.usageCount = 0
             recipe.isFavorite = false
@@ -131,6 +136,8 @@ class RecipeService: ObservableObject {
                     r.cookTime = recipe.cookTime
                     r.instructions = recipe.instructions
                     r.sourceURL = recipe.sourceURL
+                    r.imageURL = recipe.imageURL
+                    r.author = recipe.author
                     r.tags = recipe.tags
                     r.dateCreated = Date()
                     r.usageCount = 0
@@ -154,6 +161,8 @@ class RecipeService: ObservableObject {
             copy.cookTime = recipe.cookTime
             copy.instructions = recipe.instructions
             copy.sourceURL = recipe.sourceURL
+            copy.imageURL = recipe.imageURL
+            copy.author = recipe.author
             copy.tags = recipe.tags
             copy.dateCreated = Date()
             copy.usageCount = 0

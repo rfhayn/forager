@@ -10,6 +10,7 @@ struct ForagerSectionHeader: View {
     let count: Int
     var totalCount: Int?
     var isExpanded: Binding<Bool>?
+    var colorDotHex: String? = nil
 
     var body: some View {
         HStack {
@@ -30,10 +31,15 @@ struct ForagerSectionHeader: View {
 
             Spacer()
 
-            Text(title.uppercased())
-                .font(ForagerTheme.footnoteFont)
-                .tracking(0.5)
-                .foregroundStyle(ForagerTheme.textSecondary)
+            HStack(spacing: ForagerTheme.Spacing.xs) {
+                if let hex = colorDotHex {
+                    StoreColorDot(hex: hex, size: 10)
+                }
+                Text(title.uppercased())
+                    .font(ForagerTheme.footnoteFont)
+                    .tracking(0.5)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
 
             Spacer()
 

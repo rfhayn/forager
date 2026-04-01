@@ -1,5 +1,5 @@
 // foragerApp.swift
-// M15.1: Liquid Glass TabView with 5-tab navigation
+// FUI-1.1: 4-tab navigation (Home, Lists, Recipes, Meals)
 // M7.2.2 Task 3: CloudKit share invitation handling
 // M7.2.3 Phase 2.4: ManagedObjectFactory environment injection
 
@@ -7,32 +7,29 @@ import SwiftUI
 import CloudKit
 import Combine
 
-// MARK: - M15.1: Navigation Tab Enum (5 tabs — ADR 011)
+// MARK: - FUI-1.1: Navigation Tab Enum (4 tabs — Home replaces Search+Settings)
 
 enum NavigationTab: String, CaseIterable {
+    case home
     case lists
     case recipes
     case mealPlans
-    case settings
-    case search
 
     var title: String {
         switch self {
+        case .home: return "Home"
         case .lists: return "Lists"
         case .recipes: return "Recipes"
         case .mealPlans: return "Meals"
-        case .settings: return "Settings"
-        case .search: return "Search"
         }
     }
 
     var icon: String {
         switch self {
+        case .home: return "house"
         case .lists: return "list.bullet"
         case .recipes: return "book"
         case .mealPlans: return "calendar"
-        case .settings: return "gearshape"
-        case .search: return "magnifyingglass"
         }
     }
 }
@@ -72,6 +69,9 @@ struct foragerApp: App {
     // M10.6.8: Shared ingredient matching service
     @StateObject private var ingredientMatchService: IngredientMatchService
 
+    // M18.1.3: Store service for store-aware shopping
+    @StateObject private var storeService: StoreService
+
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
@@ -83,7 +83,8 @@ struct foragerApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showWelcome = false
     @State private var showCoachMarks = false
-    @State private var selectedTab: NavigationTab = .lists
+    @State private var selectedTab: NavigationTab = .home
+    @State private var showSearch = false
 
     // First-launch loading screen
     @State private var isReady = false
@@ -112,6 +113,10 @@ struct foragerApp: App {
         _groceryListItemService = StateObject(wrappedValue: groceryItemSvc)
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
+
+        // M18.1.3: Store service for store-aware shopping
+        let storeSvc = StoreService(context: context)
+        _storeService = StateObject(wrappedValue: storeSvc)
 
         // M10.1: Import service for browser and URL import
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
@@ -148,6 +153,10 @@ struct foragerApp: App {
         recipe.configure(factory: factory)
         weeklyList.configure(factory: factory)
         templateService.configure(factory: factory)
+        storeSvc.configure(factory: factory)
+        storeSvc.householdKeyProvider = { [weak household] in
+            household?.currentHouseholdKey
+        }
         MealPlanService.shared.configure(factory: factory)
         MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 
@@ -169,29 +178,28 @@ struct foragerApp: App {
                     // M15.1: Liquid Glass TabView replaces CustomBottomNavigationView
                     ZStack {
                         TabView(selection: $selectedTab) {
+                            Tab("Home", systemImage: "house", value: .home) {
+                                NavigationStack {
+                                    DashboardView(selectedTab: $selectedTab)
+                                        .searchButton(showSearch: $showSearch)
+                                }
+                            }
                             Tab("Lists", systemImage: "list.bullet", value: .lists) {
                                 NavigationStack {
                                     WeeklyListsView(popToRoot: $listsPopToRoot)
+                                        .searchButton(showSearch: $showSearch)
                                 }
                             }
                             Tab("Recipes", systemImage: "book", value: .recipes) {
                                 NavigationStack {
                                     RecipeListView(popToRoot: $recipesPopToRoot)
+                                        .searchButton(showSearch: $showSearch)
                                 }
                             }
                             Tab("Meals", systemImage: "calendar", value: .mealPlans) {
                                 NavigationStack {
                                     MealPlansListView(popToRoot: $mealPlansPopToRoot)
-                                }
-                            }
-                            Tab("Settings", systemImage: "gearshape", value: .settings) {
-                                NavigationStack {
-                                    SettingsView()
-                                }
-                            }
-                            Tab("Search", systemImage: "magnifyingglass", value: .search) {
-                                NavigationStack {
-                                    UnifiedSearchView()
+                                        .searchButton(showSearch: $showSearch)
                                 }
                             }
                         }
@@ -216,6 +224,7 @@ struct foragerApp: App {
                     .environmentObject(ingredientMatchService)
                     .environmentObject(groceryListItemService)
                     .environmentObject(importService)
+                    .environmentObject(storeService)
                     .task {
                         // Reload household now that stores are loaded (isReady gate
                         // ensures stores are ready before TabView renders).
@@ -242,6 +251,16 @@ struct foragerApp: App {
                     }
                     .fullScreenCover(isPresented: $showWelcome) {
                         WelcomeWalkthroughView()
+                    }
+                    .fullScreenCover(isPresented: $showSearch) {
+                        NavigationStack {
+                            UnifiedSearchView()
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Done") { showSearch = false }
+                                    }
+                                }
+                        }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
                         // M9.27: Replay shows the welcome carousel

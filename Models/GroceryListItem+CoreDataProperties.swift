@@ -33,6 +33,7 @@ extension GroceryListItem {
     @NSManaged public var householdKey: String?
     @NSManaged public var categoryEntity: Category?
     @NSManaged public var household: Household?
+    @NSManaged public var store: Store?
     @NSManaged public var sourceRecipes: NSSet?
     @NSManaged public var weeklyList: WeeklyList?
 

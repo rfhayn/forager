@@ -178,6 +178,8 @@ extension IngredientTemplate: HouseholdScoped {}
 // M9.15: Promoted from non-HouseholdScoped — eliminates cross-store relationships
 extension Ingredient: HouseholdScoped {}
 extension GroceryListItem: HouseholdScoped {}
+// M18.1: Store-aware shopping
+extension Store: HouseholdScoped {}
 
 // MARK: - Debug Utilities
 

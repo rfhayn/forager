@@ -103,6 +103,8 @@ struct RecipeFormData {
     var instructions: String = ""
     var tags: String = ""
     var isFavorite: Bool = false
+    var imageURL: String? = nil
+    var author: String? = nil
     var ingredients: [IngredientInput] = []
     
     var totalTime: Int {

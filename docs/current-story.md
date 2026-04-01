@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: March 28, 2026
-**Status**: **M18 ACTIVE** | **M16.9 COMPLETE** | **M16 COMPLETE**
+**Last Updated**: April 1, 2026
+**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 COMPLETE (7/7)** | **M16.9 COMPLETE**
 **Total Progress**: ~320 hours
 **Current Branch**: `feature/M18-store-aware-shopping`
-**Launch Path**: M18 -> M9.28 -> M7.7
+**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
 
 ---
 
@@ -20,13 +20,50 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
-| **M18** | Store-aware shopping + recipe attribution (combined schema v11) | 7-10h | ACTIVE |
+| **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (6/6 subs complete, pending PR) |
+| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (4/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
 ---
 
-## ACTIVE: M18 — Store-Aware Shopping (March 28, 2026)
+## EXECUTION PLAN (Phases with Parallelism)
+
+### Phase 1 — COMPLETE (April 1, 2026)
+M18.1.3, M18.1.4, FUI-1.1, FUI-1.4, FUI-1.5, FUI-1.6 all completed via parallel clauductor workers.
+
+### Phase 2 — FUI-1 remaining (parallel)
+```
+Worker A: FUI-1.2 (2.5h)   Search relocation
+Worker B: FUI-1.3 (0.5h)   Settings relocation
+```
+
+### Phase 3 — Dashboard
+```
+Worker C: FUI-1.7 (4.5h)   Dashboard — needs FUI-1.2 + FUI-1.3
+```
+
+### Phase 4 — Testing + logging cleanup
+```
+Manual/automated testing pass on all new features
+M9.28 (1.5h)   Strip diagnostic logging — AFTER testing
+```
+
+### Phase 5 — PR + merge
+Merge M18 feature branch (all M18 + FUI-1 + M9.28 work).
+
+### Phase 6 — App Store (last, partly manual)
+```
+M7.7.1 (1-2h) Landing page + M7.7.2 (0.5h) README — can parallel
+M7.7.3 (1-2h) App Store listing — needs final build for screenshots
+M7.7.4 (0.5h) Submit for review
+```
+
+**Remaining estimate**: ~10-13h (FUI-1 remaining + testing + M9.28 + M7.7)
+
+---
+
+## ACTIVE: M18 — Store-Aware Shopping (April 1, 2026)
 
 Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema changes (M10.4.0) batched into a single Core Data v11 migration. Store entity, store preferences on templates, store snapshots on grocery items, "Group by Store" view, plus persisting imageURL/author on Recipe.
 
@@ -36,13 +73,33 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 
 | Sub | Description | Status |
 |-----|-------------|--------|
-| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | READY |
-| M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | READY |
-| M18.1.2 | Store snapshot wiring in GroceryListItemService | READY |
-| M18.1.3 | Store management UI (Settings > Stores) | READY |
-| M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
-| M10.4.0 | Recipe attribution wiring (imageURL + author) | READY |
+| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | COMPLETE |
+| M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | COMPLETE |
+| M18.1.2 | Store snapshot wiring in GroceryListItemService | COMPLETE |
+| M18.1.3 | Store management UI (Settings > Stores) | COMPLETE (~1.5h) |
+| M18.1.4 | Store assignment UX + color dots + "Group by Store" | COMPLETE (~1h) |
+| M10.4.0 | Recipe attribution wiring (imageURL + author) | COMPLETE |
 | M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
+
+---
+
+## COMPLETE: FUI-1 — Dashboard, Navigation, Recipe UI (April 1, 2026)
+
+Dashboard-first design inspired by Google Stitch mockups + Apple Health card model. Tab restructure (5→4), global search, recipe hero images, grid/list toggle, dashboard with contextual cards.
+
+**PRD**: `docs/prds/complete/fui-1-dashboard-navigation-recipe-ui.md`
+**Branch**: `feature/M18-store-aware-shopping` (same branch as M18)
+**Estimated**: 12-15 hours | **Actual**: ~5.25 hours
+
+| Sub | Description | Est. | Actual | Status |
+|-----|-------------|------|--------|--------|
+| FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | ~0.75h | COMPLETE |
+| FUI-1.2 | Search relocation (global search sheet) | 2-3h | ~0.5h | COMPLETE |
+| FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | 0h | COMPLETE (built in FUI-1.1) |
+| FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | ~0.5h | COMPLETE |
+| FUI-1.5 | Recipe computed properties for attribution | 0.5h | ~0.5h | COMPLETE |
+| FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | ~2h | COMPLETE |
+| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | ~1h | COMPLETE |
 
 ---
 
@@ -134,7 +191,8 @@ Household auto-discovers in ~6 seconds after reinstall (attempt 3/30 of polling 
 
 ## PLANNED: M9.28 — Remove Diagnostic Logging for Production
 
-**Estimated**: 1-2 hours. Strip DiagnosticLogger, DebugLogService, and CloudKitLogger output added during M9.15-M9.23 debugging. Determine what to keep behind `#if DEBUG` vs remove entirely.
+**PRD**: `docs/prds/active/m9.28-strip-diagnostic-logging.md`
+**Estimated**: 1-2 hours. Gate DiagnosticLogger, DebugLogService, and CloudKitLogger behind `#if DEBUG`. Wrap ~106 caller-site log calls. Remove Settings > Diagnostics section from Release builds. Keep CloudKitLogger's OSLog calls (production-appropriate).
 
 ---
 
@@ -237,19 +295,37 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | M9.35.2 | Confidence Fix + Float Conversion | — | ~1h | — |
 | M9.35.3 | Leading Comma Display Fix | — | <0.5h | — |
 | M17.1 | Doc Slimming + PRD Archival | — | ~1h | — |
+| M10.4.0 | Recipe Attribution Wiring | 0.75h | ~0.5h | 150% |
 
-**Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~11-18h (M18 → M9.28 → M7.7)
+| M18.1.0 | Schema v11 + model files | 1.2h | ~1h | ~120% |
+| M18.1.1 | StoreService CRUD + tests | 1.1h | ~1h | ~110% |
+| M18.1.2 | Store snapshot wiring | 0.6h | ~0.5h | ~120% |
+| M10.4.0 | Recipe Attribution Wiring | 0.75h | ~0.5h | 150% |
+| FUI-1.5 | Recipe Computed Properties | 0.5h | ~0.5h | 100% |
+| FUI-1.6 | Recipe Grid/List Toggle | 2-3h | ~2h | ~125% |
+| M18.1.3 | Store Management UI | 1.75h | ~1.5h | ~117% |
+| FUI-1.4 | Recipe Detail Hero Image + Attribution | 1-2h | ~0.5h | ~300% |
+| FUI-1.1 | Tab Restructuring (5→4 tabs) | 1h | ~0.75h | ~133% |
+| M18.1.4 | Store Assignment UX + Grouping | 1.75h | ~1h | ~175% |
+| FUI-1.2 | Search Relocation | 2-3h | ~0.5h | ~500% |
+| FUI-1.3 | Settings Relocation | 0.5h | 0h | ∞ (built in FUI-1.1) |
+| FUI-1.7 | DashboardView (full build) | 4-5h | ~1h | ~450% |
 
-**Post-launch backlog**: M10.4 (import polish), M6 (testing), M9 remaining, M11+ (~160-200h estimated)
+**Total**: ~325 hours across 40+ milestones | **Remaining to launch**: ~5-8h (M9.28 + M7.7)
+
+**Post-launch backlog**: M10.4 (import polish), M6 (testing), M9 remaining, M18.2 (multi-store), FUI-2 (calendar grid), M11+ (~160-200h estimated)
 
 ---
 
 ## Next Priority
 
-After M18 complete: **M9.28** (strip diagnostic logging) → **M7.7** (App Store submission). M10.4 recipe attribution schema changes absorbed into M18. Remaining M10.4 scope (import history, telemetry) deferred post-launch.
+**Phase 1**: Testing pass on M18 + FUI-1 work.
+**Phase 2**: M9.28 (strip diagnostic logging).
+**Phase 3**: PR + merge (M18 + FUI-1 + M9.28 in one branch).
+**Phase 4**: M7.7 (App Store submission).
 
 ---
 
-**Last Session**: March 31, 2026 — FRMWK-2 lifecycle adoption (hooks, skills, orchestration), ~16 clauductor commits, hook JSON protocol fixes, deny mode guards
-**Next Action**: M18.1.0 (Schema v11 migration)
+**Last Session**: April 1, 2026 — FUI-1.1 tab restructure complete (5156954).
+**Next Action**: FUI-1.2 (search relocation) or FUI-1.3 (settings relocation) — both depend on FUI-1.1 which is now done.
 **Confidence**: GREEN

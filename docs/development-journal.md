@@ -6,6 +6,366 @@
 
 ---
 
+## Session 106 — April 1, 2026
+**Milestones**: FUI-1.2, FUI-1.3, FUI-1.7 — Search Relocation, Settings, Full Dashboard
+**Focus**: Completing remaining FUI-1 sub-milestones (search relocation + dashboard build-out)
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Relocated search from a RecipeListView-scoped `.searchable()` modifier to a global search button on all 4 tab root views. Created `SearchButtonModifier` — a ViewModifier that adds a magnifying glass toolbar button bound to the app-level `showSearch` state. Applied the modifier at the NavigationStack level in `foragerApp.swift` so all tabs (Home, Lists, Recipes, Meals) get the search button without individual view changes.
+
+Cleaned ~170 lines from RecipeListView: removed `searchText`/`searchHistory` state, `getMatchIndicators()`, `addToSearchHistory()`/`loadSearchHistory()`, `.searchable()` + `.searchSuggestions`, `searchResultHeader`, `searchSuggestionsView`, and the `SearchMatchType` enum. Simplified `filteredRecipes` to just filter + sort (no search text branch). Simplified empty state to remove the search-specific `ContentUnavailableView.search()`.
+
+The existing `fullScreenCover` for `UnifiedSearchView` (already wired in FUI-1.1) handles the actual search presentation. Build succeeded clean.
+
+**FUI-1.3** turned out to already be complete — the gear icon NavigationLink to SettingsView was built as part of FUI-1.1's placeholder DashboardView. Just marked docs as complete.
+
+**FUI-1.7**: Built out the full DashboardView with 4 cards: TodaysMealsCard (planned meals for today from active MealPlan), GroceryRunCard (most recent incomplete list with progress ring and item preview), RecipeSpotlightCard (daily-rotating recipe with hero image), and QuickActionsBar (capsule buttons for tab switching). Data is sourced from existing services — MealPlanService.shared for meals, @FetchRequest for lists and recipes (filtered by householdKey per ADR 013). Empty state shows a welcome card when nothing exists. Build succeeded clean.
+
+### Key Decisions
+
+1. **Modifier applied at NavigationStack level, not inside each view** — Applying `.searchButton(showSearch:)` in `foragerApp.swift` means we didn't need to modify WeeklyListsView, MealPlansListView, or DashboardView at all. SwiftUI merges multiple `.toolbar` modifiers, so existing toolbar items coexist naturally.
+2. **Complete removal of local search code** — Rather than leaving search infrastructure in RecipeListView "just in case," removed it entirely. UnifiedSearchView already searches across all content types (recipes, lists, meals), making per-view search redundant.
+3. **Date-seeded recipe spotlight** — Using `dayOfYear % pool.count` gives a different recipe each day without needing any persistence. Deterministic within a day, changes daily.
+4. **No new services** — Dashboard is purely presentational, pulling from MealPlanService (singleton), @FetchRequest (grocery lists, recipes), and a tab binding for quick actions.
+
+### Learning
+
+- ViewModifier is the right abstraction for cross-cutting toolbar concerns.
+- FUI-1.3 was already done from FUI-1.1 — a reminder that forward-looking placeholders can absorb future milestones.
+- Progress ring with two overlapping Circle strokes (track + fill) is a clean pattern. `.rotationEffect(.degrees(-90))` starts from 12 o'clock.
+
+### AI Tooling Observations
+
+Three milestones in one session. FUI-1.2 was mechanical cleanup, FUI-1.3 was already done, FUI-1.7 was the real work — ~280 lines of dashboard UI. PRD specs were detailed enough to implement without ambiguity.
+
+### What's Next
+
+All FUI-1 sub-milestones complete. Ready for testing, then M9.28 (strip diagnostic logging) and PR merge.
+
+### Retro — FUI-1 Milestone Complete
+
+- **Estimate vs actual**: 12-15h estimated, ~5.25h actual (~250% efficiency)
+- **What surprised you**: The PRD's detailed line references and code snippets made implementation almost mechanical. FUI-1.3 was already done (gear icon built in FUI-1.1's placeholder). FUI-1.2's search removal was much simpler than estimated because the fullScreenCover was already wired. FUI-1.7 was surprisingly fast because all data sources (MealPlanService, @FetchRequest) were already battle-tested patterns.
+- **Process improvement**: Forward-looking placeholders (like FUI-1.1 including the gear icon) are powerful — they can absorb entire future milestones. Consider doing this intentionally when the marginal cost is near zero.
+
+---
+
+## Session 105 — April 1, 2026
+**Milestone**: FUI-1.1 — Tab Restructuring (5→4 Tabs)
+**Focus**: Restructuring NavigationTab from 5 tabs to 4, adding placeholder DashboardView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Restructured the main tab bar from 5 tabs (Lists, Recipes, Meals, Settings, Search) down to 4 (Home, Lists, Recipes, Meals). Created a placeholder `DashboardView` with a time-of-day greeting and a toolbar gear icon that navigates to Settings. Moved search out of the tab bar into a `fullScreenCover` triggered from the toolbar. Updated `CoachMarkOverlay` to reference `.home` instead of the removed `.settings` tab.
+
+Added 5 unit tests in `NavigationTabTests` covering tab count, ordering, display names, SF Symbols, and the removal of old cases. Updated `pre-launch-manual-testing.md` with 9 new test scenarios for the restructured navigation.
+
+Build succeeded clean — SourceKit showed false cross-file resolution errors in the editor, but `xcodebuild` passed without issues.
+
+### Key Decisions
+
+1. **Search as fullScreenCover, not sheet** — A sheet can't present its own detail views (recipe detail, grocery list, etc.) without awkward navigation. A fullScreenCover gives search its own navigation context to push into.
+2. **DashboardView is deliberately minimal** — FUI-1.7 will build out the real dashboard. This milestone only needed the tab restructuring and a placeholder to land on.
+3. **CoachMarkOverlay update** — It referenced `.settings` which no longer exists. Updated to `.home` to prevent a compile error that would have been easy to miss.
+
+### Learning
+
+- SourceKit's cross-file resolution can lag behind actual compilation state, especially when enum cases are added/removed. When in doubt, trust `xcodebuild` over editor diagnostics.
+- Three parallel workers (M18.1.4, FUI-1.4, FUI-1.1) ran on the same branch with zero file conflicts — the orchestration file manifest system is working well.
+
+### AI Tooling Observations
+
+Quick execution — the tab restructuring was mostly mechanical (enum changes + view wiring). The main risk was missing references to removed enum cases, but the compiler catches those exhaustively via switch statements.
+
+### What's Next
+
+Continue with FUI-1 stream — FUI-1.2 (search relocation) or FUI-1.3 (visual polish) depending on priority.
+
+**Retro**:
+- Estimate vs actual: 1h estimated, ~0.75h actual (~133% accuracy)
+- What surprised you: CoachMarkOverlay was the only non-obvious reference to the old `.settings` tab — the compiler caught it immediately via exhaustive switch.
+- Process improvement: None needed — clean parallel execution across 3 workers.
+
+---
+
+## Session 104 — April 1, 2026
+**Milestone**: M18.1.4 — Store Assignment UX + Color Dots + Grouping
+**Focus**: Adding store grouping, color dots, and "Buy at..." context menu to grocery list
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Implemented the final UI-facing sub-milestone of M18.1 — the piece that makes stores *visible* in the grocery list. Three new files (StoreColorDot component, StoreAssignmentModal, StoreGroupingTests) and modifications to GroceryListDetailView, ForagerSectionHeader, and StoreService.
+
+The biggest change is in GroceryListDetailView: a `GroceryGroupMode` enum (`.category` / `.store`) persisted via `@AppStorage`, a toolbar Menu toggle (hidden when no stores exist), and an alternative `groupedByStore` code path that renders store-colored section headers instead of category headers. The existing category grouping is completely untouched — the store path is an `if/else` branch in `shoppingListView`.
+
+Also added a context menu on every item row with "Buy at..." (opens StoreAssignmentModal) and "Delete". The modal does a dual-write: sets `item.store` (immediate visual) and looks up + updates `template.preferredStore` (learning for future items).
+
+Extracted the grouping logic into `StoreService.groupByStore(items:stores:)` as a static method so it's directly unit-testable without instantiating a SwiftUI view. Wrote 9 unit tests covering sort order, unassigned section, sub-sort by category, color propagation, empty stores, assignment, and color dot visibility.
+
+Build succeeded clean. All 9 tests pass.
+
+### Key Decisions
+
+1. **Extracted `groupByStore` as static on StoreService** — The PRD required testable grouping logic. Rather than creating a separate helper, putting it on StoreService keeps store-related logic consolidated. The view just calls `StoreService.groupByStore(items:stores:)`.
+2. **Separate `collapsedSections` state for store mode** — Category and store sections use independent collapse tracking (`collapsedCategories` vs `collapsedSections`). Switching group modes doesn't lose your collapse state in either.
+3. **`@AppStorage` not CloudKit for group mode** — This is a per-device UI preference, not household data. Each family member can independently choose how they view the list.
+4. **`itemRow(_:)` extraction** — The row rendering (swipe actions, context menu, color dot) was duplicated between category and store branches. Extracted into a shared `itemRow(_:)` method to avoid drift.
+
+### Learning
+
+- `ForagerSectionHeader` was well-designed for extension — adding `colorDotHex: String? = nil` with a default kept all existing call sites working without changes. Good example of optional parameters enabling feature layering.
+- The "invisibility rule" (gate all store UI behind `hasStores`) is simple but effective — zero stores means zero store footprint. No feature flags needed.
+
+### AI Tooling Observations
+
+The `/start-work` orchestration flow (register → claim → lock → implement) keeps parallel sessions safe — FUI-1.4 was running simultaneously on the same branch with no file conflicts. The manual pbxproj editing for test files remains the most error-prone part of the workflow (foragerTests uses manual PBXGroup).
+
+### What's Next
+
+M18.1 is now fully complete (all 6 sub-milestones done). Next steps: commit M18.1.4, mark the milestone complete, then continue with FUI-1 stream (FUI-1.1 tab restructuring or FUI-1.2 search relocation).
+
+**Retro**:
+- Estimate vs actual: 1.75h estimated, ~1h actual
+- What surprised you: How cleanly the grouping logic extracted. The existing `groupedItems` pattern (Dictionary grouping → sorted by entity sortOrder) mapped directly to the store equivalent.
+- Process improvement: The test project file dance (manual PBXGroup additions) should be documented as a reusable recipe — it's the same 4 edits every time.
+
+---
+
+## Session 103 — April 1, 2026
+**Milestone**: FUI-1.4 — Recipe Detail Hero Image + Source Attribution
+**Focus**: Adding hero image and source attribution sections to RecipeDetailView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added two conditional view sections to RecipeDetailView: a hero image at the top (above the header) and source attribution at the bottom (after the usage footer). Both leverage the computed properties from FUI-1.5 (`hasHeroImage`, `hasAttribution`, `displayAuthor`, `sourceURLObject`, `sourceURLDomain`) to keep the view code clean — all nil-checking and string trimming lives in the model layer.
+
+The hero image uses `AsyncImage` with 3-phase handling: loading state shows a `ProgressView` over a rounded `backgroundSecondary` rect, success shows the image at max 240pt height with `.fill` aspect ratio and rounded corners, failure collapses to `EmptyView()`. The source attribution uses `Label` for icon+text pairs — `person.fill` for author, `link` for source URL (tappable via `@Environment(\.openURL)`). The URL display shows just the domain name for cleanliness.
+
+Also corrected the pre-launch manual testing doc — test #3 referenced `backgroundTertiary` but the implementation uses `backgroundSecondary` (matching the grid card pattern from FUI-1.6).
+
+Build succeeded clean on first attempt.
+
+### Key Decisions
+
+1. **`@ViewBuilder` for conditional sections** — Both `recipeHeroImage` and `sourceAttribution` use `@ViewBuilder` with top-level `if` conditions. When there's no hero image or attribution, the view produces zero layout footprint — no empty space, no hidden frames.
+2. **Hero above header, attribution below footer** — Magazine-style layout: the image draws you in at the top, attribution is metadata you glance at after reading the recipe. This matches common recipe app conventions.
+3. **`EmptyView()` on image failure** — Imported recipes may have stale URLs. A broken-image placeholder is worse UX than gracefully hiding the section entirely.
+
+### Learning
+
+- `Label(_:systemImage:)` handles baseline alignment automatically and provides better VoiceOver semantics than manual `HStack` + `Image` + `Text` combos. Good default for icon+text pairs.
+- The RecipeGridCard (FUI-1.6) already established the `AsyncImage` pattern with `backgroundSecondary` for loading states — reusing that pattern kept visual consistency across detail and grid views.
+
+### AI Tooling Observations
+
+Quick implementation — reading the reference files (RecipeImportPreviewView for AsyncImage pattern, RecipeGridCard for design tokens, ForagerTheme for radius/font names) took more time than writing the code. The FUI-1.5 computed properties made this milestone almost trivial since all the conditional logic was pre-built.
+
+### What's Next
+
+FUI-1.1 (Tab restructuring 5→4) is next in the execution order. It's independent of FUI-1.4 and modifies `foragerApp.swift`.
+
+**Retro**:
+- Estimate vs actual: 1.5h estimated, ~0.5h actual — much faster than expected
+- What surprised you: How little code was needed. The FUI-1.5 computed properties did the heavy lifting — the view code is just layout and conditional rendering.
+- Process improvement: None needed — small, focused milestone executed cleanly.
+
+---
+
+## Session 102 — April 1, 2026
+**Milestone**: M18.1.3 — Store Management UI (Settings > Stores)
+**Focus**: Building the store management view, add store sheet, and SettingsView integration
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Implemented the full Store Management UI as the third of four M18.1 sub-milestones. Created 3 new files (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) and modified 2 existing files (SettingsView, foragerApp). The ManageStoresView replicates the ManageCategoriesView pattern — list with color dots, drag-to-reorder, swipe-to-delete with reassignment dialog — but delegates all Core Data operations to StoreService rather than inline `performWrite` blocks. This made the view ~40% shorter than its category counterpart.
+
+AddStoreView adds suggested store chips (Costco, Walmart, Target, etc.) using FlowLayout for wrapping, shown only on first use when no stores exist. StoreService was wired into foragerApp.swift with factory injection and householdKeyProvider, then propagated as an EnvironmentObject.
+
+Also created `docs/pre-launch-manual-testing.md` — a comprehensive 80+ test case document covering all milestones on the launch path (M18, FUI-1, M9.28), intended for consolidation and potential Claude co-work automation.
+
+### Key Decisions
+
+1. **StoreService as EnvironmentObject, not local instantiation** — Unlike LLMSettingsService which uses a singleton, StoreService needs factory injection for ADR 014 compliance. Environment propagation from foragerApp ensures the factory-configured instance reaches ManageStoresView.
+2. **Delegation to StoreService for all mutations** — ManageCategoriesView does raw `performWrite` with background contexts. ManageStoresView calls `storeService.deleteStore(_:reassignTo:)` instead. The service already handles template reassignment and grocery item cleanup, so the view just coordinates UI state.
+3. **Suggested chips conditional on empty state** — `showSuggestions` parameter on AddStoreView lets ManageStoresView pass `stores.isEmpty`. Chips appear only for first-time setup, not when adding a 4th store.
+
+### Learning
+
+- ManageCategoriesView's complexity is partly historical — it was built before the service layer existed (M7.3.4 era). If it were built today, it would look more like ManageStoresView. Good evidence that the service layer investment pays off in UI simplicity.
+- FlowLayout (a Layout protocol conformer) works with `ForEach` inside it directly — no wrapper view needed. The `callAsFunction` view builder support on Layout types makes the syntax clean.
+
+### AI Tooling Observations
+
+Parallel orchestration working well — FUI-1.5, FUI-1.6, and M18.1.3 all running simultaneously with no file conflicts. The Clauductor lock system prevented any accidental overlap. Session startup (read PRD, read pattern files, check existing code) took about 30% of the session but prevented rework.
+
+### What's Next
+
+M18.1.4 (Store Assignment UX + Color Dots + Grouping) is the final M18 sub-milestone. It modifies GroceryListDetailView which is the highest-risk file in the launch path.
+
+**Retro**:
+- Estimate vs actual: 1.75h estimated, ~1.5h actual — 117% accuracy
+- What surprised you: How much simpler ManageStoresView is vs ManageCategoriesView (~40% shorter) thanks to delegating to StoreService. The service layer investment from M7.5 continues to pay dividends in every new feature.
+- Process improvement: Could have claimed foragerApp.swift in the initial manifest — the StoreService wiring was foreseeable from reading the service pattern.
+
+---
+
+## Session 101 — April 1, 2026
+**Milestone**: FUI-1.6 — Recipe List Grid/List Toggle with Image Cards
+**Focus**: Adding @AppStorage-persisted layout toggle and grid card UI to RecipeListView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added a grid/list toggle to RecipeListView with full feature parity between both layouts. The toggle is persisted via `@AppStorage` so the user's preference survives app restarts. Grid mode uses a 2-column `LazyVGrid` populated with `RecipeGridCard` — a new card view featuring an `AsyncImage` hero with deterministic colored placeholders (seeded by recipe name), title, timing info, and a favorite badge. The existing filter pills and sort controls work identically in both layouts.
+
+The key implementation challenge was interaction parity: `List` supports `.swipeActions` but `LazyVGrid` does not (it's a List-only modifier). Solved this by using `.contextMenu` on grid items to expose the same actions (favorite toggle, delete) that swipe provides in list mode. This is a natural fit — long-press context menus are the standard interaction pattern for grid/card layouts on iOS.
+
+Build succeeded clean on first attempt. Commit `bdfedc3`.
+
+### Key Decisions
+
+1. **@AppStorage over @State** — The layout preference should persist across app launches. `@AppStorage("recipeListLayout")` with a string enum gives us that for free with zero service layer involvement.
+2. **Context menus for grid actions** — `LazyVGrid` doesn't support `.swipeActions` (a `List`-only modifier). Rather than fighting the framework, used `.contextMenu` which is the standard iOS pattern for grid item actions. Logged as an insight.
+3. **Deterministic colored placeholders** — When no hero image URL exists, the placeholder color is derived from a hash of the recipe name. This gives visual variety without randomness — the same recipe always gets the same color, which feels intentional rather than chaotic.
+
+### What's Next
+
+Continue FUI-1 stream: dashboard view, navigation structure, and remaining recipe detail enhancements.
+
+**Retro**:
+- Estimate vs actual: 2-3h estimated, ~0.75h actual — dramatically under estimate
+- What surprised you: How fast it went with precise next-prompt guidance — the implementation was nearly copy-paste from the spec. The next-prompt file had exact file paths, code snippets, and even the SwiftUI modifier chain, leaving almost no ambiguity
+- Process improvement: Detailed next-prompt specs with exact file paths and code snippets dramatically reduce implementation time. This is the strongest evidence yet that investing time in spec quality pays off 3-4x in implementation speed
+
+---
+
+## Session 100 — April 1, 2026
+**Milestone**: FUI-1.5 — Recipe Computed Properties for Attribution & Hero Image
+**Focus**: Adding display-layer computed properties to support the upcoming recipe card UI
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added 5 computed properties to `Recipe+ComputedProperties.swift` under a new "Attribution Properties" MARK section. These properties bridge the raw Core Data fields (`author`, `sourceURL`, `imageURL`) wired in M10.4.0 to the view layer that FUI-1 will consume:
+
+- `hasAttribution` — true if either author or source URL is present
+- `displayAuthor` — nil-coalescing + whitespace-trimmed author string
+- `sourceURLDomain` — extracts just the hostname from sourceURL for compact display
+- `sourceURLObject` — safe URL parsing with whitespace trimming
+- `hasHeroImage` — validates imageURL is non-empty and parseable
+
+The pattern follows the file's established convention: guard-let with trimming, return nil/false for invalid data, no force unwraps. Build succeeded clean.
+
+### Key Decisions
+
+1. **Computed properties over view logic** — Rather than parsing URLs inline in SwiftUI views, centralizing in the model extension keeps views declarative and makes the logic testable. This matches the existing pattern for timing, usage, and tag properties in the same file.
+2. **sourceURLObject returns URL? not String?** — Downstream consumers (attribution row, SafariView) need a URL anyway, so parse once at the model layer rather than repeatedly in views.
+3. **hasHeroImage validates URL parseability** — A non-empty string that isn't a valid URL shouldn't trigger hero image display. The extra `URL(string:) != nil` check prevents broken image states.
+
+### What's Next
+
+Continue FUI-1 stream: recipe card view, dashboard view, and navigation structure.
+
+**Retro**:
+- Estimate vs actual: 0.5h estimated, ~0.5h actual — 100% accuracy
+- What surprised you: Nothing — the PRD had exact code, existing file conventions were clear, build passed first try
+- Process improvement: For small computed-property-only milestones, the orchestration overhead (register/claim/lock/unlock/deregister) takes longer than the code. Could batch with the next sub-milestone (FUI-1.4) when there's no blocking dependency for other workers
+
+---
+
+## Session 98 — April 1, 2026
+**Milestone**: M18.1.1 + M18.1.2 — StoreService + Store Snapshot Wiring
+**Focus**: Service layer for store-aware shopping, snapshot wiring in grocery item creation
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Two milestones in one session. M18.1.1 implemented StoreService with 7 methods: createStore, deleteStore (with template reassignment), reorderStores, fetchStores, assignStore (two overloads for template and grocery item), and resolveStore for cross-store CloudKit safety. The resolveStore method mirrors the battle-tested resolveCategory pattern from GroceryListItemService — when a Store entity lives in a different persistent store than the target WeeklyList, it falls back to a name-based lookup in the correct household scope.
+
+Service follows the established pattern: @MainActor ObservableObject with viewContext, optional ManagedObjectFactory injection for ADR 014 compliance, householdKey/householdKeyProvider for ADR 013 scoped fetches, and the standard save/clearError/rollback error handling. Wrote 13 unit tests covering all CRUD operations, household key scoping, delete with reassignment and nullification, reordering, store assignment, and cross-store resolution.
+
+M18.1.2 wired store snapshots into grocery item creation. Added resolveStore() to GroceryListItemService mirroring the resolveCategory pattern, then added snapshot lines in addItem (line 155) and addStaples (line 253). addIngredients was already covered since it delegates to addItem. Also added an optional store parameter to WeeklyListService.addItem for downstream callers.
+
+Hit a test isolation gotcha: in-memory PersistenceController instances share the same /dev/null SQLite store within a test run, so data from earlier test methods leaks into later ones. Fixed by writing assertions against relative values rather than absolute counts.
+
+Post-review cleanup removed 4 unused `in context:` parameters from StoreService methods that were dead API surface — all paths use viewContext.
+
+Parallel worker (opus-m10.4.0) was active on recipe attribution — no file conflicts thanks to orchestration locks.
+
+### Key Decisions
+
+1. **Relative test assertions** — Rather than asserting `sortOrder == 0`, assert `store2.sortOrder == store1.sortOrder + 1`. Prevents flaky tests from shared in-memory store state.
+2. **Explicit grocery item nullification in deleteStore** — Core Data's nullify rule handles this at save time, but explicitly clearing in-memory relationships ensures consistency for code that reads the item before save.
+3. **Inline resolveStore in GroceryListItemService** — Rather than injecting StoreService as a dependency, duplicated the 15-line resolve pattern inline. This matches how resolveCategory works and avoids coupling the services.
+
+### What's Next
+
+M18.1.3: Store management UI (Settings > Stores). M18.1.4: Store assignment UX + color dots + grouping.
+
+---
+
+## Session 99 — April 1, 2026
+**Milestone**: M10.4.0 — Recipe Attribution Wiring (imageURL + author)
+**Focus**: Closing the import pipeline gap — persisting extracted attribution data
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Wired `imageURL` and `author` from `ImportDraftRecipe` through to the `Recipe` entity. The import pipeline already extracted these fields (via JSON-LD and schema mapper) but `saveImport()` was dropping them at persist time. Three-file change: `RecipeImportService` (both `saveImport` and `replaceExistingRecipe` paths), `RecipeService` (`createRecipe` + `duplicateRecipe`), and `RecipeFormModels` (`RecipeFormData` fields + `toRecipeFormData()` mapping).
+
+Added 5 unit tests to `RecipeServiceTests`: create with attribution, create without (nil defaults), duplicate preserves attribution, and two `toRecipeFormData` mapping tests. All 14 tests pass.
+
+Also ran a PRD audit on M7.7 (App Store Submission) — the PRD was written Feb 8 and had gone stale: iOS 18 refs (now 26), iPhone 15 Pro screenshot devices (now 17 Pro), 190 dev hours (now ~320), 102 tests (now ~470), 10 ADRs (now 14). Updated all in place.
+
+### Key Decisions
+
+1. **Both save paths wired** — `saveImport()` writes directly to entity, `replaceExistingRecipe()` also needed the same two lines. Easy to miss the replace path.
+2. **Duplicate preserves attribution** — Not in PRD but semantically correct. If you copy an imported recipe, the source attribution should travel with it.
+3. **Optional params with nil defaults** — Zero call-site changes required for `createRecipe()`.
+
+---
+
+## Session 97 — April 1, 2026
+**Milestone**: M18.1.0 — Schema v11 + Model Files + HouseholdScoped Conformance
+**Focus**: Core Data schema validation, Store entity model files, test coverage
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Schema and model foundation session for store-aware shopping. Validated the forager 11 xcdatamodel against the M18 PRD — all entities, attributes, relationships, and fetch indices match the spec. The Store entity landed with 7 attributes (id, name, color, sortOrder, householdKey, dateCreated, updatedAt), 3 relationships (household, ingredientTemplates, groceryListItems), and a byStoreSortOrder fetch index. New relationships were added across existing entities: IngredientTemplate.preferredStore, GroceryListItem.store, and Household.stores. Recipe also gained imageURL and author attributes for import attribution.
+
+Store was declared HouseholdScoped in DataScope.swift to integrate with the dual-store architecture. Wrote 21 StoreSchemaTests covering entity creation, persistence, relationships, delete-nullify rules, factory compatibility, computed properties, and entity count validation.
+
+Two discoveries came out of the test suite. First, the entity count is 13, not the 12 stated in CLAUDE.md — the test caught this immediately. Second, ManagedObjectFactory crashes in in-memory test contexts because `store(for:)` resolves persistent stores by URL filename (looking for `forager.sqlite`), but the in-memory PersistenceController uses `/dev/null`. Factory integration tests need either a dual-store test setup or must use personal scope to avoid the crash.
+
+Build succeeded and all 21 tests pass. Committed as 84c82cf.
+
+### Key Decisions
+
+1. **Test-first schema validation** — Rather than trusting the xcdatamodel visually, wrote tests that assert entity existence, attribute types, relationship cardinality, and delete rules programmatically. This caught the entity count discrepancy immediately.
+2. **Nullify delete rules for Store relationships** — When a Store is deleted, IngredientTemplate.preferredStore and GroceryListItem.store are set to nil rather than cascading. Items without a store are valid (they just have no store assignment).
+3. **Personal scope for factory tests** — Rather than building a complex dual-store test harness, factory integration tests use personal scope which doesn't require the filename-based store resolution.
+
+### Learning
+
+The in-memory PersistenceController vs ManagedObjectFactory incompatibility is a significant architectural gotcha. The factory's `store(for:)` method assumes it can find persistent stores by URL filename matching (`forager.sqlite` for private, `forager_shared.sqlite` for shared). In-memory contexts use `/dev/null` as their URL, so the filename check fails. This means any test that exercises factory code paths needs to either (a) set up actual file-backed stores, (b) use personal scope which bypasses store resolution, or (c) mock the store resolution. This is worth remembering for all future HouseholdScoped entity testing.
+
+### AI Tooling Observations
+
+The schema validation approach — writing tests that assert against the xcdatamodel programmatically rather than relying on visual inspection — proved its value immediately by catching the entity count mismatch. This is a pattern worth repeating for future schema changes: let the test suite be the source of truth, not the Xcode model editor.
+
+### What's Next
+
+Continue M18 implementation: StoreService (CRUD operations), Store management UI, and integration with GroceryListItem and IngredientTemplate views.
+
+---
+
 ## Session 96 — March 31, 2026
 **Milestone**: FRMWK-2/FRMWK-2.5 — Clauductor Lifecycle Adoption
 **Focus**: Hooks, skills, orchestration, roadmap migration, bug fixes

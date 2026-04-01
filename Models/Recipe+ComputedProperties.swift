@@ -242,6 +242,35 @@ extension Recipe {
         return recipeSearchableText.contains(query)
     }
     
+    // MARK: - Attribution Properties
+
+    var hasAttribution: Bool {
+        displayAuthor != nil || sourceURLObject != nil
+    }
+
+    var displayAuthor: String? {
+        guard let a = author?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !a.isEmpty else { return nil }
+        return a
+    }
+
+    var sourceURLDomain: String? {
+        guard let urlObj = sourceURLObject else { return nil }
+        return urlObj.host
+    }
+
+    var sourceURLObject: URL? {
+        guard let s = sourceURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !s.isEmpty else { return nil }
+        return URL(string: s)
+    }
+
+    var hasHeroImage: Bool {
+        guard let url = imageURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !url.isEmpty else { return false }
+        return URL(string: url) != nil
+    }
+
     // MARK: - Helper Methods
     
     private func formatRecipeMinutes(_ minutes: Int) -> String {

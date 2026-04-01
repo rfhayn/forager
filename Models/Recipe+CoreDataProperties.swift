@@ -30,6 +30,8 @@ extension Recipe {
     @NSManaged public var tags: String?
     @NSManaged public var title: String?
     @NSManaged public var usageCount: Int32
+    @NSManaged public var imageURL: String?
+    @NSManaged public var author: String?
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?
     @NSManaged public var groceryListItems: NSSet?

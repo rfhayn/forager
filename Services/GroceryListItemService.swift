@@ -151,6 +151,9 @@ class GroceryListItemService: ObservableObject {
         let existingCount = (list.items as? Set<GroceryListItem>)?.count ?? 0
         item.sortOrder = Int16(existingCount)
 
+        // M18.1.2: Store snapshot from template's preferred store
+        item.store = resolveStore(for: template, targetList: list)
+
         // Relationships
         list.addToItems(item)
         if let recipe = sourceRecipe {
@@ -248,6 +251,9 @@ class GroceryListItemService: ObservableObject {
             // Category from template, with cross-store safety
             item.categoryEntity = resolveCategory(for: template, targetList: list)
 
+            // M18.1.2: Store snapshot from template's preferred store
+            item.store = resolveStore(for: template, targetList: list)
+
             list.addToItems(item)
 
             // M9.15: HouseholdKey inheritance
@@ -289,6 +295,42 @@ class GroceryListItemService: ObservableObject {
         } else {
             request.predicate = NSPredicate(
                 format: "name ==[c] %@ AND householdKey == nil", catName
+            )
+        }
+        request.fetchLimit = 1
+        return (try? viewContext.fetch(request))?.first
+    }
+
+    // MARK: - Store Resolution
+
+    /// M18.1.2: Resolve store for a template in the context of a target list.
+    /// Handles cross-store safety for dual-store CloudKit setups.
+    /// Mirrors resolveCategory pattern.
+    func resolveStore(
+        for template: IngredientTemplate?,
+        targetList: WeeklyList
+    ) -> Store? {
+        guard let store = template?.preferredStore else { return nil }
+
+        let targetPersistentStore = targetList.objectID.persistentStore
+        let storePersistentStore = store.objectID.persistentStore
+
+        if targetPersistentStore == storePersistentStore
+            || targetPersistentStore == nil
+            || storePersistentStore == nil {
+            return store
+        }
+
+        // Cross-store — lookup by name in target list's household scope
+        let request: NSFetchRequest<Store> = Store.fetchRequest()
+        let storeName = store.name ?? ""
+        if let hk = targetList.householdKey {
+            request.predicate = NSPredicate(
+                format: "name ==[c] %@ AND householdKey == %@", storeName, hk
+            )
+        } else {
+            request.predicate = NSPredicate(
+                format: "name ==[c] %@ AND householdKey == nil", storeName
             )
         }
         request.fetchLimit = 1

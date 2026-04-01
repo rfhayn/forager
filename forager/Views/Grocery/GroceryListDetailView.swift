@@ -4,16 +4,24 @@
 //
 //  M15.3: Sticky bottom progress bar, collapsible sections, check-off
 //  haptics/animations, and 100% completion celebration.
+//  M18.1.4: Store grouping toggle, color dots, "Buy at..." context menu.
 //
 
 import SwiftUI
 import CoreData
+
+// M18.1.4: Grocery list grouping mode
+enum GroceryGroupMode: String {
+    case category
+    case store
+}
 
 struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var weeklyListService: WeeklyListService
+    @EnvironmentObject private var storeService: StoreService
 
     @ObservedObject var weeklyList: WeeklyList
 
@@ -44,9 +52,14 @@ struct GroceryListDetailView: View {
 
     // M15.3: Collapsible sections
     @State private var collapsedCategories: Set<String> = []
+    @State private var collapsedSections: Set<String> = []
 
     // M15.3: Celebration
     @State private var showCelebration = false
+
+    // M18.1.4: Store grouping + assignment
+    @AppStorage("groceryListGroupMode") private var groupModeRaw: String = GroceryGroupMode.category.rawValue
+    @State private var storeAssignmentItem: GroceryListItem?
 
     // Track last-added item so saveToTemplates can update its category
     @State private var lastAddedItem: GroceryListItem?
@@ -66,10 +79,28 @@ struct GroceryListDetailView: View {
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)]
     ) private var allCategories: FetchedResults<Category>
 
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Store.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Store.name, ascending: true)
+        ]
+    ) private var allStores: FetchedResults<Store>
+
     private var categories: [Category] {
         let key = householdService.currentHouseholdKey
         return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
     }
+
+    private var stores: [Store] {
+        let key = householdService.currentHouseholdKey
+        return allStores.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
+
+    private var groupMode: GroceryGroupMode {
+        GroceryGroupMode(rawValue: groupModeRaw) ?? .category
+    }
+
+    private var hasStores: Bool { !stores.isEmpty }
 
     init(weeklyList: WeeklyList) {
         self.weeklyList = weeklyList
@@ -125,6 +156,14 @@ struct GroceryListDetailView: View {
         .sheet(isPresented: $showingAddToTemplates) {
             addToTemplatesSheet
         }
+        .sheet(item: $storeAssignmentItem) { item in
+            StoreAssignmentModal(
+                item: item,
+                storeService: storeService,
+                householdKey: householdService.currentHouseholdKey
+            )
+            .presentationDetents([.medium])
+        }
         .alert("Error", isPresented: $showingError) {
             Button("OK") { }
         } message: {
@@ -168,6 +207,11 @@ struct GroceryListDetailView: View {
             }
             return lhs.key < rhs.key
         }
+    }
+
+    // M18.1.4: Group by store — delegates to testable static method on StoreService
+    private var groupedByStore: [(storeName: String, storeColor: String?, items: [GroceryListItem])] {
+        StoreService.groupByStore(items: listItems, stores: stores)
     }
 
     private var totalItemsCount: Int { listItems.count }
@@ -321,51 +365,100 @@ struct GroceryListDetailView: View {
 
     private var shoppingListView: some View {
         List {
-            ForEach(groupedItems, id: \.key) { categoryName, items in
-                let isExpanded = Binding(
-                    get: { !collapsedCategories.contains(categoryName) },
-                    set: { if !$0 { collapsedCategories.insert(categoryName) } else { collapsedCategories.remove(categoryName) } }
-                )
+            // M18.1.4: Switch between category and store grouping
+            if hasStores && groupMode == .store {
+                ForEach(groupedByStore, id: \.storeName) { storeName, storeColor, items in
+                    let isExpanded = Binding(
+                        get: { !collapsedSections.contains(storeName) },
+                        set: { if !$0 { collapsedSections.insert(storeName) } else { collapsedSections.remove(storeName) } }
+                    )
 
-                Section {
-                    if !collapsedCategories.contains(categoryName) {
-                        ForEach(items, id: \.self) { item in
-                            GroceryListItemRow(item: item, onToggle: {
-                                toggleItemCompletion(item)
-                            }, showRecipeSources: showRecipeSources)
-                            .listRowBackground(Color.clear)
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    toggleItemCompletion(item)
-                                } label: {
-                                    Label(item.isCompleted ? "Undo" : "Complete",
-                                          systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
-                                }
-                                .tint(item.isCompleted ? .orange : .green)
-                            }
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    deleteItem(item)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
+                    Section {
+                        if !collapsedSections.contains(storeName) {
+                            ForEach(items, id: \.self) { item in
+                                itemRow(item)
                             }
                         }
+                    } header: {
+                        let completedCount = items.filter { $0.isCompleted }.count
+                        ForagerSectionHeader(
+                            title: storeName,
+                            count: completedCount,
+                            totalCount: items.count,
+                            isExpanded: isExpanded,
+                            colorDotHex: storeColor
+                        )
                     }
-                } header: {
-                    let completedCount = items.filter { $0.isCompleted }.count
-                    ForagerSectionHeader(
-                        title: categoryName,
-                        count: completedCount,
-                        totalCount: items.count,
-                        isExpanded: isExpanded
+                }
+            } else {
+                ForEach(groupedItems, id: \.key) { categoryName, items in
+                    let isExpanded = Binding(
+                        get: { !collapsedCategories.contains(categoryName) },
+                        set: { if !$0 { collapsedCategories.insert(categoryName) } else { collapsedCategories.remove(categoryName) } }
                     )
+
+                    Section {
+                        if !collapsedCategories.contains(categoryName) {
+                            ForEach(items, id: \.self) { item in
+                                itemRow(item)
+                            }
+                        }
+                    } header: {
+                        let completedCount = items.filter { $0.isCompleted }.count
+                        ForagerSectionHeader(
+                            title: categoryName,
+                            count: completedCount,
+                            totalCount: items.count,
+                            isExpanded: isExpanded
+                        )
+                    }
                 }
             }
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
+    }
+
+    // M18.1.4: Extracted item row with swipe actions and context menu
+    private func itemRow(_ item: GroceryListItem) -> some View {
+        GroceryListItemRow(
+            item: item,
+            onToggle: { toggleItemCompletion(item) },
+            showRecipeSources: showRecipeSources,
+            storeColorHex: hasStores ? item.store?.color : nil
+        )
+        .listRowBackground(Color.clear)
+        .swipeActions(edge: .leading) {
+            Button {
+                toggleItemCompletion(item)
+            } label: {
+                Label(item.isCompleted ? "Undo" : "Complete",
+                      systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
+            }
+            .tint(item.isCompleted ? .orange : .green)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                deleteItem(item)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .contextMenu {
+            if hasStores {
+                Button {
+                    storeAssignmentItem = item
+                } label: {
+                    Label("Buy at...", systemImage: "storefront")
+                }
+            }
+            Button(role: .destructive) {
+                deleteItem(item)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
 
     // MARK: - Empty State
@@ -422,6 +515,25 @@ struct GroceryListDetailView: View {
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: ForagerTheme.Spacing.sm) {
+                // M18.1.4: Group mode toggle (invisible when no stores)
+                if hasStores {
+                    Menu {
+                        Button {
+                            withAnimation { groupModeRaw = GroceryGroupMode.category.rawValue }
+                        } label: {
+                            Label("Group by Category", systemImage: groupMode == .category ? "checkmark" : "")
+                        }
+                        Button {
+                            withAnimation { groupModeRaw = GroceryGroupMode.store.rawValue }
+                        } label: {
+                            Label("Group by Store", systemImage: groupMode == .store ? "checkmark" : "")
+                        }
+                    } label: {
+                        Image(systemName: groupMode == .store ? "building.2.fill" : "building.2")
+                            .foregroundStyle(groupMode == .store ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                    }
+                }
+
                 Button {
                     withAnimation { showRecipeSources.toggle() }
                 } label: {
@@ -464,24 +576,42 @@ struct GroceryListDetailView: View {
             }
         }
 
-        // M15.3: Auto-collapse fully completed categories after 2s
-        if let categoryName = item.categoryEntity?.name {
-            checkAutoCollapse(category: categoryName)
+        // M15.3: Auto-collapse fully completed sections after 2s
+        if hasStores && groupMode == .store {
+            let storeName = item.store?.name ?? "Unassigned"
+            checkAutoCollapseStore(section: storeName)
+        } else if let categoryName = item.categoryEntity?.name {
+            checkAutoCollapseCategory(category: categoryName)
         }
     }
 
-    private func checkAutoCollapse(category: String) {
+    private func checkAutoCollapseCategory(category: String) {
         let categoryItems = listItems.filter { ($0.categoryEntity?.name ?? "Uncategorized") == category }
         let allCompleted = categoryItems.allSatisfy { $0.isCompleted }
         if allCompleted && !categoryItems.isEmpty {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                // Re-check: user may have unchecked during delay
                 let stillAllCompleted = listItems
                     .filter { ($0.categoryEntity?.name ?? "Uncategorized") == category }
                     .allSatisfy { $0.isCompleted }
                 guard stillAllCompleted else { return }
                 _ = withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
                     collapsedCategories.insert(category)
+                }
+            }
+        }
+    }
+
+    private func checkAutoCollapseStore(section: String) {
+        let sectionItems = listItems.filter { ($0.store?.name ?? "Unassigned") == section }
+        let allCompleted = sectionItems.allSatisfy { $0.isCompleted }
+        if allCompleted && !sectionItems.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let stillAllCompleted = listItems
+                    .filter { ($0.store?.name ?? "Unassigned") == section }
+                    .allSatisfy { $0.isCompleted }
+                guard stillAllCompleted else { return }
+                _ = withAnimation(reduceMotion ? .easeInOut(duration: 0.15) : .spring(response: 0.3, dampingFraction: 0.8)) {
+                    collapsedSections.insert(section)
                 }
             }
         }
@@ -551,6 +681,7 @@ struct GroceryListDetailView: View {
 
             let listItem = weeklyListService.addItem(
                 to: weeklyList, name: trimmedText, category: categoryEntity,
+                store: matchedTemplate?.preferredStore,
                 numericValue: structured.numericValue ?? 0.0,
                 standardUnit: structured.standardUnit,
                 displayText: structured.displayText,
@@ -611,6 +742,7 @@ struct GroceryListDetailView: View {
 
         let listItem = weeklyListService.addItem(
             to: weeklyList, name: trimmedText, category: categoryEntity,
+            store: selectedTemplate?.preferredStore,
             numericValue: structured.numericValue ?? 0.0,
             standardUnit: structured.standardUnit,
             displayText: structured.displayText,
@@ -713,6 +845,7 @@ struct GroceryListItemRow: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let onToggle: () -> Void
     var showRecipeSources: Bool = false
+    var storeColorHex: String? = nil
 
     /// Parsed ingredient name for bold highlighting (matches recipe detail pattern)
     private var parsedIngredientName: String? {
@@ -734,6 +867,11 @@ struct GroceryListItemRow: View {
                         .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
                 }
                 .buttonStyle(.borderless)
+
+                // M18.1.4: Store color dot (only when store assigned and stores exist)
+                if let hex = storeColorHex {
+                    StoreColorDot(hex: hex)
+                }
 
                 // Formatted text — quantity regular, name bold green (matching recipe detail)
                 if item.isCompleted {

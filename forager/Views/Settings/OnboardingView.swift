@@ -104,9 +104,9 @@ struct CoachMarkOverlay: View {
                 description: "Plan your week with recipes, then generate your grocery list from the plan."
             ),
             CoachMarkStep(
-                tab: .settings,
-                title: "Settings",
-                description: "Household sharing, AI integration, ingredient library, and categories."
+                tab: .home,
+                title: "Home",
+                description: "Your dashboard — today's meals, grocery status, and quick access to Settings."
             ),
             CoachMarkStep(
                 title: "That's It!",

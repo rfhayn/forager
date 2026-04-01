@@ -80,30 +80,17 @@ class StoreService {
 
 In `GroceryListItemService`: snapshot `template.preferredStore` onto new items in all 3 creation paths (addItem, addIngredients, addStaples). Same pattern as `categoryEntity` snapshot.
 
-### M18.1.3: Store Management UI (1.75h)
+### M18.1.3: Store Management UI (1.75h) — COMPLETE (~1.5h, e9e5307)
 
-**Settings > Stores** (below Categories in Data Management):
-- List with color dot + name, drag to reorder
-- Swipe to delete (reassignment dialog if templates assigned)
-- Add store: name + color picker + suggested store chips
-- Empty state: `ContentUnavailableView`
-- Replicate `ManageCategoriesView` pattern
+ManageStoresView, AddStoreView, ForagerTheme+StoreColors created. SettingsView Stores row added. StoreService wired into foragerApp with factory injection + householdKeyProvider.
 
-### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h)
+### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h) — COMPLETE (~1h)
 
-**Assignment**: Long-press grocery item → "Buy at..." → store picker. Sets template + current item.
-**Color dots**: Small dot on items with assigned store (visible in both group modes).
-**Grouping toggle**: Category (default) | Store in toolbar. Store sections with color dot + name + count.
-**Unassigned section**: Items without store at bottom.
-**Invisibility**: No toggle/dots if no stores created.
-**Persistence**: `UserDefaults` key `groceryListGroupMode`
+StoreColorDot component, StoreAssignmentModal ("Buy at..." picker), GroceryGroupMode enum with @AppStorage persistence, toolbar Menu toggle, groupedByStore sections with color dot headers, context menu on item rows. Extracted groupByStore as testable static on StoreService. 9 unit tests. ForagerSectionHeader updated with optional colorDotHex. Invisibility rule: all store UI gated behind hasStores.
 
-### M10.4.0: Recipe Attribution Wiring (0.75h)
+### M10.4.0: Recipe Attribution Wiring (0.75h) — COMPLETE
 
-- `RecipeImportService.saveImport()` ~line 182: add `recipe.imageURL = draft.imageURL.value` and `recipe.author = draft.author.value`
-- `RecipeService.createRecipe()`: add optional imageURL + author params
-- `RecipeFormModels.RecipeFormData`: add fields, update `toRecipeFormData()` mapping
-- imageURL stored but NOT rendered as image (deferred to future milestone)
+Wired imageURL + author through RecipeImportService (both save paths), RecipeService.createRecipe/duplicateRecipe, and RecipeFormModels. 5 unit tests added. Commit d5acc1f.
 
 ---
 
@@ -114,6 +101,33 @@ In `GroceryListItemService`: snapshot `template.preferredStore` onto new items i
 3. **Filter chips deferred to Phase 2** — Section grouping sufficient for v1
 4. **imageURL stored not rendered** — Persisted for future image display
 5. **GroceryListItem.store is a snapshot** — Mirrors categoryEntity pattern exactly
+
+---
+
+## Testing Requirements
+
+### Unit Tests (MUST write)
+1. Store grouping logic — extract grocery item grouping (by store vs category) into a testable function, write tests for it
+2. Store assignment — test that assigning store to grocery item also updates template's preferredStore
+3. Color dot visibility logic — test that dots appear only when store assigned, invisible when no stores
+4. See `foragerTests/Services/StoreServiceTests.swift` for existing Core Data test patterns
+
+### Manual Testing File (MUST update)
+After completing your work, update `docs/pre-launch-manual-testing.md`:
+- Update the Status column for M18.1.4 tests you've verified
+- Add any NEW test scenarios you discover that aren't already listed
+- For each test, note whether it could be automated via XCUITest or xcrun simctl
+
+### Simulator Testing
+After building, run:
+```bash
+xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -E "BUILD|error:|warning:"
+```
+Then try to boot the simulator and verify key behaviors:
+```bash
+xcrun simctl boot "iPhone 17 Pro" 2>&1 || true
+open -a Simulator
+```
 
 ---
 

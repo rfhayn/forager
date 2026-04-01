@@ -17,6 +17,10 @@
 		9B75A0060003000300B24679 /* IngredientTemplateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0050003000300B24679 /* IngredientTemplateServiceTests.swift */; };
 		9B75A0080004000400B24679 /* ParsingIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A0070004000400B24679 /* ParsingIntegrationTests.swift */; };
 		9B75A00B0006000600B24679 /* CoreDataInvariantsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75A00A0005000500B24679 /* CoreDataInvariantsTests.swift */; };
+		FUI11T01NAVTABTEST0000A /* NavigationTabTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUI11T01NAVTABTEST0000B /* NavigationTabTests.swift */; };
+		M181T001STORESCHEMA0000A /* StoreSchemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M181T001STORESCHEMA0000B /* StoreSchemaTests.swift */; };
+		M181T002STORESVCTEST00A /* StoreServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M181T002STORESVCTEST00B /* StoreServiceTests.swift */; };
+		M181T003STOREGRPTEST00A /* StoreGroupingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M181T003STOREGRPTEST00B /* StoreGroupingTests.swift */; };
 		9B78C7B62F36335900B24679 /* ParsingTelemetryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */; };
 		9B78C7B82F36340000B24679 /* GroceryMergeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7B72F36340000B24679 /* GroceryMergeServiceTests.swift */; };
 		9B78C7C12F36350000B24679 /* IngredientTemplateValidationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B78C7C02F36350000B24679 /* IngredientTemplateValidationTests.swift */; };
@@ -72,6 +76,10 @@
 		9B75A0050003000300B24679 /* IngredientTemplateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateServiceTests.swift; sourceTree = "<group>"; };
 		9B75A0070004000400B24679 /* ParsingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingIntegrationTests.swift; sourceTree = "<group>"; };
 		9B75A00A0005000500B24679 /* CoreDataInvariantsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataInvariantsTests.swift; sourceTree = "<group>"; };
+		FUI11T01NAVTABTEST0000B /* NavigationTabTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationTabTests.swift; sourceTree = "<group>"; };
+		M181T001STORESCHEMA0000B /* StoreSchemaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreSchemaTests.swift; sourceTree = "<group>"; };
+		M181T002STORESVCTEST00B /* StoreServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreServiceTests.swift; sourceTree = "<group>"; };
+		M181T003STOREGRPTEST00B /* StoreGroupingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreGroupingTests.swift; sourceTree = "<group>"; };
 		9B78C7B42F36335900B24679 /* ParsingTelemetryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsingTelemetryServiceTests.swift; sourceTree = "<group>"; };
 		9B78C7B72F36340000B24679 /* GroceryMergeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroceryMergeServiceTests.swift; sourceTree = "<group>"; };
 		9B78C7C02F36350000B24679 /* IngredientTemplateValidationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngredientTemplateValidationTests.swift; sourceTree = "<group>"; };
@@ -182,6 +190,8 @@
 			isa = PBXGroup;
 			children = (
 				9B75A00A0005000500B24679 /* CoreDataInvariantsTests.swift */,
+				FUI11T01NAVTABTEST0000B /* NavigationTabTests.swift */,
+				M181T001STORESCHEMA0000B /* StoreSchemaTests.swift */,
 				7E60FCA3AFE7F773C70C926E /* Mocks */,
 				9B78C7B52F36335900B24679 /* Services */,
 				9B56ECA82F08293B00877716 /* PersistenceTests */,
@@ -251,6 +261,8 @@
 				M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */,
 				M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */,
 				M1068T01MATCHSVC00000B /* IngredientMatchServiceTests.swift */,
+				M181T002STORESVCTEST00B /* StoreServiceTests.swift */,
+				M181T003STOREGRPTEST00B /* StoreGroupingTests.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -433,6 +445,10 @@
 				M169T001PREPROCESSTEST0A /* IngredientPreprocessorTests.swift in Sources */,
 				M169T002REGEXNEWPATT00A /* RegexParserNewPatternsTests.swift in Sources */,
 				M169T003MLMODELV2TEST0A /* MLModelV2Tests.swift in Sources */,
+				M181T001STORESCHEMA0000A /* StoreSchemaTests.swift in Sources */,
+				M181T002STORESVCTEST00A /* StoreServiceTests.swift in Sources */,
+				M181T003STOREGRPTEST00A /* StoreGroupingTests.swift in Sources */,
+				FUI11T01NAVTABTEST0000A /* NavigationTabTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
