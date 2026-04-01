@@ -31,6 +31,7 @@ extension Household {
     @NSManaged public var mealPlans: NSSet?
     @NSManaged public var plannedMeals: NSSet?
     @NSManaged public var recipes: NSSet?
+    @NSManaged public var stores: NSSet?
     @NSManaged public var weeklyLists: NSSet?
 }
 
@@ -128,6 +129,22 @@ extension Household {
 
     @objc(removeRecipes:)
     @NSManaged public func removeFromRecipes(_ values: NSSet)
+}
+
+// MARK: Generated accessors for stores
+extension Household {
+
+    @objc(addStoresObject:)
+    @NSManaged public func addToStores(_ value: Store)
+
+    @objc(removeStoresObject:)
+    @NSManaged public func removeFromStores(_ value: Store)
+
+    @objc(addStores:)
+    @NSManaged public func addToStores(_ values: NSSet)
+
+    @objc(removeStores:)
+    @NSManaged public func removeFromStores(_ values: NSSet)
 }
 
 // MARK: Generated accessors for weeklyLists

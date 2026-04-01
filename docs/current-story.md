@@ -36,7 +36,7 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 
 | Sub | Description | Status |
 |-----|-------------|--------|
-| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | READY |
+| M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | COMPLETE |
 | M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | READY |
 | M18.1.2 | Store snapshot wiring in GroceryListItemService | READY |
 | M18.1.3 | Store management UI (Settings > Stores) | READY |

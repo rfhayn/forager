@@ -26,6 +26,7 @@ extension IngredientTemplate {
     @NSManaged public var categoryEntity: Category?
     @NSManaged public var household: Household?
     @NSManaged public var householdKey: String?
+    @NSManaged public var preferredStore: Store?
     @NSManaged public var ingredients: NSSet?
 }
 

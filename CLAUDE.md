@@ -37,7 +37,7 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 ### Factory Enforcement (ADR 014)
 - HouseholdScoped entities MUST use `ManagedObjectFactory.make()`
 - Direct `Entity(context:)` is FORBIDDEN (exceptions: tests, previews, seeders, background contexts)
-- HouseholdScoped: WeeklyList, Recipe, PlannedMeal, MealPlan, Category, IngredientTemplate, Ingredient, GroceryListItem
+- HouseholdScoped: WeeklyList, Recipe, PlannedMeal, MealPlan, Category, IngredientTemplate, Ingredient, GroceryListItem, Store
 - Ingredient/GroceryListItem inherit scope from parent (Recipe/WeeklyList)
 
 ### Service Layer (M7.5+)
@@ -45,8 +45,8 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - **All fetches on household-scoped entities MUST include `householdKey` predicate** (ADR 013)
 - Always search for existing services before creating new ones
 
-### Core Data Model (11 Entities, v10)
-- Schema v10 (current). Read `docs/architecture/007-core-data-change-process.md` before changes
+### Core Data Model (13 Entities, v11)
+- Schema v11 (current). Read `docs/architecture/007-core-data-change-process.md` before changes
 - CloudKit Production schema is append-only — no destructive changes
 
 ### UI Patterns
