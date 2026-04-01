@@ -6,6 +6,40 @@
 
 ---
 
+## Session 106 — April 1, 2026
+**Milestone**: FUI-1.2 — Search Relocation (Global Search Sheet)
+**Focus**: Moving search from RecipeListView's `.searchable()` to a global magnifying glass on all 4 tabs
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Relocated search from a RecipeListView-scoped `.searchable()` modifier to a global search button on all 4 tab root views. Created `SearchButtonModifier` — a ViewModifier that adds a magnifying glass toolbar button bound to the app-level `showSearch` state. Applied the modifier at the NavigationStack level in `foragerApp.swift` so all tabs (Home, Lists, Recipes, Meals) get the search button without individual view changes.
+
+Cleaned ~170 lines from RecipeListView: removed `searchText`/`searchHistory` state, `getMatchIndicators()`, `addToSearchHistory()`/`loadSearchHistory()`, `.searchable()` + `.searchSuggestions`, `searchResultHeader`, `searchSuggestionsView`, and the `SearchMatchType` enum. Simplified `filteredRecipes` to just filter + sort (no search text branch). Simplified empty state to remove the search-specific `ContentUnavailableView.search()`.
+
+The existing `fullScreenCover` for `UnifiedSearchView` (already wired in FUI-1.1) handles the actual search presentation. Build succeeded clean.
+
+### Key Decisions
+
+1. **Modifier applied at NavigationStack level, not inside each view** — Applying `.searchButton(showSearch:)` in `foragerApp.swift` means we didn't need to modify WeeklyListsView, MealPlansListView, or DashboardView at all. SwiftUI merges multiple `.toolbar` modifiers, so existing toolbar items coexist naturally.
+2. **Complete removal of local search code** — Rather than leaving search infrastructure in RecipeListView "just in case," removed it entirely. UnifiedSearchView already searches across all content types (recipes, lists, meals), making per-view search redundant.
+3. **No changes to UnifiedSearchView** — The dismiss button was already added in FUI-1.1's fullScreenCover setup, so UnifiedSearchView didn't need modification.
+
+### Learning
+
+- ViewModifier is the right abstraction for cross-cutting toolbar concerns. It keeps the app entry point as the single source of truth for which toolbar items appear on all tabs, without polluting individual view files.
+- Removing ~170 lines of search code from a 2600-line file is a net win for maintainability — RecipeListView's responsibility is now filter + sort + display, not search.
+
+### AI Tooling Observations
+
+Straightforward execution — the PRD and next-prompt had clear specs. The main value of the build step was confirming that no dangling references to removed search code remained (e.g., `searchText` in computed properties or empty states).
+
+### What's Next
+
+FUI-1.3 (settings relocation — gear icon already exists in DashboardView, may just need verification) → FUI-1.7 (full DashboardView with cards and quick actions).
+
+---
+
 ## Session 105 — April 1, 2026
 **Milestone**: FUI-1.1 — Tab Restructuring (5→4 Tabs)
 **Focus**: Restructuring NavigationTab from 5 tabs to 4, adding placeholder DashboardView

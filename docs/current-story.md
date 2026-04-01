@@ -29,36 +29,37 @@
 
 ## EXECUTION PLAN (Phases with Parallelism)
 
-### Phase 1 — M18 remaining + FUI-1 recipe UI (parallel streams)
+### Phase 1 — COMPLETE (April 1, 2026)
+M18.1.3, M18.1.4, FUI-1.1, FUI-1.4, FUI-1.5, FUI-1.6 all completed via parallel clauductor workers.
 
+### Phase 2 — FUI-1 remaining (parallel)
 ```
-Worker A: M18.1.3 (1.75h) → M18.1.4 (1.75h)         Store UI
-Worker B: FUI-1.5 (0.5h) → FUI-1.4 (1.5h) → FUI-1.1 (1h) → FUI-1.2 (2.5h) → FUI-1.3 (0.5h)
-Worker C: FUI-1.6 (2.5h) after FUI-1.5 commits       Recipe grid toggle
-```
-
-No file conflicts between M18 and FUI-1 streams. FUI-1.6 depends on FUI-1.5 (computed properties).
-
-### Phase 2 — Dashboard + logging cleanup (parallel streams)
-
-```
-Worker D: FUI-1.7 (4.5h)    Dashboard — needs FUI-1.1 + FUI-1.3 done
-Worker E: M9.28 (1.5h)      Strip diagnostic logging — needs M18.1.3 done (SettingsView conflict)
+Worker A: FUI-1.2 (2.5h)   Search relocation
+Worker B: FUI-1.3 (0.5h)   Settings relocation
 ```
 
-### Phase 3 — PR + merge
+### Phase 3 — Dashboard
+```
+Worker C: FUI-1.7 (4.5h)   Dashboard — needs FUI-1.2 + FUI-1.3
+```
 
+### Phase 4 — Testing + logging cleanup
+```
+Manual/automated testing pass on all new features
+M9.28 (1.5h)   Strip diagnostic logging — AFTER testing
+```
+
+### Phase 5 — PR + merge
 Merge M18 feature branch (all M18 + FUI-1 + M9.28 work).
 
-### Phase 4 — App Store (last, partly manual)
-
+### Phase 6 — App Store (last, partly manual)
 ```
 M7.7.1 (1-2h) Landing page + M7.7.2 (0.5h) README — can parallel
 M7.7.3 (1-2h) App Store listing — needs final build for screenshots
 M7.7.4 (0.5h) Submit for review
 ```
 
-**Wall-clock estimate with parallelism**: ~12-15h | **Sequential**: ~22-27h
+**Remaining estimate**: ~10-13h (FUI-1 remaining + testing + M9.28 + M7.7)
 
 ---
 
@@ -93,7 +94,7 @@ Dashboard-first design inspired by Google Stitch mockups + Apple Health card mod
 | Sub | Description | Est. | Status |
 |-----|-------------|------|--------|
 | FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | COMPLETE (~0.75h) |
-| FUI-1.2 | Search relocation (global search sheet) | 2-3h | READY (depends on FUI-1.1) |
+| FUI-1.2 | Search relocation (global search sheet) | 2-3h | COMPLETE (~0.5h) |
 | FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | READY (depends on FUI-1.1) |
 | FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
 | FUI-1.5 | Recipe computed properties for attribution | 0.5h | COMPLETE (~0.5h) |

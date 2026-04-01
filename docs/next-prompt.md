@@ -10,21 +10,21 @@
 ### M18 — Store-Aware Shopping + Recipe Attribution
 See `docs/next-prompt-M18.md` for full implementation guidance.
 
-**Remaining**: M18.1.4 (Store assignment UX + grouping) — last sub-milestone
-**Completed**: M18.1.0, M18.1.1, M18.1.2, M18.1.3, M10.4.0
+**All sub-milestones COMPLETE**: M18.1.0, M18.1.1, M18.1.2, M18.1.3, M18.1.4, M10.4.0
 
 ### FUI-1 — Dashboard, Navigation, Recipe UI
+See `docs/next-prompt-FUI-1.md` for full implementation guidance.
 **PRD**: `docs/prds/active/fui-1-dashboard-navigation-recipe-ui.md`
 
-7 sub-milestones. See PRD for full specs. Key execution order:
+**Remaining**: FUI-1.3 (settings relocation) → FUI-1.7 (dashboard)
 
 1. ~~**FUI-1.5** (Recipe computed properties)~~ — COMPLETE (861e86a)
-2. **FUI-1.4** (Recipe detail hero image + attribution) — READY (FUI-1.5 done)
-3. **FUI-1.1** (Tab restructure 5→4) — READY, can parallel with FUI-1.4
-4. **FUI-1.2** (Search relocation) — needs FUI-1.1
-5. **FUI-1.3** (Settings relocation) — needs FUI-1.1
+2. ~~**FUI-1.4** (Recipe detail hero image + attribution)~~ — COMPLETE (e8f983e)
+3. ~~**FUI-1.1** (Tab restructure 5→4)~~ — COMPLETE (5156954)
+4. ~~**FUI-1.2** (Search relocation)~~ — COMPLETE
+5. **FUI-1.3** (Settings relocation) — READY (FUI-1.1 done)
 6. ~~**FUI-1.6** (Recipe grid/list toggle)~~ — COMPLETE (bdfedc3)
-7. **FUI-1.7** (DashboardView) — needs FUI-1.1 + FUI-1.3, largest piece (~4-5h)
+7. **FUI-1.7** (DashboardView) — needs FUI-1.2 + FUI-1.3, largest piece (~4-5h)
 
 ---
 
@@ -60,21 +60,19 @@ Screenshots, metadata, landing page, README, App Store Connect, submission. Part
 
 ## Parallelism Reference
 
-### Phase 1 (now — 3 parallel workers)
+### Phase 1 — COMPLETE
+All M18 sub-milestones + FUI-1.1, FUI-1.4, FUI-1.5, FUI-1.6 done.
+
+### Phase 2 (now — parallel workers)
 ```
-Worker A: ~~M18.1.3~~ → M18.1.4           zero overlap with FUI-1
-Worker B: FUI-1.5 → FUI-1.4 → FUI-1.1 → FUI-1.2 → FUI-1.3
-Worker C: FUI-1.6 (after FUI-1.5)        zero overlap with M18
+Worker A: FUI-1.2 (search relocation)     READY
+Worker B: FUI-1.3 (settings relocation)   READY
 ```
 
-### Phase 2 (after Phase 1 — 2 parallel workers)
-```
-Worker D: FUI-1.7                         needs FUI-1.1 + FUI-1.3
-Worker E: M9.28                           needs M18.1.3 (SettingsView)
-```
-
-### Phase 3: PR + merge
-### Phase 4: M7.7 (last)
+### Phase 3 — FUI-1.7 (Dashboard, ~4-5h, needs FUI-1.2 + FUI-1.3)
+### Phase 4 — Testing + M9.28 (strip logging, after testing)
+### Phase 5 — PR + merge
+### Phase 6 — M7.7 (App Store, last)
 
 ---
 

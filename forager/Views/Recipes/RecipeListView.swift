@@ -12,13 +12,11 @@ struct RecipeListView: View {
 
     @StateObject private var recipeService = OptimizedRecipeDataService(context: PersistenceController.shared.container.viewContext)
 
-    @State private var searchText = ""
     @State private var showingAddRecipe = false
     @State private var showingImport = false
     @State private var showingTextImport = false
     @State private var showingPhotoImport = false
     @State private var showingBrowser = false
-    @State private var searchHistory: [String] = []
     @State private var showingDeleteError = false
     @State private var deleteErrorMessage = ""
 
@@ -95,17 +93,9 @@ struct RecipeListView: View {
         case recent, alphabetical, mostUsed
     }
 
-    // M3.5: Simplified search using computed property
+    // FUI-1.2: Filter + sort (search relocated to global UnifiedSearchView)
     private var filteredRecipes: [Recipe] {
-        var result: [Recipe]
-
-        if searchText.isEmpty {
-            result = recipes
-        } else {
-            result = recipes.filter { recipe in
-                recipe.matchesRecipeSearchQuery(searchText)
-            }
-        }
+        var result = Array(recipes)
 
         // M15.4: Apply filter
         switch activeFilter {
@@ -120,77 +110,19 @@ struct RecipeListView: View {
             if result.count > 20 { result = Array(result.prefix(20)) }
         }
 
-        // M15.4: Apply sort (unless searching, which sorts by relevance)
-        if searchText.isEmpty {
-            switch sortOrder {
-            case .recent:
-                result.sort { ($0.lastUsed ?? $0.dateCreated ?? .distantPast) > ($1.lastUsed ?? $1.dateCreated ?? .distantPast) }
-            case .alphabetical:
-                result.sort { $0.recipeDisplayTitle < $1.recipeDisplayTitle }
-            case .mostUsed:
-                result.sort { $0.usageCount > $1.usageCount }
-            }
-        } else {
-            result.sort { first, second in
-                if first.usageCount != second.usageCount {
-                    return first.usageCount > second.usageCount
-                }
-                return first.recipeDisplayTitle < second.recipeDisplayTitle
-            }
+        // M15.4: Apply sort
+        switch sortOrder {
+        case .recent:
+            result.sort { ($0.lastUsed ?? $0.dateCreated ?? .distantPast) > ($1.lastUsed ?? $1.dateCreated ?? .distantPast) }
+        case .alphabetical:
+            result.sort { $0.recipeDisplayTitle < $1.recipeDisplayTitle }
+        case .mostUsed:
+            result.sort { $0.usageCount > $1.usageCount }
         }
 
         return result
     }
     
-    // ENHANCED: Search result analysis for UI indicators
-    private func getMatchIndicators(for recipe: Recipe) -> [SearchMatchType] {
-        guard !searchText.isEmpty else { return [] }
-        
-        let searchTerms = searchText.lowercased()
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .components(separatedBy: .whitespaces)
-            .filter { !$0.isEmpty }
-        
-        var indicators: [SearchMatchType] = []
-        let title = recipe.title?.lowercased() ?? ""
-        let instructions = recipe.instructions?.lowercased() ?? ""
-        
-        let ingredientNames = (recipe.ingredients?.allObjects as? [Ingredient])?
-            .compactMap { $0.name?.lowercased() } ?? []
-        
-        for term in searchTerms {
-            if title.contains(term) {
-                indicators.append(.title)
-            }
-            if ingredientNames.contains(where: { $0.contains(term) }) {
-                indicators.append(.ingredient)
-            }
-            if instructions.contains(term) {
-                indicators.append(.instructions)
-            }
-        }
-        
-        return Array(Set(indicators)) // Remove duplicates
-    }
-    
-    // ENHANCED: Search history management
-    private func addToSearchHistory(_ term: String) {
-        let trimmed = term.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !searchHistory.contains(trimmed) else { return }
-        
-        searchHistory.insert(trimmed, at: 0)
-        if searchHistory.count > 8 {
-            searchHistory = Array(searchHistory.prefix(8))
-        }
-        
-        // Persist search history
-        UserDefaults.standard.set(searchHistory, forKey: "RecipeSearchHistory")
-    }
-    
-    // ENHANCED: Load search history
-    private func loadSearchHistory() {
-        searchHistory = UserDefaults.standard.stringArray(forKey: "RecipeSearchHistory") ?? []
-    }
 
     var body: some View {
         ZStack {
@@ -211,12 +143,6 @@ struct RecipeListView: View {
             }
         }
         .navigationTitle("Recipes")
-        .searchable(text: $searchText)
-        .searchSuggestions {
-            if !searchText.isEmpty && !searchHistory.isEmpty {
-                searchSuggestionsView
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 HStack(spacing: ForagerTheme.Spacing.sm) {
@@ -302,14 +228,6 @@ struct RecipeListView: View {
         } message: {
             Text(deleteErrorMessage)
         }
-        .onAppear {
-            loadSearchHistory()
-        }
-        .onSubmit(of: .search) {
-            if !searchText.isEmpty {
-                addToSearchHistory(searchText)
-            }
-        }
         .onChange(of: popToRoot) { _, _ in
             if showingAddRecipe { showingAddRecipe = false }
             if showingMealPlanSheet { showingMealPlanSheet = false }
@@ -319,7 +237,7 @@ struct RecipeListView: View {
     
     @ViewBuilder
     private var enhancedEmptyStateView: some View {
-        if searchText.isEmpty && activeFilter == .all {
+        if activeFilter == .all {
             ContentUnavailableView {
                 Label("No Recipes Yet", systemImage: "book.closed.fill")
             } description: {
@@ -342,8 +260,6 @@ struct RecipeListView: View {
                 }
                 .buttonStyle(.bordered)
             }
-        } else if !searchText.isEmpty {
-            ContentUnavailableView.search(text: searchText)
         } else {
             // Filter-specific empty state (e.g. no favorites)
             ContentUnavailableView {
@@ -361,10 +277,6 @@ struct RecipeListView: View {
     
     private var recipeListContent: some View {
         VStack(spacing: 0) {
-            if !searchText.isEmpty {
-                searchResultHeader
-            }
-
             List {
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
                     NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
@@ -405,10 +317,6 @@ struct RecipeListView: View {
     // FUI-1.6: Grid layout content
     private var recipeGridContent: some View {
         VStack(spacing: 0) {
-            if !searchText.isEmpty {
-                searchResultHeader
-            }
-
             ScrollView {
                 LazyVGrid(
                     columns: [
@@ -466,40 +374,6 @@ struct RecipeListView: View {
         }
     }
 
-    private var searchResultHeader: some View {
-        HStack {
-            Text("\(filteredRecipes.count) recipe\(filteredRecipes.count == 1 ? "" : "s") found")
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
-
-            Spacer()
-
-            if !filteredRecipes.isEmpty {
-                Text("Sorted by relevance")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textTertiary)
-            }
-        }
-        .padding(.horizontal, ForagerTheme.Spacing.lg)
-        .padding(.vertical, ForagerTheme.Spacing.sm)
-    }
-    
-    private var searchSuggestionsView: some View {
-        ForEach(searchHistory.prefix(5), id: \.self) { historyItem in
-            Button {
-                searchText = historyItem
-            } label: {
-                HStack {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .font(ForagerTheme.captionFont)
-                    Text(historyItem)
-                        .foregroundStyle(ForagerTheme.textPrimary)
-                    Spacer()
-                }
-            }
-        }
-    }
     
     // M4.3.1: Updated to create 15 test recipes with overlapping ingredients
     private func createSampleRecipe() {
@@ -2586,37 +2460,6 @@ struct RecipeDetailView: View {
     }
 }
 
-// MARK: - Search Match Types
-
-enum SearchMatchType: CaseIterable, Hashable {
-    case title
-    case ingredient
-    case instructions
-    
-    var displayName: String {
-        switch self {
-        case .title: return "Name"
-        case .ingredient: return "Ingredient"
-        case .instructions: return "Instructions"
-        }
-    }
-    
-    var iconName: String {
-        switch self {
-        case .title: return "textformat"
-        case .ingredient: return "leaf"
-        case .instructions: return "list.bullet"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .title: return ForagerTheme.accentPrimary
-        case .ingredient: return ForagerTheme.accentSecondary
-        case .instructions: return ForagerTheme.statusWarningFG
-        }
-    }
-}
 
 #Preview {
     NavigationView {
