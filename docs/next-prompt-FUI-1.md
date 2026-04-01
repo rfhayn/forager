@@ -2,7 +2,7 @@
 
 **Last Updated**: April 1, 2026
 **For Milestone**: FUI-1 — Dashboard, Navigation Restructuring, Recipe UI
-**Status**: **FUI-1 ACTIVE** (FUI-1.1, FUI-1.2, FUI-1.3, FUI-1.4, FUI-1.5, FUI-1.6 COMPLETE)
+**Status**: **FUI-1 COMPLETE** (all 7 sub-milestones done)
 
 **Branch**: `feature/M18-store-aware-shopping` (shared with M18)
 **PRD**: `docs/prds/active/fui-1-dashboard-navigation-recipe-ui.md`
@@ -17,7 +17,7 @@
 4. ~~**FUI-1.2** (Search relocation)~~ — COMPLETE
 5. ~~**FUI-1.3** (Settings relocation)~~ — COMPLETE (built in FUI-1.1)
 6. **FUI-1.6** (Recipe grid/list toggle) — needs FUI-1.5
-7. **FUI-1.7** (DashboardView) — needs FUI-1.1 + FUI-1.3, largest piece (~4-5h)
+7. ~~**FUI-1.7** (DashboardView)~~ — COMPLETE
 
 ---
 

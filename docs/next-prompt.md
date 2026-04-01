@@ -16,7 +16,7 @@ See `docs/next-prompt-M18.md` for full implementation guidance.
 See `docs/next-prompt-FUI-1.md` for full implementation guidance.
 **PRD**: `docs/prds/active/fui-1-dashboard-navigation-recipe-ui.md`
 
-**Remaining**: FUI-1.7 (dashboard)
+**All sub-milestones COMPLETE**: FUI-1.1 through FUI-1.7
 
 1. ~~**FUI-1.5** (Recipe computed properties)~~ — COMPLETE (861e86a)
 2. ~~**FUI-1.4** (Recipe detail hero image + attribution)~~ — COMPLETE (e8f983e)
@@ -24,7 +24,7 @@ See `docs/next-prompt-FUI-1.md` for full implementation guidance.
 4. ~~**FUI-1.2** (Search relocation)~~ — COMPLETE
 5. ~~**FUI-1.3** (Settings relocation)~~ — COMPLETE (built in FUI-1.1)
 6. ~~**FUI-1.6** (Recipe grid/list toggle)~~ — COMPLETE (bdfedc3)
-7. **FUI-1.7** (DashboardView) — needs FUI-1.2 + FUI-1.3, largest piece (~4-5h)
+7. ~~**FUI-1.7** (DashboardView)~~ — COMPLETE
 
 ---
 

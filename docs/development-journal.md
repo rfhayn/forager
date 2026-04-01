@@ -7,8 +7,8 @@
 ---
 
 ## Session 106 — April 1, 2026
-**Milestone**: FUI-1.2 — Search Relocation (Global Search Sheet)
-**Focus**: Moving search from RecipeListView's `.searchable()` to a global magnifying glass on all 4 tabs
+**Milestones**: FUI-1.2, FUI-1.3, FUI-1.7 — Search Relocation, Settings, Full Dashboard
+**Focus**: Completing remaining FUI-1 sub-milestones (search relocation + dashboard build-out)
 **Branch**: `feature/M18-store-aware-shopping`
 
 ### What Happened
@@ -19,24 +19,30 @@ Cleaned ~170 lines from RecipeListView: removed `searchText`/`searchHistory` sta
 
 The existing `fullScreenCover` for `UnifiedSearchView` (already wired in FUI-1.1) handles the actual search presentation. Build succeeded clean.
 
+**FUI-1.3** turned out to already be complete — the gear icon NavigationLink to SettingsView was built as part of FUI-1.1's placeholder DashboardView. Just marked docs as complete.
+
+**FUI-1.7**: Built out the full DashboardView with 4 cards: TodaysMealsCard (planned meals for today from active MealPlan), GroceryRunCard (most recent incomplete list with progress ring and item preview), RecipeSpotlightCard (daily-rotating recipe with hero image), and QuickActionsBar (capsule buttons for tab switching). Data is sourced from existing services — MealPlanService.shared for meals, @FetchRequest for lists and recipes (filtered by householdKey per ADR 013). Empty state shows a welcome card when nothing exists. Build succeeded clean.
+
 ### Key Decisions
 
 1. **Modifier applied at NavigationStack level, not inside each view** — Applying `.searchButton(showSearch:)` in `foragerApp.swift` means we didn't need to modify WeeklyListsView, MealPlansListView, or DashboardView at all. SwiftUI merges multiple `.toolbar` modifiers, so existing toolbar items coexist naturally.
 2. **Complete removal of local search code** — Rather than leaving search infrastructure in RecipeListView "just in case," removed it entirely. UnifiedSearchView already searches across all content types (recipes, lists, meals), making per-view search redundant.
-3. **No changes to UnifiedSearchView** — The dismiss button was already added in FUI-1.1's fullScreenCover setup, so UnifiedSearchView didn't need modification.
+3. **Date-seeded recipe spotlight** — Using `dayOfYear % pool.count` gives a different recipe each day without needing any persistence. Deterministic within a day, changes daily.
+4. **No new services** — Dashboard is purely presentational, pulling from MealPlanService (singleton), @FetchRequest (grocery lists, recipes), and a tab binding for quick actions.
 
 ### Learning
 
-- ViewModifier is the right abstraction for cross-cutting toolbar concerns. It keeps the app entry point as the single source of truth for which toolbar items appear on all tabs, without polluting individual view files.
-- Removing ~170 lines of search code from a 2600-line file is a net win for maintainability — RecipeListView's responsibility is now filter + sort + display, not search.
+- ViewModifier is the right abstraction for cross-cutting toolbar concerns.
+- FUI-1.3 was already done from FUI-1.1 — a reminder that forward-looking placeholders can absorb future milestones.
+- Progress ring with two overlapping Circle strokes (track + fill) is a clean pattern. `.rotationEffect(.degrees(-90))` starts from 12 o'clock.
 
 ### AI Tooling Observations
 
-Straightforward execution — the PRD and next-prompt had clear specs. The main value of the build step was confirming that no dangling references to removed search code remained (e.g., `searchText` in computed properties or empty states).
+Three milestones in one session. FUI-1.2 was mechanical cleanup, FUI-1.3 was already done, FUI-1.7 was the real work — ~280 lines of dashboard UI. PRD specs were detailed enough to implement without ambiguity.
 
 ### What's Next
 
-FUI-1.3 (settings relocation — gear icon already exists in DashboardView, may just need verification) → FUI-1.7 (full DashboardView with cards and quick actions).
+All FUI-1 sub-milestones complete. Ready for testing, then M9.28 (strip diagnostic logging) and PR merge.
 
 ---
 

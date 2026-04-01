@@ -180,7 +180,7 @@ struct foragerApp: App {
                         TabView(selection: $selectedTab) {
                             Tab("Home", systemImage: "house", value: .home) {
                                 NavigationStack {
-                                    DashboardView()
+                                    DashboardView(selectedTab: $selectedTab)
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }

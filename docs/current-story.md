@@ -1,7 +1,7 @@
 # Current Development Story
 
 **Last Updated**: April 1, 2026
-**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 ACTIVE** | **M16.9 COMPLETE**
+**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 ACTIVE (7/7 complete, pending PR)** | **M16.9 COMPLETE**
 **Total Progress**: ~320 hours
 **Current Branch**: `feature/M18-store-aware-shopping`
 **Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
@@ -99,7 +99,7 @@ Dashboard-first design inspired by Google Stitch mockups + Apple Health card mod
 | FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
 | FUI-1.5 | Recipe computed properties for attribution | 0.5h | COMPLETE (~0.5h) |
 | FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | COMPLETE |
-| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | READY (deps met) |
+| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | COMPLETE (~1h) |
 
 ---
 
