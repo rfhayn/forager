@@ -72,6 +72,9 @@ struct RecipeListView: View {
         }
     }
 
+    // FUI-1.6: Grid/list layout toggle (persisted)
+    @AppStorage("recipeListLayout") private var showGrid: Bool = false
+
     // M15.4: Filter and sort state
     @State private var activeFilter: RecipeFilter = .all
     @State private var sortOrder: RecipeSortOrder = .recent
@@ -200,6 +203,8 @@ struct RecipeListView: View {
 
                 if filteredRecipes.isEmpty {
                     enhancedEmptyStateView
+                } else if showGrid {
+                    recipeGridContent
                 } else {
                     recipeListContent
                 }
@@ -214,14 +219,26 @@ struct RecipeListView: View {
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Menu {
-                    Picker("Sort", selection: $sortOrder) {
-                        Text("Recent").tag(RecipeSortOrder.recent)
-                        Text("A-Z").tag(RecipeSortOrder.alphabetical)
-                        Text("Most Used").tag(RecipeSortOrder.mostUsed)
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    Menu {
+                        Picker("Sort", selection: $sortOrder) {
+                            Text("Recent").tag(RecipeSortOrder.recent)
+                            Text("A-Z").tag(RecipeSortOrder.alphabetical)
+                            Text("Most Used").tag(RecipeSortOrder.mostUsed)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.up.arrow.down")
                     }
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
+
+                    // FUI-1.6: Grid/list toggle
+                    Button {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+                            showGrid.toggle()
+                        }
+                    } label: {
+                        Image(systemName: showGrid ? "list.bullet" : "square.grid.2x2")
+                    }
+                    .accessibilityLabel(showGrid ? "Switch to list view" : "Switch to grid view")
                 }
             }
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -382,6 +399,48 @@ struct RecipeListView: View {
             .listStyle(.plain)
             .background(ForagerTheme.backgroundCanvas)
             .scrollContentBackground(.hidden)
+        }
+    }
+
+    // FUI-1.6: Grid layout content
+    private var recipeGridContent: some View {
+        VStack(spacing: 0) {
+            if !searchText.isEmpty {
+                searchResultHeader
+            }
+
+            ScrollView {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: ForagerTheme.Spacing.md),
+                        GridItem(.flexible(), spacing: ForagerTheme.Spacing.md)
+                    ],
+                    spacing: ForagerTheme.Spacing.md
+                ) {
+                    ForEach(filteredRecipes, id: \.objectID) { recipe in
+                        NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                            RecipeGridCard(recipe: recipe)
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button {
+                                selectedRecipeForMealPlan = recipe
+                                showingMealPlanSheet = true
+                            } label: {
+                                Label("Add to Meal Plan", systemImage: "calendar.badge.plus")
+                            }
+                            Button(role: .destructive) {
+                                deleteRecipe(recipe)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.vertical, ForagerTheme.Spacing.sm)
+            }
+            .background(ForagerTheme.backgroundCanvas)
         }
     }
 
@@ -880,6 +939,99 @@ struct RecipeListView: View {
             deleteErrorMessage = "Failed to delete recipe: \(error.localizedDescription)"
             showingDeleteError = true
         })
+    }
+}
+
+// MARK: - FUI-1.6: Grid Card
+
+struct RecipeGridCard: View {
+    @ObservedObject var recipe: Recipe
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Hero image or colored placeholder
+            ZStack {
+                if recipe.hasHeroImage, let url = URL(string: recipe.imageURL ?? "") {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        case .failure:
+                            placeholderView
+                        case .empty:
+                            ProgressView()
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(ForagerTheme.backgroundSecondary)
+                        @unknown default:
+                            placeholderView
+                        }
+                    }
+                } else {
+                    placeholderView
+                }
+            }
+            .frame(height: 120)
+            .clipped()
+
+            // Title + metadata
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
+                Text(recipe.recipeDisplayTitle)
+                    .font(ForagerTheme.secondaryFont.weight(.semibold))
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    if recipe.hasRecipeTiming {
+                        Image(systemName: "clock")
+                            .font(ForagerTheme.captionFont)
+                        Text(recipe.recipeFormattedTotalTime)
+                            .font(ForagerTheme.captionFont)
+                    }
+
+                    Spacer()
+
+                    if recipe.isFavorite {
+                        Image(systemName: "heart.fill")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.statusDangerFG)
+                    }
+                }
+                .foregroundStyle(ForagerTheme.textTertiary)
+            }
+            .padding(ForagerTheme.Spacing.sm)
+        }
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
+        .accessibilityHint("Double tap to view recipe")
+    }
+
+    private var placeholderView: some View {
+        ZStack {
+            placeholderColor
+            Image(systemName: "book.closed.fill")
+                .font(.title2)
+                .foregroundStyle(.white.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Deterministic color derived from recipe title hash
+    private var placeholderColor: Color {
+        let hash = abs(recipe.recipeDisplayTitle.hashValue)
+        let palette: [Color] = [
+            ForagerTheme.accentPrimary,
+            ForagerTheme.accentSecondary,
+            ForagerTheme.accentTertiary,
+            ForagerTheme.statusInfoFG,
+            ForagerTheme.statusWarningFG,
+        ]
+        return palette[hash % palette.count]
     }
 }
 
