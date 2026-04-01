@@ -6,6 +6,104 @@
 
 ---
 
+## Session 102 — April 1, 2026
+**Milestone**: M18.1.3 — Store Management UI (Settings > Stores)
+**Focus**: Building the store management view, add store sheet, and SettingsView integration
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Implemented the full Store Management UI as the third of four M18.1 sub-milestones. Created 3 new files (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) and modified 2 existing files (SettingsView, foragerApp). The ManageStoresView replicates the ManageCategoriesView pattern — list with color dots, drag-to-reorder, swipe-to-delete with reassignment dialog — but delegates all Core Data operations to StoreService rather than inline `performWrite` blocks. This made the view ~40% shorter than its category counterpart.
+
+AddStoreView adds suggested store chips (Costco, Walmart, Target, etc.) using FlowLayout for wrapping, shown only on first use when no stores exist. StoreService was wired into foragerApp.swift with factory injection and householdKeyProvider, then propagated as an EnvironmentObject.
+
+Also created `docs/pre-launch-manual-testing.md` — a comprehensive 80+ test case document covering all milestones on the launch path (M18, FUI-1, M9.28), intended for consolidation and potential Claude co-work automation.
+
+### Key Decisions
+
+1. **StoreService as EnvironmentObject, not local instantiation** — Unlike LLMSettingsService which uses a singleton, StoreService needs factory injection for ADR 014 compliance. Environment propagation from foragerApp ensures the factory-configured instance reaches ManageStoresView.
+2. **Delegation to StoreService for all mutations** — ManageCategoriesView does raw `performWrite` with background contexts. ManageStoresView calls `storeService.deleteStore(_:reassignTo:)` instead. The service already handles template reassignment and grocery item cleanup, so the view just coordinates UI state.
+3. **Suggested chips conditional on empty state** — `showSuggestions` parameter on AddStoreView lets ManageStoresView pass `stores.isEmpty`. Chips appear only for first-time setup, not when adding a 4th store.
+
+### Learning
+
+- ManageCategoriesView's complexity is partly historical — it was built before the service layer existed (M7.3.4 era). If it were built today, it would look more like ManageStoresView. Good evidence that the service layer investment pays off in UI simplicity.
+- FlowLayout (a Layout protocol conformer) works with `ForEach` inside it directly — no wrapper view needed. The `callAsFunction` view builder support on Layout types makes the syntax clean.
+
+### AI Tooling Observations
+
+Parallel orchestration working well — FUI-1.5, FUI-1.6, and M18.1.3 all running simultaneously with no file conflicts. The Clauductor lock system prevented any accidental overlap. Session startup (read PRD, read pattern files, check existing code) took about 30% of the session but prevented rework.
+
+### What's Next
+
+M18.1.4 (Store Assignment UX + Color Dots + Grouping) is the final M18 sub-milestone. It modifies GroceryListDetailView which is the highest-risk file in the launch path.
+
+---
+
+## Session 101 — April 1, 2026
+**Milestone**: FUI-1.6 — Recipe List Grid/List Toggle with Image Cards
+**Focus**: Adding @AppStorage-persisted layout toggle and grid card UI to RecipeListView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added a grid/list toggle to RecipeListView with full feature parity between both layouts. The toggle is persisted via `@AppStorage` so the user's preference survives app restarts. Grid mode uses a 2-column `LazyVGrid` populated with `RecipeGridCard` — a new card view featuring an `AsyncImage` hero with deterministic colored placeholders (seeded by recipe name), title, timing info, and a favorite badge. The existing filter pills and sort controls work identically in both layouts.
+
+The key implementation challenge was interaction parity: `List` supports `.swipeActions` but `LazyVGrid` does not (it's a List-only modifier). Solved this by using `.contextMenu` on grid items to expose the same actions (favorite toggle, delete) that swipe provides in list mode. This is a natural fit — long-press context menus are the standard interaction pattern for grid/card layouts on iOS.
+
+Build succeeded clean on first attempt. Commit `bdfedc3`.
+
+### Key Decisions
+
+1. **@AppStorage over @State** — The layout preference should persist across app launches. `@AppStorage("recipeListLayout")` with a string enum gives us that for free with zero service layer involvement.
+2. **Context menus for grid actions** — `LazyVGrid` doesn't support `.swipeActions` (a `List`-only modifier). Rather than fighting the framework, used `.contextMenu` which is the standard iOS pattern for grid item actions. Logged as an insight.
+3. **Deterministic colored placeholders** — When no hero image URL exists, the placeholder color is derived from a hash of the recipe name. This gives visual variety without randomness — the same recipe always gets the same color, which feels intentional rather than chaotic.
+
+### What's Next
+
+Continue FUI-1 stream: dashboard view, navigation structure, and remaining recipe detail enhancements.
+
+**Retro**:
+- Estimate vs actual: 2-3h estimated, ~0.75h actual — dramatically under estimate
+- What surprised you: How fast it went with precise next-prompt guidance — the implementation was nearly copy-paste from the spec. The next-prompt file had exact file paths, code snippets, and even the SwiftUI modifier chain, leaving almost no ambiguity
+- Process improvement: Detailed next-prompt specs with exact file paths and code snippets dramatically reduce implementation time. This is the strongest evidence yet that investing time in spec quality pays off 3-4x in implementation speed
+
+---
+
+## Session 100 — April 1, 2026
+**Milestone**: FUI-1.5 — Recipe Computed Properties for Attribution & Hero Image
+**Focus**: Adding display-layer computed properties to support the upcoming recipe card UI
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added 5 computed properties to `Recipe+ComputedProperties.swift` under a new "Attribution Properties" MARK section. These properties bridge the raw Core Data fields (`author`, `sourceURL`, `imageURL`) wired in M10.4.0 to the view layer that FUI-1 will consume:
+
+- `hasAttribution` — true if either author or source URL is present
+- `displayAuthor` — nil-coalescing + whitespace-trimmed author string
+- `sourceURLDomain` — extracts just the hostname from sourceURL for compact display
+- `sourceURLObject` — safe URL parsing with whitespace trimming
+- `hasHeroImage` — validates imageURL is non-empty and parseable
+
+The pattern follows the file's established convention: guard-let with trimming, return nil/false for invalid data, no force unwraps. Build succeeded clean.
+
+### Key Decisions
+
+1. **Computed properties over view logic** — Rather than parsing URLs inline in SwiftUI views, centralizing in the model extension keeps views declarative and makes the logic testable. This matches the existing pattern for timing, usage, and tag properties in the same file.
+2. **sourceURLObject returns URL? not String?** — Downstream consumers (attribution row, SafariView) need a URL anyway, so parse once at the model layer rather than repeatedly in views.
+3. **hasHeroImage validates URL parseability** — A non-empty string that isn't a valid URL shouldn't trigger hero image display. The extra `URL(string:) != nil` check prevents broken image states.
+
+### What's Next
+
+Continue FUI-1 stream: recipe card view, dashboard view, and navigation structure.
+
+**Retro**:
+- Estimate vs actual: 0.5h estimated, ~0.5h actual — 100% accuracy
+- What surprised you: Nothing — the PRD had exact code, existing file conventions were clear, build passed first try
+- Process improvement: For small computed-property-only milestones, the orchestration overhead (register/claim/lock/unlock/deregister) takes longer than the code. Could batch with the next sub-milestone (FUI-1.4) when there's no blocking dependency for other workers
+
+---
+
 ## Session 98 — April 1, 2026
 **Milestone**: M18.1.1 + M18.1.2 — StoreService + Store Snapshot Wiring
 **Focus**: Service layer for store-aware shopping, snapshot wiring in grocery item creation

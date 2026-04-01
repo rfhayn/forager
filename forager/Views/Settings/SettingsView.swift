@@ -31,9 +31,13 @@ struct SettingsView: View {
     // M10.6.3: API key entry state
     @State private var apiKeyInput = ""
 
+    // M18.1.3: Store service for store management
+    @EnvironmentObject private var storeService: StoreService
+
     // M9.26: Navigation state for Settings destinations
     @State private var showingIngredients = false
     @State private var showingCategories = false
+    @State private var showingStores = false
 
     // M9.34: Import guide replay
     @State private var importGuideReset = false
@@ -179,6 +183,21 @@ struct SettingsView: View {
 
                 Divider().padding(.vertical, ForagerTheme.Spacing.sm)
 
+                // M18.1.3: Stores row
+                Button { showingStores = true } label: {
+                    HStack {
+                        Label("Stores", systemImage: "storefront")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
+
                 // Restore row
                 Button { showingRestoreConfirmation = true } label: {
                     Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
@@ -194,6 +213,9 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $showingCategories) {
                 ManageCategoriesView(popToRoot: .constant(false))
+            }
+            .navigationDestination(isPresented: $showingStores) {
+                ManageStoresView(popToRoot: .constant(false), storeService: storeService)
             }
             .confirmationDialog("Restore Default Categories?",
                                 isPresented: $showingRestoreConfirmation,

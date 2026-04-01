@@ -72,6 +72,9 @@ struct foragerApp: App {
     // M10.6.8: Shared ingredient matching service
     @StateObject private var ingredientMatchService: IngredientMatchService
 
+    // M18.1.3: Store service for store-aware shopping
+    @StateObject private var storeService: StoreService
+
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
@@ -113,6 +116,10 @@ struct foragerApp: App {
         _recipeService = StateObject(wrappedValue: recipe)
         _weeklyListService = StateObject(wrappedValue: weeklyList)
 
+        // M18.1.3: Store service for store-aware shopping
+        let storeSvc = StoreService(context: context)
+        _storeService = StateObject(wrappedValue: storeSvc)
+
         // M10.1: Import service for browser and URL import
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
         _importService = StateObject(wrappedValue: importSvc)
@@ -148,6 +155,10 @@ struct foragerApp: App {
         recipe.configure(factory: factory)
         weeklyList.configure(factory: factory)
         templateService.configure(factory: factory)
+        storeSvc.configure(factory: factory)
+        storeSvc.householdKeyProvider = { [weak household] in
+            household?.currentHouseholdKey
+        }
         MealPlanService.shared.configure(factory: factory)
         MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 
@@ -216,6 +227,7 @@ struct foragerApp: App {
                     .environmentObject(ingredientMatchService)
                     .environmentObject(groceryListItemService)
                     .environmentObject(importService)
+                    .environmentObject(storeService)
                     .task {
                         // Reload household now that stores are loaded (isReady gate
                         // ensures stores are ready before TabView renders).
