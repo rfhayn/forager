@@ -85,7 +85,7 @@ class StoreService: ObservableObject {
 
     /// Deletes a store. If `reassignTo` is provided, templates currently assigned
     /// to the deleted store are reassigned to it. Otherwise, templates are unassigned.
-    func deleteStore(_ store: Store, reassignTo replacement: Store? = nil, in context: NSManagedObjectContext? = nil) {
+    func deleteStore(_ store: Store, reassignTo replacement: Store? = nil) {
         clearError()
 
         // Reassign templates before deletion
@@ -109,7 +109,7 @@ class StoreService: ObservableObject {
     }
 
     /// Reorders stores by updating sortOrder to match array index.
-    func reorderStores(_ stores: [Store], in context: NSManagedObjectContext? = nil) {
+    func reorderStores(_ stores: [Store]) {
         clearError()
 
         for (index, store) in stores.enumerated() {
@@ -151,7 +151,7 @@ class StoreService: ObservableObject {
     /// Assigns a preferred store to an ingredient template.
     /// This is a "learning" operation — future grocery items from this template
     /// will snapshot this store preference.
-    func assignStore(_ store: Store?, toTemplate template: IngredientTemplate, in context: NSManagedObjectContext? = nil) {
+    func assignStore(_ store: Store?, toTemplate template: IngredientTemplate) {
         clearError()
         template.preferredStore = store
         template.updatedAt = Date()
@@ -159,7 +159,7 @@ class StoreService: ObservableObject {
     }
 
     /// Assigns a store to a grocery list item (direct override of snapshot).
-    func assignStore(_ store: Store?, toGroceryItem item: GroceryListItem, in context: NSManagedObjectContext? = nil) {
+    func assignStore(_ store: Store?, toGroceryItem item: GroceryListItem) {
         clearError()
         item.store = store
         save("assign store to grocery item")

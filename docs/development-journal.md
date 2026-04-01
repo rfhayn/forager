@@ -7,17 +7,21 @@
 ---
 
 ## Session 98 — April 1, 2026
-**Milestone**: M18.1.1 — StoreService (CRUD, assignment, query, cross-store resolution)
-**Focus**: Service layer implementation following established patterns
+**Milestone**: M18.1.1 + M18.1.2 — StoreService + Store Snapshot Wiring
+**Focus**: Service layer for store-aware shopping, snapshot wiring in grocery item creation
 **Branch**: `feature/M18-store-aware-shopping`
 
 ### What Happened
 
-Implemented StoreService with 7 methods: createStore, deleteStore (with template reassignment), reorderStores, fetchStores, assignStore (two overloads for template and grocery item), and resolveStore for cross-store CloudKit safety. The resolveStore method mirrors the battle-tested resolveCategory pattern from GroceryListItemService — when a Store entity lives in a different persistent store than the target WeeklyList, it falls back to a name-based lookup in the correct household scope.
+Two milestones in one session. M18.1.1 implemented StoreService with 7 methods: createStore, deleteStore (with template reassignment), reorderStores, fetchStores, assignStore (two overloads for template and grocery item), and resolveStore for cross-store CloudKit safety. The resolveStore method mirrors the battle-tested resolveCategory pattern from GroceryListItemService — when a Store entity lives in a different persistent store than the target WeeklyList, it falls back to a name-based lookup in the correct household scope.
 
-Service follows the established pattern: @MainActor ObservableObject with viewContext, optional ManagedObjectFactory injection for ADR 014 compliance, householdKey/householdKeyProvider for ADR 013 scoped fetches, and the standard save/clearError/rollback error handling.
+Service follows the established pattern: @MainActor ObservableObject with viewContext, optional ManagedObjectFactory injection for ADR 014 compliance, householdKey/householdKeyProvider for ADR 013 scoped fetches, and the standard save/clearError/rollback error handling. Wrote 13 unit tests covering all CRUD operations, household key scoping, delete with reassignment and nullification, reordering, store assignment, and cross-store resolution.
 
-Wrote 13 unit tests covering all CRUD operations, household key scoping, delete with reassignment and nullification, reordering, store assignment to templates and grocery items, and cross-store resolution. Hit a test isolation gotcha: in-memory PersistenceController instances share the same /dev/null SQLite store within a test run, so data from earlier test methods leaks into later ones. Fixed by writing assertions against relative values rather than absolute counts.
+M18.1.2 wired store snapshots into grocery item creation. Added resolveStore() to GroceryListItemService mirroring the resolveCategory pattern, then added snapshot lines in addItem (line 155) and addStaples (line 253). addIngredients was already covered since it delegates to addItem. Also added an optional store parameter to WeeklyListService.addItem for downstream callers.
+
+Hit a test isolation gotcha: in-memory PersistenceController instances share the same /dev/null SQLite store within a test run, so data from earlier test methods leaks into later ones. Fixed by writing assertions against relative values rather than absolute counts.
+
+Post-review cleanup removed 4 unused `in context:` parameters from StoreService methods that were dead API surface — all paths use viewContext.
 
 Parallel worker (opus-m10.4.0) was active on recipe attribution — no file conflicts thanks to orchestration locks.
 
@@ -25,10 +29,11 @@ Parallel worker (opus-m10.4.0) was active on recipe attribution — no file conf
 
 1. **Relative test assertions** — Rather than asserting `sortOrder == 0`, assert `store2.sortOrder == store1.sortOrder + 1`. Prevents flaky tests from shared in-memory store state.
 2. **Explicit grocery item nullification in deleteStore** — Core Data's nullify rule handles this at save time, but explicitly clearing in-memory relationships ensures consistency for code that reads the item before save.
+3. **Inline resolveStore in GroceryListItemService** — Rather than injecting StoreService as a dependency, duplicated the 15-line resolve pattern inline. This matches how resolveCategory works and avoids coupling the services.
 
 ### What's Next
 
-M18.1.2: Wire store snapshots into GroceryListItemService's 3 creation paths (addItem, addIngredients, addStaples).
+M18.1.3: Store management UI (Settings > Stores). M18.1.4: Store assignment UX + color dots + grouping.
 
 ---
 
