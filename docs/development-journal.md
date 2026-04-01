@@ -48,6 +48,8 @@ Wired `imageURL` and `author` from `ImportDraftRecipe` through to the `Recipe` e
 
 Added 5 unit tests to `RecipeServiceTests`: create with attribution, create without (nil defaults), duplicate preserves attribution, and two `toRecipeFormData` mapping tests. All 14 tests pass.
 
+Also ran a PRD audit on M7.7 (App Store Submission) — the PRD was written Feb 8 and had gone stale: iOS 18 refs (now 26), iPhone 15 Pro screenshot devices (now 17 Pro), 190 dev hours (now ~320), 102 tests (now ~470), 10 ADRs (now 14). Updated all in place.
+
 ### Key Decisions
 
 1. **Both save paths wired** — `saveImport()` writes directly to entity, `replaceExistingRecipe()` also needed the same two lines. Easy to miss the replace path.
