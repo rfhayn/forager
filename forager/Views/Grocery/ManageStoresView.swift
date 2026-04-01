@@ -141,13 +141,13 @@ struct ManageStoresView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             Text("Drag to Reorder Stores")
-                .font(.subheadline)
+                .font(ForagerTheme.secondaryFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
                 Text("Arrange stores in your preferred shopping order")
-                    .font(.caption)
+                    .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
 
                 Spacer()
@@ -253,13 +253,13 @@ struct ManageStoresView: View {
         VStack(spacing: 24) {
             VStack(spacing: 12) {
                 Text("Store Has Assigned Ingredients")
-                    .font(.title2)
+                    .font(ForagerTheme.detailTitle)
                     .fontWeight(.semibold)
                     .multilineTextAlignment(.center)
 
                 if let store = storeToDelete {
                     Text("\(assignedTemplateCount) ingredient\(assignedTemplateCount == 1 ? "" : "s") prefer\(assignedTemplateCount == 1 ? "s" : "") '\(store.displayName)'.")
-                        .font(.body)
+                        .font(ForagerTheme.bodyFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -273,7 +273,7 @@ struct ManageStoresView: View {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .foregroundStyle(ForagerTheme.accentPrimary)
                             Text("Reassign to Another Store")
-                                .font(.headline)
+                                .font(ForagerTheme.secondaryFont)
                                 .fontWeight(.medium)
                         }
 
@@ -304,7 +304,7 @@ struct ManageStoresView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                     .padding(16)
-                    .background(Color(.systemGray6))
+                    .background(ForagerTheme.backgroundSecondary)
                     .cornerRadius(ForagerTheme.Radius.md)
                 }
 
@@ -314,15 +314,15 @@ struct ManageStoresView: View {
                         Image(systemName: "xmark.circle")
                             .foregroundStyle(ForagerTheme.textTertiary)
                         Text("Clear Store Preference")
-                            .font(.headline)
+                            .font(ForagerTheme.secondaryFont)
                             .fontWeight(.medium)
                     }
                     Text("Ingredients will have no store assigned")
-                        .font(.subheadline)
+                        .font(ForagerTheme.captionFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding(16)
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
                 .cornerRadius(ForagerTheme.Radius.md)
             }
 
@@ -335,11 +335,11 @@ struct ManageStoresView: View {
                             performDeletion(store: store, reassignTo: replacement)
                         }
                     }
-                    .font(.headline)
-                    .foregroundStyle(selectedReassignmentStore == nil ? ForagerTheme.textSecondary : Color.white)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(selectedReassignmentStore == nil ? ForagerTheme.buttonPrimaryDisabledText : ForagerTheme.buttonPrimaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(selectedReassignmentStore == nil ? Color(.systemGray4) : ForagerTheme.accentPrimary)
+                    .background(selectedReassignmentStore == nil ? ForagerTheme.buttonPrimaryDisabled : ForagerTheme.buttonPrimaryDefault)
                     .cornerRadius(ForagerTheme.Radius.md)
                     .disabled(selectedReassignmentStore == nil)
                 }
@@ -349,8 +349,8 @@ struct ManageStoresView: View {
                         performDeletion(store: store, reassignTo: nil)
                     }
                 }
-                .font(.headline)
-                .foregroundStyle(.white)
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.buttonPrimaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(ForagerTheme.textTertiary)
@@ -361,11 +361,11 @@ struct ManageStoresView: View {
                     storeToDelete = nil
                     selectedReassignmentStore = nil
                 }
-                .font(.body)
+                .font(ForagerTheme.bodyFont)
                 .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
                 .cornerRadius(ForagerTheme.Radius.md)
             }
         }
@@ -409,7 +409,7 @@ struct StoreRowView: View {
         HStack(spacing: 16) {
             // Position indicator
             Text("\(position)")
-                .font(.headline)
+                .font(ForagerTheme.secondaryFont)
                 .fontWeight(.semibold)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
@@ -421,7 +421,7 @@ struct StoreRowView: View {
 
             // Store name
             Text(store.displayName)
-                .font(.headline)
+                .font(ForagerTheme.secondaryFont)
                 .fontWeight(.medium)
 
             Spacer()
@@ -465,8 +465,8 @@ struct StoreSelectionView: View {
                             .frame(width: 32, height: 32)
 
                         Text(store.displayName)
-                            .font(.body)
-                            .foregroundStyle(.primary)
+                            .font(ForagerTheme.bodyFont)
+                            .foregroundStyle(ForagerTheme.textPrimary)
 
                         Spacer()
 

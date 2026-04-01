@@ -681,6 +681,7 @@ struct GroceryListDetailView: View {
 
             let listItem = weeklyListService.addItem(
                 to: weeklyList, name: trimmedText, category: categoryEntity,
+                store: matchedTemplate?.preferredStore,
                 numericValue: structured.numericValue ?? 0.0,
                 standardUnit: structured.standardUnit,
                 displayText: structured.displayText,
@@ -741,6 +742,7 @@ struct GroceryListDetailView: View {
 
         let listItem = weeklyListService.addItem(
             to: weeklyList, name: trimmedText, category: categoryEntity,
+            store: selectedTemplate?.preferredStore,
             numericValue: structured.numericValue ?? 0.0,
             standardUnit: structured.standardUnit,
             displayText: structured.displayText,

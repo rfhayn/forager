@@ -99,7 +99,7 @@ struct StoreAssignmentModal: View {
 
     private func assignStore(_ store: Store?) {
         // Set on current grocery list item (snapshot)
-        storeService.assignStore(store, toGroceryItem: item)
+        item.store = store
 
         // Also update the template's preferredStore (learning)
         if let templateName = item.name {
@@ -117,10 +117,13 @@ struct StoreAssignmentModal: View {
             request.fetchLimit = 1
 
             if let template = try? item.managedObjectContext?.fetch(request).first {
-                storeService.assignStore(store, toTemplate: template)
+                template.preferredStore = store
+                template.updatedAt = Date()
             }
         }
 
+        // Single save for both mutations
+        storeService.assignStore(store, toGroceryItem: item)
         dismiss()
     }
 }

@@ -35,7 +35,7 @@ struct AddStoreView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 if showSuggestions {
                     suggestedChipsSection
@@ -47,7 +47,7 @@ struct AddStoreView: View {
 
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Color")
-                            .font(.headline)
+                            .font(ForagerTheme.secondaryFont)
 
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
                             ForEach(ForagerTheme.storeColorPalette, id: \.self) { color in
@@ -56,7 +56,7 @@ struct AddStoreView: View {
                                     .frame(width: 40, height: 40)
                                     .overlay(
                                         Circle()
-                                            .stroke(selectedColor == color ? Color.primary : Color.clear, lineWidth: 3)
+                                            .stroke(selectedColor == color ? ForagerTheme.textPrimary : Color.clear, lineWidth: 3)
                                     )
                                     .onTapGesture {
                                         selectedColor = color
@@ -102,7 +102,7 @@ struct AddStoreView: View {
                         name = storeName
                     } label: {
                         Text(storeName)
-                            .font(.subheadline)
+                            .font(ForagerTheme.secondaryFont)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(

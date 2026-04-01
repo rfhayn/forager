@@ -46,10 +46,8 @@ class StoreService: ObservableObject {
     /// Creates a new store with the given name and color.
     /// Uses ManagedObjectFactory for correct store assignment (ADR 014).
     @discardableResult
-    func createStore(name: String, color: String, in context: NSManagedObjectContext? = nil) -> Store? {
+    func createStore(name: String, color: String) -> Store? {
         clearError()
-
-        let ctx = context ?? viewContext
 
         if let factory = factory {
             do {
@@ -70,17 +68,11 @@ class StoreService: ObservableObject {
             }
         }
 
-        // Fallback: no factory available
-        let store = Store(context: ctx)
-        store.id = UUID()
-        store.name = name
-        store.color = color
-        store.sortOrder = nextSortOrder()
-        store.householdKey = resolvedHouseholdKey
-        store.dateCreated = Date()
-        store.updatedAt = Date()
-        save("create store")
-        return store
+        // ADR 014: factory is required for HouseholdScoped entities.
+        // Direct Store(context:) is forbidden — it bypasses store routing.
+        assertionFailure("StoreService.createStore called without factory — configure(factory:) must be called at app startup")
+        errorMessage = "Unable to create store (missing factory)"
+        return nil
     }
 
     /// Deletes a store. If `reassignTo` is provided, templates currently assigned
@@ -210,29 +202,31 @@ class StoreService: ObservableObject {
     /// M18.1.4: Groups grocery items by store, returning sections in store sortOrder
     /// with an "Unassigned" section at the end. Items within each section are sub-sorted
     /// by category sortOrder.
+    ///
+    /// Uses objectID for internal grouping to avoid key collision if a store is named "Unassigned".
     static func groupByStore(
         items: [GroceryListItem],
         stores: [Store]
     ) -> [(storeName: String, storeColor: String?, items: [GroceryListItem])] {
-        let grouped = Dictionary(grouping: items) { item -> String in
-            item.store?.name ?? "Unassigned"
+        // Group by store objectID (opaque key), nil for unassigned
+        let grouped = Dictionary(grouping: items) { item -> NSManagedObjectID? in
+            item.store?.objectID
         }
 
         var result: [(storeName: String, storeColor: String?, items: [GroceryListItem])] = []
 
         for store in stores {
-            let name = store.name ?? "Unnamed"
-            if let sectionItems = grouped[name], !sectionItems.isEmpty {
+            if let sectionItems = grouped[store.objectID], !sectionItems.isEmpty {
                 let sorted = sectionItems.sorted { lhs, rhs in
                     let lhsOrder = lhs.categoryEntity?.sortOrder ?? Int16.max
                     let rhsOrder = rhs.categoryEntity?.sortOrder ?? Int16.max
                     return lhsOrder < rhsOrder
                 }
-                result.append((storeName: name, storeColor: store.color, items: sorted))
+                result.append((storeName: store.displayName, storeColor: store.color, items: sorted))
             }
         }
 
-        if let unassigned = grouped["Unassigned"], !unassigned.isEmpty {
+        if let unassigned = grouped[nil], !unassigned.isEmpty {
             let sorted = unassigned.sorted { lhs, rhs in
                 let lhsOrder = lhs.categoryEntity?.sortOrder ?? Int16.max
                 let rhsOrder = rhs.categoryEntity?.sortOrder ?? Int16.max
