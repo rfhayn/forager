@@ -105,7 +105,7 @@
 | 4 | Tab switching works | All 4 tabs navigate to correct views | | Manual or XCUITest — verify each tab loads its view |
 | 5 | Deep links / state restoration | Re-launching app returns to last selected tab | | Manual — kill and relaunch simulator |
 | 6 | Settings accessible via gear icon | DashboardView toolbar gear → SettingsView | | Manual — verify NavigationLink pushes SettingsView |
-| 7 | Search accessible via fullScreenCover | `showSearch` state triggers UnifiedSearchView overlay with Done button | | Manual — FUI-1.2 will add the trigger button |
+| 7 | Search accessible via fullScreenCover | `showSearch` state triggers UnifiedSearchView overlay with Done button | Implemented | FUI-1.2 added SearchButtonModifier to all tabs |
 | 8 | Coach marks updated | Onboarding walkthrough shows Home tab (not Settings) | | Manual — replay via Settings > Replay Onboarding |
 | 9 | Time-of-day greeting | DashboardView shows correct greeting for current hour | | Manual or time-travel via simulator clock |
 
@@ -113,21 +113,21 @@
 
 | # | Test | Expected Result | Status |
 |---|------|-----------------|--------|
-| 1 | Search button visible on all 4 tabs | Magnifying glass toolbar button present on Home, Lists, Recipes, Meals | |
-| 2 | Tapping search opens full-screen sheet | `UnifiedSearchView` presented as `.fullScreenCover` with dismiss button | |
-| 3 | Search results push detail within sheet | Tapping a search result navigates to detail view inside the sheet, not cross-tab | |
-| 4 | Dismiss search sheet | X/Done button closes the sheet, returns to previous tab | |
-| 5 | RecipeListView no longer has .searchable | No search bar in recipe list — removed in favor of global search | |
-| 6 | Search history cleared | Old `RecipeSearchHistory` UserDefaults no longer used | |
+| 1 | Search button visible on all 4 tabs | Magnifying glass toolbar button present on Home, Lists, Recipes, Meals | Implemented | SearchButtonModifier applied at NavigationStack level |
+| 2 | Tapping search opens full-screen sheet | `UnifiedSearchView` presented as `.fullScreenCover` with dismiss button | Implemented | |
+| 3 | Search results push detail within sheet | Tapping a search result navigates to detail view inside the sheet, not cross-tab | | Manual — verify navigation within sheet |
+| 4 | Dismiss search sheet | X/Done button closes the sheet, returns to previous tab | Implemented | |
+| 5 | RecipeListView no longer has .searchable | No search bar in recipe list — removed in favor of global search | Verified | Grep confirms no searchText/searchable references |
+| 6 | Search history cleared | Old `RecipeSearchHistory` UserDefaults no longer used | Verified | Code removed, UserDefaults key no longer referenced |
 
 ### FUI-1.3: Settings Relocation
 
 | # | Test | Expected Result | Status |
 |---|------|-----------------|--------|
-| 1 | Gear icon in DashboardView toolbar | Trailing toolbar shows gear icon | |
-| 2 | Tapping gear navigates to SettingsView | Full SettingsView loads within Home tab's NavigationStack | |
-| 3 | All Settings sub-sections work | Household, Data (Ingredients, Categories, Stores), Meal Planning, Display, AI, Diagnostic, About — all navigate correctly | |
-| 4 | EnvironmentObjects propagate | No crashes from missing environment objects in Settings or its children | |
+| 1 | Gear icon in DashboardView toolbar | Trailing toolbar shows gear icon | Implemented | Built in FUI-1.1 |
+| 2 | Tapping gear navigates to SettingsView | Full SettingsView loads within Home tab's NavigationStack | Implemented | |
+| 3 | All Settings sub-sections work | Household, Data (Ingredients, Categories, Stores), Meal Planning, Display, AI, Diagnostic, About — all navigate correctly | | Manual — verify each sub-section |
+| 4 | EnvironmentObjects propagate | No crashes from missing environment objects in Settings or its children | | Manual — navigate through all Settings screens |
 
 ### FUI-1.4: Recipe Detail — Hero Image + Attribution
 
@@ -174,14 +174,16 @@
 
 | # | Test | Expected Result | Status |
 |---|------|-----------------|--------|
-| 1 | Greeting header changes by time | Morning (5-11), Afternoon (12-16), Evening (17+) | |
-| 2 | Date subtitle | Shows current day: "Tuesday, April 1" | |
-| 3 | Today's Meals card | Shows planned meals for today from active meal plan. Empty state if no plan | |
-| 4 | Grocery Run card | Shows most recent incomplete list with progress ring + item preview. Empty state if none | |
-| 5 | Recipe Spotlight card | Shows a random favorite or recently added recipe. Empty state if no recipes | |
-| 6 | Quick Actions bar | Horizontal capsule buttons for common actions (add list, add recipe, etc.) | |
-| 7 | Card tap navigation | Tapping Today's Meals → Meals tab. Tapping Grocery Run → list detail. Tapping Spotlight → recipe detail | |
-| 8 | Scroll behavior | Tab bar minimizes on scroll down | |
+| 1 | Greeting header changes by time | Morning (5-11), Afternoon (12-16), Evening (17-21), Night (22-4) | Implemented | Time-of-day greeting as navigationTitle |
+| 2 | Date subtitle | Shows current day: "Tuesday, April 1" | Implemented | `.dateTime.weekday(.wide).month(.wide).day()` format |
+| 3 | Today's Meals card | Shows planned meals for today from active meal plan. Hidden if no meals | Implemented | Filtered by `Calendar.isDateInToday()` |
+| 4 | Grocery Run card | Most recent incomplete list with progress ring + item preview. Hidden if none | Implemented | Progress ring + 3 unchecked item preview |
+| 5 | Recipe Spotlight card | Daily-rotating recipe with hero image. Hidden if no recipes | Implemented | Date-seeded selection from favorites or all |
+| 6 | Quick Actions bar | Capsule buttons: New List, Add Recipe, Plan Meals | Implemented | Switches selectedTab binding |
+| 7 | Card tap navigation | Today's Meals "View Plan" → Meals tab. Grocery "Open" → Lists tab. Spotlight → recipe detail | Implemented | Tab switching via binding, recipe via NavigationLink |
+| 8 | Scroll behavior | Tab bar minimizes on scroll down | Implemented | `.tabBarMinimizeBehavior(.onScrollDown)` on TabView |
+| 9 | Welcome card (empty state) | Shows when no meals, lists, or recipes exist | Implemented | Conditional: all data empty → welcome card |
+| 10 | Meal completion checkmarks | Completed meals show green checkmark | Implemented | `meal.isCompleted` check |
 
 ---
 
