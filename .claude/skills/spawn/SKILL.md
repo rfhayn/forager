@@ -111,12 +111,21 @@ tmux new-window -t "$TMUX_SESSION" -c "$(pwd)" -n "$WINDOW_NAME"
 
 ## Step 6: Launch Claude Code
 
-Target by window **index** (not name) to avoid tmux dot-parsing issues:
+Target by window **index** (not name) to avoid tmux dot-parsing issues.
+
+**CRITICAL**: Only pass a short slash command as the initial prompt. Do NOT embed long multi-line prompts — tmux send-keys will break on special characters (quotes, dots, newlines). The worker will load all context via `/start-work`.
 
 ```bash
 WINDOW_INDEX=$(tmux list-windows -t "$TMUX_SESSION" -F '#{window_index} #{window_name}' | grep "$WINDOW_NAME" | awk '{print $1}')
 tmux send-keys -t "$TMUX_SESSION:$WINDOW_INDEX" "claude '/start-work [PREFIX-#.#]'" Enter
 ```
+
+**For research sessions**, use the same pattern:
+```bash
+tmux send-keys -t "$TMUX_SESSION:$WINDOW_INDEX" "claude '/start-work [PREFIX-#.#]'" Enter
+```
+
+The worker will self-configure based on the milestone's next-prompt file. Do NOT try to pass mission context, orchestration state, or instructions via the launch command.
 
 ## Step 7: Log the Spawn
 
