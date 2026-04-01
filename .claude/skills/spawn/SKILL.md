@@ -115,7 +115,7 @@ Target by window **index** (not name) to avoid tmux dot-parsing issues:
 
 ```bash
 WINDOW_INDEX=$(tmux list-windows -t "$TMUX_SESSION" -F '#{window_index} #{window_name}' | grep "$WINDOW_NAME" | awk '{print $1}')
-tmux send-keys -t "$TMUX_SESSION:$WINDOW_INDEX" "claude --resume no -p '/start-work [PREFIX-#.#]'" Enter
+tmux send-keys -t "$TMUX_SESSION:$WINDOW_INDEX" "claude '/start-work [PREFIX-#.#]'" Enter
 ```
 
 ## Step 7: Log the Spawn
