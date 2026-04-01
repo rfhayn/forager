@@ -229,6 +229,46 @@
 
 ---
 
+## Automated Test Gaps (from code review audit)
+
+These were identified during the PR #114 audit and need to be written before the testing pass.
+
+### Gap 1: Recipe Computed Properties Unit Tests
+
+**File to create/update**: `foragerTests/Services/RecipeComputedPropertiesTests.swift`
+
+Properties to test (all on `Models/Recipe+ComputedProperties.swift`):
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 1 | `hasAttribution` with author set, no URL | Returns true |
+| 2 | `hasAttribution` with URL set, no author | Returns true |
+| 3 | `hasAttribution` with both nil | Returns false |
+| 4 | `hasAttribution` with both empty strings | Returns false |
+| 5 | `displayAuthor` with valid name | Returns trimmed name |
+| 6 | `displayAuthor` with whitespace-only | Returns nil |
+| 7 | `displayAuthor` with nil | Returns nil |
+| 8 | `sourceURLDomain` extracts host | "https://example.com/recipe/123" → "example.com" |
+| 9 | `sourceURLDomain` with nil sourceURL | Returns nil |
+| 10 | `sourceURLObject` with valid URL | Returns URL object |
+| 11 | `sourceURLObject` with invalid URL | Returns nil |
+| 12 | `hasHeroImage` with valid URL | Returns true |
+| 13 | `hasHeroImage` with empty string | Returns false |
+| 14 | `hasHeroImage` with nil | Returns false |
+| 15 | `hasHeroImage` with whitespace-only | Returns false |
+
+### Gap 2: WeeklyListService Store Snapshot Integration Test
+
+**File to update**: `foragerTests/Services/WeeklyListServiceTests.swift`
+
+| # | Test | Expected Result |
+|---|------|-----------------|
+| 1 | `addItem` with template that has `preferredStore` | New `GroceryListItem.store` matches `template.preferredStore` |
+| 2 | `addItem` with template that has no `preferredStore` | `GroceryListItem.store` is nil |
+| 3 | Quick-add path passes store param | Verify `weeklyListService.addItem(store:)` receives template's preferred store |
+
+---
+
 ## Notes for Automation
 
 - Tests marked with "build with Release config" or "grep confirms" can be automated via CLI
@@ -236,3 +276,5 @@
 - Time-based tests (greeting header) can be tested by changing system clock on simulator
 - Most UI tests are candidates for XCUITest automation if patterns are established
 - Store chip / color picker tests may benefit from snapshot testing
+- Recipe computed properties tests are pure logic — highest priority for automation
+- Store snapshot tests require Core Data in-memory stack but are straightforward

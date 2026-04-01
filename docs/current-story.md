@@ -319,13 +319,13 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**Phase 1**: Testing pass on M18 + FUI-1 work.
-**Phase 2**: M9.28 (strip diagnostic logging).
-**Phase 3**: PR + merge (M18 + FUI-1 + M9.28 in one branch).
+**Phase 1**: Write missing automated tests (Recipe computed properties + WeeklyListService store snapshot). See `docs/pre-launch-manual-testing.md` test gaps section.
+**Phase 2**: Manual/automated testing pass on M18 + FUI-1 work.
+**Phase 3**: M9.28 (strip diagnostic logging).
 **Phase 4**: M7.7 (App Store submission).
 
 ---
 
-**Last Session**: April 1, 2026 — FUI-1.1 tab restructure complete (5156954).
-**Next Action**: FUI-1.2 (search relocation) or FUI-1.3 (settings relocation) — both depend on FUI-1.1 which is now done.
+**Last Session**: April 1, 2026 — M18 + FUI-1 merged to main (PR #114, squash commit 96a89e7). Code review fixes applied. All 13 sub-milestones complete (~10.25h actual vs 19-25h estimated). Two automated test gaps documented.
+**Next Action**: Write Recipe computed properties tests + WeeklyListService store snapshot test, then testing pass.
 **Confidence**: GREEN
