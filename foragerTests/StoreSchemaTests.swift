@@ -333,7 +333,7 @@ final class StoreSchemaTests: XCTestCase {
 
     // MARK: - Model Entity Count
 
-    func testModelHas12Entities() throws {
+    func testModelHas13Entities() throws {
         let entities = persistence.container.managedObjectModel.entities
         XCTAssertEqual(entities.count, 13, "Schema v11 should have 13 entities")
 

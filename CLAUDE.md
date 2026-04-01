@@ -50,7 +50,7 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - CloudKit Production schema is append-only — no destructive changes
 
 ### UI Patterns
-- SwiftUI + `@FetchRequest`, `NavigationStack`, 5-tab Liquid Glass TabView
+- SwiftUI + `@FetchRequest`, `NavigationStack`, 4-tab Liquid Glass TabView
 - **ForagerTheme** semantic color tokens — never hardcode colors
 - Typography: SF Pro Rounded for chrome, system default for body. No serif.
 - Empty states: `ContentUnavailableView`
