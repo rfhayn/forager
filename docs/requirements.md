@@ -1013,7 +1013,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 - FUI-1.1: Tab restructure (5→4 tabs, add Home)
 - FUI-1.2: Search relocation (global search sheet)
 - FUI-1.3: Settings relocation (gear icon)
-- FUI-1.4: Recipe detail hero image + source attribution
+- FUI-1.4: Recipe detail hero image + source attribution — ✅ COMPLETE
 - FUI-1.5: Recipe computed properties for attribution — ✅ COMPLETE
 - FUI-1.6: Recipe list grid/list toggle — ✅ COMPLETE
 - FUI-1.7: DashboardView (greeting, cards, quick actions)

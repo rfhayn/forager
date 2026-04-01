@@ -18,6 +18,7 @@
 ## Recent Activity
 
 ### April 1, 2026 — M18 Build Sprint + FUI-1 Active
+- **FUI-1.4**: Recipe detail hero image + source attribution — COMPLETE (e8f983e)
 - **M18.1.3**: Store management UI (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) — COMPLETE (e9e5307)
 - **FUI-1.6**: Recipe list grid/list toggle with image cards — COMPLETE (bdfedc3)
 - **FUI-1.5**: Recipe computed properties for attribution — COMPLETE (861e86a)

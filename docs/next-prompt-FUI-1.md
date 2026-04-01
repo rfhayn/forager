@@ -2,7 +2,7 @@
 
 **Last Updated**: April 1, 2026
 **For Milestone**: FUI-1 — Dashboard, Navigation Restructuring, Recipe UI
-**Status**: **FUI-1 READY**
+**Status**: **FUI-1 ACTIVE** (FUI-1.5 COMPLETE)
 
 **Branch**: `feature/M18-store-aware-shopping` (shared with M18)
 **PRD**: `docs/prds/active/fui-1-dashboard-navigation-recipe-ui.md`
@@ -11,8 +11,8 @@
 
 ## Execution Order
 
-1. **FUI-1.5** (Recipe computed properties) — no dependencies, start here
-2. **FUI-1.4** (Recipe detail hero image + attribution) — needs FUI-1.5
+1. ~~**FUI-1.5** (Recipe computed properties)~~ — COMPLETE (861e86a)
+2. ~~**FUI-1.4** (Recipe detail hero image + attribution)~~ — COMPLETE (e8f983e)
 3. **FUI-1.1** (Tab restructure 5→4) — no dependencies, can parallel with FUI-1.4
 4. **FUI-1.2** (Search relocation) — needs FUI-1.1
 5. **FUI-1.3** (Settings relocation) — needs FUI-1.1
@@ -60,15 +60,9 @@ var hasHeroImage: Bool {
 
 ---
 
-## FUI-1.4: Recipe Detail — Hero Image + Source Attribution (1.5h)
+## ~~FUI-1.4: Recipe Detail — Hero Image + Source Attribution (1.5h)~~ — COMPLETE (e8f983e)
 
-**File**: `forager/Views/Recipes/RecipeListView.swift` (RecipeDetailView starts at ~line 956)
-
-Insert `recipeHeroImage` above `recipeHeaderSection` and `sourceAttribution` after `usageFooter`.
-
-**Hero image**: Conditional on `recipe.hasHeroImage`. `AsyncImage` with 3-phase handling (see `RecipeImportPreviewView.swift` ~line 1180 for pattern). Max height 240pt, `.fill`, clipped, `ForagerTheme.Radius.md` corners. Failure → `EmptyView()`.
-
-**Source Attribution**: Conditional on `recipe.hasAttribution`. Author line with `person.fill` icon. Source URL with `link` icon, tappable via `@Environment(\.openURL)`. `ForagerTheme.captionFont`, subtle metadata footer feel.
+Implemented in `forager/Views/Recipes/RecipeListView.swift`. `recipeHeroImage` (AsyncImage, 240pt, rounded, graceful failure) above header. `sourceAttribution` (author + tappable URL) after usage footer. Uses FUI-1.5 computed properties.
 
 ---
 
@@ -96,15 +90,9 @@ Gear icon in DashboardView toolbar → NavigationLink to SettingsView.
 
 ---
 
-## FUI-1.6: Recipe List Grid/List Toggle (2.5h)
+## ~~FUI-1.6: Recipe List Grid/List Toggle (2.5h)~~ — COMPLETE (bdfedc3)
 
-**File**: `forager/Views/Recipes/RecipeListView.swift`
-
-- `@AppStorage("recipeListLayout") private var showGrid: Bool = false`
-- Toolbar toggle: `square.grid.2x2` / `list.bullet`
-- Grid: `LazyVGrid` 2-column, `RecipeGridCard` with AsyncImage hero / colored placeholder fallback
-- List: existing unchanged
-- Filter pills above both layouts
+Implemented in `forager/Views/Recipes/RecipeListView.swift`. @AppStorage toggle, 2-column LazyVGrid, RecipeGridCard with AsyncImage hero + colored placeholders, context menus, filter pills above both layouts.
 
 ---
 
@@ -116,37 +104,27 @@ Full dashboard with greeting, TodaysMealsCard, GroceryRunCard, RecipeSpotlightCa
 
 ## Testing Requirements
 
-### Unit Tests (write these)
-1. Recipe computed properties (FUI-1.5): test `hasAttribution`, `displayAuthor`, `sourceURLDomain`, `hasHeroImage` with nil/empty/valid/whitespace-only inputs
-2. Color hash derivation for grid placeholders (FUI-1.6): if extracted to a utility, test it
-3. See `foragerTests/Services/RecipeServiceTests.swift` for Recipe entity test setup patterns
+### Unit Tests (MUST write)
+1. **FUI-1.4**: Hero image display logic — test that view renders/hides based on hasHeroImage
+2. **FUI-1.4**: Attribution display logic — test visibility conditions for author/URL combinations
+3. **FUI-1.1**: NavigationTab enum — verify all cases have correct title/icon, .home is default
+4. See `foragerTests/Services/RecipeServiceTests.swift` for Recipe entity test setup patterns
 
-### Manual Testing Checklist (verify all before reporting done)
-- Recipe computed properties return correct values for nil/empty/valid inputs
-- Hero image shows for recipes with imageURL, hidden otherwise
-- AsyncImage loading/error states work correctly
-- Source attribution shows author + source URL when present
-- Source URL tappable → opens Safari
-- Attribution hidden when neither author nor sourceURL present
-- Tab bar shows 4 tabs: Home, Lists, Recipes, Meals
-- Home tab shows DashboardView with time-based greeting
-- Settings accessible via gear icon on Dashboard
-- Search magnifying glass present on all tabs (after FUI-1.2)
-- Existing tab navigation still works (Lists, Recipes, Meals)
-- Grid/list toggle visible in Recipes toolbar
-- Toggle persists across app restarts (@AppStorage)
-- Grid: 2-column layout, hero images for recipes with URLs
-- Grid: colored placeholders for recipes without images
-- Grid: titles truncated to 2 lines
-- Grid: tapping navigates to RecipeDetailView
-- List mode unchanged
-- Filter pills visible above both layouts
-- Sort/filter works in both modes
-- No regression in recipe detail navigation
+### Manual Testing File (MUST update)
+After completing your work, update `docs/pre-launch-manual-testing.md`:
+- Update the Status column for tests you've verified (FUI-1.1, FUI-1.4, etc.)
+- Add any NEW test scenarios you discover that aren't already listed
+- For each test, note whether it could be automated via XCUITest or xcrun simctl
 
-### Build Verification
+### Simulator Testing
+After building, run:
 ```bash
 xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -E "BUILD|error:|warning:"
+```
+Then try to boot the simulator and verify key behaviors:
+```bash
+xcrun simctl boot "iPhone 17 Pro" 2>&1 || true
+open -a Simulator
 ```
 
 ---

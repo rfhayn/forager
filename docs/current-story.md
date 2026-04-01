@@ -21,7 +21,7 @@
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (5/6 subs complete) |
-| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (2/7 subs complete) |
+| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (3/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
@@ -95,7 +95,7 @@ Dashboard-first design inspired by Google Stitch mockups + Apple Health card mod
 | FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | READY |
 | FUI-1.2 | Search relocation (global search sheet) | 2-3h | READY (depends on FUI-1.1) |
 | FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | READY (depends on FUI-1.1) |
-| FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | READY |
+| FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
 | FUI-1.5 | Recipe computed properties for attribution | 0.5h | COMPLETE (~0.5h) |
 | FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | COMPLETE |
 | FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | READY (depends on FUI-1.1, FUI-1.3) |
@@ -303,6 +303,7 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | FUI-1.5 | Recipe Computed Properties | 0.5h | ~0.5h | 100% |
 | FUI-1.6 | Recipe Grid/List Toggle | 2-3h | ~2h | ~125% |
 | M18.1.3 | Store Management UI | 1.75h | ~1.5h | ~117% |
+| FUI-1.4 | Recipe Detail Hero Image + Attribution | 1-2h | ~0.5h | ~300% |
 
 **Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~19-24h (M18 remaining + FUI-1 + M9.28 + M7.7)
 
@@ -319,6 +320,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: April 1, 2026 — M18.1.3 store management UI complete (e9e5307). FUI-1.6 grid toggle complete (bdfedc3).
-**Next Action**: M18.1.4 (store assignment UX + grouping) — last M18 sub-milestone. Then FUI-1.4/FUI-1.1.
+**Last Session**: April 1, 2026 — FUI-1.4 hero image + attribution complete (e8f983e).
+**Next Action**: FUI-1.1 (tab restructure 5→4) — no dependencies, can run parallel with M18.1.4.
 **Confidence**: GREEN
