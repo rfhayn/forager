@@ -99,17 +99,23 @@ Current workers:
 - When done, run /release
 ```
 
-## Step 5: Create tmux Pane
+## Step 5: Create tmux Window
+
+**IMPORTANT**: Do NOT use window names containing dots (e.g., `m18.1`) — tmux interprets dots as `window.pane` separators. Use hyphens instead (e.g., `m18-1`).
 
 ```bash
 TMUX_SESSION=$(tmux list-sessions -F '#{session_name}' | grep '^clauductor-' | head -1)
-tmux new-window -t "$TMUX_SESSION" -c "$(pwd)" -n "[worker-name]"
+WINDOW_NAME=$(echo "[worker-name]" | tr '.' '-')
+tmux new-window -t "$TMUX_SESSION" -c "$(pwd)" -n "$WINDOW_NAME"
 ```
 
 ## Step 6: Launch Claude Code
 
+Target by window **index** (not name) to avoid tmux dot-parsing issues:
+
 ```bash
-tmux send-keys -t "$TMUX_SESSION:[worker-name]" "claude '[initial-prompt]'" Enter
+WINDOW_INDEX=$(tmux list-windows -t "$TMUX_SESSION" -F '#{window_index} #{window_name}' | grep "$WINDOW_NAME" | awk '{print $1}')
+tmux send-keys -t "$TMUX_SESSION:$WINDOW_INDEX" "claude --resume no -p '/start-work [PREFIX-#.#]'" Enter
 ```
 
 ## Step 7: Log the Spawn
