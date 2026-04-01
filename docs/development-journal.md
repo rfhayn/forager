@@ -32,6 +32,25 @@ M18.1.2: Wire store snapshots into GroceryListItemService's 3 creation paths (ad
 
 ---
 
+## Session 99 — April 1, 2026
+**Milestone**: M10.4.0 — Recipe Attribution Wiring (imageURL + author)
+**Focus**: Closing the import pipeline gap — persisting extracted attribution data
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Wired `imageURL` and `author` from `ImportDraftRecipe` through to the `Recipe` entity. The import pipeline already extracted these fields (via JSON-LD and schema mapper) but `saveImport()` was dropping them at persist time. Three-file change: `RecipeImportService` (both `saveImport` and `replaceExistingRecipe` paths), `RecipeService` (`createRecipe` + `duplicateRecipe`), and `RecipeFormModels` (`RecipeFormData` fields + `toRecipeFormData()` mapping).
+
+Added 5 unit tests to `RecipeServiceTests`: create with attribution, create without (nil defaults), duplicate preserves attribution, and two `toRecipeFormData` mapping tests. All 14 tests pass.
+
+### Key Decisions
+
+1. **Both save paths wired** — `saveImport()` writes directly to entity, `replaceExistingRecipe()` also needed the same two lines. Easy to miss the replace path.
+2. **Duplicate preserves attribution** — Not in PRD but semantically correct. If you copy an imported recipe, the source attribution should travel with it.
+3. **Optional params with nil defaults** — Zero call-site changes required for `createRecipe()`.
+
+---
+
 ## Session 97 — April 1, 2026
 **Milestone**: M18.1.0 — Schema v11 + Model Files + HouseholdScoped Conformance
 **Focus**: Core Data schema validation, Store entity model files, test coverage

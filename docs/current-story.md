@@ -41,7 +41,7 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 | M18.1.2 | Store snapshot wiring in GroceryListItemService | READY |
 | M18.1.3 | Store management UI (Settings > Stores) | READY |
 | M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
-| M10.4.0 | Recipe attribution wiring (imageURL + author) | READY |
+| M10.4.0 | Recipe attribution wiring (imageURL + author) | COMPLETE |
 | M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
 
 ---

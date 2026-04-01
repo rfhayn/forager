@@ -127,6 +127,70 @@ final class RecipeServiceTests: XCTestCase {
         }
     }
 
+    // MARK: - Recipe Attribution (M10.4.0)
+
+    @MainActor
+    func testCreateRecipeWithAttribution() {
+        let recipe = service.createRecipe(
+            title: "Imported Recipe", servings: 4,
+            instructions: "Test instructions",
+            imageURL: "https://example.com/hero.jpg",
+            author: "Julia Child"
+        )
+
+        XCTAssertNotNil(recipe)
+        XCTAssertEqual(recipe?.imageURL, "https://example.com/hero.jpg")
+        XCTAssertEqual(recipe?.author, "Julia Child")
+    }
+
+    @MainActor
+    func testCreateRecipeWithoutAttributionDefaultsToNil() {
+        let recipe = service.createRecipe(title: "Manual Recipe", servings: 2, instructions: "Test instructions")
+
+        XCTAssertNotNil(recipe)
+        XCTAssertNil(recipe?.imageURL)
+        XCTAssertNil(recipe?.author)
+    }
+
+    @MainActor
+    func testDuplicateRecipePreservesAttribution() {
+        let original = service.createRecipe(
+            title: "Attributed Recipe", servings: 4,
+            instructions: "Test instructions",
+            imageURL: "https://example.com/photo.jpg",
+            author: "Kenji López-Alt"
+        )
+        XCTAssertNotNil(original)
+
+        let copy = service.duplicateRecipe(original!)
+        XCTAssertNotNil(copy)
+        XCTAssertEqual(copy?.imageURL, "https://example.com/photo.jpg")
+        XCTAssertEqual(copy?.author, "Kenji López-Alt")
+    }
+
+    @MainActor
+    func testToRecipeFormDataMapsAttribution() {
+        var draft = ImportDraftRecipe.empty()
+        draft.title = ImportField(value: "Test Recipe", confidence: .high, source: .jsonLD)
+        draft.imageURL = ImportField(value: "https://example.com/img.jpg", confidence: .high, source: .jsonLD)
+        draft.author = ImportField(value: "Test Author", confidence: .high, source: .jsonLD)
+
+        let formData = draft.toRecipeFormData()
+
+        XCTAssertEqual(formData.imageURL, "https://example.com/img.jpg")
+        XCTAssertEqual(formData.author, "Test Author")
+    }
+
+    @MainActor
+    func testToRecipeFormDataNilAttributionDefaults() {
+        let draft = ImportDraftRecipe.empty()
+
+        let formData = draft.toRecipeFormData()
+
+        XCTAssertNil(formData.imageURL)
+        XCTAssertNil(formData.author)
+    }
+
     // MARK: - Ingredient Operations
 
     @MainActor

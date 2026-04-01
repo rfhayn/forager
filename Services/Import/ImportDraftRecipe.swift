@@ -128,8 +128,8 @@ struct ImportDraftRecipe: Equatable {
     // MARK: - Mapping to RecipeFormData
 
     /// Converts import draft into the form model used by recipe creation.
-    /// Fields not present on RecipeFormData (author, imageURL, cuisine, etc.)
-    /// are preview-only and dropped at this point.
+    /// Maps import draft into the form model used by recipe creation.
+    /// M10.4.0: imageURL and author now carried through to RecipeFormData.
     func toRecipeFormData() -> RecipeFormData {
         var formData = RecipeFormData()
         formData.name = title.value.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -139,6 +139,8 @@ struct ImportDraftRecipe: Equatable {
         formData.instructions = instructions.value
         formData.tags = tags ?? ""
         formData.isFavorite = false
+        formData.imageURL = imageURL.value
+        formData.author = author.value
 
         // Convert raw ingredient strings into IngredientInput items
         formData.ingredients = ingredients.value.map { text in

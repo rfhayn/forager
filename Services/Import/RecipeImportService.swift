@@ -181,6 +181,8 @@ class RecipeImportService: ObservableObject {
         recipe.instructions = draft.instructions.value
         recipe.sourceURL = draft.sourceURL
         recipe.tags = draft.tags
+        recipe.imageURL = draft.imageURL.value
+        recipe.author = draft.author.value
         recipe.dateCreated = Date()
         recipe.usageCount = 0
         recipe.isFavorite = false
@@ -271,6 +273,8 @@ class RecipeImportService: ObservableObject {
         recipe.servings = Int16(draft.servings.value)
         recipe.sourceURL = draft.sourceURL
         recipe.tags = draft.tags
+        recipe.imageURL = draft.imageURL.value
+        recipe.author = draft.author.value
 
         // M10.6.4: LLM-first path
         let createdIngredients: [Ingredient]
