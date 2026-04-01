@@ -97,13 +97,17 @@
 
 ### FUI-1.1: Tab Restructuring (5→4 tabs)
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | App launches to Home tab | Default tab is Home (DashboardView), not Lists | |
-| 2 | Four tabs visible | Home, Lists, Recipes, Meals — no Settings or Search tab | |
-| 3 | Tab icons correct | house, list.bullet, book, calendar | |
-| 4 | Tab switching works | All 4 tabs navigate to correct views | |
-| 5 | Deep links / state restoration | Re-launching app returns to last selected tab | |
+| # | Test | Expected Result | Status | Notes |
+|---|------|-----------------|--------|-------|
+| 1 | App launches to Home tab | Default tab is Home (DashboardView), not Lists | Unit tested | `testCaseOrder` verifies .home is first; default verified in foragerApp.swift |
+| 2 | Four tabs visible | Home, Lists, Recipes, Meals — no Settings or Search tab | Unit tested | `testAllCasesCount` = 4, `testRemovedCasesDoNotExist` confirms no search/settings |
+| 3 | Tab icons correct | house, list.bullet, book, calendar | Unit tested | `testIcons` verifies all 4 icons |
+| 4 | Tab switching works | All 4 tabs navigate to correct views | | Manual or XCUITest — verify each tab loads its view |
+| 5 | Deep links / state restoration | Re-launching app returns to last selected tab | | Manual — kill and relaunch simulator |
+| 6 | Settings accessible via gear icon | DashboardView toolbar gear → SettingsView | | Manual — verify NavigationLink pushes SettingsView |
+| 7 | Search accessible via fullScreenCover | `showSearch` state triggers UnifiedSearchView overlay with Done button | | Manual — FUI-1.2 will add the trigger button |
+| 8 | Coach marks updated | Onboarding walkthrough shows Home tab (not Settings) | | Manual — replay via Settings > Replay Onboarding |
+| 9 | Time-of-day greeting | DashboardView shows correct greeting for current hour | | Manual or time-travel via simulator clock |
 
 ### FUI-1.2: Search Relocation
 

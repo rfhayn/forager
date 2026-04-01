@@ -1,5 +1,5 @@
 // foragerApp.swift
-// M15.1: Liquid Glass TabView with 5-tab navigation
+// FUI-1.1: 4-tab navigation (Home, Lists, Recipes, Meals)
 // M7.2.2 Task 3: CloudKit share invitation handling
 // M7.2.3 Phase 2.4: ManagedObjectFactory environment injection
 
@@ -7,32 +7,29 @@ import SwiftUI
 import CloudKit
 import Combine
 
-// MARK: - M15.1: Navigation Tab Enum (5 tabs — ADR 011)
+// MARK: - FUI-1.1: Navigation Tab Enum (4 tabs — Home replaces Search+Settings)
 
 enum NavigationTab: String, CaseIterable {
+    case home
     case lists
     case recipes
     case mealPlans
-    case settings
-    case search
 
     var title: String {
         switch self {
+        case .home: return "Home"
         case .lists: return "Lists"
         case .recipes: return "Recipes"
         case .mealPlans: return "Meals"
-        case .settings: return "Settings"
-        case .search: return "Search"
         }
     }
 
     var icon: String {
         switch self {
+        case .home: return "house"
         case .lists: return "list.bullet"
         case .recipes: return "book"
         case .mealPlans: return "calendar"
-        case .settings: return "gearshape"
-        case .search: return "magnifyingglass"
         }
     }
 }
@@ -86,7 +83,8 @@ struct foragerApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showWelcome = false
     @State private var showCoachMarks = false
-    @State private var selectedTab: NavigationTab = .lists
+    @State private var selectedTab: NavigationTab = .home
+    @State private var showSearch = false
 
     // First-launch loading screen
     @State private var isReady = false
@@ -180,6 +178,11 @@ struct foragerApp: App {
                     // M15.1: Liquid Glass TabView replaces CustomBottomNavigationView
                     ZStack {
                         TabView(selection: $selectedTab) {
+                            Tab("Home", systemImage: "house", value: .home) {
+                                NavigationStack {
+                                    DashboardView()
+                                }
+                            }
                             Tab("Lists", systemImage: "list.bullet", value: .lists) {
                                 NavigationStack {
                                     WeeklyListsView(popToRoot: $listsPopToRoot)
@@ -193,16 +196,6 @@ struct foragerApp: App {
                             Tab("Meals", systemImage: "calendar", value: .mealPlans) {
                                 NavigationStack {
                                     MealPlansListView(popToRoot: $mealPlansPopToRoot)
-                                }
-                            }
-                            Tab("Settings", systemImage: "gearshape", value: .settings) {
-                                NavigationStack {
-                                    SettingsView()
-                                }
-                            }
-                            Tab("Search", systemImage: "magnifyingglass", value: .search) {
-                                NavigationStack {
-                                    UnifiedSearchView()
                                 }
                             }
                         }
@@ -254,6 +247,16 @@ struct foragerApp: App {
                     }
                     .fullScreenCover(isPresented: $showWelcome) {
                         WelcomeWalkthroughView()
+                    }
+                    .fullScreenCover(isPresented: $showSearch) {
+                        NavigationStack {
+                            UnifiedSearchView()
+                                .toolbar {
+                                    ToolbarItem(placement: .cancellationAction) {
+                                        Button("Done") { showSearch = false }
+                                    }
+                                }
+                        }
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
                         // M9.27: Replay shows the welcome carousel
