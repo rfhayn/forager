@@ -1,8 +1,8 @@
 # Forager - Project Index
 
-**Last Updated**: March 28, 2026
-**Current Milestone**: M18 ACTIVE | M16.9 ✅ | M16 ✅
-**Launch Path**: M18 → M9.28 → M7.7
+**Last Updated**: April 1, 2026
+**Current Milestone**: M18 ACTIVE | FUI-1 ACTIVE
+**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
 
 ---
 
@@ -16,6 +16,17 @@
 ---
 
 ## Recent Activity
+
+### April 1, 2026 — M18 Build Sprint + FUI-1 Active
+- **M18.1.3**: Store management UI (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) — COMPLETE (e9e5307)
+- **FUI-1.6**: Recipe list grid/list toggle with image cards — COMPLETE (bdfedc3)
+- **FUI-1.5**: Recipe computed properties for attribution — COMPLETE (861e86a)
+- **M18.1.0-M18.1.2**: Schema v11, StoreService, snapshot wiring (3 parallel workers)
+- **M10.4.0**: Recipe attribution wiring (imageURL + author) — COMPLETE
+- **Pre-launch manual testing doc**: 80+ test cases across all launch path milestones
+- **FUI-1**: PRD created for dashboard/navigation/recipe UI (7 sub-milestones, ~12-15h)
+- **PRD audits**: M7.7 (updated for iOS 26, ~320h), M9.28 (new PRD), FUI-1 (line refs validated)
+- **Launch plan revised**: M18 → FUI-1 → M9.28 → M7.7 (~19-24h remaining)
 
 ### March 30, 2026 — FRMWK-2 Lifecycle Automation Adoption
 - **FRMWK-2**: Adopted clauductor lifecycle automation framework
@@ -107,9 +118,9 @@
 
 ## Project Metrics
 
-- **Total Development Time**: ~315 hours
+- **Total Development Time**: ~320 hours
 - **Planning Accuracy**: 89%
-- **Tests**: 267 unit tests across 19 test files
+- **Tests**: 280+ unit tests across 20+ test files
 - **Technical Debt**: NONE
 - **Stack**: Swift 6+ / SwiftUI / iOS 26+ / Core Data + CloudKit (dual-store)
 
@@ -119,11 +130,13 @@
 
 **Complete**: M1 (Grocery), M2 (Recipes), M3 (Quantities), M3.5 (Validation), M4 (Meal Planning), M5.0 (TestFlight), M7.0-M7.6 (CloudKit/Household), M7.5 (Architecture), M8.1-M8.3 (Parsing), M8.4 (ML Parsing), M9.0-M9.5 (Prerequisites), M10.1-M10.9 (Import), M15 (UX Design System), M16.1-M16.2 (MCP)
 
-**Active**: M9.35 (Parsing Pipeline Hardening)
+**Active**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md), 5/6 subs complete)
 
-**Queued**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md)), M7.7 (App Store), M6 (Testing), M9 (Tech Debt remaining)
+**Active**: FUI-1 (Dashboard/Navigation/Recipe UI — [PRD](prds/active/fui-1-dashboard-navigation-recipe-ui.md), 2/7 subs complete)
 
-**Recently Completed**: M10.4.0 (Recipe Attribution Wiring — imageURL + author persisted through import and service layer)
+**Queued**: M9.28 (Strip Logging — [PRD](prds/active/m9.28-strip-diagnostic-logging.md)), M7.7 (App Store — [PRD](prds/active/m7.7-app-store-submission.md))
+
+**Recently Completed**: M18.1.3 (Store Management UI), M18.1.0-M18.1.2 (Schema v11 + StoreService + snapshot wiring), M10.4.0 (Recipe Attribution Wiring)
 
 **Future**: M11 (Analytics), M12 (Health), M13 (Budget), M14 (AI Assistant)
 

@@ -80,14 +80,9 @@ class StoreService {
 
 In `GroceryListItemService`: snapshot `template.preferredStore` onto new items in all 3 creation paths (addItem, addIngredients, addStaples). Same pattern as `categoryEntity` snapshot.
 
-### M18.1.3: Store Management UI (1.75h)
+### M18.1.3: Store Management UI (1.75h) — COMPLETE (~1.5h, e9e5307)
 
-**Settings > Stores** (below Categories in Data Management):
-- List with color dot + name, drag to reorder
-- Swipe to delete (reassignment dialog if templates assigned)
-- Add store: name + color picker + suggested store chips
-- Empty state: `ContentUnavailableView`
-- Replicate `ManageCategoriesView` pattern
+ManageStoresView, AddStoreView, ForagerTheme+StoreColors created. SettingsView Stores row added. StoreService wired into foragerApp with factory injection + householdKeyProvider.
 
 ### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h)
 
@@ -111,6 +106,39 @@ Wired imageURL + author through RecipeImportService (both save paths), RecipeSer
 3. **Filter chips deferred to Phase 2** — Section grouping sufficient for v1
 4. **imageURL stored not rendered** — Persisted for future image display
 5. **GroceryListItem.store is a snapshot** — Mirrors categoryEntity pattern exactly
+
+---
+
+## Testing Requirements
+
+### Unit Tests (write these)
+1. Store color hex↔Color conversion — unit test the helper in ForagerTheme+StoreColors
+2. Store reassignment on delete — test that templates get reassigned via StoreService
+3. Grouping logic — if you extract grocery item grouping (by store vs category) into a testable function, test it
+4. See `foragerTests/Services/StoreServiceTests.swift` for existing test patterns
+
+### Manual Testing Checklist (verify all before reporting done)
+- Settings > Stores navigation works
+- Add store with name + color picker
+- Suggested store chips work on first use
+- Reorder stores via drag
+- Delete store with no assigned templates
+- Delete store WITH assigned templates → reassignment dialog
+- Empty state shows when no stores exist
+- Long-press grocery item → "Buy at..." menu appears
+- Store assignment persists on template for future items
+- Color dots appear on items with assigned store
+- Group by Store toggle appears in toolbar (only when stores exist)
+- Store sections show color dot + name + completion count
+- Unassigned section appears at bottom
+- Category grouping unchanged and remains default
+- Feature completely invisible when no stores exist
+- Sub-sort by category within store sections works
+
+### Build Verification
+```bash
+xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -E "BUILD|error:|warning:"
+```
 
 ---
 

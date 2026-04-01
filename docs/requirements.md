@@ -1,9 +1,9 @@
 # Forager - Requirements Document
 
-**Last Updated**: March 28, 2026
-**Version**: 7.5
-**Current Milestone**: M18 ACTIVE (Store-Aware Shopping) | M16.9 ✅ (ML Retraining)
-**Launch Path**: M18 → M9.28 → M7.7
+**Last Updated**: April 1, 2026
+**Version**: 8.0
+**Current Milestone**: M18 ACTIVE (Store-Aware Shopping) | FUI-1 ACTIVE (Dashboard/Navigation/Recipe UI)
+**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
 
 ---
 
@@ -999,42 +999,48 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 
 **Achievement**: Production-ready CloudKit sync with complete shared data architecture! 61 items successfully migrated to shared zone.
 
-### **In Progress: M7 Multi-User Collaboration & External TestFlight** 🔄
-**Remaining Time**: 8-19 hours  
-**Requirements In Progress**: 30 (member invitation, repository hardening, conflict resolution, sync UI, parsing, TestFlight)
+### **In Progress: M18 Store-Aware Shopping + Recipe Attribution** 🔄
 
-**Recent Achievement**:
-- ✅ M7.2.3 COMPLETE - All 6 phases done (12.25 hours, 88% accuracy)
-- ✅ Shared data architecture operational (Phases 0-2)
-- ✅ Attach-then-share migration validated (Phase 4)
-- ✅ 61 items migrated to CloudKit shared zone
-- ✅ Critical bug fixed: Missing context.save() after container.share()
+- ✅ M18.1.0: Schema v11 + Store entity + model files — COMPLETE
+- ✅ M18.1.1: StoreService CRUD + 13 tests — COMPLETE
+- ✅ M18.1.2: Store snapshot wiring (3 creation paths) — COMPLETE
+- ✅ M10.4.0: Recipe attribution wiring (imageURL + author) — COMPLETE
+- ✅ M18.1.3: Store management UI (Settings > Stores) — COMPLETE (~1.5h)
+- 🔄 M18.1.4: Store assignment UX + color dots + grouping — READY
 
-**Strategic Additions:**
-- **M7.2.3: COMPLETE** ✅ (6 requirements complete, 4 remaining for phases 5-6)
-- **M7.2.2: Next** 🚀 (Member invitation testing, 2-3h)
-- **M7.5: Parsing Resilience** (6 requirements, 3-4h) - Graceful degradation before external beta
-- External TestFlight and public beta (9 requirements, 6-9h)
+### **Planned: FUI-1 Dashboard, Navigation, Recipe UI** 📋
 
-**Current Focus**: M7.2.2 - Member Invitation & Acceptance Testing (2-3 hours)
+- FUI-1.1: Tab restructure (5→4 tabs, add Home)
+- FUI-1.2: Search relocation (global search sheet)
+- FUI-1.3: Settings relocation (gear icon)
+- FUI-1.4: Recipe detail hero image + source attribution
+- FUI-1.5: Recipe computed properties for attribution — ✅ COMPLETE
+- FUI-1.6: Recipe list grid/list toggle — ✅ COMPLETE
+- FUI-1.7: DashboardView (greeting, cards, quick actions)
 
-### **Future Parsing Evolution** 💡
+### **Planned: M9.28 Strip Diagnostic Logging** 📋
 
-**M8.0: Data-Driven Improvements** (10 requirements, 8-12h)
-- Analyze M7 telemetry to identify real failure patterns
-- Hybrid NLP system for 98%+ accuracy
-- Build on actual user data, not speculation
+Gate DiagnosticLogger, DebugLogService behind `#if DEBUG`. ~106 caller-site wraps.
 
-**M9.5: ML Excellence - OPTIONAL** (8 requirements, 15-20h)
-- Custom CoreML model for 99.5%+ accuracy
-- Self-improving system with continuous learning
-- **Decision point**: Only pursue if M8.0 shows room for improvement
+### **Planned: M7.7 App Store Submission** 📋
+
+Landing page, README, screenshots, App Store Connect metadata, submission.
+
+### **Completed Milestones (M7+)**
+
+- ✅ M7.2.2-M7.6: CloudKit, household, TestFlight — ALL COMPLETE
+- ✅ M8.1-M8.4.1: Parsing intelligence (regex, NLP, hybrid, ML) — ALL COMPLETE
+- ✅ M9.x: Tech debt, security, UX fixes — ALL COMPLETE
+- ✅ M10.1-M10.8: Recipe import (URL, text, photo, inline edit) — ALL COMPLETE
+- ✅ M10.6: Claude API integration — COMPLETE
+- ✅ M15: UX design system + Liquid Glass — COMPLETE
+- ✅ M16-M16.9: Parsing test harness + ML retraining — COMPLETE
 
 ---
 
-**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration (52 requirements: 34 complete, 18 in progress). M8 parsing intelligence complete (27 + 8 + 4 = 39 requirements delivered across M8.1-M8.4.1). M15 UX Design System complete (20 requirements delivered, 1 deferred). Complete platform: 238 total requirements (217 complete, 18 in progress, 3 planned).
+**Strategic Validation**: Core platform (M1-M5.0) complete with 122 requirements. M7 CloudKit sync and collaboration complete. M8 parsing intelligence complete (39 requirements). M10 recipe import complete. M15 UX complete. M16 parsing harness + ML retraining complete. M18 store-aware shopping 5/6 complete. 250+ total requirements delivered.
 
-**Last Updated**: February 24, 2026
-**Version**: 7.0
+**Last Updated**: April 1, 2026
+**Version**: 8.0
 **Next Update**: After M7.7 App Store Submission
 **Current Focus**: M15 ✅ COMPLETE — Merge branch, TestFlight push, then M7.7

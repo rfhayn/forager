@@ -38,6 +38,11 @@ Parallel orchestration working well — FUI-1.5, FUI-1.6, and M18.1.3 all runnin
 
 M18.1.4 (Store Assignment UX + Color Dots + Grouping) is the final M18 sub-milestone. It modifies GroceryListDetailView which is the highest-risk file in the launch path.
 
+**Retro**:
+- Estimate vs actual: 1.75h estimated, ~1.5h actual — 117% accuracy
+- What surprised you: How much simpler ManageStoresView is vs ManageCategoriesView (~40% shorter) thanks to delegating to StoreService. The service layer investment from M7.5 continues to pay dividends in every new feature.
+- Process improvement: Could have claimed foragerApp.swift in the initial manifest — the StoreService wiring was foreseeable from reading the service pattern.
+
 ---
 
 ## Session 101 — April 1, 2026

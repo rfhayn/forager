@@ -20,8 +20,8 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
-| **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (4/6 subs complete) |
-| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | PLANNED |
+| **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (5/6 subs complete) |
+| **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (2/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
 
@@ -75,7 +75,7 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 | M18.1.0 | Schema v11 + model files + HouseholdScoped conformance | COMPLETE |
 | M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | COMPLETE |
 | M18.1.2 | Store snapshot wiring in GroceryListItemService | COMPLETE |
-| M18.1.3 | Store management UI (Settings > Stores) | READY |
+| M18.1.3 | Store management UI (Settings > Stores) | COMPLETE (~1.5h) |
 | M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
 | M10.4.0 | Recipe attribution wiring (imageURL + author) | COMPLETE |
 | M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
@@ -300,6 +300,9 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 | M18.1.1 | StoreService CRUD + tests | 1.1h | ~1h | ~110% |
 | M18.1.2 | Store snapshot wiring | 0.6h | ~0.5h | ~120% |
 | M10.4.0 | Recipe Attribution Wiring | 0.75h | ~0.5h | 150% |
+| FUI-1.5 | Recipe Computed Properties | 0.5h | ~0.5h | 100% |
+| FUI-1.6 | Recipe Grid/List Toggle | 2-3h | ~2h | ~125% |
+| M18.1.3 | Store Management UI | 1.75h | ~1.5h | ~117% |
 
 **Total**: ~320 hours across 40+ milestones | **Remaining to launch**: ~19-24h (M18 remaining + FUI-1 + M9.28 + M7.7)
 
@@ -316,6 +319,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: April 1, 2026 — Supervisor orchestration: M18.1.1 StoreService + M18.1.2 snapshot wiring + M10.4.0 attribution (3 parallel workers). PRD audits for M7.7, FUI-1, M9.28. Full launch plan sequencing.
-**Next Action**: Phase 1 — spawn workers for M18.1.3+M18.1.4 and FUI-1.5+1.4
+**Last Session**: April 1, 2026 — M18.1.3 store management UI complete (e9e5307). FUI-1.6 grid toggle complete (bdfedc3).
+**Next Action**: M18.1.4 (store assignment UX + grouping) — last M18 sub-milestone. Then FUI-1.4/FUI-1.1.
 **Confidence**: GREEN
