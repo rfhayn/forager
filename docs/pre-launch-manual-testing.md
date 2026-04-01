@@ -64,19 +64,21 @@
 
 ### M18.1.4: Store Assignment UX + Color Dots + Grouping
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Long-press grocery item → "Buy at..." | Context menu shows store picker with all stores + "No Store" option | |
-| 2 | Assign store to grocery item | Item's store updated. Template's preferredStore also updated (learning) | |
-| 3 | Color dots on assigned items | Small color dot visible on items with a store, in both group modes | |
-| 4 | No color dot on unassigned items | Items without store show no dot | |
-| 5 | Group by Store toggle in toolbar | Toggle appears only when stores exist. Switches between Category/Store grouping | |
-| 6 | Store sections | Sections show color dot + store name + completion count | |
-| 7 | Unassigned section | Items without store appear in "Unassigned" section at bottom | |
-| 8 | Sub-sort by category within store sections | Within a store section, items are sub-sorted by category | |
-| 9 | Category grouping unchanged | Default grouping is still by category. Category sections unchanged | |
-| 10 | Feature invisible when no stores | No toggle, no dots, no store sections when zero stores exist | |
-| 11 | Grouping persistence | Toggle persists via UserDefaults key `groceryListGroupMode` across app restart | |
+| # | Test | Expected Result | Status | Notes |
+|---|------|-----------------|--------|-------|
+| 1 | Long-press grocery item → "Buy at..." | Context menu shows store picker with all stores + "No Store" option | Code complete | `.contextMenu` on item rows; `StoreAssignmentModal` with FetchRequest; XCUITest candidate |
+| 2 | Assign store to grocery item | Item's store updated. Template's preferredStore also updated (learning) | Code + unit tested | `testAssignStoreToItemAndTemplate` passes; dual-write in `StoreAssignmentModal.assignStore` |
+| 3 | Color dots on assigned items | Small color dot visible on items with a store, in both group modes | Code complete | `StoreColorDot` in `GroceryListItemRow`; gated by `storeColorHex != nil`; XCUITest candidate |
+| 4 | No color dot on unassigned items | Items without store show no dot | Code + unit tested | `testColorDotNotVisibleWhenNoStore` passes; `storeColorHex` is nil when no store |
+| 5 | Group by Store toggle in toolbar | Toggle appears only when stores exist. Switches between Category/Store grouping | Code complete | Menu with checkmarks; gated by `hasStores`; XCUITest candidate |
+| 6 | Store sections | Sections show color dot + store name + completion count | Code + unit tested | `ForagerSectionHeader` with `colorDotHex`; `testGroupByStorePreservesStoreColor` passes |
+| 7 | Unassigned section | Items without store appear in "Unassigned" section at bottom | Code + unit tested | `testGroupByStoreUnassignedAtBottom` passes; nil storeColor for unassigned |
+| 8 | Sub-sort by category within store sections | Within a store section, items are sub-sorted by category | Code + unit tested | `testGroupByStoreSubSortsByCategorySortOrder` passes |
+| 9 | Category grouping unchanged | Default grouping is still by category. Category sections unchanged | Code + unit tested | `groupMode` defaults to `.category`; `groupedItems` logic untouched |
+| 10 | Feature invisible when no stores | No toggle, no dots, no store sections when zero stores exist | Code + unit tested | `hasStores` guards all store UI; `testGroupByStoreEmptyStoresNotIncluded` passes |
+| 11 | Grouping persistence | Toggle persists via UserDefaults key `groceryListGroupMode` across app restart | Code complete | `@AppStorage("groceryListGroupMode")`; needs manual device restart verification |
+| 12 | Auto-collapse store sections when all complete | Completed store section auto-collapses after 2s delay | Code complete | `checkAutoCollapseStore` mirrors category auto-collapse; needs manual verification |
+| 13 | Context menu also shows Delete | Long-press shows both "Buy at..." and "Delete" options | Code complete | Destructive button in `.contextMenu`; XCUITest candidate |
 
 ---
 
@@ -129,7 +131,7 @@
 |---|------|-----------------|--------|
 | 1 | Recipe with imageURL shows hero image | AsyncImage loads at top of detail, max 240pt height, fill aspect, clipped | |
 | 2 | Recipe without imageURL shows no image | Hero image section omitted entirely (zero footprint) | |
-| 3 | Image loading state | Skeleton placeholder with `ForagerTheme.backgroundTertiary` while loading | |
+| 3 | Image loading state | Rounded placeholder with `ForagerTheme.backgroundSecondary` + ProgressView while loading | |
 | 4 | Image load failure | Graceful collapse — `EmptyView()`, no error shown | |
 | 5 | Source attribution — author present | `person.fill` icon + author name at bottom of detail, caption styled | |
 | 6 | Source attribution — source URL present | `link` icon + domain name, tappable (opens Safari) | |

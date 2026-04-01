@@ -6,6 +6,47 @@
 
 ---
 
+## Session 103 — April 1, 2026
+**Milestone**: FUI-1.4 — Recipe Detail Hero Image + Source Attribution
+**Focus**: Adding hero image and source attribution sections to RecipeDetailView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Added two conditional view sections to RecipeDetailView: a hero image at the top (above the header) and source attribution at the bottom (after the usage footer). Both leverage the computed properties from FUI-1.5 (`hasHeroImage`, `hasAttribution`, `displayAuthor`, `sourceURLObject`, `sourceURLDomain`) to keep the view code clean — all nil-checking and string trimming lives in the model layer.
+
+The hero image uses `AsyncImage` with 3-phase handling: loading state shows a `ProgressView` over a rounded `backgroundSecondary` rect, success shows the image at max 240pt height with `.fill` aspect ratio and rounded corners, failure collapses to `EmptyView()`. The source attribution uses `Label` for icon+text pairs — `person.fill` for author, `link` for source URL (tappable via `@Environment(\.openURL)`). The URL display shows just the domain name for cleanliness.
+
+Also corrected the pre-launch manual testing doc — test #3 referenced `backgroundTertiary` but the implementation uses `backgroundSecondary` (matching the grid card pattern from FUI-1.6).
+
+Build succeeded clean on first attempt.
+
+### Key Decisions
+
+1. **`@ViewBuilder` for conditional sections** — Both `recipeHeroImage` and `sourceAttribution` use `@ViewBuilder` with top-level `if` conditions. When there's no hero image or attribution, the view produces zero layout footprint — no empty space, no hidden frames.
+2. **Hero above header, attribution below footer** — Magazine-style layout: the image draws you in at the top, attribution is metadata you glance at after reading the recipe. This matches common recipe app conventions.
+3. **`EmptyView()` on image failure** — Imported recipes may have stale URLs. A broken-image placeholder is worse UX than gracefully hiding the section entirely.
+
+### Learning
+
+- `Label(_:systemImage:)` handles baseline alignment automatically and provides better VoiceOver semantics than manual `HStack` + `Image` + `Text` combos. Good default for icon+text pairs.
+- The RecipeGridCard (FUI-1.6) already established the `AsyncImage` pattern with `backgroundSecondary` for loading states — reusing that pattern kept visual consistency across detail and grid views.
+
+### AI Tooling Observations
+
+Quick implementation — reading the reference files (RecipeImportPreviewView for AsyncImage pattern, RecipeGridCard for design tokens, ForagerTheme for radius/font names) took more time than writing the code. The FUI-1.5 computed properties made this milestone almost trivial since all the conditional logic was pre-built.
+
+### What's Next
+
+FUI-1.1 (Tab restructuring 5→4) is next in the execution order. It's independent of FUI-1.4 and modifies `foragerApp.swift`.
+
+**Retro**:
+- Estimate vs actual: 1.5h estimated, ~0.5h actual — much faster than expected
+- What surprised you: How little code was needed. The FUI-1.5 computed properties did the heavy lifting — the view code is just layout and conditional rendering.
+- Process improvement: None needed — small, focused milestone executed cleanly.
+
+---
+
 ## Session 102 — April 1, 2026
 **Milestone**: M18.1.3 — Store Management UI (Settings > Stores)
 **Focus**: Building the store management view, add store sheet, and SettingsView integration

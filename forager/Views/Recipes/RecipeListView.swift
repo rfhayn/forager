@@ -1110,6 +1110,7 @@ struct RecipeDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @EnvironmentObject private var recipeServiceM75: RecipeService
     @EnvironmentObject private var parsingService: IngredientParsingService
     @EnvironmentObject private var templateService: IngredientTemplateService
@@ -1344,6 +1345,8 @@ struct RecipeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
+                recipeHeroImage
+
                 recipeHeaderSection
 
                 ingredientsSection
@@ -1351,6 +1354,8 @@ struct RecipeDetailView: View {
                 instructionsSection
 
                 usageFooter
+
+                sourceAttribution
             }
             .padding()
         }
@@ -1483,6 +1488,60 @@ struct RecipeDetailView: View {
         .onChange(of: focusedMetadata) { oldValue, newValue in
             if oldValue != nil && newValue == nil {
                 commitAllMetadataEdits()
+            }
+        }
+    }
+
+    // MARK: - FUI-1.4: Hero Image
+
+    @ViewBuilder
+    private var recipeHeroImage: some View {
+        if recipe.hasHeroImage, let url = URL(string: recipe.imageURL ?? "") {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxHeight: 240)
+                        .clipped()
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+                case .failure:
+                    EmptyView()
+                case .empty:
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
+                        .fill(ForagerTheme.backgroundSecondary)
+                        .frame(height: 240)
+                        .overlay { ProgressView() }
+                @unknown default:
+                    EmptyView()
+                }
+            }
+        }
+    }
+
+    // MARK: - FUI-1.4: Source Attribution
+
+    @ViewBuilder
+    private var sourceAttribution: some View {
+        if recipe.hasAttribution {
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+                if let author = recipe.displayAuthor {
+                    Label(author, systemImage: "person.fill")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                }
+
+                if let sourceURL = recipe.sourceURLObject {
+                    Button {
+                        openURL(sourceURL)
+                    } label: {
+                        Label(recipe.sourceURLDomain ?? sourceURL.absoluteString, systemImage: "link")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.accentPrimary)
+                            .lineLimit(1)
+                    }
+                }
             }
         }
     }
