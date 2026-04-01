@@ -6,6 +6,45 @@
 
 ---
 
+## Session 105 — April 1, 2026
+**Milestone**: FUI-1.1 — Tab Restructuring (5→4 Tabs)
+**Focus**: Restructuring NavigationTab from 5 tabs to 4, adding placeholder DashboardView
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Restructured the main tab bar from 5 tabs (Lists, Recipes, Meals, Settings, Search) down to 4 (Home, Lists, Recipes, Meals). Created a placeholder `DashboardView` with a time-of-day greeting and a toolbar gear icon that navigates to Settings. Moved search out of the tab bar into a `fullScreenCover` triggered from the toolbar. Updated `CoachMarkOverlay` to reference `.home` instead of the removed `.settings` tab.
+
+Added 5 unit tests in `NavigationTabTests` covering tab count, ordering, display names, SF Symbols, and the removal of old cases. Updated `pre-launch-manual-testing.md` with 9 new test scenarios for the restructured navigation.
+
+Build succeeded clean — SourceKit showed false cross-file resolution errors in the editor, but `xcodebuild` passed without issues.
+
+### Key Decisions
+
+1. **Search as fullScreenCover, not sheet** — A sheet can't present its own detail views (recipe detail, grocery list, etc.) without awkward navigation. A fullScreenCover gives search its own navigation context to push into.
+2. **DashboardView is deliberately minimal** — FUI-1.7 will build out the real dashboard. This milestone only needed the tab restructuring and a placeholder to land on.
+3. **CoachMarkOverlay update** — It referenced `.settings` which no longer exists. Updated to `.home` to prevent a compile error that would have been easy to miss.
+
+### Learning
+
+- SourceKit's cross-file resolution can lag behind actual compilation state, especially when enum cases are added/removed. When in doubt, trust `xcodebuild` over editor diagnostics.
+- Three parallel workers (M18.1.4, FUI-1.4, FUI-1.1) ran on the same branch with zero file conflicts — the orchestration file manifest system is working well.
+
+### AI Tooling Observations
+
+Quick execution — the tab restructuring was mostly mechanical (enum changes + view wiring). The main risk was missing references to removed enum cases, but the compiler catches those exhaustively via switch statements.
+
+### What's Next
+
+Continue with FUI-1 stream — FUI-1.2 (search relocation) or FUI-1.3 (visual polish) depending on priority.
+
+**Retro**:
+- Estimate vs actual: 1h estimated, ~0.75h actual (~133% accuracy)
+- What surprised you: CoachMarkOverlay was the only non-obvious reference to the old `.settings` tab — the compiler caught it immediately via exhaustive switch.
+- Process improvement: None needed — clean parallel execution across 3 workers.
+
+---
+
 ## Session 104 — April 1, 2026
 **Milestone**: M18.1.4 — Store Assignment UX + Color Dots + Grouping
 **Focus**: Adding store grouping, color dots, and "Buy at..." context menu to grocery list
