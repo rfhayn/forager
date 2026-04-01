@@ -95,9 +95,16 @@ fi
 # --- Output warnings ---
 
 if [ -n "$WARNINGS" ]; then
-  echo "Doc freshness check before commit:"
-  echo -e "$WARNINGS"
-  echo "Run /commit to auto-fix, or update docs manually."
+  MSG="Doc freshness check before commit:${WARNINGS}\nRun /commit to auto-fix, or update docs manually."
+  # Convert \n to actual newlines for the message
+  MSG_CLEAN=$(echo -e "$MSG")
+  jq -n --arg msg "$MSG_CLEAN" '{
+    hookSpecificOutput: {
+      hookEventName: "PreToolUse",
+      permissionDecision: "allow",
+      permissionDecisionReason: $msg
+    }
+  }'
 fi
 
 exit 0
