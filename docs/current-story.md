@@ -95,11 +95,11 @@ Dashboard-first design inspired by Google Stitch mockups + Apple Health card mod
 |-----|-------------|------|--------|
 | FUI-1.1 | Tab restructuring (5→4 tabs, add Home) | 1h | COMPLETE (~0.75h) |
 | FUI-1.2 | Search relocation (global search sheet) | 2-3h | COMPLETE (~0.5h) |
-| FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | READY (depends on FUI-1.1) |
+| FUI-1.3 | Settings relocation (gear icon on Dashboard) | 0.5h | COMPLETE (built in FUI-1.1) |
 | FUI-1.4 | Recipe detail hero image + source attribution | 1-2h | COMPLETE (~0.5h) |
 | FUI-1.5 | Recipe computed properties for attribution | 0.5h | COMPLETE (~0.5h) |
 | FUI-1.6 | Recipe list grid/list toggle with image cards | 2-3h | COMPLETE |
-| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | READY (depends on FUI-1.1, FUI-1.3) |
+| FUI-1.7 | DashboardView (greeting, cards, quick actions) | 4-5h | READY (deps met) |
 
 ---
 
