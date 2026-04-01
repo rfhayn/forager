@@ -18,6 +18,7 @@
 ## Recent Activity
 
 ### April 1, 2026 — M18 Build Sprint + FUI-1 Active
+- **M18.1.4**: Store assignment UX, color dots, "Group by Store" toggle, context menu — COMPLETE (~1h, 9 tests)
 - **FUI-1.4**: Recipe detail hero image + source attribution — COMPLETE (e8f983e)
 - **M18.1.3**: Store management UI (ManageStoresView, AddStoreView, ForagerTheme+StoreColors) — COMPLETE (e9e5307)
 - **FUI-1.6**: Recipe list grid/list toggle with image cards — COMPLETE (bdfedc3)
@@ -131,13 +132,13 @@
 
 **Complete**: M1 (Grocery), M2 (Recipes), M3 (Quantities), M3.5 (Validation), M4 (Meal Planning), M5.0 (TestFlight), M7.0-M7.6 (CloudKit/Household), M7.5 (Architecture), M8.1-M8.3 (Parsing), M8.4 (ML Parsing), M9.0-M9.5 (Prerequisites), M10.1-M10.9 (Import), M15 (UX Design System), M16.1-M16.2 (MCP)
 
-**Active**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md), 5/6 subs complete)
+**Active**: M18 (Store-Aware Shopping — [PRD](prds/active/m18-store-aware-shopping.md), 6/6 subs complete, pending PR)
 
 **Active**: FUI-1 (Dashboard/Navigation/Recipe UI — [PRD](prds/active/fui-1-dashboard-navigation-recipe-ui.md), 2/7 subs complete)
 
 **Queued**: M9.28 (Strip Logging — [PRD](prds/active/m9.28-strip-diagnostic-logging.md)), M7.7 (App Store — [PRD](prds/active/m7.7-app-store-submission.md))
 
-**Recently Completed**: M18.1.3 (Store Management UI), M18.1.0-M18.1.2 (Schema v11 + StoreService + snapshot wiring), M10.4.0 (Recipe Attribution Wiring)
+**Recently Completed**: M18.1.4 (Store Assignment UX + Grouping), M18.1.3 (Store Management UI), M18.1.0-M18.1.2 (Schema v11 + StoreService + snapshot wiring), M10.4.0 (Recipe Attribution Wiring)
 
 **Future**: M11 (Analytics), M12 (Health), M13 (Budget), M14 (AI Assistant)
 

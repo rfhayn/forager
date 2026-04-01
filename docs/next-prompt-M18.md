@@ -84,14 +84,9 @@ In `GroceryListItemService`: snapshot `template.preferredStore` onto new items i
 
 ManageStoresView, AddStoreView, ForagerTheme+StoreColors created. SettingsView Stores row added. StoreService wired into foragerApp with factory injection + householdKeyProvider.
 
-### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h)
+### M18.1.4: Store Assignment UX + Color Dots + Grouping (1.75h) — COMPLETE (~1h)
 
-**Assignment**: Long-press grocery item → "Buy at..." → store picker. Sets template + current item.
-**Color dots**: Small dot on items with assigned store (visible in both group modes).
-**Grouping toggle**: Category (default) | Store in toolbar. Store sections with color dot + name + count.
-**Unassigned section**: Items without store at bottom.
-**Invisibility**: No toggle/dots if no stores created.
-**Persistence**: `UserDefaults` key `groceryListGroupMode`
+StoreColorDot component, StoreAssignmentModal ("Buy at..." picker), GroceryGroupMode enum with @AppStorage persistence, toolbar Menu toggle, groupedByStore sections with color dot headers, context menu on item rows. Extracted groupByStore as testable static on StoreService. 9 unit tests. ForagerSectionHeader updated with optional colorDotHex. Invisibility rule: all store UI gated behind hasStores.
 
 ### M10.4.0: Recipe Attribution Wiring (0.75h) — COMPLETE
 
@@ -111,33 +106,27 @@ Wired imageURL + author through RecipeImportService (both save paths), RecipeSer
 
 ## Testing Requirements
 
-### Unit Tests (write these)
-1. Store color hex↔Color conversion — unit test the helper in ForagerTheme+StoreColors
-2. Store reassignment on delete — test that templates get reassigned via StoreService
-3. Grouping logic — if you extract grocery item grouping (by store vs category) into a testable function, test it
-4. See `foragerTests/Services/StoreServiceTests.swift` for existing test patterns
+### Unit Tests (MUST write)
+1. Store grouping logic — extract grocery item grouping (by store vs category) into a testable function, write tests for it
+2. Store assignment — test that assigning store to grocery item also updates template's preferredStore
+3. Color dot visibility logic — test that dots appear only when store assigned, invisible when no stores
+4. See `foragerTests/Services/StoreServiceTests.swift` for existing Core Data test patterns
 
-### Manual Testing Checklist (verify all before reporting done)
-- Settings > Stores navigation works
-- Add store with name + color picker
-- Suggested store chips work on first use
-- Reorder stores via drag
-- Delete store with no assigned templates
-- Delete store WITH assigned templates → reassignment dialog
-- Empty state shows when no stores exist
-- Long-press grocery item → "Buy at..." menu appears
-- Store assignment persists on template for future items
-- Color dots appear on items with assigned store
-- Group by Store toggle appears in toolbar (only when stores exist)
-- Store sections show color dot + name + completion count
-- Unassigned section appears at bottom
-- Category grouping unchanged and remains default
-- Feature completely invisible when no stores exist
-- Sub-sort by category within store sections works
+### Manual Testing File (MUST update)
+After completing your work, update `docs/pre-launch-manual-testing.md`:
+- Update the Status column for M18.1.4 tests you've verified
+- Add any NEW test scenarios you discover that aren't already listed
+- For each test, note whether it could be automated via XCUITest or xcrun simctl
 
-### Build Verification
+### Simulator Testing
+After building, run:
 ```bash
 xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build 2>&1 | grep -E "BUILD|error:|warning:"
+```
+Then try to boot the simulator and verify key behaviors:
+```bash
+xcrun simctl boot "iPhone 17 Pro" 2>&1 || true
+open -a Simulator
 ```
 
 ---

@@ -1,7 +1,7 @@
 # Current Development Story
 
 **Last Updated**: April 1, 2026
-**Status**: **M18 ACTIVE** | **FUI-1 ACTIVE** | **M16.9 COMPLETE**
+**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 ACTIVE** | **M16.9 COMPLETE**
 **Total Progress**: ~320 hours
 **Current Branch**: `feature/M18-store-aware-shopping`
 **Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
@@ -20,7 +20,7 @@
 | **M9.33** | AI multi-ingredient splitting | 3-4h | COMPLETE (~3h, PR #100) |
 | **M9.34** | First import guide walkthrough | 2-3h | COMPLETE (~2h, PR #101) |
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
-| **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (5/6 subs complete) |
+| **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (6/6 subs complete, pending PR) |
 | **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (3/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
 | **M7.7** | App Store submission | 3-5h | PLANNED |
@@ -76,7 +76,7 @@ Combined milestone: Store-aware shopping (M18.1) + recipe attribution schema cha
 | M18.1.1 | StoreService (CRUD, assignment, query, cross-store resolve) | COMPLETE |
 | M18.1.2 | Store snapshot wiring in GroceryListItemService | COMPLETE |
 | M18.1.3 | Store management UI (Settings > Stores) | COMPLETE (~1.5h) |
-| M18.1.4 | Store assignment UX + color dots + "Group by Store" | READY |
+| M18.1.4 | Store assignment UX + color dots + "Group by Store" | COMPLETE (~1h) |
 | M10.4.0 | Recipe attribution wiring (imageURL + author) | COMPLETE |
 | M18.2 | Multi-store + shopping trips (Phase 2, deferred) | PLANNED |
 

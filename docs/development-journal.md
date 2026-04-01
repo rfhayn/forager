@@ -6,6 +6,50 @@
 
 ---
 
+## Session 104 — April 1, 2026
+**Milestone**: M18.1.4 — Store Assignment UX + Color Dots + Grouping
+**Focus**: Adding store grouping, color dots, and "Buy at..." context menu to grocery list
+**Branch**: `feature/M18-store-aware-shopping`
+
+### What Happened
+
+Implemented the final UI-facing sub-milestone of M18.1 — the piece that makes stores *visible* in the grocery list. Three new files (StoreColorDot component, StoreAssignmentModal, StoreGroupingTests) and modifications to GroceryListDetailView, ForagerSectionHeader, and StoreService.
+
+The biggest change is in GroceryListDetailView: a `GroceryGroupMode` enum (`.category` / `.store`) persisted via `@AppStorage`, a toolbar Menu toggle (hidden when no stores exist), and an alternative `groupedByStore` code path that renders store-colored section headers instead of category headers. The existing category grouping is completely untouched — the store path is an `if/else` branch in `shoppingListView`.
+
+Also added a context menu on every item row with "Buy at..." (opens StoreAssignmentModal) and "Delete". The modal does a dual-write: sets `item.store` (immediate visual) and looks up + updates `template.preferredStore` (learning for future items).
+
+Extracted the grouping logic into `StoreService.groupByStore(items:stores:)` as a static method so it's directly unit-testable without instantiating a SwiftUI view. Wrote 9 unit tests covering sort order, unassigned section, sub-sort by category, color propagation, empty stores, assignment, and color dot visibility.
+
+Build succeeded clean. All 9 tests pass.
+
+### Key Decisions
+
+1. **Extracted `groupByStore` as static on StoreService** — The PRD required testable grouping logic. Rather than creating a separate helper, putting it on StoreService keeps store-related logic consolidated. The view just calls `StoreService.groupByStore(items:stores:)`.
+2. **Separate `collapsedSections` state for store mode** — Category and store sections use independent collapse tracking (`collapsedCategories` vs `collapsedSections`). Switching group modes doesn't lose your collapse state in either.
+3. **`@AppStorage` not CloudKit for group mode** — This is a per-device UI preference, not household data. Each family member can independently choose how they view the list.
+4. **`itemRow(_:)` extraction** — The row rendering (swipe actions, context menu, color dot) was duplicated between category and store branches. Extracted into a shared `itemRow(_:)` method to avoid drift.
+
+### Learning
+
+- `ForagerSectionHeader` was well-designed for extension — adding `colorDotHex: String? = nil` with a default kept all existing call sites working without changes. Good example of optional parameters enabling feature layering.
+- The "invisibility rule" (gate all store UI behind `hasStores`) is simple but effective — zero stores means zero store footprint. No feature flags needed.
+
+### AI Tooling Observations
+
+The `/start-work` orchestration flow (register → claim → lock → implement) keeps parallel sessions safe — FUI-1.4 was running simultaneously on the same branch with no file conflicts. The manual pbxproj editing for test files remains the most error-prone part of the workflow (foragerTests uses manual PBXGroup).
+
+### What's Next
+
+M18.1 is now fully complete (all 6 sub-milestones done). Next steps: commit M18.1.4, mark the milestone complete, then continue with FUI-1 stream (FUI-1.1 tab restructuring or FUI-1.2 search relocation).
+
+**Retro**:
+- Estimate vs actual: 1.75h estimated, ~1h actual
+- What surprised you: How cleanly the grouping logic extracted. The existing `groupedItems` pattern (Dictionary grouping → sorted by entity sortOrder) mapped directly to the store equivalent.
+- Process improvement: The test project file dance (manual PBXGroup additions) should be documented as a reusable recipe — it's the same 4 edits every time.
+
+---
+
 ## Session 103 — April 1, 2026
 **Milestone**: FUI-1.4 — Recipe Detail Hero Image + Source Attribution
 **Focus**: Adding hero image and source attribution sections to RecipeDetailView

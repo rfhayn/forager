@@ -205,6 +205,45 @@ class StoreService: ObservableObject {
         return (try? viewContext.fetch(request))?.first
     }
 
+    // MARK: - Grouping
+
+    /// M18.1.4: Groups grocery items by store, returning sections in store sortOrder
+    /// with an "Unassigned" section at the end. Items within each section are sub-sorted
+    /// by category sortOrder.
+    static func groupByStore(
+        items: [GroceryListItem],
+        stores: [Store]
+    ) -> [(storeName: String, storeColor: String?, items: [GroceryListItem])] {
+        let grouped = Dictionary(grouping: items) { item -> String in
+            item.store?.name ?? "Unassigned"
+        }
+
+        var result: [(storeName: String, storeColor: String?, items: [GroceryListItem])] = []
+
+        for store in stores {
+            let name = store.name ?? "Unnamed"
+            if let sectionItems = grouped[name], !sectionItems.isEmpty {
+                let sorted = sectionItems.sorted { lhs, rhs in
+                    let lhsOrder = lhs.categoryEntity?.sortOrder ?? Int16.max
+                    let rhsOrder = rhs.categoryEntity?.sortOrder ?? Int16.max
+                    return lhsOrder < rhsOrder
+                }
+                result.append((storeName: name, storeColor: store.color, items: sorted))
+            }
+        }
+
+        if let unassigned = grouped["Unassigned"], !unassigned.isEmpty {
+            let sorted = unassigned.sorted { lhs, rhs in
+                let lhsOrder = lhs.categoryEntity?.sortOrder ?? Int16.max
+                let rhsOrder = rhs.categoryEntity?.sortOrder ?? Int16.max
+                return lhsOrder < rhsOrder
+            }
+            result.append((storeName: "Unassigned", storeColor: nil, items: sorted))
+        }
+
+        return result
+    }
+
     // MARK: - Helpers
 
     private func householdKeyPredicate() -> NSPredicate {

@@ -1006,7 +1006,7 @@ _Note: ML-Powered Parsing previously listed as M9.5 has been moved to M8.4 (Opti
 - ✅ M18.1.2: Store snapshot wiring (3 creation paths) — COMPLETE
 - ✅ M10.4.0: Recipe attribution wiring (imageURL + author) — COMPLETE
 - ✅ M18.1.3: Store management UI (Settings > Stores) — COMPLETE (~1.5h)
-- 🔄 M18.1.4: Store assignment UX + color dots + grouping — READY
+- ✅ M18.1.4: Store assignment UX + color dots + grouping — COMPLETE (~1h, 9 unit tests)
 
 ### **Planned: FUI-1 Dashboard, Navigation, Recipe UI** 📋
 
