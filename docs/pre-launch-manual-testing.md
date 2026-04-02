@@ -1,280 +1,362 @@
 # Pre-Launch Manual Testing
 
 **Created**: April 1, 2026
-**Purpose**: Comprehensive manual test plan for all pre-launch milestones on the `feature/M18-store-aware-shopping` branch. Intended for consolidation into a single review pass, potentially automatable via Claude co-work.
+**Updated**: April 1, 2026
+**Purpose**: Comprehensive test checklist for M18 + FUI-1 validation. Structured for Claude co-work simulator sessions — each test specifies the validation method (screenshot, xctest, CLI, or human-only).
 
-**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
-
----
-
-## M18: Store-Aware Shopping
-
-### M18.1.0: Schema v11 + Model Files
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Fresh install on simulator (delete app first) | App launches, no migration crash. Core Data stack initializes with v11 schema | |
-| 2 | Upgrade from existing install (v10 data present) | Lightweight migration succeeds silently. Existing data intact — recipes, lists, categories, household all preserved | |
-| 3 | Verify Store entity exists | `Store.fetchRequest()` executes without crash | |
-| 4 | Verify Recipe.imageURL and Recipe.author accessible | Import a recipe → check no crash on accessing `recipe.imageURL` and `recipe.author` | |
-
-### M18.1.1: StoreService
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Create a store via Settings > Stores > + | Store persists across app restart | |
-| 2 | Create store with duplicate name | Error shown: "A store with this name already exists" | |
-| 3 | Delete store with no assigned templates | Store deleted immediately (confirmation alert, no reassignment dialog) | |
-| 4 | Delete store with assigned templates → reassign | Reassignment dialog appears. After reassign, templates now reference the new store | |
-| 5 | Delete store with assigned templates → clear | Templates' `preferredStore` set to nil | |
-| 6 | Reorder stores | New order persists across app restart | |
-| 7 | Verify householdKey scoping | In a household, stores are scoped to that household. Personal mode stores have nil householdKey | |
-
-### M18.1.2: Store Snapshot Wiring
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Add item to grocery list (template has preferredStore) | New `GroceryListItem.store` matches `template.preferredStore` | |
-| 2 | Add item to grocery list (template has NO preferredStore) | `GroceryListItem.store` is nil | |
-| 3 | Batch add ingredients from recipe (templates have stores) | Each grocery item snapshots its template's preferredStore | |
-| 4 | Add staple items | Staple grocery items snapshot their template's preferredStore | |
-| 5 | Change template's preferredStore AFTER item creation | Existing grocery items retain their original store snapshot (not updated) | |
-
-### M18.1.3: Store Management UI
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Settings > Stores navigation | ManageStoresView appears with correct title | |
-| 2 | Empty state (no stores) | `ContentUnavailableView` with storefront icon, description, and "Add Store" button | |
-| 3 | Add store: name + color picker | Store created, appears in list with color dot and name | |
-| 4 | Suggested store chips (first use) | Chips shown: Costco, Walmart, Target, Kroger, Whole Foods, Aldi, Trader Joe's. Tapping fills name field | |
-| 5 | Suggested chips hidden after stores exist | Re-open Add Store sheet when stores exist — "Quick Add" section hidden | |
-| 6 | Color picker selection | Tapping a color circle highlights it. Selected color saved on store | |
-| 7 | Reorder stores via drag | Tap "Reorder", drag handles appear, drag to reorder. Order persists | |
-| 8 | Swipe to delete (no templates) | Swipe left → trash icon → confirmation alert → store deleted | |
-| 9 | Swipe to delete (templates assigned) | Reassignment dialog: shows template count, offers reassign or clear | |
-| 10 | Reassignment: select different store | NavigationLink to store picker, select store, tap "Reassign" → templates moved | |
-| 11 | Reassignment: clear preferences | "Clear Preferences & Delete" → templates have nil store, original store deleted | |
-| 12 | Cancel reassignment dialog | Store NOT deleted, state reset | |
-| 13 | Multiple stores display | List shows position number, color dot, store name for each store | |
-| 14 | Empty state "Add Store" button | Tapping button in ContentUnavailableView opens AddStoreView with suggested chips | |
-| 15 | Add store with empty/whitespace name | "Add Store" button disabled — cannot submit | |
-| 16 | StoreService environment propagation | No crash navigating Settings > Stores (StoreService injected via foragerApp) | |
-| 17 | Reorder button hidden when empty | "Reorder" toolbar button not shown when no stores exist | |
-
-### M18.1.4: Store Assignment UX + Color Dots + Grouping
-
-| # | Test | Expected Result | Status | Notes |
-|---|------|-----------------|--------|-------|
-| 1 | Long-press grocery item → "Buy at..." | Context menu shows store picker with all stores + "No Store" option | Code complete | `.contextMenu` on item rows; `StoreAssignmentModal` with FetchRequest; XCUITest candidate |
-| 2 | Assign store to grocery item | Item's store updated. Template's preferredStore also updated (learning) | Code + unit tested | `testAssignStoreToItemAndTemplate` passes; dual-write in `StoreAssignmentModal.assignStore` |
-| 3 | Color dots on assigned items | Small color dot visible on items with a store, in both group modes | Code complete | `StoreColorDot` in `GroceryListItemRow`; gated by `storeColorHex != nil`; XCUITest candidate |
-| 4 | No color dot on unassigned items | Items without store show no dot | Code + unit tested | `testColorDotNotVisibleWhenNoStore` passes; `storeColorHex` is nil when no store |
-| 5 | Group by Store toggle in toolbar | Toggle appears only when stores exist. Switches between Category/Store grouping | Code complete | Menu with checkmarks; gated by `hasStores`; XCUITest candidate |
-| 6 | Store sections | Sections show color dot + store name + completion count | Code + unit tested | `ForagerSectionHeader` with `colorDotHex`; `testGroupByStorePreservesStoreColor` passes |
-| 7 | Unassigned section | Items without store appear in "Unassigned" section at bottom | Code + unit tested | `testGroupByStoreUnassignedAtBottom` passes; nil storeColor for unassigned |
-| 8 | Sub-sort by category within store sections | Within a store section, items are sub-sorted by category | Code + unit tested | `testGroupByStoreSubSortsByCategorySortOrder` passes |
-| 9 | Category grouping unchanged | Default grouping is still by category. Category sections unchanged | Code + unit tested | `groupMode` defaults to `.category`; `groupedItems` logic untouched |
-| 10 | Feature invisible when no stores | No toggle, no dots, no store sections when zero stores exist | Code + unit tested | `hasStores` guards all store UI; `testGroupByStoreEmptyStoresNotIncluded` passes |
-| 11 | Grouping persistence | Toggle persists via UserDefaults key `groceryListGroupMode` across app restart | Code complete | `@AppStorage("groceryListGroupMode")`; needs manual device restart verification |
-| 12 | Auto-collapse store sections when all complete | Completed store section auto-collapses after 2s delay | Code complete | `checkAutoCollapseStore` mirrors category auto-collapse; needs manual verification |
-| 13 | Context menu also shows Delete | Long-press shows both "Buy at..." and "Delete" options | Code complete | Destructive button in `.contextMenu`; XCUITest candidate |
+**Simulator**: iPhone 17 Pro (`4646C977-495A-4E9A-8F95-01C9E0731CB6`)
+**Bundle ID**: `com.richhayn.forager`
 
 ---
 
-## M10.4.0: Recipe Attribution Wiring
+## How to Use This Doc
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Import recipe with imageURL + author | Both fields saved on Recipe entity, accessible via `recipe.imageURL` and `recipe.author` | |
-| 2 | Import recipe without imageURL/author | Fields are nil, no crash | |
-| 3 | Duplicate recipe preserves attribution | `RecipeService.duplicateRecipe` copies imageURL and author | |
-| 4 | Create recipe manually | imageURL and author default to nil | |
+**Validation methods:**
+- `screenshot` — Boot sim, install app, navigate to screen, take screenshot with `xcrun simctl io booted screenshot`, read image to verify
+- `xctest` — Run `xcodebuild test` with specific test class/method
+- `cli` — Validate via grep, build commands, or simctl without UI
+- `sim-interact` — Claude co-work clicks/taps in the simulator (touch interactions, navigation, swipe, long-press)
+- `two-device` — Requires two physical devices or simulators with iCloud accounts (CloudKit sync)
 
----
+**Status values:** `[ ]` not started, `[x]` passed, `[!]` failed, `[~]` skipped (not testable in current context)
 
-## FUI-1: Dashboard, Navigation, Recipe UI
+**Setup for simulator testing:**
+```bash
+# Boot simulator
+xcrun simctl boot 4646C977-495A-4E9A-8F95-01C9E0731CB6
 
-### FUI-1.1: Tab Restructuring (5→4 tabs)
+# Build and install
+xcodebuild -project forager.xcodeproj -scheme forager \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  build 2>&1 | grep -E "BUILD|error:|warning:"
 
-| # | Test | Expected Result | Status | Notes |
-|---|------|-----------------|--------|-------|
-| 1 | App launches to Home tab | Default tab is Home (DashboardView), not Lists | Unit tested | `testCaseOrder` verifies .home is first; default verified in foragerApp.swift |
-| 2 | Four tabs visible | Home, Lists, Recipes, Meals — no Settings or Search tab | Unit tested | `testAllCasesCount` = 4, `testRemovedCasesDoNotExist` confirms no search/settings |
-| 3 | Tab icons correct | house, list.bullet, book, calendar | Unit tested | `testIcons` verifies all 4 icons |
-| 4 | Tab switching works | All 4 tabs navigate to correct views | | Manual or XCUITest — verify each tab loads its view |
-| 5 | Deep links / state restoration | Re-launching app returns to last selected tab | | Manual — kill and relaunch simulator |
-| 6 | Settings accessible via gear icon | DashboardView toolbar gear → SettingsView | | Manual — verify NavigationLink pushes SettingsView |
-| 7 | Search accessible via fullScreenCover | `showSearch` state triggers UnifiedSearchView overlay with Done button | Implemented | FUI-1.2 added SearchButtonModifier to all tabs |
-| 8 | Coach marks updated | Onboarding walkthrough shows Home tab (not Settings) | | Manual — replay via Settings > Replay Onboarding |
-| 9 | Time-of-day greeting | DashboardView shows correct greeting for current hour | | Manual or time-travel via simulator clock |
+# Launch app
+xcrun simctl launch booted com.richhayn.forager
 
-### FUI-1.2: Search Relocation
+# Take screenshot
+xcrun simctl io booted screenshot /tmp/forager-test.png
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Search button visible on all 4 tabs | Magnifying glass toolbar button present on Home, Lists, Recipes, Meals | Implemented | SearchButtonModifier applied at NavigationStack level |
-| 2 | Tapping search opens full-screen sheet | `UnifiedSearchView` presented as `.fullScreenCover` with dismiss button | Implemented | |
-| 3 | Search results push detail within sheet | Tapping a search result navigates to detail view inside the sheet, not cross-tab | | Manual — verify navigation within sheet |
-| 4 | Dismiss search sheet | X/Done button closes the sheet, returns to previous tab | Implemented | |
-| 5 | RecipeListView no longer has .searchable | No search bar in recipe list — removed in favor of global search | Verified | Grep confirms no searchText/searchable references |
-| 6 | Search history cleared | Old `RecipeSearchHistory` UserDefaults no longer used | Verified | Code removed, UserDefaults key no longer referenced |
-
-### FUI-1.3: Settings Relocation
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Gear icon in DashboardView toolbar | Trailing toolbar shows gear icon | Implemented | Built in FUI-1.1 |
-| 2 | Tapping gear navigates to SettingsView | Full SettingsView loads within Home tab's NavigationStack | Implemented | |
-| 3 | All Settings sub-sections work | Household, Data (Ingredients, Categories, Stores), Meal Planning, Display, AI, Diagnostic, About — all navigate correctly | | Manual — verify each sub-section |
-| 4 | EnvironmentObjects propagate | No crashes from missing environment objects in Settings or its children | | Manual — navigate through all Settings screens |
-
-### FUI-1.4: Recipe Detail — Hero Image + Attribution
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Recipe with imageURL shows hero image | AsyncImage loads at top of detail, max 240pt height, fill aspect, clipped | |
-| 2 | Recipe without imageURL shows no image | Hero image section omitted entirely (zero footprint) | |
-| 3 | Image loading state | Rounded placeholder with `ForagerTheme.backgroundSecondary` + ProgressView while loading | |
-| 4 | Image load failure | Graceful collapse — `EmptyView()`, no error shown | |
-| 5 | Source attribution — author present | `person.fill` icon + author name at bottom of detail, caption styled | |
-| 6 | Source attribution — source URL present | `link` icon + domain name, tappable (opens Safari) | |
-| 7 | Source attribution — both present | Both author and URL lines shown | |
-| 8 | Source attribution — neither present | Attribution section omitted entirely | |
-
-### FUI-1.5: Recipe Computed Properties
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | `recipe.hasAttribution` returns true when author set | Verified via debug or unit test | |
-| 2 | `recipe.displayAuthor` trims whitespace | " John " → "John", "" → nil | |
-| 3 | `recipe.sourceURLDomain` extracts host | "https://example.com/recipe/123" → "example.com" | |
-| 4 | `recipe.hasHeroImage` validates URL | Non-empty valid URL → true, empty/nil/invalid → false | |
-
-### FUI-1.6: Recipe List — Grid/List Toggle
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Toggle button in toolbar | Grid/list icon visible next to sort button. Shows `list.bullet` when in grid mode, `square.grid.2x2` when in list mode | |
-| 2 | List mode (default) | Existing glass card list layout — unchanged. Swipe actions still work (meal plan, delete) | |
-| 3 | Grid mode | 2-column LazyVGrid. Cards show hero image (or placeholder), title (2-line limit), timing, favorite heart | |
-| 4 | Grid card with image | AsyncImage loads, 120pt height, `.fill` aspect ratio, clipped to card bounds | |
-| 5 | Grid card without image | Colored placeholder (deterministic per title) with `book.closed.fill` icon | |
-| 6 | Grid card — loading state | ProgressView shown while AsyncImage loads | |
-| 7 | Grid card — image load failure | Falls back to colored placeholder (same as no-image) | |
-| 8 | Tapping grid card | Navigates to RecipeDetailView | |
-| 9 | Long-press grid card (context menu) | Shows "Add to Meal Plan" and "Delete" options | |
-| 10 | Filter pills visible in both modes | Filter row stays above both grid and list layouts | |
-| 11 | Sort works in both modes | Sort by Recent/A-Z/Most Used applies to grid and list equally | |
-| 12 | Toggle persists | `recipeListLayout` AppStorage key persists across app restart | |
-| 13 | Toggle animation | Smooth transition when switching (respects reduce motion) | |
-| 14 | Empty state | Both grid and list show same empty state (ContentUnavailableView) when no recipes match filter | |
-
-### FUI-1.7: DashboardView
-
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Greeting header changes by time | Morning (5-11), Afternoon (12-16), Evening (17-21), Night (22-4) | Implemented | Time-of-day greeting as navigationTitle |
-| 2 | Date subtitle | Shows current day: "Tuesday, April 1" | Implemented | `.dateTime.weekday(.wide).month(.wide).day()` format |
-| 3 | Today's Meals card | Shows planned meals for today from active meal plan. Hidden if no meals | Implemented | Filtered by `Calendar.isDateInToday()` |
-| 4 | Grocery Run card | Most recent incomplete list with progress ring + item preview. Hidden if none | Implemented | Progress ring + 3 unchecked item preview |
-| 5 | Recipe Spotlight card | Daily-rotating recipe with hero image. Hidden if no recipes | Implemented | Date-seeded selection from favorites or all |
-| 6 | Quick Actions bar | Capsule buttons: New List, Add Recipe, Plan Meals | Implemented | Switches selectedTab binding |
-| 7 | Card tap navigation | Today's Meals "View Plan" → Meals tab. Grocery "Open" → Lists tab. Spotlight → recipe detail | Implemented | Tab switching via binding, recipe via NavigationLink |
-| 8 | Scroll behavior | Tab bar minimizes on scroll down | Implemented | `.tabBarMinimizeBehavior(.onScrollDown)` on TabView |
-| 9 | Welcome card (empty state) | Shows when no meals, lists, or recipes exist | Implemented | Conditional: all data empty → welcome card |
-| 10 | Meal completion checkmarks | Completed meals show green checkmark | Implemented | `meal.isCompleted` check |
+# Terminate app (for restart tests)
+xcrun simctl terminate booted com.richhayn.forager
+```
 
 ---
 
-## M9.28: Strip Diagnostic Logging
+## 1. Build & Launch
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Release build has no debug prints | Build with Release config — no `print()` statements execute | |
-| 2 | `#if DEBUG` guards all diagnostic output | Grep confirms no unguarded print/NSLog in production paths | |
-| 3 | App behavior unchanged | All features work identically without logging | |
+- [ ] `cli` — Project builds with zero errors
+- [ ] `cli` — Project builds with zero warnings (excluding AppIntents metadata)
+- [ ] `cli` — All unit tests pass: `xcodebuild test -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro'`
+- [ ] `screenshot` — App launches without crash, Home tab visible
+- [ ] `screenshot` — Fresh install (delete app first via `xcrun simctl uninstall`) — schema v11 migration succeeds
 
 ---
 
-## Cross-Cutting Concerns
+## 2. Tab Bar & Navigation (FUI-1.1)
 
-### CloudKit Sync
+- [ ] `screenshot` — 4 tabs visible: Home, Lists, Recipes, Meals (no Settings, no Search)
+- [ ] `screenshot` — Home tab icon is `house`
+- [ ] `screenshot` — Lists tab icon is `list.bullet`
+- [ ] `screenshot` — Recipes tab icon is `book`
+- [ ] `screenshot` — Meals tab icon is `calendar`
+- [ ] `screenshot` — Default tab on launch is Home
+- [ ] `xctest` — NavigationTab enum: 4 cases, correct titles/icons, no .search/.settings
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Create store on Device A | Store syncs to Device B via CloudKit household zone | |
-| 2 | Store preferences sync | Template's preferredStore assignment syncs across devices | |
-| 3 | Store deletion syncs | Deleting store on Device A removes it on Device B, templates reassigned | |
-| 4 | Recipe attribution syncs | imageURL and author sync to household members | |
+---
 
-### Household Scoping
+## 3. Dashboard (FUI-1.7)
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Stores scoped to household | User in household sees only household stores, not personal-mode stores | |
-| 2 | Personal mode | User without household sees only personal stores | |
-| 3 | Owner vs member asymmetry | Both owner and member devices see the same stores via correct persistent store | |
+- [ ] `screenshot` — Greeting header shows time-appropriate text (Good morning/afternoon/evening)
+- [ ] `screenshot` — Date subtitle shows current date formatted correctly
+- [ ] `screenshot` — Dashboard scrolls without crash
+- [ ] `screenshot` — Gear icon visible in toolbar (trailing)
+- [ ] `screenshot` — Search magnifying glass visible in toolbar
+- [ ] `screenshot` — Quick Actions bar visible: "New List", "Add Recipe", "Plan Meals"
+- [ ] `screenshot` — Welcome card shows when no data exists (fresh install)
+- [ ] `screenshot` — Today's Meals card visible when meal plan with today's meals exists
+- [ ] `screenshot` — Today's Meals card hidden when no meals today
+- [ ] `screenshot` — Grocery Run card visible when incomplete weekly list exists
+- [ ] `screenshot` — Grocery Run card shows progress ring + item preview
+- [ ] `screenshot` — Recipe Spotlight card visible when recipes exist
+- [ ] `screenshot` — Recipe Spotlight card hidden when no recipes
+- [ ] `sim-interact` — Tapping gear icon navigates to SettingsView
+- [ ] `sim-interact` — Tapping search icon opens full-screen search sheet
+- [ ] `sim-interact` — Quick action "New List" switches to Lists tab
+- [ ] `sim-interact` — Quick action "Add Recipe" switches to Recipes tab
+- [ ] `sim-interact` — Quick action "Plan Meals" switches to Meals tab
+- [ ] `sim-interact` — Tab bar minimizes on scroll down
+
+---
+
+## 4. Search Relocation (FUI-1.2)
+
+- [ ] `screenshot` — Magnifying glass toolbar button on Home tab
+- [ ] `screenshot` — Magnifying glass toolbar button on Lists tab
+- [ ] `screenshot` — Magnifying glass toolbar button on Recipes tab
+- [ ] `screenshot` — Magnifying glass toolbar button on Meals tab
+- [ ] `cli` — No `.searchable()` references in RecipeListView.swift
+- [ ] `cli` — No `searchText` or `searchHistory` state in RecipeListView.swift
+- [ ] `sim-interact` — Tapping search opens full-screen UnifiedSearchView
+- [ ] `sim-interact` — Done button dismisses search sheet
+- [ ] `sim-interact` — Search results navigate to detail within sheet (not cross-tab)
+
+---
+
+## 5. Settings Relocation (FUI-1.3)
+
+- [ ] `sim-interact` — Gear icon on Dashboard → SettingsView pushes correctly
+- [ ] `sim-interact` — All Settings sub-sections navigate: Household, Ingredients, Categories, Stores, Meal Planning, Display, AI, Diagnostic, About
+- [ ] `sim-interact` — No crashes from missing EnvironmentObjects in any Settings screen
+- [ ] `sim-interact` — Coach marks replay (Settings > Replay Onboarding) references Home tab
+
+---
+
+## 6. Recipe Detail — Hero Image + Attribution (FUI-1.4)
+
+- [ ] `screenshot` — Recipe WITH imageURL: hero image visible at top of detail view (240pt, rounded)
+- [ ] `screenshot` — Recipe WITHOUT imageURL: no hero image section (zero footprint)
+- [ ] `screenshot` — Source attribution visible when author present (person.fill + name)
+- [ ] `screenshot` — Source attribution visible when sourceURL present (link + domain)
+- [ ] `screenshot` — Attribution section hidden when neither author nor sourceURL
+- [ ] `sim-interact` — Tapping source URL opens Safari
+- [ ] `screenshot` — Image loading state: rounded placeholder while loading
+- [ ] `screenshot` — Image failure: graceful collapse (EmptyView)
+
+---
+
+## 7. Recipe Computed Properties (FUI-1.5)
+
+- [ ] `xctest` — `hasAttribution` true when author set, no URL
+- [ ] `xctest` — `hasAttribution` true when URL set, no author
+- [ ] `xctest` — `hasAttribution` false when both nil
+- [ ] `xctest` — `hasAttribution` false when both empty strings
+- [ ] `xctest` — `displayAuthor` returns trimmed name
+- [ ] `xctest` — `displayAuthor` nil for whitespace-only
+- [ ] `xctest` — `displayAuthor` nil for nil input
+- [ ] `xctest` — `sourceURLDomain` extracts host from valid URL
+- [ ] `xctest` — `sourceURLDomain` nil for nil sourceURL
+- [ ] `xctest` — `sourceURLObject` returns URL for valid string
+- [ ] `xctest` — `sourceURLObject` nil for invalid URL
+- [ ] `xctest` — `hasHeroImage` true for valid URL
+- [ ] `xctest` — `hasHeroImage` false for empty string
+- [ ] `xctest` — `hasHeroImage` false for nil
+- [ ] `xctest` — `hasHeroImage` false for whitespace-only
+
+**Status: Tests not yet written.** File: `foragerTests/Services/RecipeComputedPropertiesTests.swift`
+
+---
+
+## 8. Recipe Grid/List Toggle (FUI-1.6)
+
+- [ ] `screenshot` — Toggle button visible in Recipes toolbar
+- [ ] `screenshot` — List mode (default): glass card list layout
+- [ ] `screenshot` — Grid mode: 2-column LazyVGrid with image cards
+- [ ] `screenshot` — Grid card WITH image: hero image, title (2-line), timing
+- [ ] `screenshot` — Grid card WITHOUT image: colored placeholder with icon
+- [ ] `screenshot` — Placeholder colors vary across different recipe titles
+- [ ] `screenshot` — Filter pills row visible above both layouts
+- [ ] `screenshot` — Empty state (ContentUnavailableView) when no recipes match filter
+- [ ] `sim-interact` — Toggle switches between grid and list views
+- [ ] `sim-interact` — Toggle persists across app restart (@AppStorage)
+- [ ] `sim-interact` — Tapping grid card navigates to RecipeDetailView
+- [ ] `sim-interact` — Long-press grid card shows context menu (Add to Meal Plan, Delete)
+- [ ] `sim-interact` — Sort works in both modes (Recent/A-Z/Most Used)
+- [ ] `sim-interact` — Swipe actions work in list mode (meal plan, delete)
+
+---
+
+## 9. Store Management UI (M18.1.3)
+
+- [ ] `screenshot` — Settings shows "Stores" row in Data Management section
+- [ ] `screenshot` — ManageStoresView: empty state (ContentUnavailableView with storefront icon)
+- [ ] `screenshot` — AddStoreView: suggested store chips (Costco, Walmart, etc.) on first use
+- [ ] `screenshot` — AddStoreView: color picker grid with selection ring
+- [ ] `screenshot` — Store list: position number + color dot + store name per row
+- [ ] `screenshot` — Multiple stores display correctly in order
+- [ ] `sim-interact` — Settings > Stores navigates to ManageStoresView
+- [ ] `sim-interact` — Add store with name + color creates store
+- [ ] `sim-interact` — Tapping suggested chip fills name field
+- [ ] `sim-interact` — Chips hidden after stores exist
+- [ ] `sim-interact` — Add store with empty/whitespace name: button disabled
+- [ ] `sim-interact` — Duplicate store name shows error
+- [ ] `sim-interact` — Reorder via drag (tap Reorder, drag handles)
+- [ ] `sim-interact` — Reorder persists across app restart
+- [ ] `sim-interact` — Swipe delete (no templates): confirmation → deleted
+- [ ] `sim-interact` — Swipe delete (templates assigned): reassignment dialog
+- [ ] `sim-interact` — Reassignment: select different store → templates moved
+- [ ] `sim-interact` — Reassignment: clear preferences → templates unassigned
+- [ ] `sim-interact` — Cancel reassignment → store NOT deleted
+- [ ] `sim-interact` — Reorder button hidden when no stores exist
+
+---
+
+## 10. Store Assignment UX + Grouping (M18.1.4)
+
+- [ ] `screenshot` — No store UI visible when zero stores exist (invisible rule)
+- [ ] `screenshot` — Color dots on items with assigned store (both group modes)
+- [ ] `screenshot` — No color dot on unassigned items
+- [ ] `screenshot` — Store sections: color dot + store name + completion count
+- [ ] `screenshot` — "Unassigned" section at bottom
+- [ ] `xctest` — groupByStore: stores in sortOrder, unassigned at bottom
+- [ ] `xctest` — groupByStore: sub-sort by category within store sections
+- [ ] `xctest` — groupByStore: empty stores not included
+- [ ] `xctest` — groupByStore: objectID-based keying (no "Unassigned" collision)
+- [ ] `xctest` — Color dot visibility logic
+- [ ] `sim-interact` — Long-press grocery item → "Buy at..." context menu
+- [ ] `sim-interact` — Store picker shows all stores + "No Store" option
+- [ ] `sim-interact` — Assign store → item + template updated
+- [ ] `sim-interact` — Group by Store toggle in toolbar (only when stores exist)
+- [ ] `sim-interact` — Toggle switches between Category/Store grouping
+- [ ] `sim-interact` — Category grouping remains default and unchanged
+- [ ] `sim-interact` — Grouping persists via UserDefaults across app restart
+- [ ] `sim-interact` — Auto-collapse completed store sections after 2s
+
+---
+
+## 11. Store Snapshot Wiring (M18.1.2)
+
+- [ ] `xctest` — addItem: template with preferredStore → item.store matches
+- [ ] `xctest` — addItem: template without preferredStore → item.store nil
+- [ ] `xctest` — addIngredients batch: each item snapshots template's store
+- [ ] `xctest` — addStaples: items snapshot template's preferredStore
+- [ ] `xctest` — Quick-add path passes store param to weeklyListService
+- [ ] `sim-interact` — Change template's store AFTER item creation → existing items retain original store
+
+**Status: WeeklyListService snapshot tests not yet written.** File: `foragerTests/Services/WeeklyListServiceTests.swift`
+
+---
+
+## 12. Recipe Attribution (M10.4.0)
+
+- [ ] `xctest` — createRecipe with imageURL + author: both persisted
+- [ ] `xctest` — createRecipe without attribution: both nil
+- [ ] `xctest` — duplicateRecipe preserves imageURL + author
+- [ ] `xctest` — toRecipeFormData maps imageURL + author
+- [ ] `sim-interact` — Import recipe from URL with image → imageURL saved
+- [ ] `sim-interact` — Import recipe without image → imageURL nil, no crash
+
+---
+
+## 13. Schema v11 + Core Data (M18.1.0)
+
+- [ ] `xctest` — Schema has 13 entities
+- [ ] `xctest` — Store entity: all attributes accessible (id, name, color, sortOrder, householdKey, etc.)
+- [ ] `xctest` — Store: HouseholdScoped conformance
+- [ ] `xctest` — Store: factory creation works
+- [ ] `xctest` — Store→Household, Store→IngredientTemplate, Store→GroceryListItem relationships
+- [ ] `xctest` — Nullify on delete (both sides)
+- [ ] `xctest` — Recipe.imageURL and Recipe.author accessible
+- [ ] `cli` — Fresh install migration: no crash on boot
+- [ ] `cli` — Store listed in DataScope.swift HouseholdScoped
+
+---
+
+## 14. StoreService (M18.1.1)
+
+- [ ] `xctest` — createStore: factory path, sortOrder auto-increment
+- [ ] `xctest` — createStore: without factory → assertionFailure (ADR 014)
+- [ ] `xctest` — fetchStores: ordered, scoped by householdKey
+- [ ] `xctest` — deleteStore: reassign templates to replacement
+- [ ] `xctest` — deleteStore: nil replacement clears template stores
+- [ ] `xctest` — deleteStore: grocery items nullified
+- [ ] `xctest` — reorderStores: sortOrder updated
+- [ ] `xctest` — assignStore to template
+- [ ] `xctest` — assignStore to grocery item
+- [ ] `xctest` — resolveStore: same persistent store → direct
+- [ ] `xctest` — resolveStore: cross-store → lookup by name
+
+---
+
+## 15. Cross-Cutting Concerns
 
 ### Regression: Existing Features
+- [ ] `screenshot` — Category management (Settings > Categories) unchanged
+- [ ] `sim-interact` — Grocery list add/check/delete still works
+- [ ] `sim-interact` — Recipe import flow works, now persists imageURL + author
+- [ ] `sim-interact` — Meal planning: create plan, add meals, generate grocery list
+- [ ] `sim-interact` — Onboarding / coach marks replay works
 
-| # | Test | Expected Result | Status |
-|---|------|-----------------|--------|
-| 1 | Category management unchanged | Settings > Categories works exactly as before | |
-| 2 | Grocery list add/check/delete | Basic list operations unaffected by store feature | |
-| 3 | Recipe import flow | Full import pipeline works, now also persists imageURL + author | |
-| 4 | Meal planning | Create plan, add meals, generate grocery list — all functional | |
-| 5 | Household invite/accept | Invitation flow unaffected by schema v11 changes | |
-| 6 | Onboarding / coach marks | Welcome walkthrough and coach marks replay work | |
+### CloudKit Sync (two-device only)
+- [ ] `two-device` — Create store on Device A → syncs to Device B
+- [ ] `two-device` — Store preferences sync across devices
+- [ ] `two-device` — Store deletion syncs, templates reassigned
+- [ ] `two-device` — Recipe attribution syncs to household members
 
----
-
-## Automated Test Gaps (from code review audit)
-
-These were identified during the PR #114 audit and need to be written before the testing pass.
-
-### Gap 1: Recipe Computed Properties Unit Tests
-
-**File to create/update**: `foragerTests/Services/RecipeComputedPropertiesTests.swift`
-
-Properties to test (all on `Models/Recipe+ComputedProperties.swift`):
-
-| # | Test | Expected Result |
-|---|------|-----------------|
-| 1 | `hasAttribution` with author set, no URL | Returns true |
-| 2 | `hasAttribution` with URL set, no author | Returns true |
-| 3 | `hasAttribution` with both nil | Returns false |
-| 4 | `hasAttribution` with both empty strings | Returns false |
-| 5 | `displayAuthor` with valid name | Returns trimmed name |
-| 6 | `displayAuthor` with whitespace-only | Returns nil |
-| 7 | `displayAuthor` with nil | Returns nil |
-| 8 | `sourceURLDomain` extracts host | "https://example.com/recipe/123" → "example.com" |
-| 9 | `sourceURLDomain` with nil sourceURL | Returns nil |
-| 10 | `sourceURLObject` with valid URL | Returns URL object |
-| 11 | `sourceURLObject` with invalid URL | Returns nil |
-| 12 | `hasHeroImage` with valid URL | Returns true |
-| 13 | `hasHeroImage` with empty string | Returns false |
-| 14 | `hasHeroImage` with nil | Returns false |
-| 15 | `hasHeroImage` with whitespace-only | Returns false |
-
-### Gap 2: WeeklyListService Store Snapshot Integration Test
-
-**File to update**: `foragerTests/Services/WeeklyListServiceTests.swift`
-
-| # | Test | Expected Result |
-|---|------|-----------------|
-| 1 | `addItem` with template that has `preferredStore` | New `GroceryListItem.store` matches `template.preferredStore` |
-| 2 | `addItem` with template that has no `preferredStore` | `GroceryListItem.store` is nil |
-| 3 | Quick-add path passes store param | Verify `weeklyListService.addItem(store:)` receives template's preferred store |
+### Household Scoping (two-device only)
+- [ ] `two-device` — Stores scoped to household (not visible in personal mode)
+- [ ] `two-device` — Owner and member devices see same stores
 
 ---
 
-## Notes for Automation
+## Test Summary
 
-- Tests marked with "build with Release config" or "grep confirms" can be automated via CLI
-- CloudKit sync tests require two physical devices or two simulators with iCloud accounts
-- Time-based tests (greeting header) can be tested by changing system clock on simulator
-- Most UI tests are candidates for XCUITest automation if patterns are established
-- Store chip / color picker tests may benefit from snapshot testing
-- Recipe computed properties tests are pure logic — highest priority for automation
-- Store snapshot tests require Core Data in-memory stack but are straightforward
+| Category | Total | xctest | screenshot | cli | sim-interact | two-device |
+|----------|-------|--------|------------|-----|--------------|------------|
+| Build & Launch | 5 | 1 | 2 | 2 | 0 | 0 |
+| Tab Bar & Navigation | 7 | 1 | 5 | 0 | 1 | 0 |
+| Dashboard | 18 | 0 | 13 | 0 | 5 | 0 |
+| Search Relocation | 9 | 0 | 5 | 2 | 3 | 0 |
+| Settings Relocation | 4 | 0 | 0 | 0 | 4 | 0 |
+| Hero Image + Attribution | 8 | 0 | 6 | 0 | 2 | 0 |
+| Computed Properties | 15 | 15 | 0 | 0 | 0 | 0 |
+| Grid/List Toggle | 14 | 0 | 8 | 0 | 6 | 0 |
+| Store Management UI | 20 | 0 | 6 | 0 | 14 | 0 |
+| Store Assignment + Grouping | 18 | 5 | 5 | 0 | 8 | 0 |
+| Store Snapshot | 6 | 5 | 0 | 0 | 1 | 0 |
+| Recipe Attribution | 6 | 4 | 0 | 0 | 2 | 0 |
+| Schema + Core Data | 9 | 7 | 0 | 2 | 0 | 0 |
+| StoreService | 11 | 11 | 0 | 0 | 0 | 0 |
+| Regression | 5 | 0 | 1 | 0 | 4 | 0 |
+| CloudKit + Household | 6 | 0 | 0 | 0 | 0 | 6 |
+| **TOTAL** | **161** | **49** | **51** | **6** | **50** | **6** |
+
+**Claude co-work can validate**: 156/161 tests (97%) — xctest + screenshot + cli + sim-interact
+**Two-device only**: 6/161 tests (3%) — CloudKit sync, household scoping
+
+---
+
+## CloudKit Production Schema
+
+**IMPORTANT**: Schema v11 adds the Store entity and new relationships. Before shipping, the CloudKit Production schema must be updated:
+1. Build with **Release** configuration (CloudKit ENABLED)
+2. Run on simulator or device to trigger schema initialization
+3. Verify in CloudKit Dashboard that Store record type exists with all fields
+4. This is a non-destructive append-only change — safe for production
+
+---
+
+## Co-Work Instructions
+
+When running this test plan via Claude co-work:
+
+1. **Log all results** to `docs/pre-launch-manual-testing-results.md`
+2. For each test, log: test number, section, pass/fail, screenshot path (if taken), and any notes
+3. Take screenshots liberally — save to `/tmp/forager-tests/` with descriptive names
+4. On failure, capture the screenshot AND describe what's wrong
+5. Update the `[ ]` checkboxes in THIS file as you go (`[x]` pass, `[!]` fail)
+6. If a test requires data setup (e.g., "create a store first"), document the setup steps taken
+
+**Results file format** (`docs/pre-launch-manual-testing-results.md`):
+```markdown
+# Pre-Launch Testing Results
+
+**Date**: [date]
+**Build**: [commit sha]
+**Simulator**: iPhone 17 Pro
+
+## Results
+
+| # | Section | Test | Result | Screenshot | Notes |
+|---|---------|------|--------|------------|-------|
+| 1.1 | Build & Launch | Project builds with zero errors | PASS | — | BUILD SUCCEEDED |
+| 2.1 | Tab Bar | 4 tabs visible | PASS | /tmp/forager-tests/tabs.png | Home, Lists, Recipes, Meals confirmed |
+```
+
+---
+
+## Automation Priority
+
+1. **Write xctest gaps first** (Recipe computed properties + WeeklyListService snapshot) — 18 tests
+2. **Run full xctest suite** — 49 tests, all automatable via `xcodebuild test`
+3. **Screenshot + sim-interact pass** — 101 tests, boot sim + install + navigate + screenshot
+4. **Two-device testing** — 6 tests, requires physical devices with iCloud
