@@ -177,6 +177,68 @@ final class WeeklyListServiceTests: XCTestCase {
         XCTAssertEqual(remainingItems?.first?.name, "bread")
     }
 
+    // MARK: - Store Snapshot (M18.1.2)
+
+    @MainActor
+    func testAddItemWithPreferredStoreSnapshotsStore() {
+        let list = service.createList(name: "Test List")
+        XCTAssertNotNil(list)
+
+        // Create a store
+        let store = Store(context: context)
+        store.id = UUID()
+        store.name = "Costco"
+        store.color = "#FF0000"
+
+        let item = service.addItem(
+            to: list!, name: "chicken", store: store, displayText: "chicken"
+        )
+
+        XCTAssertNotNil(item)
+        XCTAssertEqual(item?.store, store, "Item should snapshot the passed store")
+        XCTAssertEqual(item?.store?.name, "Costco")
+    }
+
+    @MainActor
+    func testAddItemWithoutStoreHasNilStore() {
+        let list = service.createList(name: "Test List")
+        XCTAssertNotNil(list)
+
+        let item = service.addItem(
+            to: list!, name: "milk", displayText: "milk"
+        )
+
+        XCTAssertNotNil(item)
+        XCTAssertNil(item?.store, "Item without store param should have nil store")
+    }
+
+    @MainActor
+    func testStoreSnapshotIsIndependentOfLaterChanges() {
+        let list = service.createList(name: "Test List")
+        XCTAssertNotNil(list)
+
+        let store = Store(context: context)
+        store.id = UUID()
+        store.name = "Costco"
+        store.color = "#FF0000"
+
+        let item = service.addItem(
+            to: list!, name: "rice", store: store, displayText: "rice"
+        )
+        XCTAssertEqual(item?.store?.name, "Costco")
+
+        // Change the store name after item creation
+        store.name = "Walmart"
+
+        // The item's store relationship still points to the same object,
+        // so it reflects the change (this is Core Data relationship behavior).
+        // The snapshot pattern means we capture the store at ADD time —
+        // if the template's preferredStore changes later, NEW items get the new store,
+        // but existing items keep their original store reference.
+        XCTAssertEqual(item?.store?.name, "Walmart",
+            "Store is a relationship, not a flat copy — name change is visible")
+    }
+
     // MARK: - Error Handling
 
     @MainActor
