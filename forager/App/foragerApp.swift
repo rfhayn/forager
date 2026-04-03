@@ -226,21 +226,28 @@ struct foragerApp: App {
                     .environmentObject(importService)
                     .environmentObject(storeService)
                     .task {
-                        // Reload household now that stores are loaded (isReady gate
-                        // ensures stores are ready before TabView renders).
-                        // The init-time loadCurrentHousehold() fires before stores
-                        // load, so it finds nothing — this is the real load.
-                        await householdService.loadCurrentHousehold()
-                        // M10.6.19: Clear zone corruption from ghost awakeFromInsert so
-                        // CloudKit mirroring delegate can initialize and sync personal data.
-                        householdService.repairZoneCorruptionIfNeeded()
-                        await householdService.refreshCurrentMemberDisplayName()
+                        // Fire household loading off the main actor so the TabView
+                        // renders immediately with empty state. CKShare network calls
+                        // inside loadCurrentHousehold() are @MainActor but can block
+                        // for 10-20s on fresh install — detaching lets the UI appear
+                        // while those calls resolve in the background.
+                        Task.detached {
+                            // Reload household now that stores are loaded (isReady gate
+                            // ensures stores are ready before TabView renders).
+                            // The init-time loadCurrentHousehold() fires before stores
+                            // load, so it finds nothing — this is the real load.
+                            await householdService.loadCurrentHousehold()
+                            // M10.6.19: Clear zone corruption from ghost awakeFromInsert so
+                            // CloudKit mirroring delegate can initialize and sync personal data.
+                            await householdService.repairZoneCorruptionIfNeeded()
+                            await householdService.refreshCurrentMemberDisplayName()
 
-                        // M9.15.3: If no household found, start background discovery.
-                        // Handles reinstall scenario where CloudKit hasn't synced yet.
-                        // Non-blocking — app is fully usable while this runs.
-                        if householdService.currentHousehold == nil {
-                            householdService.discoverExistingHousehold()
+                            // M9.15.3: If no household found, start background discovery.
+                            // Handles reinstall scenario where CloudKit hasn't synced yet.
+                            // Non-blocking — app is fully usable while this runs.
+                            if await householdService.currentHousehold == nil {
+                                await householdService.discoverExistingHousehold()
+                            }
                         }
                     }
                     .onAppear {
