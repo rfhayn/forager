@@ -6,6 +6,46 @@
 
 ---
 
+## Session 107 — April 2, 2026
+**Milestones**: M9.36 — CloudKit Public Permission Fix + UI Freeze Fix
+**Focus**: TestFlight testing of build 92, diagnosing two post-merge bugs
+**Branch**: `main`
+
+### What Happened
+
+First real TestFlight testing session after the M18+FUI-1 merge (PR #114, build 92). Rich deleted the app, installed fresh from TestFlight, completed the onboarding walkthrough, and the app appeared to freeze for ~20 seconds before eventually loading. Additionally, Joe (the second household member) was being silently kicked from the CKShare on every app restart.
+
+**Bug 1 — UI Freeze**: After onboarding completes, the `.task` modifier on the main TabView awaits `householdService.loadCurrentHousehold()`, which performs CKShare network calls. Because `HouseholdService` is `@MainActor` and the `.task` inherits the view's main actor context, these network calls ran inline without yielding — blocking the UI for the full CloudKit discovery loop (~20s). Fixed by wrapping the `.task` contents in `Task.detached`, which breaks out of the main actor context and lets the TabView render immediately with empty state. Views update reactively when `currentHousehold` changes via `@Published`.
+
+**Bug 2 — Member Kicked (M9.36)**: The M9.30 invitation security code (`revertPublicPermissionIfNeeded`) runs on every startup. After 24 hours from `lastInviteDate`, it sets `publicPermission = .none`. The critical discovery: **CloudKit public-link participants are NOT permanent.** Their ongoing access depends on `publicPermission = .readWrite`. Setting it to `.none` instantly removes them from `CKShare.participants`. This is fundamentally different from Google Docs, where "anyone with link" participants persist after the link is disabled. The M9.30 PRD incorrectly assumed accepted participants become independent of `publicPermission`.
+
+Fixed all three revert paths (`revertPublicPermissionIfNeeded`, `cancelInvitation`, `revokeAllPendingInvitations`) to check for non-owner participants before reverting. If members exist, the revert is skipped and `lastInviteDate` is cleared.
+
+### Key Decisions
+
+1. **`Task.detached` over restructuring the loading flow** — The simplest fix that doesn't touch any CloudKit logic. The app already handles empty state gracefully (DashboardView welcome card, ContentUnavailableViews), so rendering empty and populating reactively is the right UX.
+2. **Skip revert when members exist, rather than trying to promote participants** — CloudKit's `CKShare.participants` is read-only from the client. Promoting a public participant to a private participant requires `UICloudSharingController` (broken on iOS 18.x, per ADR 009). The only safe option is to leave `publicPermission = .readWrite` for the lifetime of the share while members exist.
+3. **Clear `lastInviteDate` after skipping** — Prevents the check from re-running every single launch. Once we've confirmed members exist, there's no need to keep checking the 24h timer.
+
+### Learning
+
+- CloudKit `publicPermission` is an **ongoing authorization**, not a one-time gate. This is the single most important CloudKit insight since the ADR 009 decision.
+- SwiftUI `.task` inherits the view's actor context. `await`ing `@MainActor` methods from a main-actor `.task` runs them inline — no cooperative yielding. `Task.detached` is the escape hatch.
+- In-app diagnostic logging (`DiagnosticLogger`) proved more valuable than crash logs for this investigation. The exact before/after participant counts with timestamps told the whole story without needing Xcode attached.
+
+### AI Tooling Observations
+
+Claude Code's parallel agent architecture was effective here — launched an Explore agent for codebase investigation, a general-purpose agent for the freeze fix, and a Plan agent for the CloudKit deep dive, all concurrently. The Plan agent's thorough review of all ADRs and the HouseholdService code was essential for building confidence that the fix wouldn't break sharing. The diagnostic log analysis was done in the main conversation, which was the right call — needed the user's context about what they observed.
+
+### What's Next
+
+- Re-invite Joe to the household (he was kicked by the bug)
+- Deploy updated TestFlight build and verify both fixes
+- Continue with pre-launch testing, then M9.28 (strip diagnostic logging — but now with awareness that DiagnosticLogger is invaluable for TestFlight debugging)
+- M7.7 (App Store submission)
+
+---
+
 ## Session 106 — April 1, 2026
 **Milestones**: FUI-1.2, FUI-1.3, FUI-1.7 — Search Relocation, Settings, Full Dashboard
 **Focus**: Completing remaining FUI-1 sub-milestones (search relocation + dashboard build-out)

@@ -2503,12 +2503,26 @@ class HouseholdService: ObservableObject {
             do {
                 let share = try await getShare(for: household)
                 if share.publicPermission == .readWrite {
+                    // ADR 009 constraint: public-link participants depend on
+                    // publicPermission = .readWrite. Reverting to .none kicks
+                    // ALL non-owner members who joined via the public link.
+                    let nonOwner = share.participants.filter { $0.role != .owner }
+                    if !nonOwner.isEmpty {
+                        DiagnosticLogger.shared.info(
+                            "M9.30: Skipping publicPermission revert — \(nonOwner.count) member(s) would lose access",
+                            category: .household)
+                        // Clear lastInviteDate so we stop re-checking every launch
+                        household.lastInviteDate = nil
+                        try? viewContext.save()
+                        return
+                    }
+
                     share.publicPermission = .none
                     let persistenceController = PersistenceController.shared
                     try await persistenceController.container.persistUpdatedShare(
                         share, in: persistenceController.privateStore)
                     DiagnosticLogger.shared.info(
-                        "M9.30: Reverted publicPermission to .none (24h expired)",
+                        "M9.30: Reverted publicPermission to .none (24h expired, no members)",
                         category: .household)
                 }
             } catch {
@@ -2530,12 +2544,21 @@ class HouseholdService: ObservableObject {
         viewContext.delete(member)
         try viewContext.save()
 
-        // If no more pending members, close the public link
+        // If no more pending members, close the public link — but only if
+        // no accepted non-owner participants exist (ADR 009: reverting publicPermission
+        // kicks public-link participants).
         let remainingPending = household.memberArray.filter { $0.isPending && !$0.isExpired }
         if remainingPending.isEmpty {
             do {
                 let share = try await getShare(for: household)
                 if share.publicPermission == .readWrite {
+                    let nonOwner = share.participants.filter { $0.role != .owner }
+                    guard nonOwner.isEmpty else {
+                        DiagnosticLogger.shared.info(
+                            "M9.30: Skipping permission revert after cancel — \(nonOwner.count) member(s) would lose access",
+                            category: .household)
+                        return
+                    }
                     share.publicPermission = .none
                     let persistenceController = PersistenceController.shared
                     try await persistenceController.container.persistUpdatedShare(
@@ -2563,10 +2586,18 @@ class HouseholdService: ObservableObject {
         }
         try viewContext.save()
 
-        // Close public link
+        // Close public link — but only if no accepted non-owner participants exist
+        // (ADR 009: reverting publicPermission kicks public-link participants).
         do {
             let share = try await getShare(for: household)
             if share.publicPermission == .readWrite {
+                let nonOwner = share.participants.filter { $0.role != .owner }
+                guard nonOwner.isEmpty else {
+                    DiagnosticLogger.shared.info(
+                        "M9.30: Skipping permission revert after revoke-all — \(nonOwner.count) member(s) would lose access",
+                        category: .household)
+                    return
+                }
                 share.publicPermission = .none
                 let persistenceController = PersistenceController.shared
                 try await persistenceController.container.persistUpdatedShare(

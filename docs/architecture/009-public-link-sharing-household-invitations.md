@@ -286,6 +286,28 @@ struct ShareSheet: UIViewControllerRepresentable {
 **UI**: Show in Settings → Household → Manage Sharing
 **Priority**: Low (households are family/close friends)
 
+> **WARNING (April 2026)**: Setting `publicPermission = .none` REMOVES all non-owner
+> participants who joined via the public link. Their access depends on the public
+> permission — it is not a one-time gate. Any revocation UI must check for existing
+> members and warn the owner. See Known Constraints below.
+
+### Known Constraints (Added April 2026)
+
+1. **`publicPermission` must remain `.readWrite` while non-owner members exist.**
+   Participants who joined via the public URL are "public participants" — their
+   ongoing access is governed by `publicPermission`. Setting it to `.none` instantly
+   revokes their access and removes them from `CKShare.participants`. This cannot
+   be worked around without `UICloudSharingController` (broken on iOS 18.x) to
+   promote them to private participants.
+
+2. **Automatic invitation expiry must not revert `publicPermission`.**
+   M9.30's `revertPublicPermissionIfNeeded()` was updated (April 2026) to check for
+   non-owner participants before reverting. If any exist, the revert is skipped.
+
+3. **The invitation URL remains technically valid** as long as `publicPermission = .readWrite`.
+   This is acceptable because: (a) URLs are not guessable, (b) iCloud authentication
+   is required, (c) the 10-member cap applies, (d) the owner can see all participants.
+
 ### Manual Email Entry
 
 **Feature**: Type email instead of using link
