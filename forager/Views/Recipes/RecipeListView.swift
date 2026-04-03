@@ -1219,9 +1219,9 @@ struct RecipeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
-                recipeHeroImage
-
                 recipeHeaderSection
+
+                recipeHeroImage
 
                 ingredientsSection
 

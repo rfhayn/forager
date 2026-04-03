@@ -125,6 +125,12 @@ struct RecipeImportPreviewView: View {
                 titleSection
                     .coachMarkAnchor("importTitle")
 
+                // Hero image (below title, above metadata)
+                if let imageURL = draft.imageURL.value,
+                   let url = URL(string: imageURL) {
+                    imagePreview(url: url)
+                }
+
                 // Warning banner for partial extractions (wireframe screen 3)
                 if draft.successLevel == .partial {
                     partialExtractionBanner
@@ -146,12 +152,6 @@ struct RecipeImportPreviewView: View {
 
                 // Instructions section
                 instructionsSection
-
-                // Image preview (after instructions, per wireframe)
-                if let imageURL = draft.imageURL.value,
-                   let url = URL(string: imageURL) {
-                    imagePreview(url: url)
-                }
 
                 // Author/cuisine/category metadata
                 metadataSection

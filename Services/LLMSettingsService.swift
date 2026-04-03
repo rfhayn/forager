@@ -65,7 +65,21 @@ class LLMSettingsService: ObservableObject {
     // MARK: - Init
 
     init() {
-        self.isEnabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+        let stored = UserDefaults.standard.bool(forKey: Self.enabledKey)
+        self.isEnabled = stored
+
+        // Auto-enable on fresh install if an API key is available (Keychain
+        // survives app deletion; household key syncs via CloudKit). Without
+        // this, reinstalling the app resets the toggle and hides Parse with AI.
+        if !stored && !UserDefaults.standard.bool(forKey: "llmAutoEnableChecked") {
+            UserDefaults.standard.set(true, forKey: "llmAutoEnableChecked")
+            // Defer check so household data has time to sync from CloudKit
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                if self?.resolvedAPIKey != nil {
+                    self?.isEnabled = true
+                }
+            }
+        }
     }
 
     // MARK: - API Key Management
