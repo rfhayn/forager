@@ -1826,6 +1826,9 @@ class HouseholdService: ObservableObject {
             new.dateCreated = old.dateCreated
             new.isFavorite = old.isFavorite
             new.usageCount = old.usageCount
+            // M10.4.0: Recipe attribution fields
+            new.imageURL = old.imageURL
+            new.author = old.author
             // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
             new.household = household
             new.householdKey = householdKey
