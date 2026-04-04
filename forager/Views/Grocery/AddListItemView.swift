@@ -37,8 +37,22 @@ struct AddListItemView: View {
     @StateObject private var parsingService: IngredientParsingService
     @StateObject private var autocompleteService: IngredientAutocompleteService
     
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Store.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Store.name, ascending: true)
+        ],
+        animation: .default
+    ) private var allStores: FetchedResults<Store>
+
+    private var stores: [Store] {
+        let key = householdService.currentHouseholdKey
+        return allStores.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
+
     @State private var ingredientText = ""
     @State private var selectedCategory = ""
+    @State private var selectedStoreName = ""
     @State private var showingError = false
     @State private var errorMessage = ""
     
@@ -173,6 +187,23 @@ struct AddListItemView: View {
                     }
                 }
                 
+                // M18.1.5: Store assignment
+                if !stores.isEmpty {
+                    Section(header: Text("Store")) {
+                        Picker("Store", selection: $selectedStoreName) {
+                            Text("No Store").tag("")
+                            ForEach(stores, id: \.self) { store in
+                                HStack {
+                                    StoreColorDot(hex: store.color, size: 12)
+                                    Text(store.name ?? "Unnamed")
+                                }
+                                .tag(store.name ?? "")
+                            }
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+
                 Section {
                     HStack {
                         Button("Add to List") {
@@ -313,9 +344,10 @@ struct AddListItemView: View {
         
         if let category = template.categoryEntity?.name, !category.isEmpty {
             selectedCategory = category
-            #if DEBUG
-            print("📋 Auto-populated category: \(category)")
-            #endif
+        }
+        // M18.1.5: Auto-populate store from template's preferred store
+        if let storeName = template.preferredStore?.name, !storeName.isEmpty {
+            selectedStoreName = storeName
         }
     }
     
@@ -347,9 +379,14 @@ struct AddListItemView: View {
                 ? max(structured.parseConfidence, 0.8)
                 : structured.parseConfidence
 
+            // M18.1.5: Resolve store from selected name or template's preferred store
+            let storeEntity = stores.first { $0.name == selectedStoreName }
+                ?? matchedTemplate?.preferredStore
+
             let listItem = weeklyListService.addItem(
                 to: weeklyList, name: parsed.displayName,
                 category: categoryEntity,
+                store: storeEntity,
                 numericValue: structured.numericValue ?? 0.0,
                 standardUnit: structured.standardUnit,
                 displayText: structured.displayText,
@@ -400,9 +437,12 @@ struct AddListItemView: View {
 
         // M9.12: Resolve category entity from selected category name
         let categoryEntity = categories.first { $0.displayName == selectedCategory }
+        // M18.1.5: Resolve store from selected store name
+        let storeEntity = stores.first { $0.name == selectedStoreName }
         let listItem = weeklyListService.addItem(
             to: weeklyList, name: parsed.displayName,
             category: categoryEntity,
+            store: storeEntity,
             numericValue: structured.numericValue ?? 0.0,
             standardUnit: structured.standardUnit,
             displayText: structured.displayText,
