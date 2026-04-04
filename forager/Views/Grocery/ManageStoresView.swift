@@ -166,6 +166,7 @@ struct ManageStoresView: View {
                 StoreRowView(
                     store: store,
                     position: index + 1,
+                    storeService: storeService,
                     onDelete: {
                         prepareForStoreDeletion(store)
                     }
@@ -403,7 +404,12 @@ struct ManageStoresView: View {
 struct StoreRowView: View {
     let store: Store
     let position: Int
+    let storeService: StoreService
     let onDelete: () -> Void
+
+    @State private var isEditingName = false
+    @State private var editedName = ""
+    @State private var showingColorPicker = false
 
     var body: some View {
         HStack(spacing: 16) {
@@ -414,34 +420,147 @@ struct StoreRowView: View {
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
 
-            // Store color dot
-            Circle()
-                .fill(ForagerTheme.storeColor(hex: store.color))
-                .frame(width: 32, height: 32)
+            // Store color dot — tap to change color
+            Button {
+                showingColorPicker = true
+            } label: {
+                Circle()
+                    .fill(ForagerTheme.storeColor(hex: store.color))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(ForagerTheme.borderDefault, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
 
-            // Store name
-            Text(store.displayName)
-                .font(ForagerTheme.secondaryFont)
-                .fontWeight(.medium)
+            // Store name — tap to edit
+            if isEditingName {
+                TextField("Store name", text: $editedName)
+                    .font(ForagerTheme.secondaryFont)
+                    .fontWeight(.medium)
+                    .textFieldStyle(.plain)
+                    .submitLabel(.done)
+                    .onSubmit { saveNameEdit() }
+                    .onAppear { editedName = store.name ?? "" }
+            } else {
+                Text(store.displayName)
+                    .font(ForagerTheme.secondaryFont)
+                    .fontWeight(.medium)
+                    .onTapGesture {
+                        editedName = store.name ?? ""
+                        isEditingName = true
+                    }
+            }
 
             Spacer()
 
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .foregroundStyle(ForagerTheme.statusDangerFG)
-                    .font(.title3)
-            }
-            .buttonStyle(BorderlessButtonStyle())
+            if isEditingName {
+                HStack(spacing: 8) {
+                    Button("Cancel") {
+                        isEditingName = false
+                    }
+                    .font(.caption)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .buttonStyle(.borderless)
 
-            // Drag handle
-            Image(systemName: "line.3.horizontal")
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .font(.title2)
+                    Button("Save") {
+                        saveNameEdit()
+                    }
+                    .font(.caption)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                    .buttonStyle(.borderless)
+                    .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            } else {
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
+                        .font(.title3)
+                }
+                .buttonStyle(BorderlessButtonStyle())
+
+                // Drag handle
+                Image(systemName: "line.3.horizontal")
+                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .font(.title2)
+            }
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .foragerGlassCard()
+        .sheet(isPresented: $showingColorPicker) {
+            StoreColorPickerSheet(store: store, storeService: storeService)
+        }
+    }
+
+    private func saveNameEdit() {
+        let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != store.name else {
+            isEditingName = false
+            return
+        }
+        store.name = trimmed
+        store.updatedAt = Date()
+        storeService.saveContext()
+        isEditingName = false
+    }
+}
+
+// MARK: - Store Color Picker Sheet
+
+struct StoreColorPickerSheet: View {
+    let store: Store
+    let storeService: StoreService
+    @Environment(\.dismiss) private var dismiss
+
+    private let columns = [GridItem(.adaptive(minimum: 52))]
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: ForagerTheme.Spacing.lg) {
+                // Current color preview
+                Circle()
+                    .fill(ForagerTheme.storeColor(hex: store.color))
+                    .frame(width: 64, height: 64)
+                    .padding(.top, ForagerTheme.Spacing.lg)
+
+                Text(store.displayName)
+                    .font(ForagerTheme.detailTitle)
+
+                // Color grid
+                LazyVGrid(columns: columns, spacing: ForagerTheme.Spacing.md) {
+                    ForEach(ForagerTheme.storeColorPalette, id: \.self) { hex in
+                        Button {
+                            store.color = hex
+                            store.updatedAt = Date()
+                            storeService.saveContext()
+                            dismiss()
+                        } label: {
+                            Circle()
+                                .fill(ForagerTheme.storeColor(hex: hex))
+                                .frame(width: 44, height: 44)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(store.color == hex ? ForagerTheme.accentPrimary : Color.clear, lineWidth: 3)
+                                )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                }
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+
+                Spacer()
+            }
+            .navigationTitle("Store Color")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
     }
 }
 

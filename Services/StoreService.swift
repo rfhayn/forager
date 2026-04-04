@@ -258,6 +258,12 @@ class StoreService: ObservableObject {
         errorMessage = nil
     }
 
+    /// Public save for views that modify store properties directly (name, color).
+    func saveContext() {
+        clearError()
+        save("save store changes")
+    }
+
     @discardableResult
     private func save(_ operation: String) -> Bool {
         guard viewContext.hasChanges else { return true }

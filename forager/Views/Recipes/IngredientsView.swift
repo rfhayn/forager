@@ -10,6 +10,7 @@ struct IngredientsView: View {
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
     @EnvironmentObject private var parsingService: IngredientParsingService
+    @EnvironmentObject private var storeService: StoreService
 
     @Binding var popToRoot: Bool
 
@@ -86,6 +87,7 @@ struct IngredientsView: View {
         case review
         case duplicateReview
         case categoryChange([IngredientTemplate])
+        case storeChange([IngredientTemplate])
 
         var id: String {
             switch self {
@@ -93,6 +95,7 @@ struct IngredientsView: View {
             case .review: return "review"
             case .duplicateReview: return "duplicateReview"
             case .categoryChange: return "categoryChange"
+            case .storeChange: return "storeChange"
             }
         }
     }
@@ -122,6 +125,11 @@ struct IngredientsView: View {
             // M15.5: Review banner (when items need review and not already filtering to review)
             if needsReviewCount > 0 && !showNeedsReviewOnly {
                 reviewBanner
+            }
+
+            // M18.1.5: Store assignment banner (when ingredients lack stores and stores exist)
+            if needsStoreCount > 0 && hasStoresInHousehold {
+                storeAssignmentBanner
             }
 
             // M15: Duplicate banner (when duplicates exist and not already filtering)
@@ -215,6 +223,17 @@ struct IngredientsView: View {
             case .categoryChange(let templates):
                 CategoryChangeModal(
                     ingredientTemplates: templates,
+                    onAssignmentsComplete: {
+                        selectedIngredients.removeAll()
+                        isEditMode = false
+                        activeSheet = nil
+                    }
+                )
+            case .storeChange(let templates):
+                StoreChangeModal(
+                    ingredientTemplates: templates,
+                    storeService: storeService,
+                    householdKey: householdService.currentHouseholdKey,
                     onAssignmentsComplete: {
                         selectedIngredients.removeAll()
                         isEditMode = false
@@ -373,6 +392,30 @@ struct IngredientsView: View {
         .accessibilityHint("Double tap Review Now to start guided review")
     }
 
+    // MARK: - M18.1.5: Store Assignment Banner
+
+    private var storeAssignmentBanner: some View {
+        HStack {
+            Image(systemName: "storefront")
+                .foregroundStyle(ForagerTheme.accentPrimary)
+            Text("\(needsStoreCount) ingredient\(needsStoreCount == 1 ? "" : "s") need\(needsStoreCount == 1 ? "s" : "") a store")
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.textPrimary)
+            Spacer()
+            Button("Assign Now") {
+                let unassigned = ingredients.filter { $0.preferredStore == nil }
+                activeSheet = .storeChange(unassigned)
+            }
+            .font(ForagerTheme.footnoteFont.bold())
+            .foregroundStyle(ForagerTheme.accentPrimary)
+        }
+        .padding(ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+    }
+
     // MARK: - M15: Duplicate Banner
 
     private var duplicateBanner: some View {
@@ -446,6 +489,9 @@ struct IngredientsView: View {
                             onCategoryAssign: {
                                 activeSheet = .categoryChange([ingredient])
                             },
+                            onStoreAssign: {
+                                activeSheet = .storeChange([ingredient])
+                            },
                             onError: { message in
                                 errorMessage = message
                             }
@@ -483,6 +529,22 @@ struct IngredientsView: View {
     // M8.3.1: Count of templates needing review (for badge on filter pill)
     private var needsReviewCount: Int {
         ingredients.filter { $0.needsReview }.count
+    }
+
+    // M18.1.5: Ingredients without a preferred store
+    private var needsStoreCount: Int {
+        ingredients.filter { $0.preferredStore == nil }.count
+    }
+
+    private var hasStoresInHousehold: Bool {
+        let key = householdService.currentHouseholdKey
+        let request: NSFetchRequest<Store> = Store.fetchRequest()
+        if let key {
+            request.predicate = NSPredicate(format: "householdKey == %@", key)
+        } else {
+            request.predicate = NSPredicate(format: "householdKey == nil")
+        }
+        return (try? viewContext.count(for: request)) ?? 0 > 0
     }
 
     // M15: Duplicate detection — group by canonical name, find collisions
@@ -706,6 +768,7 @@ struct IngredientRowView: View {
     let onSelectionChanged: (Bool) -> Void
     let onStapleToggle: () -> Void
     let onCategoryAssign: () -> Void
+    let onStoreAssign: () -> Void
     var onError: ((String) -> Void)?
 
     @Environment(\.managedObjectContext) private var viewContext
@@ -793,6 +856,21 @@ struct IngredientRowView: View {
                         Image(systemName: "folder")
                             .font(.body)
                             .foregroundStyle(ForagerTheme.accentPrimary)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
+                    // M18.1.5: Store assignment
+                    Button(action: onStoreAssign) {
+                        HStack(spacing: 4) {
+                            if let store = ingredient.preferredStore {
+                                StoreColorDot(hex: store.color, size: 8)
+                            }
+                            Image(systemName: ingredient.preferredStore != nil ? "storefront.fill" : "storefront")
+                                .font(.body)
+                                .foregroundStyle(ingredient.preferredStore != nil
+                                    ? ForagerTheme.storeColor(hex: ingredient.preferredStore?.color)
+                                    : ForagerTheme.textTertiary)
+                        }
                     }
                     .buttonStyle(PlainButtonStyle())
 
