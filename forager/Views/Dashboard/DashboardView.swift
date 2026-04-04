@@ -197,13 +197,23 @@ struct DashboardView: View {
     }
 
     private var resolvedFirstName: String? {
-        // 1. Cached display name from household creation
+        // 1. Cached display name from household creation (UserDefaults — lost on reinstall)
         if let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
            !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
             return cached.components(separatedBy: " ").first
         }
 
-        // 2. Extract from device name ("Rich's iPhone" → "Rich")
+        // 2. Household ownerDisplayName (synced via CloudKit — survives reinstall)
+        if let household = householdService.currentHousehold,
+           let ownerName = household.ownerDisplayName,
+           !ownerName.isEmpty, !ownerName.hasPrefix("_") {
+            let firstName = ownerName.components(separatedBy: " ").first ?? ownerName
+            if firstName != "Me" && firstName != "You" && firstName != "User" {
+                return firstName
+            }
+        }
+
+        // 3. Extract from device name ("Rich's iPhone" → "Rich")
         let deviceName = UIDevice.current.name
         if let range = deviceName.range(of: "'s ", options: .caseInsensitive) {
             let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
