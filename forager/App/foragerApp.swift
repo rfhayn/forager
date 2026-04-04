@@ -268,6 +268,8 @@ struct foragerApp: App {
                                     }
                                 }
                         }
+                        .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                        .environmentObject(householdService)
                     }
                     .onReceive(NotificationCenter.default.publisher(for: .replayOnboarding)) { _ in
                         // M9.27: Replay shows the welcome carousel
