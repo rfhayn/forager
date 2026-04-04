@@ -1,6 +1,6 @@
 // DashboardView.swift
-// FUI-1.7: Full dashboard — greeting, today's meals, grocery run, recipe spotlight, quick actions
-// Data: MealPlanService (today's meals), @FetchRequest (grocery lists, recipes)
+// FUI-1.8: Dashboard redesign — personalized greeting, next meal, grocery snapshot,
+// meal plan overview, quick actions. Recipe Spotlight deferred to post-launch.
 
 import SwiftUI
 import CoreData
@@ -17,12 +17,6 @@ struct DashboardView: View {
         animation: .default
     ) private var allWeeklyLists: FetchedResults<WeeklyList>
 
-    // Recipes: for spotlight card
-    @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Recipe.dateCreated, ascending: false)],
-        animation: .default
-    ) private var allRecipes: FetchedResults<Recipe>
-
     @StateObject private var mealPlanService = MealPlanService.shared
 
     private var weeklyLists: [WeeklyList] {
@@ -33,40 +27,107 @@ struct DashboardView: View {
         }
     }
 
-    private var recipes: [Recipe] {
-        let key = householdService.currentHouseholdKey
-        return allRecipes.filter { recipe in
-            if let key { return recipe.householdKey == key }
-            return recipe.householdKey == nil
-        }
-    }
-
     private var activeGroceryList: WeeklyList? {
         weeklyLists.first { !$0.isCompleted }
     }
 
-    private var todaysMeals: [PlannedMeal] {
+    // MARK: - Meal Data
+
+    private var nextMeal: PlannedMeal? {
         guard let plan = mealPlanService.activeMealPlan,
-              let meals = plan.plannedMeals?.allObjects as? [PlannedMeal] else { return [] }
-        return meals
+              let meals = plan.plannedMeals?.allObjects as? [PlannedMeal] else { return nil }
+
+        let now = Date()
+        let calendar = Calendar.current
+
+        // Meal type ordering for same-day sorting
+        let mealOrder: [String: Int] = ["breakfast": 0, "lunch": 1, "dinner": 2, "snack": 3]
+
+        // Find next uncompleted meal today or tomorrow
+        let upcoming = meals
             .filter { meal in
-                guard let date = meal.date else { return false }
-                return Calendar.current.isDateInToday(date)
+                guard let date = meal.date, !meal.isCompleted else { return false }
+                return calendar.isDateInToday(date) || calendar.isDateInTomorrow(date)
             }
-            .sorted { ($0.mealType ?? "") < ($1.mealType ?? "") }
+            .sorted { a, b in
+                let dateA = a.date ?? .distantFuture
+                let dateB = b.date ?? .distantFuture
+                if !calendar.isDate(dateA, inSameDayAs: dateB) {
+                    return dateA < dateB
+                }
+                let orderA = mealOrder[(a.mealType ?? "").lowercased()] ?? 99
+                let orderB = mealOrder[(b.mealType ?? "").lowercased()] ?? 99
+                return orderA < orderB
+            }
+
+        return upcoming.first
     }
 
-    private var spotlightRecipe: Recipe? {
-        let candidates = recipes
-        guard !candidates.isEmpty else { return nil }
+    private var nextMealTimeLabel: String {
+        guard let meal = nextMeal, let date = meal.date else { return "" }
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "tonight"
+        } else if calendar.isDateInTomorrow(date) {
+            return "tomorrow"
+        }
+        return ""
+    }
 
-        // Prefer favorites, then least-used, with date-seeded randomness
-        let favorites = candidates.filter { $0.isFavorite }
-        let pool = favorites.isEmpty ? candidates : Array(favorites)
+    // MARK: - Meal Plan Overview Data
 
-        let dayOfYear = Calendar.current.ordinality(of: .day, in: .year, for: Date()) ?? 1
-        let index = dayOfYear % pool.count
-        return pool[index]
+    private var planDaysFilled: (filled: Int, total: Int)? {
+        guard let plan = mealPlanService.activeMealPlan,
+              let startDate = plan.startDate,
+              let meals = plan.plannedMeals?.allObjects as? [PlannedMeal] else { return nil }
+
+        let total = Int(plan.duration)
+        let calendar = Calendar.current
+
+        // Count days that have at least one meal
+        var daysWithMeals = Set<Int>()
+        for meal in meals {
+            guard let date = meal.date else { continue }
+            let dayOffset = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate), to: calendar.startOfDay(for: date)).day ?? 0
+            if dayOffset >= 0 && dayOffset < total {
+                daysWithMeals.insert(dayOffset)
+            }
+        }
+
+        return (daysWithMeals.count, total)
+    }
+
+    private var planDayIndicators: [(dayLetter: String, hasMeal: Bool)]? {
+        guard let plan = mealPlanService.activeMealPlan,
+              let startDate = plan.startDate,
+              let meals = plan.plannedMeals?.allObjects as? [PlannedMeal] else { return nil }
+
+        let total = Int(plan.duration)
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+
+        var daysWithMeals = Set<Int>()
+        for meal in meals {
+            guard let date = meal.date else { continue }
+            let dayOffset = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate), to: calendar.startOfDay(for: date)).day ?? 0
+            if dayOffset >= 0 && dayOffset < total {
+                daysWithMeals.insert(dayOffset)
+            }
+        }
+
+        var indicators: [(String, Bool)] = []
+        for i in 0..<total {
+            if let date = calendar.date(byAdding: .day, value: i, to: startDate) {
+                let label = String(formatter.string(from: date).prefix(3))
+                indicators.append((label, daysWithMeals.contains(i)))
+            }
+        }
+        return indicators
+    }
+
+    private var hasContent: Bool {
+        nextMeal != nil || activeGroceryList != nil || mealPlanService.activeMealPlan != nil
     }
 
     var body: some View {
@@ -78,19 +139,22 @@ struct DashboardView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .padding(.top, ForagerTheme.Spacing.xs)
 
-                if todaysMeals.isEmpty && activeGroceryList == nil && recipes.isEmpty {
+                if !hasContent {
                     welcomeCard
                 } else {
-                    if !todaysMeals.isEmpty {
-                        todaysMealsCard
+                    // 1. Next Meal (most actionable)
+                    if let meal = nextMeal {
+                        nextMealCard(meal: meal)
                     }
 
+                    // 2. Grocery Snapshot
                     if let list = activeGroceryList {
                         groceryRunCard(list: list)
                     }
 
-                    if let recipe = spotlightRecipe {
-                        recipeSpotlightCard(recipe: recipe)
+                    // 3. Meal Plan Overview
+                    if let plan = mealPlanService.activeMealPlan {
+                        mealPlanOverviewCard(plan: plan)
                     }
                 }
 
@@ -117,12 +181,44 @@ struct DashboardView: View {
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
+        let timeGreeting: String
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default: return "Good night"
+        case 5..<12: timeGreeting = "Good morning"
+        case 12..<17: timeGreeting = "Good afternoon"
+        case 17..<22: timeGreeting = "Good evening"
+        default: timeGreeting = "Good night"
         }
+
+        // Try to get user's first name
+        if let name = resolvedFirstName, !name.isEmpty {
+            return "\(timeGreeting), \(name)"
+        }
+        return timeGreeting
+    }
+
+    private var resolvedFirstName: String? {
+        // 1. Cached display name from household creation
+        if let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+           !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
+            return cached.components(separatedBy: " ").first
+        }
+
+        // 2. Extract from device name ("Rich's iPhone" → "Rich")
+        let deviceName = UIDevice.current.name
+        if let range = deviceName.range(of: "'s ", options: .caseInsensitive) {
+            let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
+            if !name.isEmpty { return name }
+        }
+        // "Rich iPhone" pattern
+        let deviceTypes = ["iPhone", "iPad", "iPod"]
+        for type in deviceTypes {
+            if let range = deviceName.range(of: " \(type)", options: .caseInsensitive) {
+                let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
+                if !name.isEmpty && name != type { return name }
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Welcome Card (nothing to show)
@@ -148,14 +244,14 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }
 
-    // MARK: - Today's Meals Card
+    // MARK: - Next Meal Card
 
-    private var todaysMealsCard: some View {
+    private func nextMealCard(meal: PlannedMeal) -> some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
             HStack {
                 Image(systemName: "fork.knife")
                     .foregroundStyle(ForagerTheme.accentPrimary)
-                Text("Today's Meals")
+                Text("Next Up")
                     .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
@@ -168,48 +264,42 @@ struct DashboardView: View {
                 }
             }
 
-            ForEach(todaysMeals, id: \.objectID) { meal in
+            // Meal type + timing
+            let mealType = meal.mealType?.capitalized ?? "Meal"
+            let timing = nextMealTimeLabel
+            Text("\(mealType)\(timing.isEmpty ? "" : " \(timing)")")
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
+
+            // Recipe or quick option
+            if let recipe = meal.recipe {
+                Text(recipe.recipeDisplayTitle)
+                    .font(ForagerTheme.secondaryFont)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineLimit(2)
+
                 HStack(spacing: ForagerTheme.Spacing.sm) {
-                    Text(mealTypeLabel(meal.mealType))
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                        .frame(width: 70, alignment: .leading)
-
-                    if let recipe = meal.recipe {
-                        Text(recipe.recipeDisplayTitle)
-                            .font(ForagerTheme.secondaryFont)
-                            .foregroundStyle(ForagerTheme.textPrimary)
-                            .lineLimit(1)
-                    } else if let quickOption = meal.quickOption {
-                        Text(quickOption)
-                            .font(ForagerTheme.secondaryFont)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                            .lineLimit(1)
-                    }
-
-                    Spacer()
-
-                    if meal.isCompleted {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(ForagerTheme.accentSecondary)
+                    if recipe.servings > 0 {
+                        Text(recipe.recipeServingsDescription)
                             .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                    if recipe.recipeTotalTime > 0 {
+                        Text("· \(recipe.recipeFormattedTotalTime)")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
+            } else if let quickOption = meal.quickOption {
+                Text(quickOption)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
         .padding(ForagerTheme.Spacing.md)
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
-    }
-
-    private func mealTypeLabel(_ type: String?) -> String {
-        switch type?.lowercased() {
-        case "breakfast": return "Breakfast"
-        case "lunch": return "Lunch"
-        case "dinner": return "Dinner"
-        case "snack": return "Snack"
-        default: return type?.capitalized ?? "Meal"
-        }
     }
 
     // MARK: - Grocery Run Card
@@ -282,56 +372,60 @@ struct DashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }
 
-    // MARK: - Recipe Spotlight Card
+    // MARK: - Meal Plan Overview Card
 
-    private func recipeSpotlightCard(recipe: Recipe) -> some View {
-        NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-                HStack {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(ForagerTheme.statusWarningFG)
-                    Text("Recipe Spotlight")
-                        .font(ForagerTheme.cardTitle)
-                        .foregroundStyle(ForagerTheme.textPrimary)
-                    Spacer()
-                }
-
-                if recipe.hasHeroImage, let urlString = recipe.imageURL, let url = URL(string: urlString) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(maxWidth: .infinity, maxHeight: 160)
-                                .clipped()
-                                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
-                        case .failure:
-                            EmptyView()
-                        default:
-                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.md)
-                                .fill(ForagerTheme.backgroundTertiary)
-                                .frame(height: 160)
-                        }
-                    }
-                }
-
-                Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont)
+    private func mealPlanOverviewCard(plan: MealPlan) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            HStack {
+                Image(systemName: "calendar")
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+                Text("Meal Plan")
+                    .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
-                    .lineLimit(2)
-
-                if let author = recipe.displayAuthor {
-                    Text("by \(author)")
+                Spacer()
+                Button {
+                    selectedTab = .mealPlans
+                } label: {
+                    Text("View")
                         .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
             }
-            .padding(ForagerTheme.Spacing.md)
-            .background(ForagerTheme.surfacePrimary)
-            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
+
+            // Plan name + fill status
+            if let dayData = planDaysFilled {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(plan.name ?? "Current Plan")
+                        .font(ForagerTheme.secondaryFont)
+                        .foregroundStyle(ForagerTheme.textPrimary)
+                    Text("·")
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text("\(dayData.filled) of \(dayData.total) days planned")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textSecondary)
+                }
+            }
+
+            // Day indicators
+            if let indicators = planDayIndicators {
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    ForEach(Array(indicators.enumerated()), id: \.offset) { _, indicator in
+                        VStack(spacing: 4) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : ForagerTheme.backgroundTertiary)
+                                .frame(width: 28, height: 6)
+                            Text(indicator.dayLetter)
+                                .font(.system(size: 10))
+                                .foregroundStyle(indicator.hasMeal ? ForagerTheme.textPrimary : ForagerTheme.textTertiary)
+                        }
+                    }
+                    Spacer()
+                }
+            }
         }
-        .buttonStyle(.plain)
+        .padding(ForagerTheme.Spacing.md)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }
 
     // MARK: - Quick Actions Bar
