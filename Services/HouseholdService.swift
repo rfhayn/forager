@@ -1250,6 +1250,7 @@ class HouseholdService: ObservableObject {
             newRecipe.householdKey = nil
 
             if let oldId = oldRecipe.id { recipeMapping[oldId] = newRecipe }
+            diag.debug("Migrated recipe '\(oldRecipe.title ?? "?")': imageURL=\(oldRecipe.imageURL != nil ? "yes" : "nil"), author=\(oldRecipe.author ?? "nil")", category: .household)
 
             // Copy ingredients
             let ingredientSet = oldRecipe.ingredients as? Set<Ingredient> ?? []
@@ -1832,11 +1833,13 @@ class HouseholdService: ObservableObject {
             // M10.4.0: Recipe attribution fields
             new.imageURL = old.imageURL
             new.author = old.author
+            new.lastUsed = old.lastUsed
             // M9.21: Relationship for CloudKit zone assignment + string for fetch predicates
             new.household = household
             new.householdKey = householdKey
             if let oldId = old.id { recipeMapping[oldId] = new }
             copiedCount += 1
+            diag.debug("Copied recipe '\(old.title ?? "?")': imageURL=\(old.imageURL != nil ? "yes" : "nil"), author=\(old.author ?? "nil")", category: .household)
 
             // Copy child Ingredients
             let ingredientSet = old.ingredients as? Set<Ingredient> ?? []
