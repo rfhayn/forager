@@ -239,7 +239,7 @@ struct DashboardView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(ForagerTheme.accentPrimary)
 
-            Text("Welcome to Forager")
+            Text("Welcome to forager")
                 .font(ForagerTheme.cardTitle)
                 .foregroundStyle(ForagerTheme.textPrimary)
 
