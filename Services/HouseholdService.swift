@@ -1243,6 +1243,9 @@ class HouseholdService: ObservableObject {
             newRecipe.dateCreated = Date()
             newRecipe.isFavorite = oldRecipe.isFavorite
             newRecipe.usageCount = 0
+            // M10.4.0: Recipe attribution fields
+            newRecipe.imageURL = oldRecipe.imageURL
+            newRecipe.author = oldRecipe.author
             newRecipe.household = nil
             newRecipe.householdKey = nil
 
