@@ -147,8 +147,6 @@ struct SettingsView: View {
     
     // MARK: - M15.1: Data Management Section (relocated from tabs — ADR 011)
 
-    @State private var showingRestoreConfirmation = false
-    @State private var restoreResultMessage: String?
 
     private var dataManagementSection: some View {
         Section {
@@ -196,14 +194,6 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
 
-                Divider().padding(.vertical, ForagerTheme.Spacing.sm)
-
-                // Restore row
-                Button { showingRestoreConfirmation = true } label: {
-                    Label("Restore Default Categories", systemImage: "arrow.counterclockwise")
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
             }
             .foragerGlassCard()
             .listRowBackground(Color.clear)
@@ -216,31 +206,6 @@ struct SettingsView: View {
             }
             .navigationDestination(isPresented: $showingStores) {
                 ManageStoresView(popToRoot: .constant(false), storeService: storeService)
-            }
-            .confirmationDialog("Restore Default Categories?",
-                                isPresented: $showingRestoreConfirmation,
-                                titleVisibility: .visible) {
-                Button("Restore") {
-                    do {
-                        let created = try DefaultSeeder.restoreDefaultCategories(in: viewContext)
-                        restoreResultMessage = created > 0
-                            ? "Restored \(created) missing categories."
-                            : "All default categories already exist."
-                    } catch {
-                        restoreResultMessage = "Failed to restore: \(error.localizedDescription)"
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will re-create any missing default categories (Produce, Pantry, Dairy & Fridge, etc.). Existing categories won't be affected.")
-            }
-            .alert("Categories", isPresented: Binding(
-                get: { restoreResultMessage != nil },
-                set: { if !$0 { restoreResultMessage = nil } }
-            )) {
-                Button("OK") { restoreResultMessage = nil }
-            } message: {
-                Text(restoreResultMessage ?? "")
             }
         } header: {
             Text("Data")

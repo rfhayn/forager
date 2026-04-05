@@ -48,6 +48,10 @@ struct ManageCategoriesView: View {
     @State private var showingSuccessAlert = false
     @State private var successMessage = ""
     
+    // Restore defaults
+    @State private var showingRestoreConfirmation = false
+    @State private var restoreResultMessage: String?
+
     // Error handling
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -65,6 +69,31 @@ struct ManageCategoriesView: View {
         }
         .sheet(isPresented: $showingAddCategory) {
             AddCategoryView()
+        }
+        .confirmationDialog("Restore Default Categories?",
+                            isPresented: $showingRestoreConfirmation,
+                            titleVisibility: .visible) {
+            Button("Restore") {
+                do {
+                    let created = try DefaultSeeder.restoreDefaultCategories(in: viewContext)
+                    restoreResultMessage = created > 0
+                        ? "Restored \(created) missing categories."
+                        : "All default categories already exist."
+                } catch {
+                    restoreResultMessage = "Failed to restore: \(error.localizedDescription)"
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will re-create any missing default categories (Produce, Pantry, Dairy & Fridge, etc.). Existing categories won't be affected.")
+        }
+        .alert("Categories", isPresented: Binding(
+            get: { restoreResultMessage != nil },
+            set: { if !$0 { restoreResultMessage = nil } }
+        )) {
+            Button("OK") { restoreResultMessage = nil }
+        } message: {
+            Text(restoreResultMessage ?? "")
         }
         .alert("Delete Category", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -175,7 +204,14 @@ struct ManageCategoriesView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: ForagerTheme.Spacing.md) {
-                Button { showingAddCategory = true } label: {
+                Menu {
+                    Button { showingAddCategory = true } label: {
+                        Label("Add Category", systemImage: "plus")
+                    }
+                    Button { showingRestoreConfirmation = true } label: {
+                        Label("Restore Defaults", systemImage: "arrow.counterclockwise")
+                    }
+                } label: {
                     Image(systemName: "plus")
                 }
 
