@@ -190,15 +190,15 @@ struct foragerApp: App {
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
-                            Tab("Recipes", systemImage: "book", value: .recipes) {
-                                NavigationStack {
-                                    RecipeListView(popToRoot: $recipesPopToRoot)
-                                        .searchButton(showSearch: $showSearch)
-                                }
-                            }
                             Tab("Meals", systemImage: "calendar", value: .mealPlans) {
                                 NavigationStack {
                                     MealPlansListView(popToRoot: $mealPlansPopToRoot)
+                                        .searchButton(showSearch: $showSearch)
+                                }
+                            }
+                            Tab("Recipes", systemImage: "book", value: .recipes) {
+                                NavigationStack {
+                                    RecipeListView(popToRoot: $recipesPopToRoot)
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
