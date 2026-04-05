@@ -68,11 +68,6 @@ struct SettingsView: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-            // M4.3.1: Display Options
-            displayOptionsSection
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-
             // M10.6: AI Integration (optional LLM API)
             aiImportSection
                 .listRowBackground(Color.clear)
@@ -267,42 +262,9 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - M4.3.1: Display Options Section
-    
-    // Display preferences for recipe source visibility
-    // Controls whether recipe sources appear throughout the app
-    private var displayOptionsSection: some View {
-        Section {
-            VStack {
-                // Show recipe sources toggle
-                // When enabled, shows recipe tags like "[Tacos] [Spaghetti]"
-                HStack {
-                    Toggle("Show Recipe Sources", isOn: $preferencesService.showRecipeSources)
-                    Button {
-                        showingRecipeSourcesInfo = true
-                    } label: {
-                        Image(systemName: "info.circle")
-                            .foregroundStyle(ForagerTheme.textTertiary)
-                            .font(.body)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .alert("Show Recipe Sources", isPresented: $showingRecipeSourcesInfo) {
-                    Button("OK", role: .cancel) { }
-                } message: {
-                    Text("Shows which recipes each grocery item came from — for example, \"Ground beef\" will display [Tacos] [Spaghetti] tags. Helpful when your grocery list is generated from a meal plan.")
-                }
-            }
-            .foragerGlassCard()
-        } header: {
-            Text("Display Options")
-        }
-    }
-    
     // MARK: - M10.6: AI Integration Section
 
     @State private var showingAutoNameInfo = false
-    @State private var showingRecipeSourcesInfo = false
     @State private var showingAIInfo = false
 
     private var aiImportSection: some View {

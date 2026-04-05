@@ -35,7 +35,7 @@ struct GroceryListDetailView: View {
     @State private var editedTitle = ""
 
     // M9.26: Toggle recipe source display
-    @State private var showRecipeSources = false
+    @ObservedObject private var preferencesService = UserPreferencesService.shared
 
     // Quick-add state
     @State private var quickAddText = ""
@@ -425,7 +425,7 @@ struct GroceryListDetailView: View {
         GroceryListItemRow(
             item: item,
             onToggle: { toggleItemCompletion(item) },
-            showRecipeSources: showRecipeSources,
+            showRecipeSources: preferencesService.showRecipeSources,
             storeColorHex: hasStores ? item.store?.color : nil
         )
         .listRowBackground(Color.clear)
@@ -535,10 +535,10 @@ struct GroceryListDetailView: View {
                 }
 
                 Button {
-                    withAnimation { showRecipeSources.toggle() }
+                    withAnimation { preferencesService.showRecipeSources.toggle() }
                 } label: {
-                    Image(systemName: showRecipeSources ? "book.fill" : "book")
-                        .foregroundStyle(showRecipeSources ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                    Image(systemName: preferencesService.showRecipeSources ? "book.fill" : "book")
+                        .foregroundStyle(preferencesService.showRecipeSources ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                 }
                 Button(action: { showingAddItem = true }) {
                     Image(systemName: "plus.square")
