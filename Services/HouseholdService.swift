@@ -1213,6 +1213,46 @@ class HouseholdService: ObservableObject {
 
         diag.debug("Migration: \(templateSet.count) templates — \(templateSet.count - skippedTemplates) new, \(skippedTemplates) mapped to existing", category: .household)
 
+        // Migrate stores (M18.1.5) — skip duplicates by name
+        let storeSet: Set<Store> = {
+            let req: NSFetchRequest<Store> = Store.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+            return Set((try? viewContext.fetch(req)) ?? [])
+        }()
+        let existingStoreNames: Set<String> = {
+            let req: NSFetchRequest<Store> = Store.fetchRequest()
+            req.predicate = NSPredicate(format: "householdKey == nil")
+            let results = (try? viewContext.fetch(req)) ?? []
+            return Set(results.compactMap { $0.name?.lowercased() })
+        }()
+        var storeMapping: [UUID: Store] = [:]
+        for oldStore in storeSet {
+            let name = oldStore.name?.lowercased() ?? ""
+            if existingStoreNames.contains(name) { continue }
+            let newStore = Store(context: viewContext)
+            newStore.id = UUID()
+            newStore.name = oldStore.name
+            newStore.color = oldStore.color
+            newStore.sortOrder = oldStore.sortOrder
+            newStore.dateCreated = oldStore.dateCreated
+            newStore.updatedAt = oldStore.updatedAt
+            newStore.household = nil
+            newStore.householdKey = nil
+            if let oldId = oldStore.id { storeMapping[oldId] = newStore }
+        }
+        // Re-link migrated templates' preferredStore
+        for oldTemplate in templateSet {
+            if let oldStoreId = oldTemplate.preferredStore?.id,
+               let newStore = storeMapping[oldStoreId],
+               let oldTemplateId = oldTemplate.id,
+               let newTemplate = templateMapping[oldTemplateId] {
+                newTemplate.preferredStore = newStore
+            }
+        }
+        if !storeSet.isEmpty {
+            diag.debug("Migration: \(storeSet.count) stores — \(storeMapping.count) new", category: .household)
+        }
+
         // Fetch existing personal recipe titles to avoid duplicates
         let existingRecipeTitles: Set<String> = {
             let req: NSFetchRequest<Recipe> = Recipe.fetchRequest()
@@ -1870,6 +1910,38 @@ class HouseholdService: ObservableObject {
             diag.debug("Copied \(oldRecipes.count) Recipe(s) to household", category: .household)
         }
 
+        // --- Stores (M18.1.5) ---
+        var storeMapping: [UUID: Store] = [:]
+        let storeReq: NSFetchRequest<Store> = Store.fetchRequest()
+        storeReq.predicate = NSPredicate(format: "householdKey == nil")
+        storeReq.affectedStores = [persistence.privateStore]
+        let oldStores = (try? viewContext.fetch(storeReq)) ?? []
+        for old in oldStores {
+            let new = Store(context: viewContext)
+            new.id = UUID()
+            new.name = old.name
+            new.color = old.color
+            new.sortOrder = old.sortOrder
+            new.dateCreated = old.dateCreated
+            new.updatedAt = old.updatedAt
+            new.household = household
+            new.householdKey = householdKey
+            if let oldId = old.id { storeMapping[oldId] = new }
+            copiedCount += 1
+        }
+        // Re-link template preferredStore to new household copies
+        for oldTemplate in oldTemplates {
+            if let oldStoreId = oldTemplate.preferredStore?.id,
+               let newStore = storeMapping[oldStoreId],
+               let oldTemplateId = oldTemplate.id,
+               let newTemplate = templateMapping[oldTemplateId] {
+                newTemplate.preferredStore = newStore
+            }
+        }
+        if !oldStores.isEmpty {
+            diag.debug("Copied \(oldStores.count) Store(s) to household", category: .household)
+        }
+
         // --- WeeklyLists + GroceryListItems ---
         let listReq: NSFetchRequest<WeeklyList> = WeeklyList.fetchRequest()
         listReq.predicate = NSPredicate(format: "householdKey == nil")
@@ -1976,6 +2048,7 @@ class HouseholdService: ObservableObject {
         // --- Delete originals (children first via cascade, but explicit for safety) ---
         for old in oldCategories { viewContext.delete(old) }
         for old in oldTemplates { viewContext.delete(old) }
+        for old in oldStores { viewContext.delete(old) }
         for old in oldRecipes { viewContext.delete(old) }
         for old in oldLists { viewContext.delete(old) }
         for old in oldPlans { viewContext.delete(old) }
