@@ -1185,6 +1185,7 @@ struct RecipeImportPreviewView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(maxHeight: 200)
+                    .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md))
             case .failure:
                 EmptyView()
@@ -1195,6 +1196,7 @@ struct RecipeImportPreviewView: View {
                     .overlay(ProgressView())
             }
         }
+        .allowsHitTesting(false)
     }
 
     // MARK: - Metadata Section
