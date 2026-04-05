@@ -842,6 +842,7 @@ struct RecipeGridCard: View {
                             placeholderView
                         }
                     }
+                    .id(recipe.objectID)
                 } else {
                     placeholderView
                 }
@@ -1391,6 +1392,7 @@ struct RecipeDetailView: View {
                     EmptyView()
                 }
             }
+            .id(recipe.objectID)
         }
     }
 
