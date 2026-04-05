@@ -1393,6 +1393,7 @@ struct RecipeDetailView: View {
                 }
             }
             .id(recipe.objectID)
+            .allowsHitTesting(false)
         }
     }
 
