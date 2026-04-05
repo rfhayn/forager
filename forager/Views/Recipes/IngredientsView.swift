@@ -127,8 +127,8 @@ struct IngredientsView: View {
                 reviewBanner
             }
 
-            // M18.1.5: Store assignment banner (when ingredients lack stores and stores exist)
-            if needsStoreCount > 0 && hasStoresInHousehold {
+            // M18.1.5: Store assignment banner (dismissible)
+            if needsStoreCount > 0 && hasStoresInHousehold && !storeAssignmentBannerDismissed {
                 storeAssignmentBanner
             }
 
@@ -394,20 +394,29 @@ struct IngredientsView: View {
 
     // MARK: - M18.1.5: Store Assignment Banner
 
+    @AppStorage("storeAssignmentBannerDismissed") private var storeAssignmentBannerDismissed = false
+
     private var storeAssignmentBanner: some View {
         HStack {
             Image(systemName: "storefront")
                 .foregroundStyle(ForagerTheme.accentPrimary)
-            Text("\(needsStoreCount) ingredient\(needsStoreCount == 1 ? "" : "s") need\(needsStoreCount == 1 ? "s" : "") a store")
+            Text("\(needsStoreCount) ingredient\(needsStoreCount == 1 ? "" : "s") without a store")
                 .font(ForagerTheme.secondaryFont)
                 .foregroundStyle(ForagerTheme.textPrimary)
             Spacer()
-            Button("Assign Now") {
+            Button("Assign") {
                 let unassigned = ingredients.filter { $0.preferredStore == nil }
                 activeSheet = .storeChange(unassigned)
             }
             .font(ForagerTheme.footnoteFont.bold())
             .foregroundStyle(ForagerTheme.accentPrimary)
+            Button {
+                storeAssignmentBannerDismissed = true
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .foregroundStyle(ForagerTheme.textTertiary)
+            }
         }
         .padding(ForagerTheme.Spacing.md)
         .background(ForagerTheme.surfacePrimary)
