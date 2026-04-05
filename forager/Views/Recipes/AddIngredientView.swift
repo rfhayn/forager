@@ -10,18 +10,33 @@ struct AddIngredientView: View {
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
+    @EnvironmentObject private var storeService: StoreService
+
     @State private var name = ""
     @State private var selectedCategory = "Uncategorized"
+    @State private var selectedStoreName = ""
     @State private var isStaple = false
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Category.sortOrder, ascending: true)]
     ) private var allCategories: FetchedResults<Category>
 
+    @FetchRequest(
+        sortDescriptors: [
+            NSSortDescriptor(keyPath: \Store.sortOrder, ascending: true),
+            NSSortDescriptor(keyPath: \Store.name, ascending: true)
+        ]
+    ) private var allStores: FetchedResults<Store>
+
     // M7.6.8: Filter categories by household scope to prevent duplicates
     private var categories: [Category] {
         let key = householdService.currentHouseholdKey
         return allCategories.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
+    }
+
+    private var stores: [Store] {
+        let key = householdService.currentHouseholdKey
+        return allStores.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
     }
     
     var body: some View {
@@ -38,6 +53,20 @@ struct AddIngredientView: View {
                         }
                     }
                     
+                    // M18.1.5: Store picker
+                    if !stores.isEmpty {
+                        Picker("Store", selection: $selectedStoreName) {
+                            Text("No Store").tag("")
+                            ForEach(stores, id: \.self) { store in
+                                HStack {
+                                    StoreColorDot(hex: store.color, size: 12)
+                                    Text(store.name ?? "Unnamed")
+                                }
+                                .tag(store.name ?? "")
+                            }
+                        }
+                    }
+
                     Toggle("Is Staple", isOn: $isStaple)
                 }
             }
@@ -74,6 +103,12 @@ struct AddIngredientView: View {
             : categories.first(where: { $0.displayName == selectedCategory })
         ingredientTemplateService.updateTemplate(ingredient, name: trimmedName,
             category: categoryEntity, isStaple: isStaple)
+
+        // M18.1.5: Assign preferred store
+        if !selectedStoreName.isEmpty,
+           let store = stores.first(where: { $0.name == selectedStoreName }) {
+            storeService.assignStore(store, toTemplate: ingredient)
+        }
 
         if ingredientTemplateService.errorMessage == nil {
             dismiss()
