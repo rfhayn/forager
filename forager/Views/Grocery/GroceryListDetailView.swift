@@ -11,10 +11,7 @@ import SwiftUI
 import CoreData
 
 // M18.1.4: Grocery list grouping mode
-enum GroceryGroupMode: String {
-    case category
-    case store
-}
+// GroceryGroupMode removed — now uses showStoreGrouping toggle with category always present
 
 struct GroceryListDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
@@ -58,7 +55,7 @@ struct GroceryListDetailView: View {
     @State private var showCelebration = false
 
     // M18.1.4: Store grouping + assignment
-    @AppStorage("groceryListGroupMode") private var groupModeRaw: String = GroceryGroupMode.category.rawValue
+    @AppStorage("groceryShowStoreGrouping") private var showStoreGrouping = false
     @State private var storeAssignmentItem: GroceryListItem?
 
     // Track last-added item so saveToTemplates can update its category
@@ -94,10 +91,6 @@ struct GroceryListDetailView: View {
     private var stores: [Store] {
         let key = householdService.currentHouseholdKey
         return allStores.filter { key != nil ? $0.householdKey == key : $0.householdKey == nil }
-    }
-
-    private var groupMode: GroceryGroupMode {
-        GroceryGroupMode(rawValue: groupModeRaw) ?? .category
     }
 
     private var hasStores: Bool { !stores.isEmpty }
@@ -209,9 +202,20 @@ struct GroceryListDetailView: View {
         }
     }
 
-    // M18.1.4: Group by store — delegates to testable static method on StoreService
-    private var groupedByStore: [(storeName: String, storeColor: String?, items: [GroceryListItem])] {
-        StoreService.groupByStore(items: listItems, stores: stores)
+    // M18.1.5: Nested grouping — Store → Category → Items
+    private var groupedByStoreThenCategory: [(storeName: String, storeColor: String?, categoryGroups: [(categoryName: String, items: [GroceryListItem])])] {
+        let storeGroups = StoreService.groupByStore(items: listItems, stores: stores)
+        return storeGroups.map { storeName, storeColor, storeItems in
+            let catGrouped = Dictionary(grouping: storeItems) { $0.categoryEntity?.name ?? "Uncategorized" }
+            let sorted = catGrouped.sorted { lhs, rhs in
+                if let lhsCat = categories.first(where: { $0.displayName == lhs.key }),
+                   let rhsCat = categories.first(where: { $0.displayName == rhs.key }) {
+                    return lhsCat.sortOrder < rhsCat.sortOrder
+                }
+                return lhs.key < rhs.key
+            }
+            return (storeName, storeColor, sorted.map { ($0.key, $0.value) })
+        }
     }
 
     private var totalItemsCount: Int { listItems.count }
@@ -365,27 +369,48 @@ struct GroceryListDetailView: View {
 
     private var shoppingListView: some View {
         List {
-            // M18.1.4: Switch between category and store grouping
-            if hasStores && groupMode == .store {
-                ForEach(groupedByStore, id: \.storeName) { storeName, storeColor, items in
-                    let isExpanded = Binding(
+            // M18.1.5: Nested grouping — optionally by store, always by category
+            if hasStores && showStoreGrouping {
+                ForEach(groupedByStoreThenCategory, id: \.storeName) { storeName, storeColor, categoryGroups in
+                    let storeExpanded = Binding(
                         get: { !collapsedSections.contains(storeName) },
                         set: { if !$0 { collapsedSections.insert(storeName) } else { collapsedSections.remove(storeName) } }
                     )
 
                     Section {
                         if !collapsedSections.contains(storeName) {
-                            ForEach(items, id: \.self) { item in
-                                itemRow(item)
+                            ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
+                                let catKey = "\(storeName)/\(categoryName)"
+                                let catExpanded = Binding(
+                                    get: { !collapsedCategories.contains(catKey) },
+                                    set: { if !$0 { collapsedCategories.insert(catKey) } else { collapsedCategories.remove(catKey) } }
+                                )
+
+                                Section {
+                                    if !collapsedCategories.contains(catKey) {
+                                        ForEach(items, id: \.self) { item in
+                                            itemRow(item)
+                                        }
+                                    }
+                                } header: {
+                                    let completedCount = items.filter { $0.isCompleted }.count
+                                    ForagerSectionHeader(
+                                        title: categoryName,
+                                        count: completedCount,
+                                        totalCount: items.count,
+                                        isExpanded: catExpanded
+                                    )
+                                }
                             }
                         }
                     } header: {
-                        let completedCount = items.filter { $0.isCompleted }.count
+                        let allItems = categoryGroups.flatMap { $0.items }
+                        let completedCount = allItems.filter { $0.isCompleted }.count
                         ForagerSectionHeader(
                             title: storeName,
                             count: completedCount,
-                            totalCount: items.count,
-                            isExpanded: isExpanded,
+                            totalCount: allItems.count,
+                            isExpanded: storeExpanded,
                             colorDotHex: storeColor
                         )
                     }
@@ -515,22 +540,13 @@ struct GroceryListDetailView: View {
         }
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: ForagerTheme.Spacing.sm) {
-                // M18.1.4: Group mode toggle (invisible when no stores)
+                // M18.1.5: Store grouping toggle (category always present)
                 if hasStores {
-                    Menu {
-                        Button {
-                            withAnimation { groupModeRaw = GroceryGroupMode.category.rawValue }
-                        } label: {
-                            Label("Group by Category", systemImage: groupMode == .category ? "checkmark" : "")
-                        }
-                        Button {
-                            withAnimation { groupModeRaw = GroceryGroupMode.store.rawValue }
-                        } label: {
-                            Label("Group by Store", systemImage: groupMode == .store ? "checkmark" : "")
-                        }
+                    Button {
+                        withAnimation { showStoreGrouping.toggle() }
                     } label: {
-                        Image(systemName: groupMode == .store ? "building.2.fill" : "building.2")
-                            .foregroundStyle(groupMode == .store ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                        Image(systemName: showStoreGrouping ? "building.2.fill" : "building.2")
+                            .foregroundStyle(showStoreGrouping ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
                     }
                 }
 
@@ -577,11 +593,13 @@ struct GroceryListDetailView: View {
         }
 
         // M15.3: Auto-collapse fully completed sections after 2s
-        if hasStores && groupMode == .store {
+        if hasStores && showStoreGrouping {
             let storeName = item.store?.name ?? "Unassigned"
             checkAutoCollapseStore(section: storeName)
-        } else if let categoryName = item.categoryEntity?.name {
-            checkAutoCollapseCategory(category: categoryName)
+        }
+        if let categoryName = item.categoryEntity?.name {
+            let catKey = showStoreGrouping ? "\(item.store?.name ?? "Unassigned")/\(categoryName)" : categoryName
+            checkAutoCollapseCategory(category: catKey)
         }
     }
 
