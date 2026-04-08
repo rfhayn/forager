@@ -73,14 +73,7 @@ Then add a pointer line in `docs/next-prompt.md` under **Active Milestones**:
 - If PRD exists and is >2 weeks old, audit it against current codebase
 - If no PRD exists and milestone is >6 hours, consider creating one
 
-## Step 6: Update Session Status
-
-If orchestration directory exists, update the status file:
-```bash
-echo "PREFIX-#.#|build||[description]" > orchestration/.session-status
-```
-
-## Step 7: Initial Commit
+## Step 6: Initial Commit
 
 ```bash
 git add docs/current-story.md docs/next-prompt.md docs/next-prompt-[milestone].md

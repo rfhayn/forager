@@ -66,7 +66,3 @@ Consider running `/review` before creating the PR to check for naming convention
 - Verify `docs/development-journal.md` has session entry
 - After merge: update local main, delete feature branch
 
-If orchestration available:
-```bash
-clauductor event --worker-id [worker-name] --type "pr_created" --detail "PR #[number]: [title]"
-```

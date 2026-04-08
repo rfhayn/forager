@@ -19,17 +19,19 @@
 
 4. **Read next prompt** — `docs/next-prompt.md`
    - Phase breakdown, technical requirements, acceptance criteria
-5. **Search Core Data schema** (if working with data model)
+5. **Check active OpenSpec changes** — `openspec/changes/`
+   - Review any in-progress changes, pending tasks, or proposals
+6. **Search Core Data schema** (if working with data model)
    - Verify properties, relationships, codegen settings, fetch indexes
-6. **Review relevant ADRs** — `docs/architecture/`
+7. **Review relevant ADRs** — `docs/architecture/`
    - Key: ADR 007 (Core Data changes), ADR 008 (shared zone), ADR 013 (scope-aware fetch), ADR 014 (factory enforcement)
    - Service standard: `docs/architecture/service-layer-pattern.md`
-7. **Search for existing services** (before creating new ones)
+8. **Search for existing services** (before creating new ones)
    - Check: OptimizedRecipeDataService, IngredientParsingService, IngredientTemplateService, QuantityMergeService, UnitConversionService, RecipeScalingService, CloudKitSyncMonitor, GroceryListItemService, MealPlanService, HouseholdService
-8. **Validate architecture approach** (complex features with multiple options)
+9. **Validate architecture approach** (complex features with multiple options)
    - Document approaches with pros/cons, present recommendation, get confirmation before coding
    - Red flags requiring validation: "multi-user", "collaboration", "sync", "share", "family"
-9. **Create feature branch** before writing ANY code
+10. **Create feature branch** before writing ANY code
    - Format: `feature/M#.#.#-brief-kebab-case`
    - One phase = one branch = one PR = one squash commit to main
 

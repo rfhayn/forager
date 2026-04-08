@@ -1,0 +1,39 @@
+schema: spec-driven
+context: |
+  Forager is a native iOS/macOS grocery list, recipe manager, and meal planner.
+
+  Tech stack:
+  - Swift / SwiftUI (iOS 26+, macOS 15+)
+  - Core Data with CloudKit sync (dual-store: private + shared)
+  - No external dependencies — pure Apple frameworks
+  - Xcode 26.0+
+
+  Architecture:
+  - Service layer pattern: all Core Data writes go through services
+  - Factory enforcement (ADR 014): HouseholdScoped entities use ManagedObjectFactory.make()
+  - Scope-aware fetches (ADR 013): all fetches on household-scoped entities include householdKey predicate
+  - CloudKit Production schema is append-only — no destructive changes
+  - 13 Core Data entities, schema v11
+
+  Key domains:
+  - Grocery lists (weekly lists with items, store-aware grouping)
+  - Recipes (import via URL/text/camera, ingredient parsing)
+  - Meal planning (weekly plans with planned meals)
+  - Household sharing (CloudKit shared zones, owner/member asymmetry)
+  - Ingredient parsing (3-tier local: Regex -> ML -> NLP, optional Claude API)
+  - Store-aware shopping (preferred stores, store grouping)
+
+  Naming convention: M#.#.# format for milestones (e.g., M19.4)
+  Design system: ForagerTheme semantic color tokens, SF Pro Rounded chrome
+
+rules:
+  proposal.md:
+    - "Reference the relevant ADRs in docs/architecture/ when proposing changes"
+    - "Note any Core Data schema implications (append-only CloudKit constraint)"
+  design.md:
+    - "Show Core Data model changes if applicable"
+    - "Reference existing services before proposing new ones"
+    - "Note factory enforcement requirements for HouseholdScoped entities"
+  tasks.md:
+    - "Use M#.#.# identifiers for task grouping"
+    - "Include build verification step after implementation tasks"

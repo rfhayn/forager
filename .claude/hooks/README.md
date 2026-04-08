@@ -1,39 +1,34 @@
 # Claude Code Hooks
 
-Shell scripts triggered by Claude Code session lifecycle events. These hooks integrate Clauductor orchestration with Claude Code's native hook system.
+Shell scripts triggered by Claude Code session lifecycle events. These hooks enforce architectural constraints and documentation standards.
 
 ## Design Principles
 
-1. **Graceful degradation** — No orchestration directory = no-op. Every hook starts with `test -d "$PROJECT_DIR/orchestration" || exit 0`. No crash, no error, no output.
+1. **Warn, don't block** — Hooks inform; humans decide. Default exit code is 0 (allow). Hooks that want hard enforcement use exit 2 (block).
 
-2. **Fast path** — Target <200ms execution. Use file stat before SQLite queries. Throttle high-frequency hooks (e.g., heartbeat uses a timestamp file to avoid firing on every tool call).
+2. **Fast path** — Target <200ms execution.
 
-3. **Warn, don't block** — Hooks inform; humans decide. Default exit code is 0 (allow). Projects that want hard enforcement on specific hooks can change to exit 2 (block).
+3. **No side effects in PreToolUse** — Sync/blocking hooks (PreToolUse) only read state, never write.
 
-4. **No side effects in PreToolUse** — Sync/blocking hooks (PreToolUse) only read state, never write to DB. This prevents deadlocks and keeps tool execution predictable.
+4. **JSON protocol** — Hooks receive JSON on stdin describing the event. Hooks may write JSON to stdout for messages. Exit 0 = allow, exit 2 = block.
 
-5. **JSON protocol** — Hooks receive JSON on stdin describing the event. Hooks may write JSON to stdout for messages. Exit 0 = allow, exit 2 = block.
-
-6. **Self-contained** — Each hook is a standalone shell script. No shared libraries. Only dependencies: `jq` and `clauductor` CLI.
+5. **Self-contained** — Each hook is a standalone shell script. No shared libraries. Only dependency: `jq`.
 
 ## Hook Inventory
 
 | Hook | Event | Mode | Purpose |
 |------|-------|------|---------|
-| `session-register.sh` | SessionStart | async | Auto-register worker on session start |
-| `heartbeat.sh` | PostToolUse | async | Keep worker alive in orchestration DB |
-| `lock-guard.sh` | PreToolUse | sync | Warn before editing locked files |
+| `architecture-guard.sh` | PreToolUse | sync | ADR 014 factory enforcement — warns on direct entity creation |
+| `core-data-guard.sh` | PreToolUse | sync | ADR 007 schema change warning |
 | `doc-freshness.sh` | PreToolUse | sync | Warn about stale/missing docs before commits |
-| `status-sync.sh` | PostToolUse | async | Sync milestone status on current-story.md changes |
 
 ## Configuration
 
 Hooks are wired in `.claude/settings.json` under the `hooks` key. See that file for the full configuration.
 
-## Adding Project-Specific Hooks
+## Adding New Hooks
 
 Create new `.sh` files in this directory following the same patterns:
-- Guard with orchestration directory check
 - Use async unless the hook must block tool execution
 - Keep execution under 200ms
 - Test with `echo '{}' | bash .claude/hooks/your-hook.sh`

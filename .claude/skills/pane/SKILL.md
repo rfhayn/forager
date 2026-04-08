@@ -25,7 +25,7 @@ Examples:
 echo "${TMUX:-NOT_IN_TMUX}"
 ```
 
-If not in tmux, tell the user: "Not in a tmux session. Run `clauductor start` first, or use `tmux` manually."
+If not in tmux, tell the user: "Not in a tmux session. Use `tmux` to start a session first."
 
 Get the current session name:
 ```bash

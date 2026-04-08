@@ -170,21 +170,26 @@ These files must stay synchronized. Use `/milestone-complete` after completions.
 
 ---
 
-## HOOKS (Clauductor Framework + Forager)
+## HOOKS
 
 Claude Code hooks run automatically on tool use events. Configured in `.claude/settings.json`.
 
 | Hook | Event | Mode | Matcher | Purpose |
 |------|-------|------|---------|---------|
-| `session-register.sh` | SessionStart | async | — | Register worker with orchestration |
-| `heartbeat.sh` | PostToolUse | async | Bash\|Edit\|Write | Keep worker alive in orchestration |
-| `status-sync.sh` | PostToolUse | async | Write | Sync session status to HUD |
-| `lock-guard.sh` | PreToolUse | sync | Edit\|Write | Warn on editing locked files |
 | `architecture-guard.sh` | PreToolUse | sync | Edit\|Write | ADR 014: factory bypass warning |
 | `core-data-guard.sh` | PreToolUse | sync | Edit\|Write | ADR 007: schema change warning |
 | `doc-freshness.sh` | PreToolUse | sync | Bash(git commit *) | Warn about stale docs before commit |
 
-**Framework hooks** (session-register, heartbeat, status-sync, lock-guard, doc-freshness) are synced from the clauductor template. **Forager hooks** (architecture-guard, core-data-guard) are project-specific and won't be overwritten by `clauductor update`.
+---
+
+## OPENSPEC WORKFLOW
+
+Specifications live in `openspec/specs/` (organized by domain). Changes are proposed and tracked in `openspec/changes/`.
+
+1. **Propose**: `/opsx:propose` — describe the feature, get a complete proposal with design, specs, and tasks
+2. **Implement**: `/opsx:apply` — work through tasks from the change
+3. **Archive**: `/opsx:archive` — finalize after implementation is complete
+4. **Explore**: `/opsx:explore` — think through ideas before proposing
 
 ---
 

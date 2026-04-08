@@ -43,20 +43,6 @@ Ask the user if there are any unlogged insights from this milestone. If yes, inv
 ### 7. `docs/development-journal.md`
 Invoke `/dev-journal` via an Agent (background) to write the milestone completion narrative. Pass context: milestone completed, what was accomplished, key decisions. Include the **Retro** section (see below).
 
-### 8. Release Orchestration Locks (if orchestration is available)
-
-If `orchestration/` directory exists:
-```bash
-clauductor unlock --worker-id [current-worker]
-clauductor deregister --worker-id [current-worker]
-clauductor event --type milestone-complete --detail "Completed $ARGUMENTS"
-```
-
-Clear the session status:
-```bash
-rm -f orchestration/.session-status
-```
-
 ## Cleanup
 
 - Remove the branch-keyed status file:
@@ -86,4 +72,4 @@ After updating:
 - [ ] Actual hours recorded
 - [ ] Journal has retro section
 - [ ] Any unlogged insights captured
-- [ ] Orchestration locks released (if applicable)
+- [ ] OpenSpec change archived (if applicable)

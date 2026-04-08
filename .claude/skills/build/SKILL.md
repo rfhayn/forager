@@ -26,23 +26,12 @@ xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS
 - **iOS target**: 26+
 - **CloudKit**: DISABLED in DEBUG, ENABLED in Release
 
-## Pre-Build (if orchestration available)
-
-```bash
-clauductor event --worker-id [worker-name] --type "build_start" --detail "Build initiated"
-```
-
 ## On Build Failure
 
 If the build fails:
 1. Read the full error output
 2. Check if it's a compilation error, dependency error, or configuration error
 3. For >5 consecutive build errors, stop and reassess approach (quality gate)
-
-If orchestration available:
-```bash
-clauductor event --worker-id [worker-name] --type "build_failure" --detail "Build failed: [error summary]"
-```
 
 ## On Build Success
 
@@ -56,7 +45,3 @@ Report:
 - The `-quiet` flag suppresses output; avoid it when debugging
 - `CURRENT_PROJECT_VERSION` is managed by the user — never modify build numbers
 
-If orchestration available:
-```bash
-clauductor event --worker-id [worker-name] --type "build_success" --detail "Build succeeded"
-```

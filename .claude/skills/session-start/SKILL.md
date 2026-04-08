@@ -1,6 +1,6 @@
 ---
 name: session-start
-description: "Run the mandatory session startup checklist. Reads context docs, checks git status, registers worker, reports current milestone and branch. TRIGGER when the user says \"start session\", \"begin session\", \"let's get started\", \"starting work\", \"resume session\", \"pick up where I left off\", \"what should I work on\", or at the start of every Claude Code session."
+description: "Run the mandatory session startup checklist. Reads context docs, checks git status, checks active OpenSpec changes, reports current milestone and branch. TRIGGER when the user says \"start session\", \"begin session\", \"let's get started\", \"starting work\", \"resume session\", \"pick up where I left off\", \"what should I work on\", or at the start of every Claude Code session."
 ---
 
 # Session Startup Checklist
@@ -54,19 +54,14 @@ SLUG=$(echo "$BRANCH" | tr '/' '-')
 echo "[M#.#] feature-name .# step-name" > ~/.claude/forager-status-${SLUG}.txt
 ```
 
-## Step 5: Register Worker (if orchestration is available)
+## Step 5: Check Active OpenSpec Changes
 
-If `orchestration/` directory exists, register this session:
+Check if there are any active (non-archived) changes:
 ```bash
-clauductor register --name [worker-name] --type [session-type] --milestone [PREFIX-#.#] --owner [user]
+ls openspec/changes/ 2>/dev/null | grep -v archive
 ```
 
-Update the session status file:
-```bash
-echo "PREFIX-#.#|[type]|[worker-name]|[description]" > orchestration/.session-status
-```
-
-If orchestration is not set up, skip this step silently.
+If active changes exist, read their `tasks.md` to understand what's in progress.
 
 ## Step 6: Report
 
@@ -84,7 +79,7 @@ Verify:
 - [ ] Not on `main` (should be on feature branch for any code work)
 - [ ] Using correct M#.#.# naming convention
 - [ ] Current work is documented in current-story.md
-- [ ] Branch-specific next-prompt file exists for the active milestone
+- [ ] OpenSpec change exists for active milestone (or next-prompt file as legacy fallback)
 - [ ] No duplicate services being created
 
 If any red flags are found, report them before proceeding.

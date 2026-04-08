@@ -1,7 +1,9 @@
 # Next Implementation Prompt
 
-**Last Updated**: April 1, 2026
-**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
+**Last Updated**: April 7, 2026
+**Launch Path**: M9.28 → M7.7
+
+> **Note**: Per-milestone `next-prompt-M#.#.md` files are now replaced by OpenSpec changes in `openspec/changes/`. Archived milestone prompts are in `docs/archive/`.
 
 ---
 
