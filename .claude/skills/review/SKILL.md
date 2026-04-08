@@ -13,8 +13,6 @@ argument-hint: "[PR number for remote review]"
 - Branch: !`git branch --show-current`
 - Commits since main: !`git log main..HEAD --oneline 2>/dev/null || echo "(on main or no commits)"`
 - Files changed: !`git diff main...HEAD --name-only 2>/dev/null || echo "(none)"`
-- Orchestration: !`cat orchestration/.session-status 2>/dev/null || echo "(no session)"`
-- Claimed files: !`clauductor query locks 2>/dev/null || echo "(no orchestration)"`
 
 ## Step 1: Determine Review Mode
 
@@ -33,26 +31,7 @@ Review each commit in `git log main..HEAD --format="%H %s"`:
 
 Result: PASS if all commits comply, WARN for minor issues, FAIL for missing prefix
 
-## Step 3: Manifest Compliance (orchestration mode only)
-
-If orchestration is available (`orchestration/` exists and worker is registered):
-
-- Read claimed files: `clauductor query locks`
-- Read actually modified files: `git diff main...HEAD --name-only`
-- **FAIL**: Files modified but NOT in the manifest (unclaimed modifications) — exclude docs/ from this check
-- **WARN**: Files in manifest but NOT modified (over-claimed, may be fine)
-
-If orchestration is not set up, report: `Manifest Compliance: SKIPPED (single-session mode)`
-
-## Step 4: Orchestration Hook Check
-
-For any modified file matching `.claude/skills/*/SKILL.md`:
-
-- Check if the skill contains `clauductor event` or `clauductor register` or `clauductor lock`
-- **WARN** if a modified skill has no orchestration integration
-- **N/A** if no skills were modified
-
-## Step 5: Documentation Currency
+## Step 3: Documentation Currency
 
 If a milestone was detected from the branch:
 
@@ -87,8 +66,6 @@ Mode:      [Branch review | PR #N review]
 Commits:   [count]
 
 Naming Convention:     [PASS | WARN (N) | FAIL (N)]
-Manifest Compliance:   [PASS | WARN (N) | FAIL (N) | SKIPPED]
-Orchestration Hooks:   [PASS | WARN (N) | N/A]
 Documentation:         [PASS | WARN (N)]
 Code Quality:          [PASS | WARN (N) | FAIL (N)]
 Commit Format:         [PASS | WARN (N)]
@@ -104,14 +81,7 @@ Verdict logic:
 - Only WARNs → `READY FOR PR (N warnings)`
 - All PASS → `CLEAN`
 
-## Step 9: Log Orchestration Event
-
-If orchestration is available:
-```bash
-clauductor event --worker-id [worker-name] --type "review" --detail "Review [verdict]: [summary]"
-```
-
-## Step 10: Next Steps
+## Step 7: Next Steps
 
 - If `CLEAN` or `READY FOR PR`: suggest "Run `/pr` to create the pull request."
 - If `NEEDS FIXES`: list the specific fixes needed and do NOT suggest `/pr`
@@ -120,6 +90,5 @@ clauductor event --worker-id [worker-name] --type "review" --detail "Review [ver
 
 - **Read-only** — this skill never modifies files, only reports
 - **Two modes, same checks** — branch and PR mode run identical analysis
-- **Manifest check gracefully skips** in single-session mode
 - **Secrets are always FAIL** — never let potential secrets through
 - **This supplements human review** — it catches convention drift, not logic bugs

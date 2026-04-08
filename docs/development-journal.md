@@ -6,6 +6,28 @@
 
 ---
 
+## Session 109 — April 7, 2026
+**Milestones**: INFRA-1 — Migrate from Clauductor to OpenSpec
+
+**What happened**: Fully migrated the forager repo away from the custom Clauductor orchestration framework to OpenSpec for spec-driven development. This was a significant infrastructure change: removed 11 orchestration skills, 5 hooks, and the entire SQLite-backed worker coordination system, while bootstrapping 8 living specifications from existing PRDs and creating an OpenSpec change for the in-progress M19 macOS work.
+
+**Key decisions**:
+- **Drop orchestration entirely** rather than keeping a lighter version. The parallel worker coordination (SQLite, file locking, HUD, supervisor) was heavy machinery used occasionally — the M18/FUI-1 parallel burst was the main use case, and that's done. Single-session workflow is the practical reality.
+- **Keep skills as standalone `.claude/skills/` files** rather than migrating them to OpenSpec's system. Skills are execution (build, commit, PR), OpenSpec is planning (specs, proposals, tasks) — they're orthogonal concerns. No framework needed for markdown prompt templates.
+- **Create INFRA-1 branch off main** rather than doing migration work on the M19 branch. Cleaner separation: infrastructure changes go to main first, then M19 rebases. Used `INFRA:` prefix — a new multi-prefix convention alongside M and FUI.
+- **Bootstrap specs from PRDs** rather than starting from scratch. Each existing domain (grocery lists, recipes, household sharing, etc.) got a living spec capturing current system behavior with MUST/SHALL requirements and Given/When/Then scenarios. 89 requirements across 8 domains.
+
+**Learning**:
+- Clauductor's skills were just markdown prompt templates all along — the Go binary only existed for orchestration. Removing orchestration made the "framework" dissolve into standalone files that work identically. When evaluating build-vs-buy for frameworks, check if the value is in the templates or the runtime.
+- OpenSpec and Clauductor solve different problems with partial overlap. Recognizing the planning/execution decomposition enabled a clean migration path instead of a messy 1:1 replacement attempt.
+- `.gitignore` exclusion patterns (`!.claude/commands/`) are easy to miss when new tools create files in gitignored directories. `openspec init` created `.claude/commands/opsx/` which was silently gitignored until caught during staging.
+
+**AI tooling observations**: Used parallel Explore agents heavily for the initial research phase — one to map the full Clauductor footprint in forager (28 skills, 7 hooks, orchestration DB schema), another to research OpenSpec (fetched the website, GitHub repo, and docs). This parallel exploration in plan mode was very efficient for understanding both sides before designing the migration. The general-purpose agent handled the bulk spec bootstrapping well — reading 10+ PRDs and generating 8 spec files with appropriate requirements.
+
+**What's next**: Push INFRA-1, create PR, merge to main. Then rebase `feature/M19-native-macos-app` onto updated main and resume M19.4 (Port Views to Detail Pane) using the new OpenSpec workflow.
+
+---
+
 ## Session 107 — April 2, 2026
 **Milestones**: M9.36 — CloudKit Public Permission Fix + UI Freeze Fix
 **Focus**: TestFlight testing of build 92, diagnosing two post-merge bugs

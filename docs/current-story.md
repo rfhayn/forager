@@ -1,10 +1,11 @@
 # Current Development Story
 
-**Last Updated**: April 1, 2026
-**Status**: **M18 ACTIVE (6/6 complete, pending PR)** | **FUI-1 COMPLETE (7/7)** | **M16.9 COMPLETE**
-**Total Progress**: ~320 hours
-**Current Branch**: `feature/M18-store-aware-shopping`
-**Launch Path**: M18 (remaining) → FUI-1 → M9.28 → M7.7
+**Last Updated**: April 7, 2026
+**Status**: **M19 ACTIVE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)** | **M9.36 COMPLETE** | **M18.1.5 COMPLETE**
+**Total Progress**: ~335 hours
+**Current Branch**: `feature/M19-native-macos-app`
+**Launch Path**: M9.28 → M7.7 (iOS) | M19 (macOS, parallel)
+**Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
 
 ---
 

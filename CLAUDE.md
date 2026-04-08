@@ -89,6 +89,7 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - `/service-check` — Before creating new services
 - `/prd-audit` — If PRD is >2 weeks old
 - `/architecture-audit` — Before creating Core Data objects
+- `/opsx:propose` — Before starting new features (creates spec-driven change proposal)
 
 ## Skills
 
@@ -109,7 +110,11 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 | `/architecture-audit` | Before creating Core Data objects |
 | `/prd-audit` | If PRD is >2 weeks old |
 | `/review` | Pre-PR quality check |
-| `/skills` | List all skills |
+| `/done` | Wrap up milestone or session |
+| `/opsx:propose` | Propose a new OpenSpec change |
+| `/opsx:apply` | Implement OpenSpec change tasks |
+| `/opsx:archive` | Finalize completed change |
+| `/opsx:explore` | Think through ideas before proposing |
 
 ## ADRs (`docs/architecture/`)
 
@@ -122,8 +127,11 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 **Stop if:** >5 build errors, >20 min on one issue, breaking existing features, no factory for HouseholdScoped, on main instead of feature branch.
 
 
-## Clauductor Framework
+## OpenSpec
 
-This project uses [Clauductor](https://github.com/rfhayn/clauductor) for orchestration.
+Specifications and changes live in the `openspec/` directory:
 
-See `template/CLAUDE.md` in the framework repo for the full reference, or run `clauductor update` to sync skills.
+- `openspec/specs/` — Living specifications organized by domain (architecture, data model, services, UI, etc.)
+- `openspec/changes/` — Proposed changes with proposal, design, tasks, and delta specs
+
+**Workflow**: `/opsx:propose` for new features → `/opsx:apply` to implement → `/opsx:archive` to finalize.

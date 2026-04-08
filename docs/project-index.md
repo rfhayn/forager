@@ -104,17 +104,14 @@
 - `docs/prds/` — Product requirement documents
 - `docs/MEMORY-SETUP.md` — Claude Code memory system guide
 
-**Skills** (24 total via Clauductor framework):
-- Workflow: `/session-start`, `/new-milestone`, `/build`, `/commit`, `/pr`, `/release-prep`
+**Skills** (21 total):
+- Workflow: `/session-start`, `/new-milestone`, `/build`, `/commit`, `/pr`, `/release-prep`, `/done`
 - Documentation: `/dev-journal`, `/log-insight`, `/milestone-complete`
 - Pre-development: `/prd-audit`, `/architecture-audit`, `/core-data-audit`, `/service-check`, `/review`
 - iOS deployment: `/archive`
-- Orchestration: `/claim`, `/release`, `/blocked`, `/status`, `/supervisor`, `/spawn`, `/handoff`, `/assign`
-- Meta: `/skills`
+- OpenSpec: `/opsx:propose`, `/opsx:apply`, `/opsx:archive`, `/opsx:explore`
 
-**Agents**: `pre-implementation` (service-check + prd-audit + core-data-audit), `session-wrap` (journal + insights + commit)
-
-**Orchestration**: `orchestration/framework.db` — Clauductor multi-worker coordination (workers, locks, events, milestones)
+**OpenSpec**: `openspec/specs/` — living specifications by domain; `openspec/changes/` — proposed changes (proposal, design, tasks, delta specs)
 
 ---
 

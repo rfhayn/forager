@@ -1,6 +1,6 @@
 ---
 name: done
-description: "Wrap up work on a milestone or session. Chains review → journal → commit → PR → milestone-complete → release. Interactive — each step asks before proceeding. TRIGGER when the user says \"done\", \"I'm done\", \"wrap up\", \"finish up\", \"all done\", \"ship it\", \"let's wrap\", \"ready to merge\", or any request to complete and finalize work."
+description: "Wrap up work on a milestone or session. Chains review → journal → commit → PR → milestone-complete. Interactive — each step asks before proceeding. TRIGGER when the user says \"done\", \"I'm done\", \"wrap up\", \"finish up\", \"all done\", \"ship it\", \"let's wrap\", \"ready to merge\", or any request to complete and finalize work."
 ---
 
 # Done — Wrap Up Work
@@ -42,18 +42,7 @@ Run `/milestone-complete [PREFIX-#.#]` to:
 - Clean up the branch-specific next-prompt file
 - Update the priority queue
 
-Show the updates and ask: "Milestone marked complete. Release locks? (y/skip)"
-
-## Step 6: Release
-
-Check if orchestration is available:
-```bash
-test -d orchestration && echo "ORCHESTRATION_AVAILABLE" || echo "NO_ORCHESTRATION"
-```
-
-**If orchestration available**: Run `/release` to release all file locks and deregister the worker.
-
-**If no orchestration**: Skip silently.
+Show the updates and confirm completion.
 
 ## Summary
 
@@ -67,7 +56,6 @@ Session Wrap-Up
 ✓ Commit:     [hash] [message first line] / skipped
 ✓ PR:         [URL] / skipped
 ✓ Milestone:  [completed / skipped]
-✓ Locks:      [released / skipped / no orchestration]
 
 [Any remaining notes or follow-up items]
 ```
@@ -76,6 +64,5 @@ Session Wrap-Up
 
 - **Review failures stop the chain** — don't commit code that fails review
 - **Each step is optional** — the user can skip any step
-- **Graceful without orchestration** — steps 5-6 just skip if no orchestration
 - **Don't push without asking** — `/commit` creates but does not push
 - **Journal before commit** — ensures the journal is captured in the commit

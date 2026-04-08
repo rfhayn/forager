@@ -79,7 +79,3 @@ After committing, automatically run these via Agents (background) for efficiency
 1. **Journal**: Read the top of `docs/development-journal.md` — if the latest entry doesn't reference today's date or the current milestone, invoke `/dev-journal` via an Agent to update it
 2. **Insights**: Ask the user if there are any unlogged technical insights from this session. If yes, invoke `/log-insight` via an Agent
 
-If orchestration is available, log the commit event:
-```bash
-clauductor event --worker-id [worker-name] --type "commit" --detail "PREFIX-#.#: [commit message first line]"
-```
