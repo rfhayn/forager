@@ -170,10 +170,15 @@ class IngredientParsingService: ObservableObject {
 
             // M10.6.9: Use category from preview assignments if available
             // M9.12: Look up Category entity from string assignment
+            // M9.37: Scope by householdKey (ADR 013) to prevent cross-store matches
             let categoryEntity: Category? = {
                 guard let categoryName = categoryAssignments[index] else { return nil }
                 let request: NSFetchRequest<Category> = Category.fetchRequest()
-                request.predicate = NSPredicate(format: "name ==[c] %@", categoryName)
+                if let key = recipe.householdKey {
+                    request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", categoryName, key)
+                } else {
+                    request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", categoryName)
+                }
                 request.fetchLimit = 1
                 return try? context.fetch(request).first
             }()

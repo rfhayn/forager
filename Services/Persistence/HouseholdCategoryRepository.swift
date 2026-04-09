@@ -27,11 +27,15 @@ final class HouseholdCategoryRepository {
     // M9.13: Optional factory for correct store assignment (ADR 014)
     private(set) var factory: ManagedObjectFactory?
 
+    // M9.37: Explicit householdKey for scope-aware lookups (ADR 013)
+    private let householdKey: String?
+
     // MARK: - Initialization
 
-    init(context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) {
+    init(context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil, householdKey: String? = nil) {
         self.context = context
         self.factory = factory
+        self.householdKey = householdKey
     }
     
     // MARK: - Public Repository Methods
@@ -127,13 +131,18 @@ final class HouseholdCategoryRepository {
     }
     
     // MARK: - Private Helper Methods
-    
-    /// Find category by normalized name (semantic uniqueness key)
+
+    /// Find category by normalized name within the current scope (ADR 013).
+    /// Scopes to householdKey when provided, otherwise scopes to personal (nil).
     private func findByNormalizedName(_ normalizedName: String) throws -> Category? {
         let request: NSFetchRequest<Category> = Category.fetchRequest()
-        request.predicate = NSPredicate(format: "normalizedName ==[c] %@", normalizedName)
+        if let key = householdKey {
+            request.predicate = NSPredicate(format: "normalizedName ==[c] %@ AND householdKey == %@", normalizedName, key)
+        } else {
+            request.predicate = NSPredicate(format: "normalizedName ==[c] %@ AND householdKey == nil", normalizedName)
+        }
         request.fetchLimit = 1
-        
+
         return try context.fetch(request).first
     }
 }
