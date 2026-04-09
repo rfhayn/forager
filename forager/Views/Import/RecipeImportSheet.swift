@@ -92,6 +92,7 @@ struct RecipeImportSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     if !importService.state.isLoading && !importService.state.isReviewing {
                         Button("Cancel") { handleCancel() }
+                            .keyboardShortcut(.cancelAction)
                     }
                 }
             }

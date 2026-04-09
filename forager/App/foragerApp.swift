@@ -265,6 +265,7 @@ struct foragerApp: App {
                                 .toolbar {
                                     ToolbarItem(placement: .cancellationAction) {
                                         Button("Done") { showSearch = false }
+                                            .keyboardShortcut(.cancelAction)
                                     }
                                 }
                         }

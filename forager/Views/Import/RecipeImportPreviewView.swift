@@ -229,6 +229,7 @@ struct RecipeImportPreviewView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") { onCancel() }
+                    .keyboardShortcut(.cancelAction)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") { saveWithCategories() }
@@ -1001,6 +1002,7 @@ struct RecipeImportPreviewView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { categoryPickerIndex = nil }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }

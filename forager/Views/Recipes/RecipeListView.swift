@@ -330,6 +330,7 @@ struct RecipeListView: View {
                             RecipeGridCard(recipe: recipe)
                         }
                         .buttonStyle(.plain)
+                        .contentShape(Rectangle())
                         .contextMenu {
                             Button {
                                 selectedRecipeForMealPlan = recipe
@@ -1728,6 +1729,7 @@ struct RecipeDetailView: View {
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showCustomScalePicker = false }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }
@@ -2221,6 +2223,7 @@ struct RecipeDetailView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { categoryPickerIngredientId = nil }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }

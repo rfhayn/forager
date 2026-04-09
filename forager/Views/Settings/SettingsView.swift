@@ -845,9 +845,10 @@ struct CreateHouseholdSheet: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .keyboardShortcut(.cancelAction)
                     .disabled(isCreating)
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
                         checkPersonalDataAndCreate()
