@@ -213,9 +213,10 @@ struct CategoryAssignmentModal: View {
     }
 
     // M9.12: Look up Category entity by display name from current household scope
+    // M9.37: Removed allCategories fallback — must stay within scope (ADR 013)
     private func findCategoryEntity(named name: String) -> Category? {
         return realCategories.first { $0.displayName == name }
-            ?? allCategories.first { $0.displayName.lowercased() == name.lowercased() }
+            ?? realCategories.first { $0.displayName.lowercased() == name.lowercased() }
     }
 
     private func skipCurrent() {
