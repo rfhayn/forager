@@ -6,6 +6,30 @@
 
 ---
 
+## Session 110 — April 9, 2026
+**Milestones**: M19 — Designed for iPad on Mac, M9.37 — Category Scope Fix
+
+**What happened**: Started the session on the M19 native macOS app branch, trying to debug why CloudKit data wasn't syncing to the Mac build. Dug into Console.app logs and discovered the root cause: locally-built apps always use the CloudKit Sandbox (Development) environment, regardless of build configuration. Only TestFlight and App Store builds get routed to Production. Successfully archived and uploaded the macOS app to TestFlight for the first time — but then discovered that the iOS app already runs on Mac via Apple Silicon compatibility ("Designed for iPad") with full CloudKit Production sync out of the box.
+
+This triggered a pivotal decision: scrapped the entire M19 native macOS target — 7 commits worth of work including the foragerMac scheme, NavigationSplitView sidebar, and platform polyfills — in favor of simply enabling `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES`. The iOS-on-Mac experience is adequate and eliminates a separate codebase, bundle ID, App Store listing, and ongoing maintenance burden. Also merged M9.37 (category scope fix) to main via PR #116.
+
+Created a new OpenSpec change "designed-for-ipad-on-mac" with full proposal, design, specs, and tasks. Implemented all 26 code tasks in a single session: the flag flip, camera feature gating, device name fix, font size bumps for Mac readability, toolbar refresh buttons, sheet dismiss affordances, a full NavigationView-to-NavigationStack migration across 20 files, adaptive grids, and larger sheet detents. Build succeeded clean.
+
+**Key decisions**:
+- **Scrap native macOS app** rather than continuing M19 as planned. The iOS-on-Mac experience via "Designed for iPad" is surprisingly viable for an app that doesn't need native macOS chrome (sidebar, menu bar, keyboard shortcuts). The iPad layout works well on Mac screens, and it gets CloudKit Production sync for free. Maintaining a separate macOS target would mean a second codebase, second bundle ID, second App Store listing, and ongoing platform divergence — all for marginal UX gains.
+- **Use `ProcessInfo.processInfo.isiOSAppOnMac`** for runtime platform checks rather than `#if targetEnvironment(macCatalyst)`. The latter returns false for iOS apps running on Apple Silicon Macs — it only applies to true Mac Catalyst apps. `isiOSAppOnMac` is the correct check for the "Designed for iPad" compatibility mode.
+- **Migrate all NavigationView to NavigationStack** across 27 files. NavigationView is deprecated and NavigationStack provides better programmatic navigation. This benefits iPad too, not just Mac — it was overdue cleanup that the Mac work motivated.
+- **Parameterized testflight-distribute.sh** for multi-platform (iOS/macOS) support during the archive phase, though the macOS-specific skills were subsequently removed when M19 pivoted away from a native target.
+
+**Learning**:
+- CloudKit environment routing is determined by distribution method, not build configuration. `Release` builds from Xcode still use Sandbox. Only TestFlight and App Store builds get Production. This is a fundamental CloudKit fact that's poorly documented and cost significant debugging time.
+- "Designed for iPad" on Mac is a surprisingly viable approach for apps that don't need native macOS chrome. The iPad layout translates well to Mac screens, and you get CloudKit Production sync, the same bundle ID, and zero additional maintenance.
+- `isiOSAppOnMac` is the correct runtime check for iOS apps running on Apple Silicon Macs. `targetEnvironment(macCatalyst)` returns false for these apps — it only applies to true Mac Catalyst builds, which are a different technology entirely.
+
+**What's next**: Build verification, then PR creation for the redesigned M19 branch. The branch history is messy (native macOS commits followed by a complete pivot), so the squash merge to main will clean that up nicely. After merge, resume pre-launch testing and App Store submission path.
+
+---
+
 ## Session 109 — April 7, 2026
 **Milestones**: INFRA-1 — Migrate from Clauductor to OpenSpec
 

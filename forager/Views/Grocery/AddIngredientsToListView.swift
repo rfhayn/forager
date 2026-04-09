@@ -191,7 +191,7 @@ struct AddIngredientsToListView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if isProcessing {
                     processingView
@@ -229,7 +229,7 @@ struct AddIngredientsToListView: View {
                     }
                 }
             )
-            .interactiveDismissDisabled()
+            .interactiveDismissDisabled(!ProcessInfo.processInfo.isiOSAppOnMac)
             .environment(\.managedObjectContext, viewContext)
         }
     }

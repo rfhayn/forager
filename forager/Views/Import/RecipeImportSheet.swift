@@ -115,7 +115,7 @@ struct RecipeImportSheet: View {
                             dismissAfterSave()
                         }
                     )
-                    .interactiveDismissDisabled()
+                    .interactiveDismissDisabled(!ProcessInfo.processInfo.isiOSAppOnMac)
                     .environment(\.managedObjectContext, viewContext)
                 }
             }

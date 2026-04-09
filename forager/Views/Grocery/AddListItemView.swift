@@ -89,7 +89,7 @@ struct AddListItemView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Item Details")) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -272,7 +272,7 @@ struct AddListItemView: View {
     // MARK: - PHASE 3: Add to Templates Sheet
     
     private var addToTemplatesSheet: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("New Ingredient")) {
                     HStack {

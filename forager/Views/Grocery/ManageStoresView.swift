@@ -92,7 +92,7 @@ struct ManageStoresView: View {
             }
         }
         .sheet(isPresented: $showingReassignmentDialog) {
-            NavigationView {
+            NavigationStack {
                 reassignmentDialog
                     .navigationTitle("Reassign Templates")
                     .navigationBarTitleDisplayMode(.inline)
@@ -614,7 +614,7 @@ struct StoreSelectionView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         ManageStoresView(
             popToRoot: .constant(false),
             storeService: StoreService(context: PersistenceController.preview.container.viewContext)

@@ -42,7 +42,7 @@ struct AddStapleView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Staple Information")) {
                     TextField("Staple Name", text: $name)

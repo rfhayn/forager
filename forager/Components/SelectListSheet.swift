@@ -39,7 +39,7 @@ struct SelectListSheet: View {
     @State private var newListName = ""
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Recipes section with servings adjustment
                 recipesSection

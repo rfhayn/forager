@@ -180,7 +180,7 @@ struct RecipeListView: View {
                             Label("Paste Recipe Text", systemImage: "doc.text")
                         }
                         Button { showingPhotoImport = true } label: {
-                            Label("Import from Photo", systemImage: "camera")
+                            Label("Import from Photo", systemImage: ProcessInfo.processInfo.isiOSAppOnMac ? "photo" : "camera")
                         }
                     }
                     Section {
@@ -1731,7 +1731,7 @@ struct RecipeDetailView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents(ProcessInfo.processInfo.isiOSAppOnMac ? [.large] : [.medium])
     }
 
     // MARK: - M10.8: Ingredient Row — Bordered Card with Display/Edit Toggle
@@ -1766,7 +1766,7 @@ struct RecipeDetailView: View {
                                 .foregroundStyle(ForagerTheme.textTertiary)
                                 .font(.system(size: 14))
                             Text("NEW")
-                                .font(.system(size: 9, weight: .bold))
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(ForagerTheme.textTertiary)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
@@ -2172,7 +2172,7 @@ struct RecipeDetailView: View {
                         .foregroundStyle(ForagerTheme.textTertiary)
                 }
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
+                    .font(.system(size: 11))
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }

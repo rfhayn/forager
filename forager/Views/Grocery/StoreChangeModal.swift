@@ -45,7 +45,7 @@ struct StoreChangeModal: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 headerSection
 

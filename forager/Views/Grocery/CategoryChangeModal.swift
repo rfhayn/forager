@@ -39,7 +39,7 @@ struct CategoryChangeModal: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Header Section - EXACT MATCH to CategoryAssignmentModal
                 headerSection

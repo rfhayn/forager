@@ -3111,10 +3111,11 @@ class HouseholdService: ObservableObject {
                     print("   ✅ Extracted from device name: \(newDisplayName!)")
                     #endif
                 }
-                // Pattern 2: "Rich iPhone" -> "Rich"
-                else if deviceName.contains("iPhone") || deviceName.contains("iPad") {
+                // Pattern 2: "Rich iPhone" / "Rich MacBook Pro" -> "Rich"
+                else {
+                    let knownDeviceTypes = ["iPhone", "iPad", "iPod", "Mac", "MacBook", "iMac"]
                     let components = deviceName.components(separatedBy: " ")
-                    if components.count >= 2 && (components[1] == "iPhone" || components[1] == "iPad") {
+                    if components.count >= 2 && knownDeviceTypes.contains(components[1]) {
                         newDisplayName = components[0]
                         #if DEBUG
                         print("   ✅ Extracted from device name: \(newDisplayName!)")

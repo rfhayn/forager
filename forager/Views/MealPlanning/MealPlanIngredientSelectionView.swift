@@ -36,7 +36,7 @@ struct MealPlanIngredientSelectionView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if isAdding {
                     addingOverlay
@@ -57,7 +57,7 @@ struct MealPlanIngredientSelectionView: View {
         .onAppear {
             initializeSelections()
         }
-        .interactiveDismissDisabled(isAdding)
+        .interactiveDismissDisabled(isAdding && !ProcessInfo.processInfo.isiOSAppOnMac)
     }
 
     // MARK: - Recipe Selection View

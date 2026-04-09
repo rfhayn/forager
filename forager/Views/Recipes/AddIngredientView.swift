@@ -40,7 +40,7 @@ struct AddIngredientView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Ingredient Details") {
                     TextField("Name", text: $name)

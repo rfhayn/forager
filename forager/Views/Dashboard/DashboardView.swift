@@ -220,7 +220,7 @@ struct DashboardView: View {
             if !name.isEmpty { return name }
         }
         // "Rich iPhone" pattern
-        let deviceTypes = ["iPhone", "iPad", "iPod"]
+        let deviceTypes = ["iPhone", "iPad", "iPod", "Mac", "MacBook", "iMac", "Mac mini", "Mac Pro", "Mac Studio"]
         for type in deviceTypes {
             if let range = deviceName.range(of: " \(type)", options: .caseInsensitive) {
                 let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
@@ -425,7 +425,7 @@ struct DashboardView: View {
                                 .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : ForagerTheme.backgroundTertiary)
                                 .frame(width: 28, height: 6)
                             Text(indicator.dayLetter)
-                                .font(.system(size: 10))
+                                .font(.system(size: 11))
                                 .foregroundStyle(indicator.hasMeal ? ForagerTheme.textPrimary : ForagerTheme.textTertiary)
                         }
                     }

@@ -108,7 +108,7 @@ struct CreateRecipeView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Basic Information Section
@@ -980,7 +980,7 @@ struct TimePickerSheet: View {
     let onDismiss: () -> Void
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 HStack(spacing: 20) {
                     // Hours Picker

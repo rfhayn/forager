@@ -49,7 +49,7 @@ struct SelectMealPlanSheet: View {
     @State private var dateHasRecipe = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 recipeSection
                 
