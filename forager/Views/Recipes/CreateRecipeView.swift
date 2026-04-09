@@ -598,6 +598,7 @@ struct CreateRecipeView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { categoryPickerIngredientId = nil }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }

@@ -61,8 +61,9 @@ struct CreateMealPlanSheet: View {
                             Button("Cancel") {
                                 dismiss()
                             }
+                            .keyboardShortcut(.cancelAction)
                         }
-                        
+
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Create") {
                                 createMealPlan()

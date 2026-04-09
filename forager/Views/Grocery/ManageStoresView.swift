@@ -558,6 +558,7 @@ struct StoreColorPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }

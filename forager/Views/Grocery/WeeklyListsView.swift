@@ -464,6 +464,7 @@ private struct MealPlanGrocerySheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
         }

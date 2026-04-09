@@ -45,6 +45,7 @@ struct RecipeBrowserView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
+                        .keyboardShortcut(.cancelAction)
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
