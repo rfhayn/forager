@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: April 7, 2026
-**Status**: **M19 ACTIVE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)** | **M9.36 COMPLETE** | **M18.1.5 COMPLETE**
-**Total Progress**: ~335 hours
-**Current Branch**: `feature/M19-native-macos-app`
-**Launch Path**: M9.28 → M7.7 (iOS) | M19 (macOS, parallel)
+**Last Updated**: April 9, 2026
+**Status**: **M9.37 COMPLETE** | **M19 SCRAPPED** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Total Progress**: ~340 hours
+**Current Branch**: `main`
+**Launch Path**: M9.28 → M7.7 (iOS) | "Designed for iPad" on Mac (replacing M19)
 **Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
 
 ---
@@ -327,6 +327,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: April 1, 2026 — M18 + FUI-1 merged to main (PR #114, squash commit 96a89e7). Code review fixes applied. All 13 sub-milestones complete (~10.25h actual vs 19-25h estimated). Two automated test gaps documented.
-**Next Action**: Write Recipe computed properties tests + WeeklyListService store snapshot test, then testing pass.
+**Last Session**: April 9, 2026 — M19 (native macOS app) scrapped after discovering iOS app runs on Mac via Apple Silicon compatibility ("Designed for iPad"). CloudKit Production sync works perfectly — all iOS data visible on Mac. M9.37 (category scope fix) merged to main (PR #116). New approach: flip `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES` instead of maintaining a separate macOS target.
+**Next Action**: Explore "Designed for iPad" formalization via `/opsx:explore`, then resume launch path (M9.28 → M7.7).
 **Confidence**: GREEN
