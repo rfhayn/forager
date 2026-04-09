@@ -108,7 +108,7 @@ struct ManageCategoriesView: View {
             }
         }
         .sheet(isPresented: $showingReassignmentDialog) {
-            NavigationView {
+            NavigationStack {
                 reassignmentDialog
                     .navigationTitle("Reassign Ingredients")
                     .navigationBarTitleDisplayMode(.inline)
@@ -790,7 +790,7 @@ struct CategoryRowView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         ManageCategoriesView(popToRoot: .constant(false))  // ← ADD PARAMETER HERE
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }
@@ -862,7 +862,7 @@ struct CategorySelectionRow: View {
     
 }
 #Preview {
-    NavigationView {
+    NavigationStack {
         ManageCategoriesView(popToRoot: .constant(false))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }

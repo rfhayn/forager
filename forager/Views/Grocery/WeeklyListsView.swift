@@ -168,6 +168,13 @@ struct WeeklyListsView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        if ProcessInfo.processInfo.isiOSAppOnMac {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { viewContext.refreshAllObjects() } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+            }
+        }
         ToolbarItem(placement: .navigationBarTrailing) {
             Button(action: { showingCreateOptions = true }) {
                 Image(systemName: "plus")
@@ -408,7 +415,7 @@ private struct MealPlanGrocerySheet: View {
     let onSelect: (MealPlan) -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if availablePlans.isEmpty {
                     VStack(spacing: ForagerTheme.Spacing.lg) {
@@ -466,7 +473,7 @@ private struct MealPlanGrocerySheet: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         WeeklyListsView(popToRoot: .constant(false))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }

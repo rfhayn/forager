@@ -84,23 +84,27 @@ struct PhotoImportView: View {
                 .font(ForagerTheme.cardTitle)
                 .foregroundStyle(ForagerTheme.textPrimary)
 
-            Text("Scan a recipe page or choose a photo from your library")
+            Text(ProcessInfo.processInfo.isiOSAppOnMac
+                 ? "Choose a photo from your library"
+                 : "Scan a recipe page or choose a photo from your library")
                 .font(ForagerTheme.secondaryFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, ForagerTheme.Spacing.lg)
 
             VStack(spacing: ForagerTheme.Spacing.md) {
-                Button {
-                    showingScanner = true
-                } label: {
-                    Label("Scan Document", systemImage: "doc.viewfinder")
-                        .font(ForagerTheme.bodyFont.bold())
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, ForagerTheme.Spacing.md)
+                if !ProcessInfo.processInfo.isiOSAppOnMac {
+                    Button {
+                        showingScanner = true
+                    } label: {
+                        Label("Scan Document", systemImage: "doc.viewfinder")
+                            .font(ForagerTheme.bodyFont.bold())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, ForagerTheme.Spacing.md)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForagerTheme.accentPrimary)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(ForagerTheme.accentPrimary)
 
                 PhotosPicker(
                     selection: $selectedPhoto,

@@ -31,7 +31,7 @@ struct AddCategoryView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Category Details")) {
                     TextField("Category Name", text: $name)
@@ -41,7 +41,7 @@ struct AddCategoryView: View {
                         Text("Color")
                             .font(.headline)
                         
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 48))], spacing: 12) {
                             ForEach(availableColors, id: \.self) { color in
                                 Circle()
                                     .fill(Color(hex: color))

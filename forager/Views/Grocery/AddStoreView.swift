@@ -49,7 +49,7 @@ struct AddStoreView: View {
                         Text("Color")
                             .font(ForagerTheme.secondaryFont)
 
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 48))], spacing: 12) {
                             ForEach(ForagerTheme.storeColorPalette, id: \.self) { color in
                                 Circle()
                                     .fill(Color(hex: color))

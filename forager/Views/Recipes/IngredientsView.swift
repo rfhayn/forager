@@ -1536,7 +1536,7 @@ struct DuplicateReviewSheet: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         IngredientsView(popToRoot: .constant(false))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }

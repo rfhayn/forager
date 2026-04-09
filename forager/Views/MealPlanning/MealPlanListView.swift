@@ -47,6 +47,13 @@ struct MealPlansListView: View {
         contentView
             .navigationTitle("Meal Plans")
             .toolbar {
+                if ProcessInfo.processInfo.isiOSAppOnMac {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button { viewContext.refreshAllObjects() } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingCreateSheet = true }) {
                         Image(systemName: "plus")
@@ -472,7 +479,7 @@ enum MealPlanStatus {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         MealPlansListView(popToRoot: .constant(false))
             .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
     }

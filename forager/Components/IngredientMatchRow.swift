@@ -85,7 +85,7 @@ struct IngredientMatchRow: View {
             // "NEW" badge for unmatched ingredients
             if !isAIParsing, matchResult?.status == .needsTemplate {
                 Text("NEW")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(ForagerTheme.textTertiary)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
@@ -206,7 +206,7 @@ struct IngredientMatchRow: View {
                         .foregroundStyle(ForagerTheme.statusDangerFG)
                 }
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 8))
+                    .font(.system(size: 11))
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }

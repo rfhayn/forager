@@ -48,11 +48,11 @@ struct CreateMealPlanSheet: View {
     
     var body: some View {
         if isInline {
-            // Inline mode - no NavigationView wrapper
+            // Inline mode - no NavigationStack wrapper
             formContent
         } else {
-            // Modal mode - wrapped in NavigationView
-            NavigationView {
+            // Modal mode - wrapped in NavigationStack
+            NavigationStack {
                 formContent
                     .navigationTitle("Create Meal Plan")
                     .navigationBarTitleDisplayMode(.inline)
@@ -304,7 +304,7 @@ struct CreateMealPlanSheet: View {
 #Preview("Inline Mode") {
     let context = PersistenceController.preview.container.viewContext
     
-    return NavigationView {
+    return NavigationStack {
         Form {
             Section {
                 Text("Parent Form Content")

@@ -111,7 +111,7 @@ struct EditRecipeView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     basicInfoSection

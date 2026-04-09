@@ -155,7 +155,7 @@ struct GroceryListDetailView: View {
                 storeService: storeService,
                 householdKey: householdService.currentHouseholdKey
             )
-            .presentationDetents([.medium])
+            .presentationDetents(ProcessInfo.processInfo.isiOSAppOnMac ? [.large] : [.medium])
         }
         .alert("Error", isPresented: $showingError) {
             Button("OK") { }
@@ -790,7 +790,7 @@ struct GroceryListDetailView: View {
     // MARK: - Add to Templates Sheet
 
     private var addToTemplatesSheet: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("New Ingredient")) {
                     HStack {

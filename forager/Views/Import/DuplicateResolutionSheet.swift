@@ -89,7 +89,7 @@ struct DuplicateResolutionSheet: View {
             .navigationTitle("Similar Recipe Found")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.medium])
+        .presentationDetents(ProcessInfo.processInfo.isiOSAppOnMac ? [.large] : [.medium])
         .presentationDragIndicator(.visible)
     }
 
