@@ -10,6 +10,9 @@ struct RecipeListView: View {
 
     @Binding var popToRoot: Bool
 
+    // FUI-1.9: Optional selection mode for dashboard recipe picker
+    var onSelect: ((Recipe) -> Void)? = nil
+
     @StateObject private var recipeService = OptimizedRecipeDataService(context: PersistenceController.shared.container.viewContext)
 
     @State private var showingAddRecipe = false
@@ -279,8 +282,16 @@ struct RecipeListView: View {
         VStack(spacing: 0) {
             List {
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
-                    NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                        RecipeCardView(recipe: recipe)
+                    Group {
+                        if let onSelect {
+                            Button { onSelect(recipe) } label: {
+                                RecipeCardView(recipe: recipe)
+                            }
+                        } else {
+                            NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                                RecipeCardView(recipe: recipe)
+                            }
+                        }
                     }
                     .listRowBackground(Color.clear)
                     .listRowSeparator(.hidden)
@@ -326,10 +337,19 @@ struct RecipeListView: View {
                     spacing: ForagerTheme.Spacing.md
                 ) {
                     ForEach(filteredRecipes, id: \.objectID) { recipe in
-                        NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                            RecipeGridCard(recipe: recipe)
+                        Group {
+                            if let onSelect {
+                                Button { onSelect(recipe) } label: {
+                                    RecipeGridCard(recipe: recipe)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                                    RecipeGridCard(recipe: recipe)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                        .buttonStyle(.plain)
                         .contentShape(Rectangle())
                         .contextMenu {
                             Button {

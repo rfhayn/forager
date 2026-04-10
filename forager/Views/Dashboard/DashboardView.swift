@@ -126,8 +126,20 @@ struct DashboardView: View {
         return indicators
     }
 
-    private var hasContent: Bool {
-        nextMeal != nil || activeGroceryList != nil || mealPlanService.activeMealPlan != nil
+    // FUI-1.9: Dashboard sheet states for ghost card actions
+    @State private var showingRecipePicker = false
+    @State private var showingCreateListOptions = false
+    @State private var showingCreateMealPlan = false
+    @State private var showingMealPlanPicker = false
+
+    // Tomorrow's meal
+    private var tomorrowMeal: PlannedMeal? {
+        let calendar = Calendar.current
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date()) else { return nil }
+        return mealPlanService.plannedMeals.first { meal in
+            guard let mealDate = meal.date, !meal.isCompleted else { return false }
+            return calendar.isDate(mealDate, inSameDayAs: tomorrow)
+        }
     }
 
     var body: some View {
@@ -139,23 +151,45 @@ struct DashboardView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .padding(.top, ForagerTheme.Spacing.xs)
 
-                if !hasContent {
-                    welcomeCard
+                // 1. Tonight's Meal (always visible)
+                if let meal = nextMeal {
+                    nextMealCard(meal: meal)
                 } else {
-                    // 1. Next Meal (most actionable)
-                    if let meal = nextMeal {
-                        nextMealCard(meal: meal)
-                    }
+                    ghostCard(
+                        icon: "fork.knife",
+                        title: "Tonight's Meal",
+                        message: "No recipe for today.",
+                        action: "Tap to pick one."
+                    ) { showingRecipePicker = true }
+                }
 
-                    // 2. Grocery Snapshot
-                    if let list = activeGroceryList {
-                        groceryRunCard(list: list)
-                    }
+                // 2. Shopping List (always visible)
+                if let list = activeGroceryList {
+                    groceryRunCard(list: list)
+                } else {
+                    ghostCard(
+                        icon: "cart",
+                        title: "Shopping List",
+                        message: "No shopping list.",
+                        action: "Tap to create one."
+                    ) { showingCreateListOptions = true }
+                }
 
-                    // 3. Meal Plan Overview
-                    if let plan = mealPlanService.activeMealPlan {
-                        mealPlanOverviewCard(plan: plan)
-                    }
+                // 3. Meal Plan Overview (always visible)
+                if let plan = mealPlanService.activeMealPlan {
+                    mealPlanOverviewCard(plan: plan)
+                } else {
+                    ghostCard(
+                        icon: "calendar",
+                        title: "Meal Plan",
+                        message: "No meal plan this week.",
+                        action: "Tap to create one."
+                    ) { showingCreateMealPlan = true }
+                }
+
+                // 4. Tomorrow's Meal (only if data exists)
+                if let meal = tomorrowMeal {
+                    tomorrowMealCard(meal: meal)
                 }
 
                 quickActionsBar
@@ -164,6 +198,24 @@ struct DashboardView: View {
             .padding(.bottom, ForagerTheme.Spacing.xl)
         }
         .background(ForagerTheme.backgroundCanvas)
+        .sheet(isPresented: $showingRecipePicker) {
+            NavigationStack {
+                RecipeListView(popToRoot: .constant(false), onSelect: { recipe in
+                    mealPlanService.assignRecipeToToday(recipe: recipe)
+                    showingRecipePicker = false
+                })
+            }
+            .environment(\.managedObjectContext, viewContext)
+            .environmentObject(householdService)
+        }
+        .sheet(isPresented: $showingCreateMealPlan) {
+            CreateMealPlanSheet()
+        }
+        .confirmationDialog("New Grocery List", isPresented: $showingCreateListOptions) {
+            Button("From Staples") { selectedTab = .lists }
+            Button("From Meal Plan") { selectedTab = .lists }
+            Button("Empty List") { selectedTab = .lists }
+        }
         .navigationTitle(greeting)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -231,25 +283,78 @@ struct DashboardView: View {
         return nil
     }
 
-    // MARK: - Welcome Card (nothing to show)
+    // MARK: - Ghost Card (empty state with dashed border)
 
-    private var welcomeCard: some View {
-        VStack(spacing: ForagerTheme.Spacing.md) {
-            Image(systemName: "fork.knife.circle")
-                .font(.system(size: 48))
-                .foregroundStyle(ForagerTheme.accentPrimary)
+    private func ghostCard(icon: String, title: String, message: String, action: String, onTap: @escaping () -> Void) -> some View {
+        Button(action: onTap) {
+            VStack(spacing: ForagerTheme.Spacing.sm) {
+                HStack {
+                    Image(systemName: icon)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Text(title)
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textTertiary)
+                    Spacer()
+                }
 
-            Text("Welcome to forager")
-                .font(ForagerTheme.cardTitle)
-                .foregroundStyle(ForagerTheme.textPrimary)
+                Text(message)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
 
-            Text("Import a recipe, create a grocery list, or plan your meals to get started.")
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .multilineTextAlignment(.center)
+                Text(action)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.accentPrimary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(ForagerTheme.Spacing.md)
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg)
+                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [8, 4]))
+                    .foregroundStyle(ForagerTheme.borderSubtle)
+            )
         }
-        .frame(maxWidth: .infinity)
-        .padding(ForagerTheme.Spacing.xl)
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Tomorrow's Meal Card
+
+    private func tomorrowMealCard(meal: PlannedMeal) -> some View {
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            HStack {
+                Image(systemName: "fork.knife")
+                    .foregroundStyle(ForagerTheme.accentTertiary)
+                Text("Tomorrow")
+                    .font(ForagerTheme.cardTitle)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                Spacer()
+            }
+
+            if let recipe = meal.recipe {
+                Text(recipe.recipeDisplayTitle)
+                    .font(ForagerTheme.secondaryFont)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .lineLimit(2)
+
+                HStack(spacing: ForagerTheme.Spacing.sm) {
+                    if recipe.servings > 0 {
+                        Text(recipe.recipeServingsDescription)
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                    if recipe.recipeTotalTime > 0 {
+                        Text("· \(recipe.recipeFormattedTotalTime)")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textSecondary)
+                    }
+                }
+            } else if let quickOption = meal.quickOption {
+                Text(quickOption)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
+            }
+        }
+        .padding(ForagerTheme.Spacing.md)
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }
@@ -446,6 +551,7 @@ struct DashboardView: View {
             quickActionButton(title: "Add Recipe", icon: "book", tab: .recipes)
             quickActionButton(title: "Plan Meals", icon: "calendar", tab: .mealPlans)
         }
+        .frame(maxWidth: .infinity)
     }
 
     private func quickActionButton(title: String, icon: String, tab: NavigationTab) -> some View {
