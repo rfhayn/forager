@@ -21,27 +21,27 @@ struct ImportGuideOverlay: View {
         (
             target: "importTitle",
             title: "Review the Recipe",
-            description: "Check the title, servings, and timing. Tap anything to edit."
+            description: "When forager imports a recipe, it captures the text exactly as written, which isn't always perfect. Review the title, servings, and timing to make sure they look right. Tap anything to edit."
         ),
         (
             target: "ingredientRow",
             title: "Ingredient Status",
-            description: "Each ingredient is parsed and matched to your library.\n\n✅ Green = matched\n🟡 Amber = needs a category\n➕ New = not in your library yet"
+            description: "forager builds a personal ingredient library that learns where you buy things and how to categorize them. The more recipes you import, the smarter it gets.\n\n✅ Matched: already in your library\n🟡 Needs category: recognized, but needs a store aisle\n➕ New: first time seeing this ingredient"
         ),
         (
             target: "smartIndicator",
             title: "Smart Indicators",
-            description: "Green rows detect multiple ingredients on one line — tap to split.\n\nAmber rows flag alternatives (X or Y) where you should pick one."
+            description: "forager detects common recipe patterns that need your attention.\n\nGreen rows have multiple ingredients on one line. Tap to split them so each goes on your grocery list separately.\n\nAmber rows flag alternatives (like 'butter or margarine') where you may want to choose one."
         ),
         (
             target: "aiParseButton",
             title: "AI-Powered Parsing",
-            description: "Tap 'Parse with AI' to auto-categorize all ingredients. Long-press any ingredient for more options."
+            description: "If you've added an API key in Settings, 'Parse with AI' will categorize all ingredients at once, saving you from doing it manually.\n\nLong-press any ingredient for more options."
         ),
         (
             target: "saveButton",
             title: "Save Your Recipe",
-            description: "Save to add this recipe and all ingredients to your library. They'll be available for meal planning and grocery lists."
+            description: "When you save, the recipe and all its ingredients are added to your library. Next time you import a recipe with the same ingredients, they'll already be matched and categorized.\n\nSaved recipes can be added to meal plans, which automatically generate grocery lists."
         )
     ]
 
