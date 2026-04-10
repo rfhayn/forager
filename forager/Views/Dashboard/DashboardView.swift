@@ -163,7 +163,7 @@ struct DashboardView: View {
             .padding(.horizontal, ForagerTheme.Spacing.md)
             .padding(.bottom, ForagerTheme.Spacing.xl)
         }
-        .background(ForagerTheme.backgroundPrimary)
+        .background(ForagerTheme.backgroundCanvas)
         .navigationTitle(greeting)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -425,7 +425,7 @@ struct DashboardView: View {
                                 .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : ForagerTheme.backgroundTertiary)
                                 .frame(width: 28, height: 6)
                             Text(indicator.dayLetter)
-                                .font(.system(size: 11))
+                                .font(ForagerTheme.captionFont)
                                 .foregroundStyle(indicator.hasMeal ? ForagerTheme.textPrimary : ForagerTheme.textTertiary)
                         }
                     }
