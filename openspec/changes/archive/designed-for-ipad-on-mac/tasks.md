@@ -54,5 +54,5 @@
 ## 10. Build and Verify
 
 - [x] 10.1 Build iOS target — confirm zero regressions from NavigationStack migration and platform guards
-- [ ] 10.2 Archive and upload to TestFlight — verify Mac build installs via TestFlight
-- [ ] 10.3 Manual QA on Mac: test all import flows, dashboard greeting, grocery lists, meal plans, recipe views
+- [x] 10.2 Archive and upload to TestFlight — verify Mac build installs via TestFlight
+- [x] 10.3 Manual QA on Mac: test all import flows, dashboard greeting, grocery lists, meal plans, recipe views
