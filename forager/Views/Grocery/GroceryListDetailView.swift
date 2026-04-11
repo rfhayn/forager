@@ -440,7 +440,7 @@ struct GroceryListDetailView: View {
                 }
             }
         }
-        .listStyle(.plain)
+        .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
     }
@@ -453,7 +453,8 @@ struct GroceryListDetailView: View {
             showRecipeSources: preferencesService.showRecipeSources,
             storeColorHex: hasStores ? item.store?.color : nil
         )
-        .listRowBackground(Color.clear)
+        .listRowBackground(ForagerTheme.surfacePrimary)
+        .listRowSeparatorTint(ForagerTheme.borderSubtle)
         .swipeActions(edge: .leading) {
             Button {
                 toggleItemCompletion(item)
