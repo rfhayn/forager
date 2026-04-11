@@ -720,6 +720,28 @@ class MealPlanService: ObservableObject {
         }
     }
     
+    // FUI-1.9: Assign a recipe to today from the dashboard.
+    // Auto-creates a meal plan if none covers today.
+    @discardableResult
+    func assignRecipeToToday(recipe: Recipe) -> PlannedMeal? {
+        let today = Calendar.current.startOfDay(for: Date())
+
+        // Find or create a meal plan covering today
+        var plan: MealPlan?
+        if let active = activeMealPlan,
+           let start = active.startDate,
+           let end = Calendar.current.date(byAdding: .day, value: Int(active.duration), to: start),
+           today >= Calendar.current.startOfDay(for: start) && today < Calendar.current.startOfDay(for: end) {
+            plan = active
+        } else {
+            plan = createMealPlan()
+        }
+
+        guard let plan else { return nil }
+
+        return addRecipeToMealPlan(recipe: recipe, date: today, mealPlan: plan)
+    }
+
     // M4.2: Gets all dates that are within the current meal plan period
     // Used by calendar view to display the planning period
     func getDatesInMealPlan() -> [Date] {

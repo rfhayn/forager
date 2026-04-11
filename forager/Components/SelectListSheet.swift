@@ -100,7 +100,7 @@ struct SelectListSheet: View {
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding()
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
             }
             .buttonStyle(.plain)
             
@@ -125,7 +125,7 @@ struct SelectListSheet: View {
             // Recipe name
             HStack {
                 Text(recipe.title ?? "Untitled Recipe")
-                    .font(.body)
+                    .font(ForagerTheme.bodyFont)
                     .fontWeight(.medium)
                 
                 Spacer()
@@ -134,7 +134,7 @@ struct SelectListSheet: View {
             // Servings adjuster
             HStack {
                 Text("Servings:")
-                    .font(.subheadline)
+                    .font(ForagerTheme.secondaryFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Spacer()
@@ -181,11 +181,11 @@ struct SelectListSheet: View {
             }
         }
         .padding()
-        .background(Color(.systemBackground))
+        .background(ForagerTheme.surfacePrimary)
         .cornerRadius(ForagerTheme.Radius.sm)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(.systemGray4), lineWidth: 1)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
         )
     }
     

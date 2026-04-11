@@ -374,7 +374,7 @@ struct MealPlanSummaryCard: View {
 
                 Text(dayInitial)
                     .font(ForagerTheme.captionFont)
-                    .foregroundStyle(isPlanned ? .white : ForagerTheme.textTertiary)
+                    .foregroundStyle(isPlanned ? ForagerTheme.buttonPrimaryText : ForagerTheme.textTertiary)
                     .frame(width: dayCircleSize, height: dayCircleSize)
                     .background(
                         Circle()

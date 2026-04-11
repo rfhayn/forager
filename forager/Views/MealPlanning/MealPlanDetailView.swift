@@ -211,7 +211,7 @@ struct MealPlanDetailView: View {
                         .foregroundStyle(ForagerTheme.textTertiary)
                     Text("\(Calendar.current.component(.day, from: date))")
                         .font(ForagerTheme.bodyFont.bold())
-                        .foregroundStyle(isToday(date) ? .white : ForagerTheme.textPrimary)
+                        .foregroundStyle(isToday(date) ? ForagerTheme.buttonPrimaryText : ForagerTheme.textPrimary)
                         .frame(width: 36, height: 36)
                         .background(
                             Circle()
@@ -479,7 +479,7 @@ struct MealPlanDetailView: View {
         } label: {
             HStack(spacing: ForagerTheme.Spacing.xs) {
                 Image(systemName: option.icon)
-                    .font(.caption2)
+                    .font(ForagerTheme.captionFont)
                 Text(option.rawValue)
             }
             .font(ForagerTheme.captionFont)
@@ -501,7 +501,7 @@ struct MealPlanDetailView: View {
         } label: {
             Text("Add to Grocery List")
                 .font(ForagerTheme.bodyFont.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(ForagerTheme.buttonPrimaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, ForagerTheme.Spacing.md)
                 .background(ForagerTheme.accentPrimary)

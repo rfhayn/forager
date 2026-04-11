@@ -6,6 +6,28 @@
 
 ---
 
+## Session 111 — April 10, 2026
+**Milestones**: FUI-1.9 — Dashboard Improvements, M9.38 — Import Onboarding Copy
+
+**What happened**: Productive session with three distinct work streams. First, merged the M9.38 import onboarding copy improvements based on Joe's feedback — all 5 guide steps now explain the "why" behind each action (e.g., explaining that forager builds a personal ingredient library that improves over time). Second, ran a comprehensive UI audit across the entire app — found dark mode contrast failures (white text on light green accent backgrounds fails WCAG AA at 2.5:1), system color usage breaking the theme in SelectListSheet, and the dashboard using a different background token than all other tabs. Fixed all findings. Third and largest: redesigned the dashboard to always show three cards with a "ghost card" pattern (dashed outline, no fill, actionable text) when empty — replacing the hide-when-empty approach that made the dashboard feel sparse. Added recipe quick-assign from dashboard (auto-creates meal plan if needed), a tomorrow's meal card, and centered the quick action buttons.
+
+**Key decisions**:
+- **Ghost cards over always-filled cards** — dashed outlines with "No recipe for today. Tap to pick one." create visual distinction between empty and populated states while teaching users what the dashboard can do. The old welcome card only appeared when ALL data was missing, which was rare.
+- **Full RecipeListView in picker sheet** — reused the entire existing view (with grid/list toggle, import menu, search) rather than building a simplified picker. More capable, zero new UI to maintain, and users can even import a new recipe on the spot.
+- **MealPlanService.assignRecipeToToday()** — composed from existing `createMealPlan()` + `addRecipeToMealPlan()` rather than a new service. Checks for active plan covering today, creates one if needed, assigns with default dinner meal type.
+- **"forager" always lowercase, no em dashes** — established as a permanent copy style rule after user correction during onboarding copy review.
+
+**Learning**:
+- SwiftUI `if/else` blocks in `ForEach` can't have view modifiers applied to the branch result directly — need to wrap in `Group {}` first. Hit this with `.listRowBackground()` after adding the `onSelect` conditional in RecipeListView.
+- Full UI audits are high-value: the dark mode contrast failure (`.white` on `accentPrimary` which is light green #7BC08A in dark mode) would have been a visible bug in App Store review. Using `buttonPrimaryText` (which adapts: white in light, dark in dark) is the correct pattern.
+- `backgroundCanvas` (#FDFBF7) vs `backgroundPrimary` (#F5F0E8) is a subtle but noticeable difference when switching tabs — consistency matters more than the specific shade.
+
+**AI tooling observations**: Ran three parallel Explore agents for the dashboard investigation (current implementation, PRD/journal history, and later a full UI audit). The UI audit agent was thorough — checked every tab view, detail view, and component against the theme system, produced a prioritized findings table with exact line numbers. The parallel agent pattern continues to be the most efficient way to gather cross-cutting information. The opsx:explore → opsx:propose → opsx:apply pipeline worked smoothly for the dashboard change.
+
+**What's next**: Push FUI-1.9 branch, create PR, merge, archive to TestFlight (build 113). Visual verification of ghost cards and dark mode fixes on device. Then resume launch path: M9.28 (strip diagnostic logging) → M7.7 (App Store submission).
+
+---
+
 ## Session 110 — April 9, 2026
 **Milestones**: M19 — Designed for iPad on Mac, M9.37 — Category Scope Fix
 
