@@ -873,74 +873,48 @@ struct GroceryListItemRow: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-            // Top line: checkbox + formatted ingredient text
-            HStack(spacing: ForagerTheme.Spacing.sm) {
-                // Checkbox — matches recipe detail status icon size
-                Button(action: onToggle) {
-                    Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
-                        .font(.system(size: 14))
-                        .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
-                        .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
-                }
-                .buttonStyle(.borderless)
+        HStack(spacing: ForagerTheme.Spacing.sm) {
+            // Checkbox
+            Button(action: onToggle) {
+                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
+                    .font(.system(size: 18))
+                    .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
+                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
+            }
+            .buttonStyle(.borderless)
 
-                // M18.1.4: Store color dot (only when store assigned and stores exist)
-                if let hex = storeColorHex {
-                    StoreColorDot(hex: hex)
-                }
-
-                // Formatted text — quantity regular, name bold green (matching recipe detail)
-                if item.isCompleted {
-                    Text(item.name ?? "Unknown Item")
-                        .font(ForagerTheme.bodyFont)
-                        .strikethrough()
-                        .foregroundStyle(ForagerTheme.textDisabled)
-                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
-                } else {
-                    formattedItemText
-                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
-                }
+            // Store color dot
+            if let hex = storeColorHex {
+                StoreColorDot(hex: hex)
             }
 
-            // Bottom line: category dot + name (matches recipe detail categoryLabel)
-            if let categoryName = item.categoryEntity?.name, !item.isCompleted {
-                HStack(spacing: ForagerTheme.Spacing.xs) {
-                    Circle()
-                        .fill(ForagerTheme.accentSecondary)
-                        .frame(width: 6, height: 6)
-                    Text(categoryName)
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                }
-                .padding(.leading, 22) // Align under text, past checkbox
-            }
-
-            // Recipe sources — subtle gray text, toggled
-            if showRecipeSources && !item.sourceRecipeNames.isEmpty {
+            // Item text
+            if item.isCompleted {
+                Text(item.name ?? "Unknown Item")
+                    .font(ForagerTheme.bodyFont)
+                    .strikethrough()
+                    .foregroundStyle(ForagerTheme.textDisabled)
+            } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(item.sourceRecipeNames, id: \.self) { recipeName in
-                        HStack(spacing: ForagerTheme.Spacing.xs) {
-                            Text("•")
-                            Text(recipeName)
-                        }
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textTertiary)
+                    formattedItemText
+
+                    // Recipe sources inline
+                    if showRecipeSources && !item.sourceRecipeNames.isEmpty {
+                        Text(item.sourceRecipeNames.joined(separator: ", "))
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
+                            .lineLimit(1)
                     }
                 }
-                .padding(.leading, 22)
             }
+
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, ForagerTheme.Spacing.sm)
-        .padding(.horizontal, ForagerTheme.Spacing.md)
-        .background(item.isCompleted ? ForagerTheme.accentTint.opacity(0.3) : ForagerTheme.surfacePrimary)
-        .overlay(
-            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
-                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
+        .padding(.vertical, ForagerTheme.Spacing.xs)
+        .frame(minHeight: 44)
         .contentShape(Rectangle())
+        .opacity(item.isCompleted ? 0.6 : 1.0)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.name ?? "Unknown Item")
