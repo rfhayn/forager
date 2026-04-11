@@ -104,9 +104,9 @@ struct SettingsView: View {
 
     private var householdSection: some View {
         Section {
-            NavigationLink {
-                HouseholdView()
-            } label: {
+            ZStack {
+                NavigationLink { HouseholdView() } label: { EmptyView() }
+                    .opacity(0)
                 if let household = householdService.currentHousehold {
                     HStack {
                         Image(systemName: "person.3")
@@ -516,9 +516,9 @@ struct SettingsView: View {
 
                 if DebugLogService.shared.isEnabled {
                     Divider()
-                    NavigationLink {
-                        DebugLogView()
-                    } label: {
+                    ZStack {
+                        NavigationLink { DebugLogView() } label: { EmptyView() }
+                            .opacity(0)
                         HStack {
                             Image(systemName: "doc.text.magnifyingglass")
                                 .foregroundStyle(ForagerTheme.accentSecondary)
@@ -537,9 +537,9 @@ struct SettingsView: View {
 
                 // CloudKit Sync Status link
                 // Opens test interface for monitoring CloudKit sync events
-                NavigationLink {
-                    CloudKitSyncTestView()
-                } label: {
+                ZStack {
+                    NavigationLink { CloudKitSyncTestView() } label: { EmptyView() }
+                        .opacity(0)
                     HStack {
                         Image(systemName: "icloud.and.arrow.up")
                             .foregroundStyle(ForagerTheme.accentSecondary)
@@ -558,9 +558,9 @@ struct SettingsView: View {
 
                 // M7.2.3 Phase 3.5: CloudKit Test Harness
                 // Comprehensive testing UI for duplicate prevention validation
-                NavigationLink {
-                    CloudKitTestHarnessView()
-                } label: {
+                ZStack {
+                    NavigationLink { CloudKitTestHarnessView() } label: { EmptyView() }
+                        .opacity(0)
                     HStack {
                         Image(systemName: "wrench.and.screwdriver")
                             .foregroundStyle(ForagerTheme.accentSecondary)

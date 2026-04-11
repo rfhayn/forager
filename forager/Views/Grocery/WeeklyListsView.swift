@@ -110,7 +110,9 @@ struct WeeklyListsView: View {
     private var listsView: some View {
         List {
             ForEach(weeklyLists, id: \.self) { list in
-                NavigationLink(destination: GroceryListDetailView(weeklyList: list)) {
+                ZStack {
+                    NavigationLink(destination: GroceryListDetailView(weeklyList: list)) { EmptyView() }
+                        .opacity(0)
                     WeeklyListRowView(weeklyList: list)
                 }
                 .listRowBackground(Color.clear)

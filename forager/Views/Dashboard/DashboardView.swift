@@ -153,7 +153,10 @@ struct DashboardView: View {
 
                 // 1. Tonight's Meal (always visible)
                 if let meal = nextMeal {
-                    nextMealCard(meal: meal)
+                    Button { selectedTab = .mealPlans } label: {
+                        nextMealCard(meal: meal)
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     ghostCard(
                         icon: "fork.knife",
@@ -165,7 +168,10 @@ struct DashboardView: View {
 
                 // 2. Shopping List (always visible)
                 if let list = activeGroceryList {
-                    groceryRunCard(list: list)
+                    Button { selectedTab = .lists } label: {
+                        groceryRunCard(list: list)
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     ghostCard(
                         icon: "cart",
@@ -177,7 +183,10 @@ struct DashboardView: View {
 
                 // 3. Meal Plan Overview (always visible)
                 if let plan = mealPlanService.activeMealPlan {
-                    mealPlanOverviewCard(plan: plan)
+                    Button { selectedTab = .mealPlans } label: {
+                        mealPlanOverviewCard(plan: plan)
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     ghostCard(
                         icon: "calendar",
@@ -370,13 +379,6 @@ struct DashboardView: View {
                     .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
-                Button {
-                    selectedTab = .mealPlans
-                } label: {
-                    Text("View Plan")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                }
             }
 
             // Meal type + timing
@@ -423,7 +425,6 @@ struct DashboardView: View {
         let items = (list.items?.allObjects as? [GroceryListItem]) ?? []
         let total = items.count
         let completed = items.filter { $0.isCompleted }.count
-        let progress: Double = total > 0 ? Double(completed) / Double(total) : 0
         let remaining = total - completed
 
         return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
@@ -434,55 +435,20 @@ struct DashboardView: View {
                     .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
-                Button {
-                    selectedTab = .lists
-                } label: {
-                    Text("Open")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                }
+                ForagerProgressRing(progress: total > 0 ? Double(completed) / Double(total) : 0)
             }
 
-            HStack(spacing: ForagerTheme.Spacing.md) {
-                // Progress ring
-                ZStack {
-                    Circle()
-                        .stroke(ForagerTheme.backgroundTertiary, lineWidth: 6)
-                    Circle()
-                        .trim(from: 0, to: progress)
-                        .stroke(ForagerTheme.accentSecondary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                    Text("\(completed)/\(total)")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                }
-                .frame(width: 56, height: 56)
-
-                VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                    if remaining > 0 {
-                        Text("\(remaining) item\(remaining == 1 ? "" : "s") remaining")
-                            .font(ForagerTheme.secondaryFont)
-                            .foregroundStyle(ForagerTheme.textPrimary)
-                    } else {
-                        Text("All done!")
-                            .font(ForagerTheme.secondaryFont)
-                            .foregroundStyle(ForagerTheme.accentSecondary)
-                    }
-
-                    // Show first few unchecked items
-                    let unchecked = items.filter { !$0.isCompleted }.prefix(3)
-                    ForEach(Array(unchecked), id: \.objectID) { item in
-                        Text("· \(item.name ?? item.displayText ?? "Item")")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.textTertiary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
+            if remaining > 0 {
+                Text("\(remaining) item\(remaining == 1 ? "" : "s") remaining")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.textPrimary)
+            } else {
+                Text("All done!")
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(ForagerTheme.accentSecondary)
             }
         }
-        .padding(ForagerTheme.Spacing.md)
+        .padding(ForagerTheme.Spacing.lg)
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }
@@ -498,13 +464,6 @@ struct DashboardView: View {
                     .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
-                Button {
-                    selectedTab = .mealPlans
-                } label: {
-                    Text("View")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                }
             }
 
             // Plan name + fill status
@@ -521,24 +480,32 @@ struct DashboardView: View {
                 }
             }
 
-            // Day indicators
+            // Day indicators — circles distributed full-width
             if let indicators = planDayIndicators {
-                HStack(spacing: ForagerTheme.Spacing.xs) {
+                HStack {
                     ForEach(Array(indicators.enumerated()), id: \.offset) { _, indicator in
                         VStack(spacing: 4) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : ForagerTheme.backgroundTertiary)
-                                .frame(width: 28, height: 6)
-                            Text(indicator.dayLetter)
+                            Text(String(indicator.dayLetter.prefix(1)))
                                 .font(ForagerTheme.captionFont)
-                                .foregroundStyle(indicator.hasMeal ? ForagerTheme.textPrimary : ForagerTheme.textTertiary)
+                                .foregroundStyle(indicator.hasMeal ? ForagerTheme.buttonPrimaryText : ForagerTheme.textTertiary)
+                                .frame(width: 28, height: 28)
+                                .background(
+                                    Circle()
+                                        .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : .clear)
+                                )
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(indicator.hasMeal ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
+                                )
+                        }
+                        if indicator.dayLetter != indicators.last?.dayLetter {
+                            Spacer(minLength: 0)
                         }
                     }
-                    Spacer()
                 }
             }
         }
-        .padding(ForagerTheme.Spacing.md)
+        .padding(ForagerTheme.Spacing.lg)
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
     }

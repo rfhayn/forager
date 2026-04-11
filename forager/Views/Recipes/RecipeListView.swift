@@ -288,7 +288,9 @@ struct RecipeListView: View {
                                 RecipeCardView(recipe: recipe)
                             }
                         } else {
-                            NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                            ZStack {
+                                NavigationLink(destination: RecipeDetailView(recipe: recipe)) { EmptyView() }
+                                    .opacity(0)
                                 RecipeCardView(recipe: recipe)
                             }
                         }
