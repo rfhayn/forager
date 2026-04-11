@@ -721,19 +721,28 @@ class MealPlanService: ObservableObject {
     }
     
     // FUI-1.9: Assign a recipe to today from the dashboard.
-    // Auto-creates a meal plan if none covers today.
+    // Finds any existing plan covering today, or creates a new one.
     @discardableResult
     func assignRecipeToToday(recipe: Recipe) -> PlannedMeal? {
         let today = Calendar.current.startOfDay(for: Date())
 
-        // Find or create a meal plan covering today
+        // Search for ANY plan covering today (not just activeMealPlan cache)
         var plan: MealPlan?
-        if let active = activeMealPlan,
-           let start = active.startDate,
-           let end = Calendar.current.date(byAdding: .day, value: Int(active.duration), to: start),
-           today >= Calendar.current.startOfDay(for: start) && today < Calendar.current.startOfDay(for: end) {
-            plan = active
-        } else {
+        let fetchRequest: NSFetchRequest<MealPlan> = MealPlan.fetchRequest()
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "isCompleted == NO"),
+            householdKeyPredicate()
+        ])
+        if let allPlans = try? context.fetch(fetchRequest) {
+            plan = allPlans.first { mp in
+                guard let start = mp.startDate,
+                      let end = Calendar.current.date(byAdding: .day, value: Int(mp.duration), to: start) else { return false }
+                return today >= Calendar.current.startOfDay(for: start) && today < Calendar.current.startOfDay(for: end)
+            }
+        }
+
+        // Only create if no plan covers today
+        if plan == nil {
             plan = createMealPlan()
         }
 

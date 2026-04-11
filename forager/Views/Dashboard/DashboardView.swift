@@ -168,7 +168,7 @@ struct DashboardView: View {
 
                 // 2. Shopping List (always visible)
                 if let list = activeGroceryList {
-                    Button { selectedTab = .lists } label: {
+                    NavigationLink(destination: GroceryListDetailView(weeklyList: list)) {
                         groceryRunCard(list: list)
                     }
                     .buttonStyle(.plain)
