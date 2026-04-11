@@ -190,9 +190,11 @@ struct HouseholdView: View {
 
                 Divider()
 
-                NavigationLink {
-                    HouseholdMembersView(household: household, service: householdService)
-                } label: {
+                ZStack {
+                    NavigationLink {
+                        HouseholdMembersView(household: household, service: householdService)
+                    } label: { EmptyView() }
+                        .opacity(0)
                     HStack {
                         Text("Manage Members")
                             .font(ForagerTheme.secondaryFont)

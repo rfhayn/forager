@@ -105,7 +105,9 @@ struct MealPlansListView: View {
                 List {
                     // Active plans
                     ForEach(activePlans, id: \.objectID) { plan in
-                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                        ZStack {
+                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) { EmptyView() }
+                                .opacity(0)
                             MealPlanSummaryCard(
                                 mealPlan: plan,
                                 status: .active,
@@ -131,7 +133,9 @@ struct MealPlansListView: View {
 
                     // Upcoming plans
                     ForEach(upcomingPlans, id: \.objectID) { plan in
-                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                        ZStack {
+                            NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) { EmptyView() }
+                                .opacity(0)
                             MealPlanSummaryCard(mealPlan: plan, status: .upcoming)
                         }
                         .listRowBackground(Color.clear)
@@ -156,7 +160,9 @@ struct MealPlansListView: View {
                         Section {
                             if showCompleted {
                                 ForEach(completedPlans, id: \.objectID) { plan in
-                                    NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) {
+                                    ZStack {
+                                        NavigationLink(destination: MealPlanDetailView(mealPlan: plan)) { EmptyView() }
+                                            .opacity(0)
                                         MealPlanSummaryCard(mealPlan: plan, status: .completed)
                                     }
                                     .listRowBackground(Color.clear)
@@ -340,7 +346,7 @@ struct MealPlanSummaryCard: View {
                     }
                     .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.accentPrimary)
-                    .padding(.horizontal, ForagerTheme.Spacing.md)
+                    .frame(maxWidth: .infinity)
                     .padding(.vertical, ForagerTheme.Spacing.sm)
                     .background(ForagerTheme.accentTint)
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
@@ -367,8 +373,8 @@ struct MealPlanSummaryCard: View {
     // MARK: - Day Dots
 
     private var dayDotsRow: some View {
-        HStack(spacing: ForagerTheme.Spacing.sm) {
-            ForEach(Array(daysInPlan.enumerated()), id: \.offset) { _, date in
+        HStack {
+            ForEach(Array(daysInPlan.enumerated()), id: \.offset) { index, date in
                 let isPlanned = plannedDates.contains(where: { Calendar.current.isDate($0, inSameDayAs: date) })
                 let dayInitial = dayLetter(for: date)
 
@@ -384,6 +390,10 @@ struct MealPlanSummaryCard: View {
                         Circle()
                             .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
                     )
+
+                if index < daysInPlan.count - 1 {
+                    Spacer(minLength: 0)
+                }
             }
         }
         .accessibilityElement(children: .ignore)
