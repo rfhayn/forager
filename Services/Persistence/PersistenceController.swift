@@ -317,7 +317,12 @@ final class PersistenceController: ObservableObject {
             return
         }
 
-        let storeURL = store.url!
+        guard let storeURL = store.url else {
+            #if DEBUG
+            print("❌ M7.2.2: Shared store has no URL")
+            #endif
+            return
+        }
         #if DEBUG
         print("🔄 M7.2.2: Destroying shared store at \(storeURL.lastPathComponent)")
         #endif

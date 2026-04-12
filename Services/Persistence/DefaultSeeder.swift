@@ -251,7 +251,8 @@ final class DefaultSeeder {
             }
         }
 
-        // Create repository instance
+        // M19: Seeder is exempt from factory requirement (ADR 014) — runs at first launch
+        // before any household exists. No factory needed for personal-scope seeding.
         let repository = HouseholdCategoryRepository(context: context)
 
         var createdCount = 0

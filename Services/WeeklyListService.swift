@@ -14,7 +14,8 @@ class WeeklyListService: ObservableObject {
     private let parsingService: IngredientParsingService
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    private(set) var factory: ManagedObjectFactory?
+    // M19: Non-optional — configure() must be called before any entity creation
+    private(set) var factory: ManagedObjectFactory!
 
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -39,27 +40,19 @@ class WeeklyListService: ObservableObject {
         clearError()
 
         let list: WeeklyList
-        if let factory = factory {
-            do {
-                list = try factory.make(WeeklyList.self, configure: { l in
-                    l.id = UUID()
-                    l.name = name
-                    l.dateCreated = startDate
-                    l.isCompleted = false
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating WeeklyList: \(error)")
-                #endif
-                errorMessage = "Failed to create list"
-                return nil
-            }
-        } else {
-            list = WeeklyList(context: viewContext)
-            list.id = UUID()
-            list.name = name
-            list.dateCreated = startDate
-            list.isCompleted = false
+        do {
+            list = try factory.make(WeeklyList.self, configure: { l in
+                l.id = UUID()
+                l.name = name
+                l.dateCreated = startDate
+                l.isCompleted = false
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating WeeklyList: \(error)")
+            #endif
+            errorMessage = "Failed to create list"
+            return nil
         }
 
         return save("create list") ? list : nil

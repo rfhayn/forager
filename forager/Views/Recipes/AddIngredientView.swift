@@ -7,6 +7,7 @@ import CoreData
 struct AddIngredientView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.managedObjectFactory) private var factory
     @EnvironmentObject private var householdService: HouseholdService
     @EnvironmentObject private var ingredientTemplateService: IngredientTemplateService
 
@@ -92,10 +93,12 @@ struct AddIngredientView: View {
     private func saveIngredient() {
         // M7.1.3: Use repository pattern to prevent duplicates
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let ingredient = IngredientTemplateRepository.getOrCreate(
+        guard let factory = factory else { return }
+        guard let ingredient = IngredientTemplateRepository.getOrCreate(
             displayName: trimmedName,
-            in: viewContext
-        )
+            in: viewContext,
+            factory: factory
+        ) else { return }
 
         // M9.12: Look up Category entity by name, pass entity instead of String
         let categoryEntity: Category? = selectedCategory == "Uncategorized"

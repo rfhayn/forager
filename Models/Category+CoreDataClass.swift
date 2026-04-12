@@ -26,9 +26,10 @@ public class Category: NSManagedObject {
     
     /// M7.2.3 Phase 3.2: Create default categories using HouseholdCategoryRepository
     /// Prevents duplicate categories in CloudKit shared zones
-    static func createDefaultCategories(in context: NSManagedObjectContext) {
-        let repository = HouseholdCategoryRepository(context: context)
-        
+    /// M19: Factory parameter required for household scope; pass factory from service
+    static func createDefaultCategories(in context: NSManagedObjectContext, factory: ManagedObjectFactory) {
+        let repository = HouseholdCategoryRepository(context: context, factory: factory)
+
         for (name, color, sortOrder) in defaultCategories {
             do {
                 // Use repository's findOrCreate (handles semantic uniqueness)
@@ -45,19 +46,20 @@ public class Category: NSManagedObject {
             }
         }
     }
-    
+
     /// M7.2.3 Phase 3.2: Ensure default categories exist using HouseholdCategoryRepository
     /// Idempotent: safe to call multiple times
-    static func ensureDefaultCategories(in context: NSManagedObjectContext) {
-        let repository = HouseholdCategoryRepository(context: context)
-        
+    /// M19: Factory parameter required for household scope; pass factory from service
+    static func ensureDefaultCategories(in context: NSManagedObjectContext, factory: ManagedObjectFactory) {
+        let repository = HouseholdCategoryRepository(context: context, factory: factory)
+
         do {
             let allCategories = try repository.findAll()
             if allCategories.isEmpty {
                 #if DEBUG
                 print("🏷️ M7.2.3: No categories found, creating defaults...")
                 #endif
-                createDefaultCategories(in: context)
+                createDefaultCategories(in: context, factory: factory)
             } else {
                 #if DEBUG
                 print("ℹ️ M7.2.3: Categories already exist (\(allCategories.count) found)")
@@ -68,7 +70,7 @@ public class Category: NSManagedObject {
             print("❌ M7.2.3: Error checking for existing categories: \(error)")
             #endif
             // Fallback: try creating defaults anyway (repository will handle duplicates)
-            createDefaultCategories(in: context)
+            createDefaultCategories(in: context, factory: factory)
         }
     }
     

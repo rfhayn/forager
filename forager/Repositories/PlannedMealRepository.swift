@@ -40,15 +40,16 @@ struct PlannedMealRepository {
     ///   - mealPlan: Parent meal plan (can be nil)
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created PlannedMeal
-    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
+    /// M9.13: Factory parameter for correct store assignment (ADR 014)
+    /// M19: Factory is required — no fallback to direct Entity(context:)
     static func getOrCreate(
         date: Date,
         mealType: String,
         recipe: Recipe?,
         mealPlan: MealPlan?,
         in context: NSManagedObjectContext,
-        factory: ManagedObjectFactory? = nil
-    ) -> PlannedMeal {
+        factory: ManagedObjectFactory
+    ) -> PlannedMeal? {
         // Validate meal type
         guard PlannedMeal.isValidMealType(mealType) else {
             #if DEBUG
@@ -59,23 +60,24 @@ struct PlannedMealRepository {
                 mealType: "dinner",
                 recipe: recipe,
                 mealPlan: mealPlan,
-                in: context
+                in: context,
+                factory: factory
             )
         }
-        
+
         let slotKey = PlannedMeal.slotKey(date: date, mealType: mealType)
-        
+
         // Query by semantic key first
         let request: NSFetchRequest<PlannedMeal> = PlannedMeal.fetchRequest()
         request.predicate = NSPredicate(format: "slotKey == %@", slotKey)
         request.fetchLimit = 1
-        
+
         // Return existing if found (update recipe if different)
         if let existing = try? context.fetch(request).first {
             #if DEBUG
             print("📦 PlannedMealRepository: Found existing meal for slot '\(slotKey)'")
             #endif
-            
+
             // Update recipe if changed
             if existing.recipe != recipe {
                 #if DEBUG
@@ -83,46 +85,34 @@ struct PlannedMealRepository {
                 #endif
                 existing.recipe = recipe
             }
-            
+
             // Update meal plan if changed
             if existing.mealPlan != mealPlan {
                 existing.mealPlan = mealPlan
             }
-            
+
             return existing
         }
-        
+
         // Create new if doesn't exist
         #if DEBUG
         print("✨ PlannedMealRepository: Creating new meal for slot '\(slotKey)'")
         #endif
-        // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory {
-            do {
-                return try factory.make(PlannedMeal.self, configure: { m in
-                    m.date = date
-                    m.mealType = mealType.lowercased()
-                    m.slotKey = slotKey
-                    m.recipe = recipe
-                    m.mealPlan = mealPlan
-                    m.createdDate = Date()
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating PlannedMeal: \(error)")
-                #endif
-            }
+        do {
+            return try factory.make(PlannedMeal.self, configure: { m in
+                m.date = date
+                m.mealType = mealType.lowercased()
+                m.slotKey = slotKey
+                m.recipe = recipe
+                m.mealPlan = mealPlan
+                m.createdDate = Date()
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating PlannedMeal: \(error)")
+            #endif
+            return nil
         }
-
-        let meal = PlannedMeal(context: context)
-        meal.date = date
-        meal.mealType = mealType.lowercased()
-        meal.slotKey = slotKey
-        meal.recipe = recipe
-        meal.mealPlan = mealPlan
-        meal.createdDate = Date()
-
-        return meal
     }
     
     // MARK: - Query Helpers

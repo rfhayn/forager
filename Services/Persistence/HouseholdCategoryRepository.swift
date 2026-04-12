@@ -24,8 +24,9 @@ final class HouseholdCategoryRepository {
     
     private let context: NSManagedObjectContext
 
-    // M9.13: Optional factory for correct store assignment (ADR 014)
-    private(set) var factory: ManagedObjectFactory?
+    // M9.13: Factory for correct store assignment (ADR 014)
+    // M19: Required for production use — seeder/tests may pass nil (ADR 014 exempt)
+    private let factory: ManagedObjectFactory?
 
     // M9.37: Explicit householdKey for scope-aware lookups (ADR 013)
     private let householdKey: String?
@@ -66,7 +67,8 @@ final class HouseholdCategoryRepository {
             return existing
         }
         
-        // M9.13: Use factory when available for correct store assignment (ADR 014)
+        // M9.13: Use factory for correct store assignment (ADR 014)
+        // M19: Factory is required for production; seeder may pass nil (ADR 014 exempt)
         let category: Category
         if let factory = factory {
             category = try factory.make(Category.self, configure: { c in
@@ -80,6 +82,8 @@ final class HouseholdCategoryRepository {
                 c.updatedAt = Date()
             })
         } else {
+            // Seeder/test fallback — no factory available, create in default store
+            assertionFailure("HouseholdCategoryRepository: factory is nil in production code")
             category = Category(context: context)
             category.id = UUID()
             category.name = name

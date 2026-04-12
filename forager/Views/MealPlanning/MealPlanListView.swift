@@ -365,7 +365,13 @@ struct MealPlanSummaryCard: View {
         let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             mealPlan.name = trimmed
-            try? viewContext.save()
+            do {
+                try viewContext.save()
+            } catch {
+                #if DEBUG
+                print("⚠️ Failed to save meal plan name: \(error)")
+                #endif
+            }
         }
         isEditingName = false
     }

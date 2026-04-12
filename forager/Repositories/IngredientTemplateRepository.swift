@@ -31,8 +31,9 @@ struct IngredientTemplateRepository {
     ///   - displayName: User-facing ingredient name (e.g., "Basil")
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created IngredientTemplate
-    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
-    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) -> IngredientTemplate {
+    /// M9.13: Factory parameter for correct store assignment (ADR 014)
+    /// M19: Factory is required — no fallback to direct Entity(context:)
+    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory) -> IngredientTemplate? {
         let canonical = IngredientTemplate.canonicalName(from: displayName)
 
         // Query by semantic key first
@@ -52,29 +53,19 @@ struct IngredientTemplateRepository {
         #if DEBUG
         print("✨ IngredientTemplateRepository: Creating new '\(displayName)' (canonical: '\(canonical)')")
         #endif
-        // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory {
-            do {
-                return try factory.make(IngredientTemplate.self, configure: { t in
-                    t.name = displayName
-                    t.canonicalName = canonical
-                    t.dateCreated = Date()
-                    t.updatedAt = Date()
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating IngredientTemplate: \(error)")
-                #endif
-            }
+        do {
+            return try factory.make(IngredientTemplate.self, configure: { t in
+                t.name = displayName
+                t.canonicalName = canonical
+                t.dateCreated = Date()
+                t.updatedAt = Date()
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating IngredientTemplate: \(error)")
+            #endif
+            return nil
         }
-
-        let template = IngredientTemplate(context: context)
-        template.name = displayName
-        template.canonicalName = canonical
-        template.dateCreated = Date()
-        template.updatedAt = Date()
-
-        return template
     }
     
     // MARK: - Query Helpers

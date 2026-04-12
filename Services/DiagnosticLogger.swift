@@ -57,7 +57,11 @@ class DiagnosticLogger: ObservableObject {
     private var fileHandle: FileHandle?
 
     init() {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            self.logFileURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("forager-diagnostics.log")
+            self.isEnabled = false
+            return
+        }
         self.logFileURL = docs.appendingPathComponent("forager-diagnostics.log")
         self.isEnabled = UserDefaults.standard.object(forKey: "diagnosticLogEnabled") as? Bool ?? true
 

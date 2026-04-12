@@ -26,6 +26,7 @@ struct CloudKitTestHarnessView: View {
     
     @StateObject private var diagnostics: CloudKitDiagnostics
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.managedObjectFactory) private var factory
     
     @State private var showingClearConfirmation = false
     @State private var testResults: [String] = []
@@ -198,7 +199,7 @@ struct CloudKitTestHarnessView: View {
         testResults.removeAll()
         testResults.append("🧪 Testing Category Duplication...")
         
-        let repository = HouseholdCategoryRepository(context: viewContext)
+        let repository = HouseholdCategoryRepository(context: viewContext, factory: factory!)
         
         do {
             // Attempt 1: Create category
@@ -240,7 +241,7 @@ struct CloudKitTestHarnessView: View {
         testResults.removeAll()
         testResults.append("🧪 Testing Template Duplication...")
         
-        let repository = HouseholdIngredientTemplateRepository(context: viewContext)
+        let repository = HouseholdIngredientTemplateRepository(context: viewContext, factory: factory!)
         
         do {
             // M9.12: Look up Category entities by name for test
@@ -295,7 +296,7 @@ struct CloudKitTestHarnessView: View {
         testResults.removeAll()
         testResults.append("🧪 Testing Meal Plan Duplication...")
         
-        let repository = HouseholdPlannedMealRepository(context: viewContext)
+        let repository = HouseholdPlannedMealRepository(context: viewContext, factory: factory!)
         let testDate = Date()
         
         do {

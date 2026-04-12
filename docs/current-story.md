@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: April 9, 2026
-**Status**: **M9.37 COMPLETE** | **M19 SCRAPPED** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
-**Total Progress**: ~340 hours
-**Current Branch**: `main`
-**Launch Path**: M9.28 → M7.7 (iOS) | "Designed for iPad" on Mac (replacing M19)
+**Last Updated**: April 12, 2026
+**Status**: **M19 (Bug Hunt) ACTIVE** | **M9.37 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Total Progress**: ~345 hours
+**Current Branch**: `feature/M19-pre-launch-bug-hunt`
+**Launch Path**: M19 (factory enforcement) → M9.28 → M7.7 (iOS) | "Designed for iPad" on Mac
 **Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
 
 ---

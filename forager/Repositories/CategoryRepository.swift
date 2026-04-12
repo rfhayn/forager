@@ -31,8 +31,9 @@ struct CategoryRepository {
     ///   - displayName: User-facing category name (e.g., "Produce")
     ///   - context: NSManagedObjectContext to use
     /// - Returns: Existing or newly created Category
-    /// M9.13: Optional factory parameter for correct store assignment (ADR 014)
-    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) -> Category {
+    /// M9.13: Factory parameter for correct store assignment (ADR 014)
+    /// M19: Factory is required — no fallback to direct Entity(context:)
+    static func getOrCreate(displayName: String, in context: NSManagedObjectContext, factory: ManagedObjectFactory) -> Category? {
         let normalized = Category.normalizedName(from: displayName)
 
         // Query by semantic key first
@@ -52,27 +53,18 @@ struct CategoryRepository {
         #if DEBUG
         print("✨ CategoryRepository: Creating new '\(displayName)' (normalized: '\(normalized)')")
         #endif
-        // M9.13: Use factory when available for correct store assignment (ADR 014)
-        if let factory = factory {
-            do {
-                return try factory.make(Category.self, configure: { c in
-                    c.name = displayName
-                    c.normalizedName = normalized
-                    c.updatedAt = Date()
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating Category: \(error)")
-                #endif
-            }
+        do {
+            return try factory.make(Category.self, configure: { c in
+                c.name = displayName
+                c.normalizedName = normalized
+                c.updatedAt = Date()
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating Category: \(error)")
+            #endif
+            return nil
         }
-
-        let category = Category(context: context)
-        category.name = displayName
-        category.normalizedName = normalized
-        category.updatedAt = Date()
-
-        return category
     }
     
     // MARK: - Query Helpers
