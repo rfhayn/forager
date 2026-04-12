@@ -83,7 +83,6 @@ final class HouseholdCategoryRepository {
             })
         } else {
             // Seeder/test fallback — no factory available, create in default store
-            assertionFailure("HouseholdCategoryRepository: factory is nil in production code")
             category = Category(context: context)
             category.id = UUID()
             category.name = name

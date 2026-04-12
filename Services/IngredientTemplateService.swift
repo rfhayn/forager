@@ -9,8 +9,8 @@ class IngredientTemplateService: ObservableObject {
     @Published var errorMessage: String?
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    // M19: Non-optional — configure() must be called before any entity creation
-    private(set) var factory: ManagedObjectFactory!
+    // M19: Optional — child-context services (RecipeImportService) operate without factory
+    private(set) var factory: ManagedObjectFactory?
 
     // M10.6.11: Household key for scoping newly created templates.
     // Set via provider closure (app-level) or direct property (child contexts).
@@ -506,18 +506,31 @@ class IngredientTemplateService: ObservableObject {
                 return existing
             }
 
-            // M9.13: Use factory for correct store assignment (ADR 014)
-            // M19: Wrapped in do-catch since we're already inside a catch block
-            let template = try! factory.make(IngredientTemplate.self, configure: { t in
-                t.id = UUID()
-                t.name = normalizedName
-                t.canonicalName = canonical
-                t.categoryEntity = category
-                t.householdKey = self.resolvedHouseholdKey
-                t.usageCount = 1
-                t.dateCreated = Date()
-                t.updatedAt = Date()
-            })
+            // M19.1: Use factory when available, otherwise create directly
+            // Child-context services (RecipeImportService) operate without factory
+            let template: IngredientTemplate
+            if let factory = factory {
+                template = try! factory.make(IngredientTemplate.self, configure: { t in
+                    t.id = UUID()
+                    t.name = normalizedName
+                    t.canonicalName = canonical
+                    t.categoryEntity = category
+                    t.householdKey = self.resolvedHouseholdKey
+                    t.usageCount = 1
+                    t.dateCreated = Date()
+                    t.updatedAt = Date()
+                })
+            } else {
+                template = IngredientTemplate(context: context)
+                template.id = UUID()
+                template.name = normalizedName
+                template.canonicalName = canonical
+                template.categoryEntity = category
+                template.householdKey = resolvedHouseholdKey
+                template.usageCount = 1
+                template.dateCreated = Date()
+                template.updatedAt = Date()
+            }
             return template
         }
     }
