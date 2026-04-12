@@ -29,34 +29,34 @@ enum ForagerTheme {
 
     /// Full-screen base background
     static var backgroundCanvas: Color {
-        adaptiveColor(lightHex: "#FDFBF7", darkHex: "#1C1A14")
+        adaptiveColor(lightHex: "#EDE8DF", darkHex: "#141210")
     }
 
     /// Card/section backgrounds
     static var backgroundPrimary: Color {
-        adaptiveColor(lightHex: "#F5F0E8", darkHex: "#221E16")
+        adaptiveColor(lightHex: "#E3DDD2", darkHex: "#1C1915")
     }
 
     /// Grouped content
     static var backgroundSecondary: Color {
-        adaptiveColor(lightHex: "#EDE6D8", darkHex: "#2A251C")
+        adaptiveColor(lightHex: "#D9D1C4", darkHex: "#24201A")
     }
 
     /// Nested groups
     static var backgroundTertiary: Color {
-        adaptiveColor(lightHex: "#E4DDD0", darkHex: "#332E24")
+        adaptiveColor(lightHex: "#CFC6B8", darkHex: "#2C2720")
     }
 
     // MARK: - Surface Colors (§4.1.3)
 
     /// Cards, list rows, inputs
     static var surfacePrimary: Color {
-        adaptiveColor(lightHex: "#FFFFFF", darkHex: "#2E2A1F")
+        adaptiveColor(lightHex: "#FAFBFC", darkHex: "#282828")
     }
 
     /// Sheets, popovers
     static var surfaceSecondary: Color {
-        adaptiveColor(lightHex: "#F8F4EE", darkHex: "#363127")
+        adaptiveColor(lightHex: "#F5F6F8", darkHex: "#323232")
     }
 
     /// Selected state highlight
@@ -174,17 +174,17 @@ enum ForagerTheme {
 
     /// Default border
     static var borderDefault: Color {
-        adaptiveColor(lightHex: "#D4CBC0", darkHex: "#443F38")
+        adaptiveColor(lightHex: "#CCC9C2", darkHex: "#444444")
     }
 
     /// Subtle border
     static var borderSubtle: Color {
-        adaptiveColor(lightHex: "#E0D8CC", darkHex: "#3A3630")
+        adaptiveColor(lightHex: "#D8D6D0", darkHex: "#3A3A3A")
     }
 
     /// Strong border
     static var borderStrong: Color {
-        adaptiveColor(lightHex: "#C8BFB3", darkHex: "#4E4840")
+        adaptiveColor(lightHex: "#C0BCAE", darkHex: "#505050")
     }
 
     /// Accent border
