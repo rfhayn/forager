@@ -362,9 +362,7 @@ struct DashboardView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
-        .padding(ForagerTheme.Spacing.md)
-        .background(ForagerTheme.surfacePrimary)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
+        .foragerGlassCard()
     }
 
     // MARK: - Next Meal Card
@@ -413,9 +411,7 @@ struct DashboardView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
-        .padding(ForagerTheme.Spacing.md)
-        .background(ForagerTheme.surfacePrimary)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
+        .foragerGlassCard()
     }
 
     // MARK: - Grocery Run Card
@@ -447,9 +443,7 @@ struct DashboardView: View {
                     .foregroundStyle(ForagerTheme.accentSecondary)
             }
         }
-        .padding(ForagerTheme.Spacing.lg)
-        .background(ForagerTheme.surfacePrimary)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
+        .foragerGlassCard()
     }
 
     // MARK: - Meal Plan Overview Card
@@ -504,9 +498,7 @@ struct DashboardView: View {
                 }
             }
         }
-        .padding(ForagerTheme.Spacing.lg)
-        .background(ForagerTheme.surfacePrimary)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg))
+        .foragerGlassCard()
     }
 
     // MARK: - Quick Actions Bar
