@@ -37,7 +37,6 @@ struct DashboardView: View {
         guard let plan = mealPlanService.activeMealPlan,
               let meals = plan.plannedMeals?.allObjects as? [PlannedMeal] else { return nil }
 
-        let now = Date()
         let calendar = Calendar.current
 
         // Meal type ordering for same-day sorting

@@ -245,7 +245,8 @@ struct foragerApp: App {
                             // M9.15.3: If no household found, start background discovery.
                             // Handles reinstall scenario where CloudKit hasn't synced yet.
                             // Non-blocking — app is fully usable while this runs.
-                            if await householdService.currentHousehold == nil {
+                            let hasHousehold = await MainActor.run { householdService.currentHousehold != nil }
+                            if !hasHousehold {
                                 await householdService.discoverExistingHousehold()
                             }
                         }

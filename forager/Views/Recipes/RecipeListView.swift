@@ -873,19 +873,23 @@ struct RecipeGridCard: View {
             .frame(height: 120)
             .clipped()
 
-            // Title + metadata
+            // Title + metadata — fixed height so grid rows align
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
                 Text(recipe.recipeDisplayTitle)
                     .font(ForagerTheme.secondaryFont.weight(.semibold))
                     .foregroundStyle(ForagerTheme.textPrimary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 HStack(spacing: ForagerTheme.Spacing.xs) {
                     if recipe.hasRecipeTiming {
                         Image(systemName: "clock")
                             .font(ForagerTheme.captionFont)
                         Text(recipe.recipeFormattedTotalTime)
+                            .font(ForagerTheme.captionFont)
+                    } else {
+                        Text(" ")
                             .font(ForagerTheme.captionFont)
                     }
 

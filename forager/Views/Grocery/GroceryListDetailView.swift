@@ -892,7 +892,7 @@ struct GroceryListItemRow: View {
 
             // Item text
             if item.isCompleted {
-                Text(item.name ?? "Unknown Item")
+                Text(cleanQuantityDisplay(item.name ?? "Unknown Item"))
                     .font(ForagerTheme.bodyFont)
                     .strikethrough()
                     .foregroundStyle(ForagerTheme.textDisabled)
@@ -923,10 +923,15 @@ struct GroceryListItemRow: View {
         .accessibilityHint("Double tap to \(item.isCompleted ? "uncheck" : "check off") this item")
     }
 
+    /// Clean trailing .0 from quantities: "2.0 tsp" → "2 tsp", "0.25 cup" unchanged
+    private func cleanQuantityDisplay(_ text: String) -> String {
+        text.replacingOccurrences(of: #"(\d+)\.0(\s|$)"#, with: "$1$2", options: .regularExpression)
+    }
+
     /// Formatted text matching recipe detail: quantity in secondary, name in bold green
     @ViewBuilder
     private var formattedItemText: some View {
-        let fullText = item.name ?? "Unknown Item"
+        let fullText = cleanQuantityDisplay(item.name ?? "Unknown Item")
         if let ingredientName = parsedIngredientName,
            let range = fullText.range(of: ingredientName, options: .caseInsensitive) {
             let prefix = String(fullText[fullText.startIndex..<range.lowerBound])

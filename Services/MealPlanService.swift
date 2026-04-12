@@ -153,14 +153,25 @@ class MealPlanService: ObservableObject {
     // Uses UserPreferencesService for duration and start day defaults
     func createMealPlan(startDate: Date? = nil, name: String? = nil, duration: Int? = nil) -> MealPlan? {
         let startTime = CFAbsoluteTimeGetCurrent()
-        
+
+        // Validate no overlap before creating
+        let prefs = UserPreferencesService.shared
+        let calculatedStart = startDate ?? calculateStartDate(using: prefs.mealPlanStartDay)
+        let planDuration = duration ?? prefs.mealPlanDuration
+        let validation = validatePlanDates(startDate: calculatedStart, duration: planDuration)
+        if !validation.isValid {
+            #if DEBUG
+            print("⚠️ MealPlan creation blocked: \(validation.errorMessage ?? "overlap")")
+            #endif
+            return nil
+        }
+
         // Deactivate any existing active plans
         deactivateAllPlans()
         
         // M9.13: Route through factory for correct store assignment (ADR 014)
         let plan: MealPlan
-        let prefs = UserPreferencesService.shared
-        let calculatedStartDate = startDate ?? calculateStartDate(using: prefs.mealPlanStartDay)
+        let calculatedStartDate = calculatedStart
 
         if let factory = factory {
             do {
