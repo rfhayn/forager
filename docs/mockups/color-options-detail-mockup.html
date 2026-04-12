@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager — Detail & Settings Color Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, 'SF Pro Text', sans-serif;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    padding: 32px 24px 80px;
+  }
+  h1 {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .page-subtitle {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  /* Option section */
+  .option-section {
+    margin-bottom: 56px;
+  }
+  .option-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 6px;
+  }
+  .option-title {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .option-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: #2D5016;
+    color: #7BC08A;
+  }
+  .option-badge.current {
+    background: #333;
+    color: #aaa;
+  }
+  .option-subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Mode row */
+  .mode-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .mode-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .mode-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  /* Phone frame */
+  .phone-scroll {
+    width: 390px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 40px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .phone-scroll::-webkit-scrollbar { display: none; }
+  .phone-strip {
+    display: flex;
+    width: max-content;
+  }
+  .phone-frame {
+    width: 390px;
+    min-width: 390px;
+    height: 780px;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  .phone-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 56px 0 32px;
+  }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px 0;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 4px; font-size: 12px; }
+
+  /* Tab bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 82px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid;
+    z-index: 10;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-icon { font-size: 22px; }
+
+  /* View indicator dots */
+  .view-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .view-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: #555;
+  }
+
+  /* Shared component styles */
+  .swipe-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Forager Detail & Settings Views</h1>
+<p class="page-subtitle">Companion to the main list mockup. Swipe each phone horizontally to see all 5 detail views.</p>
+
+<script>
+const OPTIONS = [
+  {
+    id: 'optC',
+    name: 'Option C: Parchment & Paper',
+    badge: 'Recommended',
+    badgeClass: '',
+    subtitle: 'Warm but not yellow. Slightly cooler surfaces create depth.',
+    light: {
+      bgCanvas: '#EDE8DF', surfPrimary: '#FAFBFC', surfSecondary: '#F5F6F8',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#DCD6CC', statusSuccess: '#2D6A3F', statusWarning: '#B8860B',
+      buttonPriText: '#FFFFFF',
+    },
+    dark: {
+      bgCanvas: '#141210', surfPrimary: '#282828', surfSecondary: '#323232',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#343434', statusSuccess: '#4CAF50', statusWarning: '#FFB74D',
+      buttonPriText: '#1C1A14',
+    }
+  },
+  {
+    id: 'optA',
+    name: 'Option A: Warm Linen',
+    badge: '',
+    badgeClass: '',
+    subtitle: 'Warmest option. Linen-like feel with golden undertones.',
+    light: {
+      bgCanvas: '#F0EBE0', surfPrimary: '#FFFFFF', surfSecondary: '#FAF8F4',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#E0D8CC', statusSuccess: '#2D6A3F', statusWarning: '#B8860B',
+      buttonPriText: '#FFFFFF',
+    },
+    dark: {
+      bgCanvas: '#161412', surfPrimary: '#302C24', surfSecondary: '#3A362C',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3630', statusSuccess: '#4CAF50', statusWarning: '#FFB74D',
+      buttonPriText: '#1C1A14',
+    }
+  },
+  {
+    id: 'optB',
+    name: 'Option B: Stone & Sage',
+    badge: '',
+    badgeClass: '',
+    subtitle: 'Cool and neutral. Closest to system iOS gray palette.',
+    light: {
+      bgCanvas: '#F2F2F7', surfPrimary: '#FFFFFF', surfSecondary: '#F9F9FB',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#D1D1D6', statusSuccess: '#2D6A3F', statusWarning: '#B8860B',
+      buttonPriText: '#FFFFFF',
+    },
+    dark: {
+      bgCanvas: '#000000', surfPrimary: '#1C1C1E', surfSecondary: '#2C2C2E',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3A3C', statusSuccess: '#4CAF50', statusWarning: '#FFB74D',
+      buttonPriText: '#1C1A14',
+    }
+  },
+  {
+    id: 'optCurrent',
+    name: 'Current (Baseline)',
+    badge: 'Current',
+    badgeClass: 'current',
+    subtitle: 'Existing forager palette for reference comparison.',
+    light: {
+      bgCanvas: '#FDFBF7', surfPrimary: '#FFFFFF', surfSecondary: '#F8F4EE',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#E0D8CC', statusSuccess: '#2D6A3F', statusWarning: '#B8860B',
+      buttonPriText: '#FFFFFF',
+    },
+    dark: {
+      bgCanvas: '#1C1A14', surfPrimary: '#2E2A1F', surfSecondary: '#38342A',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3630', statusSuccess: '#4CAF50', statusWarning: '#FFB74D',
+      buttonPriText: '#1C1A14',
+    }
+  },
+];
+
+/* ── Nav bar helper ─────────────────────────────────────── */
+function navBar(c, title, showBack = true) {
+  return `<div style="padding: 4px 16px 12px; display:flex; align-items:center; gap:8px;">
+    ${showBack ? `<span style="color:${c.accentPri}; font-size:17px; cursor:pointer;">&#8592;</span>` : ''}
+    <span style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:17px; font-weight:600; color:${c.textPri};">${title}</span>
+  </div>`;
+}
+
+/* ── iOS toggle helper ──────────────────────────────────── */
+function iosToggle(on, c) {
+  const bg = on ? c.accentPri : (c.borderSubtle);
+  const knobX = on ? '22px' : '2px';
+  return `<div style="width:42px; height:26px; border-radius:13px; background:${bg}; position:relative; flex-shrink:0;">
+    <div style="width:22px; height:22px; border-radius:11px; background:#fff; position:absolute; top:2px; left:${knobX}; box-shadow:0 1px 3px rgba(0,0,0,0.2);"></div>
+  </div>`;
+}
+
+/* ── iOS stepper helper ─────────────────────────────────── */
+function iosStepper(value, c) {
+  return `<div style="display:flex; align-items:center; border:1px solid ${c.borderSubtle}; border-radius:8px; overflow:hidden;">
+    <div style="width:32px; height:28px; display:flex; align-items:center; justify-content:center; color:${c.accentPri}; font-size:18px; font-weight:400; border-right:1px solid ${c.borderSubtle}; cursor:pointer;">&minus;</div>
+    <div style="width:36px; height:28px; display:flex; align-items:center; justify-content:center; color:${c.textPri}; font-size:14px; font-weight:500;">${value}</div>
+    <div style="width:32px; height:28px; display:flex; align-items:center; justify-content:center; color:${c.accentPri}; font-size:18px; font-weight:400; border-left:1px solid ${c.borderSubtle}; cursor:pointer;">+</div>
+  </div>`;
+}
+
+/* ── Inset grouped section helper ───────────────────────── */
+function sectionStart(c, title) {
+  let html = '';
+  if (title) {
+    html += `<div style="padding:0 20px; margin-bottom:6px; margin-top:20px;">
+      <div style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:${c.textTer};">${title}</div>
+    </div>`;
+  }
+  html += `<div style="margin:0 16px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">`;
+  return html;
+}
+function sectionEnd() { return '</div>'; }
+function rowSep(c) { return `<div style="margin-left:16px; height:0.5px; background:${c.borderSubtle};"></div>`; }
+
+function settingsRow(c, label, rightHTML) {
+  return `<div style="padding:12px 16px; display:flex; align-items:center; justify-content:space-between; min-height:44px;">
+    <span style="font-size:15px; color:${c.textPri};">${label}</span>
+    <span style="display:flex; align-items:center; gap:6px;">${rightHTML}</span>
+  </div>`;
+}
+
+function chevron(c) {
+  return `<span style="color:${c.textDis}; font-size:14px;">&#8250;</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW 1: Recipe Detail
+   ══════════════════════════════════════════════════════════ */
+function renderRecipeDetail(c) {
+  const ingredients = [
+    { qty: '2 lb', name: 'chicken breast', cat: 'Meat', catColor: '#C53030' },
+    { qty: '1 cup', name: 'sour cream', cat: 'Dairy', catColor: '#3A7CA5' },
+    { qty: '2 cups', name: 'panko breadcrumbs', cat: 'Pantry', catColor: '#7A5D3F' },
+    { qty: '3 cloves', name: 'garlic, minced', cat: 'Produce', catColor: '#357A30' },
+    { qty: '1 cup', name: 'parmesan cheese', cat: 'Dairy', catColor: '#3A7CA5' },
+    { qty: '2 tbsp', name: 'olive oil', cat: 'Pantry', catColor: '#7A5D3F' },
+  ];
+  const steps = [
+    'Preheat oven to 400\u00B0F. Line a baking sheet with parchment paper.',
+    'Season chicken breasts with salt, pepper, and garlic powder.',
+    'Spread sour cream evenly over each chicken breast.',
+    'Mix panko, parmesan, and minced garlic. Press onto chicken.',
+    'Drizzle with olive oil and bake 25-30 minutes until golden.',
+  ];
+
+  return `
+    ${navBar(c, 'Crispy Parmesan Chicken')}
+
+    <!-- Hero image placeholder -->
+    <div style="margin:0 16px 16px; height:200px; border-radius:14px; background:${c.surfSecondary}; display:flex; align-items:center; justify-content:center;">
+      <span style="font-size:48px; opacity:0.5;">&#x1F357;</span>
+    </div>
+
+    <!-- Timing row -->
+    <div style="margin:0 16px 16px; display:flex; gap:12px; justify-content:center;">
+      ${['Prep: 15 min','Cook: 30 min','Total: 45 min'].map(t => `
+        <div style="padding:6px 12px; border-radius:10px; background:${c.surfPrimary}; font-size:12px; font-weight:500; color:${c.textSec};">${t}</div>
+      `).join('')}
+    </div>
+
+    <!-- Servings + scale buttons -->
+    <div style="margin:0 16px 20px; display:flex; align-items:center; justify-content:space-between;">
+      <span style="font-size:15px; color:${c.textPri}; font-weight:500;">4 servings</span>
+      <div style="display:flex; gap:6px;">
+        ${['\u00BDx','1x','2x','3x'].map((s, i) => `
+          <div style="padding:5px 12px; border-radius:14px; font-size:13px; font-weight:600;
+            background:${i===1 ? c.accentPri : c.surfPrimary};
+            color:${i===1 ? (c.buttonPriText || '#fff') : c.textSec};
+            ${i!==1 ? 'border:1px solid '+c.borderSubtle+';' : ''}
+            cursor:pointer;">${s}</div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Ingredients section -->
+    <div style="padding:0 20px; margin-bottom:6px;">
+      <div style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:20px; font-weight:700; color:${c.textPri};">Ingredients</div>
+    </div>
+    <div style="margin:0 16px 20px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">
+      ${ingredients.map((ing, i) => `
+        ${i > 0 ? `<div style="margin-left:16px; height:0.5px; background:${c.borderSubtle};"></div>` : ''}
+        <div style="padding:11px 16px; display:flex; align-items:center; gap:10px;">
+          <div style="width:20px; height:20px; border-radius:10px; border:1.5px solid ${c.borderSubtle}; flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <span style="font-size:15px; color:${c.textPri};">${ing.qty} <strong>${ing.name}</strong></span>
+          </div>
+          <div style="display:flex; align-items:center; gap:4px;">
+            <div style="width:7px; height:7px; border-radius:4px; background:${ing.catColor};"></div>
+            <span style="font-size:11px; color:${c.textTer};">${ing.cat}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Steps section -->
+    <div style="padding:0 20px; margin-bottom:6px;">
+      <div style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:20px; font-weight:700; color:${c.textPri};">Steps</div>
+    </div>
+    <div style="margin:0 16px 20px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">
+      ${steps.map((step, i) => `
+        ${i > 0 ? `<div style="margin-left:16px; height:0.5px; background:${c.borderSubtle};"></div>` : ''}
+        <div style="padding:12px 16px; display:flex; gap:12px;">
+          <div style="width:24px; height:24px; border-radius:12px; background:${c.accentPri}; color:${c.buttonPriText || '#fff'}; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${i+1}</div>
+          <div style="font-size:14px; color:${c.textPri}; line-height:1.5; flex:1;">${step}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW 2: Grocery List Detail
+   ══════════════════════════════════════════════════════════ */
+function renderGroceryDetail(c) {
+  const sections = [
+    { cat: 'PRODUCE', count: '3/8', catColor: '#357A30', items: [
+      { qty: '1 bunch', name: 'Cilantro', src: 'Thai Green Curry', checked: false },
+      { qty: '3', name: 'Avocados', src: 'Weekly staples', checked: false },
+      { qty: '1 lb', name: 'Green Beans', src: 'Lemon Herb Salmon', checked: false },
+      { qty: '2', name: 'Lemons', src: 'Lemon Herb Salmon', checked: true },
+      { qty: '1 head', name: 'Romaine', src: 'Greek Salad', checked: true },
+      { qty: '1 lb', name: 'Tomatoes', src: 'Greek Salad', checked: true },
+    ]},
+    { cat: 'DAIRY', count: '1/5', catColor: '#3A7CA5', items: [
+      { qty: '1 gal', name: 'Whole Milk', src: 'Weekly staples', checked: false },
+      { qty: '8 oz', name: 'Cream Cheese', src: 'Pasta Carbonara', checked: false },
+      { qty: '1 doz', name: 'Eggs', src: 'Weekly staples', checked: false },
+      { qty: '6 oz', name: 'Greek Yogurt', src: 'Weekly staples', checked: false },
+      { qty: '4 oz', name: 'Butter', src: 'Pasta Carbonara', checked: true },
+    ]},
+  ];
+
+  let html = navBar(c, 'Weekly Groceries');
+  html += `<div style="padding:0 20px 12px;">
+    <div style="font-size:13px; color:${c.textSec};">Apr 12 &middot; 4 of 13 checked</div>
+  </div>`;
+
+  sections.forEach(sec => {
+    html += `<div style="margin:0 16px 12px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">`;
+    html += `<div style="padding:10px 16px; font-size:12px; font-weight:700; letter-spacing:0.5px; display:flex; justify-content:space-between; color:${sec.catColor}; border-bottom:0.5px solid ${c.borderSubtle};">
+      <span>${sec.cat}</span><span>${sec.count}</span>
+    </div>`;
+    sec.items.forEach((it, i) => {
+      if (i > 0) html += `<div style="margin-left:16px; height:0.5px; background:${c.borderSubtle};"></div>`;
+      if (it.checked) {
+        html += `<div style="padding:11px 16px; display:flex; align-items:center; gap:12px; opacity:0.6;">
+          <div style="width:22px; height:22px; border-radius:11px; background:${c.statusSuccess}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <span style="color:#fff; font-size:13px; font-weight:700;">&#10003;</span>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:15px; color:${c.textPri}; text-decoration:line-through;">${it.qty} <strong>${it.name}</strong></div>
+            <div style="font-size:12px; color:${c.textTer}; margin-top:1px;">${it.src}</div>
+          </div>
+        </div>`;
+      } else {
+        html += `<div style="padding:11px 16px; display:flex; align-items:center; gap:12px;">
+          <div style="width:22px; height:22px; border-radius:11px; border:2px solid ${c.borderSubtle}; flex-shrink:0;"></div>
+          <div style="flex:1;">
+            <div style="font-size:15px; color:${c.textPri};">${it.qty} <strong style="color:${c.accentPri};">${it.name}</strong></div>
+            <div style="font-size:12px; color:${c.textTer}; margin-top:1px;">${it.src}</div>
+          </div>
+        </div>`;
+      }
+    });
+    html += '</div>';
+  });
+
+  // Quick-add bar
+  html += `<div style="position:sticky; bottom:82px; margin:12px 16px 0; padding:8px; border-radius:14px; background:${c.surfPrimary}; border:1px solid ${c.borderSubtle}; display:flex; align-items:center; gap:8px; z-index:5;">
+    <span style="color:${c.textTer}; font-size:16px; padding:0 4px;">&#x1F50D;</span>
+    <div style="flex:1; font-size:14px; color:${c.textDis};">Quick add (e.g., '2 cups...')</div>
+    <div style="padding:5px 10px; border-radius:8px; background:${c.accentPri}15; color:${c.accentPri}; font-size:12px; font-weight:600;">AI Add</div>
+    <div style="width:28px; height:28px; border-radius:14px; background:${c.accentPri}; color:${c.buttonPriText || '#fff'}; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:300;">+</div>
+  </div>`;
+
+  return html;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW 3: Meal Plan Detail
+   ══════════════════════════════════════════════════════════ */
+function renderMealPlanDetail(c) {
+  const days = ['S','M','T','W','T','F','S'];
+  const todayIdx = 4; // Thursday
+
+  let html = navBar(c, 'Week of Apr 12');
+
+  // Calendar strip
+  html += `<div style="margin:0 16px 20px; display:flex; justify-content:space-between; padding:0 8px;">
+    ${days.map((d, i) => {
+      const isToday = i === todayIdx;
+      const num = 12 + i - todayIdx + 4; // Apr dates
+      return `<div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <span style="font-size:11px; font-weight:600; color:${isToday ? c.accentPri : c.textTer};">${d}</span>
+        <div style="width:32px; height:32px; border-radius:16px;
+          background:${isToday ? c.accentPri : 'transparent'};
+          color:${isToday ? (c.buttonPriText || '#fff') : c.textPri};
+          font-size:14px; font-weight:${isToday ? '700' : '500'};
+          display:flex; align-items:center; justify-content:center;">${num > 0 ? num : ''}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Day cards with meals
+  const mealDays = [
+    { day: 'THURSDAY', recipe: 'Chicken Parmesan', servings: '4 servings', hasActions: true },
+    { day: 'FRIDAY', recipe: 'Lemon Herb Salmon', servings: '4 servings', hasActions: true },
+    { day: 'SATURDAY', recipe: null },
+    { day: 'SUNDAY', recipe: 'Thai Green Curry', servings: '4 servings', hasActions: true },
+  ];
+
+  mealDays.forEach(md => {
+    html += `<div style="margin:0 16px 12px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">`;
+    html += `<div style="padding:10px 16px 6px; font-size:12px; font-weight:700; letter-spacing:0.5px; color:${c.textTer};">${md.day}</div>`;
+
+    if (md.recipe) {
+      html += `<div style="padding:4px 16px 12px;">
+        <div style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:17px; font-weight:600; color:${c.textPri}; margin-bottom:2px;">${md.recipe}</div>
+        <div style="font-size:13px; color:${c.textSec}; margin-bottom:10px;">${md.servings}</div>
+        <div style="display:flex; gap:8px;">
+          <div style="padding:6px 14px; border-radius:8px; background:${c.accentPri}; color:${c.buttonPriText || '#fff'}; font-size:13px; font-weight:600;">Done</div>
+          <div style="padding:6px 14px; border-radius:8px; border:1px solid ${c.borderSubtle}; color:${c.accentPri}; font-size:13px; font-weight:600;">Swap</div>
+          <div style="padding:6px 14px; border-radius:8px; border:1px solid ${c.borderSubtle}; color:${c.textSec}; font-size:13px; font-weight:600;">Remove</div>
+        </div>
+      </div>`;
+    } else {
+      html += `<div style="padding:12px 16px 14px; text-align:center;">
+        <div style="font-size:14px; color:${c.textDis}; margin-bottom:10px;">No meal planned</div>
+        <div style="display:inline-block; padding:6px 20px; border-radius:8px; border:1px solid ${c.borderSubtle}; color:${c.accentPri}; font-size:13px; font-weight:600; cursor:pointer;">Add</div>
+      </div>`;
+    }
+    html += '</div>';
+  });
+
+  return html;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW 4: Settings
+   ══════════════════════════════════════════════════════════ */
+function renderSettings(c) {
+  let html = `<div style="padding:4px 16px 12px;">
+    <div style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:28px; font-weight:700; color:${c.textPri};">Settings</div>
+  </div>`;
+
+  // Household
+  html += sectionStart(c, 'Household');
+  html += settingsRow(c, 'Hayn', `<span style="font-size:14px; color:${c.textSec};">Owner</span> ${chevron(c)}`);
+  html += sectionEnd();
+
+  // Data
+  html += sectionStart(c, 'Data');
+  html += settingsRow(c, 'Ingredients', chevron(c));
+  html += rowSep(c);
+  html += settingsRow(c, 'Categories', chevron(c));
+  html += rowSep(c);
+  html += settingsRow(c, 'Stores', chevron(c));
+  html += sectionEnd();
+
+  // Meal Planning
+  html += sectionStart(c, 'Meal Planning');
+  html += settingsRow(c, 'Plan Duration', iosStepper('7 days', c));
+  html += rowSep(c);
+  html += settingsRow(c, 'Start Day', `<span style="font-size:15px; color:${c.textSec};">Sunday</span> ${chevron(c)}`);
+  html += rowSep(c);
+  html += settingsRow(c, 'Auto-name plans', iosToggle(true, c));
+  html += sectionEnd();
+
+  // AI Integration
+  html += sectionStart(c, 'AI Integration');
+  html += settingsRow(c, 'Enable AI', iosToggle(true, c));
+  html += rowSep(c);
+  html += settingsRow(c, 'Provider', `<span style="font-size:15px; color:${c.textSec};">Claude API Key</span> ${chevron(c)}`);
+  html += rowSep(c);
+  html += settingsRow(c, 'API Key', `<span style="font-size:15px; color:${c.textSec};">\u2022\u2022\u2022\u2022\u2022\u2022</span> ${chevron(c)}`);
+  html += rowSep(c);
+  html += settingsRow(c, '', `<div style="width:100%; text-align:center; padding:2px 0;">
+    <span style="color:${c.accentPri}; font-size:15px; font-weight:500;">Test Connection</span>
+  </div>`);
+  html += sectionEnd();
+
+  // Diagnostics
+  html += sectionStart(c, 'Diagnostics');
+  html += settingsRow(c, 'Diagnostic Log', `<span style="font-size:14px; color:${c.textSec};">1,247 lines</span> ${chevron(c)}`);
+  html += rowSep(c);
+  html += settingsRow(c, 'Logging Enabled', iosToggle(true, c));
+  html += sectionEnd();
+
+  html += '<div style="height:20px;"></div>';
+  return html;
+}
+
+/* ══════════════════════════════════════════════════════════
+   VIEW 5: Import Preview
+   ══════════════════════════════════════════════════════════ */
+function renderImportPreview(c) {
+  const ingredients = [
+    { qty: '2 lb', name: 'chicken breast', status: 'matched' },
+    { qty: '1 cup', name: 'sour cream', status: 'matched' },
+    { qty: '2 cups', name: 'panko breadcrumbs', status: 'needs_cat' },
+    { qty: '3 cloves', name: 'garlic, minced', status: 'matched' },
+    { qty: '1 cup', name: 'parmesan cheese', status: 'matched' },
+    { qty: '1 tbsp', name: 'smoked paprika', status: 'new' },
+    { qty: '2 tbsp', name: 'olive oil', status: 'matched' },
+    { qty: '\u00BD cup', name: 'panko flakes', status: 'needs_cat' },
+  ];
+
+  function statusIcon(status) {
+    if (status === 'matched') {
+      return `<div style="width:20px; height:20px; border-radius:10px; background:${c.statusSuccess}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <span style="color:#fff; font-size:11px; font-weight:700;">&#10003;</span>
+      </div>`;
+    }
+    if (status === 'needs_cat') {
+      return `<div style="width:20px; height:20px; border-radius:10px; border:2px dashed ${c.statusWarning}; flex-shrink:0;"></div>`;
+    }
+    // new
+    return `<div style="padding:2px 6px; border-radius:4px; background:${c.surfSecondary}; font-size:10px; font-weight:700; color:${c.textTer}; letter-spacing:0.3px; flex-shrink:0;">NEW</div>`;
+  }
+
+  let html = navBar(c, 'Import Recipe');
+
+  // Recipe title editable field
+  html += `<div style="margin:4px 16px 16px;">
+    <div style="padding:12px 14px; border-radius:10px; border:1px solid ${c.borderSubtle}; background:${c.surfPrimary};">
+      <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:${c.textTer}; margin-bottom:4px;">Recipe Title</div>
+      <div style="font-size:17px; font-weight:600; color:${c.textPri};">Crispy Parmesan Chicken</div>
+    </div>
+  </div>`;
+
+  // Source URL
+  html += `<div style="margin:0 16px 16px;">
+    <div style="padding:10px 14px; border-radius:10px; background:${c.surfPrimary};">
+      <div style="font-size:13px; color:${c.textTer};">Source: allrecipes.com/crispy-parmesan...</div>
+    </div>
+  </div>`;
+
+  // Ingredients section with AI button
+  html += `<div style="padding:0 20px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="font-family:-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif; font-size:20px; font-weight:700; color:${c.textPri};">Ingredients</div>
+    <div style="padding:5px 12px; border-radius:8px; background:${c.accentPri}15; color:${c.accentPri}; font-size:12px; font-weight:600; display:flex; align-items:center; gap:4px;">
+      <span style="font-size:14px;">&#x2728;</span> Parse with AI
+    </div>
+  </div>`;
+
+  // Legend
+  html += `<div style="padding:0 20px; margin-bottom:8px; display:flex; gap:12px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:4px; font-size:11px; color:${c.textTer};">
+      <div style="width:10px; height:10px; border-radius:5px; background:${c.statusSuccess};"></div> Matched
+    </div>
+    <div style="display:flex; align-items:center; gap:4px; font-size:11px; color:${c.textTer};">
+      <div style="width:10px; height:10px; border-radius:5px; border:1.5px dashed ${c.statusWarning};"></div> Needs category
+    </div>
+    <div style="display:flex; align-items:center; gap:4px; font-size:11px; color:${c.textTer};">
+      <div style="padding:0 3px; border-radius:2px; background:${c.surfSecondary}; font-size:8px; font-weight:700; color:${c.textTer};">NEW</div> New ingredient
+    </div>
+  </div>`;
+
+  html += `<div style="margin:0 16px 20px; border-radius:14px; background:${c.surfPrimary}; overflow:hidden;">`;
+  ingredients.forEach((ing, i) => {
+    if (i > 0) html += `<div style="margin-left:16px; height:0.5px; background:${c.borderSubtle};"></div>`;
+    html += `<div style="padding:11px 16px; display:flex; align-items:center; gap:10px;">
+      ${statusIcon(ing.status)}
+      <div style="flex:1; font-size:15px; color:${c.textPri};">${ing.qty} <strong>${ing.name}</strong></div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // Save button
+  html += `<div style="margin:8px 16px 20px;">
+    <div style="padding:14px; border-radius:12px; background:${c.accentPri}; color:${c.buttonPriText || '#fff'}; text-align:center; font-size:17px; font-weight:600;">Save Recipe</div>
+  </div>`;
+
+  return html;
+}
+
+/* ── Phone rendering ────────────────────────────────────── */
+function renderPhone(c, viewFn, bgCanvas, tabBarBg, tabBarBorder, statusColor, activeTab) {
+  const content = viewFn(c);
+  const tabs = [
+    { icon: '\uD83C\uDFE0', label: 'Home' },
+    { icon: '\uD83D\uDED2', label: 'Lists' },
+    { icon: '\uD83D\uDCD6', label: 'Recipes' },
+    { icon: '\uD83D\uDCC5', label: 'Plans' },
+  ];
+  return `
+    <div class="phone-frame" style="background:${bgCanvas};">
+      <div class="status-bar" style="color:${statusColor};">
+        <span class="time">9:41</span>
+        <div class="status-icons">
+          <span>\u25CF\u25CF\u25CF\u25CF</span>
+          <span>WiFi</span>
+          <span>\uD83D\uDD0B</span>
+        </div>
+      </div>
+      <div class="phone-content">${content}</div>
+      <div class="tab-bar" style="background:${tabBarBg}; border-color:${tabBarBorder}; color:${c.textTer};">
+        ${tabs.map((t, i) => `<div class="tab-item" style="color:${i === activeTab ? c.accentPri : c.textTer};"><span class="tab-icon">${t.icon}</span>${t.label}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Build option ───────────────────────────────────────── */
+function buildOption(opt) {
+  const views = [
+    { fn: renderRecipeDetail, tab: 2 },
+    { fn: renderGroceryDetail, tab: 1 },
+    { fn: renderMealPlanDetail, tab: 3 },
+    { fn: renderSettings, tab: -1 },
+    { fn: renderImportPreview, tab: 2 },
+  ];
+  const viewNames = ['Recipe', 'Grocery', 'Meal Plan', 'Settings', 'Import'];
+
+  function phoneSet(c, isDark) {
+    const bgCanvas = c.bgCanvas;
+    const tabBarBg = isDark ? c.surfPrimary + 'ee' : c.surfPrimary + 'dd';
+    const tabBarBorder = c.borderSubtle;
+    const statusColor = c.textPri;
+    return `<div class="mode-col">
+      <div class="mode-label">${isDark ? 'Dark' : 'Light'}</div>
+      <div class="phone-scroll">
+        <div class="phone-strip">
+          ${views.map(v => renderPhone(c, v.fn, bgCanvas, tabBarBg, tabBarBorder, statusColor, v.tab)).join('')}
+        </div>
+      </div>
+      <div class="view-dots">
+        ${viewNames.map(() => '<div class="view-dot"></div>').join('')}
+      </div>
+      <div class="swipe-hint">Swipe to see all views</div>
+    </div>`;
+  }
+
+  const badgeHTML = opt.badge ? `<span class="option-badge ${opt.badgeClass}">${opt.badge}</span>` : '';
+
+  return `
+    <div class="option-section" id="${opt.id}">
+      <div class="option-header">
+        <span class="option-title">${opt.name}</span>
+        ${badgeHTML}
+      </div>
+      <p class="option-subtitle">${opt.subtitle}</p>
+      <div class="mode-row">
+        ${phoneSet(opt.light, false)}
+        ${phoneSet(opt.dark, true)}
+      </div>
+    </div>`;
+}
+
+/* ── Render all ─────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.createElement('div');
+  OPTIONS.forEach(opt => {
+    container.innerHTML += buildOption(opt);
+  });
+  document.body.appendChild(container);
+
+  // Update scroll indicator dots
+  document.querySelectorAll('.phone-scroll').forEach(scroll => {
+    const dots = scroll.parentElement.querySelectorAll('.view-dot');
+    if (dots.length) dots[0].style.background = '#aaa';
+
+    scroll.addEventListener('scroll', () => {
+      const idx = Math.round(scroll.scrollLeft / 390);
+      dots.forEach((d, i) => {
+        d.style.background = i === idx ? '#aaa' : '#555';
+      });
+    });
+  });
+});
+</script>
+
+</body>
+</html>

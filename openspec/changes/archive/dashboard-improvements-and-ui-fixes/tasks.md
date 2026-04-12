@@ -51,5 +51,5 @@
 ## 10. Build and Verify
 
 - [x] 10.1 Build iOS target — confirm zero errors
-- [ ] 10.2 Visual check: light mode dashboard with ghost cards, solid cards, mixed states
-- [ ] 10.3 Visual check: dark mode — verify contrast on all accent buttons and ghost card borders
+- [x] 10.2 Visual check: light mode dashboard with ghost cards, solid cards, mixed states
+- [x] 10.3 Visual check: dark mode — verify contrast on all accent buttons and ghost card borders

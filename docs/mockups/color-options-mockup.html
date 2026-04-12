@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager — Color Option Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, 'SF Pro Text', sans-serif;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    padding: 32px 24px 80px;
+  }
+  h1 {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .page-subtitle {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  /* Option section */
+  .option-section {
+    margin-bottom: 56px;
+  }
+  .option-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 6px;
+  }
+  .option-title {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .option-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: #2D5016;
+    color: #7BC08A;
+  }
+  .option-badge.current {
+    background: #333;
+    color: #aaa;
+  }
+  .option-subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Mode row */
+  .mode-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .mode-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .mode-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  /* Phone frame */
+  .phone-scroll {
+    width: 390px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 40px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .phone-scroll::-webkit-scrollbar { display: none; }
+  .phone-strip {
+    display: flex;
+    width: max-content;
+  }
+  .phone-frame {
+    width: 390px;
+    min-width: 390px;
+    height: 780px;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  .phone-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 56px 16px 32px;
+  }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px 0;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 4px; font-size: 12px; }
+
+  /* Tab bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 82px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 0.5px solid;
+    z-index: 10;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-icon { font-size: 22px; }
+
+  /* View indicator dots */
+  .view-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .view-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: #555;
+  }
+
+  /* Shared component styles */
+  .card {
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .ghost-card {
+    border: 2px dashed;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: transparent !important;
+  }
+  .section-title {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .greeting {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .subtitle {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .card-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .card-title {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card-detail {
+    font-size: 13px;
+  }
+
+  /* Progress ring */
+  .progress-ring {
+    width: 44px;
+    height: 44px;
+  }
+  .progress-ring circle {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+  }
+
+  /* Day circles */
+  .day-circles {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .day-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1.5px solid;
+  }
+  .day-circle.filled {
+    border-color: transparent;
+  }
+
+  /* Filter pills */
+  .filter-pills {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* Recipe grid */
+  .recipe-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .recipe-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .recipe-photo {
+    width: 100%;
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+  .recipe-info {
+    padding: 10px 12px;
+  }
+  .recipe-name {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .recipe-time {
+    font-size: 12px;
+  }
+
+  /* Grocery list */
+  .grocery-section {
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .grocery-header {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .grocery-item {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-top: 0.5px solid;
+  }
+  .checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 11px;
+    border: 2px solid;
+    flex-shrink: 0;
+  }
+  .item-text {
+    flex: 1;
+  }
+  .item-name {
+    font-size: 15px;
+  }
+  .item-source {
+    font-size: 12px;
+    margin-top: 1px;
+  }
+
+  /* Quick actions */
+  .quick-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .quick-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* Meal plan card */
+  .meal-plan-card {
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .plan-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .plan-name {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .plan-date {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .gen-btn {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* Swipe hint */
+  .swipe-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Forager Color Options</h1>
+<p class="page-subtitle">Side-by-side comparison of color schemes in light and dark modes. Swipe each phone horizontally to see all 4 views.</p>
+
+<script>
+const OPTIONS = [
+  {
+    id: 'optC',
+    name: 'Option C: Parchment & Paper',
+    badge: 'Recommended',
+    badgeClass: '',
+    subtitle: 'Warm but not yellow. Slightly cooler surfaces create depth.',
+    light: {
+      bgCanvas: '#EDE8DF', bgPrimary: '#E3DDD2', bgSecondary: '#D9D1C4',
+      surfPrimary: '#FAFBFC', surfSecondary: '#F5F6F8',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#D6CEC2', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    },
+    dark: {
+      bgCanvas: '#141210', bgPrimary: '#1C1915', bgSecondary: '#24201A',
+      surfPrimary: '#282828', surfSecondary: '#323232',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3428', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    }
+  },
+  {
+    id: 'optA',
+    name: 'Option A: Warm Linen',
+    badge: '',
+    badgeClass: '',
+    subtitle: 'Warmest option. Linen-like feel with golden undertones.',
+    light: {
+      bgCanvas: '#F0EBE0', bgPrimary: '#E8E0D2', bgSecondary: '#DED5C4',
+      surfPrimary: '#FFFFFF', surfSecondary: '#FAF8F4',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#E0D8CC', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    },
+    dark: {
+      bgCanvas: '#161412', bgPrimary: '#1E1B15', bgSecondary: '#262118',
+      surfPrimary: '#302C24', surfSecondary: '#3A362C',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3630', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    }
+  },
+  {
+    id: 'optB',
+    name: 'Option B: Stone & Sage',
+    badge: '',
+    badgeClass: '',
+    subtitle: 'Cool and neutral. Closest to system iOS gray palette.',
+    light: {
+      bgCanvas: '#F2F2F7', bgPrimary: '#E5E5EA', bgSecondary: '#D1D1D6',
+      surfPrimary: '#FFFFFF', surfSecondary: '#F9F9FB',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#D1D1D6', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    },
+    dark: {
+      bgCanvas: '#000000', bgPrimary: '#1C1C1E', bgSecondary: '#2C2C2E',
+      surfPrimary: '#1C1C1E', surfSecondary: '#2C2C2E',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3A3C', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    }
+  },
+  {
+    id: 'optCurrent',
+    name: 'Current (Baseline)',
+    badge: 'Current',
+    badgeClass: 'current',
+    subtitle: 'Existing forager palette for reference comparison.',
+    light: {
+      bgCanvas: '#FDFBF7', bgPrimary: '#F5F0E8', bgSecondary: '#EDE6D8',
+      surfPrimary: '#FFFFFF', surfSecondary: '#F8F4EE',
+      accentPri: '#2D5016', accentSec: '#4A7C2E',
+      textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+      borderSubtle: '#E0D8CC', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    },
+    dark: {
+      bgCanvas: '#1C1A14', bgPrimary: '#24221A', bgSecondary: '#2C2A22',
+      surfPrimary: '#2E2A1F', surfSecondary: '#38342A',
+      accentPri: '#7BC08A', accentSec: '#5AAD5A',
+      textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+      borderSubtle: '#3A3630', statusSuccess: '#2D6A3F', statusWarning: '#B8860B', statusDanger: '#C53030',
+    }
+  },
+];
+
+function progressRingSVG(c, pct) {
+  const r = 18, circ = 2 * Math.PI * r;
+  const offset = circ * (1 - pct);
+  return `<svg class="progress-ring" viewBox="0 0 44 44">
+    <circle cx="22" cy="22" r="${r}" stroke="${c.borderSubtle}" />
+    <circle cx="22" cy="22" r="${r}" stroke="${c.accentPri}" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" transform="rotate(-90 22 22)" />
+    <text x="22" y="26" text-anchor="middle" font-size="12" font-weight="700" fill="${c.textPri}">${Math.round(pct*100)}%</text>
+  </svg>`;
+}
+
+function dayCirclesHTML(c, filled) {
+  const days = ['S','M','T','W','T','F','S'];
+  return `<div class="day-circles">${days.map((d, i) => {
+    const isFilled = filled.includes(i);
+    return `<div class="day-circle${isFilled ? ' filled' : ''}" style="
+      background:${isFilled ? c.accentPri : 'transparent'};
+      border-color:${isFilled ? c.accentPri : c.borderSubtle};
+      color:${isFilled ? '#fff' : c.textTer};
+    ">${d}</div>`;
+  }).join('')}</div>`;
+}
+
+function renderDashboard(c) {
+  return `
+    <div class="greeting" style="color:${c.textPri}">Good morning, Rich</div>
+    <div class="subtitle" style="color:${c.textSec}">Thursday, April 9</div>
+
+    <div class="ghost-card" style="border-color:${c.borderSubtle}">
+      <div class="card-label" style="color:${c.textTer}">Tonight's Meal</div>
+      <div style="color:${c.textDis}; font-size:14px; text-align:center; padding:12px 0;">Tap to plan tonight's dinner</div>
+    </div>
+
+    <div class="card" style="background:${c.surfPrimary}; display:flex; align-items:center; gap:14px;">
+      <div style="flex:1">
+        <div class="card-label" style="color:${c.textTer}">Shopping List</div>
+        <div class="card-title" style="color:${c.textPri}">Weekly Groceries</div>
+        <div class="card-detail" style="color:${c.textSec}">5 of 16 items checked</div>
+      </div>
+      ${progressRingSVG(c, 0.31)}
+    </div>
+
+    <div class="card" style="background:${c.surfPrimary};">
+      <div class="card-label" style="color:${c.textTer}">Meal Plan</div>
+      <div class="card-title" style="color:${c.textPri}">This Week</div>
+      ${dayCirclesHTML(c, [0,1,2,3])}
+    </div>
+
+    <div class="card" style="background:${c.surfSecondary};">
+      <div class="card-label" style="color:${c.textTer}">Tomorrow</div>
+      <div class="card-title" style="color:${c.textPri}">Lemon Herb Salmon</div>
+      <div class="card-detail" style="color:${c.textSec}">35 min &middot; 4 servings</div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="quick-btn" style="background:${c.accentPri}; color:#fff;">New List</div>
+      <div class="quick-btn" style="background:${c.surfPrimary}; color:${c.accentPri}; border:1px solid ${c.borderSubtle};">Add Recipe</div>
+      <div class="quick-btn" style="background:${c.surfPrimary}; color:${c.accentPri}; border:1px solid ${c.borderSubtle};">Plan Meals</div>
+    </div>`;
+}
+
+function renderGroceryList(c) {
+  const items = [
+    { cat: 'Produce', catColor: '#357A30', count: '0/8', items: [
+      { qty: '2 lb', name: 'Chicken Breast', src: 'Lemon Herb Salmon' },
+      { qty: '1 bunch', name: 'Cilantro', src: 'Thai Green Curry' },
+      { qty: '3', name: 'Avocados', src: 'Weekly staples' },
+      { qty: '1 lb', name: 'Green Beans', src: 'Lemon Herb Salmon' },
+    ]},
+    { cat: 'Dairy & Fridge', catColor: '#3A7CA5', count: '0/5', items: [
+      { qty: '1 gal', name: 'Whole Milk', src: 'Weekly staples' },
+      { qty: '8 oz', name: 'Cream Cheese', src: 'Pasta Carbonara' },
+      { qty: '1 doz', name: 'Eggs', src: 'Weekly staples' },
+    ]},
+    { cat: 'Pantry', catColor: '#7A5D3F', count: '0/3', items: [
+      { qty: '1 can', name: 'Coconut Milk', src: 'Thai Green Curry' },
+      { qty: '1 box', name: 'Penne Pasta', src: 'Pasta Carbonara' },
+    ]},
+  ];
+
+  return `
+    <div class="section-title" style="color:${c.textPri}">Shopping List</div>
+    <div class="subtitle" style="color:${c.textSec}">Apr 12 &middot; 16 items</div>
+    ${items.map(s => `
+      <div class="grocery-section" style="background:${c.surfPrimary};">
+        <div class="grocery-header" style="color:${s.catColor}; border-bottom: 0.5px solid ${c.borderSubtle};">
+          <span>${s.cat.toUpperCase()}</span><span>${s.count}</span>
+        </div>
+        ${s.items.map(it => `
+          <div class="grocery-item" style="border-color:${c.borderSubtle};">
+            <div class="checkbox" style="border-color:${c.borderSubtle};"></div>
+            <div class="item-text">
+              <div class="item-name" style="color:${c.textPri}">${it.qty} <strong>${it.name}</strong></div>
+              <div class="item-source" style="color:${c.textTer}">${it.src}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}`;
+}
+
+function renderRecipeGrid(c) {
+  const recipes = [
+    { name: 'Lemon Herb Salmon', time: '35 min', emoji: '\uD83C\uDF4B' },
+    { name: 'Thai Green Curry', time: '40 min', emoji: '\uD83C\uDF5B' },
+    { name: 'Pasta Carbonara', time: '25 min', emoji: '\uD83C\uDF5D' },
+    { name: 'Greek Salad', time: '15 min', emoji: '\uD83E\uDD57' },
+    { name: 'Chicken Stir Fry', time: '30 min', emoji: '\uD83C\uDF73' },
+    { name: 'Mushroom Risotto', time: '45 min', emoji: '\uD83C\uDF44' },
+  ];
+  return `
+    <div class="section-title" style="color:${c.textPri}">Recipes</div>
+    <div style="height:8px"></div>
+    <div class="filter-pills">
+      <div class="filter-pill" style="background:${c.accentPri}; color:#fff;">All</div>
+      <div class="filter-pill" style="background:${c.surfSecondary}; color:${c.textSec};">Favorites</div>
+      <div class="filter-pill" style="background:${c.surfSecondary}; color:${c.textSec};">Recent</div>
+    </div>
+    <div class="recipe-grid">
+      ${recipes.map(r => `
+        <div class="recipe-card" style="background:${c.surfPrimary};">
+          <div class="recipe-photo" style="background:${c.surfSecondary};">${r.emoji}</div>
+          <div class="recipe-info">
+            <div class="recipe-name" style="color:${c.textPri}">${r.name}</div>
+            <div class="recipe-time" style="color:${c.textTer}">${r.time}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function renderMealPlans(c) {
+  return `
+    <div class="section-title" style="color:${c.textPri}">Meal Plans</div>
+    <div style="height:12px"></div>
+
+    <div class="meal-plan-card" style="background:${c.surfPrimary};">
+      <div class="plan-badge" style="background:${c.accentPri}20; color:${c.accentPri};">Active</div>
+      <div class="plan-name" style="color:${c.textPri}">This Week</div>
+      <div class="plan-date" style="color:${c.textSec}">Apr 7 - Apr 13</div>
+      ${dayCirclesHTML(c, [0,1,2,3])}
+      <div class="gen-btn" style="background:${c.accentPri}; color:#fff;">Generate Grocery List</div>
+    </div>
+
+    <div class="meal-plan-card" style="background:${c.surfPrimary};">
+      <div class="plan-name" style="color:${c.textPri}">Next Week</div>
+      <div class="plan-date" style="color:${c.textSec}">Apr 14 - Apr 20</div>
+      ${dayCirclesHTML(c, [0,4,5])}
+      <div class="gen-btn" style="background:${c.surfSecondary}; color:${c.accentPri}; border:1px solid ${c.borderSubtle};">Generate Grocery List</div>
+    </div>
+
+    <div class="meal-plan-card" style="background:${c.surfPrimary};">
+      <div class="plan-name" style="color:${c.textPri}">Easter Week</div>
+      <div class="plan-date" style="color:${c.textSec}">Mar 31 - Apr 6</div>
+      ${dayCirclesHTML(c, [0,1,2,3,4,5,6])}
+    </div>`;
+}
+
+function renderPhone(c, viewFn, bgCanvas, tabBarBg, tabBarBorder, statusColor) {
+  const content = viewFn(c);
+  return `
+    <div class="phone-frame" style="background:${bgCanvas};">
+      <div class="status-bar" style="color:${statusColor};">
+        <span class="time">9:41</span>
+        <div class="status-icons">
+          <span>\u25CF\u25CF\u25CF\u25CF</span>
+          <span>WiFi</span>
+          <span>\uD83D\uDD0B</span>
+        </div>
+      </div>
+      <div class="phone-content">${content}</div>
+      <div class="tab-bar" style="background:${tabBarBg}; border-color:${tabBarBorder}; color:${c.textTer};">
+        <div class="tab-item" style="color:${c.accentPri}"><span class="tab-icon">\uD83C\uDFE0</span>Home</div>
+        <div class="tab-item"><span class="tab-icon">\uD83D\uDED2</span>Lists</div>
+        <div class="tab-item"><span class="tab-icon">\uD83D\uDCD6</span>Recipes</div>
+        <div class="tab-item"><span class="tab-icon">\uD83D\uDCC5</span>Plans</div>
+      </div>
+    </div>`;
+}
+
+function buildOption(opt) {
+  const views = [renderDashboard, renderGroceryList, renderRecipeGrid, renderMealPlans];
+  const viewNames = ['Dashboard', 'Grocery List', 'Recipes', 'Meal Plans'];
+
+  function phoneSet(c, isDark) {
+    const bgCanvas = c.bgCanvas;
+    const tabBarBg = isDark ? c.surfPrimary + 'ee' : c.surfPrimary + 'dd';
+    const tabBarBorder = c.borderSubtle;
+    const statusColor = c.textPri;
+    return `<div class="mode-col">
+      <div class="mode-label">${isDark ? 'Dark' : 'Light'}</div>
+      <div class="phone-scroll">
+        <div class="phone-strip">
+          ${views.map(fn => renderPhone(c, fn, bgCanvas, tabBarBg, tabBarBorder, statusColor)).join('')}
+        </div>
+      </div>
+      <div class="view-dots">
+        ${viewNames.map(() => '<div class="view-dot"></div>').join('')}
+      </div>
+      <div class="swipe-hint">Swipe to see all views</div>
+    </div>`;
+  }
+
+  const badgeHTML = opt.badge ? `<span class="option-badge ${opt.badgeClass}">${opt.badge}</span>` : '';
+
+  return `
+    <div class="option-section" id="${opt.id}">
+      <div class="option-header">
+        <span class="option-title">${opt.name}</span>
+        ${badgeHTML}
+      </div>
+      <p class="option-subtitle">${opt.subtitle}</p>
+      <div class="mode-row">
+        ${phoneSet(opt.light, false)}
+        ${phoneSet(opt.dark, true)}
+      </div>
+    </div>`;
+}
+
+// Render all options
+document.addEventListener('DOMContentLoaded', () => {
+  const container = document.createElement('div');
+  OPTIONS.forEach(opt => {
+    container.innerHTML += buildOption(opt);
+  });
+  document.body.appendChild(container);
+
+  // Update scroll indicator dots
+  document.querySelectorAll('.phone-scroll').forEach(scroll => {
+    const dots = scroll.parentElement.querySelectorAll('.view-dot');
+    if (dots.length) dots[0].style.background = '#aaa';
+
+    scroll.addEventListener('scroll', () => {
+      const idx = Math.round(scroll.scrollLeft / 390);
+      dots.forEach((d, i) => {
+        d.style.background = i === idx ? '#aaa' : '#555';
+      });
+    });
+  });
+});
+</script>
+
+</body>
+</html>
