@@ -367,6 +367,19 @@ struct GroceryListDetailView: View {
 
     // MARK: - Shopping List with Collapsible Sections
 
+    // Header row styled to match item rows inside the card
+    private func sectionHeaderRow(title: String, completedCount: Int, totalCount: Int, isExpanded: Binding<Bool>, colorDotHex: String? = nil) -> some View {
+        ForagerSectionHeader(
+            title: title,
+            count: completedCount,
+            totalCount: totalCount,
+            isExpanded: isExpanded,
+            colorDotHex: colorDotHex
+        )
+        .listRowBackground(ForagerTheme.surfacePrimary)
+        .listRowSeparator(.hidden)
+    }
+
     private var shoppingListView: some View {
         List {
             // M18.1.5: Nested grouping — optionally by store, always by category
@@ -377,7 +390,19 @@ struct GroceryListDetailView: View {
                         set: { if !$0 { collapsedSections.insert(storeName) } else { collapsedSections.remove(storeName) } }
                     )
 
+                    let allItems = categoryGroups.flatMap { $0.items }
+                    let storeCompleted = allItems.filter { $0.isCompleted }.count
+
                     Section {
+                        // Store header as first row inside card
+                        sectionHeaderRow(
+                            title: storeName,
+                            completedCount: storeCompleted,
+                            totalCount: allItems.count,
+                            isExpanded: storeExpanded,
+                            colorDotHex: storeColor
+                        )
+
                         if !collapsedSections.contains(storeName) {
                             ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
                                 let catKey = "\(storeName)/\(categoryName)"
@@ -386,33 +411,23 @@ struct GroceryListDetailView: View {
                                     set: { if !$0 { collapsedCategories.insert(catKey) } else { collapsedCategories.remove(catKey) } }
                                 )
 
-                                Section {
-                                    if !collapsedCategories.contains(catKey) {
-                                        ForEach(items, id: \.self) { item in
-                                            itemRow(item)
-                                        }
+                                let catCompleted = items.filter { $0.isCompleted }.count
+
+                                // Category header as row inside card
+                                sectionHeaderRow(
+                                    title: categoryName,
+                                    completedCount: catCompleted,
+                                    totalCount: items.count,
+                                    isExpanded: catExpanded
+                                )
+
+                                if !collapsedCategories.contains(catKey) {
+                                    ForEach(items, id: \.self) { item in
+                                        itemRow(item)
                                     }
-                                } header: {
-                                    let completedCount = items.filter { $0.isCompleted }.count
-                                    ForagerSectionHeader(
-                                        title: categoryName,
-                                        count: completedCount,
-                                        totalCount: items.count,
-                                        isExpanded: catExpanded
-                                    )
                                 }
                             }
                         }
-                    } header: {
-                        let allItems = categoryGroups.flatMap { $0.items }
-                        let completedCount = allItems.filter { $0.isCompleted }.count
-                        ForagerSectionHeader(
-                            title: storeName,
-                            count: completedCount,
-                            totalCount: allItems.count,
-                            isExpanded: storeExpanded,
-                            colorDotHex: storeColor
-                        )
                     }
                 }
             } else {
@@ -422,20 +437,22 @@ struct GroceryListDetailView: View {
                         set: { if !$0 { collapsedCategories.insert(categoryName) } else { collapsedCategories.remove(categoryName) } }
                     )
 
+                    let completedCount = items.filter { $0.isCompleted }.count
+
                     Section {
+                        // Category header as first row inside card
+                        sectionHeaderRow(
+                            title: categoryName,
+                            completedCount: completedCount,
+                            totalCount: items.count,
+                            isExpanded: isExpanded
+                        )
+
                         if !collapsedCategories.contains(categoryName) {
                             ForEach(items, id: \.self) { item in
                                 itemRow(item)
                             }
                         }
-                    } header: {
-                        let completedCount = items.filter { $0.isCompleted }.count
-                        ForagerSectionHeader(
-                            title: categoryName,
-                            count: completedCount,
-                            totalCount: items.count,
-                            isExpanded: isExpanded
-                        )
                     }
                 }
             }
