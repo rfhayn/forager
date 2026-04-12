@@ -198,19 +198,20 @@ final class DefaultSeeder {
             #endif
         }
 
-        // Also check any household scope — for existing households that predate this feature
-        let householdRequest: NSFetchRequest<Store> = Store.fetchRequest()
-        householdRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey != nil")
-        householdRequest.fetchLimit = 1
+        // M19.1: Check household scope — derive key from Household entity directly,
+        // not from existing stores. On member devices, stores may not have synced yet
+        // but the Household entity is always present after share acceptance.
+        let householdFetch: NSFetchRequest<Household> = Household.fetchRequest()
+        householdFetch.fetchLimit = 1
 
-        if (try? context.fetch(householdRequest))?.first == nil {
-            // Check if user is in a household by looking for any store with a householdKey
-            let anyHouseholdStore: NSFetchRequest<Store> = Store.fetchRequest()
-            anyHouseholdStore.predicate = NSPredicate(format: "householdKey != nil")
-            anyHouseholdStore.fetchLimit = 1
+        if let household = (try? context.fetch(householdFetch))?.first,
+           let householdKey = household.id?.uuidString {
+            // Check if household-scoped "No Store" already exists
+            let householdStoreRequest: NSFetchRequest<Store> = Store.fetchRequest()
+            householdStoreRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey == %@", householdKey)
+            householdStoreRequest.fetchLimit = 1
 
-            if let existingStore = (try? context.fetch(anyHouseholdStore))?.first,
-               let householdKey = existingStore.householdKey {
+            if (try? context.fetch(householdStoreRequest))?.first == nil {
                 let noStore = Store(context: context)
                 noStore.id = UUID()
                 noStore.name = "No Store"

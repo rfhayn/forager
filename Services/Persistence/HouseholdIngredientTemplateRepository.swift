@@ -25,12 +25,12 @@ final class HouseholdIngredientTemplateRepository {
     private let context: NSManagedObjectContext
 
     // M9.13: Factory for correct store assignment (ADR 014)
-    // M19: Non-optional — caller must provide factory
-    private let factory: ManagedObjectFactory
+    // M19.1: Optional — child-context callers (RecipeImportService) operate without factory
+    private let factory: ManagedObjectFactory?
 
     // MARK: - Initialization
 
-    init(context: NSManagedObjectContext, factory: ManagedObjectFactory) {
+    init(context: NSManagedObjectContext, factory: ManagedObjectFactory? = nil) {
         self.context = context
         self.factory = factory
     }
@@ -96,17 +96,33 @@ final class HouseholdIngredientTemplateRepository {
         // Create new template
         Task { @MainActor in DebugLogService.shared.log("findOrCreate: canonical=\(canonicalName), found existing=no, creating new, householdKey param=\(householdKey ?? "nil")", category: "Repo") }
         // M9.13: Use factory for correct store assignment (ADR 014)
-        let template = try factory.make(IngredientTemplate.self, configure: { t in
-            t.id = UUID()
-            t.name = name
-            t.canonicalName = canonicalName
-            t.categoryEntity = category
-            t.isStaple = isStaple
-            t.usageCount = 0
-            t.dateCreated = Date()
-            t.updatedAt = Date()
-            t.householdKey = householdKey
-        })
+        // M19.1: Factory optional — child-context callers operate without it
+        let template: IngredientTemplate
+        if let factory = factory {
+            template = try factory.make(IngredientTemplate.self, configure: { t in
+                t.id = UUID()
+                t.name = name
+                t.canonicalName = canonicalName
+                t.categoryEntity = category
+                t.isStaple = isStaple
+                t.usageCount = 0
+                t.dateCreated = Date()
+                t.updatedAt = Date()
+                t.householdKey = householdKey
+            })
+        } else {
+            // Child-context/test fallback (e.g., RecipeImportService, unit tests)
+            template = IngredientTemplate(context: context)
+            template.id = UUID()
+            template.name = name
+            template.canonicalName = canonicalName
+            template.categoryEntity = category
+            template.isStaple = isStaple
+            template.usageCount = 0
+            template.dateCreated = Date()
+            template.updatedAt = Date()
+            template.householdKey = householdKey
+        }
 
         Task { @MainActor in DebugLogService.shared.log("template created: name=\(name), householdKey=\(householdKey ?? "nil"), usageCount=0", category: "Import") }
         #if DEBUG

@@ -340,4 +340,72 @@ final class StoreSchemaTests: XCTestCase {
         let entityNames = Set(entities.compactMap { $0.name })
         XCTAssertTrue(entityNames.contains("Store"), "Model must contain Store entity")
     }
+
+    // MARK: - M19.1: No Store Seeder for Member Devices
+
+    /// Validates that ensureNoStoreExists creates household-scoped No Store
+    /// when a Household entity exists but no stores have synced yet.
+    /// This is the member-device scenario: Household syncs immediately via CloudKit
+    /// share acceptance, but stores may not have synced yet.
+    func testNoStoreCreatedForHouseholdWithNoExistingStores() throws {
+        // Create a household (simulating share acceptance on member device)
+        let household = createHousehold()
+        try context.save()
+
+        let householdKey = household.id!.uuidString
+
+        // No stores exist yet — simulates member device before store sync
+        let storesBefore: NSFetchRequest<Store> = Store.fetchRequest()
+        storesBefore.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        XCTAssertEqual(try context.count(for: storesBefore), 0, "No stores should exist yet")
+
+        // Run seeder
+        try DefaultSeeder.ensureNoStoreExists(in: context)
+        try context.save()
+
+        // Should have created household-scoped No Store
+        let householdStores: NSFetchRequest<Store> = Store.fetchRequest()
+        householdStores.predicate = NSPredicate(format: "isDefault == YES AND householdKey == %@", householdKey)
+        let results = try context.fetch(householdStores)
+
+        XCTAssertEqual(results.count, 1, "Should create one No Store for household")
+        XCTAssertEqual(results.first?.name, "No Store")
+        XCTAssertTrue(results.first?.isDefault ?? false)
+        XCTAssertEqual(results.first?.householdKey, householdKey)
+    }
+
+    /// Validates personal No Store is also created alongside household one.
+    func testNoStoreCreatedInBothScopes() throws {
+        let household = createHousehold()
+        try context.save()
+
+        try DefaultSeeder.ensureNoStoreExists(in: context)
+        try context.save()
+
+        // Personal scope
+        let personalRequest: NSFetchRequest<Store> = Store.fetchRequest()
+        personalRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
+        XCTAssertEqual(try context.count(for: personalRequest), 1, "Personal No Store should exist")
+
+        // Household scope
+        let householdRequest: NSFetchRequest<Store> = Store.fetchRequest()
+        householdRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey != nil")
+        XCTAssertEqual(try context.count(for: householdRequest), 1, "Household No Store should exist")
+    }
+
+    /// Validates idempotency — running twice doesn't duplicate.
+    func testNoStoreSeederIsIdempotent() throws {
+        let household = createHousehold()
+        try context.save()
+
+        try DefaultSeeder.ensureNoStoreExists(in: context)
+        try context.save()
+        try DefaultSeeder.ensureNoStoreExists(in: context)
+        try context.save()
+
+        let allDefaults: NSFetchRequest<Store> = Store.fetchRequest()
+        allDefaults.predicate = NSPredicate(format: "isDefault == YES")
+        let count = try context.count(for: allDefaults)
+        XCTAssertEqual(count, 2, "Should have exactly 2 No Stores (personal + household)")
+    }
 }

@@ -215,4 +215,40 @@ final class IngredientTemplateServiceTests: XCTestCase {
         XCTAssertNotEqual(groundBeef.objectID, beef.objectID,
                           "ground beef and beef should be separate templates")
     }
+
+    // MARK: - M19.1: Child-Context Factory Safety
+
+    /// Validates that IngredientTemplateService works without factory configured.
+    /// RecipeImportService creates child-context services without factory — this must not crash.
+    @MainActor
+    func testFindOrCreateWithoutFactoryDoesNotCrash() {
+        // Simulate RecipeImportService pattern: child context, no factory
+        let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
+        childContext.parent = context
+
+        let childService = IngredientTemplateService(context: childContext)
+        // Deliberately NOT calling childService.configure(factory:)
+
+        // This must not crash — it should create the template without factory
+        let template = childService.findOrCreateTemplate(name: "butter")
+
+        XCTAssertNotNil(template)
+        XCTAssertEqual(template.name, "butter")
+        XCTAssertNotNil(template.id)
+    }
+
+    /// Validates that child-context service sets householdKey even without factory.
+    @MainActor
+    func testChildContextServiceSetsHouseholdKey() {
+        let childContext = NSManagedObjectContext(concurrencyType: .mainQueueConcurrencyType)
+        childContext.parent = context
+
+        let childService = IngredientTemplateService(context: childContext)
+        childService.householdKey = "test-household-key"
+
+        let template = childService.findOrCreateTemplate(name: "milk")
+
+        XCTAssertEqual(template.householdKey, "test-household-key",
+                       "Template should get householdKey even without factory")
+    }
 }

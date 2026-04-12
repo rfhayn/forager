@@ -257,25 +257,11 @@ struct DashboardView: View {
     }
 
     private var resolvedFirstName: String? {
-        // 1. Cached display name from household creation (UserDefaults — lost on reinstall)
-        if let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
-           !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
-            return cached.components(separatedBy: " ").first
-        }
-
-        // 2. Household ownerDisplayName (synced via CloudKit — survives reinstall)
-        if let household = householdService.currentHousehold,
-           let ownerName = household.ownerDisplayName,
-           !ownerName.isEmpty, !ownerName.hasPrefix("_") {
-            let firstName = ownerName.components(separatedBy: " ").first ?? ownerName
-            if firstName != "Me" && firstName != "You" && firstName != "User" {
-                return firstName
-            }
-        }
-
-        // 3. Extract from device name ("Rich's iPhone" → "Rich")
+        // 1. Extract from device name ("Mary's iPad" → "Mary", "Rich's iPhone" → "Rich")
+        // M19.1: Device name is always the current user — works for both owner and member
         let deviceName = UIDevice.current.name
-        if let range = deviceName.range(of: "'s ", options: .caseInsensitive) {
+        if let range = deviceName.range(of: "\u{2019}s ", options: .caseInsensitive) ??
+                        deviceName.range(of: "'s ", options: .caseInsensitive) {
             let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
             if !name.isEmpty { return name }
         }
@@ -285,6 +271,22 @@ struct DashboardView: View {
             if let range = deviceName.range(of: " \(type)", options: .caseInsensitive) {
                 let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
                 if !name.isEmpty && name != type { return name }
+            }
+        }
+
+        // 2. Cached display name from household creation (UserDefaults — owner only)
+        if let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+           !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
+            return cached.components(separatedBy: " ").first
+        }
+
+        // 3. Household ownerDisplayName (fallback — only correct on owner's device)
+        if let household = householdService.currentHousehold,
+           let ownerName = household.ownerDisplayName,
+           !ownerName.isEmpty, !ownerName.hasPrefix("_") {
+            let firstName = ownerName.components(separatedBy: " ").first ?? ownerName
+            if firstName != "Me" && firstName != "You" && firstName != "User" {
+                return firstName
             }
         }
 
