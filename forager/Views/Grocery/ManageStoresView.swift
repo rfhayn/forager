@@ -29,10 +29,11 @@ struct ManageStoresView: View {
         animation: .default
     ) private var allStores: FetchedResults<Store>
 
-    // ADR 013: Filter by current household scope
+    // ADR 013: Filter by current household scope, exclude default "No Store"
     private var stores: [Store] {
         let currentHouseholdKey = householdService.currentHouseholdKey
         return allStores.filter { store in
+            guard !store.isDefault else { return false }
             if let householdKey = currentHouseholdKey {
                 return store.householdKey == householdKey
             } else {

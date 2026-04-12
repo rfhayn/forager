@@ -442,6 +442,9 @@ final class PersistenceController: ObservableObject {
                 // M9.12: Ensure "Uncategorized" always exists (survives leave-household)
                 try DefaultSeeder.ensureUncategorizedExists(in: context)
 
+                // M18.2: Ensure "No Store" default store always exists
+                try DefaultSeeder.ensureNoStoreExists(in: context)
+
                 // M7.6.6: Migrate tags from sourceURL hack to dedicated tags attribute
                 Self.migrateSourceURLTagsIfNeeded(in: context)
 

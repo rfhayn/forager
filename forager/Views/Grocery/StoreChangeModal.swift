@@ -324,7 +324,7 @@ struct StorePickerView: View {
 
     var body: some View {
         List {
-            ForEach(stores, id: \.objectID) { store in
+            ForEach(stores.filter { !$0.isDefault }, id: \.objectID) { store in
                 Button {
                     onStoreSelected(store.objectID)
                     dismiss()
@@ -348,7 +348,12 @@ struct StorePickerView: View {
             }
 
             Button("No Store") {
-                onStoreSelected(nil)
+                // M18.2: Assign the default "No Store" entity instead of nil
+                if let defaultStore = stores.first(where: { $0.isDefault }) {
+                    onStoreSelected(defaultStore.objectID)
+                } else {
+                    onStoreSelected(nil)
+                }
                 dismiss()
             }
             .foregroundStyle(ForagerTheme.textSecondary)

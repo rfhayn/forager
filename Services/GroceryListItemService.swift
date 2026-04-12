@@ -310,7 +310,10 @@ class GroceryListItemService: ObservableObject {
         for template: IngredientTemplate?,
         targetList: WeeklyList
     ) -> Store? {
-        guard let store = template?.preferredStore else { return nil }
+        guard let store = template?.preferredStore else {
+            // M18.2: Return default "No Store" entity instead of nil
+            return lookupDefaultStore(householdKey: targetList.householdKey)
+        }
 
         let targetPersistentStore = targetList.objectID.persistentStore
         let storePersistentStore = store.objectID.persistentStore
@@ -335,6 +338,18 @@ class GroceryListItemService: ObservableObject {
         }
         request.fetchLimit = 1
         return (try? viewContext.fetch(request))?.first
+    }
+
+    // M18.2: Lookup default "No Store" entity by isDefault flag
+    private func lookupDefaultStore(householdKey: String?) -> Store? {
+        let request: NSFetchRequest<Store> = Store.fetchRequest()
+        if let key = householdKey {
+            request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == %@", key)
+        } else {
+            request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
+        }
+        request.fetchLimit = 1
+        return try? viewContext.fetch(request).first
     }
 
     // MARK: - Template Helpers

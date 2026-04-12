@@ -712,6 +712,7 @@ class HouseholdService: ObservableObject {
             // copyPersonalDataToHousehold moved all personal categories into the household,
             // so a clean delete leaves zero categories. Re-seed so the user has defaults.
             try DefaultSeeder.ensureUncategorizedExists(in: viewContext)
+            try DefaultSeeder.ensureNoStoreExists(in: viewContext)
             DefaultSeeder.resetSeedingForRestore()
             try DefaultSeeder.seedDefaultsIfNeeded(in: viewContext)
         }
