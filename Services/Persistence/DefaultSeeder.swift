@@ -170,6 +170,33 @@ final class DefaultSeeder {
         #endif
     }
 
+    // MARK: - No Store Safety Net
+
+    /// M18.2: Ensure "No Store" default store exists in the personal store.
+    /// Mirrors ensureUncategorizedExists for categories.
+    /// Runs every startup — cheap fetch, no-op if it exists.
+    static func ensureNoStoreExists(in context: NSManagedObjectContext) throws {
+        let request: NSFetchRequest<Store> = Store.fetchRequest()
+        request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
+        request.fetchLimit = 1
+
+        let existing = (try? context.fetch(request))?.first
+        if existing != nil { return }
+
+        let noStore = Store(context: context)
+        noStore.id = UUID()
+        noStore.name = "No Store"
+        noStore.color = "#9E9E9E"
+        noStore.sortOrder = 999
+        noStore.isDefault = true
+        noStore.dateCreated = Date()
+        noStore.updatedAt = Date()
+
+        #if DEBUG
+        print("🏪 M18.2: Created missing 'No Store' default store in personal store")
+        #endif
+    }
+
     // MARK: - Category Seeding (Phase 3.1: Using Repository)
     
     /// M7.2.3 Phase 3.1: Seeds default categories using HouseholdCategoryRepository

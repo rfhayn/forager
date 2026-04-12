@@ -75,10 +75,31 @@ class StoreService: ObservableObject {
         return nil
     }
 
+    /// M18.2: Lookup the default "No Store" entity for the current household scope.
+    func lookupDefaultStore() -> Store? {
+        let request: NSFetchRequest<Store> = Store.fetchRequest()
+        if let key = householdKeyProvider?() {
+            request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == %@", key)
+        } else {
+            request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
+        }
+        request.fetchLimit = 1
+        return try? viewContext.fetch(request).first
+    }
+
     /// Deletes a store. If `reassignTo` is provided, templates currently assigned
     /// to the deleted store are reassigned to it. Otherwise, templates are unassigned.
+    /// Protected stores (isDefault == true) cannot be deleted.
     func deleteStore(_ store: Store, reassignTo replacement: Store? = nil) {
         clearError()
+
+        // M18.2: Protect default store from deletion
+        guard !store.isDefault else {
+            #if DEBUG
+            print("⚠️ Cannot delete default store '\(store.name ?? "")'")
+            #endif
+            return
+        }
 
         // Reassign templates before deletion
         if let templates = store.ingredientTemplates as? Set<IngredientTemplate> {
