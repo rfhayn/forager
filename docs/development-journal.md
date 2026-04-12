@@ -6,6 +6,35 @@
 
 ---
 
+## Session 112 — April 12, 2026
+**Milestones**: FUI-1.9.5, FUI-1.10, FUI-1.10.1, FUI-1.10.2, M15.2, no-store-default-entity planning
+
+**What happened**: Dense session covering bugfixes, visual polish, a major color palette rethink, and planning for a new Core Data entity. Started with a bugfix sweep: fixed build warnings (unused `let now`, Sendable crossing with `MainActor.run`), recipe grid card height inconsistency (invisible spacer when no timing metadata), quantity display stripping trailing `.0` from amounts ("2.0 tsp" to "2 tsp"), and meal plan overlap prevention (moved `validatePlanDates()` into `createMealPlan()` itself so no caller can bypass validation). Also removed all NavigationLink disclosure chevrons (10 instances across 5 files using the hidden NavigationLink ZStack pattern).
+
+Dashboard card consistency pass: moved progress ring to right side, switched day indicators from bars to distributed circles, removed all Open/View buttons making cards fully tappable. On the meal plan tab, distributed day dots full-width and centered the Generate Grocery List button. Hidden staggered row separators in the grocery list with `.listRowSeparator(.hidden)`.
+
+The biggest effort was a color palette rethink under M15.2. Explored three options — Warm Linen (all-warm tones), Stone & Sage (cool-neutral with green accents), and Parchment & Paper (warm canvas with cool-white cards). Created HTML mockups for all 9 app views across all three palettes before touching any code. Selected Option C "Parchment & Paper" for its warm-vs-cool temperature contrast, which creates perceptual surface separation even at a modest 1.18:1 luminance ratio. Applied the palette: 9 token changes in ForagerTheme.swift plus cooler borders.
+
+Additional refinements: rewrote onboarding walkthrough copy with "why" context (same approach as the import guide), demystified the Claude API key explanation. Dashboard grocery card now reuses `WeeklyListRowView` directly for identical appearance everywhere. Moved grocery section headers inside insetGrouped cards to fix flat light mode appearance where headers were floating on canvas instead of card surface.
+
+Finally, explored and proposed a "No Store" default entity (mirroring the Uncategorized category pattern) and completed a Core Data audit — approved for implementation as schema v12.
+
+**Key decisions**:
+- **Option C "Parchment & Paper" over Warm Linen and Stone & Sage** — warm-vs-cool temperature contrast (parchment #EDE8DF canvas vs cool-white #FAFBFC cards) creates perceptual depth even at modest luminance ratios. The eye registers warm-on-cool as more different than warm-on-warm at the same luminance gap. More effective than simply darkening the canvas while keeping everything in the same temperature family.
+- **Reuse WeeklyListRowView on dashboard** instead of a custom grocery card component — one component, one appearance, zero divergence risk.
+- **Section headers inside insetGrouped cards** (not floating on canvas) — custom headers placed via `Section(header:)` render on the canvas background outside the rounded cards, which fails in light mode where canvas and card are similar colors. Moving the header into section content as the first row gives it the card surface background.
+- **"No Store" as a real entity with isDefault flag** (schema v12), not just `store = nil` — distinguishes intentional "I don't want a store" from unassigned items. Mirrors the Uncategorized category pattern that already works well.
+
+**Learning**:
+- Color temperature contrast (warm canvas vs cool cards) is perceptually more effective than luminance-only contrast for distinguishing surfaces. The eye is sensitive to temperature shifts even when absolute brightness differences are small.
+- HTML mockups are valuable for exploring color options before touching code — created 3 comparison mockups covering all 9 app views, which made the decision obvious before any Swift changes.
+- `insetGrouped` list style handles section card grouping natively, but `Section(header:)` places custom headers on the canvas, not inside the card. To render headers inside cards, use them as the first content row instead.
+- Defense-in-depth for validation: `createMealPlan()` now validates dates internally rather than trusting callers. The UI validated, but `assignRecipeToToday()` bypassed it, creating overlapping plans. Validate at the service level, not just the UI level.
+
+**What's next**: Implement no-store-default-entity (schema v12), continue FUI polish pass, then resume launch path toward App Store submission.
+
+---
+
 ## Session 111 — April 10, 2026
 **Milestones**: FUI-1.9 — Dashboard Improvements, M9.38 — Import Onboarding Copy
 
