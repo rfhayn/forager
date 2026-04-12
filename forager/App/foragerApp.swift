@@ -157,7 +157,6 @@ struct foragerApp: App {
         storeSvc.householdKeyProvider = { [weak household] in
             household?.currentHouseholdKey
         }
-        storeSvc.ensureDefaultStoreExists()
         MealPlanService.shared.configure(factory: factory)
         MealPlanService.shared.configure(groceryListItemService: groceryItemSvc)
 

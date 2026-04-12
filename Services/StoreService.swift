@@ -41,11 +41,6 @@ class StoreService: ObservableObject {
         self.factory = factory
     }
 
-    /// M18.2: Ensure "No Store" default exists. Call after householdKeyProvider is set.
-    func ensureDefaultStoreExists() {
-        _ = lookupDefaultStore()
-    }
-
     // MARK: - CRUD
 
     /// Creates a new store with the given name and color.
@@ -81,7 +76,6 @@ class StoreService: ObservableObject {
     }
 
     /// M18.2: Lookup the default "No Store" entity for the current household scope.
-    /// Creates it if it doesn't exist (handles household context where personal-only seeding misses it).
     func lookupDefaultStore() -> Store? {
         let request: NSFetchRequest<Store> = Store.fetchRequest()
         if let key = householdKeyProvider?() {
@@ -90,34 +84,7 @@ class StoreService: ObservableObject {
             request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
         }
         request.fetchLimit = 1
-
-        if let existing = try? viewContext.fetch(request).first {
-            return existing
-        }
-
-        // Not found — create it in current scope using factory
-        guard let factory = factory else { return nil }
-        do {
-            let noStore = try factory.make(Store.self, configure: { s in
-                s.id = UUID()
-                s.name = "No Store"
-                s.color = "#9E9E9E"
-                s.sortOrder = 999
-                s.isDefault = true
-                s.dateCreated = Date()
-                s.updatedAt = Date()
-            })
-            try viewContext.save()
-            #if DEBUG
-            print("🏪 M18.2: Created 'No Store' default in household scope")
-            #endif
-            return noStore
-        } catch {
-            #if DEBUG
-            print("⚠️ M18.2: Failed to create default store: \(error)")
-            #endif
-            return nil
-        }
+        return try? viewContext.fetch(request).first
     }
 
     /// Deletes a store. If `reassignTo` is provided, templates currently assigned
