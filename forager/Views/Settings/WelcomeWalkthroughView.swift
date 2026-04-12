@@ -130,12 +130,12 @@ struct WelcomeWalkthroughView: View {
 
     private var howItWorksScreen: some View {
         VStack(spacing: 0) {
-            Text("How Forager Works")
+            Text("How forager Works")
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .padding(.top, 40)
 
-            Text("Import, plan, and shop \u{2014} all connected")
+            Text("Import, plan, and shop. All connected.")
                 .font(.system(size: 16, weight: .regular, design: .rounded))
                 .foregroundStyle(ForagerTheme.textTertiary)
                 .padding(.top, 8)
@@ -145,7 +145,7 @@ struct WelcomeWalkthroughView: View {
                     icon: "book.fill",
                     iconColor: ForagerTheme.accentPrimary,
                     title: "Import Recipes",
-                    description: "Paste a URL and AI parses every ingredient automatically. Or create from scratch."
+                    description: "Paste a recipe URL and forager extracts every ingredient for you, no typing required. You can also create recipes from scratch or snap a photo."
                 )
 
                 flowArrow
@@ -154,7 +154,7 @@ struct WelcomeWalkthroughView: View {
                     icon: "calendar",
                     iconColor: ForagerTheme.accentSecondary,
                     title: "Plan Your Week",
-                    description: "Add recipes to your meal plan. Quick options for takeout or leftovers."
+                    description: "Drag recipes into your weekly meal plan. Nights you're ordering in or eating leftovers? There are quick options for that too."
                 )
 
                 flowArrow
@@ -163,7 +163,7 @@ struct WelcomeWalkthroughView: View {
                     icon: "cart.fill",
                     iconColor: ForagerTheme.accentTertiary,
                     title: "Shop Smart",
-                    description: "Grocery list auto-generated from your plan, organized by store aisle."
+                    description: "One tap generates your grocery list from your meal plan. Items are grouped by store aisle so you shop efficiently, not randomly."
                 )
             }
             .padding(.top, 24)
@@ -231,7 +231,7 @@ struct WelcomeWalkthroughView: View {
                     iconColor: ForagerTheme.accentPrimary,
                     title: "AI Ingredient Parsing",
                     badge: "Optional",
-                    description: "Add an API key to unlock smarter ingredient recognition when importing recipes. Parses quantities, units, and categories automatically.",
+                    description: "forager parses most ingredients on its own, but an optional Claude API key handles the tricky ones, like '1 (14 oz) can of diced tomatoes, drained.' It costs just pennies per recipe and makes imports nearly perfect.\n\nGet a free API key at console.anthropic.com, then paste it in Settings.",
                     settingsHint: "Settings \u{2192} AI Integration"
                 )
 
@@ -241,7 +241,7 @@ struct WelcomeWalkthroughView: View {
                     iconColor: ForagerTheme.accentSecondary,
                     title: "Household Sharing",
                     badge: nil,
-                    description: "Share grocery lists, recipes, and meal plans with your household. Everyone stays in sync via iCloud.",
+                    description: "Invite your partner or roommates and everyone sees the same grocery lists, recipes, and meal plans in real time. When someone checks off an item at the store, it updates for everyone.",
                     settingsHint: "Settings \u{2192} Household"
                 )
             }
