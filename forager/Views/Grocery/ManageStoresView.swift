@@ -29,11 +29,10 @@ struct ManageStoresView: View {
         animation: .default
     ) private var allStores: FetchedResults<Store>
 
-    // ADR 013: Filter by current household scope, exclude default "No Store"
+    // ADR 013: Filter by current household scope
     private var stores: [Store] {
         let currentHouseholdKey = householdService.currentHouseholdKey
         return allStores.filter { store in
-            guard !store.isDefault else { return false }
             if let householdKey = currentHouseholdKey {
                 return store.householdKey == householdKey
             } else {
@@ -445,13 +444,22 @@ struct StoreRowView: View {
                     .onSubmit { saveNameEdit() }
                     .onAppear { editedName = store.name ?? "" }
             } else {
-                Text(store.displayName)
-                    .font(ForagerTheme.secondaryFont)
-                    .fontWeight(.medium)
-                    .onTapGesture {
-                        editedName = store.name ?? ""
-                        isEditingName = true
+                HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(store.displayName)
+                        .font(ForagerTheme.secondaryFont)
+                        .fontWeight(.medium)
+
+                    if store.isDefault {
+                        Image(systemName: "lock.fill")
+                            .font(ForagerTheme.captionFont)
+                            .foregroundStyle(ForagerTheme.textTertiary)
                     }
+                }
+                .onTapGesture {
+                    guard !store.isDefault else { return }
+                    editedName = store.name ?? ""
+                    isEditingName = true
+                }
             }
 
             Spacer()
@@ -473,8 +481,8 @@ struct StoreRowView: View {
                     .buttonStyle(.borderless)
                     .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-            } else {
-                // Delete button
+            } else if !store.isDefault {
+                // Delete button — hidden for protected stores
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .foregroundStyle(ForagerTheme.statusDangerFG)
