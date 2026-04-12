@@ -39,7 +39,10 @@ class StoreService: ObservableObject {
     /// One-time factory injection at app startup (ADR 014)
     func configure(factory: ManagedObjectFactory) {
         self.factory = factory
-        // M18.2: Ensure "No Store" default exists in current scope
+    }
+
+    /// M18.2: Ensure "No Store" default exists. Call after householdKeyProvider is set.
+    func ensureDefaultStoreExists() {
         _ = lookupDefaultStore()
     }
 
