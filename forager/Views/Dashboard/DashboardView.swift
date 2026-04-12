@@ -168,7 +168,7 @@ struct DashboardView: View {
                 // 2. Shopping List (always visible)
                 if let list = activeGroceryList {
                     NavigationLink(destination: GroceryListDetailView(weeklyList: list)) {
-                        groceryRunCard(list: list)
+                        WeeklyListRowView(weeklyList: list)
                     }
                     .buttonStyle(.plain)
                 } else {
@@ -409,38 +409,6 @@ struct DashboardView: View {
                 Text(quickOption)
                     .font(ForagerTheme.secondaryFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
-            }
-        }
-        .foragerGlassCard()
-    }
-
-    // MARK: - Grocery Run Card
-
-    private func groceryRunCard(list: WeeklyList) -> some View {
-        let items = (list.items?.allObjects as? [GroceryListItem]) ?? []
-        let total = items.count
-        let completed = items.filter { $0.isCompleted }.count
-        let remaining = total - completed
-
-        return VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            HStack {
-                Image(systemName: "cart")
-                    .foregroundStyle(ForagerTheme.accentSecondary)
-                Text(list.name ?? "Grocery List")
-                    .font(ForagerTheme.cardTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Spacer()
-                ForagerProgressRing(progress: total > 0 ? Double(completed) / Double(total) : 0)
-            }
-
-            if remaining > 0 {
-                Text("\(remaining) item\(remaining == 1 ? "" : "s") remaining")
-                    .font(ForagerTheme.secondaryFont)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-            } else {
-                Text("All done!")
-                    .font(ForagerTheme.secondaryFont)
-                    .foregroundStyle(ForagerTheme.accentSecondary)
             }
         }
         .foragerGlassCard()
