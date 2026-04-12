@@ -33,8 +33,12 @@ CloudKit-powered household collaboration enabling couples, roommates, and famili
 - REQ-009: The system MUST operate in exactly one active scope at a time: .personal OR .household, never both (DataScope enum).
   - Scenario: Given a user joins a household, When the scope transitions to .household, Then all @FetchRequest queries use the household's householdKey and new entities are created in the shared store.
 
-- REQ-010: The system MUST use the ManagedObjectFactory for all HouseholdScoped entity creation to ensure correct store assignment (ADR 014).
+- REQ-010: The system MUST use the ManagedObjectFactory for all HouseholdScoped entity creation to ensure correct store assignment (ADR 014). The factory MUST be a non-optional dependency in all services and repositories that create HouseholdScoped entities. Fallback creation via `Entity(context:)` is FORBIDDEN in production code paths. If factory creation fails, the error MUST be propagated to the caller — never silently creating an unscoped entity.
   - Scenario: Given code needs to create a new Recipe in household scope, When it calls ManagedObjectFactory.make(Recipe.self, in: scope), Then the Recipe is assigned to the correct persistent store (private or shared) based on the active scope.
+  - Scenario: Given a service or repository that creates HouseholdScoped entities is initialized, Then the factory parameter MUST be non-optional (`ManagedObjectFactory`, not `ManagedObjectFactory?`).
+  - Scenario: Given `factory.make()` throws an error during entity creation, Then the error MUST be propagated to the caller and no entity SHALL be created via direct `Entity(context:)` fallback.
+  - Scenario: Given a service instantiates a Household*Repository inline, Then the service MUST pass its own factory instance to the repository init.
+  - Scenario: Given entity creation occurs in tests, SwiftUI previews, DefaultSeeder, or HouseholdService migration methods, Then direct `Entity(context:)` is acceptable as documented exceptions per ADR 014.
 
 - REQ-011: The system MUST use a dual-store architecture with private store (forager.sqlite) for personal data and shared store (forager_shared.sqlite) for household data, with asymmetric owner/member behavior (ADR 008).
   - Scenario: Given an owner device, When household data syncs, Then the owner's shared zone data lives in the private store (owner's zone), while a member device receives shared zone data in the shared store.
