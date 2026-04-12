@@ -42,29 +42,8 @@ struct StoreAssignmentModal: View {
     var body: some View {
         NavigationStack {
             List {
-                // "No Store" option — assigns the default store entity
-                Button {
-                    assignStore(storeService.lookupDefaultStore())
-                } label: {
-                    HStack(spacing: ForagerTheme.Spacing.sm) {
-                        Circle()
-                            .strokeBorder(ForagerTheme.borderDefault, lineWidth: 1.5)
-                            .frame(width: 12, height: 12)
-                        Text("No Store")
-                            .font(ForagerTheme.bodyFont)
-                            .foregroundStyle(ForagerTheme.textSecondary)
-                        Spacer()
-                        if item.store?.isDefault == true {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(ForagerTheme.accentPrimary)
-                                .font(.caption)
-                        }
-                    }
-                }
-                .listRowBackground(Color.clear)
-
-                // Store options (exclude default "No Store")
-                ForEach(stores.filter { !$0.isDefault }) { store in
+                // All stores including "No Store" default entity
+                ForEach(stores) { store in
                     Button {
                         assignStore(store)
                     } label: {
