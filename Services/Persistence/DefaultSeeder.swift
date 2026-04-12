@@ -172,29 +172,60 @@ final class DefaultSeeder {
 
     // MARK: - No Store Safety Net
 
-    /// M18.2: Ensure "No Store" default store exists in the personal store.
+    /// M18.2: Ensure "No Store" default store exists.
     /// Mirrors ensureUncategorizedExists for categories.
     /// Runs every startup — cheap fetch, no-op if it exists.
+    /// Creates in personal store (householdKey=nil). For existing households,
+    /// also checks the household scope and creates there if missing.
     static func ensureNoStoreExists(in context: NSManagedObjectContext) throws {
-        let request: NSFetchRequest<Store> = Store.fetchRequest()
-        request.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
-        request.fetchLimit = 1
+        // Personal store
+        let personalRequest: NSFetchRequest<Store> = Store.fetchRequest()
+        personalRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey == nil")
+        personalRequest.fetchLimit = 1
 
-        let existing = (try? context.fetch(request))?.first
-        if existing != nil { return }
+        if (try? context.fetch(personalRequest))?.first == nil {
+            let noStore = Store(context: context)
+            noStore.id = UUID()
+            noStore.name = "No Store"
+            noStore.color = "#9E9E9E"
+            noStore.sortOrder = 999
+            noStore.isDefault = true
+            noStore.dateCreated = Date()
+            noStore.updatedAt = Date()
 
-        let noStore = Store(context: context)
-        noStore.id = UUID()
-        noStore.name = "No Store"
-        noStore.color = "#9E9E9E"
-        noStore.sortOrder = 999
-        noStore.isDefault = true
-        noStore.dateCreated = Date()
-        noStore.updatedAt = Date()
+            #if DEBUG
+            print("🏪 M18.2: Created 'No Store' default in personal store")
+            #endif
+        }
 
-        #if DEBUG
-        print("🏪 M18.2: Created missing 'No Store' default store in personal store")
-        #endif
+        // Also check any household scope — for existing households that predate this feature
+        let householdRequest: NSFetchRequest<Store> = Store.fetchRequest()
+        householdRequest.predicate = NSPredicate(format: "isDefault == YES AND householdKey != nil")
+        householdRequest.fetchLimit = 1
+
+        if (try? context.fetch(householdRequest))?.first == nil {
+            // Check if user is in a household by looking for any store with a householdKey
+            let anyHouseholdStore: NSFetchRequest<Store> = Store.fetchRequest()
+            anyHouseholdStore.predicate = NSPredicate(format: "householdKey != nil")
+            anyHouseholdStore.fetchLimit = 1
+
+            if let existingStore = (try? context.fetch(anyHouseholdStore))?.first,
+               let householdKey = existingStore.householdKey {
+                let noStore = Store(context: context)
+                noStore.id = UUID()
+                noStore.name = "No Store"
+                noStore.color = "#9E9E9E"
+                noStore.sortOrder = 999
+                noStore.isDefault = true
+                noStore.householdKey = householdKey
+                noStore.dateCreated = Date()
+                noStore.updatedAt = Date()
+
+                #if DEBUG
+                print("🏪 M18.2: Created 'No Store' default in household scope (\(householdKey))")
+                #endif
+            }
+        }
     }
 
     // MARK: - Category Seeding (Phase 3.1: Using Repository)
