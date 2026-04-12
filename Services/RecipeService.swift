@@ -13,7 +13,8 @@ class RecipeService: ObservableObject {
     private let parsingService: IngredientParsingService
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    private(set) var factory: ManagedObjectFactory?
+    // M19: Non-optional — configure() must be called before any entity creation
+    private(set) var factory: ManagedObjectFactory!
 
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
@@ -40,43 +41,27 @@ class RecipeService: ObservableObject {
         clearError()
 
         let recipe: Recipe
-        if let factory = factory {
-            do {
-                recipe = try factory.make(Recipe.self, configure: { r in
-                    r.id = UUID()
-                    r.title = title
-                    r.servings = servings
-                    r.prepTime = prepTime
-                    r.cookTime = cookTime
-                    r.instructions = instructions
-                    r.sourceURL = sourceURL
-                    r.imageURL = imageURL
-                    r.author = author
-                    r.dateCreated = Date()
-                    r.usageCount = 0
-                    r.isFavorite = false
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating Recipe: \(error)")
-                #endif
-                errorMessage = "Failed to create recipe"
-                return nil
-            }
-        } else {
-            recipe = Recipe(context: viewContext)
-            recipe.id = UUID()
-            recipe.title = title
-            recipe.servings = servings
-            recipe.prepTime = prepTime
-            recipe.cookTime = cookTime
-            recipe.instructions = instructions
-            recipe.sourceURL = sourceURL
-            recipe.imageURL = imageURL
-            recipe.author = author
-            recipe.dateCreated = Date()
-            recipe.usageCount = 0
-            recipe.isFavorite = false
+        do {
+            recipe = try factory.make(Recipe.self, configure: { r in
+                r.id = UUID()
+                r.title = title
+                r.servings = servings
+                r.prepTime = prepTime
+                r.cookTime = cookTime
+                r.instructions = instructions
+                r.sourceURL = sourceURL
+                r.imageURL = imageURL
+                r.author = author
+                r.dateCreated = Date()
+                r.usageCount = 0
+                r.isFavorite = false
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating Recipe: \(error)")
+            #endif
+            errorMessage = "Failed to create recipe"
+            return nil
         }
 
         return save("create recipe") ? recipe : nil
@@ -126,48 +111,30 @@ class RecipeService: ObservableObject {
         clearError()
 
         let copy: Recipe
-        if let factory = factory {
-            do {
-                copy = try factory.make(Recipe.self, configure: { r in
-                    r.id = UUID()
-                    r.title = "\(recipe.title ?? "Recipe") (Copy)"
-                    r.servings = recipe.servings
-                    r.prepTime = recipe.prepTime
-                    r.cookTime = recipe.cookTime
-                    r.instructions = recipe.instructions
-                    r.sourceURL = recipe.sourceURL
-                    r.imageURL = recipe.imageURL
-                    r.author = recipe.author
-                    r.tags = recipe.tags
-                    r.dateCreated = Date()
-                    r.usageCount = 0
-                    r.isFavorite = false
-                    // M9.13: Preserve source recipe's scope instead of using active scope
-                    r.householdKey = recipe.householdKey
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating Recipe (duplicate): \(error)")
-                #endif
-                errorMessage = "Failed to duplicate recipe"
-                return nil
-            }
-        } else {
-            copy = Recipe(context: viewContext)
-            copy.id = UUID()
-            copy.title = "\(recipe.title ?? "Recipe") (Copy)"
-            copy.servings = recipe.servings
-            copy.prepTime = recipe.prepTime
-            copy.cookTime = recipe.cookTime
-            copy.instructions = recipe.instructions
-            copy.sourceURL = recipe.sourceURL
-            copy.imageURL = recipe.imageURL
-            copy.author = recipe.author
-            copy.tags = recipe.tags
-            copy.dateCreated = Date()
-            copy.usageCount = 0
-            copy.isFavorite = false
-            copy.householdKey = recipe.householdKey
+        do {
+            copy = try factory.make(Recipe.self, configure: { r in
+                r.id = UUID()
+                r.title = "\(recipe.title ?? "Recipe") (Copy)"
+                r.servings = recipe.servings
+                r.prepTime = recipe.prepTime
+                r.cookTime = recipe.cookTime
+                r.instructions = recipe.instructions
+                r.sourceURL = recipe.sourceURL
+                r.imageURL = recipe.imageURL
+                r.author = recipe.author
+                r.tags = recipe.tags
+                r.dateCreated = Date()
+                r.usageCount = 0
+                r.isFavorite = false
+                // M9.13: Preserve source recipe's scope instead of using active scope
+                r.householdKey = recipe.householdKey
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating Recipe (duplicate): \(error)")
+            #endif
+            errorMessage = "Failed to duplicate recipe"
+            return nil
         }
 
         // Duplicate all ingredients with structured data

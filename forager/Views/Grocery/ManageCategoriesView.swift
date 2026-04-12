@@ -525,18 +525,17 @@ struct ManageCategoriesView: View {
                 if let existing = uncategorizedCategories.first {
                     uncategorizedCategory = existing
                 } else {
-                    // Create Uncategorized category if it doesn't exist
-                    uncategorizedCategory = Category(context: context)
-                    uncategorizedCategory.id = UUID()
-                    uncategorizedCategory.name = "Uncategorized"
-                    uncategorizedCategory.color = "#9E9E9E" // Gray color
-                    uncategorizedCategory.isDefault = false
-                    uncategorizedCategory.dateCreated = Date()
-                    uncategorizedCategory.sortOrder = Int16.max
-                    // M7.3.4: Set householdKey for proper scoping
-                    uncategorizedCategory.householdKey = currentHouseholdKey
+                    // M19: Use factory for correct store assignment (ADR 014)
+                    let factory = ManagedObjectFactory(context: context, persistence: PersistenceController.shared)
+                    let repo = HouseholdCategoryRepository(context: context, factory: factory, householdKey: currentHouseholdKey)
+                    uncategorizedCategory = try repo.findOrCreate(
+                        name: "Uncategorized",
+                        color: "#9E9E9E",
+                        sortOrder: Int16.max,
+                        isDefault: false
+                    )
                     #if DEBUG
-                    print("✅ Created Uncategorized category during reassignment")
+                    print("✅ Created Uncategorized category during reassignment via factory")
                     #endif
                 }
 

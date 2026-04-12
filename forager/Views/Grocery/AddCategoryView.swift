@@ -4,6 +4,7 @@ import CoreData
 struct AddCategoryView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.managedObjectFactory) private var factory
 
     // M7.3.4: Household service for filtering by householdKey
     @EnvironmentObject private var householdService: HouseholdService
@@ -108,38 +109,45 @@ struct AddCategoryView: View {
             return
         }
 
-        // Capture householdKey for use in performWrite closure
+        // M19: Use factory for correct store assignment (ADR 014)
+        guard let factory = factory else {
+            errorMessage = "Internal error: factory not available"
+            showingError = true
+            return
+        }
+
+        guard let newCategory = CategoryRepository.getOrCreate(displayName: trimmedName, in: viewContext, factory: factory) else {
+            errorMessage = "Failed to create category"
+            showingError = true
+            return
+        }
+
+        newCategory.id = UUID()
+        newCategory.color = selectedColor
+        newCategory.isDefault = false
+        newCategory.dateCreated = Date()
+
+        // M7.3.4: Get next sort order within current household scope only
         let currentHouseholdKey = householdService.currentHouseholdKey
+        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
+        if let key = currentHouseholdKey {
+            categoryRequest.predicate = NSPredicate(format: "householdKey == %@", key)
+        } else {
+            categoryRequest.predicate = NSPredicate(format: "householdKey == nil")
+        }
+        let maxSortOrder = (try? viewContext.fetch(categoryRequest).map(\.sortOrder).max()) ?? 5
+        newCategory.sortOrder = maxSortOrder + 1
 
-        // M7.1.3 Phase 1.2: Create category using repository pattern
-        PersistenceController.shared.performWrite({ context in
-            let newCategory = CategoryRepository.getOrCreate(displayName: trimmedName, in: context)
-            newCategory.id = UUID()
-            newCategory.color = selectedColor
-            newCategory.isDefault = false
-            newCategory.dateCreated = Date()
-            // M7.3.4: Set householdKey for proper scoping
-            newCategory.householdKey = currentHouseholdKey
-
-            // M7.3.4: Get next sort order within current household scope only
-            let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
-            if let key = currentHouseholdKey {
-                categoryRequest.predicate = NSPredicate(format: "householdKey == %@", key)
-            } else {
-                categoryRequest.predicate = NSPredicate(format: "householdKey == nil")
-            }
-            let maxSortOrder = (try? context.fetch(categoryRequest).map(\.sortOrder).max()) ?? 5
-            newCategory.sortOrder = maxSortOrder + 1
-
+        do {
+            try viewContext.save()
             #if DEBUG
             print("✅ Created new category: \(trimmedName)")
             #endif
-        }, onError: { error in
-            DispatchQueue.main.async {
-                errorMessage = "Failed to save category: \(error.localizedDescription)"
-                showingError = true
-            }
-        })
+        } catch {
+            errorMessage = "Failed to save category: \(error.localizedDescription)"
+            showingError = true
+            return
+        }
 
         dismiss()
     }

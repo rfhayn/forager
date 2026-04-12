@@ -585,7 +585,7 @@ struct GroceryListDetailView: View {
         let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             weeklyList.name = trimmed
-            try? viewContext.save()
+            weeklyListService.saveContext()
         }
         isEditingTitle = false
     }

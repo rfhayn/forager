@@ -589,7 +589,13 @@ struct MealPlanDetailView: View {
         let trimmed = editedTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             mealPlan.name = trimmed
-            try? mealPlan.managedObjectContext?.save()
+            do {
+                try mealPlan.managedObjectContext?.save()
+            } catch {
+                #if DEBUG
+                print("⚠️ Failed to save meal plan title: \(error)")
+                #endif
+            }
         }
         isEditingTitle = false
     }

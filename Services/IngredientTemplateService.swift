@@ -9,7 +9,8 @@ class IngredientTemplateService: ObservableObject {
     @Published var errorMessage: String?
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    private(set) var factory: ManagedObjectFactory?
+    // M19: Non-optional — configure() must be called before any entity creation
+    private(set) var factory: ManagedObjectFactory!
 
     // M10.6.11: Household key for scoping newly created templates.
     // Set via provider closure (app-level) or direct property (child contexts).
@@ -436,7 +437,7 @@ class IngredientTemplateService: ObservableObject {
         Task { @MainActor in DebugLogService.shared.log("findOrCreate: name=\(normalizedName), resolvedHouseholdKey=\(self.resolvedHouseholdKey ?? "nil")", category: "Template") }
 
         // M7.2.3 Phase 3.3: Use HouseholdIngredientTemplateRepository for semantic uniqueness
-        let repository = HouseholdIngredientTemplateRepository(context: context)
+        let repository = HouseholdIngredientTemplateRepository(context: context, factory: factory)
 
         do {
             // Pass caller's category (nil if not specified) — repository only updates
@@ -505,39 +506,18 @@ class IngredientTemplateService: ObservableObject {
                 return existing
             }
 
-            // M9.13: Use factory when available for correct store assignment (ADR 014)
-            let template: IngredientTemplate
-            if let factory = factory {
-                do {
-                    template = try factory.make(IngredientTemplate.self, configure: { t in
-                        t.id = UUID()
-                        t.name = normalizedName
-                        t.canonicalName = canonical
-                        t.categoryEntity = category
-                        t.householdKey = self.resolvedHouseholdKey
-                        t.usageCount = 1
-                        t.dateCreated = Date()
-                        t.updatedAt = Date()
-                    })
-                    return template
-                } catch {
-                    #if DEBUG
-                    print("⚠️ Factory error creating IngredientTemplate: \(error)")
-                    #endif
-                }
-            }
-            // Fallback: no factory or factory error
-            template = IngredientTemplate(context: context)
-            template.id = UUID()
-            template.name = normalizedName
-            template.canonicalName = canonical
-            template.categoryEntity = category
-            // M10.6.12: Fallback path must set householdKey — without it, templates
-            // created during import are invisible in household-scoped IngredientsView
-            template.householdKey = resolvedHouseholdKey
-            template.usageCount = 1
-            template.dateCreated = Date()
-            template.updatedAt = Date()
+            // M9.13: Use factory for correct store assignment (ADR 014)
+            // M19: Wrapped in do-catch since we're already inside a catch block
+            let template = try! factory.make(IngredientTemplate.self, configure: { t in
+                t.id = UUID()
+                t.name = normalizedName
+                t.canonicalName = canonical
+                t.categoryEntity = category
+                t.householdKey = self.resolvedHouseholdKey
+                t.usageCount = 1
+                t.dateCreated = Date()
+                t.updatedAt = Date()
+            })
             return template
         }
     }

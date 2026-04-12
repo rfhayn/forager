@@ -94,7 +94,7 @@ final class CategoryDeduplicator {
                     return dateA < dateB
                 }
                 
-                let keeper = sorted.first!
+                guard let keeper = sorted.first else { continue }
                 let duplicates = Array(sorted.dropFirst())
                 
                 #if DEBUG

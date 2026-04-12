@@ -6,6 +6,30 @@
 
 ---
 
+## Session 113 — April 12, 2026
+**Milestone**: M19 — Pre-Launch Bug Hunt (Factory Enforcement)
+
+**What happened**: Deep audit of the entire codebase for pre-launch bugs, followed by systematic elimination of ~15 factory bypass sites where top-level HouseholdScoped entities were created with `Entity(context:)` instead of `ManagedObjectFactory.make()`. These entities would silently land in the wrong persistent store and become invisible to household members — the most dangerous class of data corruption bug in the CloudKit dual-store architecture.
+
+The session started in Plan mode with three parallel Explore agents auditing services/models, views/UI, and test coverage. Ultraplan refined the findings (key correction: child entities like Ingredient and GroceryListItem inherit store from parent via Core Data relationship — these were incorrectly flagged as P1 in the draft). Implementation touched 28 files: made factory `ManagedObjectFactory!` (implicitly unwrapped) in 4 services, made factory required in 6 repository classes, removed all `if let factory` / `else` fallback branches, fixed the ghost recipe creation in CreateRecipeView, replaced 6 force unwraps with guard-let, and replaced 4 `try? viewContext.save()` calls with proper do-catch logging. Added 20 new tests across 3 test files.
+
+**Key decisions**:
+- **Implicitly unwrapped optional (`!`) over init injection** — services are `@StateObject` created before the factory exists in `foragerApp.init()`. Restructuring init order would require changing `@StateObject` to `@State` + lazy init across all services. The `!` approach keeps `configure(factory:)` working while making every use site crash loudly on nil instead of silently falling back.
+- **Remove fallback branches entirely, don't fix them** — the plan considered adding household/householdKey to fallback branches. The better fix: delete the branches. A visible error (nil return, assertion failure) is always better than silent wrong-store creation.
+- **Keep HouseholdCategoryRepository factory as optional** — the DefaultSeeder and tests create this repository without a factory (no household exists at first launch). Added `assertionFailure` in the else branch to catch production misuse while allowing seeder/test exemptions.
+- **Child entity creation is NOT a bug** — Ultraplan correctly identified that `GroceryListItem(context:)` and `Ingredient(context:)` followed by `item.weeklyList = parentList` is correct per ADR 014. Core Data relationship store inheritance handles this automatically.
+
+**Learning**:
+- The root cause of all factory bypass bugs was a single architectural pattern: factory declared as `ManagedObjectFactory?` in services, forcing `if let` / `else` at every call site. Making it non-optional eliminates the entire class of bugs at once — fixing the type is more effective than fixing individual sites.
+- In-memory `PersistenceController` can't test factory store assignment because `store(for: .private)` resolves by filename (`forager.sqlite`), which in-memory stores don't have. Factory tests must validate scope resolution and household assignment without triggering store resolution.
+- The Ultraplan refinement step was valuable — it caught 4 significant corrections to the draft plan (child entities downgraded, view saves reduced from 7 to 4, factory bypass count increased from 5 to ~15, HouseholdCategoryRepository fallback behavior corrected).
+
+**AI tooling observations**: The three-agent parallel exploration (services, views, tests) was efficient for initial discovery but produced false positives that needed manual verification. The Plan → Ultraplan → Execute pipeline worked well for this kind of systematic audit. The architecture-guard hook caught `Entity(context:)` in edit content even when removing the pattern — had to use Python for those edits.
+
+**What's next**: Commit, PR, and merge. Then consider whether the CategoryDeduplicator should reassign templates before deleting duplicates (current behavior: Core Data nullify rule leaves templates orphaned). Also address the pre-existing HybridParserRoutingTests unicode fraction failures (unrelated to this change).
+
+---
+
 ## Session 112 — April 12, 2026
 **Milestones**: FUI-1.9.5, FUI-1.10, FUI-1.10.1, FUI-1.10.2, M15.2, no-store-default-entity planning
 

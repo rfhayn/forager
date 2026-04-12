@@ -2453,7 +2453,7 @@ class HouseholdService: ObservableObject {
             }
         }
 
-        throw lastError!
+        throw lastError ?? HouseholdError.creationFailed("CloudKit share failed with unknown error")
     }
 
     // MARK: - CloudKit Integration

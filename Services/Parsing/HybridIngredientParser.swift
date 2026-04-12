@@ -63,8 +63,12 @@ class HybridIngredientParser: IngredientParser {
             // Step 3: NLP fallback only if both regex and ML are highly uncertain
             if regexResult.confidence < 0.5 && mlResult.confidence < 0.5 {
                 let nlpResult = nlpParser.parse(input)
-                return [regexResult, mlResult, nlpResult]
-                    .max(by: { $0.confidence < $1.confidence })!
+                // M19: Safe unwrap — array always has 3 elements
+                guard let best = [regexResult, mlResult, nlpResult]
+                    .max(by: { $0.confidence < $1.confidence }) else {
+                    return regexResult
+                }
+                return best
             }
 
             // Return better of regex vs ML

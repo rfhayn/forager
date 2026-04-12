@@ -858,7 +858,7 @@ class RegexIngredientParser: IngredientParser {
         guard !trimmed.isEmpty else { return nil }
 
         // Must NOT start with a digit — those should have been caught by earlier patterns
-        let first = trimmed.unicodeScalars.first!
+        guard let first = trimmed.unicodeScalars.first else { return nil }
         if CharacterSet.decimalDigits.contains(first) { return nil }
 
         // Must be mostly letters/spaces/hyphens (not a section header or HTML junk)

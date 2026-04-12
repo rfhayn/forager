@@ -397,7 +397,13 @@ struct WeeklyListRowView: View {
         let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             weeklyList.name = trimmed
-            try? viewContext.save()
+            do {
+                try viewContext.save()
+            } catch {
+                #if DEBUG
+                print("⚠️ Failed to save list name: \(error)")
+                #endif
+            }
         }
         isEditingName = false
     }

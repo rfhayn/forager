@@ -76,7 +76,8 @@ class MealPlanService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     // M9.13: Factory for creating HouseholdScoped entities in correct store (ADR 014)
-    private(set) var factory: ManagedObjectFactory?
+    // M19: Non-optional — configure() must be called before any entity creation
+    private(set) var factory: ManagedObjectFactory!
 
     // M9.16: Unified grocery list item service for generateGroceryList
     private(set) var groceryListItemService: GroceryListItemService?
@@ -173,35 +174,23 @@ class MealPlanService: ObservableObject {
         let plan: MealPlan
         let calculatedStartDate = calculatedStart
 
-        if let factory = factory {
-            do {
-                plan = try factory.make(MealPlan.self, configure: { p in
-                    p.id = UUID()
-                    p.createdDate = Date()
-                    p.isActive = true
-                    p.startDate = calculatedStartDate
-                    p.duration = Int16(prefs.mealPlanDuration)
-                    if prefs.autoNameMealPlans {
-                        p.name = generateMealPlanName(for: calculatedStartDate)
-                    }
-                })
-            } catch {
-                #if DEBUG
-                print("⚠️ Factory error creating MealPlan: \(error)")
-                #endif
-                lastError = error
-                return nil
-            }
-        } else {
-            plan = MealPlan(context: context)
-            plan.id = UUID()
-            plan.createdDate = Date()
-            plan.isActive = true
-            plan.startDate = calculatedStartDate
-            plan.duration = Int16(prefs.mealPlanDuration)
-            if prefs.autoNameMealPlans {
-                plan.name = generateMealPlanName(for: calculatedStartDate)
-            }
+        do {
+            plan = try factory.make(MealPlan.self, configure: { p in
+                p.id = UUID()
+                p.createdDate = Date()
+                p.isActive = true
+                p.startDate = calculatedStartDate
+                p.duration = Int16(prefs.mealPlanDuration)
+                if prefs.autoNameMealPlans {
+                    p.name = generateMealPlanName(for: calculatedStartDate)
+                }
+            })
+        } catch {
+            #if DEBUG
+            print("⚠️ Factory error creating MealPlan: \(error)")
+            #endif
+            lastError = error
+            return nil
         }
         
         // M9.13: Apply caller-provided overrides before single save
@@ -564,7 +553,7 @@ class MealPlanService: ObservableObject {
         
         // M7.2.3 Phase 3.4: Create planned meal using HouseholdPlannedMealRepository
         // Default mealType to "dinner" - future enhancement: allow user to select
-        let repository = HouseholdPlannedMealRepository(context: context)
+        let repository = HouseholdPlannedMealRepository(context: context, factory: factory)
         
         do {
             let plannedMeal = try repository.findOrCreate(
@@ -874,27 +863,15 @@ class MealPlanService: ObservableObject {
             }
 
             // M9.13: Route through factory for correct store assignment (ADR 014)
-            let meal: PlannedMeal
-            if let factory = factory {
-                meal = try factory.make(PlannedMeal.self, configure: { m in
-                    m.id = UUID()
-                    m.date = startOfDay
-                    m.quickOption = option.rawValue
-                    m.recipe = nil
-                    m.mealPlan = plan
-                    m.createdDate = Date()
-                    m.isCompleted = option == .noMeal
-                })
-            } else {
-                meal = PlannedMeal(context: context)
-                meal.id = UUID()
-                meal.date = startOfDay
-                meal.quickOption = option.rawValue
-                meal.recipe = nil
-                meal.mealPlan = plan
-                meal.createdDate = Date()
-                meal.isCompleted = option == .noMeal
-            }
+            let meal = try factory.make(PlannedMeal.self, configure: { m in
+                m.id = UUID()
+                m.date = startOfDay
+                m.quickOption = option.rawValue
+                m.recipe = nil
+                m.mealPlan = plan
+                m.createdDate = Date()
+                m.isCompleted = option == .noMeal
+            })
 
             try context.save()
 
@@ -932,24 +909,14 @@ class MealPlanService: ObservableObject {
             diag.debug("  Found \(meals.count) planned meals", category: .household)
 
             // M9.13: Route through factory for correct store assignment (ADR 014)
-            let newList: WeeklyList
             let planName = plan.name ?? DateFormatter.shortDate.string(from: Date())
-            if let factory = factory {
-                newList = try factory.make(WeeklyList.self, configure: { l in
-                    l.id = UUID()
-                    l.name = "From Plan - \(planName)"
-                    l.dateCreated = Date()
-                    l.isCompleted = false
-                    l.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
-                })
-            } else {
-                newList = WeeklyList(context: context)
-                newList.id = UUID()
-                newList.name = "From Plan - \(planName)"
-                newList.dateCreated = Date()
-                newList.isCompleted = false
-                newList.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
-            }
+            let newList = try factory.make(WeeklyList.self, configure: { l in
+                l.id = UUID()
+                l.name = "From Plan - \(planName)"
+                l.dateCreated = Date()
+                l.isCompleted = false
+                l.notes = "Generated from meal plan: \(plan.name ?? "Unnamed")"
+            })
 
             // M9.16: Delegate item creation to GroceryListItemService for consistent
             // template resolution, category assignment, cross-store safety, and merge logic
