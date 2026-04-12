@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forager — Option C "Parchment & Paper" Final Mockup</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, 'SF Pro Text', sans-serif;
+    background: #1a1a1a;
+    color: #e0e0e0;
+    padding: 32px 24px 80px;
+  }
+  h1 {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .page-subtitle {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .color-legend {
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+    margin-bottom: 40px;
+  }
+  .color-legend span {
+    display: inline-block;
+    margin: 0 8px;
+  }
+  .color-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* Section headers */
+  .section-header {
+    font-family: -apple-system, system-ui, 'SF Pro Rounded', 'SF Pro Display', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin: 48px 0 8px;
+  }
+  .section-header:first-of-type { margin-top: 0; }
+  .section-subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* Mode row: light + dark side by side */
+  .mode-row {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .mode-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .mode-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  /* Phone frame with horizontal scroll */
+  .phone-scroll {
+    width: 390px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 40px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .phone-scroll::-webkit-scrollbar { display: none; }
+  .phone-strip {
+    display: flex;
+    width: max-content;
+  }
+  .phone-frame {
+    width: 390px;
+    min-width: 390px;
+    height: 780px;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+  .phone-content {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 56px 0 0;
+  }
+  .phone-content::-webkit-scrollbar { display: none; }
+  .phone-content.has-tab-bar { padding-bottom: 82px; }
+
+  /* Status bar */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px 0;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10;
+  }
+  .status-bar .time { font-size: 15px; font-weight: 700; }
+  .status-icons { display: flex; gap: 4px; font-size: 12px; }
+
+  /* Tab bar */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 82px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding-top: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 10;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-icon { font-size: 22px; }
+
+  /* View indicator dots */
+  .view-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .view-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: #555;
+    transition: background 0.2s;
+  }
+  .view-dot.active { background: #aaa; }
+  .swipe-hint {
+    text-align: center;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Option C: Parchment &amp; Paper - Final Reference</h1>
+<p class="page-subtitle">All 9 Forager screens in light and dark mode. Swipe phones to navigate. Updated border colors included.</p>
+<div class="color-legend">
+  <span><span class="color-swatch" style="background:#EDE8DF"></span>Canvas</span>
+  <span><span class="color-swatch" style="background:#FAFBFC; border: 1px solid #ccc"></span>Surface</span>
+  <span><span class="color-swatch" style="background:#2D5016"></span>Accent</span>
+  <span><span class="color-swatch" style="background:#D8D6D0"></span>Border Subtle</span>
+  <span><span class="color-swatch" style="background:#CCC9C2"></span>Border Default</span>
+  <span><span class="color-swatch" style="background:#C0BCAE"></span>Border Strong</span>
+</div>
+
+<h2 class="section-header">Main Views</h2>
+<p class="section-subtitle">Dashboard, Grocery Lists, Recipes, Meal Plans -- swipe each phone to navigate</p>
+<div id="main-views"></div>
+
+<h2 class="section-header" style="margin-top:56px">Detail Views</h2>
+<p class="section-subtitle">Grocery Detail, Recipe Detail, Meal Plan Detail, Settings, Import Preview</p>
+<div id="detail-views"></div>
+
+<div style="text-align:center;margin-top:48px;padding:20px;color:#666;font-size:13px;border-top:1px solid #333">
+  <div style="font-weight:600;color:#999;margin-bottom:8px">Option C: Parchment &amp; Paper -- Final Reference Mockup</div>
+  <div>All 9 screens | Light + Dark | Updated border colors (cooler light, neutral dark)</div>
+  <div style="margin-top:8px;font-size:12px;color:#555">Generated April 2026 for Forager iOS</div>
+</div>
+
+<script>
+/* Note: This is a static mockup file for design review. All content is trusted/hardcoded. */
+
+// ============== COLOR TOKENS ==============
+var L = {
+  bgCanvas: '#EDE8DF', bgPrimary: '#E3DDD2', bgSecondary: '#D9D1C4', bgTertiary: '#CFC6B8',
+  surfPrimary: '#FAFBFC', surfSecondary: '#F5F6F8',
+  borderSubtle: '#D8D6D0', borderDefault: '#CCC9C2', borderStrong: '#C0BCAE',
+  accentPri: '#2D5016', accentSec: '#4A7C2E',
+  textPri: '#2C2418', textSec: '#5A5347', textTer: '#6A6057', textDis: '#B0A89E',
+  success: '#2D6A3F', warning: '#B8860B', danger: '#C53030',
+  surfAccent: '#E4F0DC', accentTint: '#E8F0E0',
+  buttonText: '#FFFFFF',
+  isLight: true
+};
+var D = {
+  bgCanvas: '#141210', bgPrimary: '#1C1915', bgSecondary: '#24201A', bgTertiary: '#2C2720',
+  surfPrimary: '#282828', surfSecondary: '#323232',
+  borderSubtle: '#3A3A3A', borderDefault: '#444444', borderStrong: '#505050',
+  accentPri: '#7BC08A', accentSec: '#5AAD5A',
+  textPri: '#F0EBE3', textSec: '#C4BDB2', textTer: '#A09A90', textDis: '#5A5650',
+  success: '#4CAF50', warning: '#FFB74D', danger: '#EF5350',
+  surfAccent: '#1A2E1A', accentTint: '#2A3520',
+  buttonText: '#1C1A14',
+  isLight: false
+};
+
+// ============== HELPERS ==============
+function h(tag, attrs, children) {
+  var el = document.createElement(tag);
+  if (attrs) {
+    Object.keys(attrs).forEach(function(k) {
+      if (k === 'style' && typeof attrs[k] === 'object') {
+        Object.keys(attrs[k]).forEach(function(sk) { el.style[sk] = attrs[k][sk]; });
+      } else if (k === 'className') {
+        el.className = attrs[k];
+      } else {
+        el.setAttribute(k, attrs[k]);
+      }
+    });
+  }
+  if (children) {
+    if (typeof children === 'string') {
+      el.textContent = children;
+    } else if (Array.isArray(children)) {
+      children.forEach(function(c) { if (c) el.appendChild(c); });
+    } else {
+      el.appendChild(children);
+    }
+  }
+  return el;
+}
+
+function hHTML(tag, attrs, htmlStr) {
+  var el = document.createElement(tag);
+  if (attrs) {
+    Object.keys(attrs).forEach(function(k) {
+      if (k === 'style' && typeof attrs[k] === 'string') {
+        el.setAttribute('style', attrs[k]);
+      } else if (k === 'className') {
+        el.className = attrs[k];
+      } else {
+        el.setAttribute(k, attrs[k]);
+      }
+    });
+  }
+  /* Static trusted content only - this is a design mockup with no user input */
+  el.innerHTML = htmlStr;
+  return el;
+}
+
+function progressRingSVG(pct, size, strokeWidth, t) {
+  var r = (size - strokeWidth) / 2;
+  var circ = 2 * Math.PI * r;
+  var offset = circ - (pct / 100) * circ;
+  var ns = 'http://www.w3.org/2000/svg';
+
+  var svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+
+  var bgCircle = document.createElementNS(ns, 'circle');
+  bgCircle.setAttribute('cx', size/2);
+  bgCircle.setAttribute('cy', size/2);
+  bgCircle.setAttribute('r', r);
+  bgCircle.setAttribute('fill', 'none');
+  bgCircle.setAttribute('stroke', t.borderSubtle);
+  bgCircle.setAttribute('stroke-width', strokeWidth);
+  svg.appendChild(bgCircle);
+
+  var fgCircle = document.createElementNS(ns, 'circle');
+  fgCircle.setAttribute('cx', size/2);
+  fgCircle.setAttribute('cy', size/2);
+  fgCircle.setAttribute('r', r);
+  fgCircle.setAttribute('fill', 'none');
+  fgCircle.setAttribute('stroke', t.accentPri);
+  fgCircle.setAttribute('stroke-width', strokeWidth);
+  fgCircle.setAttribute('stroke-dasharray', circ);
+  fgCircle.setAttribute('stroke-dashoffset', offset);
+  fgCircle.setAttribute('stroke-linecap', 'round');
+  fgCircle.setAttribute('transform', 'rotate(-90 ' + size/2 + ' ' + size/2 + ')');
+  svg.appendChild(fgCircle);
+
+  var text = document.createElementNS(ns, 'text');
+  text.setAttribute('x', size/2);
+  text.setAttribute('y', size/2);
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('dominant-baseline', 'central');
+  text.setAttribute('fill', t.textPri);
+  text.setAttribute('font-size', size * 0.28);
+  text.setAttribute('font-weight', '600');
+  text.textContent = pct + '%';
+  svg.appendChild(text);
+
+  return svg;
+}
+
+function dayCirclesDOM(filled, t) {
+  var days = ['S','M','T','W','T','F','S'];
+  var container = h('div', {style: {display:'flex', justifyContent:'space-between', padding:'0 4px'}});
+  days.forEach(function(d, i) {
+    var isFilled = filled.indexOf(i) >= 0;
+    var circle = h('div', {style: {
+      width:'32px', height:'32px', borderRadius:'16px',
+      background: isFilled ? t.accentPri : 'transparent',
+      border: '1.5px solid ' + (isFilled ? t.accentPri : t.borderDefault),
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:'12px', fontWeight:'600',
+      color: isFilled ? (t.isLight ? '#fff' : '#1C1A14') : t.textSec
+    }}, d);
+    container.appendChild(circle);
+  });
+  return container;
+}
+
+function toggleSwitchDOM(on, t) {
+  var bg = on ? t.accentPri : t.borderDefault;
+  var knobLeft = on ? '24px' : '2px';
+  var outer = h('div', {style: {width:'46px', height:'28px', borderRadius:'14px', background:bg, position:'relative', flexShrink:'0'}});
+  outer.appendChild(h('div', {style: {width:'24px', height:'24px', borderRadius:'12px', background:'#fff', position:'absolute', top:'2px', left:knobLeft, boxShadow:'0 1px 3px rgba(0,0,0,0.2)'}}));
+  return outer;
+}
+
+function stepperDOM(val, t) {
+  var wrap = h('div', {style: {display:'flex', alignItems:'center', gap:'0', border:'1px solid '+t.borderDefault, borderRadius:'8px', overflow:'hidden'}});
+  wrap.appendChild(h('div', {style: {width:'32px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', color:t.accentPri, borderRight:'1px solid '+t.borderDefault}}, '-'));
+  wrap.appendChild(h('div', {style: {width:'36px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'600', color:t.textPri}}, String(val)));
+  wrap.appendChild(h('div', {style: {width:'32px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px', color:t.accentPri, borderLeft:'1px solid '+t.borderDefault}}, '+'));
+  return wrap;
+}
+
+function chipPillDOM(label, bgColor, textColor) {
+  return h('span', {style: {display:'inline-block', padding:'3px 10px', borderRadius:'12px', background:bgColor, color:textColor, fontSize:'11px', fontWeight:'600'}}, label);
+}
+
+function filterPillDOM(label, selected, t) {
+  var bg = selected ? t.accentPri : t.surfPrimary;
+  var color = selected ? (t.isLight ? '#fff' : '#1C1A14') : t.textSec;
+  var border = selected ? t.accentPri : t.borderDefault;
+  return h('span', {style: {display:'inline-block', padding:'6px 16px', borderRadius:'16px', background:bg, color:color, fontSize:'13px', fontWeight:'600', border:'1px solid '+border}}, label);
+}
+
+function statusBarDOM(t) {
+  var bar = h('div', {className:'status-bar', style:{color:t.textPri}});
+  bar.appendChild(h('span', {className:'time'}, '9:41'));
+  var icons = h('div', {className:'status-icons'});
+  for (var i = 0; i < 4; i++) icons.appendChild(hHTML('span', {}, '\u25CF'));
+  bar.appendChild(icons);
+  return bar;
+}
+
+function tabBarDOM(t, activeIdx) {
+  var tabs = [
+    { icon: '\uD83C\uDFE0', label: 'Home' },
+    { icon: '\uD83D\uDED2', label: 'Lists' },
+    { icon: '\uD83D\uDCD5', label: 'Recipes' },
+    { icon: '\uD83D\uDCC5', label: 'Plans' },
+  ];
+  var bg = t.isLight ? 'rgba(250,251,252,0.85)' : 'rgba(28,25,21,0.85)';
+  var bar = h('div', {className:'tab-bar', style:{background:bg, borderTopColor:t.borderSubtle, borderTopStyle:'solid', borderTopWidth:'0.5px'}});
+  tabs.forEach(function(tab, i) {
+    var color = i === activeIdx ? t.accentPri : t.textTer;
+    var item = h('div', {className:'tab-item', style:{color:color}});
+    item.appendChild(h('span', {className:'tab-icon'}, tab.icon));
+    item.appendChild(h('span', {}, tab.label));
+    bar.appendChild(item);
+  });
+  return bar;
+}
+
+function sectionCardDOM(t, title, contentChildren) {
+  var card = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  if (title) {
+    card.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, title));
+  }
+  contentChildren.forEach(function(c) { card.appendChild(c); });
+  return card;
+}
+
+function sectionRowDOM(t, label, rightText, isLast) {
+  var borderBot = isLast ? '' : '0.5px solid ' + t.borderSubtle;
+  var row = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:borderBot}});
+  row.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, label));
+  row.appendChild(h('span', {style:{fontSize:'15px', color:t.textSec}}, rightText));
+  return row;
+}
+
+function sectionRowDOMWithElement(t, labelEl, rightEl, isLast) {
+  var borderBot = isLast ? '' : '0.5px solid ' + t.borderSubtle;
+  var row = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:borderBot}});
+  row.appendChild(labelEl);
+  row.appendChild(rightEl);
+  return row;
+}
+
+// ============== VIEW BUILDERS (return DOM elements) ==============
+
+// 1. Dashboard
+function dashboardView(t) {
+  var frag = document.createDocumentFragment();
+
+  // Greeting
+  var greetBlock = h('div', {style:{padding:'16px 20px 0'}});
+  greetBlock.appendChild(h('div', {style:{fontSize:'28px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Good morning, Rich'));
+  greetBlock.appendChild(h('div', {style:{fontSize:'15px', color:t.textSec, marginTop:'2px'}}, 'Saturday, April 12'));
+  frag.appendChild(greetBlock);
+
+  // Ghost card
+  var ghost = h('div', {style:{margin:'20px 16px 0', padding:'20px', border:'2px dashed '+t.borderSubtle, borderRadius:'14px', textAlign:'center'}});
+  ghost.appendChild(h('div', {style:{fontSize:'28px', marginBottom:'6px'}}, '\uD83C\uDF5C'));
+  ghost.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textSec}}, "Tonight's Meal"));
+  ghost.appendChild(h('div', {style:{fontSize:'13px', color:t.textTer, marginTop:'4px'}}, 'No meal planned for today'));
+  ghost.appendChild(h('div', {style:{marginTop:'12px', padding:'8px 20px', borderRadius:'10px', background:t.accentPri, color:t.isLight?'#fff':'#1C1A14', fontSize:'14px', fontWeight:'600', display:'inline-block'}}, 'Plan a Meal'));
+  frag.appendChild(ghost);
+
+  // Shopping card
+  var shopCard = h('div', {style:{margin:'12px 16px 0', padding:'16px', background:t.surfPrimary, borderRadius:'14px', display:'flex', alignItems:'center', gap:'14px'}});
+  shopCard.appendChild(h('div', {}, [progressRingSVG(15, 56, 5, t)]));
+  var shopInfo = h('div', {style:{flex:'1'}});
+  shopInfo.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textPri}}, 'Weekly Groceries'));
+  shopInfo.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginTop:'2px'}}, '4 of 27 items'));
+  shopCard.appendChild(shopInfo);
+  shopCard.appendChild(h('div', {style:{fontSize:'18px', color:t.textTer}}, '\u203A'));
+  frag.appendChild(shopCard);
+
+  // Meal plan card
+  var mpCard = h('div', {style:{margin:'12px 16px 0', padding:'16px', background:t.surfPrimary, borderRadius:'14px'}});
+  var mpHeader = h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px'}});
+  var mpInfo = h('div');
+  mpInfo.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textPri}}, "This Week's Plan"));
+  mpInfo.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginTop:'2px'}}, 'Apr 7 - Apr 13'));
+  mpHeader.appendChild(mpInfo);
+  mpHeader.appendChild(h('div', {style:{fontSize:'18px', color:t.textTer}}, '\u203A'));
+  mpCard.appendChild(mpHeader);
+  mpCard.appendChild(dayCirclesDOM([0,1,3,4], t));
+  frag.appendChild(mpCard);
+
+  // Quick actions
+  var actions = h('div', {style:{display:'flex', justifyContent:'center', gap:'12px', margin:'24px 16px 20px', flexWrap:'wrap'}});
+  ['New List', 'Add Recipe', 'Plan Meals'].forEach(function(label) {
+    actions.appendChild(h('div', {style:{padding:'10px 20px', borderRadius:'12px', background:t.surfPrimary, border:'1px solid '+t.borderDefault, fontSize:'14px', fontWeight:'600', color:t.accentPri}}, label));
+  });
+  frag.appendChild(actions);
+
+  return frag;
+}
+
+// 2. Grocery Lists
+function groceryListsView(t) {
+  var frag = document.createDocumentFragment();
+
+  frag.appendChild(h('div', {style:{padding:'16px 20px 0'}}, [
+    h('div', {style:{fontSize:'32px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Grocery Lists')
+  ]));
+
+  var lists = [
+    { name: 'Weekly Groceries', date: 'Apr 7, 2026', items: '4 of 27', pct: 15, chips: [{l:'Produce',lc:'#E4F0DC',ltc:'#2D5016',dc:'#1A2E1A',dtc:'#7BC08A'},{l:'Dairy',lc:'#E0ECFF',ltc:'#1A3F7A',dc:'#1A2030',dtc:'#7BA8E0'},{l:'Pantry',lc:'#FFF3E0',ltc:'#8B5E00',dc:'#2E2A1A',dtc:'#E0B060'}] },
+    { name: 'BBQ Saturday', date: 'Apr 12, 2026', items: '0 of 14', pct: 0, chips: [{l:'Meat',lc:'#FFE8E8',ltc:'#8B2020',dc:'#2E1A1A',dtc:'#E07070'},{l:'Produce',lc:'#E4F0DC',ltc:'#2D5016',dc:'#1A2E1A',dtc:'#7BC08A'},{l:'Beverages',lc:'#F3E8FF',ltc:'#5B2080',dc:'#251A30',dtc:'#B080E0'}] },
+    { name: 'Costco Run', date: 'Apr 5, 2026', items: '12 of 12', pct: 100, chips: [{l:'Pantry',lc:'#FFF3E0',ltc:'#8B5E00',dc:'#2E2A1A',dtc:'#E0B060'},{l:'Frozen',lc:'#E0F4FF',ltc:'#1A5F8B',dc:'#1A2530',dtc:'#70B0E0'}] },
+  ];
+
+  lists.forEach(function(li) {
+    var card = h('div', {style:{margin:'12px 16px 0', padding:'16px', background:t.surfPrimary, borderRadius:'14px'}});
+    var top = h('div', {style:{display:'flex', alignItems:'center', gap:'14px'}});
+    var info = h('div', {style:{flex:'1'}});
+    info.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textPri}}, li.name));
+    info.appendChild(h('div', {style:{fontSize:'13px', color:t.textTer, marginTop:'2px'}}, li.date));
+    info.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginTop:'2px'}}, li.items + ' items'));
+    top.appendChild(info);
+    top.appendChild(h('div', {}, [progressRingSVG(li.pct, 48, 4, t)]));
+    card.appendChild(top);
+
+    var chips = h('div', {style:{display:'flex', gap:'6px', marginTop:'10px', flexWrap:'wrap'}});
+    li.chips.forEach(function(c) {
+      var bg = t.isLight ? c.lc : c.dc;
+      var tc = t.isLight ? c.ltc : c.dtc;
+      chips.appendChild(chipPillDOM(c.l, bg, tc));
+    });
+    card.appendChild(chips);
+    frag.appendChild(card);
+  });
+
+  return frag;
+}
+
+// 3. Recipe Grid
+function recipeGridView(t) {
+  var frag = document.createDocumentFragment();
+
+  frag.appendChild(h('div', {style:{padding:'16px 20px 0'}}, [
+    h('div', {style:{fontSize:'32px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Recipes')
+  ]));
+
+  var filters = h('div', {style:{padding:'12px 20px', display:'flex', gap:'8px'}});
+  filters.appendChild(filterPillDOM('All', true, t));
+  filters.appendChild(filterPillDOM('Favorites', false, t));
+  filters.appendChild(filterPillDOM('Recent', false, t));
+  frag.appendChild(filters);
+
+  var recipes = [
+    { name: 'Lemon Herb Chicken', time: '45 min', emoji: '\uD83C\uDF57' },
+    { name: 'Pasta Primavera', time: '30 min', emoji: '\uD83C\uDF5D' },
+    { name: 'Thai Green Curry', time: '35 min', emoji: '\uD83C\uDF5B' },
+    { name: 'Caesar Salad', time: '15 min', emoji: '\uD83E\uDD57' },
+    { name: 'Beef Tacos', time: '25 min', emoji: '\uD83C\uDF2E' },
+    { name: 'Mushroom Risotto', time: '50 min', emoji: '\uD83C\uDF44' },
+  ];
+
+  var grid = h('div', {style:{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', padding:'0 16px 20px'}});
+  recipes.forEach(function(r) {
+    var card = h('div', {style:{background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+    card.appendChild(h('div', {style:{height:'110px', background:t.surfSecondary, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px'}}, r.emoji));
+    var info = h('div', {style:{padding:'10px 12px'}});
+    info.appendChild(h('div', {style:{fontSize:'14px', fontWeight:'600', color:t.textPri}}, r.name));
+    info.appendChild(h('div', {style:{fontSize:'12px', color:t.textSec, marginTop:'4px'}}, '\u23F0 ' + r.time));
+    card.appendChild(info);
+    grid.appendChild(card);
+  });
+  frag.appendChild(grid);
+
+  return frag;
+}
+
+// 4. Meal Plans List
+function mealPlansListView(t) {
+  var frag = document.createDocumentFragment();
+
+  frag.appendChild(h('div', {style:{padding:'16px 20px 0'}}, [
+    h('div', {style:{fontSize:'32px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Meal Plans')
+  ]));
+
+  var plans = [
+    { name: 'This Week', active: true, range: 'Apr 7 - Apr 13', filled: [0,1,3,4] },
+    { name: 'Next Week', active: false, range: 'Apr 14 - Apr 20', filled: [1,2,4] },
+  ];
+
+  plans.forEach(function(p) {
+    var card = h('div', {style:{margin:'12px 16px 0', padding:'16px', background:t.surfPrimary, borderRadius:'14px'}});
+    var hdr = h('div', {style:{display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px'}});
+    hdr.appendChild(h('div', {style:{fontSize:'17px', fontWeight:'600', color:t.textPri}}, p.name));
+    if (p.active) {
+      hdr.appendChild(h('span', {style:{padding:'2px 10px', borderRadius:'10px', background:t.surfAccent, color:t.success, fontSize:'11px', fontWeight:'600'}}, 'Active'));
+    }
+    card.appendChild(hdr);
+    card.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginBottom:'12px'}}, p.range));
+    card.appendChild(dayCirclesDOM(p.filled, t));
+    var btnWrap = h('div', {style:{textAlign:'center', marginTop:'14px'}});
+    btnWrap.appendChild(h('div', {style:{display:'inline-block', padding:'10px 24px', borderRadius:'12px', background:t.accentPri, color:t.isLight?'#fff':'#1C1A14', fontSize:'14px', fontWeight:'600'}}, 'Generate Grocery List'));
+    card.appendChild(btnWrap);
+    frag.appendChild(card);
+  });
+
+  return frag;
+}
+
+// 5. Grocery List Detail
+function groceryDetailView(t) {
+  var frag = document.createDocumentFragment();
+
+  var header = h('div', {style:{padding:'12px 20px 0'}});
+  header.appendChild(h('div', {style:{fontSize:'13px', color:t.accentPri, fontWeight:'500'}}, '\u2039 Lists'));
+  header.appendChild(h('div', {style:{fontSize:'28px', fontWeight:'700', color:t.textPri, marginTop:'4px', fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Weekly Groceries'));
+  header.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginTop:'2px'}}, '4 of 27 items checked'));
+  frag.appendChild(header);
+
+  function groceryItemDOM(item) {
+    var opacity = item.checked ? '0.6' : '1';
+    var textDeco = item.checked ? 'line-through' : 'none';
+    var row = h('div', {style:{padding:'10px 16px', display:'flex', alignItems:'center', gap:'12px', opacity:opacity}});
+
+    if (item.checked) {
+      var circle = h('div', {style:{width:'22px', height:'22px', borderRadius:'11px', background:t.accentPri, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:'0'}});
+      circle.appendChild(h('span', {style:{color:'#fff', fontSize:'12px', fontWeight:'700'}}, '\u2713'));
+      row.appendChild(circle);
+    } else {
+      row.appendChild(h('div', {style:{width:'22px', height:'22px', borderRadius:'11px', border:'1.5px solid '+t.borderDefault, flexShrink:'0'}}));
+    }
+
+    var info = h('div', {style:{flex:'1'}});
+    var nameLine = h('div', {style:{fontSize:'15px', textDecoration:textDeco}});
+    nameLine.appendChild(h('span', {style:{color:t.textSec}}, item.qty + ' '));
+    nameLine.appendChild(h('span', {style:{color:t.accentPri, fontWeight:'600'}}, item.name));
+    info.appendChild(nameLine);
+    if (item.source) {
+      info.appendChild(h('div', {style:{fontSize:'12px', color:t.textTer, marginTop:'2px'}}, item.source));
+    }
+    row.appendChild(info);
+    return row;
+  }
+
+  function categorySectionDOM(catName, count, total, items) {
+    var card = h('div', {style:{margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+    var catHeader = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', gap:'8px'}});
+    catHeader.appendChild(h('span', {style:{fontSize:'12px', color:t.textTer}}, '\u25BC'));
+    catHeader.appendChild(h('span', {style:{fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer, flex:'1', textAlign:'center'}}, catName));
+    catHeader.appendChild(h('span', {style:{padding:'2px 8px', borderRadius:'8px', background:t.surfSecondary, fontSize:'12px', fontWeight:'600', color:t.textSec}}, count + '/' + total));
+    card.appendChild(catHeader);
+    items.forEach(function(it) { card.appendChild(groceryItemDOM(it)); });
+    return card;
+  }
+
+  frag.appendChild(categorySectionDOM('Produce', '2', '5', [
+    { name: 'Avocados', qty: '3', checked: false, source: 'Thai Green Curry' },
+    { name: 'Red Bell Pepper', qty: '2', checked: false, source: 'Pasta Primavera' },
+    { name: 'Baby Spinach', qty: '1 bag', checked: true, source: 'Caesar Salad' },
+    { name: 'Lemons', qty: '4', checked: false, source: 'Lemon Herb Chicken' },
+    { name: 'Garlic', qty: '1 head', checked: true, source: '' },
+  ]));
+
+  frag.appendChild(categorySectionDOM('Dairy', '1', '3', [
+    { name: 'Greek Yogurt', qty: '32 oz', checked: false, source: '' },
+    { name: 'Parmesan', qty: '1 block', checked: true, source: 'Caesar Salad' },
+    { name: 'Heavy Cream', qty: '1 pint', checked: false, source: 'Mushroom Risotto' },
+  ]));
+
+  frag.appendChild(categorySectionDOM('Meat', '1', '2', [
+    { name: 'Chicken Breast', qty: '2 lb', checked: false, source: 'Lemon Herb Chicken' },
+    { name: 'Ground Beef', qty: '1 lb', checked: true, source: 'Beef Tacos' },
+  ]));
+
+  // Quick-add bar
+  var quickAdd = h('div', {style:{margin:'16px 16px 20px', padding:'12px 16px', background:t.surfPrimary, borderRadius:'12px', border:'1px solid '+t.borderDefault, display:'flex', alignItems:'center', gap:'8px'}});
+  quickAdd.appendChild(h('span', {style:{fontSize:'18px', color:t.accentPri, fontWeight:'300'}}, '+'));
+  quickAdd.appendChild(h('span', {style:{fontSize:'15px', color:t.textDis}}, 'Add an item...'));
+  frag.appendChild(quickAdd);
+
+  return frag;
+}
+
+// 6. Recipe Detail
+function recipeDetailView(t) {
+  var frag = document.createDocumentFragment();
+
+  // Hero
+  frag.appendChild(h('div', {style:{height:'200px', background:t.surfSecondary, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'64px'}}, '\uD83C\uDF57'));
+
+  var titleBlock = h('div', {style:{padding:'16px 20px 0'}});
+  titleBlock.appendChild(h('div', {style:{fontSize:'24px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Lemon Herb Chicken'));
+  frag.appendChild(titleBlock);
+
+  // Timing row
+  var timing = h('div', {style:{display:'flex', justifyContent:'space-around', padding:'16px 20px', margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px'}});
+  [['Prep','15 min'],['Cook','30 min'],['Total','45 min']].forEach(function(pair, i) {
+    if (i > 0) timing.appendChild(h('div', {style:{width:'1px', background:t.borderSubtle}}));
+    var col = h('div', {style:{textAlign:'center'}});
+    col.appendChild(h('div', {style:{fontSize:'12px', color:t.textTer, marginBottom:'2px'}}, pair[0]));
+    col.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textPri}}, pair[1]));
+    timing.appendChild(col);
+  });
+  frag.appendChild(timing);
+
+  // Servings
+  var servings = h('div', {style:{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px', margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px'}});
+  servings.appendChild(h('div', {style:{fontSize:'15px', fontWeight:'600', color:t.textPri}}, 'Servings'));
+  var pills = h('div', {style:{display:'flex', gap:'6px'}});
+  ['1x','2x','3x'].forEach(function(s, i) {
+    var sel = i === 0;
+    pills.appendChild(h('span', {style:{padding:'4px 12px', borderRadius:'8px', background:sel?t.accentPri:'transparent', color:sel?(t.isLight?'#fff':'#1C1A14'):t.textSec, fontSize:'13px', fontWeight:'600', border:'1px solid '+(sel?t.accentPri:t.borderDefault)}}, s));
+  });
+  servings.appendChild(pills);
+  frag.appendChild(servings);
+
+  // Ingredients
+  var ingredients = ['2 lb chicken breast','2 lemons, juiced','3 cloves garlic, minced','2 tbsp olive oil','1 tsp dried thyme','Salt and pepper to taste'];
+  var ingCard = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  ingCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'Ingredients'));
+  ingredients.forEach(function(ing) {
+    var row = h('div', {style:{padding:'10px 16px', display:'flex', alignItems:'center', gap:'12px'}});
+    row.appendChild(h('div', {style:{width:'20px', height:'20px', borderRadius:'10px', border:'1.5px solid '+t.borderDefault, flexShrink:'0'}}));
+    row.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, ing));
+    ingCard.appendChild(row);
+  });
+  frag.appendChild(ingCard);
+
+  // Steps
+  var steps = ['Pat chicken dry and season with salt, pepper, and thyme.','Heat olive oil in oven-safe skillet over medium-high heat.','Sear chicken 3-4 minutes per side until golden.','Pour lemon juice and minced garlic over chicken.','Transfer to 400\u00B0F oven for 20 minutes.'];
+  var stepsCard = h('div', {style:{margin:'16px 16px 20px', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  stepsCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'Steps'));
+  steps.forEach(function(s, i) {
+    var row = h('div', {style:{padding:'10px 16px', display:'flex', gap:'12px'}});
+    row.appendChild(h('div', {style:{width:'24px', height:'24px', borderRadius:'12px', background:t.accentPri, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:'0', fontSize:'12px', fontWeight:'700', color:t.isLight?'#fff':'#1C1A14'}}, String(i+1)));
+    row.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri, lineHeight:'1.5', flex:'1'}}, s));
+    stepsCard.appendChild(row);
+  });
+  frag.appendChild(stepsCard);
+
+  return frag;
+}
+
+// 7. Meal Plan Detail
+function mealPlanDetailView(t) {
+  var frag = document.createDocumentFragment();
+
+  var header = h('div', {style:{padding:'12px 20px 0'}});
+  header.appendChild(h('div', {style:{fontSize:'13px', color:t.accentPri, fontWeight:'500'}}, '\u2039 Plans'));
+  header.appendChild(h('div', {style:{fontSize:'28px', fontWeight:'700', color:t.textPri, marginTop:'4px', fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'This Week'));
+  frag.appendChild(header);
+
+  // Calendar strip
+  var days = [
+    {d:'7',day:'Mon',today:false,meal:true}, {d:'8',day:'Tue',today:false,meal:true},
+    {d:'9',day:'Wed',today:false,meal:false}, {d:'10',day:'Thu',today:false,meal:true},
+    {d:'11',day:'Fri',today:false,meal:true}, {d:'12',day:'Sat',today:true,meal:false},
+    {d:'13',day:'Sun',today:false,meal:false},
+  ];
+
+  var calStrip = h('div', {style:{display:'flex', justifyContent:'space-between', padding:'16px 12px', margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px'}});
+  days.forEach(function(day) {
+    var col = h('div', {style:{textAlign:'center'}});
+    var dayColor = day.today ? (t.isLight?'#fff':'#1C1A14') : t.textTer;
+    col.appendChild(h('div', {style:{fontSize:'11px', color:dayColor, marginBottom:'4px'}}, day.day));
+    var bg = day.today ? t.accentPri : 'transparent';
+    var numColor = day.today ? (t.isLight?'#fff':'#1C1A14') : t.textPri;
+    var border = day.today ? t.accentPri : 'transparent';
+    col.appendChild(h('div', {style:{width:'36px', height:'36px', borderRadius:'18px', background:bg, border:'1.5px solid '+border, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px', fontWeight:'600', color:numColor}}, day.d));
+    if (day.meal) {
+      col.appendChild(h('div', {style:{width:'4px', height:'4px', borderRadius:'2px', background:day.today?(t.isLight?'#fff':'#1C1A14'):t.accentPri, margin:'2px auto 0'}}));
+    } else {
+      col.appendChild(h('div', {style:{width:'4px', height:'4px', margin:'2px auto 0'}}));
+    }
+    calStrip.appendChild(col);
+  });
+  frag.appendChild(calStrip);
+
+  // Meal day cards
+  function mealDayCard(dayName, recipeName, servText) {
+    var card = h('div', {style:{margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden', padding:'16px'}});
+    card.appendChild(h('div', {style:{fontSize:'12px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer, marginBottom:'8px'}}, dayName));
+    card.appendChild(h('div', {style:{fontSize:'16px', fontWeight:'600', color:t.textPri}}, recipeName));
+    card.appendChild(h('div', {style:{fontSize:'13px', color:t.textSec, marginTop:'2px'}}, servText));
+    var btns = h('div', {style:{display:'flex', gap:'8px', marginTop:'12px'}});
+    btns.appendChild(h('div', {style:{padding:'6px 14px', borderRadius:'8px', background:t.surfAccent, color:t.success, fontSize:'13px', fontWeight:'600'}}, '\u2713 Done'));
+    btns.appendChild(h('div', {style:{padding:'6px 14px', borderRadius:'8px', border:'1px solid '+t.borderDefault, color:t.textSec, fontSize:'13px', fontWeight:'500'}}, 'Swap'));
+    btns.appendChild(h('div', {style:{padding:'6px 14px', borderRadius:'8px', border:'1px solid '+t.borderDefault, color:t.danger, fontSize:'13px', fontWeight:'500'}}, 'Remove'));
+    card.appendChild(btns);
+    return card;
+  }
+
+  function emptyDayCard(dayName) {
+    var card = h('div', {style:{margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden', padding:'16px', textAlign:'center'}});
+    card.appendChild(h('div', {style:{fontSize:'12px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer, marginBottom:'8px', textAlign:'left'}}, dayName));
+    card.appendChild(h('div', {style:{fontSize:'15px', color:t.textDis, margin:'12px 0'}}, 'No meal planned'));
+    card.appendChild(h('div', {style:{display:'inline-block', padding:'8px 20px', borderRadius:'10px', border:'1px solid '+t.accentPri, color:t.accentPri, fontSize:'14px', fontWeight:'600'}}, '+ Add Meal'));
+    return card;
+  }
+
+  frag.appendChild(mealDayCard('Thursday', 'Lemon Herb Chicken', '4 servings'));
+  frag.appendChild(mealDayCard('Friday', 'Thai Green Curry', '2 servings'));
+  frag.appendChild(emptyDayCard('Saturday'));
+  frag.appendChild(emptyDayCard('Sunday'));
+  frag.appendChild(h('div', {style:{height:'20px'}}));
+
+  return frag;
+}
+
+// 8. Settings
+function settingsView(t) {
+  var frag = document.createDocumentFragment();
+
+  frag.appendChild(h('div', {style:{padding:'16px 20px 0'}}, [
+    h('div', {style:{fontSize:'32px', fontWeight:'700', color:t.textPri, fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Settings')
+  ]));
+
+  // Household
+  frag.appendChild(sectionCardDOM(t, 'Household', [
+    sectionRowDOM(t, 'Household Name', 'The Hayns', false),
+    sectionRowDOM(t, 'Members', '2', false),
+    sectionRowDOMWithElement(t,
+      h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Invite Member'),
+      h('span', {style:{fontSize:'15px', color:t.accentPri}}, '\u203A'),
+      true)
+  ]));
+
+  // Data
+  frag.appendChild(sectionCardDOM(t, 'Data', [
+    sectionRowDOM(t, 'Ingredients', '142 \u203A', false),
+    sectionRowDOM(t, 'Categories', '12 \u203A', false),
+    sectionRowDOM(t, 'Stores', '3 \u203A', true)
+  ]));
+
+  // Meal Planning
+  var mpCard = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  mpCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'Meal Planning'));
+  // Default servings with stepper
+  var stepRow = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'0.5px solid '+t.borderSubtle}});
+  stepRow.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Default Servings'));
+  stepRow.appendChild(stepperDOM(4, t));
+  mpCard.appendChild(stepRow);
+  // Week starts on picker
+  var pickerRow = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'0.5px solid '+t.borderSubtle}});
+  pickerRow.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Week Starts On'));
+  pickerRow.appendChild(h('span', {style:{padding:'4px 12px', borderRadius:'8px', background:t.surfSecondary, color:t.textSec, fontSize:'14px'}}, 'Monday \u25BE'));
+  mpCard.appendChild(pickerRow);
+  // Auto-consolidate toggle
+  var toggleRow = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}});
+  toggleRow.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Auto-consolidate'));
+  toggleRow.appendChild(toggleSwitchDOM(true, t));
+  mpCard.appendChild(toggleRow);
+  frag.appendChild(mpCard);
+
+  // AI Integration
+  var aiCard = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  aiCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'AI Integration'));
+  var aiRow1 = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'0.5px solid '+t.borderSubtle}});
+  aiRow1.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Enable AI Parsing'));
+  aiRow1.appendChild(toggleSwitchDOM(true, t));
+  aiCard.appendChild(aiRow1);
+  var aiRow2 = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'0.5px solid '+t.borderSubtle}});
+  aiRow2.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'API Key'));
+  aiRow2.appendChild(h('span', {style:{fontSize:'14px', color:t.textDis, fontFamily:'monospace'}}, 'sk-ant-...7x2m'));
+  aiCard.appendChild(aiRow2);
+  var aiRow3 = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}});
+  aiRow3.appendChild(h('span', {style:{fontSize:'15px', color:t.accentPri, fontWeight:'500'}}, 'Test Connection'));
+  aiRow3.appendChild(h('span', {style:{fontSize:'13px', color:t.success, fontWeight:'500'}}, '\u2713 Connected'));
+  aiCard.appendChild(aiRow3);
+  frag.appendChild(aiCard);
+
+  // Diagnostics
+  var diagCard = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  diagCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'Diagnostics'));
+  var diagRow1 = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'0.5px solid '+t.borderSubtle}});
+  diagRow1.appendChild(h('span', {style:{fontSize:'15px', color:t.textPri}}, 'Parser Telemetry'));
+  diagRow1.appendChild(toggleSwitchDOM(false, t));
+  diagCard.appendChild(diagRow1);
+  var diagRow2 = h('div', {style:{padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between'}});
+  var diagLabel = h('div');
+  diagLabel.appendChild(h('div', {style:{fontSize:'15px', color:t.textPri}}, 'Log Level'));
+  diagLabel.appendChild(h('div', {style:{fontSize:'12px', color:t.textTer, marginTop:'2px'}}, 'v3 schema, 142 events'));
+  diagRow2.appendChild(diagLabel);
+  diagRow2.appendChild(h('span', {style:{padding:'4px 12px', borderRadius:'8px', background:t.surfSecondary, color:t.textSec, fontSize:'14px'}}, 'Info \u25BE'));
+  diagCard.appendChild(diagRow2);
+  frag.appendChild(diagCard);
+
+  frag.appendChild(h('div', {style:{height:'20px'}}));
+  return frag;
+}
+
+// 9. Import Preview
+function importPreviewView(t) {
+  var frag = document.createDocumentFragment();
+
+  var header = h('div', {style:{padding:'12px 20px 0'}});
+  header.appendChild(h('div', {style:{fontSize:'13px', color:t.accentPri, fontWeight:'500'}}, '\u2039 Recipes'));
+  header.appendChild(h('div', {style:{fontSize:'28px', fontWeight:'700', color:t.textPri, marginTop:'4px', fontFamily:"-apple-system,system-ui,'SF Pro Rounded','SF Pro Display',sans-serif"}}, 'Import Recipe'));
+  frag.appendChild(header);
+
+  // Editable title
+  var titleField = h('div', {style:{margin:'16px 16px 0', background:t.surfPrimary, borderRadius:'12px', padding:'12px 16px'}});
+  titleField.appendChild(h('div', {style:{fontSize:'12px', color:t.textTer, marginBottom:'4px'}}, 'Recipe Name'));
+  titleField.appendChild(h('div', {style:{fontSize:'17px', fontWeight:'600', color:t.textPri}}, 'Thai Green Curry'));
+  frag.appendChild(titleField);
+
+  // Ingredients with status
+  var items = [
+    { name: '1 can coconut milk', status: 'matched', note: 'Coconut Milk' },
+    { name: '2 tbsp green curry paste', status: 'matched', note: 'Green Curry Paste' },
+    { name: '1 lb chicken thigh', status: 'matched', note: 'Chicken Thigh' },
+    { name: '1 cup Thai basil', status: 'fuzzy', note: 'Basil (approximate)' },
+    { name: '2 kaffir lime leaves', status: 'new', note: 'Will create new ingredient' },
+    { name: '1 tbsp fish sauce', status: 'matched', note: 'Fish Sauce' },
+    { name: '1 tsp palm sugar', status: 'new', note: 'Will create new ingredient' },
+    { name: '1 red chili, sliced', status: 'fuzzy', note: 'Red Pepper (approximate)' },
+  ];
+
+  var ingCard = h('div', {style:{margin:'12px 16px 0', background:t.surfPrimary, borderRadius:'12px', overflow:'hidden'}});
+  ingCard.appendChild(h('div', {style:{padding:'12px 16px 4px', fontSize:'13px', fontWeight:'600', textTransform:'uppercase', letterSpacing:'0.5px', color:t.textTer}}, 'Parsed Ingredients'));
+
+  items.forEach(function(it) {
+    var row = h('div', {style:{padding:'10px 16px', display:'flex', alignItems:'center', gap:'12px'}});
+    var iconWrap = h('div', {style:{width:'28px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:'0'}});
+
+    if (it.status === 'matched') {
+      iconWrap.appendChild(h('span', {style:{color:t.success, fontWeight:'700', fontSize:'16px'}}, '\u2713'));
+    } else if (it.status === 'fuzzy') {
+      iconWrap.appendChild(h('span', {style:{color:t.warning, fontSize:'18px'}}, '\u25CB'));
+    } else {
+      iconWrap.appendChild(h('span', {style:{padding:'1px 6px', borderRadius:'4px', background:t.surfSecondary, color:t.textTer, fontSize:'10px', fontWeight:'600'}}, 'NEW'));
+    }
+
+    row.appendChild(iconWrap);
+    var info = h('div', {style:{flex:'1'}});
+    info.appendChild(h('div', {style:{fontSize:'15px', color:t.textPri}}, it.name));
+    info.appendChild(h('div', {style:{fontSize:'12px', color:t.textTer, marginTop:'1px'}}, it.note));
+    row.appendChild(info);
+    ingCard.appendChild(row);
+  });
+  frag.appendChild(ingCard);
+
+  // Parse with AI button
+  var aiBtn = h('div', {style:{margin:'16px 16px 0', padding:'12px', borderRadius:'12px', border:'1px solid '+t.accentPri, textAlign:'center'}});
+  aiBtn.appendChild(h('span', {style:{fontSize:'14px', fontWeight:'600', color:t.accentPri}}, '\u2728 Parse with AI'));
+  frag.appendChild(aiBtn);
+
+  // Save button
+  var saveBtn = h('div', {style:{margin:'12px 16px 20px', padding:'14px', borderRadius:'14px', background:t.accentPri, textAlign:'center'}});
+  saveBtn.appendChild(h('span', {style:{fontSize:'16px', fontWeight:'600', color:t.isLight?'#fff':'#1C1A14'}}, 'Save Recipe'));
+  frag.appendChild(saveBtn);
+
+  return frag;
+}
+
+// ============== RENDER ==============
+function renderPhone(viewFn, t, hasTabBar, tabIdx) {
+  var frame = h('div', {className:'phone-frame', style:{background:t.bgCanvas}});
+  frame.appendChild(statusBarDOM(t));
+  var content = h('div', {className: hasTabBar ? 'phone-content has-tab-bar' : 'phone-content'});
+  content.appendChild(viewFn(t));
+  frame.appendChild(content);
+  if (hasTabBar) frame.appendChild(tabBarDOM(t, tabIdx));
+  return frame;
+}
+
+function renderScrollGroup(views, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  var modes = [{name:'Light', tokens:L}, {name:'Dark', tokens:D}];
+  var row = h('div', {className:'mode-row'});
+
+  modes.forEach(function(mode) {
+    var col = h('div', {className:'mode-col'});
+    col.appendChild(h('div', {className:'mode-label'}, mode.name));
+
+    var scroll = h('div', {className:'phone-scroll'});
+    var strip = h('div', {className:'phone-strip'});
+
+    views.forEach(function(v) {
+      strip.appendChild(renderPhone(v.fn, mode.tokens, v.hasTabBar, v.tabIdx));
+    });
+    scroll.appendChild(strip);
+    col.appendChild(scroll);
+
+    // Dots
+    var dots = h('div', {className:'view-dots'});
+    views.forEach(function(_, i) {
+      var dot = h('div', {className: i === 0 ? 'view-dot active' : 'view-dot'});
+      dots.appendChild(dot);
+    });
+    col.appendChild(dots);
+
+    // View name label
+    var viewLabel = h('div', {style:{textAlign:'center', fontSize:'12px', color:'#888', marginTop:'4px', height:'16px'}}, views[0].label);
+    col.appendChild(viewLabel);
+
+    col.appendChild(h('div', {className:'swipe-hint'}, 'Swipe to see all views'));
+
+    // Scroll observer
+    scroll.addEventListener('scroll', function() {
+      var idx = Math.round(scroll.scrollLeft / 390);
+      var allDots = dots.querySelectorAll('.view-dot');
+      for (var i = 0; i < allDots.length; i++) {
+        if (i === idx) { allDots[i].classList.add('active'); }
+        else { allDots[i].classList.remove('active'); }
+      }
+      if (views[idx]) viewLabel.textContent = views[idx].label;
+    });
+
+    col.appendChild(h('div', {style:{height:'8px'}}));
+    row.appendChild(col);
+  });
+
+  container.appendChild(row);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var mainViews = [
+    { fn: dashboardView, label: 'Dashboard', hasTabBar: true, tabIdx: 0 },
+    { fn: groceryListsView, label: 'Grocery Lists', hasTabBar: true, tabIdx: 1 },
+    { fn: recipeGridView, label: 'Recipes', hasTabBar: true, tabIdx: 2 },
+    { fn: mealPlansListView, label: 'Meal Plans', hasTabBar: true, tabIdx: 3 },
+  ];
+
+  var detailViews = [
+    { fn: groceryDetailView, label: 'Grocery List Detail', hasTabBar: false, tabIdx: -1 },
+    { fn: recipeDetailView, label: 'Recipe Detail', hasTabBar: false, tabIdx: -1 },
+    { fn: mealPlanDetailView, label: 'Meal Plan Detail', hasTabBar: false, tabIdx: -1 },
+    { fn: settingsView, label: 'Settings', hasTabBar: false, tabIdx: -1 },
+    { fn: importPreviewView, label: 'Import Preview', hasTabBar: false, tabIdx: -1 },
+  ];
+
+  renderScrollGroup(mainViews, 'main-views');
+  renderScrollGroup(detailViews, 'detail-views');
+});
+</script>
+
+</body>
+</html>
