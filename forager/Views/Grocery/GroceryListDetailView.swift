@@ -454,7 +454,7 @@ struct GroceryListDetailView: View {
             storeColorHex: hasStores ? item.store?.color : nil
         )
         .listRowBackground(ForagerTheme.surfacePrimary)
-        .listRowSeparatorTint(ForagerTheme.borderSubtle)
+        .listRowSeparator(.hidden)
         .swipeActions(edge: .leading) {
             Button {
                 toggleItemCompletion(item)
