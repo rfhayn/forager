@@ -73,10 +73,12 @@ struct SettingsView: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-            // M9.15.3: Diagnostic Log (available in Release + Debug)
+            // M9.15.3: Diagnostic Log (M9.28: hidden in Release builds)
+            #if DEBUG
             diagnosticLogSection
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
+            #endif
 
             // M10.6.18: Developer tools hidden in Release builds for launch
             #if DEBUG

@@ -1,10 +1,10 @@
 # Current Development Story
 
 **Last Updated**: April 12, 2026
-**Status**: **M19 (Bug Hunt) ACTIVE** | **M9.37 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Status**: **M7.7 + M9.28 ACTIVE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
 **Total Progress**: ~345 hours
-**Current Branch**: `feature/M19-pre-launch-bug-hunt`
-**Launch Path**: M19 (factory enforcement) → M9.28 → M7.7 (iOS) | "Designed for iPad" on Mac
+**Current Branch**: `feature/M7.7-app-store-submission`
+**Launch Path**: M7.7 (App Store submission) | "Designed for iPad" on Mac
 **Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
 
 ---
@@ -320,13 +320,12 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**Phase 1**: Write missing automated tests (Recipe computed properties + WeeklyListService store snapshot). See `docs/pre-launch-manual-testing.md` test gaps section.
-**Phase 2**: Manual/automated testing pass on M18 + FUI-1 work.
-**Phase 3**: M9.28 (strip diagnostic logging).
-**Phase 4**: M7.7 (App Store submission).
+**Phase 1**: Merge M7.7 PR (App Store assets + M9.28 logging strip).
+**Phase 2**: Archive + upload final build to TestFlight.
+**Phase 3**: Take screenshots on iPhone Pro Max, enter metadata in ASC, submit for review.
 
 ---
 
-**Last Session**: April 9, 2026 — M19 (native macOS app) scrapped after discovering iOS app runs on Mac via Apple Silicon compatibility ("Designed for iPad"). CloudKit Production sync works perfectly — all iOS data visible on Mac. M9.37 (category scope fix) merged to main (PR #116). New approach: flip `SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES` instead of maintaining a separate macOS target.
-**Next Action**: Explore "Designed for iPad" formalization via `/opsx:explore`, then resume launch path (M9.28 → M7.7).
+**Last Session**: April 12, 2026 — M7.7 + M9.28 combined into single branch. Privacy policy updated with Claude API disclosure. Landing page created. README rewritten with current stats. App Store listing copy drafted. DiagnosticLogger + DebugLogService gated behind `#if DEBUG` with no-op Release stubs. Both Debug and Release builds verified.
+**Next Action**: Merge PR, archive final build, take screenshots, submit to App Store.
 **Confidence**: GREEN

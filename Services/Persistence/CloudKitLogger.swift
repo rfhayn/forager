@@ -27,11 +27,13 @@ struct CloudKitLogger {
     )
 
     /// M9.15.3: Write to persistent DiagnosticLogger alongside OSLog.
-    /// Uses Task to hop to MainActor since DiagnosticLogger is @MainActor.
+    /// Gated to DEBUG only (M9.28) — no file I/O in Release builds.
     private static func persist(_ message: String, level: DiagnosticLogger.Level = .info) {
+        #if DEBUG
         Task { @MainActor in
             DiagnosticLogger.shared.log(message, category: .cloudKit, level: level)
         }
+        #endif
     }
 
     // MARK: - Household Operations

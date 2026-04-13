@@ -3,11 +3,12 @@
 //  forager
 //
 //  M9.15.3: Persistent file-based diagnostic logger for CloudKit troubleshooting.
-//  Works in Release builds. Writes to Documents/forager-diagnostics.log.
-//  Exportable from Settings > Diagnostic Log.
+//  DEBUG only. Gated behind #if DEBUG for App Store builds (M9.28).
 //
 
 import Foundation
+
+#if DEBUG
 import UIKit
 
 /// Persistent diagnostic logger that writes to a file on disk.
@@ -81,16 +82,10 @@ class DiagnosticLogger: ObservableObject {
         let device = UIDevice.current
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        let isDebug: String
-        #if DEBUG
-        isDebug = "Debug"
-        #else
-        isDebug = "Release"
-        #endif
 
         writeRaw("\n══════════════════════════════════════════")
         writeRaw("SESSION START: \(dateFormatter.string(from: Date()))")
-        writeRaw("Version: \(version) (\(build)) [\(isDebug)]")
+        writeRaw("Version: \(version) (\(build)) [Debug]")
         writeRaw("Device: \(device.name) (\(device.systemName) \(device.systemVersion))")
         writeRaw("══════════════════════════════════════════")
     }
@@ -188,3 +183,50 @@ class DiagnosticLogger: ObservableObject {
         return content.components(separatedBy: "\n").count
     }
 }
+
+#else
+
+// MARK: - Release no-op stub
+
+/// No-op stub for Release builds. All methods compile but do nothing.
+/// Empty function calls are optimized away by the compiler.
+@MainActor
+class DiagnosticLogger: ObservableObject {
+
+    static let shared = DiagnosticLogger()
+
+    enum Category: String {
+        case cloudKit = "CloudKit"
+        case household = "Household"
+        case sync = "Sync"
+        case schema = "Schema"
+        case store = "Store"
+        case discovery = "Discovery"
+        case app = "App"
+        case import_ = "Import"
+        case error = "ERROR"
+    }
+
+    enum Level: String {
+        case debug = "DEBUG"
+        case info = "INFO"
+        case warning = "WARN"
+        case error = "ERROR"
+    }
+
+    @Published var isEnabled: Bool = false
+    @Published private(set) var lineCount: Int = 0
+
+    func log(_ message: String, category: Category = .app, level: Level = .info) {}
+    func debug(_ message: String, category: Category = .app) {}
+    func info(_ message: String, category: Category = .app) {}
+    func warning(_ message: String, category: Category = .app) {}
+    func error(_ message: String, category: Category = .app) {}
+    func readLog() -> String { "" }
+    var fileURL: URL { URL(fileURLWithPath: "") }
+    var fileSize: Int { 0 }
+    var formattedFileSize: String { "0 B" }
+    func clear() {}
+}
+
+#endif

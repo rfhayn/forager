@@ -36,7 +36,7 @@
 </head>
 <body>
     <h1>forager Privacy Policy</h1>
-    <p class="last-updated">Last updated: January 2026</p>
+    <p class="last-updated">Last updated: April 2026</p>
 
     <div class="important">
         <strong>Summary:</strong> forager stores your data locally on your device and optionally syncs it to your personal iCloud account. When you create or join a household, your household data is shared with household members. We do not collect, track, or share your data with any third parties.
@@ -106,12 +106,24 @@
     </ul>
 
     <h2>Third-Party Services</h2>
-    <p>forager does not use any third-party analytics, tracking, or advertising services. We do not share your data with anyone except:</p>
+    <p>forager does not use any third-party analytics, tracking, or advertising services. Your data is not shared with anyone except in the following cases, all of which you control:</p>
     <ul>
         <li><strong>Apple iCloud:</strong> When you enable sync (your data stays in your iCloud account)</li>
         <li><strong>Household Members:</strong> When you create or join a household (you control membership)</li>
+        <li><strong>Anthropic (optional):</strong> When you enable AI ingredient parsing and provide your own API key (see below)</li>
     </ul>
     <p>There are no advertisers, data brokers, or other third parties involved.</p>
+
+    <h3>AI-Powered Ingredient Parsing (Optional)</h3>
+    <p>forager includes an optional AI-powered ingredient parsing feature that uses Anthropic's Claude API to improve accuracy when importing recipes. This feature is:</p>
+    <ul>
+        <li><strong>Off by default</strong> — you must explicitly enable it in Settings > AI Integration</li>
+        <li><strong>User-funded</strong> — you provide your own Anthropic API key (forager does not include or subsidize an API key)</li>
+        <li><strong>Limited in scope</strong> — only ingredient text (e.g., "2 cups flour") is sent to Anthropic's API for parsing. No recipes, grocery lists, meal plans, household information, or personal data is ever sent.</li>
+        <li><strong>Not accessed by the developer</strong> — your API key is stored in your device's Keychain and optionally shared with household members via encrypted CloudKit sync. The developer never sees your key or your data.</li>
+        <li><strong>Revocable</strong> — you can disable the feature or remove your API key at any time in Settings</li>
+    </ul>
+    <p>When this feature is enabled, Anthropic's <a href="https://www.anthropic.com/privacy">Privacy Policy</a> applies to the ingredient text processed by their API. forager works fully without this feature using its built-in local parsing engine.</p>
 
     <h2>Data Deletion</h2>
 
@@ -189,6 +201,6 @@
     <h2>Legal</h2>
     <p>This privacy policy is governed by the laws of the United States. For legal requests or concerns, please contact us through the channels listed above.</p>
 
-    <p class="last-updated">This privacy policy is effective as of January 2026.</p>
+    <p class="last-updated">This privacy policy is effective as of April 2026.</p>
 </body>
 </html>
