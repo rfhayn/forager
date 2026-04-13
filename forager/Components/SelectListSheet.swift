@@ -192,20 +192,16 @@ struct SelectListSheet: View {
     // MARK: - View Components
     
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "cart")
-                .font(.system(size: 50))
-                .foregroundStyle(ForagerTheme.textSecondary)
-            
-            Text("No Shopping Lists")
-                .font(.title3)
-                .fontWeight(.semibold)
-            
-            Text("Create your first list to get started")
+        VStack(spacing: 8) {
+            Text("No existing lists")
                 .font(.subheadline)
                 .foregroundStyle(ForagerTheme.textSecondary)
+            Text("Tap below to create one")
+                .font(.caption)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
-        .frame(maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, ForagerTheme.Spacing.lg)
     }
     
     private var listSelectionView: some View {
