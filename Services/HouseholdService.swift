@@ -102,6 +102,9 @@ class HouseholdService: ObservableObject {
     @Published var errorMessage: String?
     @Published var creationStatus: String?
 
+    // M19.1: Current user's display name — resolved from HouseholdMember or device name
+    @Published var currentUserDisplayName: String?
+
     // M9.15.3: Returning user detection — background discovery state
     enum DiscoveryState: Equatable {
         case idle           // Not running (already has household or never started)
@@ -333,6 +336,9 @@ class HouseholdService: ObservableObject {
                     if let storeURL = household.objectID.persistentStore?.url {
                         CloudKitLogger.debug("Store: \(storeURL.lastPathComponent)")
                     }
+
+                    // M19.1: Resolve current user's display name for dashboard greeting
+                    await resolveCurrentUserDisplayName(in: household)
 
                     // Initialize known participants for departure detection
                     do {
@@ -2454,6 +2460,71 @@ class HouseholdService: ObservableObject {
         }
 
         throw lastError ?? HouseholdError.creationFailed("CloudKit share failed with unknown error")
+    }
+
+    // MARK: - Current User Display Name
+
+    /// M19.1: Resolves the current user's display name from CKShare participant
+    /// or falls back to device name extraction. Called on every household load so
+    /// the dashboard greeting always shows the correct name — even if the user
+    /// changes their device name or joins from a different device.
+    private func resolveCurrentUserDisplayName(in household: Household) async {
+        // 1. Owner check — use cached owner display name
+        let isOwnerUser = await isOwner(household: household)
+        if isOwnerUser {
+            if let ownerName = household.ownerDisplayName,
+               !ownerName.isEmpty, !ownerName.hasPrefix("_") {
+                currentUserDisplayName = ownerName.components(separatedBy: " ").first ?? ownerName
+                #if DEBUG
+                print("👤 M19.1: Owner display name: \(currentUserDisplayName ?? "nil")")
+                #endif
+                return
+            }
+            // Owner with cached UserDefaults name
+            if let cached = UserDefaults.standard.string(forKey: "cachedOwnerDisplayName"),
+               !cached.isEmpty, cached != "Me", cached != "You", cached != "User" {
+                currentUserDisplayName = cached.components(separatedBy: " ").first
+                return
+            }
+        }
+
+        // 2. Member: get name from CKShare participant
+        do {
+            let share = try await getShare(for: household)
+            if let participant = share.currentUserParticipant,
+               let nameComponents = participant.userIdentity.nameComponents {
+                let firstName = nameComponents.givenName
+                if let firstName = firstName, !firstName.isEmpty {
+                    currentUserDisplayName = firstName
+                    #if DEBUG
+                    print("👤 M19.1: Member display name from CKShare: \(firstName)")
+                    #endif
+                    return
+                }
+            }
+        } catch {
+            #if DEBUG
+            print("⚠️ M19.1: Could not get CKShare participant name: \(error)")
+            #endif
+        }
+
+        // 3. Fallback: extract from device name
+        let deviceName = await UIDevice.current.name
+        if let range = deviceName.range(of: "\u{2019}s ", options: .caseInsensitive) ??
+                        deviceName.range(of: "'s ", options: .caseInsensitive) {
+            currentUserDisplayName = String(deviceName[deviceName.startIndex..<range.lowerBound])
+            return
+        }
+        let deviceTypes = ["iPhone", "iPad", "iPod", "Mac", "MacBook", "iMac", "Mac mini", "Mac Pro", "Mac Studio"]
+        for type in deviceTypes {
+            if let range = deviceName.range(of: " \(type)", options: .caseInsensitive) {
+                let name = String(deviceName[deviceName.startIndex..<range.lowerBound])
+                if !name.isEmpty && name != type {
+                    currentUserDisplayName = name
+                    return
+                }
+            }
+        }
     }
 
     // MARK: - CloudKit Integration
