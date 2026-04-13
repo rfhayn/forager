@@ -3,11 +3,12 @@
 //  forager
 //
 //  M10.6.5: In-memory debug log for testing AI parsing flow.
-//  M10.6.13: Ungated for Release builds — safe with 500-entry cap + toggle guard.
-//  Toggle on in Settings > Developer Tools, copy logs to share.
+//  DEBUG only. Gated behind #if DEBUG for App Store builds (M9.28).
 //
 
 import Foundation
+
+#if DEBUG
 
 @MainActor
 class DebugLogService: ObservableObject {
@@ -49,3 +50,22 @@ class DebugLogService: ObservableObject {
         entries.joined(separator: "\n")
     }
 }
+
+#else
+
+// MARK: - Release no-op stub
+
+@MainActor
+class DebugLogService: ObservableObject {
+
+    static let shared = DebugLogService()
+
+    @Published var isEnabled: Bool = false
+    @Published private(set) var entries: [String] = []
+
+    func log(_ message: String, category: String = "General") {}
+    func clear() {}
+    var fullLog: String { "" }
+}
+
+#endif

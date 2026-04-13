@@ -1,62 +1,53 @@
 # forager
 
-A smart iOS grocery and meal planning app that turns shopping from a chore into an efficient, personalized experience — with store-layout optimization, recipe scaling, household collaboration, and intelligent ingredient parsing.
+A smart iOS grocery and meal planning app that turns shopping from a chore into an efficient, personalized experience -- with store-layout optimization, recipe scaling, household collaboration, and intelligent ingredient parsing.
 
 **Pure Swift. No external dependencies. Built with SwiftUI, Core Data, and CloudKit.**
+
+[![TestFlight Beta](https://img.shields.io/badge/TestFlight-Join%20Beta-blue)](https://testflight.apple.com/join/zwFHTpDs)
+[![iOS 26+](https://img.shields.io/badge/iOS-26%2B-black)](https://developer.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-6-orange)](https://swift.org)
+
+---
+
+## Try It
+
+Join the public beta on TestFlight: **[testflight.apple.com/join/zwFHTpDs](https://testflight.apple.com/join/zwFHTpDs)**
 
 ---
 
 ## Features
 
 ### Grocery Management
-- **Store-layout optimized lists** — Organize items by your actual shopping path with custom drag-and-drop category ordering
-- **Staple items** — Auto-populate recurring essentials to every new list
-- **Smart consolidation** — Merge duplicates intelligently ("1 cup milk" + "2 cups milk" = "3 cups milk")
-- **Unit conversion** — Automatic conversion between compatible units (cups/tbsp/tsp, lbs/oz)
+- **Store-layout optimized lists** -- organize items by your actual shopping path with custom drag-and-drop category ordering
+- **Store-aware shopping** -- assign preferred stores to ingredients, group grocery items by store
+- **Smart consolidation** -- merge duplicates intelligently ("1 cup milk" + "2 cups milk" = "3 cups milk")
+- **Unit conversion** -- automatic conversion between compatible units (cups/tbsp/tsp, lbs/oz)
 
 ### Recipe Catalog
-- **Full CRUD operations** — Create, browse, search, edit, and delete recipes
-- **Recipe scaling** — Adjust servings from 0.25x to 4x with kitchen-friendly fractions (1.5 → "1 1/2")
-- **Smart autocomplete** — Parse-then-search ingredient entry with fuzzy matching and template alignment
-- **Usage tracking** — Track recipe popularity with usage counts and dates
+- **Multi-source import** -- import recipes from URLs, pasted text, or photos (OCR)
+- **Recipe scaling** -- adjust servings from 0.25x to 4x with kitchen-friendly fractions
+- **Smart autocomplete** -- parse-then-search ingredient entry with fuzzy matching and template alignment
+- **Grid and list views** -- browse recipes as image cards or a compact list
 
 ### Meal Planning
-- **Calendar-based planning** — Assign recipes to specific days with an intuitive grid interface
-- **Bulk grocery generation** — One-tap "Add All to Shopping List" from any meal plan
-- **Servings adjustment** — Per-recipe scaling when adding to grocery lists
-- **Completion tracking** — Mark meals as completed with visual feedback
+- **Calendar-based planning** -- assign recipes to specific days with an intuitive interface
+- **Bulk grocery generation** -- one-tap "Add All to Shopping List" from any meal plan
+- **Servings adjustment** -- per-recipe scaling when adding to grocery lists
+- **Completion tracking** -- mark meals as completed with visual feedback
 
 ### Household Collaboration
-- **CloudKit sync** — Multi-device sync with < 5s latency
-- **Shared households** — Create a household, invite members via shareable link, share all data automatically
-- **Dual-store architecture** — Private store for personal data, shared store for household data
-- **Full lifecycle** — Create, invite, join, leave, rejoin, remove members, delete households
+- **CloudKit sync** -- multi-device sync with < 5s latency
+- **Shared households** -- create a household, invite members via shareable link, share all data automatically
+- **Dual-store architecture** -- private store for personal data, shared store for household data
+- **Full lifecycle** -- create, invite, join, leave, rejoin, remove members, delete households
 
 ### Intelligent Parsing
-- **Hybrid parser** — Regex fast path (< 0.05s) + NLP fallback for complex inputs
-- **98%+ accuracy** — 7 regex pattern categories covering unicode fractions, ranges, parentheticals, compound phrases, qualifiers, and descriptive amounts
-- **Template normalization** — 4-phase pipeline (case, plural, abbreviation, variation) prevents "Butter"/"butter"/"BUTTER" duplication
-- **Confidence tracking** — Yellow badges flag low-confidence parses for user review
-- **Auto-merge** — Adding the same ingredient from multiple recipes merges quantities automatically
-
----
-
-## Getting Started
-
-### Requirements
-- iOS 26+
-- Xcode 26.0+
-- macOS 26.0+
-
-### Installation
-
-```bash
-git clone https://github.com/rfhayn/forager.git
-cd forager
-open forager.xcodeproj
-```
-
-Press **Cmd+R** in Xcode to build and run. No package managers, no dependency installs — it's pure Swift.
+- **3-tier hybrid parser** -- regex fast path (< 0.05s) + ML model (BiLSTM-CRF) + NLP fallback
+- **98%+ accuracy** -- 7 regex pattern categories covering unicode fractions, ranges, parentheticals, compound phrases, qualifiers, and descriptive amounts
+- **Optional AI enhancement** -- Claude API integration for edge cases (user provides own API key, off by default)
+- **Template normalization** -- 4-phase pipeline prevents "Butter"/"butter"/"BUTTER" duplication
+- **Auto-merge** -- adding the same ingredient from multiple recipes merges quantities automatically
 
 ---
 
@@ -66,66 +57,27 @@ Press **Cmd+R** in Xcode to build and run. No package managers, no dependency in
 | Layer | Technology |
 |-------|-----------|
 | UI | SwiftUI with `@FetchRequest` for live updates |
-| Persistence | Core Data (10 entities, 6 model versions) |
+| Persistence | Core Data (13 entities, schema v11) |
 | Cloud | CloudKit via `NSPersistentCloudKitContainer` |
-| Parsing | Regex + Apple NaturalLanguage (NLTagger) |
-| Testing | XCTest (146+ unit tests) |
+| Parsing | Regex + BiLSTM-CRF (CoreML) + Apple NaturalLanguage |
+| Testing | XCTest (531 unit tests) |
 | Distribution | TestFlight + App Store Connect |
 
 ### Key Patterns
 
-**Dual-store CloudKit architecture** — Two persistent stores (`forager.sqlite` for private, `forager_shared.sqlite` for shared) backed by separate CloudKit databases. Data scope is determined by a `DataScope` enum (`.personal` vs `.household`), and a `ManagedObjectFactory` automatically assigns objects to the correct store.
+**Dual-store CloudKit architecture** -- two persistent stores (`forager.sqlite` for private, `forager_shared.sqlite` for shared) backed by separate CloudKit databases. Data scope is determined by a `DataScope` enum (`.personal` vs `.household`), and a `ManagedObjectFactory` automatically assigns objects to the correct store.
 
-**Hybrid parser with confidence routing** — `IngredientParser` protocol with three implementations: `RegexIngredientParser` (fast, handles 85% of inputs), `NLPIngredientParser` (Apple NaturalLanguage fallback), and `HybridIngredientParser` (router). If regex confidence < 0.8, NLP gets consulted. Whichever parser returns higher confidence wins.
+**3-tier hybrid parser with confidence routing** -- `IngredientParser` protocol with three implementations: `RegexIngredientParser` (fast, handles 90%+ of inputs), `MLIngredientParser` (BiLSTM-CRF CoreML model), and `NLPIngredientParser` (Apple NaturalLanguage fallback). `HybridIngredientParser` routes based on confidence thresholds.
 
-**Service layer standard** — All Core Data writes go through service objects (`HouseholdService`, `MealPlanService`, `OptimizedRecipeDataService`, etc.). Views never call `context.save()` directly.
+**Service layer standard** -- all Core Data writes go through service objects. Views never call `context.save()` directly. Factory enforcement (ADR 014) ensures all household-scoped entities use `ManagedObjectFactory.make()`.
 
-**Template-based normalization** — `IngredientTemplate` is the single source of truth for ingredient names. A 4-phase normalization pipeline and `findOrCreateTemplate` ensure deduplication across all entry points.
+**Template-based normalization** -- `IngredientTemplate` is the single source of truth for ingredient names. A 4-phase normalization pipeline and `findOrCreateTemplate` ensure deduplication across all entry points.
 
-### Project Structure
-
-```
-forager/
-├── forager.xcodeproj
-├── forager/                     # Main app source
-│   ├── foragerApp.swift         # App entry point + loading screen
-│   ├── SceneDelegate.swift      # CloudKit share handling
-│   ├── Assets.xcassets/         # App icon, launch assets
-│   └── forager.xcdatamodeld/    # Core Data model (v1-v6)
-├── Services/                    # Service layer
-│   ├── Persistence/             # Core Data + CloudKit infrastructure
-│   │   ├── PersistenceController.swift
-│   │   ├── DataScope.swift
-│   │   ├── ManagedObjectFactory.swift
-│   │   ├── CategoryDeduplicator.swift
-│   │   └── ...
-│   ├── Parsing/                 # Hybrid ingredient parser
-│   │   ├── IngredientParser.swift       # Protocol
-│   │   ├── RegexIngredientParser.swift  # Fast path (~650 lines)
-│   │   ├── NLPIngredientParser.swift    # NLP fallback (~310 lines)
-│   │   └── HybridIngredientParser.swift # Router (~60 lines)
-│   ├── HouseholdService.swift
-│   ├── MealPlanService.swift
-│   ├── IngredientParsingService.swift   # Public API
-│   ├── UnitConversionService.swift
-│   ├── RecipeScalingService.swift
-│   └── ...
-├── foragerTests/                # Unit tests (146+)
-├── docs/                        # Project documentation
-│   ├── current-story.md         # Active development status
-│   ├── roadmap.md               # Milestone tracking
-│   ├── requirements.md          # 234 functional requirements
-│   ├── learning-notes/          # 37 implementation journey notes
-│   ├── architecture/            # 12 Architecture Decision Records
-│   └── prds/                    # Product Requirements Documents
-└── CLAUDE.md                    # AI assistant instructions
-```
-
-### Core Data Model (10 Entities)
+### Core Data Model (13 Entities)
 
 | Domain | Entities |
 |--------|----------|
-| Grocery | `WeeklyList`, `GroceryListItem`, `Category` |
+| Grocery | `WeeklyList`, `GroceryListItem`, `GroceryItem`, `Category`, `Store` |
 | Recipe | `Recipe`, `Ingredient`, `IngredientTemplate` |
 | Meal Planning | `MealPlan`, `PlannedMeal` |
 | Household | `Household`, `HouseholdMember` |
@@ -134,8 +86,6 @@ forager/
 ---
 
 ## Performance
-
-All targets met or exceeded across ~221 hours of development:
 
 | Metric | Target | Achieved |
 |--------|--------|----------|
@@ -150,70 +100,59 @@ All targets met or exceeded across ~221 hours of development:
 
 ---
 
-## Development Journey
+## Development
 
-forager has been built incrementally across ~221 hours with 89% planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
+forager has been built incrementally across ~345 hours with high planning accuracy. Each milestone follows a one-branch, one-PR, one-squash-commit workflow.
 
 ### Completed Milestones
 
-| Milestone | Description | Hours | Date |
-|-----------|-------------|-------|------|
-| **M1** | Professional Grocery Management | 32h | Aug 2025 |
-| **M2** | Recipe Integration & Autocomplete | 16.5h | Sep-Oct 2025 |
-| **M3** | Structured Quantities & Scaling | 10.5h | Oct 2025 |
-| **M3.5** | Foundation Validation & Testing | 8.5h | Oct 2025 |
-| **M4** | Meal Planning & Grocery Integration | 19.25h | Nov 2025 |
-| **M5.0** | App Renaming & TestFlight | 6h | Dec 2025 |
-| **M7.0** | App Store Prerequisites | 3h | Dec 2025 |
-| **M7.1** | CloudKit Sync Foundation | 10.5h | Dec 2025 |
-| **M7.2** | Household Shared Zone Architecture | ~25h | Dec 2025-Feb 2026 |
-| **M7.3** | Household Management & Error Handling | ~6h | Jan-Feb 2026 |
-| **M7.4** | UI Polish (Apple Music-style nav) | ~4h | Feb 2026 |
-| **M8** | Hybrid NLP Parser & Parsing Intelligence | ~17h | Feb 2026 |
-| **M7.6** | Pre-Launch Prep & Schema Cleanup | ~9.5h | Feb 2026 |
-| **M15** | UX Design System & Visual Refresh | ~50h | Feb 2026 |
-| **M7.5** | Architecture Hardening | ~5h | Feb 2026 |
-| **M9.0** | Warning Resolution (zero-warning baseline) | <1h | Feb 2026 |
+| Milestone | Description |
+|-----------|-------------|
+| **M1** | Professional Grocery Management |
+| **M2** | Recipe Integration & Autocomplete |
+| **M3** | Structured Quantities & Scaling |
+| **M3.5** | Foundation Validation & Testing |
+| **M4** | Meal Planning & Grocery Integration |
+| **M5.0** | App Renaming & TestFlight |
+| **M7.0-7.1** | App Store Prerequisites & CloudKit Foundation |
+| **M7.2** | Household Shared Zone Architecture |
+| **M7.3-7.4** | Household Management & UI Polish |
+| **M7.5** | Architecture Hardening (Service Layer) |
+| **M7.6** | Pre-Launch Prep & External TestFlight |
+| **M8** | Hybrid NLP Parser & Intelligence |
+| **M8.4** | ML-Powered Parsing (BiLSTM-CRF) |
+| **M9.x** | Tech Debt, Bug Fixes, Security Hardening |
+| **M10** | Recipe Import (URL, Text, Photo/OCR) |
+| **M10.6** | Claude API Integration |
+| **M15** | UX Design System & Liquid Glass |
+| **M16** | Parsing Test Harness & ML Retraining |
+| **M18** | Store-Aware Shopping (Schema v11) |
+| **FUI-1** | Dashboard, Navigation, Recipe UI |
+| **M19** | Pre-Launch Factory Enforcement |
 
-### Current
-
-M15, M7.5, M9.0 all complete on `main`. Next: M9.1.2 (centralize parsing utilities) → M9.5-partial (parser DI) → M8.4 (ML parsing) → M7.7 (App Store).
-
-### Planned
-
-| Milestone | Description | Est. Hours |
-|-----------|-------------|------------|
-| **M9.1.2** | Centralize extractCleanIngredientName | 2-3h |
-| **M9.5-partial** | Parser Dependency Injection | 4h |
-| **M8.4** | ML-Powered Parsing (CoreML BiLSTM-CRF) | 18-24h |
-| **M7.7** | App Store Submission & Landing Page | 3-5h |
-| **M6** | Testing Foundation & CI/CD | 20-30h |
-| **M9** | Remaining Technical Debt | ~120h |
-| **M10+** | Analytics, Health, Budget, AI, Collaboration | 48-72h |
-
----
-
-## Documentation
-
-This project maintains comprehensive documentation tracking the full development journey:
+### Documentation
 
 | Resource | Description |
 |----------|-------------|
 | [current-story.md](docs/current-story.md) | Active development status |
-| [roadmap.md](docs/roadmap.md) | Milestone tracking and execution order |
-| [requirements.md](docs/requirements.md) | 234 functional requirements with traceability |
+| [requirements.md](docs/requirements.md) | Functional requirements with traceability |
 | [project-index.md](docs/project-index.md) | Central navigation hub |
-| [learning-notes/](docs/learning-notes/) | 37 implementation journey notes |
-| [architecture/](docs/architecture/) | 12 Architecture Decision Records |
-| [prds/](docs/prds/) | Product Requirements Documents |
-| [insights-log.md](docs/insights-log.md) | Technical insights triage inbox |
+| [architecture/](docs/architecture/) | 14 Architecture Decision Records |
+
+---
+
+## Privacy
+
+All data stored in your personal iCloud account. No third-party servers, no tracking, no analytics. Optional AI parsing sends only ingredient text to Anthropic's API using your own key.
+
+[Privacy Policy](https://rfhayn.github.io/forager/privacy.html) | [Support](https://github.com/rfhayn/forager/issues)
 
 ---
 
 ## License
 
-This project is available under the MIT License.
+All rights reserved. Copyright 2025-2026 Rich Hayn.
 
 ---
 
-**~221 hours** of development | **89%** planning accuracy | **146+** unit tests | **234** tracked requirements | **37** learning notes | **12** ADRs | **Zero** technical debt
+**~345 hours** of development | **531** unit tests | **14** ADRs | **13** Core Data entities

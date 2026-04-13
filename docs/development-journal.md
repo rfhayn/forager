@@ -6,6 +6,25 @@
 
 ---
 
+## Session 114 — April 12, 2026
+**Milestone**: M7.7 + M9.28 — App Store Submission Preparation
+
+**What happened**: Combined App Store submission prep and diagnostic logging strip into a single branch. Started with an `/opsx:explore` session to map out everything needed for App Store submission — researched exact App Store Connect requirements, privacy nutrition labels, screenshot specifications, and export compliance. Discovered the privacy policy needed updating for Claude API disclosure. Learned that CloudKit data is exempt from Apple's privacy nutrition labels because it's stored in the user's own iCloud container and the developer never accesses it.
+
+Created an OpenSpec change via `/opsx:propose` and implemented via `/opsx:apply`. Updated the privacy policy with AI disclosure language, created a landing page (`docs/index.html`), rewrote the README with current stats, and drafted all App Store listing copy with a submission checklist. On the code side, gated `DiagnosticLogger` and `DebugLogService` behind `#if DEBUG` with no-op stubs for Release builds, then verified both Debug and Release configurations build clean.
+
+**Key decisions**:
+- **No-op stub pattern over `#if DEBUG` at call sites** — wrapping the logger internals with no-op stubs means every existing call site continues to compile without changes. The alternative — scattering `#if DEBUG` conditionals across 100+ call sites — would be invasive and fragile.
+- **Conservative privacy nutrition label approach** — declared User Content for the Claude API even though it's optional and user-initiated. Better to over-disclose than risk an App Store rejection for under-reporting data collection.
+- **Landing page kept minimal** — no screenshots, no JavaScript, just app info and a TestFlight link. A full marketing site isn't needed for initial submission.
+- **M9.28 bundled with M7.7** — the diagnostic logging strip touched only 4 files, not worth a separate branch and PR cycle.
+
+**AI tooling observations**: Used the explore agent for thorough App Store requirements research, then spawned parallel agents for codebase investigation (API key storage patterns, household name exposure in UI). The OpenSpec workflow (explore, propose, apply, archive) worked smoothly for a docs-heavy change where most of the work was research and copywriting rather than code.
+
+**What's next**: Merge the branch, then final pre-submission testing on device. Screenshot capture for all required device sizes, followed by the actual App Store Connect submission.
+
+---
+
 ## Session 113 — April 12, 2026
 **Milestone**: M19 — Pre-Launch Bug Hunt (Factory Enforcement)
 

@@ -24,8 +24,11 @@ App settings providing user preferences, household management access, AI integra
 - REQ-006: The system MUST provide a "Restore Default Categories" action within the Manage Categories view for resetting to the built-in category set.
   - Scenario: Given the user has modified categories extensively, When they tap "Restore Default Categories" in Manage Categories, Then a confirmation dialog appears and the default 7 categories are recreated.
 
-- REQ-007: The system MUST hide developer/diagnostic tools in Release builds using #if DEBUG conditional compilation.
-  - Scenario: Given the app is built in Release mode for TestFlight, When a tester opens Settings, Then no debug views, test harnesses, or diagnostic logging controls are visible.
+- REQ-007: The system MUST hide developer tools AND diagnostic logging controls in Release builds using `#if DEBUG` conditional compilation. This includes the Diagnostics section and the Developer Tools section. DiagnosticLogger and DebugLogService SHALL be replaced with no-op stubs in Release builds so that all call sites compile but perform zero file I/O.
+  - Scenario: Given the app is built in Release mode, When a user opens Settings, Then no Diagnostics section, Developer Tools section, or debug views are visible.
+  - Scenario: Given the app launches in a Release build, Then DiagnosticLogger does not create or write to `forager-diagnostics.log`, and DebugLogService methods are no-ops.
+  - Scenario: Given the app is built in Debug mode, Then DiagnosticLogger writes to disk, DebugLogService captures in-memory logs, and Settings shows both Diagnostics and Developer Tools sections.
+  - Scenario: Given CloudKitLogger logs an event in a Release build, Then the OSLog call fires normally but the DiagnosticLogger bridge is a no-op.
 
 - REQ-008: The system MUST provide a privacy policy link that opens the hosted privacy policy URL in an external browser.
   - Scenario: Given the user taps Settings > Privacy Policy, When the system opens the URL, Then the hosted privacy policy page loads in Safari.
