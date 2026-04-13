@@ -167,12 +167,6 @@ struct MealPlanIngredientSelectionView: View {
                 }
 
                 Spacer()
-
-                if let displayText = ingredient.displayText, !displayText.isEmpty {
-                    Text(displayText)
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                }
             }
         }
         .buttonStyle(.plain)
