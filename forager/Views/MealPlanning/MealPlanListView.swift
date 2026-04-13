@@ -40,6 +40,9 @@ struct MealPlansListView: View {
     @State private var groceryListMessage = ""
     @State private var showingError = false
     @State private var errorMessage = ""
+    @State private var showingGenerateConfirm = false
+    @State private var includeStaples = false
+    @State private var planToGenerate: MealPlan?
 
     @StateObject private var mealPlanService = MealPlanService.shared
 
@@ -62,6 +65,25 @@ struct MealPlansListView: View {
             }
             .sheet(isPresented: $showingCreateSheet) {
                 CreateMealPlanSheet()
+            }
+            .confirmationDialog(
+                "Generate Grocery List",
+                isPresented: $showingGenerateConfirm,
+                titleVisibility: .visible
+            ) {
+                Button("Generate") {
+                    if let plan = planToGenerate {
+                        generateGroceryList(from: plan, includeStaples: includeStaples)
+                    }
+                }
+                Button("Generate with Staples") {
+                    if let plan = planToGenerate {
+                        generateGroceryList(from: plan, includeStaples: true)
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Create a grocery list from this meal plan's recipes?")
             }
             .alert("Grocery List", isPresented: $showingGroceryListAlert) {
                 Button("OK") { }
@@ -111,7 +133,10 @@ struct MealPlansListView: View {
                             MealPlanSummaryCard(
                                 mealPlan: plan,
                                 status: .active,
-                                onGenerateGroceryList: { generateGroceryList(from: plan) }
+                                onGenerateGroceryList: {
+                                    planToGenerate = plan
+                                    showingGenerateConfirm = true
+                                }
                             )
                         }
                         .listRowBackground(Color.clear)
@@ -256,8 +281,8 @@ struct MealPlansListView: View {
         }
     }
 
-    private func generateGroceryList(from plan: MealPlan) {
-        if let list = mealPlanService.generateGroceryList(from: plan) {
+    private func generateGroceryList(from plan: MealPlan, includeStaples: Bool = false) {
+        if let list = mealPlanService.generateGroceryList(from: plan, includeStaples: includeStaples) {
             groceryListMessage = "Created \"\(list.name ?? "Grocery List")\" with \(list.items?.count ?? 0) items."
         } else {
             groceryListMessage = "No recipes found in this plan to generate a list from."
@@ -351,6 +376,7 @@ struct MealPlanSummaryCard: View {
                     .background(ForagerTheme.accentTint)
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
                 }
+                .buttonStyle(.borderless)
             }
         }
         .foragerGlassCard()

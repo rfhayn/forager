@@ -896,7 +896,7 @@ class MealPlanService: ObservableObject {
     // Fetches all planned meals' recipes, extracts ingredients,
     // and creates a WeeklyList + GroceryListItems grouped by category.
     @discardableResult
-    func generateGroceryList(from plan: MealPlan) -> WeeklyList? {
+    func generateGroceryList(from plan: MealPlan, includeStaples: Bool = false) -> WeeklyList? {
         let diag = DiagnosticLogger.shared
         diag.info("=== GENERATE GROCERY LIST from plan '\(plan.name ?? "?")' ===", category: .household)
 
@@ -956,6 +956,21 @@ class MealPlanService: ObservableObject {
                         listItem.household = newList.household
                         listItem.householdKey = newList.householdKey
                     }
+                }
+            }
+
+            // Add staple items if requested
+            if includeStaples, let itemService = groceryListItemService {
+                let stapleRequest: NSFetchRequest<IngredientTemplate> = IngredientTemplate.fetchRequest()
+                if let key = newList.householdKey {
+                    stapleRequest.predicate = NSPredicate(format: "isStaple == YES AND householdKey == %@", key)
+                } else {
+                    stapleRequest.predicate = NSPredicate(format: "isStaple == YES AND householdKey == nil")
+                }
+                stapleRequest.sortDescriptors = [NSSortDescriptor(keyPath: \IngredientTemplate.name, ascending: true)]
+                let staples = try context.fetch(stapleRequest)
+                if !staples.isEmpty {
+                    itemService.addStaples(staples, to: newList)
                 }
             }
 
