@@ -8,6 +8,21 @@ argument-hint: <PREFIX-#.# brief description>
 
 **Milestone**: $ARGUMENTS
 
+## Step 0: Detect Identifier Format
+
+Forager accepts two identifier formats (per `docs/openspec-workflow-reference.md`):
+- **Legacy M-format**: `M7.7`, `M9.16`, `M18.1.3` — historical work only (forward-only policy)
+- **New OpenSpec change-id**: `architecture-compliance-sweep`, `migrate-to-structured-logging` — all new work
+
+Normalize and validate the input via the shared utility:
+```bash
+bash .claude/skills/_shared/milestone-format.sh "$ARGUMENTS"
+# Output: format=M|kebab  id=<identifier>  original=<identifier>
+# Exit 2 if the input matches neither format
+```
+
+The skill's subsequent steps substitute `<identifier>` for the normalized ID regardless of format — branch names, PRD file names, next-prompt file names, and commit prefixes all use the identifier as-is.
+
 ## Step 1: Verify Prerequisites
 
 - Current branch: !`git branch --show-current`
@@ -20,11 +35,18 @@ git checkout main && git pull origin main
 
 ## Step 2: Create Feature Branch
 
-Branch naming: `feature/PREFIX-#.#-brief-kebab-case` (3-5 words max)
+Branch naming:
+- Legacy M-format: `feature/M9.16-brief-kebab-case` (3-5 words max)
+- New OpenSpec change-id: `feature/<change-id>` (the change-id is already kebab-case; no extra suffix needed)
 
 ```bash
-git checkout -b feature/PREFIX-#.#-brief-description
-git push -u origin feature/PREFIX-#.#-brief-description
+# Legacy example
+git checkout -b feature/M9.16-grocery-list-item-service
+git push -u origin feature/M9.16-grocery-list-item-service
+
+# New OpenSpec example
+git checkout -b feature/architecture-compliance-sweep
+git push -u origin feature/architecture-compliance-sweep
 ```
 
 ## Step 3: Update `docs/current-story.md`

@@ -14,16 +14,19 @@ Read `CLAUDE.md` and check if the Setup Checklist has uncompleted items. If so, 
 ## Step 2: Load Context Documents
 
 Read these files in order:
-1. `docs/session-startup-checklist.md`
-2. `docs/project-naming-standards.md`
-3. `docs/current-story.md`
-4. `docs/next-prompt.md` (the hub/index)
+1. `docs/openspec-workflow-reference.md` — canonical naming + workflow reference (if present; graceful skip with "workflow ref: not found" notice if missing)
+2. `docs/project-brief.md` — living summary: capability map, service registry, skill inventory, ADR index, active work pointer, known debt (if present; graceful skip with "project-brief: not found" notice if missing)
+3. `docs/session-startup-checklist.md`
+4. `docs/project-naming-standards.md`
+5. `docs/current-story.md`
+6. `docs/next-prompt.md` (the hub/index)
 
 Then check for branch-specific next-prompt files:
 - Get current branch: !`git branch --show-current`
-- Extract milestone from branch name (e.g., `feature/AUTH-1.3-description` → `AUTH-1`)
-- Also supports legacy format: `feature/M1.2.3-description` → `M1.2`
-- If `docs/next-prompt-[milestone].md` exists for that milestone, read it too
+- Detect identifier format via shared utility: `bash .claude/skills/_shared/milestone-format.sh "<id-from-branch>"` outputs `format=M|kebab` and normalizes the id
+  - Branch `feature/M1.2.3-description` → identifier `M1.2.3`, format `M`
+  - Branch `feature/architecture-compliance-sweep` → identifier `architecture-compliance-sweep`, format `kebab`
+- If `docs/next-prompt-[identifier].md` exists, read it too
 - If on `main`, check `docs/next-prompt.md` for active milestone pointers and read the relevant files
 
 ## Step 3: Check Git State
@@ -35,23 +38,25 @@ Current branch and status:
 
 ## Step 4: Set Status Line
 
-Write the active milestone and step to a **branch-keyed** status file so the status line displays it for the entire session. This prevents multiple sessions from overwriting each other.
+Write the active identifier and step to a **branch-keyed** status file so the status line displays it for the entire session. This prevents multiple sessions from overwriting each other.
 
-Parse the active milestone and current step from `current-story.md`. Determine the branch slug by replacing `/` with `-` in the branch name.
+Parse the active identifier and current step from `current-story.md`. Determine the branch slug by replacing `/` with `-` in the branch name. Detect format via `.claude/skills/_shared/milestone-format.sh`.
 
-Format: `[M#.#] feature-name .# step-name`
+Format by identifier type:
+- **Legacy M-format**: `[M#.#] feature-name .# step-name`
+  - `[M16.9] ml-model-retraining .3 full-retrain`
+  - `[M7.7] app-store-submission`
+- **OpenSpec change-id format**: `[<change-id>] <optional-phase>`
+  - `[architecture-compliance-sweep] phase 1`
+  - `[expand-claude-context-infrastructure]`
 
-Examples:
-- `[M16.9] ml-model-retraining .3 full-retrain`
-- `[M9.28] remove-diagnostic-logging`
-- `[M7.7] app-store-submission`
-
-Use a single line. The step (`.#`) is optional — include it when a sub-milestone is active.
+Use a single line. The step/phase is optional — include it when a sub-milestone or phase is active.
 
 ```bash
 BRANCH=$(git branch --show-current)
 SLUG=$(echo "$BRANCH" | tr '/' '-')
-echo "[M#.#] feature-name .# step-name" > ~/.claude/forager-status-${SLUG}.txt
+# Identifier detected from branch via milestone-format.sh (e.g., M7.7 or architecture-compliance-sweep)
+echo "[<identifier>] <phase-or-feature-name>" > ~/.claude/forager-status-${SLUG}.txt
 ```
 
 ## Step 5: Check Active OpenSpec Changes
@@ -77,9 +82,9 @@ After reading all documents, provide a concise status report:
 
 Verify:
 - [ ] Not on `main` (should be on feature branch for any code work)
-- [ ] Using correct M#.#.# naming convention
+- [ ] Branch identifier matches a valid format (M#.#.# legacy OR kebab change-id) — `bash .claude/skills/_shared/milestone-format.sh` exits non-zero on malformed names
 - [ ] Current work is documented in current-story.md
-- [ ] OpenSpec change exists for active milestone (or next-prompt file as legacy fallback)
+- [ ] OpenSpec change exists for active work (or next-prompt file as legacy fallback)
 - [ ] No duplicate services being created
 
 If any red flags are found, report them before proceeding.

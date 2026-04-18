@@ -8,6 +8,15 @@ argument-hint: <PREFIX-#.#>
 
 **Milestone to complete**: $ARGUMENTS
 
+## Step 0: Detect Identifier Format
+
+Accepts both legacy M-format (`M7.7`, `M9.16`) and new OpenSpec change-ids (`architecture-compliance-sweep`). Normalize via:
+```bash
+bash .claude/skills/_shared/milestone-format.sh "$ARGUMENTS"
+```
+
+All subsequent references to the identifier use it as-is. File name patterns substitute `<identifier>` — e.g., `docs/next-prompt-M9.16.md` for legacy, or `docs/next-prompt-architecture-compliance-sweep.md` for new-style (if such per-milestone file exists — OpenSpec changes generally don't use per-milestone next-prompt files; the change directory under `openspec/changes/` is the source of truth).
+
 ## Current State
 
 - Branch: !`git branch --show-current`
@@ -22,8 +31,9 @@ argument-hint: <PREFIX-#.#>
 - Update priority queue (remove completed, add next)
 
 ### 2. Branch-specific next-prompt file
-- If `docs/next-prompt-M#.#.md` exists for this milestone, move it to `docs/prds/complete/` (rename to `next-prompt-M#.#-complete.md`) for historical reference, or delete it
+- If `docs/next-prompt-<identifier>.md` exists for this milestone, move it to `docs/archive/` (rename to `next-prompt-<identifier>.md` stays as-is — the archive path is sufficient historical marker) for reference, or delete it
 - If the file contains guidance for other sub-tasks still in progress, only remove the completed section
+- OpenSpec changes (new work) generally do not use per-milestone next-prompt files — the `openspec/changes/<change-id>/` directory holds the proposal/design/tasks, and archival happens via `/opsx:archive`. If completing an OpenSpec change, prefer `/opsx:archive <change-id>` after this skill runs.
 
 ### 3. `docs/next-prompt.md` (hub/index)
 - **Remove** the pointer to the completed milestone from the Active Milestones section

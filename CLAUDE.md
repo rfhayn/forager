@@ -16,12 +16,18 @@ xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS
 - Debug: CloudKit DISABLED | Release: CloudKit ENABLED
 - CloudKit container: `iCloud.com.richhayn.forager`
 
-## Naming Convention (Zero Tolerance)
+## Naming Convention (forward-only)
 
-**M#.#.# format** everywhere — code, commits, docs, branches. Never "Phase 3" or "Step 3".
+**Authoritative reference**: [`docs/openspec-workflow-reference.md`](docs/openspec-workflow-reference.md)
+
+- **New work** uses OpenSpec change-id format: `<verb>-<kebab-case>` (e.g. `architecture-compliance-sweep`, `migrate-to-structured-logging`, `fix-grocery-list-detail-scope`). Branches are `feature/<change-id>`; commits use `<change-id>:` prefix; PRs use `<change-id>: Title`.
+- **Historical work** keeps `M#.#.#` (e.g. `M7.7`, `M9.16`, `M18.1.3`). Never rename archived PRDs, git history, ADR references, journal entries, or in-flight legacy branches (forward-only policy).
+- **Shared utility**: `.claude/skills/_shared/milestone-format.sh` accepts both formats and normalizes output; the 6 workflow skills (session-start, new-milestone, milestone-complete, commit, pr, done) use it for format-agnostic handling.
+- **Never**: "Phase 3" or "Step 3" as an identifier — use a proper change-id or M#.#.#.
 
 ```
-M7 = Major Feature | M7.2 = Component | M7.2.3 = Task
+Legacy:     M7 → M7.2 → M7.2.3        (Major → Component → Task)
+OpenSpec:   <verb>-<kebab-case>       (one change = one branch = one PR)
 ```
 
 Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
@@ -66,10 +72,11 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 
 ## Git Workflow
 
-**One phase = one branch = one PR = one squash commit to main.**
+**One change = one branch = one PR = one squash commit to main.**
 
-- Branch: `feature/M#.#.#-brief-kebab-case`
-- Commit: `M#.#.#:` imperative mood. **No Co-Authored-By.**
+- Branch (new work): `feature/<change-id>` (e.g. `feature/architecture-compliance-sweep`)
+- Branch (legacy in-flight): `feature/M#.#.#-brief-kebab-case`
+- Commit: `<identifier>:` imperative mood. **No Co-Authored-By.** Shared utility at `.claude/skills/_shared/milestone-format.sh` detects format automatically.
 - Use skills: `/commit`, `/pr`, `/build`, `/release-prep`
 
 ## Documentation (After Every Session)

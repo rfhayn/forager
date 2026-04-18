@@ -202,6 +202,238 @@ def get_project_status() -> str:
 
 
 @mcp.tool()
+def get_capabilities() -> str:
+    """List all OpenSpec capabilities with one-line summaries.
+
+    Scans openspec/specs/<capability>/spec.md. Returns each capability's
+    kebab-case name, path, and a summary extracted from the spec's Overview
+    or first requirement. Use this to orient to what the system does before
+    proposing or implementing changes.
+    """
+    _ensure_indexed()
+
+    specs_dir = REPO_ROOT / "openspec" / "specs"
+    if not specs_dir.exists():
+        return "No openspec/specs/ directory found"
+
+    entries = []
+    for cap_dir in sorted(specs_dir.iterdir()):
+        if not cap_dir.is_dir():
+            continue
+        spec_path = cap_dir / "spec.md"
+        if not spec_path.exists():
+            continue
+
+        name = cap_dir.name
+        rel_path = f"openspec/specs/{name}/spec.md"
+        summary = _extract_capability_summary(spec_path)
+        entries.append((name, rel_path, summary))
+
+    if not entries:
+        return "No capabilities found"
+
+    lines = [f"Found {len(entries)} capabilities:\n"]
+    for name, path, summary in entries:
+        lines.append(f"  [{name}] {path}")
+        lines.append(f"    {summary}")
+    return "\n".join(lines)
+
+
+def _extract_capability_summary(spec_path: Path) -> str:
+    """Pull a one-line summary from a spec file — Overview first line, or first Requirement description."""
+    try:
+        content = spec_path.read_text(encoding="utf-8")
+    except Exception as e:
+        return f"(unreadable: {e})"
+
+    # Try Overview section first
+    overview_match = re.search(r"^##\s+Overview\s*\n+(.+?)(?=\n\n|\n##|\Z)", content, re.MULTILINE | re.DOTALL)
+    if overview_match:
+        first_line = overview_match.group(1).strip().split("\n")[0]
+        return first_line[:250]
+
+    # Fall back to first Requirement description
+    req_match = re.search(r"^###\s+Requirement:\s*(.+?)\n+(.+?)(?=\n\n|\n####|\n###|\Z)", content, re.MULTILINE | re.DOTALL)
+    if req_match:
+        req_title = req_match.group(1).strip()
+        req_desc = req_match.group(2).strip().split("\n")[0]
+        return f"{req_title} — {req_desc[:200]}"
+
+    return "(no Overview or Requirement found)"
+
+
+@mcp.tool()
+def get_services() -> str:
+    """List top-level Swift services in Services/ with role hints.
+
+    Scans Services/*.swift (excluding subdirectories like Parsing/, Import/,
+    Persistence/). For each file, extracts a role hint from the top-level
+    doc comment or class declaration. Useful for orienting to the service
+    layer before proposing new services (run /service-check first).
+    """
+    services_dir = REPO_ROOT / "Services"
+    if not services_dir.exists():
+        return "No Services/ directory found"
+
+    entries = []
+    for service_file in sorted(services_dir.glob("*.swift")):
+        name = service_file.name
+        rel_path = f"Services/{name}"
+        role = _extract_service_role(service_file)
+        entries.append((name, rel_path, role))
+
+    if not entries:
+        return "No services found"
+
+    lines = [f"Found {len(entries)} top-level services:\n"]
+    for name, path, role in entries:
+        lines.append(f"  [{name.replace('.swift', '')}] {path}")
+        lines.append(f"    {role}")
+    return "\n".join(lines)
+
+
+def _extract_service_role(service_path: Path) -> str:
+    """Extract role hint from a Swift service file — top doc comment or class declaration line."""
+    try:
+        content = service_path.read_text(encoding="utf-8")
+    except Exception as e:
+        return f"(unreadable: {e})"
+
+    # Try top-level doc comment block (/// lines)
+    doc_lines = []
+    for line in content.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("///"):
+            doc_lines.append(stripped.lstrip("/").strip())
+        elif stripped.startswith("//"):
+            # Plain comments, include up to first break
+            doc_lines.append(stripped.lstrip("/").strip())
+        elif doc_lines and stripped and not stripped.startswith("import"):
+            # Hit non-comment non-import; stop
+            break
+
+    if doc_lines:
+        # First non-empty doc line
+        for d in doc_lines:
+            if d:
+                return d[:250]
+
+    # Fall back to first class/struct declaration
+    class_match = re.search(r"^(?:final\s+)?(?:class|struct|actor|enum)\s+(\w+)", content, re.MULTILINE)
+    if class_match:
+        return f"declares {class_match.group(1)}"
+
+    # Fall back to file name
+    return service_path.stem
+
+
+@mcp.tool()
+def get_adr(number: str) -> str:
+    """Fetch a specific ADR by number prefix.
+
+    Scans docs/architecture/ for a file matching the given number prefix
+    (e.g., "013" matches "013-scope-aware-fetch-pattern.md"). Returns the
+    ADR's number, title, status, path, and full content.
+
+    Args:
+        number: The ADR number as a zero-padded string (e.g., "007", "013")
+    """
+    adr_dir = REPO_ROOT / "docs" / "architecture"
+    if not adr_dir.exists():
+        return "No docs/architecture/ directory found"
+
+    # Normalize — accept "7", "07", or "007"
+    normalized = number.strip().zfill(3)
+
+    for adr_file in sorted(adr_dir.glob(f"{normalized}-*.md")):
+        return _format_adr(adr_file)
+
+    # Also try unpadded, since user might pass "7"
+    for adr_file in sorted(adr_dir.glob(f"{number.strip()}-*.md")):
+        return _format_adr(adr_file)
+
+    available = [f.stem for f in sorted(adr_dir.glob("*.md")) if re.match(r"^\d+", f.stem)]
+    return f"No ADR found matching number '{number}'. Available: {', '.join(available)}"
+
+
+def _format_adr(adr_file: Path) -> str:
+    """Format an ADR file for output with extracted metadata."""
+    try:
+        content = adr_file.read_text(encoding="utf-8")
+    except Exception as e:
+        return f"Could not read {adr_file}: {e}"
+
+    # Extract title from first heading
+    title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else adr_file.stem
+
+    # Extract status if declared (e.g., **Status**: SUPERSEDED or Status: Active)
+    status_match = re.search(r"(?:^|\n)\*\*Status\*\*:\s*([^\n]+)", content)
+    if not status_match:
+        status_match = re.search(r"(?:^|\n)Status:\s*([^\n]+)", content)
+    status = status_match.group(1).strip() if status_match else "Active (no explicit status declared)"
+
+    # Extract number
+    number_match = re.match(r"^(\d+)-", adr_file.stem)
+    number = number_match.group(1) if number_match else "?"
+
+    rel_path = f"docs/architecture/{adr_file.name}"
+    return (
+        f"ADR {number}: {title}\n"
+        f"Status: {status}\n"
+        f"File: {rel_path}\n"
+        f"{'=' * 60}\n\n"
+        f"{content}"
+    )
+
+
+@mcp.tool()
+def get_active_work() -> str:
+    """Return parsed extract of current active work — milestone, branch, next action.
+
+    Reads docs/current-story.md (header + active-milestone section) and
+    docs/next-prompt.md (active section). Use to quickly orient to what
+    is being worked on right now without reading the full files.
+    """
+    _ensure_indexed()
+
+    parts = []
+
+    # current-story.md — parse header lines + first ACTIVE section
+    current_story = next((d for d in _documents if d.file_path == "docs/current-story.md"), None)
+    if current_story:
+        parts.append("=== ACTIVE WORK (from current-story.md) ===\n")
+        lines = current_story.content.split("\n")
+        # Header block — first ~10 lines with status / branch / launch path
+        parts.extend(lines[:15])
+        # First ACTIVE: section if present
+        in_active = False
+        active_lines: list[str] = []
+        for line in lines[15:]:
+            if re.match(r"^##\s+ACTIVE:", line):
+                in_active = True
+                active_lines.append(line)
+            elif in_active:
+                if re.match(r"^##\s+", line):
+                    break
+                active_lines.append(line)
+        if active_lines:
+            parts.append("")
+            parts.extend(active_lines[:40])
+
+    # next-prompt.md — first 60 lines (header + Active + first backlog entries)
+    next_prompt = next((d for d in _documents if d.file_path == "docs/next-prompt.md"), None)
+    if next_prompt:
+        parts.append("\n\n=== NEXT PROMPT (from next-prompt.md) ===\n")
+        parts.extend(next_prompt.content.split("\n")[:60])
+
+    if not parts:
+        return "Could not find current-story.md or next-prompt.md in index"
+
+    return "\n".join(parts)
+
+
+@mcp.tool()
 def get_newsletter_context(
     topic: str,
     include_previous: bool = True,

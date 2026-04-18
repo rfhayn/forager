@@ -16,10 +16,13 @@ Create a commit following project conventions.
 
 ## Commit Rules
 
-1. **Detect milestone** from current branch name (e.g., `feature/AUTH-1.3-oauth-callback` → `AUTH-1.3`)
+1. **Detect identifier** from current branch name using `.claude/skills/_shared/milestone-format.sh`:
+   - Legacy M-format: `feature/M9.16-description` → `M9.16` (format: `M`)
+   - New OpenSpec change-id: `feature/architecture-compliance-sweep` → `architecture-compliance-sweep` (format: `kebab`)
+   - The shared utility normalizes both; commit prefix uses whichever format the branch uses.
 2. **Stage specific files** — never use `git add .` or `git add -A` (risk of committing secrets or large binaries)
 3. **Format commit message**:
-   - First line: `PREFIX-#.#: Brief description` (imperative mood, e.g., "Add", "Fix", "Update")
+   - First line: `<identifier>: Brief description` (imperative mood, e.g., "Add", "Fix", "Update")
    - Blank line
    - Bullet points of specific changes
 4. **NO Co-Authored-By line** — this is a project convention
@@ -27,12 +30,20 @@ Create a commit following project conventions.
 
 ## Message Format
 
+Legacy M-format branch:
 ```
-PREFIX-#.#: Brief imperative description
+M9.16: Brief imperative description
 
 - Detail 1
 - Detail 2
-- Detail 3
+```
+
+New OpenSpec change-id branch:
+```
+architecture-compliance-sweep: Brief imperative description
+
+- Detail 1
+- Detail 2
 ```
 
 ## Process
