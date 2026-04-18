@@ -68,6 +68,10 @@ Implement tasks from an OpenSpec change.
 
    For each pending task:
    - Show which task is being worked on
+   - Refresh the branch-keyed status file to reflect the task now in focus:
+     ```bash
+     bash .claude/skills/_shared/status-line.sh write "[<change-id>] task N/M — <short task title>"
+     ```
    - Make the code changes required
    - Keep changes minimal and focused
    - Mark task complete in the tasks file: `- [ ]` → `- [x]`
@@ -84,8 +88,14 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
-   - If paused: explain why and wait for guidance
+   - If all done: suggest archive AND update the status line to reflect readiness:
+     ```bash
+     bash .claude/skills/_shared/status-line.sh write "[<change-id>] all tasks complete — ready to archive"
+     ```
+   - If paused: explain why and wait for guidance; refresh status to describe the blocker:
+     ```bash
+     bash .claude/skills/_shared/status-line.sh write "[<change-id>] paused — <blocker>"
+     ```
 
 **Output During Implementation**
 

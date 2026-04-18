@@ -53,11 +53,11 @@ Format by identifier type:
 Use a single line. The step/phase is optional — include it when a sub-milestone or phase is active.
 
 ```bash
-BRANCH=$(git branch --show-current)
-SLUG=$(echo "$BRANCH" | tr '/' '-')
 # Identifier detected from branch via milestone-format.sh (e.g., M7.7 or architecture-compliance-sweep)
-echo "[<identifier>] <phase-or-feature-name>" > ~/.claude/forager-status-${SLUG}.txt
+bash .claude/skills/_shared/status-line.sh write "[<identifier>] <phase-or-feature-name>"
 ```
+
+The helper derives the branch-slug automatically from `git branch --show-current` and writes to `~/.claude/forager-status-<slug>.txt`. All workflow skills that represent a focus transition use this same helper — see [`CLAUDE.md § Status Line (Focus Sync)`](../../../CLAUDE.md).
 
 ## Step 5: Check Active OpenSpec Changes
 

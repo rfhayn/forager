@@ -129,6 +129,20 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - **010**: Parser confidence routing | **011**: Tab reduction | **012**: GroceryListItem snapshots
 - **013**: Scope-aware fetches + store assignment | **014**: Factory enforcement
 
+## Status Line (Focus Sync)
+
+The status line is a polled script (`.claude/statusline.sh`, ~300ms). It reads `~/.claude/forager-status-<branch-slug>.txt`. Branch switches auto-update via the branch-keyed filename; **focus changes within a branch require an explicit write**.
+
+Rewrite the file whenever focus shifts materially — entering a new phase, switching sub-tasks, moving from build to review, waiting on external state, etc. Use the shared helper:
+
+```bash
+bash .claude/skills/_shared/status-line.sh write "[<identifier>] <short focus>"
+```
+
+Labels follow the same shape as `/session-start` output: `[M7.7] awaiting re-review`, `[architecture-compliance-sweep] phase 1 — views 1–15`, `[main] post-Cluster B — next: scope architecture-compliance-sweep`. Keep labels short; the status bar truncates long lines.
+
+The 6 workflow skills (`/session-start`, `/new-milestone`, `/milestone-complete`, `/commit`, `/opsx:apply`, `/opsx:archive`) all call `status-line.sh write` at their natural transition points. Outside those skills, update the file inline when focus changes materially.
+
 ## Quality Gates
 
 **Stop if:** >5 build errors, >20 min on one issue, breaking existing features, no factory for HouseholdScoped, on main instead of feature branch.

@@ -89,4 +89,11 @@ Bad:
 After committing, automatically run these via Agents (background) for efficiency:
 1. **Journal**: Read the top of `docs/development-journal.md` — if the latest entry doesn't reference today's date or the current milestone, invoke `/dev-journal` via an Agent to update it
 2. **Insights**: Ask the user if there are any unlogged technical insights from this session. If yes, invoke `/log-insight` via an Agent
+3. **Status line**: Check whether the branch-keyed status file still reflects the current focus. If this commit represents a transition (phase complete, sub-task done, moving from build to review), refresh it:
+
+```bash
+bash .claude/skills/_shared/status-line.sh write "[<identifier>] <new focus>"
+```
+
+Typical post-commit transitions: `phase 1 — scaffolding` → `phase 2 — wiring`, or `implementation` → `review / testing`, or after the final commit `ready for PR`.
 
