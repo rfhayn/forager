@@ -1,11 +1,12 @@
 # Current Development Story
 
-**Last Updated**: April 17, 2026
-**Status**: **M7.7 SUBMITTED (rejection round 2 — metadata fix in ASC)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
-**Total Progress**: ~345 hours
-**Current Branch**: `main` (M7.7 + M7.7.1 merged)
-**Launch Path**: M7.7 (App Store submission) | "Designed for iPad" on Mac
-**Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
+**Last Updated**: April 18, 2026
+**Status**: **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Total Progress**: ~353 hours (+~8h post-launch operating-model cleanup)
+**Current Branch**: `main` (post-merge clean)
+**Launch Path**: M7.7 (App Store submission, awaiting re-review) | post-launch roadmap at `docs/project-roadmap.md`
+**Planning**: Three-stream roadmap — [operating-model](roadmaps/operating-model-roadmap.md) / [app-health](roadmaps/app-health-roadmap.md) / [shipping](roadmaps/shipping-roadmap.md). OpenSpec specs in `openspec/specs/` (11 capabilities incl. new `architecture` + `developer-tooling`); archived changes in `openspec/changes/archive/`.
+**Naming**: Forward-only — new work uses OpenSpec change-id kebab-case (see [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md)); historical M#.#.# preserved.
 
 ---
 
@@ -24,7 +25,9 @@
 | **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (6/6 subs complete, pending PR) |
 | **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (4/7 subs complete) |
 | **M9.28** | Remove diagnostic logging for production | 1-2h | COMPLETE (shipped in M7.7 branch) |
-| **M7.7** | App Store submission | 3-5h | SUBMITTED — rejection round 2 (2.3.6 metadata) |
+| **M7.7** | App Store submission | 3-5h | SUBMITTED — rejection round 2 metadata fix replied; awaiting re-review |
+| `seed-operating-model-foundations` | Cluster A — architecture + developer-tooling capability specs, three-stream roadmap, config migration, forward-only naming | 4h | COMPLETE (PR #141, commit `6f31ff5`, 2026-04-18) |
+| `expand-claude-context-infrastructure` | Cluster B — project-brief.md, 4 new MCP tools, dual-format skill utility, CLAUDE.md + memory pointers | 3.5h | COMPLETE (PR #143, commit `96241af`, 2026-04-18) |
 
 ---
 
@@ -320,9 +323,12 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**Phase 1**: Fix Age Rating in App Store Connect — set "Unrestricted Web Access" to Yes (forces 17+). Metadata-only; build 134 unchanged.
-**Phase 2**: Reply to reviewer in Resolution Center. For metadata rejections, reply + ASC update is sufficient — Apple continues the review automatically. No Resubmit click required.
-**Phase 3**: Await review decision.
+**Parallel tracks:**
+
+1. **M7.7 re-review**: metadata reply sent to reviewer (Unrestricted Web Access = Yes, age rating 17+); awaiting Apple decision. No local action.
+2. **Cluster C — `architecture-compliance-sweep`**: first post-launch correctness sweep. PRD at [`architecture-compliance-sweep.md`](prds/active/architecture-compliance-sweep.md). Will be discussed in a **new session** before proposing, per user direction (not auto-proposed here).
+
+**Optional small change (flagged by user)**: `harden-pr-skill-doc-freshness` — extend `/pr` skill to auto-check insights-log and development-journal currency before opening PR. ~1-1.5h. Independent of Cluster C; can slot in anytime.
 
 ---
 
@@ -335,6 +341,6 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ---
 
-**Last Session**: April 17, 2026 — Received rejection round 2 (guideline 2.3.6). Recipe URL import qualifies as unrestricted web access; Age Rating must declare it. Fix is metadata-only in App Store Connect — no binary changes, no rebuild, no new TestFlight upload. Prior session (April 12) shipped M7.7 + M7.7.1 + M9.28 (build 134).
-**Next Action**: Update Age Rating in ASC App Information → reply to reviewer → resubmit.
-**Confidence**: GREEN (trivial fix, reviewer was explicit about the remedy)
+**Last Session**: April 18, 2026 — Applied Cluster A (seed-operating-model-foundations, PR #141) + Cluster B (expand-claude-context-infrastructure, PR #143). Both squash-merged into main. OpenSpec changes archived at `openspec/changes/archive/2026-04-18-*`. `openspec/specs/architecture/` and `openspec/specs/developer-tooling/` are now living capability specs. Three-stream roadmap live at `docs/project-roadmap.md`. Forward-only naming policy in effect; dual-format skill utility at `.claude/skills/_shared/milestone-format.sh` bridges legacy M#.#.# and new change-ids. Planning-heavy day (~8h) that established the operating-model foundation for the remaining post-launch backlog.
+**Next Action**: New session — discuss scoping for `architecture-compliance-sweep` (Cluster C) before `/opsx:propose`.
+**Confidence**: GREEN — operating-model foundation solid, app-health roadmap organized, shipping state stable pending Apple re-review.

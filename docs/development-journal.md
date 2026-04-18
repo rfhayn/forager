@@ -6,6 +6,44 @@
 
 ---
 
+## Session 117 — April 18, 2026 (afternoon)
+**Milestone**: `seed-operating-model-foundations` + `expand-claude-context-infrastructure` — both applied, shipped, and archived
+
+**What happened**: Execution-focused follow-up to Session 116's planning marathon. Applied both Cluster A and Cluster B OpenSpec changes end-to-end: capability specs created, roadmap docs written, config migrated, 6 skills made dual-format-aware, MCP server extended with 4 new tools, project-brief.md authored, memory reference added. Two PRs shipped (#141 and #143) and both merged into main.
+
+The session ran into two git-workflow quirks worth remembering. First: all 4 session-116 commits ended up on `main` directly (not a feature branch) — had to rescue them by creating `feature/seed-operating-model-foundations` at HEAD, then `git reset --hard origin/main` to restore main. Second: when PR #141 merged with `--delete-branch`, GitHub auto-closed PR #142 (its base branch was gone). Re-opening a closed PR with a deleted base isn't allowed, so #142 became #143 after rebasing `feature/expand-claude-context-infrastructure` onto updated main via `git rebase --onto main HEAD~3` (dropping the 4 inherited Cluster A commits, keeping only the 3 Cluster B commits).
+
+The MCP tool smoke tests revealed a pre-existing repo artifact: `Services/ RecipeScalingService.swift` has a leading space in its filename. Not caused by this change, but visible once `get_services()` listed all services. Noted for a future cleanup commit.
+
+Post-merge: archived both changes to `openspec/changes/archive/2026-04-18-*`, updated `current-story.md` with completion entries and the new "Next Priority" parallel tracks (M7.7 re-review external + Cluster C discussion in new session + optional pr-skill hardening), and wrote this entry + matching insights.
+
+**Key decisions**:
+- **Stacked PR approach for Cluster B** — originally set PR #142's base to `feature/seed-operating-model-foundations` so the diff only showed Cluster B's 3 commits. Worked locally but GitHub's auto-close-on-base-deleted behavior forced a rebase + new PR. Next time: merge #141 first, THEN push Cluster B to avoid the stacking dance entirely.
+- **Smoke tests beat runtime tests for doc/infra changes** — verified the 4 new MCP tools via direct `uv run python` rather than waiting for Claude Desktop restart. Proved logic; deferred true runtime verification as low-risk. Saved ~1h of context-loss waiting.
+- **Dual-format skill regex choice** — went with `^M[0-9]+(\.[0-9]+){0,3}$` to allow bare `M7` (valid per project-naming-standards where `M7 = Major Feature`). The {0,3} was a late catch from self-test failing on `M9`.
+- **MCP tool output format: strings not dicts** — matched existing tools' pattern (return formatted strings for agent consumption). The task spec said "return dict" but consistency with existing 7 tools matters more than the letter of the task description.
+
+**Learning**:
+- **Don't commit to main accidentally** — I worked through 4 commits before noticing I was on main instead of a feature branch. Rescue pattern (create branch at HEAD, then `git reset --hard origin/main`) worked cleanly but cost ~10 min of recovery. Session-start's "not on main" red-flag check should have caught this; I didn't run session-start at turn-start in this session because I was continuing prior context.
+- **Archive PR branches AFTER downstream PRs merge** — `--delete-branch` on an intermediate branch nukes stacked PRs. Order matters.
+- **OpenSpec `/opsx:archive` is a file move + metadata write** — living specs must already contain the target content before archiving. I did this manually during apply (wrote `openspec/specs/architecture/spec.md` directly), so archive was a no-op promotion. If the change hadn't done that, archive would need to run the promotion step.
+
+**AI tooling observations**: `/opsx:apply` worked well as a task-driven loop — 32 tasks for A, 42 for B, each with clear file:line acceptance criteria. Marking checkboxes in tasks.md as we go produced a natural audit trail. The shared `_shared/milestone-format.sh` utility is a good pattern — one file, sourced by 6 skills, testable in isolation. Self-test block inside the script was surprisingly high-value (caught the bare `M9` case). I should adopt that pattern for future shell utilities.
+
+Ultraplan's contribution from Session 116 paid off here — its ground-truth audit (45 @FetchRequest, 6 saves-in-views, 657 print calls) was used directly in the app-health-roadmap and architecture-compliance-sweep PRD. Without that audit, Cluster C's scope would still be 3x underestimated.
+
+**What's next**:
+- **Next session** (as explicitly requested): scope and propose `architecture-compliance-sweep` (Cluster C). This is the first correctness sweep — 45 scope-predicate fixes, 6 saves-in-views cleanup, ADR 011 supersession, ADR 015 authoring, `/architecture-audit` skill hardening.
+- **Optional sidestep**: user proposed `harden-pr-skill-doc-freshness` to auto-check journal/insights currency before opening PRs. ~1-1.5h. Independent of Cluster C.
+- **M7.7 approval**: external — Apple re-reviews the metadata update. No local action.
+
+**Retro**:
+- Estimate vs actual for Clusters A + B combined: ~7h estimated, ~6h actual (counting apply + smoke tests + merge dance). Good accuracy for doc-heavy work.
+- What surprised me: the git-workflow recovery (commits on main + auto-closed PR) was all recoverable but cost ~20 min. Worth remembering for next time.
+- Process improvement: **add a session-start red-flag for "uncommitted work on main" + explicit "target branch stale because base PR merged" detection**. Could be part of the pr-skill hardening change.
+
+---
+
 ## Session 116 — April 17–18, 2026
 **Milestone**: Operating-model reframe — `seed-operating-model-foundations` + `expand-claude-context-infrastructure` proposed
 

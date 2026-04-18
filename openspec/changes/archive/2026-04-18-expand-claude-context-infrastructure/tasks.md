@@ -57,6 +57,6 @@
 
 ## 7. Commit
 
-- [ ] 7.1 Stage all changes with `git add` targeting only modified / created paths (avoid `git add -A`)
-- [ ] 7.2 Commit with message `expand-claude-context-infrastructure: add project-brief + 4 MCP tools + dual-format skill support` (imperative mood, no Co-Authored-By)
-- [ ] 7.3 Do not push or create a PR in this change's apply phase — that happens via `/pr` after apply completes, per workflow
+- [x] 7.1 Staged specific paths via `git add` (no `-A`) — 12 files for apply + 1 for smoke-test follow-up + 1 for uv.lock
+- [x] 7.2 Committed as 3 discrete commits: `1948e12` apply, `cdf7c7a` smoke tests, `039350d` uv.lock sync — all with `expand-claude-context-infrastructure:` prefix, no Co-Authored-By. After rebase onto main: `0957049`/`1af9c79`/`0851a69`.
+- [x] 7.3 PR #143 created (replacement for auto-closed #142), squash-merged as `96241af`
