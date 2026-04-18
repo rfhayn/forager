@@ -23,7 +23,7 @@ context: |
   - Ingredient parsing (3-tier local: Regex -> ML -> NLP, optional Claude API)
   - Store-aware shopping (preferred stores, store grouping)
 
-  Naming convention: M#.#.# format for milestones (e.g., M19.4)
+  Naming: forward-only. Historical work uses M#.#.# (see docs/project-naming-standards.md). New changes use descriptive kebab-case IDs (see docs/openspec-workflow-reference.md).
   Design system: ForagerTheme semantic color tokens, SF Pro Rounded chrome
 
 rules:
@@ -35,5 +35,5 @@ rules:
     - "Reference existing services before proposing new ones"
     - "Note factory enforcement requirements for HouseholdScoped entities"
   tasks.md:
-    - "Use M#.#.# identifiers for task grouping"
+    - "Group tasks by change phase (Phase 1 / Phase 2 / ...) rather than by milestone number"
     - "Include build verification step after implementation tasks"
