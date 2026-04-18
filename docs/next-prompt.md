@@ -1,93 +1,72 @@
 # Next Implementation Prompt
 
-**Last Updated**: April 7, 2026
-**Launch Path**: M9.28 → M7.7
+**Last Updated**: April 18, 2026
+**Launch Path**: M7.7 — in App Review (rejection round 2 resolved via ASC metadata fix)
+**Canonical planning reference**: [`docs/project-roadmap.md`](project-roadmap.md) — parent doc with three stream detail docs
+**Naming convention**: forward-only. New work uses OpenSpec change-id kebab-case; legacy M#.#.# preserved for historical artifacts. See [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md).
 
 > **Note**: Per-milestone `next-prompt-M#.#.md` files are now replaced by OpenSpec changes in `openspec/changes/`. Archived milestone prompts are in `docs/archive/`.
 
 ---
 
-## Active Milestones
+## Active
 
-### M18 — Store-Aware Shopping + Recipe Attribution
-See `docs/next-prompt-M18.md` for full implementation guidance.
+### M7.7 — App Store Submission (IN REVIEW)
 
-**All sub-milestones COMPLETE**: M18.1.0, M18.1.1, M18.1.2, M18.1.3, M18.1.4, M10.4.0
-
-### FUI-1 — Dashboard, Navigation, Recipe UI — COMPLETE
-All 7 sub-milestones done (~5.25h actual vs 12-15h estimated).
-**PRD**: `docs/prds/complete/fui-1-dashboard-navigation-recipe-ui.md`
+**PRD**: `docs/prds/active/m7.7-app-store-submission.md`
+**Status**: Submitted build 134. Rejected on 2026-04-17 for guideline 2.3.6 (Age Rating — Unrestricted Web Access = No was inaccurate given recipe URL import). Fix is metadata-only in ASC; no new binary.
+**Next action**: Update Age Rating in App Store Connect (set Unrestricted Web Access = Yes → age rating auto-bumps to 17+), then reply in Resolution Center. Apple continues the review automatically for metadata rejections — no Resubmit click required.
 
 ---
 
-## Planned (Next Up)
+## Post-Launch Backlog
 
-### M9.28 — Remove Diagnostic Logging for Production
+Ordered roughly by priority. See the three-stream roadmap for strategic detail: [`operating-model`](roadmaps/operating-model-roadmap.md), [`app-health`](roadmaps/app-health-roadmap.md), [`shipping`](roadmaps/shipping-roadmap.md).
 
-**PRD**: `docs/prds/active/m9.28-strip-diagnostic-logging.md`
-**Estimated**: 1-2 hours
+### Operating Model (Stream 1)
 
-Gate DiagnosticLogger, DebugLogService behind `#if DEBUG`. Wrap ~106 caller-site `diag.*` and `DebugLogService.shared.log()` calls. Remove Settings > Diagnostics from Release. Keep CloudKitLogger OSLog calls.
+| Change ID | Description | Source |
+|-----------|-------------|--------|
+| `seed-operating-model-foundations` | APPLYING — establishes capability specs + three-stream roadmap + config migration | `openspec/changes/seed-operating-model-foundations/` |
+| `expand-claude-context-infrastructure` | READY — project-brief.md + 4 new MCP tools + dual-format skills | `openspec/changes/expand-claude-context-infrastructure/` |
 
-**Conflict note**: Touches `SettingsView.swift` — run after M18.1.3 lands (also modifies SettingsView).
+### App Health (Stream 2)
 
-Key files:
-- `Services/DiagnosticLogger.swift` — gate entire class
-- `Services/DebugLogService.swift` — gate entire class
-- `Services/Persistence/CloudKitLogger.swift` — gate DiagnosticLogger bridge only
-- `Services/HouseholdService.swift` — 58 `diag.*` calls to wrap
-- `Services/Import/RecipeImportService.swift` — 15 calls
-- `forager/Views/Settings/SettingsView.swift` — gate `diagnosticLogSection`
+| Change ID | Description | Source |
+|-----------|-------------|--------|
+| `architecture-compliance-sweep` | URGENT — ADR 013 scope sweep (45 occurrences in 28 files) + saves-in-views cleanup (6 sites) + ADR 011 supersession + ADR 015 + /architecture-audit hardening | PRD: [`architecture-compliance-sweep.md`](prds/active/architecture-compliance-sweep.md) |
+| `optimize-fetch-performance` | Planned — fetchBatchSize + relationshipKeyPathsForPrefetching | [app-health roadmap](roadmaps/app-health-roadmap.md) |
+| `migrate-to-structured-logging` | Planned — 657 `print()` calls → Logger / DiagnosticLogger | [app-health roadmap](roadmaps/app-health-roadmap.md) |
+| `add-service-test-coverage` | Planned — 8 services missing test files | [app-health roadmap](roadmaps/app-health-roadmap.md) |
+| `harden-service-injection-and-saves` | Planned — singleton removal + saves consolidation | [app-health roadmap](roadmaps/app-health-roadmap.md) |
+| `standardize-service-async-patterns` | Planned — async write methods across 5 services | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 
----
+### Shipping (Stream 3)
 
-### M7.7 — App Store Submission
+| Milestone | Description | PRD |
+|-----------|-------------|-----|
+| M7.7 | App Store submission — IN REVIEW (build 134, metadata fix replied) | `docs/prds/active/m7.7-app-store-submission.md` |
+| M11.1 Tiers 2–3 | Recipe images — local cache + camera. Tier 1 shipped as M10.4.0. | `docs/prds/active/m11.1-recipe-images.md` |
+| FUI-2 | Meal planner calendar grid | (no PRD yet) |
+| M10.7 | USDA ingredient seed dictionary | `docs/prds/active/m10.7-usda-ingredient-seed-dictionary.md` |
+| M18.2 | Multi-store + shopping trips (Phase 2) | (no PRD yet) |
+| M6 | Testing foundation + AI augmentation | `docs/prds/active/milestone-6-testing-foundation-ai-augmentation.md` |
 
-**PRD**: `docs/prds/active/m7.7-app-store-submission.md` (audited April 1, 2026)
-**Estimated**: 3-5h
-
-Screenshots, metadata, landing page, README, App Store Connect, submission. Partly manual (screenshots, App Store Connect configuration). M7.7.1 (landing page) + M7.7.2 (README) can run in parallel. M7.7.3-4 need final build.
-
----
-
-## Parallelism Reference
-
-### Phase 1 — COMPLETE
-All M18 sub-milestones + FUI-1.1, FUI-1.4, FUI-1.5, FUI-1.6 done.
-
-### Phase 2 (now — parallel workers)
-```
-Worker A: FUI-1.2 (search relocation)     READY
-Worker B: FUI-1.3 (settings relocation)   READY
-```
-
-### Phase 3 — FUI-1.7 (Dashboard, ~4-5h, needs FUI-1.2 + FUI-1.3)
-### Phase 4 — Testing + M9.28 (strip logging, after testing)
-### Phase 5 — PR + merge
-### Phase 6 — M7.7 (App Store, last)
+Legacy backlog PRDs retain their M-prefix until picked up into a focused milestone, at which point they are renamed to OpenSpec change-id form (per forward-only policy).
 
 ---
 
-## Completed (Recent)
+## Recently Completed (summaries in `current-story.md`)
 
-### M10.4.0 — Recipe Attribution Wiring
-COMPLETE (April 1, 2026). imageURL + author persisted through both save paths (saveImport + replaceExistingRecipe), createRecipe, duplicateRecipe. 5 unit tests. Commit d5acc1f.
-
-### M18.1.3 — Store Management UI
-COMPLETE (April 1, 2026). ManageStoresView, AddStoreView, ForagerTheme+StoreColors, SettingsView integration, foragerApp StoreService wiring. Commit e9e5307.
-
-### M18.1.0-M18.1.2 — Store Schema + Service + Snapshot Wiring
-COMPLETE (April 1, 2026). Schema v11, StoreService (7 methods, 13 tests), store snapshot in 3 GroceryListItem creation paths.
-
-### M16.9 — ML Model Retraining
-COMPLETE (March 28, 2026). BiLSTM-CRF v2 deployed, parser fixes ported, 3 new test classes. PR #105 merged, build 91.
-
----
-
-## Post-Launch Priorities
-
-- M18.2: Multi-store + shopping trips (Phase 2)
-- FUI-2: Meal planner calendar grid
-- M10.4: Recipe import polish — history, telemetry (deferred)
-- M6: Testing Foundation (12-18h)
-- M9 Remaining (~120h)
+- **M10 Recipe Import** — All 4 phases shipped: URL (JSON-LD + WKWebView), text paste (HeuristicTextExtractor), photo/OCR (ImageOCRService + OCRLineClassifier), LLM (M10.6 Claude API)
+- **M7.x Dev Infra Automation** — Shipped as INFRA-1 (OpenSpec migration, `.claude/skills/`) + M16.1-16.2 (`Tools/mcp-knowledge/`). MCP servers + agents ecosystem operational.
+- **M8.5** — Measurement modifier stripping (heaping/rounded/scant/packed) shipped into `RegexIngredientParser`
+- **M9.35** — Parsing pipeline hardening absorbed into M16 test harness + `IngredientPreprocessor` (all 4 phases effectively shipped or superseded)
+- **M7.7.1** — Shopping list sheet fix + redundant amounts (PR #140)
+- **M7.7** — App Store submission prep, logging strip, meal plan bug (PR #139)
+- **M9.28** — DiagnosticLogger gated behind `#if DEBUG` (shipped in M7.7 branch)
+- **FUI-1** — Dashboard, navigation, recipe UI (8/8 subs, ~5.25h)
+- **M18** — Store-aware shopping + schema v11 (6/6 subs)
+- **M19** — Pre-launch factory enforcement audit
+- **M16.9** — ML model retraining (BiLSTM-CRF v2)
+- **M16** — Parsing test harness

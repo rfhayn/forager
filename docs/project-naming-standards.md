@@ -4,6 +4,16 @@
 
 ---
 
+## Forward-Only Migration Notice (2026-04-18)
+
+For **new work**, consult [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md) as the authoritative source for naming and workflow. New OpenSpec changes use descriptive kebab-case change IDs (e.g., `architecture-compliance-sweep`, `migrate-to-structured-logging`) rather than `M#.#.#` milestone numbers.
+
+The M#.#.# specification below remains correct for **historical work**: archived PRDs, git history, ADR references, journal entries, active backlog PRDs not yet picked up, and in-flight legacy branches (e.g., M7.7 launch work). Forward-only policy — no retroactive renames.
+
+See `openspec/specs/architecture/spec.md` for the cross-cutting architectural rules that both naming eras share, and `openspec/specs/developer-tooling/spec.md` for the workflow skills that accept both formats during the transition.
+
+---
+
 ## Quick Reference Card
 
 ### Naming Format
