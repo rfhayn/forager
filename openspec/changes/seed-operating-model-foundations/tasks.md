@@ -47,6 +47,6 @@
 
 ## 7. Commit
 
-- [ ] 7.1 Stage all changes with `git add` targeting only modified / created paths (avoid `git add -A`)
-- [ ] 7.2 Commit with message `seed-operating-model-foundations: establish architecture + developer-tooling specs and three-stream roadmap` (imperative mood, no Co-Authored-By)
-- [ ] 7.3 Do not push or create a PR in this change's apply phase — that happens via `/pr` after apply completes, per workflow
+- [x] 7.1 Stage all changes with `git add` targeting only modified / created paths (avoid `git add -A`) — staged 41 paths
+- [x] 7.2 Commit with message `seed-operating-model-foundations: establish architecture + developer-tooling specs and three-stream roadmap` (imperative mood, no Co-Authored-By) — commit `039521d`
+- [x] 7.3 Do not push or create a PR in this change's apply phase — that happens via `/pr` after apply completes, per workflow
