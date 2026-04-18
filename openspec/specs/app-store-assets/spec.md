@@ -21,6 +21,10 @@ Web presence and documentation required for App Store submission: privacy policy
   - Scenario: Given the user opens the listing document, Then it contains: app name (30 chars), subtitle (30 chars max), description (4000 chars max), keywords (100 chars max), category, copyright, support URL, privacy policy URL, and marketing URL.
   - Scenario: Given the user follows the submission checklist, Then it covers: screenshots guidance, privacy nutrition label answers, age rating answers, pricing, app review notes, build selection, and submission steps.
 
+- REQ-006: The Age Rating declaration SHALL answer "Yes" to "Unrestricted Web Access" because the recipe import feature fetches user-supplied URLs.
+  - Scenario: Given the Age Rating questionnaire is being answered, Then "Unrestricted Web Access" is set to "Yes" and the resulting age rating is 17+.
+  - Scenario: Given the listing document describes the Age Rating, Then it explicitly calls out that "Unrestricted Web Access: Yes" is required and explains why (recipe URL import), with a reference to the 2026-04-17 rejection (guideline 2.3.6) that established this requirement.
+
 - REQ-005: The app's Info.plist SHALL contain `ITSAppUsesNonExemptEncryption` set to `false`.
   - Scenario: Given the Info.plist is checked, Then `ITSAppUsesNonExemptEncryption` is already `false`.
 

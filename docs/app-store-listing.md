@@ -15,7 +15,7 @@
 | **Primary Category** | Food & Drink |
 | **Secondary Category** | Productivity |
 | **Copyright** | 2026 Rich Hayn |
-| **Age Rating** | 4+ |
+| **Age Rating** | 17+ (required — recipe URL import = Unrestricted Web Access) |
 | **Price** | Free |
 
 ### URLs
@@ -104,8 +104,9 @@ Note: This covers the optional Claude API ingredient parsing. CloudKit data is e
 
 ### Age Rating Questionnaire
 
-- [ ] All questions: **None** / **No**
-- [ ] Expected result: **4+**
+- [ ] Content questions (violence, sexual content, profanity, etc.): **None** / **No**
+- [ ] **Unrestricted Web Access: Yes** — required because the recipe URL import feature fetches user-supplied URLs. Answering No here was the cause of the 2026-04-17 rejection (guideline 2.3.6).
+- [ ] Expected result: **17+** (mandatory once Unrestricted Web Access = Yes; not negotiable without restricting URL import to an allowlist)
 
 ### Pricing
 

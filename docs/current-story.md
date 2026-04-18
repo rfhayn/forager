@@ -1,9 +1,9 @@
 # Current Development Story
 
-**Last Updated**: April 12, 2026
-**Status**: **M7.7 + M9.28 ACTIVE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Last Updated**: April 17, 2026
+**Status**: **M7.7 SUBMITTED (rejection round 2 — metadata fix in ASC)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
 **Total Progress**: ~345 hours
-**Current Branch**: `feature/M7.7-app-store-submission`
+**Current Branch**: `main` (M7.7 + M7.7.1 merged)
 **Launch Path**: M7.7 (App Store submission) | "Designed for iPad" on Mac
 **Planning**: OpenSpec specs in `openspec/specs/`, active changes in `openspec/changes/`
 
@@ -23,8 +23,8 @@
 | **M9.26** | Launch prep bug fixes (rounds 2-4) | 2-4h | COMPLETE (PRs #94-99) |
 | **M18** | Store-aware shopping + recipe attribution (schema v11) | 7-10h | ACTIVE (6/6 subs complete, pending PR) |
 | **FUI-1** | Dashboard, navigation restructuring, recipe UI | 12-15h | ACTIVE (4/7 subs complete) |
-| **M9.28** | Remove diagnostic logging for production | 1-2h | PLANNED |
-| **M7.7** | App Store submission | 3-5h | PLANNED |
+| **M9.28** | Remove diagnostic logging for production | 1-2h | COMPLETE (shipped in M7.7 branch) |
+| **M7.7** | App Store submission | 3-5h | SUBMITTED — rejection round 2 (2.3.6 metadata) |
 
 ---
 
@@ -190,10 +190,10 @@ Household auto-discovers in ~6 seconds after reinstall (attempt 3/30 of polling 
 
 ---
 
-## PLANNED: M9.28 — Remove Diagnostic Logging for Production
+## COMPLETE: M9.28 — Remove Diagnostic Logging for Production
 
-**PRD**: `docs/prds/active/m9.28-strip-diagnostic-logging.md`
-**Estimated**: 1-2 hours. Gate DiagnosticLogger, DebugLogService, and CloudKitLogger behind `#if DEBUG`. Wrap ~106 caller-site log calls. Remove Settings > Diagnostics section from Release builds. Keep CloudKitLogger's OSLog calls (production-appropriate).
+**Status**: COMPLETE (shipped in M7.7 branch, commit c5c404b)
+DiagnosticLogger + DebugLogService gated behind `#if DEBUG` with no-op Release stubs. Settings > Diagnostics section hidden in Release builds. CloudKitLogger's OSLog calls retained (production-appropriate).
 
 ---
 
@@ -320,12 +320,21 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 ## Next Priority
 
-**Phase 1**: Merge M7.7 PR (App Store assets + M9.28 logging strip).
-**Phase 2**: Archive + upload final build to TestFlight.
-**Phase 3**: Take screenshots on iPhone Pro Max, enter metadata in ASC, submit for review.
+**Phase 1**: Fix Age Rating in App Store Connect — set "Unrestricted Web Access" to Yes (forces 17+). Metadata-only; build 134 unchanged.
+**Phase 2**: Reply to reviewer in Resolution Center. For metadata rejections, reply + ASC update is sufficient — Apple continues the review automatically. No Resubmit click required.
+**Phase 3**: Await review decision.
 
 ---
 
-**Last Session**: April 12, 2026 — M7.7 + M9.28 combined into single branch. Privacy policy updated with Claude API disclosure. Landing page created. README rewritten with current stats. App Store listing copy drafted. DiagnosticLogger + DebugLogService gated behind `#if DEBUG` with no-op Release stubs. Both Debug and Release builds verified.
-**Next Action**: Merge PR, archive final build, take screenshots, submit to App Store.
-**Confidence**: GREEN
+## App Store Rejection History
+
+| Round | Date | Guideline | Issue | Resolution |
+|-------|------|-----------|-------|------------|
+| 1 | (prior) | — | — | — |
+| 2 | 2026-04-17 | 2.3.6 Accurate Metadata | Age Rating missing "Unrestricted Web Access" = Yes (recipe URL import qualifies) | Metadata-only fix in ASC; build 134 unchanged. Age rating auto-bumps to 17+. Reply in Resolution Center + ASC update is sufficient for metadata rejections — Apple continues review without explicit Resubmit. |
+
+---
+
+**Last Session**: April 17, 2026 — Received rejection round 2 (guideline 2.3.6). Recipe URL import qualifies as unrestricted web access; Age Rating must declare it. Fix is metadata-only in App Store Connect — no binary changes, no rebuild, no new TestFlight upload. Prior session (April 12) shipped M7.7 + M7.7.1 + M9.28 (build 134).
+**Next Action**: Update Age Rating in ASC App Information → reply to reviewer → resubmit.
+**Confidence**: GREEN (trivial fix, reviewer was explicit about the remedy)
