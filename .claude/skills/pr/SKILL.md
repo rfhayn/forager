@@ -16,13 +16,21 @@ Create a PR following project conventions.
 
 ## PR Conventions
 
+### Identifier Detection
+
+Detect branch identifier via `.claude/skills/_shared/milestone-format.sh`. Supports both legacy `M#.#.#` and new OpenSpec `<verb>-<kebab>` change-ids. Title prefix uses whichever format the branch uses.
+
 ### Title Format
 ```
-PREFIX-#.#: Brief Descriptive Title
+<identifier>: Brief Descriptive Title
 ```
 - Under 70 characters
-- Milestone prefix from branch name
+- Identifier extracted from branch name
 - Descriptive, not vague
+
+Examples:
+- Legacy: `M9.16: Unified GroceryListItemService`
+- New OpenSpec: `architecture-compliance-sweep: Align code with ADR 013 and service-layer pattern`
 
 ### Body Template
 
@@ -45,7 +53,7 @@ PREFIX-#.#: Brief Descriptive Title
 - Actual: Y hours
 
 ## Next
-PREFIX-#.#: [Next milestone in priority queue]
+<next-identifier>: [Next milestone/change in priority queue]
 ```
 
 ## Pre-PR Review (recommended)

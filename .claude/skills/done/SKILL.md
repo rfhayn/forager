@@ -37,7 +37,7 @@ If the user says skip, jump to Step 6 (release) — they're done with the sessio
 
 ## Step 5: Milestone Complete
 
-Run `/milestone-complete [PREFIX-#.#]` to:
+Run `/milestone-complete [<identifier>]` (accepts both legacy `M#.#.#` and new OpenSpec change-ids via shared utility at `.claude/skills/_shared/milestone-format.sh`) to:
 - Update `docs/current-story.md` with completion
 - Clean up the branch-specific next-prompt file
 - Update the priority queue
