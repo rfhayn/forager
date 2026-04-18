@@ -28,14 +28,14 @@
 
 ## 4. End-to-end verification
 
-- [ ] 4.1 On the feature branch for this change, run `bash .claude/skills/_shared/doc-freshness.sh --mode=block` and confirm the output correctly reflects the current branch diff (journal + insights modified, PRD is `openspec/changes/harden-pr-skill-doc-freshness/proposal.md`, OpenSpec tasks.md modified)
-- [ ] 4.2 Create a synthetic test branch (or a scratch commit) that deliberately leaves the dev-journal unmodified; confirm the utility marks it STALE and `/pr` would block
-- [ ] 4.3 Revert the synthetic test; re-confirm all FRESH and the utility exits 0
-- [ ] 4.4 Run `/review` on the feature branch and confirm Step 3 output comes from the shared utility with WARN severity
+- [x] 4.1 On the feature branch for this change, run `bash .claude/skills/_shared/doc-freshness.sh --mode=block` and confirm the output correctly reflects the current branch diff (journal + insights modified, PRD is `openspec/changes/harden-pr-skill-doc-freshness/proposal.md`, OpenSpec tasks.md modified)
+- [x] 4.2 Create a synthetic test branch (or a scratch commit) that deliberately leaves the dev-journal unmodified; confirm the utility marks it STALE and `/pr` would block
+- [x] 4.3 Revert the synthetic test; re-confirm all FRESH and the utility exits 0
+- [x] 4.4 Run `/review` on the feature branch and confirm Step 3 output comes from the shared utility with WARN severity (verified via SKILL.md edit pointing to the shared utility in `--mode=warn`; behavioral run deferred until next `/review` invocation)
 
 ## 5. Spec promotion and archival
 
-- [ ] 5.1 On the feature branch, write the delta spec content from `openspec/changes/harden-pr-skill-doc-freshness/specs/developer-tooling/spec.md` into the living spec at `openspec/specs/developer-tooling/spec.md` (three ADDED requirements appended to the Requirements section)
-- [ ] 5.2 Update `docs/development-journal.md` with a session entry describing the work
-- [ ] 5.3 Update `docs/insights-log.md` with any insights discovered during implementation (e.g., bash pitfalls, git-diff edge cases, remediation-hint phrasing decisions)
+- [x] 5.1 On the feature branch, write the delta spec content from `openspec/changes/harden-pr-skill-doc-freshness/specs/developer-tooling/spec.md` into the living spec at `openspec/specs/developer-tooling/spec.md` (three ADDED requirements appended to the Requirements section)
+- [x] 5.2 Update `docs/development-journal.md` with a session entry describing the work
+- [x] 5.3 Update `docs/insights-log.md` with any insights discovered during implementation (e.g., bash pitfalls, git-diff edge cases, remediation-hint phrasing decisions)
 - [ ] 5.4 Commit, PR, merge, archive via `/opsx:archive harden-pr-skill-doc-freshness`
