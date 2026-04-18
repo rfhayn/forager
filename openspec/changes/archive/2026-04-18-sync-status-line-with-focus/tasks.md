@@ -29,8 +29,8 @@
 
 ## Phase 5 — Ship
 
-- [ ] Journal entry (Session 119)
-- [ ] Insights log entry
-- [ ] Commit
-- [ ] PR
-- [ ] Archive via `/opsx:archive` after merge
+- [x] Journal entry (Session 119)
+- [x] Insights log entry
+- [x] Commit (05d966b on feature/sync-status-line-with-focus)
+- [x] PR #145 — squash-merged to main as e46ee25
+- [x] Archive via `/opsx:archive` after merge
