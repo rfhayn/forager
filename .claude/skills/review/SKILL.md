@@ -33,12 +33,15 @@ Result: PASS if all commits comply, WARN for minor issues, FAIL for missing pref
 
 ## Step 3: Documentation Currency
 
-If a milestone was detected from the branch:
+Run the shared freshness utility in warn mode and relay its output as WARN findings:
 
-- [ ] `docs/development-journal.md` has an entry dated today or within the last 2 days — **WARN** if not
-- [ ] `docs/current-story.md` references the active milestone — **WARN** if not found
-- [ ] `docs/next-prompt-[milestone].md` exists for the milestone — **WARN** if missing
-- [ ] `docs/insights-log.md` was modified in this branch — **INFO** (noted, not a failure)
+```bash
+bash .claude/skills/_shared/doc-freshness.sh --mode=warn
+```
+
+The utility reports on four doc families (dev journal, insights log, PRD, OpenSpec change) using `git diff main...HEAD --name-only` as the freshness signal. In warn mode, the utility always exits 0 — continue the review regardless of staleness. Any STALE family is a WARN finding in the Documentation line of the final report.
+
+`/pr` runs the same utility in block mode, so staleness flagged here will block a subsequent `/pr` invocation until the user commits doc updates.
 
 ## Step 6: Code Quality
 

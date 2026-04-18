@@ -56,9 +56,28 @@ Examples:
 <next-identifier>: [Next milestone/change in priority queue]
 ```
 
-## Pre-PR Review (recommended)
+## Documentation Freshness Check (blocking)
 
-Consider running `/review` before creating the PR to check for naming convention compliance, documentation currency, and code quality. This is advisory, not blocking.
+Before any PR is created, `/pr` MUST run the shared documentation-freshness utility:
+
+```bash
+bash .claude/skills/_shared/doc-freshness.sh --mode=block
+```
+
+The utility checks four doc families against `git diff main...HEAD --name-only`:
+
+- `docs/development-journal.md` — must be modified
+- `docs/insights-log.md` — must be modified
+- **PRD** (`docs/prds/active/<id>*.md` OR `openspec/changes/<id>/proposal.md`) — must exist AND be modified
+- **OpenSpec change** (`openspec/changes/<id>/tasks.md`) — must be modified if the change dir exists; otherwise SKIP
+
+If the utility exits non-zero, STOP. Do not run `gh pr create`. Relay the utility's report verbatim to the user along with the remediation hints. The user fixes the stale docs, commits them, and re-runs `/pr`. There is no bypass flag.
+
+If the utility exits zero, proceed to Process.
+
+## Optional pre-PR quality review
+
+`/review` runs additional checks (naming conventions, code quality, secret scanning). Not required by this skill; run it separately if desired.
 
 ## Process
 
@@ -70,7 +89,5 @@ Consider running `/review` before creating the PR to check for naming convention
 
 ## Post-PR Reminders
 
-- Verify `docs/insights-log.md` is current
-- Verify `docs/development-journal.md` has session entry
 - After merge: update local main, delete feature branch
 
