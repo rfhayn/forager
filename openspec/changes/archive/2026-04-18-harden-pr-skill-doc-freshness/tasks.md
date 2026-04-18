@@ -38,4 +38,4 @@
 - [x] 5.1 On the feature branch, write the delta spec content from `openspec/changes/harden-pr-skill-doc-freshness/specs/developer-tooling/spec.md` into the living spec at `openspec/specs/developer-tooling/spec.md` (three ADDED requirements appended to the Requirements section)
 - [x] 5.2 Update `docs/development-journal.md` with a session entry describing the work
 - [x] 5.3 Update `docs/insights-log.md` with any insights discovered during implementation (e.g., bash pitfalls, git-diff edge cases, remediation-hint phrasing decisions)
-- [ ] 5.4 Commit, PR, merge, archive via `/opsx:archive harden-pr-skill-doc-freshness`
+- [x] 5.4 Commit, PR, merge, archive via `/opsx:archive harden-pr-skill-doc-freshness`
