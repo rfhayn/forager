@@ -95,7 +95,17 @@ Then add a pointer line in `docs/next-prompt.md` under **Active Milestones**:
 - If PRD exists and is >2 weeks old, audit it against current codebase
 - If no PRD exists and milestone is >6 hours, consider creating one
 
-## Step 6: Initial Commit
+## Step 6: Write Status Line
+
+Write the initial status label for the new branch. The status-line helper derives the branch-slug from the current branch, so no manual slugging needed:
+
+```bash
+bash .claude/skills/_shared/status-line.sh write "[<identifier>] setup"
+```
+
+Update with a more specific focus (e.g., `"[<identifier>] phase 1 — scaffolding"`) as soon as work on the first phase begins.
+
+## Step 7: Initial Commit
 
 ```bash
 git add docs/current-story.md docs/next-prompt.md docs/next-prompt-[milestone].md
@@ -110,4 +120,5 @@ git push
 - [ ] current-story.md updated with ACTIVE status
 - [ ] `docs/next-prompt-[milestone].md` created with implementation guidance
 - [ ] `docs/next-prompt.md` has pointer to branch-specific file under Active Milestones
+- [ ] Branch-keyed status file written via `status-line.sh write`
 - [ ] Initial commit pushed to remote

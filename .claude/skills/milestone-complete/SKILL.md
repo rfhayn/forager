@@ -55,11 +55,13 @@ Invoke `/dev-journal` via an Agent (background) to write the milestone completio
 
 ## Cleanup
 
-- Remove the branch-keyed status file:
+- Update the branch-keyed status file to reflect completion (do not delete — the file is the record of what this branch *was*; deleting it causes the status line to fall back to branch-name parsing and lose the focus label):
+
 ```bash
-SLUG=$(git branch --show-current | tr '/' '-')
-rm -f ~/.claude/forager-status-${SLUG}.txt
+bash .claude/skills/_shared/status-line.sh write "[<identifier>] COMPLETE — awaiting merge"
 ```
+
+If the PR has merged and the branch has been deleted locally, the status file becomes orphaned (harmless) and can be removed at leisure. For active branches kept around post-merge, leave the status file in place.
 
 ## Retrospective (mandatory)
 

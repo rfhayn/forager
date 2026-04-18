@@ -6,6 +6,39 @@
 
 ---
 
+## Session 119 — April 18, 2026 (late evening)
+**Change**: `sync-status-line-with-focus` — proposed retroactively, applied, awaiting PR
+
+**What happened**: User asked how to get the status bar to update every time the branch changes or the focus item changes. The bar had just displayed `[main] post-Cluster B — next: scope architecture-compliance-sweep` after `/session-start` and the user wanted that quality of label to persist. Explained the split: branch changes already auto-update (branch-keyed filenames + polled script), focus changes within a branch don't. Recommended a behavioral rule (CLAUDE.md) paired with skill wiring; rejected the PostToolUse-hook alternative as heuristic-heavy. User approved; built it out in auto mode.
+
+Implemented a shared helper `_shared/status-line.sh` mirroring the `milestone-format.sh` / `doc-freshness.sh` conventions — subcommand dispatch (`write` / `path` / `--test`), sourceable `write_status` function, `mkdir -p` to be fresh-machine-safe, self-test passes. Added a "Status Line (Focus Sync)" section to CLAUDE.md. Wired six workflow skills to call the helper at their natural transition points: `/session-start` (initial label), `/new-milestone` (setup), `/milestone-complete` (COMPLETE — awaiting merge, replacing the `rm -f` cleanup), `/commit` (post-commit refresh on transitions), `/opsx:apply` (per-task label), `/opsx:archive` (archived — ready for PR). Dogfooded by writing `[sync-status-line-with-focus] implementing — 6 tasks done, self-test passes` to the branch's own status file mid-session.
+
+The retroactive OpenSpec change (proposal + design + tasks + delta spec to developer-tooling) happened because the `harden-pr-skill-doc-freshness` gate — shipped in the previous session — flagged the missing PRD and blocked `/pr`. That is exactly the enforcement loop the gate was built to close: the very next change after the gate shipped got caught by it, and the fix was to do the docs properly, not bypass. Working as intended.
+
+**Key decisions**:
+- **Rewrite the status file on completion, don't delete it.** The original `/milestone-complete` had `rm -f` cleanup, which made the bar regress to raw-branch-name fallback at the moment work finished — losing the rich label. Rewriting to "COMPLETE — awaiting merge" preserves the narrative. The file costs a few bytes.
+- **Behavioral rule + skill wiring beat a hook.** A `PostToolUse` hook could theoretically rewrite the file from commit messages or task-tool signals, but the heuristics drift and debugging is annoying. The shared primitive + "when focus shifts, write the file" rule is simpler and more honest about whose responsibility it is.
+- **Labels are free-form.** The helper deliberately does NOT validate labels against `milestone-format.sh`. Legitimate labels include `[main] post-Cluster B — next: …` where `main` isn't a valid identifier; forcing the prefix to be a known change-id would block those.
+- **Scope boundary: 6 skills, not all of them.** `/pr`, `/done`, `/build`, `/release-prep`, `/dev-journal`, `/log-insight` don't represent focus transitions — they're chain-callers or orthogonal. Keeping the list small avoids redundant writes.
+
+**Learning**:
+- **The polling-script + branch-keyed-file pattern is elegant because it's composable.** Branch changes auto-refresh for free — the filename IS the key, no additional logic needed. Focus changes are the orthogonal half, and solving them with a shared primitive (rather than embedding write-logic in the polling script itself) keeps the polling script simple and the write-logic distributed to wherever semantic focus actually lives (the skills).
+- **Retroactive OpenSpec is fine when the implementation precedes the proposal.** The shape of the work was clear enough from the user's approval that jumping straight to implementation was correct. Writing the proposal / design / tasks / spec delta *after* the fact took ~10 minutes and is a faithful record of the decision tree. What's important is that the artifacts exist and describe the shipped state accurately — not that they were written in a particular order.
+- **Doc-freshness gate is earning its keep.** It caught a missing PRD + stale journal + stale insights within 24 hours of shipping. The warning-mode output explicitly pointed at the two remediation options (PRD file vs. OpenSpec proposal) — chose proposal because of the precedent and because the work fits the capability-spec model cleanly.
+
+**AI tooling observations**: Auto mode worked well here. The user said "i'm good with your recommendation" and then invoked `/commit /pr` directly — clear signal to execute, not deliberate. Task list tracking (TaskCreate/TaskUpdate) kept the 6-file wiring sweep legible; marking each task completed in real time made it easy to see what remained. The doc-freshness gate firing was a productive interruption — it forced the retroactive proposal I would have skipped otherwise, and the result is a better artifact trail.
+
+**What's next**:
+- Commit, run `/pr` to trigger the doc-freshness gate (should pass now), merge, `/opsx:archive sync-status-line-with-focus`.
+- Back to Cluster C scoping (`architecture-compliance-sweep`) in a subsequent session, as originally planned.
+
+**Retro**:
+- Estimate vs actual: ~45 min implementation + ~15 min retroactive OpenSpec + journal/insight = ~1h total. No prior estimate since this was reactive.
+- What surprised me: the doc-freshness gate fired on the *very next change* after shipping. The user's insight that "architectural patterns without mechanical enforcement accumulate drift" now has a second data point — *process patterns without enforcement also drift, and enforcement pays off immediately*.
+- Process improvement: the `harden-pr-skill-doc-freshness` → `sync-status-line-with-focus` sequence was an unintentional dogfood test — shipping a gate, then shipping a change that would have previously slipped past it. That pattern (land enforcement, then ship the next thing without special-casing) is worth remembering as a deliberate validation move.
+
+---
+
 ## Session 118 — April 18, 2026 (evening)
 **Milestone**: `harden-pr-skill-doc-freshness` — proposed, applied, awaiting PR
 

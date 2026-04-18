@@ -91,6 +91,20 @@ Archive a completed change in the experimental workflow.
    - Whether specs were synced (if applicable)
    - Note about any warnings (incomplete artifacts/tasks)
 
+7. **Refresh the status line**
+
+   Archiving marks the change as shipped. Update the branch-keyed status file so the bar reflects the new state:
+
+   ```bash
+   bash .claude/skills/_shared/status-line.sh write "[<change-id>] archived — ready for PR"
+   ```
+
+   If the archive was invoked from `main` (post-merge cleanup for someone else's change), set a forward-looking label instead:
+
+   ```bash
+   bash .claude/skills/_shared/status-line.sh write "[main] <change-id> archived — next: <upcoming work or 'awaiting next'>"
+   ```
+
 **Output On Success**
 
 ```
