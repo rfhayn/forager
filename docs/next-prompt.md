@@ -27,8 +27,9 @@ Ordered roughly by priority. See the three-stream roadmap for strategic detail: 
 
 | Change ID | Description | Source |
 |-----------|-------------|--------|
-| `seed-operating-model-foundations` | APPLYING — establishes capability specs + three-stream roadmap + config migration | `openspec/changes/seed-operating-model-foundations/` |
-| `expand-claude-context-infrastructure` | READY — project-brief.md + 4 new MCP tools + dual-format skills | `openspec/changes/expand-claude-context-infrastructure/` |
+| `seed-operating-model-foundations` | COMPLETE (PR #141) — capability specs + three-stream roadmap + config migration | `openspec/changes/archive/2026-04-18-seed-operating-model-foundations/` |
+| `expand-claude-context-infrastructure` | COMPLETE (PR #143) — project-brief.md + 4 new MCP tools + dual-format skills | `openspec/changes/archive/2026-04-18-expand-claude-context-infrastructure/` |
+| `harden-pr-skill-doc-freshness` | COMPLETE (PR #144) — mandatory doc-freshness gate in `/pr`; shared utility with `/review` | `openspec/changes/archive/2026-04-18-harden-pr-skill-doc-freshness/` |
 
 ### App Health (Stream 2)
 

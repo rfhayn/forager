@@ -1,9 +1,9 @@
 # Current Development Story
 
 **Last Updated**: April 18, 2026
-**Status**: **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
-**Total Progress**: ~353 hours (+~8h post-launch operating-model cleanup)
-**Current Branch**: `main` (post-merge clean)
+**Status**: **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Total Progress**: ~354.25 hours (+~1.25h for harden-pr-skill-doc-freshness)
+**Current Branch**: `feature/harden-pr-skill-doc-freshness` (PR #144 open, awaiting merge)
 **Launch Path**: M7.7 (App Store submission, awaiting re-review) | post-launch roadmap at `docs/project-roadmap.md`
 **Planning**: Three-stream roadmap — [operating-model](roadmaps/operating-model-roadmap.md) / [app-health](roadmaps/app-health-roadmap.md) / [shipping](roadmaps/shipping-roadmap.md). OpenSpec specs in `openspec/specs/` (11 capabilities incl. new `architecture` + `developer-tooling`); archived changes in `openspec/changes/archive/`.
 **Naming**: Forward-only — new work uses OpenSpec change-id kebab-case (see [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md)); historical M#.#.# preserved.
@@ -28,6 +28,7 @@
 | **M7.7** | App Store submission | 3-5h | SUBMITTED — rejection round 2 metadata fix replied; awaiting re-review |
 | `seed-operating-model-foundations` | Cluster A — architecture + developer-tooling capability specs, three-stream roadmap, config migration, forward-only naming | 4h | COMPLETE (PR #141, commit `6f31ff5`, 2026-04-18) |
 | `expand-claude-context-infrastructure` | Cluster B — project-brief.md, 4 new MCP tools, dual-format skill utility, CLAUDE.md + memory pointers | 3.5h | COMPLETE (PR #143, commit `96241af`, 2026-04-18) |
+| `harden-pr-skill-doc-freshness` | Mechanical doc-freshness gate in `/pr`; shared utility with `/review`; first enforcement of "update the journal before PR" | 1–1.5h | COMPLETE (PR #144, 2026-04-18) |
 
 ---
 
@@ -328,7 +329,7 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 1. **M7.7 re-review**: metadata reply sent to reviewer (Unrestricted Web Access = Yes, age rating 17+); awaiting Apple decision. No local action.
 2. **Cluster C — `architecture-compliance-sweep`**: first post-launch correctness sweep. PRD at [`architecture-compliance-sweep.md`](prds/active/architecture-compliance-sweep.md). Will be discussed in a **new session** before proposing, per user direction (not auto-proposed here).
 
-**Optional small change (flagged by user)**: `harden-pr-skill-doc-freshness` — extend `/pr` skill to auto-check insights-log and development-journal currency before opening PR. ~1-1.5h. Independent of Cluster C; can slot in anytime.
+~~**Optional small change (flagged by user)**: `harden-pr-skill-doc-freshness`~~ — SHIPPED in PR #144 (2026-04-18). Mandatory doc-freshness gate now installed in `/pr`; same utility backs `/review` Step 3 in warn mode.
 
 ---
 

@@ -6,6 +6,36 @@
 
 ---
 
+## Session 118 — April 18, 2026 (evening)
+**Milestone**: `harden-pr-skill-doc-freshness` — proposed, applied, awaiting PR
+
+**What happened**: Short single-purpose session to install a mechanical documentation-freshness gate in `/pr`. Started in explore mode, landed on four design decisions (branch-diff signal, strict missing-PRD, no bypass, shared utility across `/pr` + `/review`), proposed the change, created the OpenSpec artifacts (proposal/design/specs/tasks), branched, and implemented. Core of the change is a new `.claude/skills/_shared/doc-freshness.sh` that checks four doc families — dev journal, insights log, PRD, OpenSpec change — against `git diff main...HEAD --name-only` and exits non-zero on any staleness when invoked with `--mode=block`. `/pr` SKILL.md now calls it as a mandatory gate before `gh pr create`; `/review` Step 3 calls the same utility with `--mode=warn` so both skills share one truth.
+
+The utility embeds a `--test` block — same pattern as `milestone-format.sh` — with synthetic fixtures covering all four families in FRESH/STALE/SKIP states plus the invalid-identifier path. Twelve cases, all pass.
+
+**Key decisions** (all locked during explore mode):
+- **Branch-diff as freshness signal**, not mtime or content-mention. Mechanical; answers "did I update this while doing this work?"
+- **Missing PRD = FAIL** (strict). User explicitly chose strict over glob-and-skip. Every branch must have a PRD — even 1-hour changes. This change's own PRD is its proposal.md, which satisfies the check.
+- **No bypass flag.** `/pr --skip-doc-check` was considered and rejected. Escape hatches become drift.
+- **Shared utility between `/pr` and `/review`**. Same playbook as `milestone-format.sh` from Cluster B.
+
+**Learning**:
+- **The insights-log April-18 entry prophesied this change**: *"Architectural patterns without mechanical enforcement accumulate drift proportional to time-since-adoption."* That was written about ADR 013; it applies just as well to process rules. Advisory `/pr` reminders had drifted for weeks. Making the check mandatory takes "remember to update the journal" out of working memory and puts it into the tool surface.
+- **Remediation-hint phrasing matters**. Initial implementation tacked the full reason string ("<path> not modified in branch diff") into the remediation line. Fixed to strip the suffix and present just the path.
+- **Separating pure check functions from I/O pays off for self-test**. The four `check_*` functions take `(identifier, diff_list)` as args and echo `STATUS|reason` — pure enough to exercise from a temp-dir test harness without touching git. Bash makes the pattern awkward (heredocs for multi-value returns) but the payoff is test isolation.
+
+**AI tooling observations**: The `/opsx:explore` → `/opsx:propose` → `/opsx:apply` chain worked smoothly for a surgical change. Explore-mode questions (4 design tradeoffs) led directly into lock decisions; propose generated artifacts matching those decisions exactly; apply worked task-by-task with no ambiguity. This is the minimum unit of work the OpenSpec workflow was built for — small enough to be one session, well-scoped, with a clean spec delta.
+
+**What's next**:
+- Commit, run the utility for end-to-end verification, PR, merge, archive.
+- Next significant work remains `architecture-compliance-sweep` (Cluster C) — scoping discussion still pending in a separate session per user direction.
+
+**Retro**:
+- Estimate vs actual: 1–1.5h estimated, ~1.25h actual. Accurate.
+- What surprised me: the bootstrap circularity — on a fresh feature branch with no commits, the gate reports everything STALE because `git diff main...HEAD` is empty. That's actually correct behavior (nothing committed yet means no progress to document), but it's a teachable moment: the gate fires at PR time, by which point commits exist.
+
+---
+
 ## Session 117 — April 18, 2026 (afternoon)
 **Milestone**: `seed-operating-model-foundations` + `expand-claude-context-infrastructure` — both applied, shipped, and archived
 
