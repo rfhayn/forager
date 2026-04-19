@@ -1,6 +1,6 @@
 # Forager Project Brief
 
-**Last Reviewed**: 2026-04-18
+**Last Reviewed**: 2026-04-19
 **Cadence**: review monthly + after any change that adds a capability or ADR
 **Audience**: dual-purpose — human reader orienting to the project, and AI agent loading context at session start
 
@@ -23,7 +23,7 @@ Living specs at [`openspec/specs/`](../openspec/specs/). One spec per capability
 | Capability | Summary |
 |------------|---------|
 | [`app-store-assets`](../openspec/specs/app-store-assets/spec.md) | Web presence + App Store Connect metadata (privacy policy, landing page, listing copy, submission checklist, age rating) |
-| [`architecture`](../openspec/specs/architecture/spec.md) | Cross-cutting rules from ADRs (scope-aware fetch, factory enforcement, service-save ownership, parser confidence routing, snapshot pattern, Core Data change process) |
+| [`architecture`](../openspec/specs/architecture/spec.md) | Cross-cutting rules from ADRs (scope-aware fetch — **services/repositories only per ADR 013**; view-layer `@FetchRequest` pattern deferred to future change; factory enforcement; service-save ownership; parser confidence routing; snapshot pattern; Core Data change process) |
 | [`developer-tooling`](../openspec/specs/developer-tooling/spec.md) | Skills, hooks, MCP knowledge server, pre-dev audits |
 | [`grocery-lists`](../openspec/specs/grocery-lists/spec.md) | Weekly lists, list items, section grouping, category/store assignment, completion state |
 | [`household-sharing`](../openspec/specs/household-sharing/spec.md) | CKShare setup, invitations, member management, scope provider, owner/member asymmetry |
@@ -99,10 +99,11 @@ ADRs live at [`docs/architecture/`](architecture/). Most rules are codified in t
 | 008 | Shared Zone Architecture | Active |
 | 009 | Public Link Sharing (Household Invitations) | Active |
 | 010 | Hybrid Parser Confidence Routing | Active |
-| **011** | Tab Architecture Reduction | **SUPERSEDED** (by FUI-1's 4-tab Dashboard design; ADR 015 planned via [`architecture-compliance-sweep`](prds/active/architecture-compliance-sweep.md) Phase 4) |
+| **011** | Tab Architecture Reduction | **SUPERSEDED** by [ADR 015](architecture/015-dashboard-first-navigation.md) (4-tab Dashboard design); marked SUPERSEDED in `architecture-compliance-sweep` |
 | 012 | GroceryListItem Snapshot Architecture | Active |
-| 013 | Scope-Aware Fetch Pattern | Active (enforcement gap under repair — `architecture-compliance-sweep`) |
+| 013 | Scope-Aware Fetch Pattern | Active — scope narrowed to services/repositories in `architecture-compliance-sweep`; view-layer pattern deferred to future `decide-view-layer-scope-architecture` change |
 | 014 | Managed Object Factory Enforcement | Active |
+| **015** | Dashboard-First Navigation (4-tab Liquid Glass TabView) | Active — codifies the FUI-1 navigation design definitively; supersedes ADR 011 |
 | — | [`service-layer-pattern.md`](architecture/service-layer-pattern.md) | Living reference (service layer M7.5+ standard) |
 | — | [`milestone5.0.1-name-decision-record.md`](architecture/milestone5.0.1-name-decision-record.md) | Historical |
 

@@ -30,9 +30,24 @@ Any service that does `Entity.fetchRequest()` without a `householdKey` predicate
 
 ---
 
+## Scope of this ADR
+
+**This ADR governs service-layer and repository-layer fetches only** — `NSFetchRequest<T>` declarations in `Services/*.swift` and `forager/Repositories/*.swift`. View-layer `@FetchRequest` scope handling is **not** specified by this ADR.
+
+The current in-memory filter pattern in views (unscoped `@FetchRequest` + `.filter { $0.householdKey == currentKey }` on the result) is emergent, not designed:
+- First appeared in commit [`f263730`](https://github.com/rfhayn/forager/commit/f263730) (January 18, 2026, `MealPlanListView`) as a pragmatic FIX for household-context scoping.
+- Spread by copy-paste across 24 views between January and March 2026 without a coordinating commit, journal entry, or proposed ADR.
+- When this ADR was written (March 7, 2026), the pattern was acknowledged in the Related Files section below as "existing pattern" — but the rule deliberately was not extended to views.
+
+A future change named **`decide-view-layer-scope-architecture`** will evaluate alternatives (custom `@ScopedFetchRequest` property wrapper, formalizing the in-memory filter with mechanical enforcement, or deliberately ratifying the status quo), pilot the chosen approach, migrate all ~43 view sites, and only then write a definitive ADR.
+
+Until that future change lands, **unscoped `@FetchRequest` in views is NOT a violation of this ADR**. The `/architecture-audit` skill's Check 3 is scoped to `Services/` and `forager/Repositories/` to reflect this boundary.
+
+---
+
 ## Decision
 
-**All service-layer fetch requests that return user-facing data MUST include a `householdKey` scope predicate.**
+**All service-layer and repository-layer fetch requests that return user-facing data MUST include a `householdKey` scope predicate.**
 
 ### The Pattern
 

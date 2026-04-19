@@ -243,7 +243,7 @@ class MealPlanService: ObservableObject {
     // Cascade delete rule automatically removes associated PlannedMeal records
     func deleteMealPlan(_ plan: MealPlan) {
         context.delete(plan)
-        
+
         do {
             try context.save()
             if plan == activeMealPlan {
@@ -258,7 +258,22 @@ class MealPlanService: ObservableObject {
             context.rollback()
         }
     }
-    
+
+    /// Updates meal plan name. Mirrors `WeeklyListService.renameList(_:name:)`.
+    func renamePlan(_ plan: MealPlan, name: String) {
+        plan.name = name
+
+        do {
+            try context.save()
+        } catch {
+            lastError = error
+            #if DEBUG
+            print("Error renaming meal plan: \(error)")
+            #endif
+            context.rollback()
+        }
+    }
+
     // MARK: - M4.2.4: Date Validation
     
     // M4.2.4: Validates that proposed meal plan dates don't overlap with existing plans

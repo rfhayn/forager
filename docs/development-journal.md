@@ -52,6 +52,48 @@
 
 ---
 
+## Session 120 — April 19, 2026
+**Change**: `architecture-compliance-sweep` — narrowed, refined via Ultraplan, implemented, tests added
+
+**What happened**: Long session. Started by entering `/opsx:explore architecture-compliance-sweep` against a 16-20h PRD drafted the previous day that scoped adding `householdKey` to 43 `@FetchRequest` sites in views. Exploration surfaced that Phase 1 was solving a non-problem: ADR 013 explicitly targets service-layer fetches, not views; the view-layer in-memory filter pattern is emergent (first appeared commit `f263730` on 2026-01-18 as a pragmatic FIX, spread by copy-paste across 24 views, ratified post-hoc by ADR 013 without formalization). The user's pushback *"I don't remember it being intentional, but unless it's an architecture issue, I'm reluctant to change it"* triggered the archaeology that proved the finding.
+
+User principle emerged: *"ADRs are supposed to be definitive, I'd rather do a refactor and write the ADR as a separate piece of work if that is the case."* That killed the original plan's proposed ADR 016. Writing an ADR to retroactively rationalize emergent drift would be documentation theater; defer the architectural decision to a dedicated future change (`decide-view-layer-scope-architecture`) that evaluates alternatives, pilots one, migrates code, and only then writes the ADR.
+
+Reshape: ~7-8h narrowed plan. Handed off to Ultraplan for refinement (took 3 attempts — first two failed with remote-container errors). Ultraplan's refinement surfaced three factual corrections: (1) Phase 1's service-layer fixes were already done (`GroceryListItemService.resolveCategory/resolveStore/lookupDefaultStore` already scope by householdKey, I had grep-matched file existence not predicate contents); (2) six view-save sites reduce to three real production hits — the three MealPlanning matches are inside `#Preview` / `PreviewProvider` blocks (legitimate); (3) `openspec/specs/architecture/spec.md` contradicts ADR 013 by mandating `@FetchRequest` scope in views, which ADR 013 doesn't require — a spec-to-ADR drift that's itself a drift-risk category.
+
+Implementation: created `Services/CategoryService.swift` (new, ~100 lines) with `createCustomCategory(displayName:color:) -> Result<Category, CategoryError>` owning dedup + factory get-or-create + sortOrder assignment + save. Wired as `@EnvironmentObject` in `foragerApp.swift`. Rewrote `WeeklyListsView.saveName()` → `weeklyListService.renameList` (existing). Added `MealPlanService.renamePlan` mirroring `WeeklyListService.renameList`; rewrote `MealPlanListView.saveName()` to call it. Rewrote `AddCategoryView.createCategory()` to call `categoryService.createCustomCategory` (dropped ~60 lines of view-layer logic). Tightened `/architecture-audit` Check 3 (restricted to `Services/` + `forager/Repositories/` with explicit non-goal note for views) and Check 4 (added `--exclude='*Preview*'` and manual in-body note). Marked ADR 011 SUPERSEDED with cross-link. Wrote ADR 015 (4-tab Dashboard-first, ~120 lines). Inserted "Scope of this ADR" section in ADR 013. Narrowed `openspec/specs/architecture/spec.md` scope-aware-fetches requirement to services/repositories; added preview exemption to view-save requirement. One-line updates to `CLAUDE.md`, `project-brief.md`, `current-story.md`.
+
+Tests: wrote `foragerTests/Services/CategoryServiceTests.swift` (5 passing tests — dedup rejection case-insensitive, dedup whitespace trimming, factory-unavailable error, errorMessage wiring). Deferred the factory-success path tests (happy-path success, sortOrder assignment, persistence) because they require dual-store test-harness investment (currently crashes on `PersistenceController` init for factory's store resolution). Noted as explicit deferred work in the test file comments. Added pbxproj entries manually per the foragerTests PBXGroup convention (the memory confirms this is required).
+
+Mid-session: launched a background Explore agent to investigate "test-first thinking" as a process improvement — 11 of 25 production services have no unit tests, Claude currently proposes zero XCTest tasks in OpenSpec changes, computer-use Simulator drive is feasible but accessibility-first automation (`ios-simulator-skill` / `ios-simulator-mcp`) is the better long-term bet. Agent's plan at `/Users/rich/.claude/plans/test-first-thinking-exploration.md`. Defers into its own change (`establish-test-planning-workflow`) to not scope-creep this one.
+
+**Key decisions**:
+- **Don't write ADR 016 as part of this change.** Emergent pattern + no decision = no ADR. User's "ADRs are definitive" principle codified.
+- **Keep `MealPlanService.shared` singleton pattern.** Project-brief notes this is "scheduled for DI in later hardening change" — don't scope-creep here.
+- **Test only what's testable now.** Factory-success paths deferred pending test harness investment. Dedup/validation/factory-guard paths still cover meaningful logic.
+- **Check 3/4 boundary is path-based, not entity-based.** Simpler to maintain; the architectural boundary (services/repos as enforcement layer, views as deferred question) IS path-based. Regex complexity for "view is in scope UNLESS in preview block" handled via glob exclusion + manual in-body note.
+- **Preview save exemption is explicit in the capability spec.** Not just a skill-level implementation detail; it's a spec-level truth that `#Preview` blocks are an exempt environment.
+
+**Learning**:
+- **grep existence ≠ grep contents.** My initial claim that the service-layer fetches needed work was based on file-exists grep, not predicate-contents grep. Ultraplan caught this. Generalizable: when declaring "X is missing," verify by inspecting the code that would have the missing thing, not by matching file patterns. Promoted to insight.
+- **Spec-to-ADR drift is its own drift-risk category.** We're used to thinking about "ADR-to-code drift" (what ADR 013 was about). This session found the inverse: the spec went beyond the ADR, over-specifying and thereby weakening the ADR's authority (because readers who notice the contradiction won't know which is truth). Fix is to keep the spec in sync with the ADR and enforce it mechanically. Promoted to insight.
+- **Emergent-vs-designed is a real distinction worth preserving in writing.** My first draft of the auto-memory for scope safety (written earlier in the day) claimed the view-layer in-memory filter was "intentional design" — the Ultraplan/archaeology corrected that. The memory now honestly says "emergent, not designed." Future Claude will treat that differently than a designed pattern: less confident about extending it, more willing to revisit. Honesty in memory has direct behavioral consequences.
+- **Ultraplan fails and fails fast.** Three attempts before success. The remote container issue is not my bug — the workflow is to try once, see what happens, move on if it fails. When it works, the refinement is high-quality (caught three factual corrections I missed). Worth the occasional failed attempt.
+- **Computer-use Simulator drive is feasible but not the right v1.** Accessibility-based automation tools (`ios-simulator-skill` via `xcrun simctl`) are ~96% cheaper and deterministic vs. computer-use vision. The test-first plan properly defers sim-drive as a later change after v1 runs for ~4 weeks.
+
+**AI tooling observations**: The `/opsx:explore` → Ultraplan → `/opsx:propose` → implement chain worked, with the `/opsx:explore` step being the highest-value step because it's where the misread surfaced. Without that exploration, I would have shipped the 16-20h plan and done Phase 1 correctly according to the PRD while solving the wrong problem. Auto-memory entries get corrected by later understanding — the correction workflow (update the memory file + update the MEMORY.md pointer line) is worth formalizing if we do it more.
+
+**What's next**:
+- Commit, `/pr`, merge, `/opsx:archive architecture-compliance-sweep`.
+- User wants to kick off `establish-test-planning-workflow` (or whatever change-id lands) as the follow-up, using the background agent's plan as input. That's a separate session.
+
+**Retro**:
+- Estimate vs actual: 5-6h planned (Ultraplan refinement), actual ~6h from start of `/opsx:explore` to end of verification. Close to on-target.
+- What surprised me: the 3 preview false positives. I expected the original 6-save count to be right; Ultraplan's re-verification caught the preview blocks. Lesson: always grep with `--exclude='*Preview*'` when counting view-layer patterns.
+- Process improvement: The test-first exploration happened as a background agent during implementation. That pattern (kick off a related exploration in parallel with implementation work) is powerful — the plan is ready for the next session instead of blocking this one.
+
+---
+
 ## Session 119 — April 18, 2026 (late evening)
 **Change**: `sync-status-line-with-focus` — proposed retroactively, applied, awaiting PR
 

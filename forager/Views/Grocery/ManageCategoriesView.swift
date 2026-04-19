@@ -741,9 +741,10 @@ struct CategoryRowView: View {
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
-            // Category color indicator
+            // Category color indicator — prefers stored hex (user-chosen) over
+            // name-based theme color (architecture-compliance-sweep fix)
             Circle()
-                .fill(ForagerTheme.categoryColor(for: category.displayName))
+                .fill(ForagerTheme.categoryColor(for: category))
                 .frame(width: 32, height: 32)
 
             // Category info
@@ -834,11 +835,11 @@ struct CategorySelectionRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 16) {
-                // Category color indicator
+                // Category color indicator — prefers stored hex (architecture-compliance-sweep fix)
                 Circle()
-                    .fill(ForagerTheme.categoryColor(for: category.displayName))
+                    .fill(ForagerTheme.categoryColor(for: category))
                     .frame(width: 32, height: 32)
-                
+
                 // Category name
                 Text(category.displayName)
                     .font(.body)

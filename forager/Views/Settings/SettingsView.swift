@@ -73,12 +73,17 @@ struct SettingsView: View {
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
 
-            // M9.15.3: Diagnostic Log (M9.28: hidden in Release builds)
-            #if DEBUG
+            // M9.15.3: Diagnostic Log
+            // M9.28 gated behind #if DEBUG for production hide.
+            // architecture-compliance-sweep (2026-04-19): un-gated for TestFlight
+            // beta builds so testers can enable logging + share log entries with
+            // the developer. **TODO: re-gate with `#if DEBUG || BETA` or a
+            // Settings.bundle toggle before App Store submission.** Tracked at
+            // /Users/rich/Development/forager/docs/next-prompt.md backlog and
+            // the current-story "Known Issues & Limitations" section.
             diagnosticLogSection
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
-            #endif
 
             // M10.6.18: Developer tools hidden in Release builds for launch
             #if DEBUG

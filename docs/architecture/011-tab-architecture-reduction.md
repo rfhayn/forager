@@ -1,9 +1,19 @@
 # ADR 011: Tab Architecture Reduction (6 → 5 Tabs)
 
-**Status**: Accepted
+**Status**: SUPERSEDED — see [ADR 015](015-dashboard-first-navigation.md)
 **Date**: February 17, 2026
 **Milestone**: M15 — UX Design System
 **Deciders**: Rich Hayn
+**Superseded**: April 19, 2026 (change `architecture-compliance-sweep`)
+
+---
+
+> **Superseded by ADR 015**: The 5-tab design described here shipped in M15 but was
+> itself superseded by the FUI-1 Dashboard redesign (4 tabs: Home, Lists, Meals,
+> Recipes). Settings moved off-tab to a gear icon on Dashboard; global search moved
+> to a modal sheet launched from Dashboard. See [ADR 015](015-dashboard-first-navigation.md)
+> for the current navigation decision and [`docs/prds/complete/fui-1-dashboard-navigation-recipe-ui.md`](../prds/complete/fui-1-dashboard-navigation-recipe-ui.md)
+> for the PRD that drove it. Historical content preserved below because the 6→5 reasoning informs the 5→4 migration.
 
 ---
 

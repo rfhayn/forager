@@ -39,26 +39,49 @@ grep -rn 'viewContext\.assign(\|context\.assign(' --include='*.swift' --exclude=
 
 **Expected**: Zero matches.
 
-### 3. ADR 013 Scope Compliance
-Search for HouseholdScoped fetch requests missing `householdKey` predicate:
+### 3. ADR 013 Scope Compliance (services + repositories only)
+Search for HouseholdScoped fetch requests missing `householdKey` predicate in the
+service + repository layers:
 
 ```bash
-# Look for fetch requests on HouseholdScoped entities
-grep -rn 'NSFetchRequest<WeeklyList>\|NSFetchRequest<Recipe>\|NSFetchRequest<MealPlan>\|NSFetchRequest<PlannedMeal>\|NSFetchRequest<Category>\|NSFetchRequest<IngredientTemplate>' \
-  --include='*.swift' \
-  --exclude-dir=foragerTests
+# Look for fetch requests on HouseholdScoped entities in Services/ and Repositories/ ONLY
+grep -rn 'NSFetchRequest<WeeklyList>\|NSFetchRequest<Recipe>\|NSFetchRequest<MealPlan>\|NSFetchRequest<PlannedMeal>\|NSFetchRequest<Category>\|NSFetchRequest<IngredientTemplate>\|NSFetchRequest<GroceryListItem>\|NSFetchRequest<Ingredient>\|NSFetchRequest<Store>' \
+  Services/ forager/Repositories/ \
+  --include='*.swift'
 ```
 
-Then verify each fetch includes a `householdKey` predicate.
+Then verify each fetch includes a `householdKey` predicate (grep the same file within ~10 lines after the declaration for the string `householdKey`).
+
+**Non-goal — view-layer `@FetchRequest`**: this check intentionally does NOT scan
+`forager/Views/`. The view-layer in-memory-filter pattern is emergent (first
+appeared `f263730` on 2026-01-18; spread by copy-paste across 24 views; not
+formalized by any ADR) and is deferred to a future change named
+`decide-view-layer-scope-architecture` which will evaluate alternatives, pilot
+one, migrate all ~43 sites, and only then write a definitive ADR. Do NOT extend
+this check to `forager/Views/` before that future change lands — the bare
+`@FetchRequest` on a HouseholdScoped entity is NOT a violation of ADR 013 today.
+See the auto-memory entry `project_scope_safety_three_layers.md` for context.
 
 ### 4. Service Layer Compliance
-Search for `context.save()` in view files (views should use services):
+Search for `context.save()` in production view files (views should use services).
+Previews are exempt — `#Preview { }` blocks and `PreviewProvider` extensions are a
+legitimate standalone environment that may call `context.save()` to stage preview
+data.
 
 ```bash
-grep -rn 'context\.save()\|viewContext\.save()' forager/Views/ --include='*.swift'
+# Production view saves: exclude dedicated preview files via glob
+grep -rn 'context\.save()\|viewContext\.save()' forager/Views/ \
+  --include='*.swift' \
+  --exclude='*Preview*'
 ```
 
-**Expected**: Zero matches (all saves through service layer).
+**Manual follow-up**: matches inside `#Preview { ... }` macro blocks or
+`PreviewProvider` extension bodies (in files NOT named `*Preview*`) are
+also legitimate. Discount them when reporting violations. For each reported
+match, open the file and confirm it is outside any `#Preview { }` block and
+outside any `PreviewProvider` extension before flagging it.
+
+**Expected**: Zero production matches (all production saves through service layer).
 
 ## How to Run
 

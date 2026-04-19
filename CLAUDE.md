@@ -47,8 +47,8 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - Ingredient/GroceryListItem inherit scope from parent (Recipe/WeeklyList)
 
 ### Service Layer (M7.5+)
-- **All Core Data writes go through services.** Views never call `context.save()`.
-- **All fetches on household-scoped entities MUST include `householdKey` predicate** (ADR 013)
+- **All Core Data writes go through services.** Views never call `context.save()` (previews exempt).
+- **Service + repository fetches on HouseholdScoped entities MUST include `householdKey` predicate** (ADR 013). View-layer `@FetchRequest` scope is emergent in-memory filter; out of scope pending `decide-view-layer-scope-architecture` — do NOT treat unscoped view `@FetchRequest` as ADR 013 violations.
 - Always search for existing services before creating new ones
 
 ### Core Data Model (13 Entities, v11)

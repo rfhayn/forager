@@ -72,6 +72,9 @@ struct foragerApp: App {
     // M18.1.3: Store service for store-aware shopping
     @StateObject private var storeService: StoreService
 
+    // architecture-compliance-sweep: Category service for user-facing custom-category creation
+    @StateObject private var categoryService: CategoryService
+
     // M10.1: Import service at app level for browser and URL import
     @StateObject private var importService: RecipeImportService
 
@@ -118,6 +121,10 @@ struct foragerApp: App {
         let storeSvc = StoreService(context: context)
         _storeService = StateObject(wrappedValue: storeSvc)
 
+        // architecture-compliance-sweep: Category service for user-facing custom-category creation
+        let categorySvc = CategoryService(context: context, householdService: household)
+        _categoryService = StateObject(wrappedValue: categorySvc)
+
         // M10.1: Import service for browser and URL import
         let importSvc = RecipeImportService(context: context, parsingService: parsingService)
         _importService = StateObject(wrappedValue: importSvc)
@@ -154,6 +161,7 @@ struct foragerApp: App {
         weeklyList.configure(factory: factory)
         templateService.configure(factory: factory)
         storeSvc.configure(factory: factory)
+        categorySvc.configure(factory: factory)
         storeSvc.householdKeyProvider = { [weak household] in
             household?.currentHouseholdKey
         }
@@ -225,6 +233,7 @@ struct foragerApp: App {
                     .environmentObject(groceryListItemService)
                     .environmentObject(importService)
                     .environmentObject(storeService)
+                    .environmentObject(categoryService)
                     .task {
                         // Fire household loading off the main actor so the TabView
                         // renders immediately with empty state. CKShare network calls
