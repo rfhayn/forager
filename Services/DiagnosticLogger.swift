@@ -3,12 +3,21 @@
 //  forager
 //
 //  M9.15.3: Persistent file-based diagnostic logger for CloudKit troubleshooting.
-//  DEBUG only. Gated behind #if DEBUG for App Store builds (M9.28).
+//
+//  Gating history:
+//   - M9.28 (April 2026): gated behind `#if DEBUG`; no-op stub in Release for
+//     the initial App Store submission (build 134).
+//   - architecture-compliance-sweep (2026-04-19): un-gated for TestFlight beta
+//     builds so testers can enable logging and share log entries with the
+//     developer. Default is now OFF in Release (users opt in via Settings);
+//     DEBUG builds keep default ON.
+//   - **TODO before the next App Store submission**: either (a) re-gate behind
+//     a BETA compilation flag that only TestFlight builds set, or (b) keep the
+//     code compiled but verify App Store Review is OK with a user-optional
+//     diagnostic logger that writes to Documents/forager-diagnostics.log.
 //
 
 import Foundation
-
-#if DEBUG
 import UIKit
 
 /// Persistent diagnostic logger that writes to a file on disk.
@@ -64,7 +73,15 @@ class DiagnosticLogger: ObservableObject {
             return
         }
         self.logFileURL = docs.appendingPathComponent("forager-diagnostics.log")
-        self.isEnabled = UserDefaults.standard.object(forKey: "diagnosticLogEnabled") as? Bool ?? true
+        // Default ON in DEBUG for developer convenience; OFF in Release (TestFlight /
+        // App Store) so users must opt in via Settings > Diagnostics before logs
+        // accumulate on disk. (architecture-compliance-sweep 2026-04-19)
+        #if DEBUG
+        let defaultEnabled = true
+        #else
+        let defaultEnabled = false
+        #endif
+        self.isEnabled = UserDefaults.standard.object(forKey: "diagnosticLogEnabled") as? Bool ?? defaultEnabled
 
         // Create file if it doesn't exist
         if !FileManager.default.fileExists(atPath: logFileURL.path) {
@@ -184,16 +201,16 @@ class DiagnosticLogger: ObservableObject {
     }
 }
 
-#else
+// MARK: - Release no-op stub (retained for reference; currently unused)
+// The `#else` branch below is dead code after the architecture-compliance-sweep
+// un-gating (2026-04-19). Kept here for easy re-gating if we decide to restore
+// the stub behavior before App Store submission.
+#if false
 
-// MARK: - Release no-op stub
-
-/// No-op stub for Release builds. All methods compile but do nothing.
-/// Empty function calls are optimized away by the compiler.
 @MainActor
-class DiagnosticLogger: ObservableObject {
+class DiagnosticLoggerStub: ObservableObject {
 
-    static let shared = DiagnosticLogger()
+    static let shared = DiagnosticLoggerStub()
 
     enum Category: String {
         case cloudKit = "CloudKit"

@@ -221,6 +221,19 @@ enum ForagerTheme {
 
     // MARK: - Category Colors (§4.1.8)
 
+    /// Returns the themed color for a Category, preferring the stored `color`
+    /// hex (set by AddCategoryView / CategoryService when a user creates a
+    /// custom category) and falling back to the name-based default when the
+    /// stored hex is missing or empty. Use this overload for any rendering of
+    /// a first-class Category object; the String overload below remains for
+    /// callers that only have a name (e.g., pre-fetch preview chips).
+    static func categoryColor(for category: Category) -> Color {
+        if let hex = category.color, !hex.isEmpty {
+            return Color(hex: hex)
+        }
+        return categoryColor(for: category.displayName)
+    }
+
     /// Returns the themed color for a grocery category name.
     /// All colors verified ≥ 3:1 on their respective backgrounds.
     static func categoryColor(for name: String) -> Color {

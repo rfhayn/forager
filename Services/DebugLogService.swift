@@ -3,12 +3,16 @@
 //  forager
 //
 //  M10.6.5: In-memory debug log for testing AI parsing flow.
-//  DEBUG only. Gated behind #if DEBUG for App Store builds (M9.28).
+//
+//  Gating history:
+//   - M9.28: gated behind `#if DEBUG`; no-op stub in Release for App Store.
+//   - architecture-compliance-sweep (2026-04-19): un-gated for TestFlight beta
+//     builds. Default stays OFF — users must opt in via Settings > Diagnostics.
+//     TODO before next App Store submission: re-evaluate (see DiagnosticLogger.swift
+//     header for the same note).
 //
 
 import Foundation
-
-#if DEBUG
 
 @MainActor
 class DebugLogService: ObservableObject {
@@ -29,6 +33,8 @@ class DebugLogService: ObservableObject {
     }()
 
     init() {
+        // Default OFF — users explicitly enable. No conditional default; this
+        // matches the prior DEBUG impl's default.
         self.isEnabled = UserDefaults.standard.bool(forKey: "debugLogEnabled")
     }
 
@@ -50,22 +56,3 @@ class DebugLogService: ObservableObject {
         entries.joined(separator: "\n")
     }
 }
-
-#else
-
-// MARK: - Release no-op stub
-
-@MainActor
-class DebugLogService: ObservableObject {
-
-    static let shared = DebugLogService()
-
-    @Published var isEnabled: Bool = false
-    @Published private(set) var entries: [String] = []
-
-    func log(_ message: String, category: String = "General") {}
-    func clear() {}
-    var fullLog: String { "" }
-}
-
-#endif

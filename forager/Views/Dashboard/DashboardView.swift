@@ -415,27 +415,22 @@ struct DashboardView: View {
 
     private func mealPlanOverviewCard(plan: MealPlan) -> some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            // Title row: plan name (mirrors grocery list card pattern — the
+            // list/plan NAME leads, not a generic domain label)
             HStack {
                 Image(systemName: "calendar")
                     .foregroundStyle(ForagerTheme.accentPrimary)
-                Text("Meal Plan")
+                Text(plan.name ?? "Current Plan")
                     .font(ForagerTheme.cardTitle)
                     .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
             }
 
-            // Plan name + fill status
+            // Fill status (plan name moved to title; no need to repeat here)
             if let dayData = planDaysFilled {
-                HStack(spacing: ForagerTheme.Spacing.xs) {
-                    Text(plan.name ?? "Current Plan")
-                        .font(ForagerTheme.secondaryFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
-                    Text("·")
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                    Text("\(dayData.filled) of \(dayData.total) days planned")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.textSecondary)
-                }
+                Text("\(dayData.filled) of \(dayData.total) days planned")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textSecondary)
             }
 
             // Day indicators — circles distributed full-width
