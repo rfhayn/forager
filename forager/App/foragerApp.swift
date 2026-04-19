@@ -143,6 +143,15 @@ struct foragerApp: App {
             household?.currentHouseholdKey
         }
 
+        // fix-dashboard-meal-plan-cold-start (2026-04-19): reload active plan now
+        // that the household key provider is wired. The singleton's private init()
+        // ran loadActiveMealPlan() eagerly with a nil-key predicate (before the
+        // provider was set) and set activeMealPlan = nil. Without this reload the
+        // Dashboard Meal Plan card stays blank (ghost state) on cold start until
+        // the user visits the Meals tab, which triggers a reload via
+        // MealPlansListView.onAppear → updateActivePlanStatus().
+        MealPlanService.shared.loadActiveMealPlan()
+
         // M9.13: Create scope provider + factory, inject into services (ADR 014)
         let sp = HouseholdScopeProvider(
             householdService: household,
