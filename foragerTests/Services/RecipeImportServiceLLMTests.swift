@@ -20,6 +20,16 @@ final class RecipeImportServiceLLMTests: XCTestCase {
     private var persistence: PersistenceController!
     private var previousShared: PersistenceController!
 
+    // Baselines captured in setUp — prior-test state leaks across instances of
+    // PersistenceController(inMemory: true) in this suite (suspected
+    // NSPersistentCloudKitContainer caching keyed by in-memory URL, see
+    // investigate-import-and-store-test-failures plan §2 Failure #2). Rather
+    // than deeply-isolate the stores, the tests use delta assertions — same
+    // pattern as StoreServiceTests.testFetchStoresReturnsOrderedBySort.
+    // (investigate-import-and-store-test-failures, 2026-04-19)
+    private var baselineRecipeCount = 0
+    private var baselineIngredientCount = 0
+
     override func setUp() {
         super.setUp()
 
@@ -40,6 +50,12 @@ final class RecipeImportServiceLLMTests: XCTestCase {
         // Ensure LLM is disabled by default for isolation
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
+
+        // Capture baselines BEFORE this test does any work. If the container is
+        // fresh, these are 0; if state leaked from prior tests, this captures
+        // whatever is there so deltas reflect only THIS test's changes.
+        baselineRecipeCount = currentRecipeCount()
+        baselineIngredientCount = currentIngredientCount()
     }
 
     override func tearDown() {
@@ -55,6 +71,26 @@ final class RecipeImportServiceLLMTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Recipes added by THIS test (delta from setUp baseline).
+    private func recipesAddedByThisTest() -> Int {
+        return currentRecipeCount() - baselineRecipeCount
+    }
+
+    /// Ingredients added by THIS test (delta from setUp baseline).
+    private func ingredientsAddedByThisTest() -> Int {
+        return currentIngredientCount() - baselineIngredientCount
+    }
+
+    private func currentRecipeCount() -> Int {
+        let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        return (try? context.count(for: request)) ?? 0
+    }
+
+    private func currentIngredientCount() -> Int {
+        let request: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
+        return (try? context.count(for: request)) ?? 0
+    }
 
     private func makeDraft(
         title: String = "Test Recipe",
@@ -78,21 +114,25 @@ final class RecipeImportServiceLLMTests: XCTestCase {
     // MARK: - 1. LLM Disabled → Pipeline Used
 
     func testSaveImportUsesPipelineWhenLLMDisabled() async {
-        let draft = makeDraft()
+        // Use a unique title so we can locate this test's recipe by predicate,
+        // independent of state leakage from other tests in this file.
+        let uniqueTitle = "PipelineRecipe-\(UUID().uuidString.prefix(8))"
+        let draft = makeDraft(title: uniqueTitle)
 
         let result = await importService.saveImport(from: draft)
 
         XCTAssertNotNil(result, "Save should succeed via pipeline fallback")
-        // Verify recipe was created
-        let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
-        let recipes = try? context.fetch(fetchRequest)
-        XCTAssertEqual(recipes?.count, 1)
-        XCTAssertEqual(recipes?.first?.title, "Test Recipe")
+        XCTAssertEqual(recipesAddedByThisTest(), 1)
+        XCTAssertEqual(ingredientsAddedByThisTest(), 2)
 
-        // Verify ingredients were created
-        let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
-        let ingredients = try? context.fetch(ingredientRequest)
-        XCTAssertEqual(ingredients?.count, 2)
+        // Fetch by unique title — avoids the "existingObject returns a faulted
+        // instance with nil attributes" issue seen on freshly-saved recipes in
+        // the dual-store in-memory container.
+        let request: NSFetchRequest<Recipe> = Recipe.fetchRequest()
+        request.predicate = NSPredicate(format: "title == %@", uniqueTitle)
+        let recipes = (try? context.fetch(request)) ?? []
+        XCTAssertEqual(recipes.count, 1, "Exactly one recipe with title '\(uniqueTitle)' should exist")
+        XCTAssertEqual(recipes.first?.title, uniqueTitle)
     }
 
     // MARK: - 2. Pipeline Fallback Creates Valid Ingredients
@@ -103,11 +143,20 @@ final class RecipeImportServiceLLMTests: XCTestCase {
         let result = await importService.saveImport(from: draft)
 
         XCTAssertNotNil(result)
+        XCTAssertEqual(ingredientsAddedByThisTest(), 1)
+
+        // Verify template connectivity. Use a fresh fetch (not `recipe.ingredients`,
+        // which can return nil immediately after save even when ingredients exist,
+        // because the inverse relationship cache isn't populated until the main
+        // context faults the objects). Every ingredient created via the pipeline
+        // path has a template — assert ALL ingredients in the context satisfy
+        // that, which tolerates state leakage from other tests.
         let ingredientRequest: NSFetchRequest<Ingredient> = Ingredient.fetchRequest()
-        let ingredients = try? context.fetch(ingredientRequest)
-        XCTAssertEqual(ingredients?.count, 1)
-        // Template should be connected
-        XCTAssertNotNil(ingredients?.first?.ingredientTemplate)
+        let allIngredients = (try? context.fetch(ingredientRequest)) ?? []
+        XCTAssertFalse(allIngredients.isEmpty)
+        for ingredient in allIngredients {
+            XCTAssertNotNil(ingredient.ingredientTemplate, "Ingredient '\(ingredient.name ?? "?")' should have a template")
+        }
     }
 
     // MARK: - 3. Save Result Contains Uncategorized Templates
@@ -162,8 +211,7 @@ final class RecipeImportServiceLLMTests: XCTestCase {
         let result = await importService.saveImport(from: draft)
 
         XCTAssertNotNil(result)
-        let fetchRequest: NSFetchRequest<Recipe> = Recipe.fetchRequest()
-        let recipes = try? context.fetch(fetchRequest)
-        XCTAssertEqual(recipes?.count, 1)
+        XCTAssertEqual(recipesAddedByThisTest(), 1)
+        XCTAssertEqual(ingredientsAddedByThisTest(), 0)
     }
 }

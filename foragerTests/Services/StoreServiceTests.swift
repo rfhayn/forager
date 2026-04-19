@@ -2,6 +2,19 @@ import XCTest
 import CoreData
 @testable import forager
 
+/// Test-only stub for `ScopeProvider` that returns a fixed `DataScope`.
+/// Used by `testFetchStoresScopedByHouseholdKey` to exercise the factory's
+/// `.household(...)` branch, which actually sets `object.householdKey` —
+/// the test's previous assumption (that `service.householdKey` propagates
+/// into creation) was pre-ADR-014 and no longer holds.
+/// (investigate-import-and-store-test-failures, 2026-04-19)
+@MainActor
+final class TestStubScopeProvider: ScopeProvider {
+    var activeScope: DataScope
+    init(_ scope: DataScope) { self.activeScope = scope }
+    func scopeSnapshot() -> DataScope { activeScope }
+}
+
 /// M18.1.1: StoreService unit tests
 /// Validates store CRUD, assignment, reordering, and cross-store resolution
 /// using in-memory Core Data.
@@ -115,18 +128,39 @@ final class StoreServiceTests: XCTestCase {
     }
 
     @MainActor
-    func testFetchStoresScopedByHouseholdKey() {
-        service.householdKey = "household-A"
-        let _ = service.createStore(name: "Costco", color: "#E53E3E")
+    func testFetchStoresScopedByHouseholdKey() throws {
+        // Create a persisted Household so the factory's `.household` branch can
+        // resolve via ObjectID. Without this, factory falls to `.personal` and
+        // explicitly nils out `householdKey` — which is what caused the earlier
+        // version of this test to fail before PR #147 exposed it by fixing the
+        // setUp crash-loop. (investigate-import-and-store-test-failures)
+        let household = Household(context: context)
+        household.id = UUID()
+        household.name = "A"
+        household.createdDate = Date()
+        try context.save()
 
-        // Create a store with different household key directly
+        let householdKeyA = household.id!.uuidString
+
+        // Reconfigure the factory with a stub ScopeProvider returning `.household`
+        // so `createStore` routes through the household branch and sets
+        // `store.householdKey = household.id?.uuidString`.
+        let provider = TestStubScopeProvider(.household(id: household.objectID, storeID: .private))
+        let scopedFactory = ManagedObjectFactory(context: context, scopeProvider: provider, persistence: persistence)
+        service.configure(factory: scopedFactory)
+        service.householdKey = householdKeyA
+
+        let costco = service.createStore(name: "Costco", color: "#E53E3E")
+        XCTAssertEqual(costco?.householdKey, householdKeyA, "Factory's .household branch should set householdKey from the resolved Household")
+
+        // Create a store with a different household key directly (bypasses factory)
         let otherStore = Store(context: context)
         otherStore.id = UUID()
         otherStore.name = "Target"
         otherStore.color = "#3182CE"
         otherStore.householdKey = "household-B"
         otherStore.sortOrder = 0
-        try? context.save()
+        try context.save()
 
         let stores = service.fetchStores()
         XCTAssertEqual(stores.count, 1)

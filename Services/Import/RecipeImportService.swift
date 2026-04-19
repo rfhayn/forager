@@ -294,11 +294,15 @@ class RecipeImportService: ObservableObject {
             )
         }
 
-        // Atomic persist: child → parent → disk
+        // Atomic persist: child → parent → disk.
+        // preserveUpdated: [recipe] keeps the replace-path recipe's UPDATED edits
+        // from being discarded by the cross-store-safety refresh loop inside
+        // persistAndFinish. (investigate-import-and-store-test-failures 2026-04-19)
         return persistAndFinish(
             recipe: recipe,
             createdIngredients: createdIngredients,
-            childContext: childContext
+            childContext: childContext,
+            preserveUpdated: [recipe]
         )
     }
 
@@ -410,11 +414,21 @@ class RecipeImportService: ObservableObject {
 
     // MARK: - Persist Helper
 
-    /// Shared persist logic for saveImport and replaceExistingRecipe
+    /// Shared persist logic for saveImport and replaceExistingRecipe.
+    ///
+    /// - Parameter preserveUpdated: objects whose pending edits MUST survive the
+    ///   `refresh(mergeChanges: false)` loop. `saveImport` passes `[]` because
+    ///   the new recipe is INSERTED (not updated) and the existing cross-store
+    ///   refresh safety net is correct. `replaceExistingRecipe` passes
+    ///   `[recipe]` because the recipe is UPDATED and refreshing it would wipe
+    ///   the new title/instructions/etc. — which was the
+    ///   `investigate-import-and-store-test-failures` / Failure #1 bug.
+    ///   (fix: 2026-04-19)
     private func persistAndFinish(
         recipe: Recipe,
         createdIngredients: [Ingredient],
-        childContext: NSManagedObjectContext
+        childContext: NSManagedObjectContext,
+        preserveUpdated: Set<NSManagedObject> = []
     ) -> ImportSaveResult? {
         let diag = DiagnosticLogger.shared
         do {
@@ -463,7 +477,20 @@ class RecipeImportService: ObservableObject {
             // on those dirty Categories during save — including pre-existing cross-store
             // template refs — causing 134040 errors. Refreshing everything is safe because
             // inserted objects (our new recipe data) are excluded.
-            for obj in viewContext.updatedObjects where !obj.isInserted {
+            //
+            // EXCEPTION (investigate-import-and-store-test-failures 2026-04-19):
+            // `replaceExistingRecipe` UPDATES the target recipe in place (new title,
+            // instructions, etc.). Refreshing it here discards those edits. Callers
+            // that update an object and want its edits to survive pass it via the
+            // `preserveUpdated` parameter, which excludes it from this loop.
+            //
+            // Compare by objectID: the caller may pass a child-context reference
+            // while the refresh loop iterates viewContext's updatedObjects — those
+            // are DIFFERENT NSManagedObject instances sharing the same objectID
+            // after child→parent propagation. Identity comparison via `contains`
+            // would miss the match; objectID comparison catches it.
+            let preserveIDs = Set(preserveUpdated.map { $0.objectID })
+            for obj in viewContext.updatedObjects where !obj.isInserted && !preserveIDs.contains(obj.objectID) {
                 let store = obj.objectID.persistentStore?.url?.lastPathComponent ?? "no-store"
                 diag.debug("  refreshing updated obj: \(obj.entity.name ?? "?") store=\(store)", category: .import_)
                 viewContext.refresh(obj, mergeChanges: false)
