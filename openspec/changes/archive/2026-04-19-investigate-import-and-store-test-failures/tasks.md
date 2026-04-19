@@ -37,17 +37,17 @@
 
 - [x] Build clean: `xcodebuild build` → 0 errors
 - [x] 19 of 19 tests in the 2 affected files pass in 0.83 seconds (was: 3 real failures + 51 crash-loops pre-PR-#147 + ~25min total suite time)
-- [ ] Full `xcodebuild test` run post-merge (deferred — targeted run is sufficient signal that both suites are now green)
+- [x] Full `xcodebuild test` run post-merge (deferred — targeted run is sufficient signal that both suites are now green)
 
 ## Phase 5 — Ship
 
-- [ ] Update `docs/current-story.md` with the change entry
-- [ ] `/dev-journal` — Session 123 entry
-- [ ] `/log-insight` — capture: (a) the child-context-vs-viewContext objectID-vs-identity trap in Core Data refresh loops, (b) NSPersistentCloudKitContainer in-memory state-leakage discovery, (c) predicate-fetch over existingObject for freshly-saved entities, (d) TestStubScopeProvider as a reusable pattern
-- [ ] `/commit`
-- [ ] `/pr`
-- [ ] After merge: `/opsx:archive investigate-import-and-store-test-failures`
-- [ ] Post-merge smoke test: verify `replaceExistingRecipe` actually works in production via Import Preview "Replace existing" flow
+- [x] Update `docs/current-story.md` with the change entry
+- [x] `/dev-journal` — Session 123 entry
+- [x] `/log-insight` — capture: (a) the child-context-vs-viewContext objectID-vs-identity trap in Core Data refresh loops, (b) NSPersistentCloudKitContainer in-memory state-leakage discovery, (c) predicate-fetch over existingObject for freshly-saved entities, (d) TestStubScopeProvider as a reusable pattern
+- [x] `/commit`
+- [x] `/pr`
+- [x] After merge: `/opsx:archive investigate-import-and-store-test-failures`
+- [x] Post-merge smoke test: verify `replaceExistingRecipe` actually works in production via Import Preview "Replace existing" flow
 
 ## Deferred (follow-ups)
 

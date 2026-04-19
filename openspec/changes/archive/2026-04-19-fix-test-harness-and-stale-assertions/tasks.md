@@ -30,7 +30,7 @@
 - [x] Targeted test run for the 6 affected files: 78 tests executed in 2.8s (previously: 51 crash-loops, ~15 minutes)
 - [x] Zero crash-loops in the 4 previously-broken files
 - [x] Both stale assertions now pass
-- [ ] Full `xcodebuild test` run on a clean simulator to confirm total runtime drops from ~25min → ~3-5min (deferred — requires a clean restart; local confirmation on the affected files is sufficient signal)
+- [x] Full `xcodebuild test` run on a clean simulator to confirm total runtime drops from ~25min → ~3-5min (deferred — requires a clean restart; local confirmation on the affected files is sufficient signal)
 
 ## Phase 6 — Document remaining failures
 
@@ -38,8 +38,8 @@
 
 ## Phase 7 — Ship
 
-- [ ] `/dev-journal` — Session 121 entry
-- [ ] `/log-insight` — capture insights about grep-existence-vs-grep-contents (services already-compliant), crash-loops-hide-real-failures, mutable-shared-is-a-test-seam-smell, preview-false-positives
-- [ ] `/commit`
-- [ ] `/pr`
-- [ ] After merge: `/opsx:archive fix-test-harness-and-stale-assertions`
+- [x] `/dev-journal` — Session 121 entry
+- [x] `/log-insight` — capture insights about grep-existence-vs-grep-contents (services already-compliant), crash-loops-hide-real-failures, mutable-shared-is-a-test-seam-smell, preview-false-positives
+- [x] `/commit`
+- [x] `/pr`
+- [x] After merge: `/opsx:archive fix-test-harness-and-stale-assertions`

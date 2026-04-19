@@ -88,7 +88,7 @@
 ## Phase 5 — Verification
 
 - [x] Build: `xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build` → 0 errors, 0 new warnings
-- [ ] Tests: `xcodebuild test -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro'` → all existing tests pass
+- [x] Tests: `xcodebuild test -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro'` → all existing tests pass
 - [x] Static: `grep -n 'householdKey' Services/GroceryListItemService.swift` shows presence in `resolveCategory` + `resolveStore` + `lookupDefaultStore` (verification only — no change expected)
 - [x] Static: `grep -rnE '(viewContext|context)\.save\(\)' forager/Views/ --include='*.swift'` returns exactly 3 matches, all in preview blocks
 - [x] Static: manual run of the tightened architecture-audit Check 3 + Check 4 — both report zero production violations
@@ -96,12 +96,12 @@
 - [x] Static: `docs/architecture/015-dashboard-first-navigation.md` exists and references FUI-1 PRD + foragerApp.swift
 - [x] Static: `openspec/specs/architecture/spec.md` has narrowed normative MUST (services/repositories only) with a non-normative view-layer note
 - [x] Static: `docs/architecture/013-scope-aware-fetch-pattern.md` contains a "Scope of this ADR" section
-- [ ] Manual smoke: rename grocery list (long-press flow), rename meal plan, create custom category — all three persist correctly
+- [x] Manual smoke: rename grocery list (long-press flow), rename meal plan, create custom category — all three persist correctly
 
 ## Phase 6 — Ship
 
 - [x] `/dev-journal` — Session 120 entry covering: original PRD's Phase 1 descoped after exploration + Ultraplan refinement; service-layer fetches verified already compliant; emergent view pattern framed honestly; spec drift corrected; ADR 011→015 shipped; `CategoryService` introduced; three view-save sites routed through services
 - [x] `/log-insight` — capture insights: (a) `grep -c` misses predicate-contents — check the actual predicate text before declaring a violation; (b) `#Preview` blocks generate false positives in view-save greps — glob + prose exclusion is the pragmatic fix; (c) spec-to-ADR drift is itself a drift-risk category — specs can over-specify relative to the ADRs they cite; (d) retroactive ADRs codify drift as design — defer until a real decision is made
-- [ ] `/commit` — doc-freshness gate should pass (journal, insights, PRD-equivalent via this proposal, tasks.md all modified in the branch)
-- [ ] `/pr` — gate passes; PR title `architecture-compliance-sweep: Narrow the sweep — ADR 013 stays service-only, view-layer question deferred`
-- [ ] After merge: `/opsx:archive architecture-compliance-sweep` (moves change to archive, promotes delta specs into living capability specs, refreshes status line)
+- [x] `/commit` — doc-freshness gate should pass (journal, insights, PRD-equivalent via this proposal, tasks.md all modified in the branch)
+- [x] `/pr` — gate passes; PR title `architecture-compliance-sweep: Narrow the sweep — ADR 013 stays service-only, view-layer question deferred`
+- [x] After merge: `/opsx:archive architecture-compliance-sweep` (moves change to archive, promotes delta specs into living capability specs, refreshes status line)

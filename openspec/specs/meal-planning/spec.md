@@ -36,6 +36,11 @@ Calendar-based weekly meal planning that bridges recipe discovery and grocery li
 - REQ-010: The system MUST support configurable meal planning preferences in Settings: default duration (3-14 days), start day (any day of week), auto-naming behavior, and recipe source display toggle.
   - Scenario: Given the user changes default start day to Monday in Settings, When they create a new meal plan, Then the default date range starts on the next Monday.
 
+- REQ-011: The app entry point MUST invoke `MealPlanService.shared.loadActiveMealPlan()` immediately after wiring the service's `householdKeyProvider` closure. Without this invocation the service's eager init-time load runs with the default nil-key predicate and fails to populate `activeMealPlan` for users in a household; UI that binds to `activeMealPlan` (notably the Dashboard Meal Plan card) then displays a ghost/empty state until some other event triggers a reload. Source: `fix-dashboard-meal-plan-cold-start` (2026-04-19).
+  - Scenario: Given the user is in a household with an active meal plan, When the app is cold-launched, Then `foragerApp.init()` wires `MealPlanService.shared.householdKeyProvider` AND immediately calls `loadActiveMealPlan()` AND the Dashboard Meal Plan card renders the active plan's name on first render (not the ghost state).
+  - Scenario: Given no active meal plan exists for the current scope, When the app is cold-launched, Then `activeMealPlan` is nil after the reload AND the Dashboard shows the ghost state ("No meal plan this week. Tap to create one.").
+  - Scenario: Given the user is not in any household (`householdKeyProvider` returns nil), When the app is cold-launched, Then the reload fetches meal plans with `householdKey == nil` predicate AND populates `activeMealPlan` with the active personal-scope plan if any exists.
+
 ## Implementation Notes
 
 - Core entities: MealPlan (date range + name), PlannedMeal (date + recipe link + completedDate)

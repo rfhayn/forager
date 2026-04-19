@@ -10,17 +10,29 @@ Skills, hooks, MCP server tools, and automation that support the forager develop
 
 The project SHALL provide an `/architecture-audit` skill that scans the codebase for violations of architectural rules defined in the `architecture` capability. The skill SHALL be invokable on demand and SHALL report violations with file:line references.
 
+The skill's Check 3 (scope-aware fetch compliance, ADR 013) SHALL restrict its scan to `Services/` and `forager/Repositories/`. View-layer `@FetchRequest` is explicitly out of scope for Check 3 pending the future `decide-view-layer-scope-architecture` change; the skill file SHALL include a "Non-goal" note documenting this boundary so future contributors do not extend the check to views prematurely.
+
+The skill's Check 4 (view-save violations, service-layer-pattern) SHALL scan `forager/Views/**/*.swift` for `context.save()`, `viewContext.save()`, and `.managedObjectContext.save()` calls, excluding files matching `*Preview*` via grep glob, and the skill prose SHALL instruct the reader to discount matches inside `#Preview { }` blocks and `PreviewProvider` extensions when the file itself is not named `*Preview*`.
+
 #### Scenario: Developer runs architecture-audit
 - **WHEN** a developer invokes `/architecture-audit` before creating a pull request
-- **THEN** the skill scans the codebase and reports any architectural violations it detects (currently: factory enforcement for HouseholdScoped entity creation)
+- **THEN** the skill scans the codebase and reports any architectural violations it detects (factory enforcement, scope-aware fetch in services/repositories, view-save ownership excluding previews)
 
 #### Scenario: Audit reports zero violations on compliant code
 - **WHEN** the skill is run against a clean codebase
-- **THEN** the skill reports success with zero violations
+- **THEN** the skill reports success with zero violations, including zero false positives from preview-block save calls
+
+#### Scenario: Check 3 does not flag view @FetchRequest
+- **WHEN** Check 3 (scope-aware fetch compliance) scans the codebase
+- **THEN** it scans only `Services/` and `forager/Repositories/`; any unscoped `@FetchRequest` in `forager/Views/` is explicitly NOT reported by Check 3, and the skill file contains a "Non-goal" note making this boundary clear
+
+#### Scenario: Check 4 excludes preview save calls
+- **WHEN** Check 4 (view-save violations) scans `forager/Views/**/*.swift`
+- **THEN** files matching `*Preview*` are excluded via grep glob, AND the skill prose instructs readers to discount matches inside `#Preview { }` blocks and `PreviewProvider` extensions in non-preview-named files; the check SHALL report zero violations on the post-fix tree
 
 #### Scenario: Skill is extensible for new architectural rules
 - **WHEN** a new architectural rule is added to the `architecture` capability spec
-- **THEN** the `/architecture-audit` skill MAY be extended with a corresponding check (e.g., scope-aware fetch compliance, view-save ownership) without disrupting existing checks
+- **THEN** the `/architecture-audit` skill MAY be extended with a corresponding check without disrupting existing checks; extensions to Check 3 covering view-layer `@FetchRequest` specifically SHALL wait for the `decide-view-layer-scope-architecture` change to land and define the normative pattern
 
 ### Requirement: Session start workflow
 
@@ -254,6 +266,58 @@ The helper SHALL:
 
 - **WHEN** `bash .claude/skills/_shared/status-line.sh --test` is invoked
 - **THEN** the self-test exits 0 after verifying the write-to-file and slash-to-hyphen cases
+
+### Requirement: Service unit tests configure the managed object factory in setUp
+
+Service-layer unit tests that exercise creation paths using `ManagedObjectFactory.make()` (ADR 014) SHALL call `service.configure(factory:)` in their setUp method with a `ManagedObjectFactory` constructed from the test's in-memory `PersistenceController`. This applies to any test that calls service methods which internally invoke `factory.make(...)`. Without this configuration the service's implicit-unwrapped factory crashes on first use, producing the crash-loop behavior fixed by `fix-test-harness-and-stale-assertions`.
+
+#### Scenario: RecipeServiceTests setUp configures the factory
+
+- **WHEN** `RecipeServiceTests.setUp` runs
+- **THEN** a `ManagedObjectFactory` is instantiated with the test's in-memory `PersistenceController` and passed to `service.configure(factory:)` AND to `templateService.configure(factory:)`
+
+#### Scenario: WeeklyListServiceTests setUp configures the factory
+
+- **WHEN** `WeeklyListServiceTests.setUp` runs
+- **THEN** the factory is configured on both `service` and `templateService` for parity with production setup
+
+#### Scenario: StoreServiceTests setUp configures the factory
+
+- **WHEN** `StoreServiceTests.setUp` runs
+- **THEN** the factory is configured on `service` so that `service.createStore(...)` exercises the production creation path instead of the assertionFailure guard at `StoreService.swift:73`
+
+### Requirement: In-memory PersistenceController resolves its stores by canonical filename
+
+`PersistenceController(inMemory: true)` SHALL configure its in-memory store URLs so that the `privateStore` and `sharedStore` property getters (which match on `url.lastPathComponent`) find the stores the same way they do in production. The in-memory paths SHALL use `forager.sqlite` and `forager_shared.sqlite` as their last path components (nested under any opaque parent such as `/dev/null/`). Core Data treats these URLs as opaque identifiers for in-memory stores — the filesystem path does not need to be valid.
+
+#### Scenario: In-memory privateStore getter resolves
+
+- **WHEN** `PersistenceController(inMemory: true).privateStore` is accessed
+- **THEN** the getter returns the in-memory `.private` store (no fatalError)
+
+#### Scenario: In-memory sharedStore getter resolves
+
+- **WHEN** `PersistenceController(inMemory: true).sharedStore` is accessed
+- **THEN** the getter returns the in-memory `.shared` store (no fatalError)
+
+### Requirement: Tests that reach through `PersistenceController.shared` may swap it
+
+For test files whose services internally reach through `PersistenceController.shared` (e.g. `RecipeImportService.persistAndFinish` accessing `.shared.privateStore`), the test's setUp MAY swap `PersistenceController.shared` with the test's in-memory controller and restore the prior value in tearDown. `PersistenceController.shared` SHALL be declared as `static var` (not `let`) to support this swap. Production code SHALL NOT mutate `PersistenceController.shared` — the mutable declaration exists solely to enable test isolation pending a future DI refactor.
+
+#### Scenario: RecipeImportServiceLLMTests swaps the shared controller in setUp
+
+- **WHEN** `RecipeImportServiceLLMTests.setUp` runs
+- **THEN** the prior `PersistenceController.shared` is captured, an in-memory controller is assigned to `PersistenceController.shared`, and the service's internal `.shared.privateStore` lookup now resolves to the in-memory private store
+
+#### Scenario: tearDown restores the prior shared controller
+
+- **WHEN** `RecipeImportServiceLLMTests.tearDown` runs after any test method
+- **THEN** `PersistenceController.shared` is reassigned to the prior value captured in setUp so subsequent tests are not coupled to this file's controller
+
+#### Scenario: Production code does not mutate shared
+
+- **WHEN** any file outside `foragerTests/` is scanned for assignments to `PersistenceController.shared`
+- **THEN** zero matches SHALL be found; the `static var` declaration exists for test swapping only
 
 ## Implementation Notes
 
