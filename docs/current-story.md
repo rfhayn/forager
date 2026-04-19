@@ -4,6 +4,9 @@
 **Status**: **architecture-compliance-sweep ACTIVE** (rebase-in-progress; PR #146 build 136 on TestFlight) | **fix-test-harness-and-stale-assertions COMPLETE** (#147 merged) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
 **Total Progress**: ~355.25h shipped + architecture-compliance-sweep / fix-dashboard-meal-plan-cold-start / investigate-import-and-store-test-failures in flight
 **Current Branch**: `feature/architecture-compliance-sweep` (rebasing onto post-#147 main)
+**Status**: **architecture-compliance-sweep ACTIVE** (PR #146, build 136 on TestFlight) | **fix-test-harness-and-stale-assertions ACTIVE** (PR #147, awaiting review) | **fix-dashboard-meal-plan-cold-start ACTIVE** (new branch, awaiting PR) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
+**Total Progress**: ~355.25h shipped + 3 small changes in flight
+**Current Branch**: `feature/fix-dashboard-meal-plan-cold-start`
 **Launch Path**: M7.7 (App Store submission, awaiting re-review) | post-launch roadmap at `docs/project-roadmap.md`
 **Planning**: Three-stream roadmap — [operating-model](roadmaps/operating-model-roadmap.md) / [app-health](roadmaps/app-health-roadmap.md) / [shipping](roadmaps/shipping-roadmap.md). OpenSpec specs in `openspec/specs/` (11 capabilities incl. new `architecture` + `developer-tooling`); archived changes in `openspec/changes/archive/`.
 **Naming**: Forward-only — new work uses OpenSpec change-id kebab-case (see [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md)); historical M#.#.# preserved.
@@ -32,6 +35,9 @@
 | `sync-status-line-with-focus` | Shared `status-line.sh` helper + 6 workflow skills wired to rewrite the branch-keyed status file at focus transitions; CLAUDE.md convention | 1h | COMPLETE (PR #145, commit `e46ee25`, 2026-04-18) |
 | `fix-test-harness-and-stale-assertions` | Eliminate 51 test setUp crash-loops + fix 2 stale parser/normalizer assertions | ~1h | COMPLETE (PR #147, commit `9cb8224`, 2026-04-19) |
 | `architecture-compliance-sweep` | Narrowed sweep (Ultraplan-refined): 3 view-save fixes, architecture-audit Check 3/4 tightening, ADR 011 SUPERSEDED + ADR 015 (Dashboard), ADR 013 scope clarification + spec drift fix, beta diagnostic logging, CategoryService | 5-6h | ACTIVE (PR #146 open, build 136 on TestFlight, 2026-04-19) |
+| `architecture-compliance-sweep` | Narrowed sweep: 3 view-save fixes + audit tightening + ADR 011 SUPERSEDED + ADR 015 + ADR 013 scope clarification + spec drift fix + beta diagnostic logging + CategoryService | 5-6h | ACTIVE (PR #146, build 136 on TestFlight, 2026-04-19) |
+| `fix-test-harness-and-stale-assertions` | Eliminate 51 test setUp crash-loops; fix 2 stale parser/normalizer assertions. 6 newly-exposed failures → `investigate-import-and-store-test-failures` | ~1h | ACTIVE (PR #147, awaiting review, 2026-04-19) |
+| `fix-dashboard-meal-plan-cold-start` | One-line fix: reload `MealPlanService.shared.activeMealPlan` after `householdKeyProvider` is wired. Dashboard Meal Plan card now populates on cold start instead of showing ghost state until user visits Meals tab | ~0.5h | ACTIVE (new branch, awaiting PR, 2026-04-19) |
 
 ---
 

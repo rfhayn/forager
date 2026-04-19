@@ -91,6 +91,43 @@ Mid-session: launched a background Explore agent to investigate "test-first thin
 - Estimate vs actual: 5-6h planned (Ultraplan refinement), actual ~6h from start of `/opsx:explore` to end of verification. Close to on-target.
 - What surprised me: the 3 preview false positives. I expected the original 6-save count to be right; Ultraplan's re-verification caught the preview blocks. Lesson: always grep with `--exclude='*Preview*'` when counting view-layer patterns.
 - Process improvement: The test-first exploration happened as a background agent during implementation. That pattern (kick off a related exploration in parallel with implementation work) is powerful — the plan is ready for the next session instead of blocking this one.
+## Session 122 — April 19, 2026
+**Change**: `fix-dashboard-meal-plan-cold-start` — Dashboard meal plan card shows active plan on cold start
+
+**What happened**: Rich reported during TestFlight build 136 smoke-testing that the Dashboard Meal Plan card was showing the ghost state ("No meal plan this week. Tap to create one.") on cold launch — even with an active meal plan. The card populated only AFTER visiting the Meals tab once. Classic init-order race.
+
+**Root cause**: `MealPlanService.shared` is a singleton with `private init()` that eagerly calls `loadActiveMealPlan()`. At that moment, `householdKeyProvider` is still nil (default) — so the scope predicate falls back to `householdKey == nil` and the fetch returns `[]` for users in a household. `activeMealPlan` is stuck at nil. `foragerApp.init()` wires the provider AFTER (line 135) but nothing re-triggers the load. The Meals tab's `.onAppear` eventually calls `updateActivePlanStatus()` → `loadActiveMealPlan()` with the correct key, which explains why the card populates after visiting Meals.
+
+**Why the grocery list card doesn't have this bug**: `WeeklyListsView` uses `@FetchRequest` + in-memory `.filter` — SwiftUI reactively re-renders when `householdService.currentHouseholdKey` changes via `@EnvironmentObject` observation, so the filter re-applies automatically. `MealPlanService.shared.activeMealPlan` is imperatively cached, so nothing re-triggers it.
+
+**Fix**: one line in `foragerApp.init()` immediately after the `householdKeyProvider` closure assignment:
+```swift
+MealPlanService.shared.loadActiveMealPlan()
+```
+Plus a multi-line comment explaining the init-order race.
+
+**Key decisions**:
+- **Fix at the app-init wiring point, not in Dashboard `.onAppear`.** Treating the symptom in the view would require every new view that binds to `activeMealPlan` to add the same workaround. The bug is in the service wiring; fix it there.
+- **Reuse the public `loadActiveMealPlan()` method.** Adding a new `reconfigureActiveMealPlan()` or parameterizing the setter would be noise — `loadActiveMealPlan()` already does the right thing.
+- **Standalone change, not folded into PR #146.** PR #146 is open, smoke-tested, waiting for merge. Adding unrelated fix churns review. Each bug = one PR.
+- **Don't refactor the singleton.** The proper fix (DI, observable key changes) is bigger scope; tracked in `establish-test-planning-workflow` plan. One-line fix here, refactor later.
+
+**Learning**:
+- **Lazy singletons with eager init side effects are init-order hazards.** `MealPlanService.shared` accesses `PersistenceController.shared.container.viewContext` AND calls `loadActiveMealPlan()` in its private init. The former triggers its own shared-singleton chain; the latter runs before any dependencies are wired. Exactly the kind of coupling DI would prevent. Pattern to watch for: `private init` + `static let shared = Self()` + "do something important" inside init that depends on external state.
+- **Dashboard exposes bugs that tab-based navigation hides.** When Dashboard is the landing tab, users see the state of every domain card immediately. Every `.onAppear`-triggered refresh that previously ran on first-tab-visit is now deferred past the first render. The FUI-1 Dashboard refactor didn't introduce this bug — it made it visible.
+- **The grocery list card's reactive pattern is better.** `@FetchRequest` + `@EnvironmentObject`-observing filter is automatically correct across scope changes because SwiftUI handles dependency tracking. When writing domain services that front @Published state, observing upstream dependency changes (or exposing data via `@FetchRequest` directly) avoids this class of bug.
+
+**AI tooling observations**: I resisted the temptation to ask Rich for the log. Code reading was enough — the init order + the predicate fallback made the bug deterministic. "Don't ask for the log if the code already tells you" is a good principle when the bug is architectural rather than data-dependent.
+
+**What's next**:
+- Commit, `/pr`, merge.
+- Bump build 137 after all three PRs (#146, #147, #148) merge, archive for TestFlight cold-start verification.
+- `investigate-import-and-store-test-failures` still queued (agent's plan should be back soon).
+
+**Retro**:
+- Estimate vs actual: ~0.5h estimate, ~0.5h actual (investigation + one-line fix + OpenSpec + journal).
+- What surprised me: how simple the fix was once I traced the init order. The bug had persisted unnoticed for weeks because tab-based nav always loaded the Meals tab eventually. Dashboard-as-landing exposed it.
+- Process improvement: keep doing what worked — investigate, scope minimally, ship focused. Three small PRs in one day is healthy pace when each is well-scoped.
 
 ---
 
