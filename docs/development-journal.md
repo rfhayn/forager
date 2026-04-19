@@ -6,6 +6,54 @@
 
 ---
 
+## Session 123 — April 19, 2026
+**Change**: `investigate-import-and-store-test-failures` — 3 real test failures resolved (1 service bug + 2 test fixes)
+
+**What happened**: Background agent ran the 2 previously-crashing test files (`RecipeImportServiceLLMTests`, `StoreServiceTests`) on PR #147's branch and produced a triage plan. Key finding: actual failure count was **3, not 6** — PR #147's description over-counted before the tests could execute. The 3 failures split by class:
+
+1. **REAL SERVICE BUG** — `testReplaceExistingRecipeUpdatesFields`: `RecipeImportService.persistAndFinish` runs `refresh(mergeChanges: false)` on all updated objects before save (M9.23 commit `e058ef7`, to fix 134040 cross-store validation errors). Correct for `saveImport` (recipe is INSERTED) but **wrong for `replaceExistingRecipe`** (recipe is UPDATED in place — refresh discards pending edits, reverts title/ingredients to pre-edit state). Production impact uncertain but possible.
+2. **TEST-HARNESS ARTIFACT** — `testSaveImportUsesPipelineWhenLLMDisabled`: state leaks across tests. `PersistenceController(inMemory: true)` instances across setUp/tearDown appear to share some cache (suspected `NSPersistentCloudKitContainer` URL-keyed retention). Counts match cumulative totals in alphabetical test order.
+3. **STALE TEST** — `testFetchStoresScopedByHouseholdKey`: test expected `service.householdKey` to propagate into factory-made entities, but ADR 014's factory (M19) takes scope from `ScopeProvider`. With `scopeProvider: nil`, factory falls to `.personal` which NILS `householdKey`.
+
+**Fixes applied**:
+
+**Service fix** (Option A, additive, near-zero regression risk): added `preserveUpdated: Set<NSManagedObject> = []` parameter to `persistAndFinish`. Refresh loop excludes objects whose `objectID` is in the set. `replaceExistingRecipe` passes `preserveUpdated: [recipe]`; `saveImport` uses default `[]`.
+
+**Important subtlety caught during testing**: first attempt compared by `NSManagedObject` identity (`contains(obj)`). That failed because the caller passes a child-context `recipe` but the refresh loop iterates viewContext's `updatedObjects` — those are DIFFERENT NSManagedObject instances sharing the same objectID after child→parent propagation. Fix: compare by `objectID`, not identity.
+
+**Test fix #2** (delta assertions): setUp captures baseline recipe/ingredient counts; assertions use `recipesAddedByThisTest()` / `ingredientsAddedByThisTest()` deltas. `testSaveImportUsesPipelineWhenLLMDisabled` uses a UUID-suffixed title and fetches by predicate — avoids the "existingObject returns faulted instance with nil attributes" issue on freshly-saved recipes. `testPipelineFallbackCreatesIngredientsWithTemplates` iterates all context ingredients to verify template connectivity.
+
+**Test fix #3** (stub ScopeProvider): added `TestStubScopeProvider` inline at top of `StoreServiceTests.swift`. `testFetchStoresScopedByHouseholdKey` creates a real Household, reconfigures the service with a factory using `TestStubScopeProvider(.household(...))`, which exercises the factory's `.household` branch that sets `scopedObject.householdKey = household.id?.uuidString`.
+
+**Result**: 19 of 19 tests pass in 0.83 seconds. Full suite runtime should now approach the ~3-5 minute PR #147 target.
+
+**Key decisions**:
+- **Option A over Option B/C.** Additive parameter preserves `saveImport` behavior; escape hatch is explicit. Option B (narrow M9.23's refresh) would risk 134040 regressions. Option C (capture/restore pending changes) brittle.
+- **Compare preserveUpdated by objectID, not identity.** Core Data contexts have per-context NSManagedObject instances; ObjectID is the cross-context identifier.
+- **Delta assertions, not unique URLs.** Root-cause state-leakage investigation deferred; delta pattern already in the codebase.
+- **Fetch-by-predicate over existingObject.** Freshly-saved recipes come back as faulted instances with nil attributes; predicate fetch sidesteps the cache state.
+- **Inline TestStubScopeProvider.** YAGNI — extract when a second file needs it.
+
+**Learning**:
+- **Child-context-vs-viewContext identity is a common Core Data trap.** When passing a managed object across contexts, you're passing one specific NSManagedObject instance. The same logical entity in another context is a DIFFERENT NSManagedObject. `===` and `Set<NSManagedObject>.contains()` both use identity. For cross-context work, always compare by `objectID`.
+- **The agent's "Option A vs B vs C" breakdown was unusually high-leverage.** Each option had a specific tradeoff in a specific direction. Picking the right one took seconds. Good exploration output: not just "here's the bug" but "here are 3 fix shapes and here's why A wins."
+- **Freshly-saved Core Data objects are often faulted on the main context.** Accessing attributes immediately after save may return nil until the fault fires. When a test asserts on a freshly-saved object's attributes, prefer predicate fetch.
+- **Over-counting failures is a common exploration error.** PR #147 said 6 failures; reality was 3 + 3 that actually passed. Inferred from "not green" but crash-loops masked real status. Lesson: measure, don't infer. When a suite has crash-loops, per-test status is unreliable.
+
+**AI tooling observations**: Second successful "agent investigates in background while I implement something else" pattern. Agent produced a 2300-word plan with triage table, specific root causes, code references, and fix recommendations — executed directly from it in ~2h. Cost-benefit on investigation agents is strongly positive when investigation is bounded (specific failures to triage) and output is actionable (plan I can implement verbatim).
+
+**What's next**:
+- Commit, `/pr`, merge.
+- Post-merge smoke test: verify `replaceExistingRecipe` actually works in production (Import Preview → "Replace existing" flow).
+- Archive + TestFlight build 137 (cumulative with #146, #147, #148, #149) once everything merges.
+
+**Retro**:
+- Estimate: 4-6h (agent); actual ~2h (implementation + artifacts + journal).
+- What surprised me: the objectID-vs-identity issue. First attempt silently no-op'd; test failed the same way as before the fix. Took a minute to realize the set.contains wasn't matching. Reminder: when a fix "doesn't take effect," suspect silent no-ops from filter/equality logic before suspecting the code path.
+- Process improvement: "fix the visible bug, defer the architectural work" continues to serve well. State-leakage and singleton-coupling are real but orthogonal. Keep shipping narrow fixes; stack architectural work separately.
+
+---
+
 ## Session 121 — April 19, 2026
 **Change**: `fix-test-harness-and-stale-assertions` — test-harness crash-loops eliminated; 2 stale assertions updated
 
