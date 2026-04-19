@@ -17,6 +17,13 @@ final class StoreServiceTests: XCTestCase {
         persistence = PersistenceController(inMemory: true)
         context = persistence.container.viewContext
         service = StoreService(context: context)
+
+        // ADR 014: service.createStore explicitly assertionFailures when the
+        // factory isn't configured (Services/StoreService.swift:73). Configure
+        // it here so tests exercise the real creation path.
+        // (fix-test-harness-and-stale-assertions)
+        let factory = ManagedObjectFactory(context: context, scopeProvider: nil, persistence: persistence)
+        service.configure(factory: factory)
     }
 
     @MainActor

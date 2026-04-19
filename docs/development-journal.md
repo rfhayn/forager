@@ -6,6 +6,52 @@
 
 ---
 
+## Session 121 — April 19, 2026
+**Change**: `fix-test-harness-and-stale-assertions` — test-harness crash-loops eliminated; 2 stale assertions updated
+
+**What happened**: A full `xcodebuild test` run during `architecture-compliance-sweep` verification (PR #146, build 136 on TestFlight) took ~25 minutes and reported FAILED — but the background agent found that most of those 25 minutes were 51 simulator relaunches from 4 test files crash-looping on setUp, not real failures. The agent also identified 2 stale assertions (tests whose expectations hadn't been updated after underlying parser/normalizer behavior changed). Rich asked: "fix the test suite issues" — interpreted narrowly as "eliminate the crash-loops and resolve the stale drift, don't scope-creep into the real assertion failures hidden underneath." Started a fresh branch off main so PR #146 stays focused.
+
+**Root causes**:
+1. `RecipeServiceTests`, `WeeklyListServiceTests`, `StoreServiceTests` — setUp never called `service.configure(factory:)`. The factory is declared `private(set) var factory: ManagedObjectFactory!` (implicit-unwrap). When a test method invokes a creation path that uses `factory.make(...)`, the force-unwrap crashes. These tests predate ADR 014 factory enforcement — when the factory was added in M9.13/M19, setUp wasn't updated.
+2. `RecipeImportServiceLLMTests` — used a raw `NSPersistentContainer(name: "forager")` with one in-memory store, but the service under test reaches through `PersistenceController.shared.privateStore` internally (in `persistAndFinish`). `.shared` lazy-inits the default (production) controller which has no loaded stores in a test process; the `privateStore` getter's force-unwrap fatalErrors.
+3. `HybridParserRoutingTests.testParsersReceiveCorrectInput` expected `"½ cup butter"` but `IngredientPreprocessor` now normalizes the fraction to `"1/2 cup butter"` before parser dispatch.
+4. `IngredientTemplateNormalizationTests.testLargeEggsSingularizes` expected `"large egg"` but the normalizer now treats "large" as a size descriptor and strips it, yielding `"egg"`.
+
+**Fixes**:
+- Three service-test setUps got 3-line additions: instantiate `ManagedObjectFactory` + `service.configure(factory:)` (+ `templateService.configure(factory:)` where applicable).
+- `PersistenceController.swift` — two small production changes: (a) in-memory URLs now include `forager.sqlite` / `forager_shared.sqlite` as their `lastPathComponent` so the `privateStore`/`sharedStore` getters (which match by filename) resolve in-memory stores the same way they resolve real files; (b) `static let shared` → `static var shared` so `RecipeImportServiceLLMTests` can temporarily swap in an in-memory controller and restore in tearDown.
+- `RecipeImportServiceLLMTests` refactored from raw NSPersistentContainer to `PersistenceController(inMemory: true)` + `.shared` swap.
+- Parser-routing test switched to ASCII-only input (`"1 cup butter"`) to decouple from preprocessor normalization rules — the test is about parser dispatch, not preprocessor behavior.
+- Normalization test updated: `"Large Eggs"` → `"egg"` (large is a size descriptor, stripped; `baby` in adjacent tests is preserved as identity).
+
+**Results**: 4 crash-loops → 0. 78 tests across the 6 affected files run in 2.8 seconds (previously: ~15 minutes of relaunches). 2 stale assertions pass. 6 new real assertion failures visible (4 in `RecipeImportServiceLLMTests`, 2 in `StoreServiceTests`) — previously hidden under the crashes. Captured as deferred follow-up change `investigate-import-and-store-test-failures`.
+
+**Key decisions**:
+- **Don't weaken ADR 014's factory force-unwrap.** Tests must configure the factory the way production does. The implicit-unwrap is an intentional "misconfigured at app startup → crash loudly" contract.
+- **`static var shared` is a test seam, not a production API.** Production code never sets it. Comment on the declaration makes that explicit. If more test files need to reach through `.shared`, we should introduce proper DI.
+- **Don't fix the 6 newly-exposed failures in this change.** They were hidden by crashes; making them visible is already progress. Investigating them properly is its own change.
+- **In-memory URLs got canonical filenames.** The URL is opaque for in-memory stores — Core Data doesn't touch the filesystem — so `/dev/null/forager.sqlite` works the same as `/dev/null` but resolves cleanly through the production getter logic.
+
+**Learning**:
+- **Crash-loops hide real failures.** A test that crashes on setUp never reaches its assertions; xctest relaunches and tries the next. 51 relaunches in one suite run means you lose 15 minutes of CI AND 51 opportunities to see real drift. Eliminating the crashes was the highest-leverage test-harness work in the project.
+- **Factory enforcement (ADR 014) has a cost that propagates into tests.** When services require factory configuration before use, tests must match production setup precisely. The alternative (optional factory) would weaken the invariant. Worth adding to checklist: "if adding a service with `factory: ManagedObjectFactory!`, also write the test setUp that configures it."
+- **Singleton-through patterns (`.shared.privateStore`) create hidden test coupling.** The test THINKS it's isolated because it creates its own NSPersistentContainer — but the code under test reaches through `.shared` and breaks the isolation. Real architectural risk, not just a test artifact.
+- **Unicode fractions in parser tests coupled to preprocessor.** The `½` input coupled the parser-routing test to `IngredientPreprocessor`. When preprocessor rules changed, test broke even though parser routing still worked. Generalizable: keep tests about one thing — if the test is about routing, use an input that doesn't exercise preprocessing.
+
+**AI tooling observations**: The background test-agent produced a detailed failure report I could act on without polluting main-conversation context with 6500 lines of test log. The pattern (fire agent in background, continue working, integrate findings when it completes) is worth repeating. This entire fix-test-harness change came directly from that agent's report.
+
+**What's next**:
+- `/pr`, merge after review.
+- After PR #146 also merges, propose `investigate-import-and-store-test-failures` to triage the 6 remaining failures.
+- `establish-test-planning-workflow` (agent's plan at `~/.claude/plans/test-first-thinking-exploration.md`) still queued.
+
+**Retro**:
+- Estimate vs actual: no prior estimate; ~1h (investigation + fixes + OpenSpec + journal).
+- What surprised me: the mismatch between in-memory store URL filenames and the getter lookup. A latent bug in the test harness nobody noticed because nothing called `privateStore`/`sharedStore` from a test that used `PersistenceController(inMemory: true)` until today.
+- Process improvement: the narrow scope ("fix the visible problem, document remaining as deferred, don't scope-creep") served this change well. Easy to wander into the 6 newly-exposed assertions and balloon this to 4 hours.
+
+---
+
 ## Session 119 — April 18, 2026 (late evening)
 **Change**: `sync-status-line-with-focus` — proposed retroactively, applied, awaiting PR
 

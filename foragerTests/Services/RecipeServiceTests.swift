@@ -20,6 +20,13 @@ final class RecipeServiceTests: XCTestCase {
         templateService = IngredientTemplateService(context: context)
         parsingService = IngredientParsingService(context: context, templateService: templateService)
         service = RecipeService(context: context, parsingService: parsingService)
+
+        // ADR 014: service.createRecipe etc. go through ManagedObjectFactory.make;
+        // without configure(factory:) the implicit-unwrapped `factory!` crashes on
+        // first use. (fix-test-harness-and-stale-assertions)
+        let factory = ManagedObjectFactory(context: context, scopeProvider: nil, persistence: persistence)
+        service.configure(factory: factory)
+        templateService.configure(factory: factory)
     }
 
     @MainActor

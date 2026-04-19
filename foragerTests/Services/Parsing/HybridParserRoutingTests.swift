@@ -194,7 +194,15 @@ final class HybridParserRoutingTests: XCTestCase {
 
     // MARK: - Call Tracking
 
-    /// Verify parsers receive the exact input string in order
+    /// Verify parsers receive the exact input string in order.
+    ///
+    /// NOTE: `IngredientPreprocessor` normalizes Unicode fractions (e.g. ½ → 1/2)
+    /// BEFORE `HybridIngredientParser.parse()` dispatches to the underlying parsers.
+    /// The test asserts the post-preprocess form because that's what the parsers
+    /// actually observe. Use an ASCII-only input to avoid coupling the test to the
+    /// preprocessor's exact normalization rules — the goal of this test is to
+    /// verify that all three parsers receive the SAME input, not to validate the
+    /// preprocessor. (fix-test-harness-and-stale-assertions, 2026-04-19)
     func testParsersReceiveCorrectInput() {
         mockRegex.defaultConfidence = 0.3
         mockML.defaultConfidence = 0.3
@@ -204,11 +212,12 @@ final class HybridParserRoutingTests: XCTestCase {
             regexParser: mockRegex, nlpParser: mockNLP,
             mlParser: mockML, regexConfidenceThreshold: 0.9
         )
-        let _ = hybrid.parse("½ cup butter")
+        let input = "1 cup butter"
+        let _ = hybrid.parse(input)
 
-        XCTAssertEqual(mockRegex.parseCalls, ["½ cup butter"])
-        XCTAssertEqual(mockML.parseCalls, ["½ cup butter"])
-        XCTAssertEqual(mockNLP.parseCalls, ["½ cup butter"],
+        XCTAssertEqual(mockRegex.parseCalls, [input])
+        XCTAssertEqual(mockML.parseCalls, [input])
+        XCTAssertEqual(mockNLP.parseCalls, [input],
                        "NLP should be called when both regex and ML < 0.5")
     }
 

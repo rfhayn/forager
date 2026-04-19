@@ -17,23 +17,20 @@ final class RecipeImportServiceLLMTests: XCTestCase {
     private var importService: RecipeImportService!
     private var mockParser: MockLLMIngredientParser!
 
+    private var persistence: PersistenceController!
+    private var previousShared: PersistenceController!
+
     override func setUp() {
         super.setUp()
 
-        // In-memory Core Data stack for testing
-        let container = NSPersistentContainer(name: "forager")
-        let description = NSPersistentStoreDescription()
-        description.type = NSInMemoryStoreType
-        container.persistentStoreDescriptions = [description]
+        // Dual-store in-memory controller (matches production dual-store shape so
+        // RecipeImportService.persistAndFinish's `.shared.privateStore` lookup works).
+        // (fix-test-harness-and-stale-assertions, 2026-04-19)
+        persistence = PersistenceController(inMemory: true)
+        previousShared = PersistenceController.shared
+        PersistenceController.shared = persistence
 
-        let expectation = expectation(description: "Store loaded")
-        container.loadPersistentStores { _, error in
-            XCTAssertNil(error)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 5)
-
-        context = container.viewContext
+        context = persistence.container.viewContext
         let templateService = IngredientTemplateService(context: context)
         let parsingService = IngredientParsingService(context: context, templateService: templateService)
         importService = RecipeImportService(context: context, parsingService: parsingService)
@@ -48,6 +45,12 @@ final class RecipeImportServiceLLMTests: XCTestCase {
     override func tearDown() {
         UserDefaults.standard.removeObject(forKey: "llmParsingEnabled")
         KeychainHelper.deleteLLMAPIKey()
+        // Restore the shared controller so later tests aren't coupled to ours.
+        if let previous = previousShared {
+            PersistenceController.shared = previous
+        }
+        previousShared = nil
+        persistence = nil
         super.tearDown()
     }
 
