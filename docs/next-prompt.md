@@ -1,11 +1,20 @@
 # Next Implementation Prompt
 
-**Last Updated**: April 18, 2026
-**Launch Path**: M7.7 — in App Review (rejection round 2 resolved via ASC metadata fix)
+**Last Updated**: April 19, 2026
+**Launch Path**: M7.7 — in App Review (rejection round 2 resolved via ASC metadata fix); Build 137 on TestFlight with 4 additional PRs merged (see App Health below)
 **Canonical planning reference**: [`docs/project-roadmap.md`](project-roadmap.md) — parent doc with three stream detail docs
 **Naming convention**: forward-only. New work uses OpenSpec change-id kebab-case; legacy M#.#.# preserved for historical artifacts. See [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md).
 
 > **Note**: Per-milestone `next-prompt-M#.#.md` files are now replaced by OpenSpec changes in `openspec/changes/`. Archived milestone prompts are in `docs/archive/`.
+
+---
+
+## Recommended Next (in priority order)
+
+1. **Smoke-test build 137 on TestFlight** — cold-launch Dashboard meal plan card, Replace-existing recipe import, Settings > Diagnostic Log visibility.
+2. **Wait for M7.7 Apple re-review** on build 134 — metadata fix replied; no local action.
+3. **Kick off `establish-test-planning-workflow`** (Operating Model stream) — plan drafted at [`docs/prds/active/establish-test-planning-workflow.md`](prds/active/establish-test-planning-workflow.md); run `/opsx:propose establish-test-planning-workflow` when ready. §7 of the PRD has 5 decisions to resolve during proposal.
+4. **Consider `decide-view-layer-scope-architecture`** (App Health stream) — deferred from architecture-compliance-sweep. Evaluate custom property wrapper vs. formalize in-memory filter vs. accept status quo. Write ADR 016 after the decision.
 
 ---
 
@@ -30,15 +39,22 @@ Ordered roughly by priority. See the three-stream roadmap for strategic detail: 
 | `seed-operating-model-foundations` | COMPLETE (PR #141) — capability specs + three-stream roadmap + config migration | `openspec/changes/archive/2026-04-18-seed-operating-model-foundations/` |
 | `expand-claude-context-infrastructure` | COMPLETE (PR #143) — project-brief.md + 4 new MCP tools + dual-format skills | `openspec/changes/archive/2026-04-18-expand-claude-context-infrastructure/` |
 | `harden-pr-skill-doc-freshness` | COMPLETE (PR #144) — mandatory doc-freshness gate in `/pr`; shared utility with `/review` | `openspec/changes/archive/2026-04-18-harden-pr-skill-doc-freshness/` |
+| `sync-status-line-with-focus` | COMPLETE (PR #145) — status-line helper + 6 workflow skills + CLAUDE.md convention | `openspec/changes/archive/2026-04-18-sync-status-line-with-focus/` |
+| `establish-test-planning-workflow` | **READY** — plan drafted, use `/opsx:propose` to kick off; capability spec + `/test-plan` skill + `test-freshness.sh` gate + skill integrations; ~7.5h | PRD: [`establish-test-planning-workflow.md`](prds/active/establish-test-planning-workflow.md) |
 
 ### App Health (Stream 2)
 
 | Change ID | Description | Source |
 |-----------|-------------|--------|
-| `architecture-compliance-sweep` | URGENT — ADR 013 scope sweep (45 occurrences in 28 files) + saves-in-views cleanup (6 sites) + ADR 011 supersession + ADR 015 + /architecture-audit hardening | PRD: [`architecture-compliance-sweep.md`](prds/active/architecture-compliance-sweep.md) |
+| `architecture-compliance-sweep` | COMPLETE (PR #146) — narrowed sweep: view-save fixes, audit Check 3/4 tightening, ADR 011 SUPERSEDED + ADR 015, ADR 013 scope clarification + spec drift fix, beta diagnostic logging, CategoryService | `openspec/changes/archive/2026-04-19-architecture-compliance-sweep/` |
+| `fix-test-harness-and-stale-assertions` | COMPLETE (PR #147) — eliminated 51 setUp crash-loops + 2 stale parser/normalizer assertions | `openspec/changes/archive/2026-04-19-fix-test-harness-and-stale-assertions/` |
+| `fix-dashboard-meal-plan-cold-start` | COMPLETE (PR #148) — one-line `loadActiveMealPlan()` after householdKeyProvider wired | `openspec/changes/archive/2026-04-19-fix-dashboard-meal-plan-cold-start/` |
+| `investigate-import-and-store-test-failures` | COMPLETE (PR #149) — `persistAndFinish` preserveUpdated escape hatch; 19/19 tests pass | `openspec/changes/archive/2026-04-19-investigate-import-and-store-test-failures/` |
+| `decide-view-layer-scope-architecture` | **Planned** — evaluate `@ScopedFetchRequest` wrapper vs. formalize in-memory filter vs. ratify; pilot one view; migrate all 43 sites; write ADR 016 | Deferred from `architecture-compliance-sweep`; see that change's proposal.md |
+| `harden-adr-enforcement-round-2` | Planned — enforcement upgrades for ADRs 001, 005 (beyond view-save), 007 which have high drift risk from discipline-only enforcement | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 | `optimize-fetch-performance` | Planned — fetchBatchSize + relationshipKeyPathsForPrefetching | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 | `migrate-to-structured-logging` | Planned — 657 `print()` calls → Logger / DiagnosticLogger | [app-health roadmap](roadmaps/app-health-roadmap.md) |
-| `add-service-test-coverage` | Planned — 8 services missing test files | [app-health roadmap](roadmaps/app-health-roadmap.md) |
+| `add-service-test-coverage` | Planned — 8 services missing test files (likely folded into `establish-test-planning-workflow` follow-ups) | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 | `harden-service-injection-and-saves` | Planned — singleton removal + saves consolidation | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 | `standardize-service-async-patterns` | Planned — async write methods across 5 services | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 

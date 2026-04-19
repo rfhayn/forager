@@ -6,6 +6,40 @@
 
 ---
 
+## Session 124 — April 19, 2026 (late — session wrap)
+**Change**: none (post-merge bookkeeping); session wrap + TestFlight build 137
+
+**What happened**: Wrapped the multi-PR session. Merged all 4 PRs (#146, #147, #148, #149) to main in dependency order — #147 first (its branch was the base for #149, so --delete-branch on #147 would have auto-closed #149 per the Session 117 insight). Switched #149's PR base to main via `gh pr edit` BEFORE merging #147 so the auto-close didn't happen. Rebased #149 onto new main via `git rebase --onto origin/main bd7c17a`, force-pushed, merged. Rebased #146 onto new main — 3 conflicts in docs (current-story, journal, insights-log) since all four branches touched those files. Resolved by preserving both sets of entries in reverse-chronological order. Same conflict pattern on #148 and #149 rebases — resolved via Python regex helper that strips `<<<<<<<` / `=======` / `>>>>>>>` markers while keeping both conflict sides intact. All 4 merged cleanly.
+
+Bumped to build 137. Archive + upload + TestFlight distribute (Public Beta Testers). Build 137 live with cumulative "What to Test" notes covering all 4 changes. Then Rich asked for OpenSpec + docs cleanup before signing off.
+
+Manually archived all 4 changes (skipped /opsx:archive to avoid 4 skill prompt cycles): promoted each change's delta specs into living capability specs (`architecture`, `developer-tooling`, `meal-planning`), moved change dirs to `openspec/changes/archive/2026-04-19-<id>/`, ticked Phase 5 tasks in each archived tasks.md via sed. Updated `docs/current-story.md` with 4 COMPLETE entries; `docs/next-prompt.md` with post-merge backlog + recommended-next section (smoke-test, wait for Apple, kick off `establish-test-planning-workflow`). Copied the background agent's test-first plan from `~/.claude/plans/test-first-thinking-exploration.md` into `docs/prds/active/establish-test-planning-workflow.md` so it survives the session ending.
+
+**Key decisions**:
+- **Change #149's base to main BEFORE merging #147**, not after. GitHub auto-closes stacked PRs when the base branch is deleted; changing the base first preserves the PR (avoids the rebase-and-open-new-PR dance we did for #142 last week).
+- **Keep both sides of doc conflicts during rebase**. The journal/insights/current-story conflicts all have the same shape: both branches added entries at the top. Resolution is "keep both, order by session number descending" — not "pick one side." A Python helper that strips conflict markers while preserving both blocks is faster than resolving each conflict by hand when the intent is always "append both."
+- **Manual /opsx:archive over skill invocation.** Four changes × one skill prompt each would have been interactive noise. Running the equivalent operations (promote deltas, `mv` to archive/, tick Phase 5) as direct shell + edits took ~5 minutes total.
+- **Save the test-first plan as a repo PRD, not leave it in `~/.claude/plans/`.** The `plans/` folder is session-local; the repo survives. Putting `establish-test-planning-workflow.md` in `docs/prds/active/` + linking from `docs/next-prompt.md` means the next session can pick it up directly.
+
+**Learning**:
+- **PR-stacking base-branch re-parenting is the clean escape hatch.** `gh pr edit <N> --base main` preserves a PR when its original base is about to be deleted. Do this BEFORE merging the base PR, not after. Once the base branch is deleted, the PR auto-closes and reopening requires re-creation. Adding to the "PR stacking" insight from Session 117 as a mitigation.
+- **Regex conflict-marker stripping is surprisingly viable for append-only docs.** When both sides of a merge conflict added new content to the TOP of a reverse-chronological log, the resolution is trivially "keep both." A 5-line Python script (`re.sub(r'<<<<<<< HEAD\n', '', ...)` etc.) handled 3 file conflicts in one shot. Won't work for substantive code merges, but shines for journal/insight/current-story conflicts that happen routinely in multi-branch sessions.
+- **Session wrap is its own kind of hygiene.** Rich said "I'm running out of context, let's call it quits" — that's a signal to capture everything important into the repo before the session state disappears. Saving the test-first plan as a PRD, updating `next-prompt.md` with the recommended-next stack, and making sure `current-story.md` reflects reality are the minimum wrap. The prompt "what's next?" needs a concrete answer written down.
+
+**AI tooling observations**: This session ran for ~8h and shipped 4 PRs + 1 TestFlight build. The background-agent pattern (fire investigation, continue main-thread work, integrate findings) was load-bearing — Sessions 121 and 123 both started from agent reports. The `/opsx:explore` → Ultraplan → implement chain caught Phase 1's over-scoping on architecture-compliance-sweep (saved 10-12h of unnecessary work). The doc-freshness gate fired exactly once (on sync-status-line-with-focus, Session 119) and has worked silently since — "installed the gate and it did its job" is a better outcome than "installed the gate and it kept firing."
+
+**What's next**:
+- Rich smoke-tests build 137 on TestFlight (3 scenarios: cold-launch Dashboard, Replace-existing recipe import, Settings > Diagnostic Log).
+- Wait for Apple re-review on build 134 (M7.7 submission).
+- Next session: either pick up `establish-test-planning-workflow` via `/opsx:propose` (plan already drafted), or something else in the backlog.
+
+**Retro**:
+- Estimate vs actual: N/A (wrap session). Time to wrap: ~30 min (docs + archive + PRD copy + this journal entry).
+- What surprised me: the 4-PR-in-parallel merge order + rebase flow worked better than expected. Each rebase took ~1 minute; conflict resolution via the Python helper took ~30 seconds per file.
+- Process improvement: consider automating the "copy plan from `~/.claude/plans/` to `docs/prds/active/` on exit" as part of session wrap, maybe via a `/session-wrap` skill that formalizes this. Potential small follow-up.
+
+---
+
 ## Session 123 — April 19, 2026
 **Change**: `investigate-import-and-store-test-failures` — 3 real test failures resolved (1 service bug + 2 test fixes)
 
