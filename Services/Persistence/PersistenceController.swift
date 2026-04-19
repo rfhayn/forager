@@ -28,9 +28,15 @@ final class PersistenceController: ObservableObject {
     @Published var isReady = false
     
     // MARK: - Singleton
-    
-    static let shared = PersistenceController()
-    
+
+    // `static var` (not `let`) so tests can swap in an in-memory controller.
+    // Production code NEVER sets this — the default stays in effect.
+    // (fix-test-harness-and-stale-assertions: enables tests whose code paths
+    // reach through the singleton, e.g. RecipeImportService.persistAndFinish,
+    // to exercise an in-memory controller instead of crashing on the
+    // production forager.sqlite lookup.)
+    static var shared = PersistenceController()
+
     static var preview: PersistenceController = {
         let controller = PersistenceController(inMemory: true)
         // Sample data creation handled by DefaultSeeder (Phase 1.2)
@@ -148,9 +154,14 @@ final class PersistenceController: ObservableObject {
 
         if inMemory {
             // In-memory testing: each store needs a unique URL so Core Data
-            // doesn't reject the second as "Can't add the same store twice"
-            let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null"), scope: .private, inMemory: true)
-            let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null-shared"), scope: .shared, inMemory: true)
+            // doesn't reject the second as "Can't add the same store twice".
+            // URLs are opaque identifiers for in-memory stores — Core Data doesn't
+            // actually touch the filesystem — but the `privateStore`/`sharedStore`
+            // getters below look up stores by `url.lastPathComponent`. Use the
+            // same filenames as production so in-memory tests resolve the stores
+            // the same way the app does. (fix-test-harness-and-stale-assertions)
+            let privateDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null/forager.sqlite"), scope: .private, inMemory: true)
+            let sharedDesc = createStoreDescription(url: URL(fileURLWithPath: "/dev/null/forager_shared.sqlite"), scope: .shared, inMemory: true)
             container.persistentStoreDescriptions = [privateDesc, sharedDesc]
             #if DEBUG
             print("🧪 M7.2.2: Dual in-memory stores configured")

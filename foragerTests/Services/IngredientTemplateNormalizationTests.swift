@@ -143,7 +143,12 @@ final class IngredientTemplateNormalizationTests: XCTestCase {
 
     func testLargeEggsSingularizes() {
         let result = service.normalize(name: "Large Eggs")
-        XCTAssertEqual(result, "large egg", "'Large Eggs' singularizes — qty handles plurality, normalizer deduplicates")
+        // `large` is a size descriptor (like small/medium/large eggs — same product,
+        // different grade) so the normalizer strips it along with the plural. Contrast
+        // with `baby` in `testBabyCarrotsSingularizes` / `testBabySpinachPreserved`
+        // where baby is an identity qualifier (distinct product). (fix-test-harness-
+        // and-stale-assertions, 2026-04-19)
+        XCTAssertEqual(result, "egg", "'Large Eggs' → 'egg' — 'large' is a size descriptor, stripped; plural singularized")
     }
 
     func testFreshBasilPreservesIdentity() {

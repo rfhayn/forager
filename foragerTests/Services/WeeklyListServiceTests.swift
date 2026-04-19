@@ -21,6 +21,13 @@ final class WeeklyListServiceTests: XCTestCase {
         templateService = IngredientTemplateService(context: context)
         parsingService = IngredientParsingService(context: context, templateService: templateService)
         service = WeeklyListService(context: context, parsingService: parsingService)
+
+        // ADR 014: service.createList goes through ManagedObjectFactory.make;
+        // configure(factory:) is required to avoid crashing on the implicit-
+        // unwrapped `factory!`. (fix-test-harness-and-stale-assertions)
+        let factory = ManagedObjectFactory(context: context, scopeProvider: nil, persistence: persistence)
+        service.configure(factory: factory)
+        templateService.configure(factory: factory)
     }
 
     @MainActor
