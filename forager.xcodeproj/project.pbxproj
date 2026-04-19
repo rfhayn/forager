@@ -36,6 +36,7 @@
 		M106T002CLAUDETESTS0000A /* ClaudeIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */; };
 		M19T003DEDUPTESTS00A /* CategoryDeduplicatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */; };
 		M19T002SCOPETESTS00A /* HouseholdScopeProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */; };
+		ACS001CATSVCTESTS00A /* CategoryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */; };
 		M19T001FACTORYTESTSA /* ManagedObjectFactoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */; };
 		M106T003LLMSETTINGS0000A /* LLMSettingsServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */; };
 		M106T004IMPORTLLMTEST0A /* RecipeImportServiceLLMTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */; };
@@ -100,6 +101,7 @@
 		M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeIngredientParserTests.swift; sourceTree = "<group>"; };
 		M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDeduplicatorTests.swift; sourceTree = "<group>"; };
 		M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdScopeProviderTests.swift; sourceTree = "<group>"; };
+		ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryServiceTests.swift; sourceTree = "<group>"; };
 		M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedObjectFactoryTests.swift; sourceTree = "<group>"; };
 		M106T003LLMSETTINGS0000B /* LLMSettingsServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsServiceTests.swift; sourceTree = "<group>"; };
 		M106T004IMPORTLLMTEST0B /* RecipeImportServiceLLMTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecipeImportServiceLLMTests.swift; sourceTree = "<group>"; };
@@ -250,6 +252,7 @@
 			isa = PBXGroup;
 			children = (
 				M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */,
+				ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */,
 				M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */,
 				M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */,
 				52E9560AEAAE424DA939DD38 /* Parsing */,
@@ -427,6 +430,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				M19T003DEDUPTESTS00A /* CategoryDeduplicatorTests.swift in Sources */,
+				ACS001CATSVCTESTS00A /* CategoryServiceTests.swift in Sources */,
 				M19T002SCOPETESTS00A /* HouseholdScopeProviderTests.swift in Sources */,
 				M19T001FACTORYTESTSA /* ManagedObjectFactoryTests.swift in Sources */,
 				2B7444CCCB65A52DEBEC3B2B /* MockIngredientParser.swift in Sources */,

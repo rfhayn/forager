@@ -2,12 +2,9 @@ import SwiftUI
 import CoreData
 
 struct AddCategoryView: View {
-    @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.managedObjectFactory) private var factory
 
-    // M7.3.4: Household service for filtering by householdKey
-    @EnvironmentObject private var householdService: HouseholdService
+    @EnvironmentObject private var categoryService: CategoryService
 
     @State private var name = ""
     @State private var selectedColor = "#4CAF50"
@@ -62,7 +59,7 @@ struct AddCategoryView: View {
                 
                 Section {
                     Button("Add Category") {
-                        saveCategory()
+                        createCategory()
                     }
                     .frame(maxWidth: .infinity)
                     .disabled(!isFormValid)
@@ -85,79 +82,24 @@ struct AddCategoryView: View {
         }
     }
     
-    private func saveCategory() {
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // M7.3.4: Check for duplicates within current household scope only
-        let request: NSFetchRequest<Category> = Category.fetchRequest()
-        if let householdKey = householdService.currentHouseholdKey {
-            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == %@", trimmedName, householdKey)
-        } else {
-            request.predicate = NSPredicate(format: "name ==[c] %@ AND householdKey == nil", trimmedName)
-        }
-
-        do {
-            let existingCategories = try viewContext.fetch(request)
-            if !existingCategories.isEmpty {
-                errorMessage = "A category with this name already exists."
-                showingError = true
-                return
-            }
-        } catch {
-            errorMessage = "Failed to check for existing categories: \(error.localizedDescription)"
+    private func createCategory() {
+        switch categoryService.createCustomCategory(displayName: name, color: selectedColor) {
+        case .success:
+            dismiss()
+        case .failure(let error):
+            errorMessage = error.errorDescription ?? "Failed to create category"
             showingError = true
-            return
         }
-
-        // M19: Use factory for correct store assignment (ADR 014)
-        guard let factory = factory else {
-            errorMessage = "Internal error: factory not available"
-            showingError = true
-            return
-        }
-
-        guard let newCategory = CategoryRepository.getOrCreate(displayName: trimmedName, in: viewContext, factory: factory) else {
-            errorMessage = "Failed to create category"
-            showingError = true
-            return
-        }
-
-        newCategory.id = UUID()
-        newCategory.color = selectedColor
-        newCategory.isDefault = false
-        newCategory.dateCreated = Date()
-
-        // M7.3.4: Get next sort order within current household scope only
-        let currentHouseholdKey = householdService.currentHouseholdKey
-        let categoryRequest: NSFetchRequest<Category> = Category.fetchRequest()
-        if let key = currentHouseholdKey {
-            categoryRequest.predicate = NSPredicate(format: "householdKey == %@", key)
-        } else {
-            categoryRequest.predicate = NSPredicate(format: "householdKey == nil")
-        }
-        let maxSortOrder = (try? viewContext.fetch(categoryRequest).map(\.sortOrder).max()) ?? 5
-        newCategory.sortOrder = maxSortOrder + 1
-
-        do {
-            try viewContext.save()
-            #if DEBUG
-            print("✅ Created new category: \(trimmedName)")
-            #endif
-        } catch {
-            errorMessage = "Failed to save category: \(error.localizedDescription)"
-            showingError = true
-            return
-        }
-
-        dismiss()
     }
 }
 
 #Preview {
     let context = PersistenceController.preview.container.viewContext
     let householdService = HouseholdService(context: context)
+    let categoryService = CategoryService(context: context, householdService: householdService)
 
     AddCategoryView()
         .environment(\.managedObjectContext, context)
         .environmentObject(householdService)
+        .environmentObject(categoryService)
 }

@@ -296,6 +296,7 @@ struct WeeklyListsView: View {
 struct WeeklyListRowView: View {
     @ObservedObject var weeklyList: WeeklyList
     @Environment(\.managedObjectContext) private var viewContext
+    @EnvironmentObject private var weeklyListService: WeeklyListService
 
     @FetchRequest private var itemsFetch: FetchedResults<GroceryListItem>
 
@@ -396,14 +397,7 @@ struct WeeklyListRowView: View {
     private func saveName() {
         let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            weeklyList.name = trimmed
-            do {
-                try viewContext.save()
-            } catch {
-                #if DEBUG
-                print("⚠️ Failed to save list name: \(error)")
-                #endif
-            }
+            weeklyListService.renameList(weeklyList, name: trimmed)
         }
         isEditingName = false
     }

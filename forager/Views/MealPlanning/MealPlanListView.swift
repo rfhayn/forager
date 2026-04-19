@@ -390,14 +390,7 @@ struct MealPlanSummaryCard: View {
     private func saveName() {
         let trimmed = editedName.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            mealPlan.name = trimmed
-            do {
-                try viewContext.save()
-            } catch {
-                #if DEBUG
-                print("⚠️ Failed to save meal plan name: \(error)")
-                #endif
-            }
+            MealPlanService.shared.renamePlan(mealPlan, name: trimmed)
         }
         isEditingName = false
     }
