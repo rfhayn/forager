@@ -177,12 +177,47 @@ class CloudKitSyncMonitor: ObservableObject {
             }
         }()
 
-        let reason = error.userInfo[NSLocalizedFailureReasonErrorKey] as? String ?? "(no reason)"
+        // Extract every piece of useful context from the NSError. Build 138's
+        // diagnostic only grepped NSLocalizedFailureReasonErrorKey — that key is
+        // populated for the setup-time alert flavor but NOT for the export-path
+        // event we hit in the wild. Dump the fuller picture: domain, code,
+        // localizedDescription, all userInfo keys, plus any NSUnderlyingError.
+        // The persistent ID we need for targeted remediation often shows up in
+        // the localizedDescription or an underlying error rather than the
+        // top-level reason.
+        let domain = error.domain
+        let localizedDesc = error.localizedDescription
+        let reason = error.userInfo[NSLocalizedFailureReasonErrorKey] as? String ?? "(absent)"
+        let userInfoKeys = error.userInfo.keys
+            .map { String(describing: $0) }
+            .sorted()
+            .joined(separator: ",")
+        let underlying: String = {
+            guard let nested = error.userInfo[NSUnderlyingErrorKey] as? NSError else { return "nil" }
+            return "{domain=\(nested.domain) code=\(nested.code) desc=\(nested.localizedDescription)}"
+        }()
+        // If any userInfo value names a Core Data URI, surface it — that's the
+        // persistent ID we target for remediation.
+        let uriHits: String = error.userInfo
+            .compactMap { (_, value) -> String? in
+                let str = String(describing: value)
+                guard str.contains("x-coredata://") else { return nil }
+                return str
+            }
+            .joined(separator: " | ")
+        let uriSection = uriHits.isEmpty ? "" : " uris=[\(uriHits)]"
 
         // DiagnosticLogger is @MainActor; bounce through MainActor.run to log.
         // The enclosing sink already delivers on the main queue, but Swift
         // concurrency still requires an explicit isolation hop here.
-        let logMessage = "🚨 Zone conflict detected — CloudKit mirroring delegate event=\(eventKind) store=\(storeName) code=\(error.code): \(reason)"
+        let logMessage = """
+            🚨 Zone conflict detected — event=\(eventKind) store=\(storeName) \
+            domain=\(domain) code=\(error.code) \
+            desc=\"\(localizedDesc)\" \
+            reason=\"\(reason)\" \
+            userInfoKeys=[\(userInfoKeys)] \
+            underlying=\(underlying)\(uriSection)
+            """
         Task { @MainActor in
             DiagnosticLogger.shared.log(logMessage, category: .cloudKit, level: .error)
         }
@@ -192,7 +227,7 @@ class CloudKitSyncMonitor: ObservableObject {
         syncError = error
 
         #if DEBUG
-        print("🚨 CloudKit zone conflict: \(reason)")
+        print("🚨 CloudKit zone conflict: \(localizedDesc)")
         #endif
     }
 
