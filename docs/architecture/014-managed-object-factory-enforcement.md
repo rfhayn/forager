@@ -44,20 +44,46 @@ This worked through M7 because the views that crash (`AddIngredientsToListView`,
 
 ## Child HouseholdScoped Entities (M9.15)
 
-`Ingredient` and `GroceryListItem` were promoted to HouseholdScoped in M9.15 to eliminate cross-store relationships. They inherit `household`/`householdKey` from their parent entity (Recipe/WeeklyList) rather than going through `ManagedObjectFactory.make()` directly. Pattern:
+`Ingredient` and `GroceryListItem` were promoted to HouseholdScoped in M9.15 to eliminate cross-store relationships. They inherit `household`/`householdKey` from their parent entity (Recipe/WeeklyList) rather than going through `ManagedObjectFactory.make()` directly. The **correct** pattern requires an explicit `context.assign(...)` call to co-locate the child with the parent's persistent store:
 
 ```swift
+// ✅ CORRECT — explicit assign co-locates child with parent's store
 let ingredient = Ingredient(context: viewContext)
+if let parentStore = recipe.objectID.persistentStore {
+    viewContext.assign(ingredient, to: parentStore)   // ← REQUIRED
+}
 ingredient.recipe = recipe
-ingredient.household = recipe.household      // ✅ Safe — parent is in same store
+ingredient.household = recipe.household      // Safe — ingredient is in recipe's store
 ingredient.householdKey = recipe.householdKey
 ```
 
-> **⚠️ M9.19 CRITICAL — Cross-Store Relationship Rule**: The `household` relationship
-> is safe in the child pattern above ONLY because `recipe.household` is guaranteed to be
-> in the same store as the recipe (and therefore the ingredient). **NEVER set
-> `entity.household = household` when the Household object may be in a different store
-> than the entity being created.**
+```swift
+// ❌ INCORRECT — relies on Core Data's implicit store inference from relationships
+let ingredient = Ingredient(context: viewContext)
+ingredient.recipe = recipe
+ingredient.household = recipe.household      // Core Data MAY route to wrong store
+ingredient.householdKey = recipe.householdKey
+```
+
+> **⚠️ 2026-04-21 CRITICAL — Explicit `context.assign()` is REQUIRED**
+>
+> Core Data's implicit relationship-based store inference runs at save time and does
+> NOT reliably co-locate the child with the parent under CloudKit dual-store mirroring.
+> The incorrect pattern above caused `fix-groceryitem-multi-zone-assignment` (CoreData
+> error 134040 "Object graph corruption detected — objects assigned to multiple zones"):
+> the child was placed in the default first store (usually private), the parent was in
+> the shared store, and the CloudKit mirroring delegate refused to initialize.
+>
+> The architecture-guard hook at `.claude/hooks/architecture-guard.sh` enforces this:
+> a direct `GroceryListItem(context:)` / `Ingredient(context:)` init that is not
+> followed within 10 lines by a `context.assign(...)` call (or routed through
+> `ManagedObjectFactory.make()`) is rejected at edit time.
+
+> **⚠️ M9.19 — Cross-Store Relationship Rule (subsumed by the 2026-04-21 rule above)**:
+> The `household` relationship is safe in the child pattern only because
+> `recipe.household` is guaranteed to be in the same store as the recipe (and therefore
+> the ingredient, via the explicit assign). **NEVER set `entity.household = household`
+> when the Household object may be in a different store than the entity being created.**
 >
 > After `container.share()`, the Household moves to the **shared store**. Any
 > private-store entity with a `household` relationship to it creates a cross-store link

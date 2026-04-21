@@ -95,9 +95,9 @@ Parent reference varies by site (WeeklyList for GroceryListItem, Recipe for Ingr
 
 ## 5. ADR 014 clarification
 
-- [ ] 5.1 Edit `docs/architecture/014-managed-object-factory-enforcement.md` Child HouseholdScoped Entities section (lines 45-54) to add an explicit `context.assign(object, to: parent.objectID.persistentStore)` step in the example code, with a note that this is required not optional
-- [ ] 5.2 Cross-reference from the M9.19 CRITICAL block (lines 56-69) to the new assign requirement
-- [ ] 5.3 Add a "Correct pattern" vs "Incorrect pattern" code comparison in the ADR
+- [x] 5.1 Edited `docs/architecture/014-managed-object-factory-enforcement.md` Child HouseholdScoped Entities section. Original M9.15 code block replaced with side-by-side "✅ CORRECT" (explicit assign) vs "❌ INCORRECT" (implicit inference) comparison. Correct pattern now includes `viewContext.assign(ingredient, to: parentStore)` with a comment calling it REQUIRED.
+- [x] 5.2 Added a 2026-04-21 CRITICAL callout block above the existing M9.19 block explaining (a) why implicit inference fails, (b) that this caused `fix-groceryitem-multi-zone-assignment` CoreData 134040, (c) that the architecture-guard hook enforces the pattern at edit time.
+- [x] 5.3 M9.19 callout updated to reference the new 2026-04-21 rule as the primary invariant.
 
 ## 6. Architecture audit skill
 
@@ -107,24 +107,28 @@ Parent reference varies by site (WeeklyList for GroceryListItem, Recipe for Ingr
 - [ ] 6.4 Test the updated rule against the post-fix codebase — should report 0 violations
 - [ ] 6.5 Test the updated rule against the pre-fix codebase (on a scratch branch) — should report 11+ violations, confirming the rule catches the pattern
 
-## 7. Device remediation (dev's iPhone)
+## 7. Build + TestFlight distribute (MUST precede device remediation)
 
-- [ ] 7.1 Identify the specific GroceryListItem(s) in conflict by running the app with the new diagnostic + verbose CloudKit logging enabled
-- [ ] 7.2 Record the persistent ID(s) in `docs/bugs/investigation-assets/` for future reference
-- [ ] 7.3 Delete the conflicted object(s) locally via a one-off Debug-only developer tool OR by manual Core Data intervention (simulator + CloudKit Dashboard)
-- [ ] 7.4 Verify: relaunch app, confirm mirroring delegate initializes without error, confirm CloudKit sync resumes (new items added on a second device appear on this device)
-- [ ] 7.5 If a fresh install on a second device pulls the bad state from CloudKit, add a CloudKit Dashboard cleanup step — delete the orphan CKRecord directly from the shared zone or default zone
+**Why first**: Task 8 (device remediation) requires the new diagnostic code and the 18-site fix to be ON your device to identify GroceryListItem/p20 and confirm the fix. The Debug build currently on your phone is build 137 (pre-fix).
 
-## 8. Build, validate, ship
+- [ ] 7.1 Run the full test suite: `xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test` — require green (includes the 4 new regression tests)
+- [ ] 7.2 User bumps `CURRENT_PROJECT_VERSION` in Xcode (per memory: user manages build numbers). Expected: 138.
+- [ ] 7.3 Archive and distribute via `/archive` skill to TestFlight (auto-uploads, adds to beta group, sets export compliance)
+- [ ] 7.4 Install the new build on the dev's iPhone via TestFlight
+- [ ] 7.5 Upload the same binary to App Store Connect to replace build 134 in the v2.0 submission (deferred until device remediation confirms the fix)
 
-- [ ] 8.1 Run the full test suite: `xcodebuild -project forager.xcodeproj -scheme forager -destination 'platform=iOS Simulator,name=iPhone 17 Pro' test` — require green
-- [ ] 8.2 User bumps `CURRENT_PROJECT_VERSION` in Xcode (per memory: user manages build numbers)
-- [ ] 8.3 Archive and distribute via `/archive` skill to TestFlight
-- [ ] 8.4 Verify on the dev's device that the new build:
-  - Launches without the mirroring delegate error
-  - Adding a grocery item succeeds and syncs to a second device
-  - All existing lists/recipes/meal plans remain accessible
-- [ ] 8.5 Upload the new build to App Store Connect, replace build 134 in the v2.0 submission
+## 8. Device remediation (dev's iPhone) — AFTER build 138 is installed
+
+- [ ] 8.1 Enable DiagnosticLogger in Settings > Diagnostics (default is OFF in Release; new observer logs zone conflicts to `forager-diagnostics.log` when enabled)
+- [ ] 8.2 Trigger the zone conflict by reproducing the 10:30 scenario from 2026-04-21 (navigate the app until the mirroring delegate complains). The new observer in CloudKitSyncMonitor will log a structured entry with event kind, store ID prefix, error code, and reason.
+- [ ] 8.3 Share the log file (Settings > Diagnostics > Share) and inspect it to identify the specific GroceryListItem persistent ID in conflict (expected: the same `p20` from the original error, or similar)
+- [ ] 8.4 Record the persistent ID(s) in `docs/bugs/investigation-assets/` for future reference
+- [ ] 8.5 Delete the conflicted object(s) locally. Options:
+  - **Option A (preferred)**: use a one-off Debug-only developer tool. Add a temporary button under Settings > Diagnostics that fetches GroceryListItem by p20 suffix and deletes it via `viewContext.delete(item)`. Remove before the next build.
+  - **Option B**: uninstall + reinstall the app. Risk: if the bad state is in CloudKit, it will re-sync back.
+  - **Option C**: delete the specific CKRecord from CloudKit Dashboard directly (requires knowing the record name; log entry should surface enough info).
+- [ ] 8.6 Verify: relaunch app, confirm mirroring delegate initializes without error (no zone-conflict log entry), confirm CloudKit sync resumes (items added on a second device appear on this device within ~5s)
+- [ ] 8.7 If a fresh install on a second device pulls the bad state from CloudKit, perform the CloudKit Dashboard cleanup (Option C)
 
 ## 9. Coordinate with reposition-app-store-listing
 
