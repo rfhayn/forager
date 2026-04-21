@@ -6,6 +6,46 @@
 
 ---
 
+## Session 126 — April 21, 2026 (evening — device validation)
+**Change**: `fix-groceryitem-multi-zone-assignment` shipped + validated on device. New discovery: 5 duplicate "No Store" default entities — `fix-no-store-default-duplicates` investigation agent launched.
+
+**What happened**: Followed through on Session 125's fix. Archived build 138 to TestFlight (Public Beta Testers). Rich installed, reproduced the invite flow — the same 134040 error fired because the **CloudKit-side state was still corrupted**; the code fix only prevents NEW corruption, not repair of existing bad records. The new CloudKitSyncMonitor observer caught one event (code `134060`, store `C3E2EB60`, event=export) but reported `(no reason)` because build 138's diagnostic only extracted `NSLocalizedFailureReasonErrorKey`.
+
+Shipped build 139 with a beefed-up diagnostic: dump `error.domain`, `localizedDescription`, all `userInfo` keys, any `NSUnderlyingError`, plus any `userInfo` value containing `x-coredata://`. Rich reproduced — output revealed a harder truth: **Apple's `NSPersistentCloudKitContainer.eventChangedNotification` delivers an NSError with completely empty `userInfo` for this class of event.** `userInfoKeys=[]`, `underlying=nil`, only `desc="A Core Data error occurred."`. Apple sanitizes before the event API. The rich detail from the original Error.png alert comes from a different code path (UI alert presentation) that observers don't have access to.
+
+Rich chose the nuke path over a repair-button (test data wasn't valuable). Recommended a stepped sequence — Delete Household in-app → uninstall → reinstall → verify, only escalating to an iCloud Settings purge if step 4 still showed 🚨.
+
+Post-delete log showed **zero new 🚨 entries**. The stuck mirroring delegate recovered the moment its corrupted payload was gone. Reinstall session (build 139) ran completely clean: Discovery polled for the old "Your Household" (CloudKit zombie — the previous Core Data delete succeeded locally but the stuck delegate couldn't propagate it, so CloudKit retained records in the owner's private zone), timed out at 60s, Rich created a new household "My Kitchen". M9.30 pre-create cleanup removed 91 orphans. 55 objects copied. Zero zone conflicts. **Fix validated end-to-end**.
+
+Along the way, Rich noticed 5 duplicate "No Store" default entries in Manage Stores. Screenshot shared. Log confirms 8 Stores copied during household create (should be 3-4 real + 1 No Store). Pre-existing bug, not caused by this change. Launched a background agent to produce a root-cause investigation + fix-plan: study `CategoryDeduplicator` pattern, grep Store creation sites, propose options. Output goes to `docs/bugs/investigation-plans/no-store-duplicates-plan.md`.
+
+**Key decisions**:
+- **Beef up the diagnostic even though Apple sanitizes.** We didn't know the API limit until we hit it. Build 139's diagnostic also catches future zero-day error classes. Not wasted work — revealed a ceiling.
+- **Stepped nuke over full purge.** Delete Household → uninstall → reinstall → verify. Only escalate to iCloud Settings purge if step 4 shows new 🚨. Simpler-first; turned out to be enough.
+- **Leave the CloudKit residue.** ~55 orphan CKRecords sit in owner's private zone post-delete but aren't actively breaking anything. Storage curiosity; revisit if it becomes a functional problem.
+- **Validation by absence of signal.** We don't need Apple's detailed error payload to know the fix works. The persistent-every-session error stopped firing the moment the corrupted payload was deleted. Zero-🚨 on build 139 = fix validated.
+- **Kick off No Store investigation as a background agent, don't expand current change's scope.** Pre-existing bug surfaced during validation. Plan-only output; implementation is a future change.
+
+**Learning**:
+- **Apple's CloudKit event observers receive sanitized errors.** `NSPersistentCloudKitContainer.eventChangedNotification` delivers `NSError` with mostly-empty userInfo. The rich detail visible in UI alerts comes from a different code path we can't observe. Chasing detail from the event observer past build 139's shape is a dead end.
+- **"No new error entries after delete" is sufficient validation for data-corruption fixes.** If a bug is persistent every session and stops firing the moment the corrupted data is removed, the fix is validated even without identifying the specific corrupted record. The observer isn't useless for detection; it's just not useful for identification.
+- **Core Data deletes succeed locally even when the mirroring delegate is stuck.** `context.delete()` + `save()` always work — they don't route through CloudKit. CloudKit propagation happens async and may silently fail, leaving ~55 orphan CKRecords when the delegate is wedged. Important design consideration for delete/cleanup flows that need to work during broken-sync recovery.
+- **CloudKit zombie data pattern on reinstall.** After an uninstall + reinstall, NSPersistentCloudKitContainer imports records from the owner's private zone. If those records outlived their parent CKShare (because the CKShare was deleted but the records weren't — timing of our stuck delegate), they come back on the new install as orphans. M9.30 orphan cleanup handles this locally (91 orphans removed in this session) but doesn't clean up CloudKit.
+
+**AI tooling observations**: The diagnostic-iteration loop (build → user reproduces → log → improve diagnostic → re-build) is slow but correct. Two build cycles (138, 139) to learn Apple's API ceiling. The alternative — skip diagnostics and go straight to the nuke — would have saved time but left us without confidence that the fix worked vs. just masked. The log showing zero new entries on build 139 post-nuke is load-bearing evidence that the fix's actual mechanism works, not just that a specific error happens to have stopped for unrelated reasons.
+
+The background-agent pattern continues to work well. Today we fired the "No Store investigation" agent while closing out the current change's docs — zero blocking overhead, parallel work that the main thread would have otherwise deferred.
+
+**What's next**:
+- Merge PR #150 (`fix-groceryitem-multi-zone-assignment`).
+- Archive from main as build 140 (or let the user bump manually — existing build 139 on TestFlight has the same code).
+- Resume `reposition-app-store-listing` Session 2 — screenshots + walkthrough video against the merged-main build.
+- Triage `fix-no-store-default-duplicates` once the background agent returns its plan.
+
+**Retro**: Session 126 unplanned duration: ~3h (expected ~1h for the TestFlight install + quick verify). The iteration cycles ate the budget; build 138 revealed diagnostic was incomplete, build 139 revealed Apple's API limit, the "No Store" discovery added a followup. Net: the fix shipped and is verified, the discovery is well-scoped for future work.
+
+---
+
 ## Session 125 — April 21, 2026
 **Changes**: `reposition-app-store-listing` (paused) + `fix-groceryitem-multi-zone-assignment` (feature branch, shipped through regression tests + ADR clarification; TestFlight deferred until post-PR-merge)
 
