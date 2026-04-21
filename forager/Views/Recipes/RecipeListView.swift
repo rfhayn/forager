@@ -806,6 +806,10 @@ struct RecipeListView: View {
             let (parsed, structured) = parsingService.parseUnified(text: text)
 
             let ingredient = Ingredient(context: context)
+            // Co-locate with parent recipe to prevent CloudKit zone conflict (134040).
+            if let parentStore = recipe.objectID.persistentStore {
+                context.assign(ingredient, to: parentStore)
+            }
             ingredient.id = UUID()
             ingredient.name = text
             ingredient.sortOrder = Int16(index)

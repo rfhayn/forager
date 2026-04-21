@@ -230,6 +230,10 @@ class QuantityMergeService: ObservableObject {
             for mergedItem in group.mergedItems where mergedItem.isMerged {
                 // Create single consolidated item
                 let consolidated = GroceryListItem(context: context)
+                // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+                if let parentStore = list.objectID.persistentStore {
+                    context.assign(consolidated, to: parentStore)
+                }
                 consolidated.id = UUID()
                 consolidated.name = group.ingredientName
                 consolidated.displayText = mergedItem.displayText

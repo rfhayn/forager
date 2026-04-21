@@ -154,6 +154,10 @@ class IngredientParsingService: ObservableObject {
             let (parsed, structured) = parseUnified(text: text)
 
             let ingredient = Ingredient(context: context)
+            // Co-locate with parent recipe to prevent CloudKit zone conflict (134040).
+            if let parentStore = recipe.objectID.persistentStore {
+                context.assign(ingredient, to: parentStore)
+            }
             ingredient.id = UUID()
             ingredient.name = parsed.originalText
             ingredient.numericValue = structured.numericValue ?? 0.0

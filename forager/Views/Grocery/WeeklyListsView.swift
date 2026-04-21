@@ -220,6 +220,10 @@ struct WeeklyListsView: View {
 
             for (index, template) in stapleTemplates.enumerated() {
                 let listItem = GroceryListItem(context: context)
+                // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+                if let parentStore = newList.objectID.persistentStore {
+                    context.assign(listItem, to: parentStore)
+                }
                 listItem.id = UUID()
                 listItem.name = template.name
                 listItem.displayText = "1"

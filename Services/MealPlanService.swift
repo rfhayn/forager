@@ -957,6 +957,10 @@ class MealPlanService: ObservableObject {
 
                     for ingredient in ingredients {
                         let listItem = GroceryListItem(context: context)
+                        // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+                        if let parentStore = newList.objectID.persistentStore {
+                            context.assign(listItem, to: parentStore)
+                        }
                         listItem.id = UUID()
                         listItem.name = ingredient.name
                         listItem.displayText = ingredient.displayText ?? "1"

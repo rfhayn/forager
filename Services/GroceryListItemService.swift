@@ -128,6 +128,12 @@ class GroceryListItemService: ObservableObject {
         }
 
         let item = GroceryListItem(context: viewContext)
+        // Co-locate with parent list to prevent CloudKit zone conflict (error 134040).
+        // Core Data relationship-based store inference is unreliable under dual-store
+        // mirroring; explicit assign is required (fix-groceryitem-multi-zone-assignment).
+        if let parentStore = list.objectID.persistentStore {
+            viewContext.assign(item, to: parentStore)
+        }
         item.id = UUID()
         item.name = groceryDisplayName
         item.categoryEntity = category
@@ -237,6 +243,10 @@ class GroceryListItemService: ObservableObject {
 
         for (index, template) in templates.enumerated() {
             let item = GroceryListItem(context: viewContext)
+            // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+            if let parentStore = list.objectID.persistentStore {
+                viewContext.assign(item, to: parentStore)
+            }
             item.id = UUID()
             item.name = template.name
             item.displayText = "1"

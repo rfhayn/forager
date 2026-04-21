@@ -1303,6 +1303,9 @@ class HouseholdService: ObservableObject {
             let ingredientSet = oldRecipe.ingredients as? Set<Ingredient> ?? []
             for oldIngredient in ingredientSet {
                 let newIngredient = Ingredient(context: viewContext)
+                // Co-locate with parent recipe (private store) to prevent
+                // CloudKit zone conflict (134040, fix-groceryitem-multi-zone-assignment).
+                viewContext.assign(newIngredient, to: PersistenceController.shared.privateStore)
                 newIngredient.id = UUID()
                 newIngredient.name = oldIngredient.name
                 newIngredient.displayText = oldIngredient.displayText
@@ -1355,6 +1358,9 @@ class HouseholdService: ObservableObject {
             let itemSet = oldList.items as? Set<GroceryListItem> ?? []
             for oldItem in itemSet {
                 let newItem = GroceryListItem(context: viewContext)
+                // Co-locate with parent list (private store) to prevent CloudKit
+                // zone conflict (134040, fix-groceryitem-multi-zone-assignment).
+                viewContext.assign(newItem, to: PersistenceController.shared.privateStore)
                 newItem.id = UUID()
                 newItem.name = oldItem.name
                 newItem.displayText = oldItem.displayText
@@ -1892,6 +1898,11 @@ class HouseholdService: ObservableObject {
             let ingredientSet = old.ingredients as? Set<Ingredient> ?? []
             for oldIng in ingredientSet {
                 let newIng = Ingredient(context: viewContext)
+                // Owner-side household copy: target is the private store (household
+                // data coexists with personal data there, routed to shared zone via
+                // the household relationship). Co-locate to prevent CloudKit zone
+                // conflict (134040, fix-groceryitem-multi-zone-assignment).
+                viewContext.assign(newIng, to: persistence.privateStore)
                 newIng.id = UUID()
                 newIng.name = oldIng.name
                 newIng.displayText = oldIng.displayText
@@ -1970,6 +1981,9 @@ class HouseholdService: ObservableObject {
             let itemSet = old.items as? Set<GroceryListItem> ?? []
             for oldItem in itemSet {
                 let newItem = GroceryListItem(context: viewContext)
+                // Owner-side household copy: target is private store (see note
+                // above for Ingredients). Co-locate to prevent 134040.
+                viewContext.assign(newItem, to: persistence.privateStore)
                 newItem.id = UUID()
                 newItem.name = oldItem.name
                 newItem.displayText = oldItem.displayText
