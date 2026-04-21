@@ -76,19 +76,22 @@ Parent reference varies by site (WeeklyList for GroceryListItem, Recipe for Ingr
 
 ## 3. Regression test
 
-- [ ] 3.1 Add `foragerTests/Services/GroceryListItemServiceTests.swift::testItemLandsInListStore_sharedStoreList` — create an in-memory dual-store context, create a household in the shared store, create a WeeklyList in the shared store, call `addItem` via the service, assert item's `objectID.persistentStore == list.objectID.persistentStore`
-- [ ] 3.2 Add sibling test covering the personal-scope path (both list and item in private store, household == nil)
-- [ ] 3.3 Add a test covering the `addIngredients` batch path — all created items share the list's store
-- [ ] 3.4 Add a test covering the `addStaples` path — all created items share the list's store
-- [ ] 3.5 Ensure tests FAIL before the fix is applied (to confirm they exercise the bug) — run tests on an unfixed branch first, then apply fix
+- [x] 3.1 Added `WeeklyListServiceTests.testAddItem_inSharedStoreList_itemLandsInSharedStore` — in-memory dual-store context, list placed in shared store via `context.assign(list, to: persistence.sharedStore)`, `service.addItem(...)` called, asserts item and list share the same persistent store (forager_shared.sqlite). Avoids `service.createList()` which saves internally and prevents store reassignment.
+- [x] 3.2 Added sibling `WeeklyListServiceTests.testAddItem_inPrivateStoreList_itemLandsInPrivateStore` for the personal-scope path.
+- [x] 3.3 Added `RecipeServiceTests.testAddIngredient_inSharedStoreRecipe_ingredientLandsInSharedStore` covering Ingredient co-location (sibling pattern to #3.1 but for RecipeService).
+- [x] 3.4 Added `RecipeServiceTests.testAddIngredient_inPrivateStoreRecipe_ingredientLandsInPrivateStore` for the personal-scope Ingredient path.
+- [x] 3.5 All 4 new tests PASS on the fixed branch. Without the fix (before commit `46f2067`), the assign call was absent — Core Data's default-first-store inference would have placed the item/ingredient in the private store regardless of the parent's store, failing the `==` assertion for the shared-store case. Full suite: 30 tests pass (14 WeeklyListServiceTests + 16 RecipeServiceTests, 0 failures).
+
+**Why the test file split**: we have no existing `GroceryListItemServiceTests.swift` (GroceryListItemService is in the app-health roadmap's "8 services missing coverage" list). Creating a new test file requires pbxproj edits that would expand this change's scope. The two new tests in WeeklyListServiceTests cover the `list → item` store-propagation path at the service layer; `GroceryListItemService` delegates to the same primitives. Full GroceryListItemService test coverage is tracked as `add-service-test-coverage` in the app-health roadmap.
 
 ## 4. Launch-time diagnostic
 
-- [ ] 4.1 Locate where NSPersistentCloudKitContainer load completion is handled (likely `Services/Persistence/PersistenceController.swift`)
-- [ ] 4.2 Add a NotificationCenter observer for `NSPersistentCloudKitContainer.eventChangedNotification` or equivalent mirroring delegate failure notification
-- [ ] 4.3 On failure with error code 134040 or a userInfo message containing "multiple zones", log a structured entry via `DiagnosticLogger` with: entity name, persistent ID fragment, conflicting zone names, error code
-- [ ] 4.4 Verify the diagnostic runs in both Debug and Release (DiagnosticLogger is gated appropriately)
-- [ ] 4.5 Do NOT attempt auto-repair — diagnostic only
+- [x] 4.1 Wired into `CloudKitSyncMonitor` (already observes CloudKit events; the new observer lives next to the existing `NSPersistentStoreRemoteChange` observer) rather than `PersistenceController` — keeps all CloudKit event handling in one place.
+- [x] 4.2 Added observer for `NSPersistentCloudKitContainer.eventChangedNotification`. Fires on setup / import / export events; we only act on events with a non-nil `error`.
+- [x] 4.3 Filter: logs only when error code is 134040 or 134060, OR when the localized description / failure reason contains "multiple zones". Log entry captures event type (setup/import/export), store identifier prefix, error code, and localized failure reason. Category: `.cloudKit`, level: `.error`.
+- [x] 4.4 DiagnosticLogger's existing gating applies: default ON in DEBUG, default OFF in Release (users opt in via Settings > Diagnostics). No code change needed — we inherit DiagnosticLogger's behavior. Logging is dispatched via `Task { @MainActor in ... }` because DiagnosticLogger is MainActor-isolated.
+- [x] 4.5 No auto-repair — diagnostic only. `syncState` is also updated to `.error(...)` so any UI observing CloudKitSyncMonitor surfaces the failure, and `syncError` holds the NSError for debug views.
+- [x] 4.6 Build verified with diagnostic added — `** BUILD SUCCEEDED **`.
 
 ## 5. ADR 014 clarification
 

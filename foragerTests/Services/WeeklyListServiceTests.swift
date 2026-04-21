@@ -256,4 +256,73 @@ final class WeeklyListServiceTests: XCTestCase {
         XCTAssertNotNil(list)
         XCTAssertNil(service.errorMessage, "errorMessage should clear on successful operation")
     }
+
+    // MARK: - Zone Assignment Regression (fix-groceryitem-multi-zone-assignment)
+    //
+    // These tests verify that GroceryListItem creation co-locates the new item
+    // with the parent WeeklyList's persistent store. Before the fix, Core Data's
+    // relationship-based store inference ran lazily at save time and did not
+    // prevent the CloudKit mirroring delegate from routing the CKRecord into the
+    // wrong zone, causing error 134040 "Object graph corruption detected — objects
+    // assigned to multiple zones".
+    //
+    // The in-memory dual-store setup (PersistenceController(inMemory: true))
+    // mirrors the production topology (forager.sqlite + forager_shared.sqlite).
+    // The tests place the list in the shared store explicitly and assert the new
+    // item lands in the same store, rather than defaulting to the first store.
+
+    @MainActor
+    func testAddItem_inSharedStoreList_itemLandsInSharedStore() throws {
+        // Create list directly in the shared store (simulates a household-scoped
+        // list on a member device, or an owner-device scenario where CloudKit
+        // routes via household relationship). Direct init + assign + save is
+        // required because service.createList saves internally, and Core Data
+        // refuses to reassign an already-saved object to a different store.
+        let list = WeeklyList(context: context)
+        list.id = UUID()
+        list.name = "Shared List"
+        list.dateCreated = Date()
+        list.isCompleted = false
+        context.assign(list, to: persistence.sharedStore)
+        try context.save()
+
+        let item = service.addItem(
+            to: list, name: "Whole milk",
+            numericValue: 1.0, standardUnit: "gallon",
+            displayText: "1 gallon"
+        )
+
+        XCTAssertNotNil(item, "addItem returned nil. service.errorMessage: \(service.errorMessage ?? "(none)")")
+        XCTAssertEqual(item?.objectID.persistentStore?.url?.lastPathComponent,
+                       list.objectID.persistentStore?.url?.lastPathComponent,
+                       "Item must be co-located with parent list's persistent store to prevent CloudKit zone conflict (134040)")
+        XCTAssertEqual(item?.objectID.persistentStore?.url?.lastPathComponent,
+                       "forager_shared.sqlite",
+                       "List was placed in shared store; item should follow")
+    }
+
+    @MainActor
+    func testAddItem_inPrivateStoreList_itemLandsInPrivateStore() throws {
+        let list = WeeklyList(context: context)
+        list.id = UUID()
+        list.name = "Personal List"
+        list.dateCreated = Date()
+        list.isCompleted = false
+        context.assign(list, to: persistence.privateStore)
+        try context.save()
+
+        let item = service.addItem(
+            to: list, name: "Cereal",
+            numericValue: 1.0, standardUnit: "box",
+            displayText: "1 box"
+        )
+
+        XCTAssertNotNil(item, "addItem returned nil. service.errorMessage: \(service.errorMessage ?? "(none)")")
+        XCTAssertEqual(item?.objectID.persistentStore?.url?.lastPathComponent,
+                       list.objectID.persistentStore?.url?.lastPathComponent,
+                       "Item must be co-located with parent list")
+        XCTAssertEqual(item?.objectID.persistentStore?.url?.lastPathComponent,
+                       "forager.sqlite",
+                       "List was placed in private store; item should follow")
+    }
 }
