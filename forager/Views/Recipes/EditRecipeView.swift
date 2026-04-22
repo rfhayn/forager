@@ -888,6 +888,10 @@ struct EditRecipeView: View {
             guard !trimmed.isEmpty else { continue }
 
             let ingredient = Ingredient(context: viewContext)
+            // Co-locate with parent recipe to prevent CloudKit zone conflict (134040).
+            if let parentStore = recipe.objectID.persistentStore {
+                viewContext.assign(ingredient, to: parentStore)
+            }
             ingredient.id = UUID()
             ingredient.name = trimmed
             ingredient.sortOrder = Int16(index)

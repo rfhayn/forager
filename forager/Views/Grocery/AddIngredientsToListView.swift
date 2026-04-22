@@ -517,6 +517,10 @@ struct AddIngredientsToListView: View {
             } else {
                 // Create new item
                 let listItem = GroceryListItem(context: viewContext)
+                // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+                if let parentStore = targetList.objectID.persistentStore {
+                    viewContext.assign(listItem, to: parentStore)
+                }
                 listItem.id = UUID()
                 listItem.name = itemDisplayName
 

@@ -272,4 +272,67 @@ final class RecipeServiceTests: XCTestCase {
         XCTAssertNotNil(recipe)
         XCTAssertNil(service.errorMessage, "errorMessage should clear on successful operation")
     }
+
+    // MARK: - Zone Assignment Regression (fix-groceryitem-multi-zone-assignment)
+    //
+    // Verifies Ingredient co-locates with parent Recipe's persistent store. Same
+    // class of bug as the GroceryListItem/p20 zone-conflict (error 134040) on
+    // 2026-04-21 — Ingredient shares the child-inheritance pattern from ADR 014.
+    // See WeeklyListServiceTests for the GroceryListItem side.
+
+    @MainActor
+    func testAddIngredient_inSharedStoreRecipe_ingredientLandsInSharedStore() throws {
+        // Create recipe directly in the shared store. See companion
+        // WeeklyListService test for why direct init + assign + save is needed
+        // (service.createRecipe saves internally; Core Data refuses to reassign
+        // an already-saved object).
+        let recipe = Recipe(context: context)
+        recipe.id = UUID()
+        recipe.title = "Carbonara"
+        recipe.servings = 4
+        recipe.instructions = "Mix"
+        recipe.dateCreated = Date()
+        context.assign(recipe, to: persistence.sharedStore)
+        try context.save()
+
+        let ingredient = service.addIngredient(
+            to: recipe, name: "2 cups flour",
+            numericValue: 2.0, standardUnit: "cups",
+            displayText: "2 cups"
+        )
+
+        XCTAssertNotNil(ingredient, "addIngredient returned nil. service.errorMessage: \(service.errorMessage ?? "(none)")")
+        XCTAssertEqual(ingredient?.objectID.persistentStore?.url?.lastPathComponent,
+                       recipe.objectID.persistentStore?.url?.lastPathComponent,
+                       "Ingredient must be co-located with parent recipe's persistent store to prevent CloudKit zone conflict (134040)")
+        XCTAssertEqual(ingredient?.objectID.persistentStore?.url?.lastPathComponent,
+                       "forager_shared.sqlite",
+                       "Recipe was placed in shared store; ingredient should follow")
+    }
+
+    @MainActor
+    func testAddIngredient_inPrivateStoreRecipe_ingredientLandsInPrivateStore() throws {
+        let recipe = Recipe(context: context)
+        recipe.id = UUID()
+        recipe.title = "Personal Recipe"
+        recipe.servings = 2
+        recipe.instructions = "Cook"
+        recipe.dateCreated = Date()
+        context.assign(recipe, to: persistence.privateStore)
+        try context.save()
+
+        let ingredient = service.addIngredient(
+            to: recipe, name: "1 onion, diced",
+            numericValue: 1.0, standardUnit: nil,
+            displayText: "1"
+        )
+
+        XCTAssertNotNil(ingredient, "addIngredient returned nil. service.errorMessage: \(service.errorMessage ?? "(none)")")
+        XCTAssertEqual(ingredient?.objectID.persistentStore?.url?.lastPathComponent,
+                       recipe.objectID.persistentStore?.url?.lastPathComponent,
+                       "Ingredient must be co-located with parent recipe")
+        XCTAssertEqual(ingredient?.objectID.persistentStore?.url?.lastPathComponent,
+                       "forager.sqlite",
+                       "Recipe was placed in private store; ingredient should follow")
+    }
 }

@@ -91,6 +91,10 @@ class WeeklyListService: ObservableObject {
         clearError()
 
         let item = GroceryListItem(context: viewContext)
+        // Co-locate with parent list to prevent CloudKit zone conflict (134040).
+        if let parentStore = list.objectID.persistentStore {
+            viewContext.assign(item, to: parentStore)
+        }
         item.id = UUID()
         item.name = name
         item.categoryEntity = category

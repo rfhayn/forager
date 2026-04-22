@@ -141,6 +141,10 @@ class RecipeService: ObservableObject {
         if let ingredients = recipe.ingredients as? Set<Ingredient> {
             for original in ingredients {
                 let ingredient = Ingredient(context: viewContext)
+                // Co-locate with parent recipe to prevent CloudKit zone conflict (134040).
+                if let parentStore = copy.objectID.persistentStore {
+                    viewContext.assign(ingredient, to: parentStore)
+                }
                 ingredient.id = UUID()
                 ingredient.name = original.name
                 ingredient.notes = original.notes
@@ -173,6 +177,10 @@ class RecipeService: ObservableObject {
         clearError()
 
         let ingredient = Ingredient(context: viewContext)
+        // Co-locate with parent recipe to prevent CloudKit zone conflict (134040).
+        if let parentStore = recipe.objectID.persistentStore {
+            viewContext.assign(ingredient, to: parentStore)
+        }
         ingredient.id = UUID()
         ingredient.name = name
         ingredient.numericValue = numericValue
