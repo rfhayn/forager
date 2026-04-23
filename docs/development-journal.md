@@ -6,6 +6,56 @@
 
 ---
 
+## Session 127 — April 23, 2026
+**Change**: `fix-no-store-default-duplicates` — implementation, tests, device-verification pending
+
+**What happened**: The 5 duplicate "No Store" rows were actively blocking Rich's ability to capture Shot 2 (Group by Store) for the `reposition-app-store-listing` work — 5 locked "No Store" entries in Manage Stores made the screenshot unusable for the intended "multi-stop shopping" message. Priority shifted: fix the dedup bug first, then ship a new build, then resume 4.3(a) screenshots.
+
+Used the plan the background agent produced on 2026-04-21 (Session 126). Implementation had three pieces:
+
+1. **`Services/Persistence/StoreDeduplicator.swift`** — new service modelled on `CategoryDeduplicator.swift` with two divergences. (a) Grouping key adds the `isDefault` dimension: `"\(name)|\(householdKey ?? "personal")|\(isDefault ? "default" : "user")"` — so a user-created "No Store" (edge case given the UI lock) remains semantically separate from the protected default. Category doesn't need this dimension. (b) Explicit relationship re-parenting: before deleting a duplicate, walk `ingredientTemplates` and `groceryListItems` inverse sets and re-point them at the keeper. Category can lean on `nullify` + Uncategorized as a safety net; Store has no equivalent safety net, so `nullify` would silently drop user-assigned preferred stores — a user-visible regression.
+
+2. **`Services/CloudKitSyncMonitor.swift`** — renamed `runDeduplication` → `runCategoryDeduplication`, added `runStoreDeduplication`, added `runAllDeduplication` wrapper invoked from `handleRemoteChange`. Registry pattern for future deduplicators.
+
+3. **`Services/HouseholdService.swift:1931-1962`** — fixed the `copyPersonalDataToHousehold` Store loop. Builds destination keys (existing household-scope Stores), source-loop tracker; skips any source row whose `(name, isDefault)` key already exists. Also fixed a subtle bug I noticed while there: the original code didn't copy `old.isDefault` into `new.isDefault`, so the default flag was silently dropped on household-scope clones. Now explicit.
+
+Tests: `foragerTests/Services/StoreDeduplicatorTests.swift` — 7 new tests covering no-op on clean data, 5→1 collapse with oldest-keeper selection, IngredientTemplate re-parenting, GroceryListItem re-parenting, cross-scope safety (personal + household with same name), isDefault dimension safety, idempotent second run. Hit a test-isolation issue midway (DefaultSeeder auto-seeds in-memory stores, so counting all Stores gave false totals from other tests' leaked state) — fixed by using UUID-suffixed names per test and scoping counts by predicate to the specific name. Standard pattern for this codebase's flaky in-memory test environment.
+
+Added the test file to the `foragerTests` target via `project.pbxproj` (4 insertions: PBXBuildFile, PBXFileReference, PBXGroup children, PBXSourcesBuildPhase). IDs `FNS001STOREDEDUPTS0A/B` following the M19T003DEDUPTESTS00A/B naming pattern.
+
+Also confirmed with user: ASC build swap does NOT require a new App Store version. Same v2.0 submission, change the Build selector to the new build, update Resolution Center reply to reference new build, Apple's review resumes automatically for metadata-cited rejections (per `reference_appstore_resubmit_workflow.md` memory). Caveat: new build number must be distinct (no duplicates per version).
+
+**Key decisions**:
+- **Fix No Store first, then 4.3(a) screenshots.** Blocking issue: Shot 2 was impossible to capture cleanly with 5 locked "No Store" entries visible. Sequence changed from "ship 4.3(a) now, fix No Store later" to "fix No Store, ship new build, resume 4.3(a)."
+- **Also copy `isDefault` in the copy-path fix.** Was an incidental bug found during the dedup fix — would have caused different class of issues later (household copies losing their protected-default flag). Low-risk addition, same change scope.
+- **Source + destination dedupe in the copy path.** Source dedupe prevents cloning same-name-in-personal-scope duplicates; destination dedupe prevents adding a source that the destination already has (via prior DefaultSeeder run or similar). Both layers needed to cover the full matrix.
+- **Keep the related observation (`DefaultSeeder` uses raw `Store(context:)`) out of scope.** Flagged on the roadmap, but this change is tight enough without expanding to factory routing. Tracked.
+- **UUID-suffixed test names instead of fixing the underlying test-isolation flake.** The in-memory `PersistenceController` leak is pre-existing (visible in CategoryDeduplicatorTests and others). Tracked under `add-service-test-coverage` on app-health roadmap. Don't expand this change to fix it.
+
+**Learning**:
+- **The copy path in migration code is where deduplication gaps hide.** `migrateHouseholdDataToPersonal` had a dedupe guard since M9.x. `copyPersonalDataToHousehold` did not. Same structural code, opposite directions, only one was defended. Lesson: when writing symmetric migration code, audit both directions against each other at commit time, not at bug-discovery time.
+- **In-memory Core Data test state leaks across tests on some configurations.** `PersistenceController(inMemory: true)` is meant to be fresh per test but the DefaultSeeder's auto-seeded "No Store" + schema-init background operations can leak totals across tests. Pattern that works: scope every count assertion by predicate to a test-unique name (UUID-suffix) so cross-test state is structurally inaccessible.
+- **`isDeleted` on an NSManagedObject after `context.save()` is unreliable.** Once save completes, the object is removed from the context and its `isDeleted` flag may not reflect correctly. More reliable: count rows matching the deleted object's name/id predicate. Tests should assert on downstream state (count, relationships pointing at keeper) rather than the object's internal state flag.
+- **Four pbxproj edits per new test file (PBXBuildFile + PBXFileReference + PBXGroup + PBXSourcesBuildPhase).** The foragerTests/ manual group trap from MEMORY.md. Actually straightforward once you know the pattern, but easy to forget one of the four insertions — the test would compile and run 0 tests silently.
+
+**AI tooling observations**: The background agent's investigation plan from 2026-04-21 was directly actionable. I spent zero time re-deriving the root cause; implementation followed the plan's file references and decision rationale verbatim. The "CategoryDeduplicator pattern summary" section of the plan saved 20 minutes of code-reading. This is the third consecutive session where agent-produced plans paid their compile-time-to-value ratio (Sessions 123, 126, 127).
+
+Separately: the doc-freshness gate fired again at PR time. Session 126's journal entry mentioned this as a pattern — reminder to update DURING the session. Still a work-in-progress for me.
+
+**What's next**:
+- Archive build 140 from this branch (device verification requires the fix on-device before we can confirm remediation cleans up the existing 5 duplicates).
+- Rich installs, enables DiagnosticLogger, waits for remote-change event or triggers one. Confirm Manage Stores shows exactly 1 "No Store".
+- If remediation succeeds: `/pr`, merge, then checkout main and archive again (or reuse build 140) for the 4.3(a) submission.
+- Resume `feature/reposition-app-store-listing` Session 2 now that Shot 2 will look clean.
+- ASC: update submission to point at the new build, submit Resolution Center reply.
+
+**Retro**:
+- Estimated 4-6h per design.md. Actual so far: ~2h for implementation + tests. Device verification + PR + archive still TBD; total likely 4-5h.
+- What surprised me: the `isDefault` field wasn't being copied in the original `copyPersonalDataToHousehold`. Incidental bug found while investigating the known bug. Cheap to fix in the same change.
+- Process improvement: still fighting the update-docs-during-session habit. Session 127 did better (staged the journal update before PR creation rather than after). Continuing trend.
+
+---
+
 ## Session 126 — April 21, 2026 (evening — device validation)
 **Change**: `fix-groceryitem-multi-zone-assignment` shipped + validated on device. New discovery: 5 duplicate "No Store" default entities — `fix-no-store-default-duplicates` investigation agent launched.
 
