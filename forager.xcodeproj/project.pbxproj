@@ -35,6 +35,7 @@
 		M106T001MOCKLLMPARSER000A /* MockLLMIngredientParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */; };
 		M106T002CLAUDETESTS0000A /* ClaudeIngredientParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */; };
 		M19T003DEDUPTESTS00A /* CategoryDeduplicatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */; };
+		FNS001STOREDEDUPTS0A /* StoreDeduplicatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FNS001STOREDEDUPTS0B /* StoreDeduplicatorTests.swift */; };
 		M19T002SCOPETESTS00A /* HouseholdScopeProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */; };
 		ACS001CATSVCTESTS00A /* CategoryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */; };
 		M19T001FACTORYTESTSA /* ManagedObjectFactoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */; };
@@ -100,6 +101,7 @@
 		M106T001MOCKLLMPARSER000B /* MockLLMIngredientParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockLLMIngredientParser.swift; sourceTree = "<group>"; };
 		M106T002CLAUDETESTS0000B /* ClaudeIngredientParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeIngredientParserTests.swift; sourceTree = "<group>"; };
 		M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryDeduplicatorTests.swift; sourceTree = "<group>"; };
+		FNS001STOREDEDUPTS0B /* StoreDeduplicatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDeduplicatorTests.swift; sourceTree = "<group>"; };
 		M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HouseholdScopeProviderTests.swift; sourceTree = "<group>"; };
 		ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryServiceTests.swift; sourceTree = "<group>"; };
 		M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedObjectFactoryTests.swift; sourceTree = "<group>"; };
@@ -252,6 +254,7 @@
 			isa = PBXGroup;
 			children = (
 				M19T003DEDUPTESTS00B /* CategoryDeduplicatorTests.swift */,
+				FNS001STOREDEDUPTS0B /* StoreDeduplicatorTests.swift */,
 				ACS001CATSVCTESTS00B /* CategoryServiceTests.swift */,
 				M19T002SCOPETESTS00B /* HouseholdScopeProviderTests.swift */,
 				M19T001FACTORYTESTSB /* ManagedObjectFactoryTests.swift */,
@@ -430,6 +433,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				M19T003DEDUPTESTS00A /* CategoryDeduplicatorTests.swift in Sources */,
+				FNS001STOREDEDUPTS0A /* StoreDeduplicatorTests.swift in Sources */,
 				ACS001CATSVCTESTS00A /* CategoryServiceTests.swift in Sources */,
 				M19T002SCOPETESTS00A /* HouseholdScopeProviderTests.swift in Sources */,
 				M19T001FACTORYTESTSA /* ManagedObjectFactoryTests.swift in Sources */,

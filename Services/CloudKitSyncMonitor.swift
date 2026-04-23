@@ -130,9 +130,11 @@ class CloudKitSyncMonitor: ObservableObject {
         print("   ✅ Sync state updated: synced at \(lastSyncDate!)")
         #endif
         
-        // M7.2.3 Phase 3.8: Run deduplication after import events
-        // This handles the case where multiple devices seeded simultaneously
-        runDeduplication()
+        // Run deduplication after import events (Category + Store).
+        // Handles the case where multiple devices seeded simultaneously OR where
+        // CloudKit sync races with DefaultSeeder's single-shot check produced
+        // duplicate default rows.
+        runAllDeduplication()
     }
 
     // MARK: - CloudKit Event Diagnostics
@@ -231,35 +233,78 @@ class CloudKitSyncMonitor: ObservableObject {
         #endif
     }
 
-    // MARK: - M7.2.3 Phase 3.8: Deduplication
-    
-    /// M7.2.3 Phase 3.8: Run category deduplication on background thread
-    /// Safe to call multiple times - CategoryDeduplicator is idempotent
-    /// Removes duplicate categories that arose from simultaneous seeding
-    private func runDeduplication() {
-        // Run on background thread to avoid blocking UI
+    // MARK: - Deduplication
+    //
+    // Registered deduplicators run on each remote-change notification on a
+    // background context. All are best-effort: errors log and swallow so a
+    // failing deduplicator never wedges sync. Add future deduplicators by
+    // creating the service + a runXxxDeduplication() method + a call inside
+    // runAllDeduplication().
+
+    /// Run every registered deduplicator in sequence.
+    /// Order: Category first (oldest service, M7.2.3), then Store (M18.2 /
+    /// fix-no-store-default-duplicates). Sequencing isn't strictly required
+    /// but it keeps log output predictable for debugging.
+    private func runAllDeduplication() {
+        runCategoryDeduplication()
+        runStoreDeduplication()
+    }
+
+    /// Run CategoryDeduplicator on a background context. Idempotent.
+    private func runCategoryDeduplication() {
         DispatchQueue.global(qos: .utility).async {
             let context = PersistenceController.shared.newBackgroundContext()
             context.automaticallyMergesChangesFromParent = true
-            
+
             context.performAndWait {
                 do {
                     let deduplicator = CategoryDeduplicator(context: context)
                     let deletedCount = try deduplicator.removeDuplicates()
-                    
+
                     if deletedCount > 0 {
-                        // Deduplication happened - log it
                         DispatchQueue.main.async {
                             #if DEBUG
-                            print("🧹 M7.2.3: Auto-deduplication removed \(deletedCount) duplicate categories")
+                            print("🧹 Auto-deduplication removed \(deletedCount) duplicate Categories")
                             #endif
                         }
                     }
                 } catch {
-                    // Log error but don't fail - deduplication is best-effort
                     DispatchQueue.main.async {
                         #if DEBUG
-                        print("⚠️ M7.2.3: Deduplication failed: \(error)")
+                        print("⚠️ CategoryDeduplicator failed: \(error)")
+                        #endif
+                    }
+                }
+            }
+        }
+    }
+
+    /// Run StoreDeduplicator on a background context. Idempotent.
+    /// Introduced by fix-no-store-default-duplicates (2026-04-23) after a
+    /// device accumulated 5 duplicate "No Store" default rows through a
+    /// combination of DefaultSeeder CloudKit-import races and the old
+    /// HouseholdService.copyPersonalDataToHousehold blind-clone bug.
+    private func runStoreDeduplication() {
+        DispatchQueue.global(qos: .utility).async {
+            let context = PersistenceController.shared.newBackgroundContext()
+            context.automaticallyMergesChangesFromParent = true
+
+            context.performAndWait {
+                do {
+                    let deduplicator = StoreDeduplicator(context: context)
+                    let deletedCount = try deduplicator.removeDuplicates()
+
+                    if deletedCount > 0 {
+                        DispatchQueue.main.async {
+                            #if DEBUG
+                            print("🧹 Auto-deduplication removed \(deletedCount) duplicate Stores")
+                            #endif
+                        }
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        #if DEBUG
+                        print("⚠️ StoreDeduplicator failed: \(error)")
                         #endif
                     }
                 }

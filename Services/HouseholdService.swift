@@ -1929,12 +1929,44 @@ class HouseholdService: ObservableObject {
         }
 
         // --- Stores (M18.1.5) ---
+        // fix-no-store-default-duplicates (2026-04-23): dedupe source Stores
+        // by (name, isDefault) AND skip any source whose key already exists in
+        // the destination household scope. Fixes the "Copied 8 Store(s) to
+        // household" bug where N duplicate personal-scope "No Store" rows were
+        // cloned into the new household on top of the household-seeded row.
         var storeMapping: [UUID: Store] = [:]
+
+        // Pre-existing destination keys (household-scope seeding may have
+        // already run — don't clone a source that duplicates one).
+        let existingHouseholdStoresReq: NSFetchRequest<Store> = Store.fetchRequest()
+        existingHouseholdStoresReq.predicate = NSPredicate(format: "householdKey == %@", householdKey)
+        let existingHouseholdStores = (try? viewContext.fetch(existingHouseholdStoresReq)) ?? []
+        let destinationKeys: Set<String> = Set(existingHouseholdStores.map { store -> String in
+            let name = store.name?.lowercased().trimmingCharacters(in: .whitespaces) ?? ""
+            let defaultFlag = store.isDefault ? "default" : "user"
+            return "\(name)|\(defaultFlag)"
+        })
+
         let storeReq: NSFetchRequest<Store> = Store.fetchRequest()
         storeReq.predicate = NSPredicate(format: "householdKey == nil")
         storeReq.affectedStores = [persistence.privateStore]
         let oldStores = (try? viewContext.fetch(storeReq)) ?? []
+
+        // Tracks source-side dedup within this copy pass.
+        var copiedKeys: Set<String> = []
+        var skippedDuplicateCount = 0
+
         for old in oldStores {
+            let name = old.name?.lowercased().trimmingCharacters(in: .whitespaces) ?? ""
+            let defaultFlag = old.isDefault ? "default" : "user"
+            let key = "\(name)|\(defaultFlag)"
+
+            if destinationKeys.contains(key) || copiedKeys.contains(key) {
+                skippedDuplicateCount += 1
+                continue
+            }
+            copiedKeys.insert(key)
+
             let new = Store(context: viewContext)
             new.id = UUID()
             new.name = old.name
@@ -1942,10 +1974,14 @@ class HouseholdService: ObservableObject {
             new.sortOrder = old.sortOrder
             new.dateCreated = old.dateCreated
             new.updatedAt = old.updatedAt
+            new.isDefault = old.isDefault
             new.household = household
             new.householdKey = householdKey
             if let oldId = old.id { storeMapping[oldId] = new }
             copiedCount += 1
+        }
+        if skippedDuplicateCount > 0 {
+            diag.debug("Skipped \(skippedDuplicateCount) duplicate personal Store(s) already in household scope", category: .household)
         }
         // Re-link template preferredStore to new household copies
         for oldTemplate in oldTemplates {
