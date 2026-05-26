@@ -1,7 +1,7 @@
 # Next Implementation Prompt
 
-**Last Updated**: April 19, 2026
-**Launch Path**: M7.7 — in App Review (rejection round 2 resolved via ASC metadata fix); Build 137 on TestFlight with 4 additional PRs merged (see App Health below)
+**Last Updated**: May 26, 2026
+**Launch Path**: M7.7 — v1.0 build 134 rejected on guideline 4.3(a) (spam/repositioning); resolution is the paused `reposition-app-store-listing` change (metadata + screenshots) shipped against a fresh binary. **Build 141 on TestFlight** (cumulative: #150 CloudKit zone-conflict fix + #152 Dashboard meal-plan cold-start fix on top of build 137)
 **Canonical planning reference**: [`docs/project-roadmap.md`](project-roadmap.md) — parent doc with three stream detail docs
 **Naming convention**: forward-only. New work uses OpenSpec change-id kebab-case; legacy M#.#.# preserved for historical artifacts. See [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md).
 
@@ -11,8 +11,8 @@
 
 ## Recommended Next (in priority order)
 
-1. **Smoke-test build 137 on TestFlight** — cold-launch Dashboard meal plan card, Replace-existing recipe import, Settings > Diagnostic Log visibility.
-2. **Wait for M7.7 Apple re-review** on build 134 — metadata fix replied; no local action.
+1. **Resume `reposition-app-store-listing` Session 2** (Shipping) — screenshots + video against build 141. This is the actual unblock for the 4.3(a) rejection; the new binary (141, with the #150 CloudKit fix) is already on TestFlight. Update the 4.3(a) response doc with the build swap (134 → 141).
+2. **Smoke-test build 141 on TestFlight** — cold-launch Dashboard: confirm all three meal-plan cards populate immediately (the #152 fix) and the grocery card still renders; verify no CloudKit zone-conflict (134040) on launch (the #150 fix).
 3. **Kick off `establish-test-planning-workflow`** (Operating Model stream) — plan drafted at [`docs/prds/active/establish-test-planning-workflow.md`](prds/active/establish-test-planning-workflow.md); run `/opsx:propose establish-test-planning-workflow` when ready. §7 of the PRD has 5 decisions to resolve during proposal.
 4. **Consider `decide-view-layer-scope-architecture`** (App Health stream) — deferred from architecture-compliance-sweep. Evaluate custom property wrapper vs. formalize in-memory filter vs. accept status quo. Write ADR 016 after the decision.
 
@@ -20,11 +20,11 @@
 
 ## Active
 
-### M7.7 — App Store Submission (IN REVIEW)
+### M7.7 — App Store Submission (REJECTED 4.3(a) — repositioning in progress)
 
-**PRD**: `docs/prds/active/m7.7-app-store-submission.md`
-**Status**: Submitted build 134. Rejected on 2026-04-17 for guideline 2.3.6 (Age Rating — Unrestricted Web Access = No was inaccurate given recipe URL import). Fix is metadata-only in ASC; no new binary.
-**Next action**: Update Age Rating in App Store Connect (set Unrestricted Web Access = Yes → age rating auto-bumps to 17+), then reply in Resolution Center. Apple continues the review automatically for metadata rejections — no Resubmit click required.
+**PRD**: `docs/prds/active/m7.7-app-store-submission.md` + `reposition-app-store-listing` change
+**Status**: Build 134 cleared the round-2 metadata issue (2.3.6 Age Rating, 2026-04-17) but was then rejected on 2026-04-21 under guideline **4.3(a) Spam** (positioned too generically). Round-2 was metadata-only; round-3 (4.3a) requires both repositioned metadata/screenshots **and** a fresh binary. Build 141 (with the #150 CloudKit zone-conflict fix) is on TestFlight and is the binary to resubmit.
+**Next action**: Resume `reposition-app-store-listing` Session 2 — screenshots + video against build 141, lead with the three noun-phrase positions (household no-account / multi-stop / on-device parsing). Update the 4.3(a) response doc with the build swap (134 → 141), then resubmit (binary/guideline rejection ⇒ Resubmit required).
 
 ---
 
@@ -50,6 +50,8 @@ Ordered roughly by priority. See the three-stream roadmap for strategic detail: 
 | `fix-test-harness-and-stale-assertions` | COMPLETE (PR #147) — eliminated 51 setUp crash-loops + 2 stale parser/normalizer assertions | `openspec/changes/archive/2026-04-19-fix-test-harness-and-stale-assertions/` |
 | `fix-dashboard-meal-plan-cold-start` | COMPLETE (PR #148) — one-line `loadActiveMealPlan()` after householdKeyProvider wired | `openspec/changes/archive/2026-04-19-fix-dashboard-meal-plan-cold-start/` |
 | `investigate-import-and-store-test-failures` | COMPLETE (PR #149) — `persistAndFinish` preserveUpdated escape hatch; 19/19 tests pass | `openspec/changes/archive/2026-04-19-investigate-import-and-store-test-failures/` |
+| `fix-groceryitem-multi-zone-assignment` | COMPLETE (PR #150, 2026-04-22) — explicit `context.assign()` at 18 child-entity creation sites fixes CloudKit error 134040; `architecture-guard` hook now enforces it edit-time. Delta specs promoted into `architecture` + `grocery-lists` (2026-05-26). | `openspec/changes/archive/2026-04-22-fix-groceryitem-multi-zone-assignment/` |
+| `fix-meal-plan-household-observer` | COMPLETE (PR #152, 2026-04-30) — Dashboard meal-plan cards reload via Combine subscription to `HouseholdService.$currentHousehold`, fixing the cold-start init-order race left by #148. | merged to `main` (`70e2814`); no OpenSpec change folder |
 | `decide-view-layer-scope-architecture` | **Planned** — evaluate `@ScopedFetchRequest` wrapper vs. formalize in-memory filter vs. ratify; pilot one view; migrate all 43 sites; write ADR 016 | Deferred from `architecture-compliance-sweep`; see that change's proposal.md |
 | `harden-adr-enforcement-round-2` | Planned — enforcement upgrades for ADRs 001, 005 (beyond view-save), 007 which have high drift risk from discipline-only enforcement | [app-health roadmap](roadmaps/app-health-roadmap.md) |
 | `optimize-fetch-performance` | Planned — fetchBatchSize + relationshipKeyPathsForPrefetching | [app-health roadmap](roadmaps/app-health-roadmap.md) |

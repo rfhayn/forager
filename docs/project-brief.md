@@ -1,6 +1,6 @@
 # Forager Project Brief
 
-**Last Reviewed**: 2026-04-19
+**Last Reviewed**: 2026-05-26
 **Cadence**: review monthly + after any change that adds a capability or ADR
 **Audience**: dual-purpose — human reader orienting to the project, and AI agent loading context at session start
 
@@ -11,7 +11,7 @@
 - **What it is**: Native iOS/macOS grocery list, recipe manager, and meal planner. Household-shared via CloudKit; offline-first; no third-party dependencies.
 - **Tech stack**: Swift / SwiftUI (iOS 26+, macOS 15+), Core Data + CloudKit (dual-store: private + shared), Xcode 26.0+, pure Apple frameworks.
 - **Schema**: v11 — 13 Core Data entities; CloudKit Production schema is append-only.
-- **Current launch state**: v1.0 in App Review (build 134, rejection round 2 resolved 2026-04-17 via Age Rating metadata fix). Awaiting approval.
+- **Current launch state**: v1.0 build 134 rejected under guideline 4.3(a) (spam/repositioning) on 2026-04-21. Resolution is the paused `reposition-app-store-listing` change — repositioned metadata + screenshots, resubmitted against a fresh binary. **Build 141 on TestFlight** (adds #150 CloudKit zone-conflict fix + #152 Dashboard cold-start fix) is the binary to resubmit.
 - **Operating model**: mid-migration to OpenSpec. Forward-only naming (historical `M#.#.#` untouched; new work uses `<verb>-<kebab>` change-ids). See [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md).
 
 ---
@@ -119,4 +119,4 @@ ADRs live at [`docs/architecture/`](architecture/). Most rules are codified in t
 
 ## Known Debt
 
-Full outstanding architectural debt tracked at [`docs/roadmaps/app-health-roadmap.md`](roadmaps/app-health-roadmap.md). ~130–140h across four strategic buckets (correctness, foundation, maintainability, enforcement). Current urgent item: `architecture-compliance-sweep` (correctness — 45 `@FetchRequest` occurrences missing `householdKey` predicate across 28 view files + 6 views calling `context.save()` directly).
+Full outstanding architectural debt tracked at [`docs/roadmaps/app-health-roadmap.md`](roadmaps/app-health-roadmap.md). ~130–140h across four strategic buckets (correctness, foundation, maintainability, enforcement). The correctness sweep `architecture-compliance-sweep` shipped (PR #146): view-save fixes, audit tightening, ADR 011→015, beta diagnostic logging. The remaining view-layer `@FetchRequest` scope question (43 sites) was **deliberately deferred** to `decide-view-layer-scope-architecture` (ADR 016 pending) — per the architecture spec, unscoped view `@FetchRequest` is an emergent in-memory filter, not an ADR 013 violation. The next correctness item is `fix-groceryitem-multi-zone-assignment`'s enforcement, now live as the `architecture-guard` edit-time hook (PR #150).
