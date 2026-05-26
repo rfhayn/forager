@@ -108,6 +108,25 @@ class MealPlanService: ObservableObject {
         self.factory = factory
     }
 
+    /// fix-meal-plan-household-observer (2026-04-30): reload `activeMealPlan` whenever
+    /// `HouseholdService.currentHousehold` changes. Fixes the cold-start race where
+    /// `HouseholdService.init()` kicks off an async load, `foragerApp.init()` then
+    /// synchronously called `loadActiveMealPlan()` while `currentHousehold` was still
+    /// nil → predicate matched `householdKey == nil` → user's plan filtered out →
+    /// Dashboard rendered empty Tonight's Meal / Meal Plan cards until the user
+    /// visited the Meals tab. The grocery card avoided this because @FetchRequest is
+    /// reactive; meal-plan data lives in this singleton and needs an explicit reload.
+    func observeHousehold(_ service: HouseholdService) {
+        service.$currentHousehold
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.loadActiveMealPlan()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
     /// M9.16: One-time service injection for grocery list item creation
     func configure(groceryListItemService: GroceryListItemService) {
         self.groceryListItemService = groceryListItemService

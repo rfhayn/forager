@@ -6,6 +6,35 @@
 
 ---
 
+## Session 127 — April 30, 2026 — fix-meal-plan-household-observer
+**Change**: `fix-meal-plan-household-observer` — Dashboard Tonight's Meal / Meal Plan / Tomorrow's Meal cards rendered blank on cold start until the user navigated to the Meals tab. Fixed by replacing a one-shot eager reload with a Combine subscription on `HouseholdService.$currentHousehold`.
+
+**What happened**: Rich reported the symptom — grocery list card populated immediately on launch but the three meal-plan cards rendered as ghost states. Diagnosis took two reads: `DashboardView.swift` to confirm the data sources (grocery uses `@FetchRequest`, meal-plan uses `MealPlanService.shared`), then `MealPlanService.swift` to find that `loadActiveMealPlan()` filters by `householdKey` via the provider closure. The race surfaced from `HouseholdService.init()`'s `Task { await loadCurrentHousehold() }` — `foragerApp.init()` then synchronously called `MealPlanService.shared.loadActiveMealPlan()` while `currentHousehold` was still nil, predicate matched `householdKey == nil`, the user's plan was filtered out, `activeMealPlan = nil` cached for the rest of cold start. The Meals tab's `onAppear → updateActivePlanStatus` is what eventually unstuck it.
+
+There was a prior fix from 2026-04-19 (`fix-dashboard-meal-plan-cold-start`) at `foragerApp.swift:153` that added the eager `loadActiveMealPlan()` call. The comment correctly identified the symptom but the call still raced — eager reload + async dependency = faster race condition.
+
+Replaced with `MealPlanService.shared.observeHousehold(household)`. The new method subscribes to `service.$currentHousehold` via Combine, hops to MainActor in the sink, and calls `loadActiveMealPlan()` on every change. `@Published` semantics deliver the current value on subscribe AND fire again when the async load resolves — one subscription replaces "eager call + observer." Built clean. Awaiting Rich's simulator verification.
+
+**Key decisions**:
+- **Observer at app-init layer, not view-layer band-aid.** Two alternatives considered: (A) `.task { mealPlanService.loadActiveMealPlan() }` + `.onChange(of: currentHouseholdKey)` in `DashboardView`, (B) Combine subscription in `MealPlanService.observeHousehold(_:)` wired once in `foragerApp.init()`. Picked B because the bug isn't dashboard-specific — any view reading `mealPlanService.activeMealPlan` on cold start has it. Also handles future household-switching for free.
+- **Don't refactor `MealPlanService` to take `HouseholdService` in init.** The singleton's lifecycle is set; injecting through init would touch every test fixture. The new `observeHousehold(_:)` method is symmetric with the existing `configure(factory:)` / `configure(groceryListItemService:)` injection points.
+- **Don't change the `householdKeyProvider` closure pattern.** Closure-based provider works correctly — closures read live state. The bug was never in the closure; it was in the timing of the one-shot reload.
+
+**Learning**:
+- **`@Published` subscribe-fires-current-value is exactly the right primitive for this race.** A separate "wait for non-nil" flag would be wrong (rebuilds happen on household-switch too). A `.dropFirst()` would be wrong (we'd lose the eager case where currentHousehold happens to already be set). The simple `.sink` is correct because *every* publish is a trigger to reload.
+- **`Task { @MainActor in }` inside `.sink` for actor-isolated callees.** `MealPlanService` is `@MainActor`. Combine sinks aren't actor-isolated — they're `@Sendable` escaping closures. `.receive(on: DispatchQueue.main)` puts execution on the main thread but Swift's strict-concurrency checker still wants an explicit hop into the actor. `Task { @MainActor in }` is that hop.
+- **One-shot reload + async dependency = anti-pattern.** This is the second time a fix in this codebase took the form "call it once at init time, hope the async load finished" (the prior 4-19 fix was the first). The pattern fails because Swift Tasks aren't synchronously joinable from an init. Default to subscribing to whatever signals the async load is done — Combine `@Published`, `NotificationCenter`, or `Task` continuation.
+- **The "why grocery list works" answer is the diagnostic shortcut.** Once I saw the asymmetry — grocery uses `@FetchRequest` (reactive), meal-plan uses singleton (one-shot) — the root cause was implicit. Lesson: when one similar-shaped feature works and another doesn't, the difference between them IS the bug.
+
+**AI tooling observations**: Direct grep + targeted reads beat Explore-agent for this kind of bug. Two greps located all `MealPlanService.shared` callers and the `householdKeyProvider` wiring. Three reads (`DashboardView.swift`, `MealPlanService.swift`, then ranges of `foragerApp.swift` and `HouseholdService.swift`) gave full causal chain. The bug was knowable from code structure alone; no agent or runtime instrumentation needed.
+
+**What's next**:
+- Rich verifies on simulator: cold start → Tonight's Meal + Meal Plan + Tomorrow's Meal populate immediately, no navigation to Meals tab required.
+- `/pr` to merge to main.
+- This branch is independent of `feature/reposition-app-store-listing` — no rebase needed; main fast-forwards cleanly when the App Store branch eventually merges.
+
+---
+
 ## Session 126 — April 21, 2026 (evening — device validation)
 **Change**: `fix-groceryitem-multi-zone-assignment` shipped + validated on device. New discovery: 5 duplicate "No Store" default entities — `fix-no-store-default-duplicates` investigation agent launched.
 
