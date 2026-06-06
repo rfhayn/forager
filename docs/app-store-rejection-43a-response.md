@@ -274,9 +274,9 @@ Drop the optional second-device acceptance beat. Otherwise same shooting + expor
 | 2026-05-05 | Developer resubmitted v2.0 build 140 for review | Same submission ID. No metadata change of record beyond the 2026-04-23 repositioning. |
 | 2026-05-13 | Apple re-review | REJECTED under 4.3(a). **Third** 4.3(a) determination on the same submission. Reviewed on iPad Air 11-inch (M3), version 2.0 (140). Message is verbatim-identical boilerplate, opening "The issues we previously identified still need your attention," with a generic spam-factor resource list (shared source code / repackaged template / purchased template / multiple accounts) — none of which apply to forager. Full text recorded in § 11.1. |
 | 2026-06-06 | Strategy reset → escalate to App Review Board | Metadata-only repositioning is disproven: fully executed on 2026-04-23, it drew identical boilerplate on two re-reviews. Decision: stop editing metadata and file a formal App Review Board appeal. See § 11. Tracked by OpenSpec change `escalate-43a-to-app-review-board`. |
+| 2026-06-06 | **App Review Board appeal SUBMITTED** | Filed via the App Review appeal form (`developer.apple.com/contact/app-store/?topic=appeal`), not the Resolution Center. Submission ID `e5e960e5…`, v2.0 build 140. Sent the 1,945-char trimmed letter (§ 11.3) verbatim — fit under the form's 2,000-char cap. Now awaiting the Board's response (typical window: a few business days to ~2 weeks). Outcome plan in § 11.5. |
 
 Add new rows as the round progresses:
-- When the appeal is submitted to the App Review Board
 - When Apple responds (overturn, uphold, or follow-up question)
 - When any subsequent action is taken
 

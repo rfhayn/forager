@@ -30,11 +30,11 @@ Confirm every factual claim in the appeal is true in build 140 before submitting
 
 ## 3. Submit the appeal (user executes, ~20 min)
 
-- [ ] 3.1 Go to developer.apple.com → Contact Us → App Review → "I would like to appeal the rejection of my app" (App Review Board form). Do NOT use the Resolution Center reply box
-- [ ] 3.2 Select the forager app + the rejected version 2.0 (build 140), submission ID `e5e960e5-2797-4d0c-a768-581576a70214`
-- [ ] 3.3 Paste the appeal letter from `docs/app-store-rejection-43a-response.md` § 11.3. Verify no em dashes survived the paste and "forager" is lowercase throughout
-- [ ] 3.4 Submit
-- [ ] 3.5 Record the submission date in § 7 (new row) and commit: `escalate-43a-to-app-review-board: record Board appeal submitted YYYY-MM-DD`
+- [x] 3.1 Filed via the App Review appeal form (`developer.apple.com/contact/app-store/?topic=appeal`). NOT the Resolution Center reply box
+- [x] 3.2 Selected forager v2.0 (build 140), submission ID `e5e960e5-2797-4d0c-a768-581576a70214`
+- [x] 3.3 Pasted the appeal letter from § 11.3 — note: the form caps at **2,000 chars**, so the trimmed 1,945-char version was filed (em-dash-free, "forager" lowercase, all 12 competitors + all 4 refutations + 3 differentiators preserved)
+- [x] 3.4 Submitted 2026-06-06
+- [x] 3.5 Recorded the submission in § 7 (Submission History) — committed with the docs sync
 
 ## 4. Monitor + branch on outcome (user + Claude, 24-72 hr+ wait)
 
