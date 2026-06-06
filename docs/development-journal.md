@@ -6,7 +6,7 @@
 
 ---
 
-## Session 128 — June 6, 2026 — escalate-43a-to-app-review-board
+## Session 129 — June 6, 2026 — escalate-43a-to-app-review-board
 **Change**: `escalate-43a-to-app-review-board` — after a third App Store 4.3(a) "Design - Spam" rejection (2026-05-13), reset the strategy from metadata surgery to a formal App Review Board appeal.
 
 **What happened**: Rich came back to the App Store saga after a couple of weeks away. He'd resubmitted on May 5 and been rejected again on May 13 — the third 4.3(a) on the same submission. The repo had gone quiet on the topic since the 2026-04-23 Resolution Center reply; the submission-history table stopped there, so the second and third rejections were undocumented. The decisive input was the verbatim May 13 message, which Rich pasted: identical boilerplate to April 21, opening "The issues we previously identified still need your attention," with a generic spam-factor resource list.
@@ -29,6 +29,22 @@ Drafted the appeal to lead with a point-by-point refutation of Apple's own four 
 - **The reviewer device is a clue we under-weighted.** Both reviews used an iPad Air 11" M3. If forager on iPad is a scaled iPhone layout, it amplifies the "generic" read. Documented as a deferred hypothesis (Non-Goal) to revisit only if the Board upholds — Rich chose to skip the iPad check for now.
 
 **AI tooling observations**: This was a judgment session, not a coding one — the value was in reading the rejection text correctly and refusing to mechanically re-run the documented escalation steps. The pre-existing paper trail (response doc, design.md competitor matrix, the 4.3a memory) meant the appeal could be grounded in already-validated research rather than re-derived. The branch-divergence trap (scaffolding off a stale unmerged branch) was caught by checking `git diff --stat` against main before committing — worth doing whenever a change is based on anything other than current main.
+
+---
+
+## Session 128 — May 26, 2026 — archive-zone-fix-and-sync-docs (housekeeping)
+**Change**: `archive-zone-fix-and-sync-docs` — close out two long-merged PRs that had left the repo's bookkeeping behind: merge #152, archive #150 with delta-spec promotion, and re-sync three core docs that had drifted ~5 weeks.
+
+**What happened**: Session opened on `feature/fix-meal-plan-household-observer` with PR #152 green and mergeable but never merged, and `current-story.md` still claiming the branch was `feature/fix-test-harness-and-stale-assertions` with build 137. Three loose ends surfaced: (1) PR #152 open; (2) the merged `fix-groceryitem-multi-zone-assignment` (#150, 2026-04-22) still sitting in `openspec/changes/` un-archived with its delta specs never promoted; (3) `current-story.md` / `next-prompt.md` / `project-brief.md` all dated April 19 and contradicting reality (two stale, conflicting status blocks in current-story alone).
+
+Merged #152 (squash `70e2814`). Before archiving #150 I checked its `tasks.md` — 27 unchecked boxes. That looked like incomplete work, so I traced what PR #150 actually shipped across sessions 124–126: the 18-site `context.assign()` fix, the `architecture-guard` edit-time hook (the §6 enforcement, implemented as a hook rather than the audit skill — a stronger substitution), the diagnostic beef-up, device validation + nuke (§8), and builds 138/139. The unchecked boxes were stale tracking, not open work. Archived to `2026-04-22-…` (completion date, not today, to keep the archive timeline honest) and promoted both delta specs into the living `architecture` and `grocery-lists` specs.
+
+**Decisions**:
+- **Spec sync style**: `grocery-lists/spec.md` predates the OpenSpec convention (legacy `REQ-NNN:` numbering); appended the two new requirements in canonical `### Requirement:` style anyway (Rich's call) rather than down-converting and losing scenario richness.
+- **Reworded the audit requirement** to credit the `architecture-guard` hook as the primary (edit-time) enforcer, since that's where the §6 enforcement actually landed — promoting the delta verbatim would have asserted audit-skill behavior that lives in the hook.
+- **Branch + PR, no shortcuts** (Rich): the archive + spec promotion + doc resync go through `feature/archive-zone-fix-and-sync-docs` → PR → squash, not a direct `docs:` commit to main (despite the repo's prior `b3f613b` direct-commit precedent).
+
+**Learned / flagged**: `openspec validate` reports every living spec invalid — they use a `## Overview` header where the validator now expects `## Purpose`. Confirmed pre-existing (HEAD version has zero `## Purpose` sections); flagged for a future header-normalization change, not fixed here. Also: the recurring lesson from #152 generalizes — any UI fed by a singleton service cache instead of a reactive `@FetchRequest` will ghost on async cold start; worth an enforcement idea later.
 
 ---
 

@@ -1,13 +1,10 @@
 # Current Development Story
 
-**Last Updated**: April 19, 2026
-**Status**: **architecture-compliance-sweep COMPLETE** (#146) | **fix-test-harness-and-stale-assertions COMPLETE** (#147) | **fix-dashboard-meal-plan-cold-start COMPLETE** (#148) | **investigate-import-and-store-test-failures COMPLETE** (#149) | **Build 137 on TestFlight (cumulative)** | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
-**Total Progress**: ~362h shipped (all 4 recent changes merged + build 137 distributed)
-**Current Branch**: `feature/fix-dashboard-meal-plan-cold-start`
-**Status**: **architecture-compliance-sweep ACTIVE** (PR #146, build 136 on TestFlight) | **fix-test-harness-and-stale-assertions ACTIVE** (PR #147, awaiting review) | **fix-dashboard-meal-plan-cold-start ACTIVE** (PR #148, awaiting review) | **investigate-import-and-store-test-failures ACTIVE** (new branch — 19/19 tests pass, awaiting PR) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M7.7 SUBMITTED (rejection round 2 — awaiting re-review)** | **M9.28 COMPLETE** | **M19 COMPLETE** | **M18 COMPLETE** | **FUI-1 COMPLETE (8/8)**
-**Total Progress**: ~355.25h shipped + architecture-compliance-sweep and fix-test-harness-and-stale-assertions in flight
-**Current Branch**: `feature/fix-test-harness-and-stale-assertions`
-**Launch Path**: M7.7 (App Store submission, awaiting re-review) | post-launch roadmap at `docs/project-roadmap.md`
+**Last Updated**: May 26, 2026
+**Status**: **fix-meal-plan-household-observer COMPLETE** (#152, squash `70e2814`, 2026-04-30) | **fix-groceryitem-multi-zone-assignment COMPLETE + ARCHIVED** (#150, squash `25f0314`, 2026-04-22 — delta specs promoted into `architecture` + `grocery-lists` living specs on 2026-05-26) | **Build 141 on TestFlight** | **architecture-compliance-sweep COMPLETE** (#146) | **fix-test-harness-and-stale-assertions COMPLETE** (#147) | **fix-dashboard-meal-plan-cold-start COMPLETE** (#148) | **investigate-import-and-store-test-failures COMPLETE** (#149) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M9.28 / M19 / M18 / FUI-1 (8/8) COMPLETE**
+**Total Progress**: ~363h shipped (all post-launch correctness changes merged + build 141 distributed)
+**Current Branch**: `main` (clean — no active OpenSpec changes; #150 and #152 merged and `#150` archived)
+**Launch Path**: M7.7 — v1.0 build 134 rejected on guideline 4.3(a) (spam/repositioning); `reposition-app-store-listing` change paused on its own branch, to be resubmitted against a fresh binary (now build 141). See [`docs/project-roadmap.md`](project-roadmap.md) and the 4.3(a) response doc.
 **Planning**: Three-stream roadmap — [operating-model](roadmaps/operating-model-roadmap.md) / [app-health](roadmaps/app-health-roadmap.md) / [shipping](roadmaps/shipping-roadmap.md). OpenSpec specs in `openspec/specs/` (11 capabilities incl. new `architecture` + `developer-tooling`); archived changes in `openspec/changes/archive/`.
 **Naming**: Forward-only — new work uses OpenSpec change-id kebab-case (see [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md)); historical M#.#.# preserved.
 
@@ -339,10 +336,9 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 
 **Parallel tracks:**
 
-1. **M7.7 re-review**: metadata reply sent to reviewer (Unrestricted Web Access = Yes, age rating 17+); awaiting Apple decision. No local action.
-2. **Cluster C — `architecture-compliance-sweep`**: first post-launch correctness sweep. PRD at [`architecture-compliance-sweep.md`](prds/active/architecture-compliance-sweep.md). Will be discussed in a **new session** before proposing, per user direction (not auto-proposed here).
-
-~~**Optional small change (flagged by user)**: `harden-pr-skill-doc-freshness`~~ — SHIPPED in PR #144 (2026-04-18). Mandatory doc-freshness gate now installed in `/pr`; same utility backs `/review` Step 3 in warn mode.
+1. **App Store**: `reposition-app-store-listing` (paused) resumes against build 141 — Session 2 is screenshots + video per its `tasks.md`. Build 134's 4.3(a) rejection needs a fresh binary; 141 is ready on TestFlight.
+2. **App Health — `establish-test-planning-workflow`**: READY. Plan drafted at [`establish-test-planning-workflow.md`](prds/active/establish-test-planning-workflow.md); run `/opsx:propose` when ready. §7 has 5 decisions to resolve during proposal.
+3. **App Health — `decide-view-layer-scope-architecture`**: deferred from `architecture-compliance-sweep`. Evaluate `@ScopedFetchRequest` wrapper vs. formalize the in-memory filter vs. ratify status quo; write ADR 016 after the decision.
 
 ---
 
@@ -352,9 +348,12 @@ Fixed member import to refresh ALL updated objects before save. Switched import 
 |-------|------|-----------|-------|------------|
 | 1 | (prior) | — | — | — |
 | 2 | 2026-04-17 | 2.3.6 Accurate Metadata | Age Rating missing "Unrestricted Web Access" = Yes (recipe URL import qualifies) | Metadata-only fix in ASC; build 134 unchanged. Age rating auto-bumps to 17+. Reply in Resolution Center + ASC update is sufficient for metadata rejections — Apple continues review without explicit Resubmit. |
+| 3 | 2026-04-21 | 4.3(a) Spam | Listing positioned too generically among grocery/recipe apps | Metadata-led repositioning (`reposition-app-store-listing`, paused): lead with three noun-phrase positions (household no-account / multi-stop / on-device parsing); screenshots are the highest-leverage change. New binary (build 141) ships alongside after the `fix-groceryitem-multi-zone-assignment` CloudKit fix (#150). |
 
 ---
 
-**Last Session**: April 18, 2026 — Applied Cluster A (seed-operating-model-foundations, PR #141) + Cluster B (expand-claude-context-infrastructure, PR #143). Both squash-merged into main. OpenSpec changes archived at `openspec/changes/archive/2026-04-18-*`. `openspec/specs/architecture/` and `openspec/specs/developer-tooling/` are now living capability specs. Three-stream roadmap live at `docs/project-roadmap.md`. Forward-only naming policy in effect; dual-format skill utility at `.claude/skills/_shared/milestone-format.sh` bridges legacy M#.#.# and new change-ids. Planning-heavy day (~8h) that established the operating-model foundation for the remaining post-launch backlog.
-**Next Action**: New session — discuss scoping for `architecture-compliance-sweep` (Cluster C) before `/opsx:propose`.
-**Confidence**: GREEN — operating-model foundation solid, app-health roadmap organized, shipping state stable pending Apple re-review.
+**Last Session**: May 26, 2026 — Session-wrap housekeeping. Merged PR #152 (`fix-meal-plan-household-observer`, squash `70e2814`) — Dashboard meal-plan cards now reload via a Combine subscription to `HouseholdService.$currentHousehold` instead of a one-shot eager call that lost the init-order race. Archived the already-merged `fix-groceryitem-multi-zone-assignment` (#150, merged 2026-04-22) to `openspec/changes/archive/2026-04-22-…`, promoting its two delta specs into the `architecture` (child-store assignment + tooling enforcement) and `grocery-lists` (same-store invariant + launch-time diagnostic) living specs. Re-synced the stale core docs (current-story, next-prompt, project-brief) which had drifted ~5 weeks behind reality. Build 141 on TestFlight; no active OpenSpec changes remain.
+**Next Action**: Resume `reposition-app-store-listing` Session 2 (screenshots + video against build 141), OR kick off `establish-test-planning-workflow` via `/opsx:propose`.
+**Confidence**: GREEN — post-launch correctness changes all merged, specs synced, docs current. Shipping blocked only on the 4.3(a) repositioning (metadata + screenshots), not on code.
+
+> **Note (2026-05-26)**: `openspec validate` reports the living specs invalid because they use a `## Overview` header where the validator now expects `## Purpose`. This is a pre-existing repo-wide mismatch (predates this session) — a future change should normalize all spec headers; it is not caused by the delta-spec promotion done here.

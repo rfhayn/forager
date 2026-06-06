@@ -138,6 +138,53 @@ Source: `investigate-import-and-store-test-failures` (2026-04-19). Prior behavio
 - **WHEN** `persistAndFinish` runs the refresh loop with a non-empty `preserveUpdated` set
 - **THEN** objects whose `objectID` is NOT in the `preserveUpdated` set are still refreshed with `mergeChanges: false`
 
+### Requirement: Child HouseholdScoped entities explicitly assigned to parent store
+
+When creating a child HouseholdScoped entity (`GroceryListItem`, `Ingredient`) that inherits its household relationship from a parent entity (`WeeklyList`, `Recipe`), the creation site SHALL explicitly assign the new object to the parent's persistent store via `context.assign(object, to: parentStore)` before the first save. Relying on Core Data's implicit store inference from subsequently-set relationships is insufficient under CloudKit dual-store mirroring and MAY cause zone-conflict crashes (error 134040 "Object graph corruption detected").
+
+The child-inheritance pattern documented in ADR 014 remains valid; this requirement makes the store-assignment step that pattern implicitly assumed into an explicit code obligation.
+
+Source: `fix-groceryitem-multi-zone-assignment` (2026-04-22). Error 134040 on the dev's iPhone broke CloudKit sync entirely; 18 production sites created child entities without the explicit assign and were corrected in PR #150.
+
+#### Scenario: GroceryListItem creation in shared-store scope
+
+- **WHEN** code creates a `GroceryListItem` as a child of a `WeeklyList` whose `objectID.persistentStore` is the shared store
+- **THEN** the site calls `context.assign(item, to: list.objectID.persistentStore)` before setting any relationship or calling `context.save()`, and the resulting item's `objectID.persistentStore` matches the list's store after save
+
+#### Scenario: Ingredient creation in shared-store recipe
+
+- **WHEN** code creates an `Ingredient` as a child of a `Recipe` whose `objectID.persistentStore` is the shared store
+- **THEN** the site calls `context.assign(ingredient, to: recipe.objectID.persistentStore)` before the first save, and the resulting ingredient lands in the same store as the recipe
+
+#### Scenario: Fallback when parent has no store
+
+- **WHEN** code creates a child entity whose parent has no persistent store (e.g., unsaved in-memory parent)
+- **THEN** the site falls back to assigning the child to the persistent store coordinator's first store (matching Core Data's default behavior) AND logs the fallback via DiagnosticLogger so the pattern can be audited
+
+#### Scenario: Test and preview contexts exempt
+
+- **WHEN** the context is an in-memory test context or preview context with only one persistent store
+- **THEN** the `context.assign()` call is still made but is effectively a no-op; tests do not need to mock multi-store behavior
+
+### Requirement: Tooling blocks direct child creation without explicit store assignment
+
+The `architecture-guard` edit-time hook (`.claude/hooks/architecture-guard.sh`) SHALL block — and the `/architecture-audit` skill SHALL flag — any production-code call to `GroceryListItem(context:)` or `Ingredient(context:)` that is not followed (within 10 lines) by a `context.assign(` call on the newly-created object, or routed through `ManagedObjectFactory.make()`. Edit-time enforcement via the hook is the primary mechanism (it prevents the violation from being written at all); the audit skill provides batch verification across the existing codebase. The hook matches the spec's disjunction (assign OR factory), not a strict subset, so it does not reject the correct fix pattern.
+
+#### Scenario: Hook blocks missing assign
+
+- **WHEN** an edit introduces `let item = GroceryListItem(context: viewContext)` followed by property configuration and `list.addToItems(item)` with no `viewContext.assign(item, ...)` call
+- **THEN** the `architecture-guard` hook blocks the edit and the `/architecture-audit` batch run reports the site as a rule violation with file and line reference
+
+#### Scenario: Tooling skips test files
+
+- **WHEN** the hook or audit evaluates files under `foragerTests/` or `foragerUITests/`
+- **THEN** direct `GroceryListItem(context:)` / `Ingredient(context:)` calls are exempt from the rule
+
+#### Scenario: Tooling accepts factory route
+
+- **WHEN** a production site uses `factory.make(GroceryListItem.self, in: scope) { ... }`
+- **THEN** the tooling considers the site compliant regardless of the absence of an explicit `assign` call (the factory performs the assignment internally)
+
 ## Implementation Notes
 
 - ADR source documents live at `docs/architecture/007-*.md` through `014-*.md` and `service-layer-pattern.md`
