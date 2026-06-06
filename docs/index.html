@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>forager - Smart Meal Planner</title>
+    <title>forager - Shared Shopping</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -69,6 +69,27 @@
         .links a:hover {
             text-decoration: underline;
         }
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 20px 0 40px;
+        }
+        .screenshots figure {
+            margin: 0;
+            text-align: center;
+        }
+        .screenshots img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        .screenshots figcaption {
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
         footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -83,20 +104,36 @@
     <div class="hero">
         <img src="icon.png" alt="forager app icon">
         <h1>forager</h1>
-        <p class="subtitle">Smart Meal Planner</p>
+        <p class="subtitle">Shared Shopping</p>
     </div>
 
-    <p>Plan meals, build grocery lists, and cook together as a household. All synced through iCloud.</p>
+    <p>Shared grocery lists for households. No account. No server. Just iCloud.</p>
 
     <h2>Features</h2>
     <ul>
-        <li>Grocery lists organized by store section, shared in real time</li>
-        <li>Recipe catalog with smart ingredient scaling</li>
-        <li>Calendar-based meal planning with one-tap grocery generation</li>
-        <li>Household sharing via iCloud for your whole family</li>
-        <li>Intelligent ingredient parsing that understands natural language</li>
-        <li>No account required. No ads. No tracking.</li>
+        <li>Invite your household with a shareable link. No signup, no email, no proprietary account.</li>
+        <li>"Group by Store" shopping when your week spans Trader Joe's, Costco, or anywhere else.</li>
+        <li>On-device ingredient parsing. "2 cups flour" and "a pinch of saffron" are understood without leaving your iPhone.</li>
+        <li>Save recipes by pasting a URL, pasting text, or snapping a photo of a cookbook page.</li>
+        <li>Scale any recipe from a quarter to four times, in kitchen-friendly fractions.</li>
+        <li>No ads, no tracking, no third-party code.</li>
     </ul>
+
+    <h2>Screenshots</h2>
+    <div class="screenshots">
+        <figure>
+            <img src="beta/screenshots/01-household-invite.png" alt="Household invite screen showing shareable link">
+            <figcaption>Invite your household with a link.</figcaption>
+        </figure>
+        <figure>
+            <img src="beta/screenshots/02-group-by-store.png" alt="Grocery list grouped by store">
+            <figcaption>One list. Every store.</figcaption>
+        </figure>
+        <figure>
+            <img src="beta/screenshots/03-recipe-import.png" alt="Recipe import showing on-device ingredient parsing">
+            <figcaption>AI parsing on your iPhone.</figcaption>
+        </figure>
+    </div>
 
     <div class="cta">
         <a href="https://testflight.apple.com/join/zwFHTpDs">Join the TestFlight Beta</a>
