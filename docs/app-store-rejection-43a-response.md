@@ -382,46 +382,29 @@ You cannot copy-edit your way out of a non-engagement loop. The remaining high-l
 
 ### 11.3 Appeal letter (text to submit)
 
-Submit via developer.apple.com → Contact Us → App Review → "I would like to appeal the rejection of my app." (the App Review Board form), NOT the Resolution Center reply box. Copy-style: "forager" lowercase, no em dashes.
+Submit via developer.apple.com → Contact Us → App Review → Appeals (the App Review Board form at `https://developer.apple.com/contact/app-store/?topic=appeal`), NOT the Resolution Center reply box. **The appeal form caps the message at 2,000 characters**, so the filed version below is the trimmed 1,945-char letter. Copy-style: "forager" lowercase, no em dashes. If the form has separate subject + body fields, paste the body starting at "Hello App Review Board,"; if it truncates, the submission ID is already in the first sentence so the "Subject:" line is droppable.
 
 ```
-Subject: forager 4.3(a) rejection appeal
-(Submission ID e5e960e5-2797-4d0c-a768-581576a70214)
-
 Hello App Review Board,
+I'm appealing a Guideline 4.3(a) "Design - Spam" rejection of forager (v2.0, build 140). Submission ID: e5e960e5-2797-4d0c-a768-581576a70214.
+The same submission has been rejected three times with identical wording, most recently May 13, 2026. Between rounds I rewrote the subtitle, description, keywords, and screenshots in good faith. Each re-review returned the same boilerplate, naming no similar app. None of 4.3(a)'s spam factors apply to forager:
+Shared code or assets: forager is original native Swift, written from scratch, sharing no code or assets with any app.
+Repackaged template: no template. It's the only app of its kind I've built.
+Purchased third-party template: none was used.
+Multiple apps across accounts: I'm a solo developer, one account, one app in this category.
+forager also differs from every comparable app. I surveyed twelve (AnyList, Paprika, Mealime, Plan to Eat, Samsung Food, Yummly, BigOven, Crouton, Mela, Pestle, Bring!, Kitchen Stories) on three points:
 
-I'm formally appealing a Guideline 4.3(a) "Design - Spam" rejection of forager (version 2.0, build 140), Submission ID e5e960e5-2797-4d0c-a768-581576a70214.
+Account-free household sharing via a CloudKit link: no signup, no email, no server. The account-based apps require a login; Crouton and Mela rely on Apple Family Sharing.
+Multi-stop shopping with Group by Store: assign stores to ingredients, view one list grouped by store. AnyList has per-item store tags but doesn't build around this workflow.
+Fully on-device ingredient parsing via a three-tier pipeline (regex, a Core ML BiLSTM-CRF model, and Apple's NaturalLanguage framework), no network request. Samsung Food parses in the cloud; Pestle depends on iOS 26 Apple Intelligence.
 
-The same submission has been rejected three times, each time with identical wording, most recently on May 13, 2026. Between rounds I revised the listing in good faith: a new subtitle, a rewritten description, new keywords, and five new screenshots. Every re-review returned the same boilerplate, with no app-specific detail and no mention of an app forager is supposed to resemble. I'm asking the Board for an individualized review, because forager does not meet any of the criteria the guideline describes.
-
-The guideline lists the factors that contribute to a spam determination. None of them apply to forager, and I'll take each one directly.
-
-Shared source code or assets: forager is an original native Swift app, written from scratch. It shares no code or assets with any other app.
-
-A repackaged template producing multiple similar apps: forager uses no template, and it's the only app of its kind I've built.
-
-A purchased third-party template with problematic code: no third-party template was used at all.
-
-Several similar apps across multiple accounts: I'm a solo developer with a single account and a single app in this category.
-
-forager is also materially different from every comparable app I could find. I surveyed twelve of the leading apps in the grocery, recipe, and meal-planning space: AnyList, Paprika, Mealime, Plan to Eat, Samsung Food, Yummly, BigOven, Crouton, Mela, Pestle, Bring!, and Kitchen Stories. forager differs from all of them on three concrete points.
-
-First, household sharing without an account. forager creates a shared household through a CloudKit shareable link. There's no signup, no email, and no proprietary server. None of the twelve apps do this. The account-based ones (AnyList, Plan to Eat, Samsung Food, BigOven, Mealime) require a login, and the two that share at all (Crouton, Mela) lean on Apple Family Sharing rather than an ad-hoc link invite.
-
-Second, multi-stop shopping built around Group by Store. forager lets you assign preferred stores to ingredients and then view a single grocery list grouped by store for a multi-stop trip. AnyList offers per-item store tags, but no comparable app builds the list around the multi-store shopping workflow itself.
-
-Third, fully on-device ingredient parsing. forager turns free text like "2 cups all-purpose flour, sifted" into a structured quantity, unit, ingredient, and qualifier using a three-tier pipeline: a regular-expression parser, a Core ML BiLSTM-CRF model, and Apple's NaturalLanguage framework. All of it runs on device, with no network request. Samsung Food parses in the cloud, and Pestle depends on iOS 26 Apple Intelligence. forager runs on any iOS 26 device with no server round trip.
-
-All three features are present and functional in the build under review, and I'd welcome a reviewer verifying each one directly.
-
-If the Board has identified a specific app that forager is believed to duplicate, I'd appreciate knowing which one so I can respond to that concern directly. If not, I respectfully ask that the 4.3(a) determination be overturned and the app approved.
-
+All three are functional in this build, and I'd welcome a reviewer verifying each.
+If the Board has identified a specific app forager is believed to duplicate, I'd appreciate knowing which one so I can respond. Otherwise, I respectfully ask that the 4.3(a) determination be overturned and the app approved.
 Thank you for reconsidering.
-
 Rich Hayn
 ```
 
-> **Letter version note**: This is the refined letter (solo-developer "I" voice), finalized 2026-06-06 and ready to file with the App Review Board. The earlier "we"-voice draft was superseded. Update § 7 with the filing date once submitted.
+> **Letter version note**: This is the filed letter — solo-developer "I" voice, trimmed to **1,945 characters** to fit the App Review Board form's 2,000-char cap, finalized 2026-06-06. Verified: 0 em dashes, "forager" lowercase throughout, submission ID intact, all 12 surveyed competitors named, all four spam-factor refutations + three differentiators + the "name the app" ask preserved. The earlier ~3,300-char "we"-voice and "I"-voice drafts were superseded. Update § 7 with the filing date once submitted.
 
 ### 11.4 Tone notes (kept from the Resolution Center discipline)
 
