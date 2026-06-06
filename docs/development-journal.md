@@ -6,6 +6,22 @@
 
 ---
 
+## Session 128 — May 26, 2026 — archive-zone-fix-and-sync-docs (housekeeping)
+**Change**: `archive-zone-fix-and-sync-docs` — close out two long-merged PRs that had left the repo's bookkeeping behind: merge #152, archive #150 with delta-spec promotion, and re-sync three core docs that had drifted ~5 weeks.
+
+**What happened**: Session opened on `feature/fix-meal-plan-household-observer` with PR #152 green and mergeable but never merged, and `current-story.md` still claiming the branch was `feature/fix-test-harness-and-stale-assertions` with build 137. Three loose ends surfaced: (1) PR #152 open; (2) the merged `fix-groceryitem-multi-zone-assignment` (#150, 2026-04-22) still sitting in `openspec/changes/` un-archived with its delta specs never promoted; (3) `current-story.md` / `next-prompt.md` / `project-brief.md` all dated April 19 and contradicting reality (two stale, conflicting status blocks in current-story alone).
+
+Merged #152 (squash `70e2814`). Before archiving #150 I checked its `tasks.md` — 27 unchecked boxes. That looked like incomplete work, so I traced what PR #150 actually shipped across sessions 124–126: the 18-site `context.assign()` fix, the `architecture-guard` edit-time hook (the §6 enforcement, implemented as a hook rather than the audit skill — a stronger substitution), the diagnostic beef-up, device validation + nuke (§8), and builds 138/139. The unchecked boxes were stale tracking, not open work. Archived to `2026-04-22-…` (completion date, not today, to keep the archive timeline honest) and promoted both delta specs into the living `architecture` and `grocery-lists` specs.
+
+**Decisions**:
+- **Spec sync style**: `grocery-lists/spec.md` predates the OpenSpec convention (legacy `REQ-NNN:` numbering); appended the two new requirements in canonical `### Requirement:` style anyway (Rich's call) rather than down-converting and losing scenario richness.
+- **Reworded the audit requirement** to credit the `architecture-guard` hook as the primary (edit-time) enforcer, since that's where the §6 enforcement actually landed — promoting the delta verbatim would have asserted audit-skill behavior that lives in the hook.
+- **Branch + PR, no shortcuts** (Rich): the archive + spec promotion + doc resync go through `feature/archive-zone-fix-and-sync-docs` → PR → squash, not a direct `docs:` commit to main (despite the repo's prior `b3f613b` direct-commit precedent).
+
+**Learned / flagged**: `openspec validate` reports every living spec invalid — they use a `## Overview` header where the validator now expects `## Purpose`. Confirmed pre-existing (HEAD version has zero `## Purpose` sections); flagged for a future header-normalization change, not fixed here. Also: the recurring lesson from #152 generalizes — any UI fed by a singleton service cache instead of a reactive `@FetchRequest` will ghost on async cold start; worth an enforcement idea later.
+
+---
+
 ## Session 127 — April 30, 2026 — fix-meal-plan-household-observer
 **Change**: `fix-meal-plan-household-observer` — Dashboard Tonight's Meal / Meal Plan / Tomorrow's Meal cards rendered blank on cold start until the user navigated to the Meals tab. Fixed by replacing a one-shot eager reload with a Combine subscription on `HouseholdService.$currentHousehold`.
 
