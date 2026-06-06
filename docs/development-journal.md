@@ -6,6 +6,32 @@
 
 ---
 
+## Session 128 — June 6, 2026 — escalate-43a-to-app-review-board
+**Change**: `escalate-43a-to-app-review-board` — after a third App Store 4.3(a) "Design - Spam" rejection (2026-05-13), reset the strategy from metadata surgery to a formal App Review Board appeal.
+
+**What happened**: Rich came back to the App Store saga after a couple of weeks away. He'd resubmitted on May 5 and been rejected again on May 13 — the third 4.3(a) on the same submission. The repo had gone quiet on the topic since the 2026-04-23 Resolution Center reply; the submission-history table stopped there, so the second and third rejections were undocumented. The decisive input was the verbatim May 13 message, which Rich pasted: identical boilerplate to April 21, opening "The issues we previously identified still need your attention," with a generic spam-factor resource list.
+
+That text reframed the whole problem. We had spent the `reposition-app-store-listing` change betting 4.3(a) was a positioning problem — new subtitle, human-voice description, five captioned screenshots, competitor-named reply. We executed that bet in full. It drew identical boilerplate twice. The signature of identical-boilerplate-on-re-review is a **non-engagement loop**: the reviewer (or an automated pass) isn't weighing the listing on its merits. You cannot copy-edit out of a loop where the copy isn't being read. Worse, all three determinations were on one submission ID — we never reached a fresh reviewer.
+
+I gave Rich the honest read rather than re-running the escalation playbook mechanically: our strategy was disproven, and another metadata round was the definition of repeating a failed move. Offered four paths (Meet-with-Apple appointment, Board appeal, withdraw-and-refile-fresh, substantive iPad-polish change). Rich chose the **formal App Review Board appeal** and to keep the "name the app you think we duplicate" ask.
+
+Drafted the appeal to lead with a point-by-point refutation of Apple's own four spam criteria (none apply: original native Swift, no template, single account, one app), then prove differentiation against the 12-app competitor matrix on the three owned axes. Backfilled the submission history, recorded the verbatim rejection, and wrote the letter + outcome-branching plan into `docs/app-store-rejection-43a-response.md` § 11. Scaffolded the OpenSpec change (validates clean) with an `app-store-assets` delta requiring a versioned appeal record.
+
+**Key decisions**:
+- **Appeal to a fresh team, not another Resolution Center reply.** A Board appeal routes to a different team — the only written path that escapes the stuck submission. Held the Meet-with-Apple appointment (Apple offered it in the message) as the primary fallback if the Board upholds, and withdraw-and-refile-fresh as a post-Board move (filing the appeal forecloses a blind refile, which would forfeit the appeal-in-progress).
+- **Lead with criteria refutation, not differentiation prose.** Refuting objective criteria ("does it meet these conditions? No") is harder for a Board to wave away than the subjective "my app IS unique" appeals they see constantly.
+- **Branch hygiene over convenience.** The change was scaffolded off the never-merged, weeks-stale `reposition-app-store-listing` branch (where the response doc and assets live), but the appeal work is docs-only. Rather than drag reposition's stale `current-story.md` / journal / `MealPlanService.swift` regressions toward main, committed on the reposition base, then cherry-picked the single docs commit onto a fresh `main`-based branch (`feature/escalate-43a-board-appeal`). Resolved the expected modify/delete conflict (the response doc is new to main) by taking the full file. Diff vs main is now exactly the appeal docs.
+- **Did not edit the stale `current-story.md` on the working branch.** The Round-4 row + Next-Action update are queued against main's authoritative copy as part of the PR.
+
+**Learning**:
+- **Identical boilerplate on a guideline re-review is itself a signal.** It means the response wasn't individually evaluated. The lever isn't the artifact being rejected — it's getting a different human in the loop. Recognizing "non-engagement loop" early would have saved a round of screenshot work.
+- **Apple hands you the escape hatch in the rejection text.** The May 13 message explicitly invited a "Meet with Apple" appointment. The boilerplate is canned, but the support options at the bottom are real and were overlooked in prior rounds.
+- **The reviewer device is a clue we under-weighted.** Both reviews used an iPad Air 11" M3. If forager on iPad is a scaled iPhone layout, it amplifies the "generic" read. Documented as a deferred hypothesis (Non-Goal) to revisit only if the Board upholds — Rich chose to skip the iPad check for now.
+
+**AI tooling observations**: This was a judgment session, not a coding one — the value was in reading the rejection text correctly and refusing to mechanically re-run the documented escalation steps. The pre-existing paper trail (response doc, design.md competitor matrix, the 4.3a memory) meant the appeal could be grounded in already-validated research rather than re-derived. The branch-divergence trap (scaffolding off a stale unmerged branch) was caught by checking `git diff --stat` against main before committing — worth doing whenever a change is based on anything other than current main.
+
+---
+
 ## Session 127 — April 30, 2026 — fix-meal-plan-household-observer
 **Change**: `fix-meal-plan-household-observer` — Dashboard Tonight's Meal / Meal Plan / Tomorrow's Meal cards rendered blank on cold start until the user navigated to the Meals tab. Fixed by replacing a one-shot eager reload with a Combine subscription on `HouseholdService.$currentHousehold`.
 
