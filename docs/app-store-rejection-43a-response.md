@@ -390,72 +390,38 @@ Subject: forager 4.3(a) rejection appeal
 
 Hello App Review Board,
 
-We are formally appealing a Guideline 4.3(a) "Design - Spam"
-rejection of forager (version 2.0, build 140). The same submission
-has now received this rejection three times, each with identical
-wording, most recently on May 13, 2026. Between rounds we
-substantially revised the listing in good faith: a new subtitle, a
-rewritten description, new keywords, and five new screenshots. Each
-re-review returned the same boilerplate text with no app-specific
-detail and no identification of an allegedly similar app. We are
-asking the Board for an individualized review, because we do not
-believe forager meets any of the criteria the guideline describes.
+I'm formally appealing a Guideline 4.3(a) "Design - Spam" rejection of forager (version 2.0, build 140), Submission ID e5e960e5-2797-4d0c-a768-581576a70214.
 
-None of guideline 4.3(a)'s stated spam factors apply to forager.
-The rejection lists the factors that contribute to a spam
-determination. We address each directly:
+The same submission has been rejected three times, each time with identical wording, most recently on May 13, 2026. Between rounds I revised the listing in good faith: a new subtitle, a rewritten description, new keywords, and five new screenshots. Every re-review returned the same boilerplate, with no app-specific detail and no mention of an app forager is supposed to resemble. I'm asking the Board for an individualized review, because forager does not meet any of the criteria the guideline describes.
 
-- Same source code or assets as other apps: forager is an original
-  native Swift application written from scratch. It shares no code or
-  assets with any other app.
-- Multiple similar apps from a repackaged template: forager is built
-  on no template. It is our only app of this kind.
-- A purchased app template with problematic code: no third-party
-  template was used.
-- Several similar apps across multiple accounts: we maintain a single
-  developer account with a single app in this category.
+The guideline lists the factors that contribute to a spam determination. None of them apply to forager, and I'll take each one directly.
 
-forager is materially differentiated from every comparable app we
-could identify. We surveyed twelve leading apps in the grocery,
-recipe, and meal-planning space (AnyList, Paprika, Mealime, Plan to
-Eat, Samsung Food, Yummly, BigOven, Crouton, Mela, Pestle, Bring!,
-and Kitchen Stories). forager differs on three concrete axes:
+Shared source code or assets: forager is an original native Swift app, written from scratch. It shares no code or assets with any other app.
 
-1. Household sharing without an account. forager forms a shared
-   household through a CloudKit shareable link, with no signup, no
-   email, and no proprietary server. None of the twelve apps offer
-   this: the account-based apps (AnyList, Plan to Eat, Samsung Food,
-   BigOven, Mealime) require a login, and the apps that share at all
-   (Crouton, Mela) rely on Apple Family Sharing rather than ad-hoc
-   link invites.
+A repackaged template producing multiple similar apps: forager uses no template, and it's the only app of its kind I've built.
 
-2. Multi-stop shopping with Group by Store. forager lets a user
-   assign preferred stores to ingredients and view one grocery list
-   grouped by store for a multi-stop trip. AnyList offers per-item
-   store tags, but no comparable app builds the list around the
-   multi-store shopping workflow.
+A purchased third-party template with problematic code: no third-party template was used at all.
 
-3. Fully on-device ingredient parsing. forager converts free text
-   such as "2 cups all-purpose flour, sifted" into structured
-   quantity, unit, ingredient, and qualifier using a three-tier
-   pipeline (a regular-expression parser, a Core ML BiLSTM-CRF model,
-   and Apple's NaturalLanguage framework), entirely on device with no
-   network request. Samsung Food's parsing is cloud-based; Pestle's
-   depends on iOS 26 Apple Intelligence. forager runs on any iOS 26
-   device with no server round trip.
+Several similar apps across multiple accounts: I'm a solo developer with a single account and a single app in this category.
 
-These features are present and functional in the build under review.
-We would welcome a reviewer verifying each one directly.
+forager is also materially different from every comparable app I could find. I surveyed twelve of the leading apps in the grocery, recipe, and meal-planning space: AnyList, Paprika, Mealime, Plan to Eat, Samsung Food, Yummly, BigOven, Crouton, Mela, Pestle, Bring!, and Kitchen Stories. forager differs from all of them on three concrete points.
 
-If the Board has identified a specific app that forager is believed
-to duplicate, we would appreciate knowing which one, so that we can
-respond to the specific concern. Absent that, we respectfully ask
-that the 4.3(a) determination be overturned and the app approved.
+First, household sharing without an account. forager creates a shared household through a CloudKit shareable link. There's no signup, no email, and no proprietary server. None of the twelve apps do this. The account-based ones (AnyList, Plan to Eat, Samsung Food, BigOven, Mealime) require a login, and the two that share at all (Crouton, Mela) lean on Apple Family Sharing rather than an ad-hoc link invite.
+
+Second, multi-stop shopping built around Group by Store. forager lets you assign preferred stores to ingredients and then view a single grocery list grouped by store for a multi-stop trip. AnyList offers per-item store tags, but no comparable app builds the list around the multi-store shopping workflow itself.
+
+Third, fully on-device ingredient parsing. forager turns free text like "2 cups all-purpose flour, sifted" into a structured quantity, unit, ingredient, and qualifier using a three-tier pipeline: a regular-expression parser, a Core ML BiLSTM-CRF model, and Apple's NaturalLanguage framework. All of it runs on device, with no network request. Samsung Food parses in the cloud, and Pestle depends on iOS 26 Apple Intelligence. forager runs on any iOS 26 device with no server round trip.
+
+All three features are present and functional in the build under review, and I'd welcome a reviewer verifying each one directly.
+
+If the Board has identified a specific app that forager is believed to duplicate, I'd appreciate knowing which one so I can respond to that concern directly. If not, I respectfully ask that the 4.3(a) determination be overturned and the app approved.
 
 Thank you for reconsidering.
 
 Rich Hayn
 ```
+
+> **Letter version note**: This is the refined letter (solo-developer "I" voice), finalized 2026-06-06 and ready to file with the App Review Board. The earlier "we"-voice draft was superseded. Update § 7 with the filing date once submitted.
 
 ### 11.4 Tone notes (kept from the Resolution Center discipline)
 
