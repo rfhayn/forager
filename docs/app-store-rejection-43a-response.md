@@ -275,6 +275,7 @@ Drop the optional second-device acceptance beat. Otherwise same shooting + expor
 | 2026-05-13 | Apple re-review | REJECTED under 4.3(a). **Third** 4.3(a) determination on the same submission. Reviewed on iPad Air 11-inch (M3), version 2.0 (140). Message is verbatim-identical boilerplate, opening "The issues we previously identified still need your attention," with a generic spam-factor resource list (shared source code / repackaged template / purchased template / multiple accounts) — none of which apply to forager. Full text recorded in § 11.1. |
 | 2026-06-06 | Strategy reset → escalate to App Review Board | Metadata-only repositioning is disproven: fully executed on 2026-04-23, it drew identical boilerplate on two re-reviews. Decision: stop editing metadata and file a formal App Review Board appeal. See § 11. Tracked by OpenSpec change `escalate-43a-to-app-review-board`. |
 | 2026-06-06 | **App Review Board appeal SUBMITTED** | Filed via the App Review appeal form (`developer.apple.com/contact/app-store/?topic=appeal`), not the Resolution Center. Submission ID `e5e960e5…`, v2.0 build 140. Sent the 1,945-char trimmed letter (§ 11.3) verbatim — fit under the form's 2,000-char cap. Now awaiting the Board's response (typical window: a few business days to ~2 weeks). Outcome plan in § 11.5. |
+| 2026-06-23 | **App Review Board UPHELD the rejection** | Appeal Ticket **APL466617** (reviewer "Leo"). The Board determined the original 4.3(a) rejection feedback was valid: "this app duplicates the content and functionality of other apps … considered a form of spam." Still **no specific duplicated app named** — the determination did not engage our point-by-point refutation of the four spam factors, confirming the operative driver is unstated category-saturation perception, not the written criteria. Matches the **"Upheld with the same boilerplate"** branch of § 11.5 → next move is the "Meet with Apple" appointment. Full Board message recorded in § 11.7. |
 
 Add new rows as the round progresses:
 - When Apple responds (overturn, uphold, or follow-up question)
@@ -416,10 +417,58 @@ Rich Hayn
 ### 11.5 Expected outcomes and next move
 
 - **Overturned / approved** → update § 7, archive `escalate-43a-to-app-review-board`, resume the ship checklist (build 141 is ready on TestFlight; confirm the ASC build selector and submit).
-- **Upheld with the same boilerplate** → book the "Meet with Apple" appointment (Tue/Thu) and request the specific comparable app live; bring this document as the paper trail.
+- ✅ **ACTUAL OUTCOME (2026-06-23, ticket APL466617): Upheld with the same boilerplate** → book the "Meet with Apple" appointment (Tue/Thu) and request the specific comparable app live; bring this document as the paper trail. **This branch is now active — see § 11.7 for the verbatim Board message and § 11.8 for the Meet with Apple plan.**
 - **Upheld with NEW specifics** (a named app or a concrete overlap) → treat as progress; triage the specific concern in a follow-up change.
 - **Different guideline raised** → 4.3(a) is effectively resolved; triage the new guideline separately.
 
 ### 11.6 Live fallback considered but not chosen first
 
-Withdrawing this submission and filing a fresh one (new submission ID, build 141) would escape the stuck thread and likely draw a new reviewer, but it also forfeits the appeal-in-progress and the documented Resolution Center history. Hold it as a move for *after* the Board responds, not before.
+Withdrawing this submission and filing a fresh one (new submission ID, build 141) would escape the stuck thread and likely draw a new reviewer, but it also forfeits the appeal-in-progress and the documented Resolution Center history. Hold it as a move for *after* the Board responds, not before. **(Now unlocked — the Board has responded. See § 11.8.)**
+
+### 11.7 Board response (verbatim, 2026-06-23)
+
+Appeal Ticket **APL466617**. The Board upheld the rejection.
+
+> Hello,
+>
+> Appeal Ticket: APL466617
+>
+> Thank you for your patience as we considered your appeal.
+>
+> The App Review Board determined that the original rejection feedback was valid. The app does not comply with:
+>
+> **4.3(a) - Design**
+>
+> During our review, we found that this app duplicates the content and functionality of other apps submitted to the App Store, which is considered a form of spam and not appropriate for the App Store.
+>
+> Apps submitted to the App Store should be unique and should not duplicate other apps. We encourage you to create a unique app to submit to the App Store. For more information about developing apps for the App Store, visit the Develop section of the Apple Developer website.
+>
+> We appreciate your efforts to resolve this issue and look forward to reviewing your revised submission.
+>
+> Best regards,
+> Leo
+> App Review Board
+
+**Diagnosis.** The Board reviewed our point-by-point refutation of all four written spam factors (no shared code, no template, no purchased template, single account) and upheld anyway — **without naming a single app forager supposedly duplicates** and without engaging the refutation. That confirms the operative driver is not the written 4.3(a) factors but an unstated *category-saturation* judgment: the app reads to a fast-triage reviewer as "another grocery + recipe + meal-planning app," and our differentiators (account-free CloudKit household sharing, fully on-device three-tier parsing, Group by Store) are not legible in the first-impression surface (name, icon, subtitle, first screenshot). You cannot win this with a better written argument — the argument was already correct. The remaining moves are (a) force live engagement via Meet with Apple, and (b) reposition the *product's first impression* around one differentiator, then refile fresh.
+
+### 11.8 Meet with Apple — plan
+
+Apple offered "Request an App Review Appointment at Meet with Apple … Tuesdays and Thursdays, local business hours" in the 2026-05-13 message. This is the next move.
+
+**📅 BOOKED: Thursday, July 2, 2026, 2:00 p.m. Eastern.** Talking-points sheet: [`docs/app-store-meet-with-apple-talking-points.md`](app-store-meet-with-apple-talking-points.md).
+
+**Goal of the meeting:** Move from written non-engagement to a live human who must answer the load-bearing question — *"Which specific app does forager duplicate?"* If they can name one, that's actionable (differentiate against it concretely). If they cannot, that itself is leverage — it surfaces that the rejection is category-perception, not duplication, which reframes what we need to change.
+
+**Booking** (steps in § 11.9 below / chat guidance):
+1. Go to the App Review appointment page: `developer.apple.com/contact/app-store/` → "App Review" → "Request an appointment" / Meet with Apple. (Also linked from the bottom of the 2026-05-13 Resolution Center message.)
+2. Sign in with the Account Holder / Admin Apple Developer account.
+3. Select the app (forager, v2.0 build 140), pick a Tue/Thu slot in local business hours, and reference Appeal Ticket **APL466617** + submission ID `e5e960e5-2797-4d0c-a768-581576a70214`.
+
+**Bring to the call:**
+- This document (the four-factor refutation + the 12-competitor differentiation survey).
+- A one-page talking-points sheet (to be drafted): the single demand ("name the app"), the three live-demoable differentiators, and the verification offer.
+- A device or simulator able to demo the three differentiators live: account-free household invite, Group by Store, and on-device parsing in Airplane Mode.
+
+**Two outcomes:**
+- They name a comparable app → triage it; differentiate concretely; refile.
+- They cannot / will not → the case for *repositioning the first-impression surface* + withdraw-and-refile-fresh (build 141, new submission ID, per § 11.6) becomes the path.
