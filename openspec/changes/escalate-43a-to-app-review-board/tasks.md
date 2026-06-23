@@ -38,11 +38,14 @@ Confirm every factual claim in the appeal is true in build 140 before submitting
 
 ## 4. Monitor + branch on outcome (user + Claude, 24-72 hr+ wait)
 
-- [ ] 4.1 **Overturned / approved** → update § 7; mark this change ready to archive; confirm the ASC build selector (build 141 is on TestFlight) and complete the ship checklist
-- [ ] 4.2 **Upheld, same boilerplate** → book the "Meet with Apple" appointment (Tue/Thu, local business hours) via the link in the 2026-05-13 message; bring this document; request the specific comparable app live
-- [ ] 4.3 **Upheld, NEW specifics** (named app / concrete overlap) → treat as progress; open a follow-up change to triage the specific concern
-- [ ] 4.4 **Different guideline raised** → 4.3(a) effectively resolved; triage the new guideline in a separate change
-- [ ] 4.5 Consider withdraw-and-refile-fresh (new submission ID, build 141) ONLY after the Board responds, if escalation stalls
+**OUTCOME (2026-06-23): Board UPHELD, same boilerplate (no app named).** Appeal Ticket APL466617. → Branch 4.2 is active. See response doc § 11.7 (verbatim) + § 11.8 (Meet with Apple plan).
+
+- [x] 4.0 Board responded 2026-06-23 — recorded verbatim in response doc § 11.7 + § 7 submission-history row + current-story Round 5
+- [ ] 4.1 ~~Overturned / approved~~ — did not occur
+- [~] 4.2 **Upheld, same boilerplate** (ACTIVE) → book the "Meet with Apple" appointment (Tue/Thu, local business hours); bring the response doc; request the specific comparable app live. Plan in response doc § 11.8. *Booking is the immediate next user action.*
+- [ ] 4.3 ~~Upheld, NEW specifics~~ — did not occur (no app named)
+- [ ] 4.4 ~~Different guideline raised~~ — did not occur
+- [ ] 4.5 Withdraw-and-refile-fresh (new submission ID, build 141) — now UNLOCKED as the fallback after Meet with Apple if it yields no actionable specific app
 
 ## 5. Close-out
 

@@ -6,6 +6,43 @@
 
 ---
 
+## Session 130 — June 23, 2026 — escalate-43a-to-app-review-board
+**Change**: `escalate-43a-to-app-review-board` (continued) — the App Review Board responded and **upheld** the 4.3(a) "Design - Spam" rejection. Pivoted to the live-engagement fallback: booked a "Meet with Apple" appointment and built the talking-points strategy around it.
+
+**What happened**: The Board moved fast — appeal filed 2026-06-06, decision back 2026-06-23 (Appeal Ticket APL466617, reviewer "Leo"). The verdict upheld the rejection: the Board called the original feedback "valid" and restated that the app "duplicates the content and functionality of other apps." But the response was conspicuous in what it *didn't* do. It named no specific app. It did not engage — not even glancingly — the point-by-point refutation that was the whole spine of the appeal: shared code, repackaged template, purchased template, multiple accounts. None of those four written spam factors apply to forager, the appeal proved that line by line, and the Board's reply sailed past all of it to repeat the conclusion.
+
+That non-response is the finding. Session 129 diagnosed the re-review loop as non-engagement; this session confirms the *operative driver* underneath it. The thing actually triggering 4.3(a) here is not any of Apple's four written duplication criteria — it's an **unstated category-saturation perception**. To a fast-triage reviewer, forager reads as "another grocery + recipe + meal-planning app," and that gestalt is doing the work the written factors are supposed to do. The appeal was correct and lost anyway, which means the written-argument path is now exhausted: a *better* argument cannot win this, because the argument was already right and the decision wasn't made on the argument's terms. You cannot out-reason a determination that isn't reasoning from its own stated rules.
+
+So the remaining moves are no longer textual. They are (a) live engagement via "Meet with Apple," where a human has to respond in real time rather than send boilerplate, and (b) repositioning the product's first-impression surface — the thing a triage reviewer actually forms the "generic" gestalt from — followed by a withdraw-and-refile-fresh on build 141.
+
+Logged the outcome everywhere it needs to live: `docs/app-store-rejection-43a-response.md` got the verbatim Board message and diagnosis in a new § 11.7, a § 11.5 active-outcome marker, a § 7 history row, and a new § 11.8 capturing the Meet-with-Apple plan. `docs/current-story.md` got a Round 5 rejection-history row, a header update, a new Next Action, and a confidence drop to **AMBER** (this is no longer a "we have a clear path" situation). The OpenSpec change `tasks.md` § 4 now marks branch 4.2 (Meet with Apple) as the active path.
+
+Booked the appointment: **Thursday, July 2, 2026, 2:00 p.m. Eastern**.
+
+Then drafted the one-page talking-points sheet (`docs/app-store-meet-with-apple-talking-points.md`), built around three differentiators, with a single live goal: **force the reviewer to name the specific app forager allegedly duplicates.** That ask is the whole game — the entire 4.3(a) chain has survived by never having to be specific, and a live conversation is the one venue where vagueness is hard to sustain.
+
+**Key decisions**:
+- **The talking-points sheet deliberately departs from the filed appeal — it features the optional Claude parsing tier.** The written appeal *hid* the Claude tier on purpose, to keep a clean "fully on-device, no network" claim that's easy to defend in writing. For a live meeting the calculus flips. The single strongest piece of evidence that forager is original engineering and not a repackaged template is the parsing pipeline: an on-device three-tier stack (regex → Core ML BiLSTM-CRF → NaturalLanguage) *plus* an optional, off-by-default Claude tier for the hardest ~7–8% of ingredient lines. That's not something you get from a purchased template — it directly attacks the spam claim at its root. So the sheet leads with it.
+- **Reconciled the Claude tier with the offline demo by ordering it on-device-first, Claude-optional-second.** The demo still opens fully offline (on-device tiers carry the live walkthrough, no network dependency on the meeting wifi), then the Claude tier is presented as the optional escalation. Same product, two framings tuned to two venues — the written claim stays clean, the live pitch gets its best exhibit.
+- **Confidence to AMBER, not RED.** Shipping is still blocked, but there are two unspent, real moves (live meeting + repositioning + fresh refile). RED would mean out of options; we're not.
+
+**Learning**:
+- **A correct argument that loses tells you the decision isn't being made on the argument's axis.** The appeal refuted all four written criteria and the Board still upheld — the only coherent reading is that the real trigger is unstated (category saturation), and no amount of refuting the *stated* criteria touches it. The lesson generalizes beyond Apple: when a rigorous rebuttal draws a conclusion-only response, stop polishing the rebuttal and go find the unstated premise.
+- **The written-appeal ceiling is real and we've now hit it.** Resolution Center reply → metadata repositioning → Board appeal: three escalating *textual* moves, all answered with conclusion-only boilerplate. Text is spent. The remaining levers (live conversation, first-impression surface) are the ones we hadn't pulled precisely because they're harder than editing copy.
+- **Venue changes the optimal disclosure.** The same true fact (the Claude tier exists) is a liability in a written "no network" claim and an asset in a live "this is real engineering" pitch. Worth holding both framings explicitly rather than letting the written posture silently constrain the live one.
+
+**AI tooling observations**: Like Session 129, this was a judgment session, not a coding one — and the most useful move was carrying the non-engagement diagnosis forward and recognizing it had matured into a *ceiling*, not just a loop. The prior session's paper trail (the response doc, the competitor matrix, the verbatim rejection history) made the outcome trivial to log accurately and let the diagnosis build on validated ground rather than re-litigate it. The discipline that mattered was resisting the reflex to draft a *better* written appeal — the tooling makes another polished document cheap to produce, which is exactly why it was the wrong move. The honest read was that more text can't win, and the right output was a meeting strategy, not prose.
+
+**What's next**:
+- Meet with Apple, Thursday July 2, 2:00 p.m. ET — drive the conversation to "name the app."
+- If the reviewer can't or won't name a specific duplicate, that's the wedge to push for approval or a fresh, specific re-review.
+- If upheld live: repositioning the first-impression surface, then withdraw-and-refile-fresh as build 141.
+- Shipping stays blocked until 4.3(a) clears. The path forward is live conversation + product repositioning — not another round of metadata edits.
+
+**Commit**: `1e6f500`.
+
+---
+
 ## Session 129 — June 6, 2026 — escalate-43a-to-app-review-board
 **Change**: `escalate-43a-to-app-review-board` — after a third App Store 4.3(a) "Design - Spam" rejection (2026-05-13), reset the strategy from metadata surgery to a formal App Review Board appeal.
 
