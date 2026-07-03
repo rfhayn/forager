@@ -378,6 +378,7 @@ struct GroceryListDetailView: View {
         )
         .listRowBackground(ForagerTheme.surfacePrimary)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 6, leading: ForagerTheme.Spacing.sm, bottom: 2, trailing: ForagerTheme.Spacing.sm))
     }
 
     private var shoppingListView: some View {
@@ -403,28 +404,14 @@ struct GroceryListDetailView: View {
                             colorDotHex: storeColor
                         )
 
+                        // reskin-provisions-press: flat mockup grammar — store
+                        // band, then rows carrying printed category tags (no
+                        // nested category bands; category order is preserved
+                        // by the grouped source).
                         if !collapsedSections.contains(storeName) {
                             ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
-                                let catKey = "\(storeName)/\(categoryName)"
-                                let catExpanded = Binding(
-                                    get: { !collapsedCategories.contains(catKey) },
-                                    set: { if !$0 { collapsedCategories.insert(catKey) } else { collapsedCategories.remove(catKey) } }
-                                )
-
-                                let catCompleted = items.filter { $0.isCompleted }.count
-
-                                // Category header as row inside card
-                                sectionHeaderRow(
-                                    title: categoryName,
-                                    completedCount: catCompleted,
-                                    totalCount: items.count,
-                                    isExpanded: catExpanded
-                                )
-
-                                if !collapsedCategories.contains(catKey) {
-                                    ForEach(items, id: \.self) { item in
-                                        itemRow(item)
-                                    }
+                                ForEach(items, id: \.self) { item in
+                                    itemRow(item, categoryTag: categoryName)
                                 }
                             }
                         }
@@ -458,20 +445,25 @@ struct GroceryListDetailView: View {
             }
         }
         .listStyle(.insetGrouped)
+        .listSectionSpacing(.compact)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
     }
 
     // M18.1.4: Extracted item row with swipe actions and context menu
-    private func itemRow(_ item: GroceryListItem) -> some View {
+    // reskin-provisions-press: hairline separators + tight print insets
+    private func itemRow(_ item: GroceryListItem, categoryTag: String? = nil) -> some View {
         GroceryListItemRow(
             item: item,
             onToggle: { toggleItemCompletion(item) },
             showRecipeSources: preferencesService.showRecipeSources,
-            storeColorHex: hasStores ? item.store?.color : nil
+            storeColorHex: hasStores ? item.store?.color : nil,
+            categoryTagName: categoryTag
         )
         .listRowBackground(ForagerTheme.surfacePrimary)
-        .listRowSeparator(.hidden)
+        .listRowSeparator(.visible)
+        .listRowSeparatorTint(ForagerTheme.borderSubtle)
+        .listRowInsets(EdgeInsets(top: 2, leading: ForagerTheme.Spacing.md, bottom: 2, trailing: ForagerTheme.Spacing.md))
         .swipeActions(edge: .leading) {
             Button {
                 toggleItemCompletion(item)
@@ -882,6 +874,10 @@ struct GroceryListItemRow: View {
     let onToggle: () -> Void
     var showRecipeSources: Bool = false
     var storeColorHex: String? = nil
+    /// reskin-provisions-press: when set, renders the printed category tag
+    /// (mockup .ctag) at the row's trailing edge — used in store grouping
+    /// where rows mix categories.
+    var categoryTagName: String? = nil
 
     /// Parsed ingredient name for bold highlighting (matches recipe detail pattern)
     private var parsedIngredientName: String? {
@@ -940,6 +936,21 @@ struct GroceryListItemRow: View {
             }
 
             Spacer(minLength: 0)
+
+            // Printed category tag (reskin-provisions-press mockup .ctag)
+            if let tag = categoryTagName {
+                Text(tag.uppercased())
+                    .font(.system(size: 10, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .lineLimit(1)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(item.isCompleted
+                        ? ForagerTheme.textDisabled
+                        : ForagerTheme.categoryColor(for: tag))
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
+            }
         }
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .frame(minHeight: 44)

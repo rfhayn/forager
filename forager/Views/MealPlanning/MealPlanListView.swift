@@ -125,6 +125,13 @@ struct MealPlansListView: View {
                 }
             } else {
                 List {
+                    // reskin-provisions-press: ink band section headers
+                    if !activePlans.isEmpty {
+                        ForagerSectionHeader(title: "Active", count: activePlans.count)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
+                    }
                     // Active plans
                     ForEach(activePlans, id: \.objectID) { plan in
                         ZStack {
@@ -156,6 +163,12 @@ struct MealPlansListView: View {
                         }
                     }
 
+                    if !upcomingPlans.isEmpty {
+                        ForagerSectionHeader(title: "Upcoming", count: upcomingPlans.count)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
+                    }
                     // Upcoming plans
                     ForEach(upcomingPlans, id: \.objectID) { plan in
                         ZStack {
@@ -208,21 +221,14 @@ struct MealPlansListView: View {
                                 }
                             }
                         } header: {
-                            Button {
-                                withAnimation { showCompleted.toggle() }
-                            } label: {
-                                HStack(spacing: ForagerTheme.Spacing.sm) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(ForagerTheme.textTertiary)
-                                    Text("Completed (\(completedPlans.count))")
-                                        .font(ForagerTheme.secondaryFont)
-                                        .foregroundStyle(ForagerTheme.textSecondary)
-                                    Spacer()
-                                    Image(systemName: showCompleted ? "chevron.up" : "chevron.down")
-                                        .font(.caption)
-                                        .foregroundStyle(ForagerTheme.textTertiary)
-                                }
-                            }
+                            // reskin-provisions-press: ink band with collapse chevron
+                            ForagerSectionHeader(
+                                title: "Completed",
+                                count: completedPlans.count,
+                                isExpanded: $showCompleted
+                            )
+                            .textCase(nil)
+                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 2, trailing: 0))
                         }
                     }
                 }
@@ -338,19 +344,21 @@ struct MealPlanSummaryCard: View {
                 }
                 Spacer()
                 if status == .active {
-                    Text("Active")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .padding(.horizontal, ForagerTheme.Spacing.sm)
-                        .padding(.vertical, 2)
-                        .background(ForagerTheme.accentTint)
-                        .clipShape(Capsule())
+                    // reskin-provisions-press: printed tomato tag
+                    Text("ACTIVE")
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.accentPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
             }
 
-            // Date range
+            // Date range — mono price-tag numerals (reskin-provisions-press)
             Text(dateRangeText)
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.quantityFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
             // Day dots — left-aligned to match Lists/Recipes card style
@@ -379,7 +387,7 @@ struct MealPlanSummaryCard: View {
                 .buttonStyle(.borderless)
             }
         }
-        .foragerGlassCard()
+        .foragerCard()
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
         .accessibilityElement(children: .combine)
@@ -408,12 +416,12 @@ struct MealPlanSummaryCard: View {
                     .foregroundStyle(isPlanned ? ForagerTheme.buttonPrimaryText : ForagerTheme.textTertiary)
                     .frame(width: dayCircleSize, height: dayCircleSize)
                     .background(
-                        Circle()
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                             .fill(isPlanned ? ForagerTheme.accentPrimary : .clear)
                     )
                     .overlay(
-                        Circle()
-                            .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                            .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1.5)
                     )
 
                 if index < daysInPlan.count - 1 {
