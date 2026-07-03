@@ -329,7 +329,7 @@ struct IngredientChangeRow: View {
                             // Find the category to get its color
                             let category = categories.first { $0.name == categoryName }
                             Circle()
-                                .fill(colorFromHex(category?.color ?? "#4CAF50"))
+                                .fill(colorFromHex(category?.color ?? "#2E7A52"))
                                 .frame(width: 16, height: 16)
                             Text(categoryName)
                                 .foregroundStyle(.primary)
@@ -372,7 +372,7 @@ struct IngredientChangeRow: View {
                 let category = categories.first { $0.name == categoryName }
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(colorFromHex(category?.color ?? "#4CAF50"))
+                        .fill(colorFromHex(category?.color ?? "#2E7A52"))
                         .frame(width: 16, height: 16)
                     Text(categoryName)
                         .font(.caption)
@@ -450,7 +450,7 @@ struct CategorySelectionRowForChange: View {
             HStack(spacing: 16) {
                 // Category color and name
                 Circle()
-                    .fill(colorFromHex(category.color ?? "#4CAF50"))
+                    .fill(colorFromHex(category.color ?? "#2E7A52"))
                     .frame(width: 24, height: 24)
                 
                 Text(category.name ?? "Unknown")

@@ -43,18 +43,18 @@ struct ForagerSectionHeader: View {
 
             Spacer()
 
-            // Count badge
+            // Count badge — mono numerals, printed-tag corners (reskin-provisions-press)
             if let total = totalCount {
                 Text("\(count)/\(total)")
-                    .font(ForagerTheme.captionFont)
+                    .font(ForagerTheme.quantityFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
                     .padding(.horizontal, ForagerTheme.Spacing.sm)
                     .padding(.vertical, 2)
                     .background(ForagerTheme.backgroundSecondary)
-                    .clipShape(Capsule())
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
             } else {
                 Text("\(count)")
-                    .font(ForagerTheme.captionFont)
+                    .font(ForagerTheme.quantityFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
             }
         }

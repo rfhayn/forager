@@ -2144,7 +2144,9 @@ struct RecipeDetailView: View {
 
     // MARK: - M10.8: Formatted Ingredient Text
 
-    /// Format ingredient text with parsed name in bold accent. Uses shared IngredientMatchResult.
+    /// Format ingredient text (reskin-provisions-press): quantity prefix in
+    /// mono ink (price-tag numerals), parsed name in medium ink. Uses shared
+    /// IngredientMatchResult.
     @ViewBuilder
     private func formattedIngredientText(text: String, matchInfo: IngredientMatchResult?) -> some View {
         if let info = matchInfo,
@@ -2154,12 +2156,12 @@ struct RecipeDetailView: View {
             let suffix = String(text[range.upperBound...])
             HStack(spacing: 0) {
                 Text(prefix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .font(ForagerTheme.quantityFontLarge)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                 Text(name)
                     .font(ForagerTheme.bodyFont)
-                    .bold()
-                    .foregroundStyle(ForagerTheme.accentPrimary)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                 Text(suffix)
                     .font(ForagerTheme.bodyFont)
                     .foregroundStyle(ForagerTheme.textSecondary)

@@ -104,17 +104,17 @@ struct WelcomeWalkthroughView: View {
                 .shadow(color: ForagerTheme.accentPrimary.opacity(0.3), radius: 16, y: 8)
 
             Text("Welcome to")
-                .font(.system(size: 28, weight: .regular, design: .rounded))
+                .font(.system(size: 28, weight: .regular))
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .padding(.top, 32)
 
             Text("forager")
-                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .font(.system(size: 48, weight: .heavy).width(.condensed))
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .padding(.top, 4)
 
             Text("Plan meals, build grocery lists,\nand cook together.")
-                .font(.system(size: 19, weight: .regular, design: .rounded))
+                .font(.system(size: 19, weight: .regular))
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(5)
@@ -131,12 +131,12 @@ struct WelcomeWalkthroughView: View {
     private var howItWorksScreen: some View {
         VStack(spacing: 0) {
             Text("How forager Works")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 30, weight: .heavy).width(.condensed))
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .padding(.top, 40)
 
             Text("Import, plan, and shop. All connected.")
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(ForagerTheme.textTertiary)
                 .padding(.top, 8)
 
@@ -184,7 +184,7 @@ struct WelcomeWalkthroughView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold).width(.condensed))
                     .foregroundStyle(ForagerTheme.textPrimary)
 
                 Text(description)
@@ -215,12 +215,12 @@ struct WelcomeWalkthroughView: View {
     private var powerUpScreen: some View {
         VStack(spacing: 0) {
             Text("Power Up")
-                .font(.system(size: 30, weight: .bold, design: .rounded))
+                .font(.system(size: 30, weight: .heavy).width(.condensed))
                 .foregroundStyle(ForagerTheme.textPrimary)
                 .padding(.top, 40)
 
             Text("Set up anytime in Settings")
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(ForagerTheme.textTertiary)
                 .padding(.top, 8)
 
@@ -270,7 +270,7 @@ struct WelcomeWalkthroughView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                 Text(title)
-                    .font(.system(size: 18, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold).width(.condensed))
                     .foregroundStyle(ForagerTheme.textPrimary)
 
                 if let badge {

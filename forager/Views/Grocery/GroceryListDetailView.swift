@@ -945,7 +945,8 @@ struct GroceryListItemRow: View {
         text.replacingOccurrences(of: #"(\d+)\.0(\s|$)"#, with: "$1$2", options: .regularExpression)
     }
 
-    /// Formatted text matching recipe detail: quantity in secondary, name in bold green
+    /// Formatted text matching recipe detail (reskin-provisions-press):
+    /// quantity in mono ink (price-tag numerals), name in medium ink
     @ViewBuilder
     private var formattedItemText: some View {
         let fullText = cleanQuantityDisplay(item.name ?? "Unknown Item")
@@ -956,12 +957,12 @@ struct GroceryListItemRow: View {
             let suffix = String(fullText[range.upperBound...])
             HStack(spacing: 0) {
                 Text(prefix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .font(ForagerTheme.quantityFontLarge)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                 Text(name)
                     .font(ForagerTheme.bodyFont)
-                    .bold()
-                    .foregroundStyle(ForagerTheme.accentPrimary)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                 Text(suffix)
                     .font(ForagerTheme.bodyFont)
                     .foregroundStyle(ForagerTheme.textSecondary)

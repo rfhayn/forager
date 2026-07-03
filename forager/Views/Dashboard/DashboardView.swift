@@ -429,7 +429,7 @@ struct DashboardView: View {
             // Fill status (plan name moved to title; no need to repeat here)
             if let dayData = planDaysFilled {
                 Text("\(dayData.filled) of \(dayData.total) days planned")
-                    .font(ForagerTheme.captionFont)
+                    .font(ForagerTheme.quantityFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
 

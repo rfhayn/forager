@@ -23,9 +23,9 @@ struct ForagerProgressRing: View {
                 .rotationEffect(.degrees(-90))
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
 
-            // Percentage text
+            // Percentage text — mono numerals (reskin-provisions-press)
             Text("\(Int(progress * 100))%")
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.quantityFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
         }
         .frame(width: ringSize, height: ringSize)

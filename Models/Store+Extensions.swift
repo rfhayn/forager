@@ -15,7 +15,7 @@ extension Store {
     }
 
     var displayColor: String {
-        return color ?? "#757575"
+        return color ?? "#7A7368"
     }
 
     public override func awakeFromInsert() {

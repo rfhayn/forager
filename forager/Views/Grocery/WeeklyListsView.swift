@@ -369,7 +369,7 @@ struct WeeklyListRowView: View {
                     }
 
                     Text("\(completedItemsCount) of \(totalItemsCount) items")
-                        .font(ForagerTheme.secondaryFont)
+                        .font(ForagerTheme.quantityFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 

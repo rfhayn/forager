@@ -13,13 +13,16 @@ import CoreData
 public class Category: NSManagedObject {
     
     // MARK: - Default Categories
+    // reskin-provisions-press: seed colors in the print gamut (what a fresh
+    // install sees). Hue families match ForagerTheme.categoryColor defaults;
+    // existing users keep their persisted hexes (seeds only run at creation).
     static let defaultCategories: [(name: String, color: String, sortOrder: Int16)] = [
-        ("Produce", "#4CAF50", 0),              // Green - Store entrance
-        ("Deli & Meat", "#F44336", 1),          // Red - Back perimeter
-        ("Dairy & Fridge", "#2196F3", 2),       // Blue - Back wall
-        ("Bread & Frozen", "#FF9800", 3),       // Orange - Side aisles
-        ("Boxed & Canned", "#795548", 4),       // Brown - Center aisles
-        ("Snacks, Drinks, & Other", "#9C27B0", 5) // Purple - Checkout area
+        ("Produce", "#2E7A52", 0),              // Print Green - Store entrance
+        ("Deli & Meat", "#C8402E", 1),          // Tomato - Back perimeter
+        ("Dairy & Fridge", "#34689A", 2),       // Label Blue - Back wall
+        ("Bread & Frozen", "#B0762A", 3),       // Golden Brown - Side aisles
+        ("Boxed & Canned", "#77563A", 4),       // Kraft Brown - Center aisles
+        ("Snacks, Drinks, & Other", "#C2662C", 5) // Crate Orange - Checkout area
     ]
     
     // MARK: - M7.2.3 Phase 3.2: Category Management (Using Repository)

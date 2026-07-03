@@ -431,7 +431,7 @@ struct MealPlanSummaryCard: View {
         HStack {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
                 Text("TONIGHT")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold).width(.condensed))
                     .tracking(0.5)
                     .foregroundStyle(ForagerTheme.textTertiary)
 

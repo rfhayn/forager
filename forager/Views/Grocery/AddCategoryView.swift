@@ -7,21 +7,22 @@ struct AddCategoryView: View {
     @EnvironmentObject private var categoryService: CategoryService
 
     @State private var name = ""
-    @State private var selectedColor = "#4CAF50"
+    @State private var selectedColor = "#2E7A52"
     @State private var showingError = false
     @State private var errorMessage = ""
-    
+
+    // reskin-provisions-press: selectable colors in the print gamut
     private let availableColors = [
-        "#4CAF50", // Green
-        "#F44336", // Red
-        "#2196F3", // Blue
-        "#FF9800", // Orange
-        "#795548", // Brown
-        "#9C27B0", // Purple
-        "#E91E63", // Pink
-        "#00BCD4", // Cyan
-        "#FFC107", // Amber
-        "#607D8B"  // Blue Grey
+        "#2E7A52", // Print Green
+        "#C8402E", // Tomato
+        "#34689A", // Label Blue
+        "#B0762A", // Golden Brown
+        "#77563A", // Kraft Brown
+        "#6A4E92", // Plum
+        "#C2662C", // Crate Orange
+        "#1F6E6A", // Teal
+        "#3C7D96", // Ice Blue
+        "#5E6E60"  // Market Grey-Green
     ]
     
     private var isFormValid: Bool {

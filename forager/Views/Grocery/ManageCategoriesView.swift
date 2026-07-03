@@ -530,7 +530,7 @@ struct ManageCategoriesView: View {
                     let repo = HouseholdCategoryRepository(context: context, factory: factory, householdKey: currentHouseholdKey)
                     uncategorizedCategory = try repo.findOrCreate(
                         name: "Uncategorized",
-                        color: "#9E9E9E",
+                        color: "#7A7368",
                         sortOrder: Int16.max,
                         isDefault: false
                     )
