@@ -6,6 +6,37 @@
 
 ---
 
+## Session 131 — July 2–3, 2026 — Meet with Apple outcome → reskin-provisions-press
+**Change**: `reskin-provisions-press` (new) — the Meet with Apple appointment happened, it finally named the real axis of the 4.3(a) rejection, and the response is a full visual-identity overhaul. Milestone set up, OpenSpec change proposed (4/4 artifacts), direction chosen and mocked up.
+
+**What happened**: The July 2 appointment delivered the thing three written rounds never did: specificity. The feedback was largely *not* that forager copies code or that its functionality is too similar to other apps — it's that the **user interface, color scheme, and overall design read as over-saturated and already-used**. In other words: the four-factor engineering defense was never the battleground. The screenshots were. Session 130's "unstated category-saturation perception" diagnosis was right, and now it has a name and a fix: the design surface.
+
+There's a sharp irony worth recording: the current UI was largely produced through Claude design on the web, and the diagnosis of the current `ForagerTheme` confirms it sits dead-center in the most common AI-generated design cluster — warm cream canvas (`#EDE8DF`), earthy green accents, SF Pro Rounded, soft cards — which is *also* the grocery/recipe category's default visual space. Two saturations, one look. A triage reviewer can't tell forager's screenshots from a dozen competitors', and per the 4.3(a) record, didn't.
+
+Explored three replacement directions as a side-by-side mockup (`docs/mockups/ui-overhaul-directions.html`): **Field Guide** (cool cartographic instrument), **Larder** (dark premium cookbook), **Provisions Press** (bold editorial print, grocery vernacular). Research validated that the whole category lives in warm/green/minimal space — bold editorial print is an outlier *within the category* — with one guardrail: neo-brutalism is itself a 2026 trend with its own clichés (acid yellow/pink/lime, thick black borders, hard shadows), so the identity must stay grounded in grocery-world vernacular (crate labels, butcher paper, printed tags, price-gun numerals) rather than the trend kit. User chose **Provisions Press**.
+
+**Key decisions**:
+- **Chrome/content layer split — Liquid Glass stays.** The user's explicit requirement was to keep the Liquid Glass work. It turns out that's not a compromise, it's the correct architecture: glass is the chrome layer (tab bar, nav, sheets, CTAs — floats above content, picks up tint from beneath), the print identity is the content layer. Matte print under glossy glass is itself the signature pairing, and the identity survives Reduce Transparency because it doesn't live in the glass.
+- **Tomato `#C8402E` as primary, not green.** Severs the reflexive green=food association every competitor leans on, while staying grocer-grounded (tomatoes, meat labels, sale tags). Mustard and teal as secondary/tertiary; butcher-paper grey canvas; ink text.
+- **SF Mono for quantities** — a functional signature, not decoration: the app is dense with amounts and mono numerals are scannable. Display type moves from SF Pro Rounded to SF Compact heavy/condensed (crate-label voice).
+- **Functionality frozen by construction.** The change is visual-layer only — no service, model, navigation, or CloudKit changes. M15.1's semantic-token architecture makes this tractable: rewriting `ForagerTheme` restyles ~90% of the app in one file; a sweep catches the leaks.
+- **Category colors keep their hue families** (produce green→print green, dairy blue, meat red) so existing users' learned associations survive the reskin.
+
+**Learning**:
+- **Live engagement extracts what boilerplate hides.** The whole written chain survived on vagueness; a human in real time named the axis in one conversation. When conclusion-only responses exhaust the written path, the live venue isn't a long shot — it's the only venue where the unstated premise has to surface.
+- **"Distinct" that's defensible means subject-specific, not trendy.** Swapping the cozy-meal-planner template for the neo-brutalist template would reproduce the same failure one trend over. The test for every visual device: does it trace to the grocery world, or to a Pinterest board?
+- **A rejection can be a design brief.** Three rounds of 4.3(a) read as an immovable wall; one sentence of live feedback converted it into scoped, actionable work with clear exit criteria (new identity → new screenshots → withdraw-and-refile fresh).
+
+**AI tooling observations**: The full arc ran in one session: post-meeting debrief → design diagnosis (reading `ForagerTheme` and recognizing the cluster) → three-direction exploration with an HTML comparison mockup → web research validating category positioning → `/new-milestone` → `/opsx:propose` (proposal, design, delta spec, tasks) → revised Liquid Glass-aware mockup with dark mode and accessibility fallback panels. The mockup-first workflow (HTML in `docs/mockups/`, sign-off before Swift) continues to be the right rhythm for visual work — it made the direction choice concrete enough for the user to react to ("I like Provisions Press more") rather than adjudicating adjectives. Notable: the user's design instinct to keep Liquid Glass initially looked like a constraint to work around and turned out to be the strongest single idea in the direction.
+
+**What's next**:
+- User sign-off on `docs/mockups/provisions-press-liquid-glass.html` (task 1.3) — then `/opsx:apply`.
+- Token map with contrast ratios (task 2) before any Swift changes.
+- Open questions from design.md: app icon refresh in-scope?, landing page restyle, M9.34 walkthrough asset audit.
+- Exit: re-skinned build → TestFlight beta feedback → new screenshots → withdraw-and-refile fresh submission.
+
+---
+
 ## Session 130 — June 23, 2026 — escalate-43a-to-app-review-board
 **Change**: `escalate-43a-to-app-review-board` (continued) — the App Review Board responded and **upheld** the 4.3(a) "Design - Spam" rejection. Pivoted to the live-engagement fallback: booked a "Meet with Apple" appointment and built the talking-points strategy around it.
 
