@@ -20,6 +20,11 @@
 
 ## Active
 
+### reskin-provisions-press — UI/UX Overhaul (ACTIVE)
+
+- [reskin-provisions-press: Provisions Press visual identity](next-prompt-reskin-provisions-press.md) — Branch: `feature/reskin-provisions-press` | Status: ACTIVE
+- **Why**: Meet with Apple (2026-07-02) — 4.3(a) is a design-surface objection (color scheme, over-saturated look), not functionality. Full visual overhaul, Liquid Glass chrome retained, functionality frozen.
+
 ### M7.7 — App Store Submission (REJECTED 4.3(a) — repositioning in progress)
 
 **PRD**: `docs/prds/active/m7.7-app-store-submission.md` + `reposition-app-store-listing` change
