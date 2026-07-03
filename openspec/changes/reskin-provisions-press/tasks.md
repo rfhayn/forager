@@ -36,7 +36,7 @@
 
 - [ ] 6.1 Update CLAUDE.md UI Patterns (typography rule, palette summary) + create successor design-system mockup doc; update memory design-system notes
 - [ ] 6.2 Log Meet with Apple outcome in `docs/app-store-rejection-43a-response.md` §7/§11.8; update insights log + dev journal
-- [ ] 6.3 App icon redesign (leaf abandoned): concept mockup → user pick → generate AppIcon + LaunchIcon assets in the print vocabulary
+- [x] 6.3 App icon redesign (leaf abandoned): concept mockup → user pick → generate AppIcon + LaunchIcon assets in the print vocabulary
 - [ ] 6.3b Landing page (`docs/index.html`) restyle — first pass done; REVISIT after final icon + any palette refinement land
 - [ ] 6.4 New App Store screenshot set against the re-skinned build
 - [ ] 6.5 PR + squash merge; then withdraw-and-refile fresh submission via `/release-prep`
