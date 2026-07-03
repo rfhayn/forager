@@ -70,8 +70,8 @@ Phase order: (1) revised mockup approval → (2) `ForagerTheme` token + typograp
 
 No data or schema migration — visual layer only. Rollback = revert the squash commit. The change ships as one PR to `main`; the App Store refile (withdraw + fresh submission with new build + screenshots) happens after merge via `/release-prep`.
 
-## Open Questions
+## Open Questions — RESOLVED (2026-07-03, user decisions)
 
-- App icon: redesign to match Provisions Press in this change, or as an immediate follow-up? (Screenshots include the icon on device; a mismatched icon weakens the first impression. Leaning: include a simple crate-label icon refresh in-scope.)
-- Onboarding/walkthrough assets (M9.34 first-import guide) contain rendered UI — verify whether they're screenshots (need regen) or live views (restyle for free).
-- Landing page (`docs/index.html`) restyle to match — in-scope or follow-up?
+- **App icon: IN-SCOPE, full redesign.** The leaf design is abandoned entirely — new icon designed from the Provisions Press vocabulary (crate label / butcher paper / tomato-ink print). Concepts mocked first (`docs/mockups/provisions-press-app-icon.html`), user picks, then asset generation. `LaunchIcon` asset (used in WelcomeWalkthroughView) regenerates with it.
+- **Landing page: IN-SCOPE.** `docs/index.html` restyled to Provisions Press in this change.
+- Onboarding/walkthrough (M9.34): verified live SwiftUI views, not baked screenshots — restyled for free by the token swap; only the `LaunchIcon` image asset needs regeneration (covered by the icon task).
