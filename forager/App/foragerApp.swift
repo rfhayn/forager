@@ -97,7 +97,32 @@ struct foragerApp: App {
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
 
+    /// reskin-provisions-press: apply the Provisions Press display voice to
+    /// UIKit-managed navigation titles (SwiftUI's .navigationTitle renders
+    /// through UINavigationBar, which ForagerTheme fonts can't reach).
+    /// Only typography is set — backgrounds/tints stay untouched so the
+    /// Liquid Glass chrome keeps its adaptive material.
+    private static func configureNavigationBarTypography() {
+        func condensedHeavy(size: CGFloat) -> UIFont {
+            let base = UIFont.systemFont(ofSize: size, weight: .heavy)
+            let descriptor = base.fontDescriptor.withDesign(.default)?
+                .addingAttributes([.traits: [
+                    UIFontDescriptor.TraitKey.width: NSNumber(value: 0.2)
+                ]]) ?? base.fontDescriptor
+            return UIFont(descriptor: descriptor.withSymbolicTraits(.traitCondensed) ?? descriptor, size: size)
+        }
+
+        let navBar = UINavigationBar.appearance()
+        navBar.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
+        navBar.titleTextAttributes = [.font: condensedHeavy(size: 17)]
+    }
+
     init() {
+        // reskin-provisions-press: crate-label navigation titles — heavy
+        // condensed system font for large titles and inline bar titles.
+        // Colors stay dynamic (nav bars remain Liquid Glass; only type changes).
+        Self.configureNavigationBarTypography()
+
         let context = PersistenceController.shared.container.viewContext
 
         let household = HouseholdService(context: context)

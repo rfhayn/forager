@@ -892,13 +892,25 @@ struct GroceryListItemRow: View {
 
     var body: some View {
         HStack(spacing: ForagerTheme.Spacing.sm) {
-            // Checkbox
+            // Checkbox — square print check (reskin-provisions-press):
+            // ink-outlined box, tomato fill when checked
             Button(action: onToggle) {
-                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
-                    .font(.system(size: 18))
-                    .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
-                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
+                ZStack {
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(item.isCompleted ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .fill(item.isCompleted ? ForagerTheme.accentPrimary : Color.clear)
+                        )
+                    if item.isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                    }
+                }
+                .frame(width: 20, height: 20)
+                .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
+                .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
             }
             .buttonStyle(.borderless)
 
