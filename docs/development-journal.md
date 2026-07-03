@@ -29,11 +29,12 @@ Explored three replacement directions as a side-by-side mockup (`docs/mockups/ui
 
 **AI tooling observations**: The full arc ran in one session: post-meeting debrief → design diagnosis (reading `ForagerTheme` and recognizing the cluster) → three-direction exploration with an HTML comparison mockup → web research validating category positioning → `/new-milestone` → `/opsx:propose` (proposal, design, delta spec, tasks) → revised Liquid Glass-aware mockup with dark mode and accessibility fallback panels. The mockup-first workflow (HTML in `docs/mockups/`, sign-off before Swift) continues to be the right rhythm for visual work — it made the direction choice concrete enough for the user to react to ("I like Provisions Press more") rather than adjudicating adjectives. Notable: the user's design instinct to keep Liquid Glass initially looked like a constraint to work around and turned out to be the strongest single idea in the direction.
 
+**Apply session (July 3, same session continued)**: `/opsx:apply` ran tasks 1–4.2 + parts of 5.2. Token map produced with 69 programmatically-verified WCAG contrast pairs (6 initial failures tightened: success/warning FGs deepened in light, danger FG lifted in dark, dark pressed-button flipped to *lighter* tomato with ink text). `ForagerTheme` fully swapped: Provisions Press palette light+dark, SF Compact condensed display roles, new SF Mono `quantityFont`/`quantityFontLarge`, sharper print radii. Leak sweep found the token system's *satellites*: 9 rounded fonts in WelcomeWalkthroughView + MealPlanListView, Material-palette seed hexes in `Category.defaultCategories` (what a fresh install — i.e. the reviewer — actually sees, since stored hex trumps theme fallback), picker palettes in AddCategoryView, store palette, 6 raw `.red`/`.green`/`.blue` literals, and the **asset-catalog AccentColor** (still leaf green — caught by simulator screenshot showing a green Home tab on an otherwise-tomato app). All routed through tokens; builds green; suite failures (3/219) verified **pre-existing** via a throwaway worktree at main running the identical isolated suites. Simulator screenshot confirms: paper canvas, tomato accents, condensed titles, mono counts.
+
 **What's next**:
-- User sign-off on `docs/mockups/provisions-press-liquid-glass.html` (task 1.3) — then `/opsx:apply`.
-- Token map with contrast ratios (task 2) before any Swift changes.
-- Open questions from design.md: app icon refresh in-scope?, landing page restyle, M9.34 walkthrough asset audit.
-- Exit: re-skinned build → TestFlight beta feedback → new screenshots → withdraw-and-refile fresh submission.
+- **Interactive walk needed (user)**: tasks 4.1/4.3/4.4/5.1 — walk all tabs light+dark, verify glass tint pickup, Reduce Transparency, Dynamic Type; an iCloud verification dialog blocks CLI-driven navigation and simctl can't tap.
+- Open questions from design.md: app icon refresh in-scope?, landing page restyle, M9.34 walkthrough asset audit (task 4.4).
+- Then: TestFlight beta feedback (5.3) → docs sync + CLAUDE.md typography rule (6.1–6.2) → screenshots → withdraw-and-refile fresh (6.4–6.5).
 
 ---
 
