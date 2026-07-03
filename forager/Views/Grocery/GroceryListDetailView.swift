@@ -479,7 +479,7 @@ struct GroceryListDetailView: View {
                 Label(item.isCompleted ? "Undo" : "Complete",
                       systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
             }
-            .tint(item.isCompleted ? .orange : .green)
+            .tint(item.isCompleted ? ForagerTheme.accentSecondary : ForagerTheme.statusSuccessFG)
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {

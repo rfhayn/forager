@@ -128,7 +128,7 @@ struct HouseholdMembersView: View {
                                         Text("Revoke All Invitations")
                                     }
                                     .font(ForagerTheme.captionFont)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(ForagerTheme.statusDangerFG)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, ForagerTheme.Spacing.sm)
                                 }

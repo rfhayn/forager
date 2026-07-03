@@ -855,7 +855,7 @@ struct IngredientRowView: View {
                         saveNameEdit()
                     }
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(ForagerTheme.accentPrimary)
                     .buttonStyle(.borderless)
                     .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }

@@ -326,7 +326,7 @@ final class StoreSchemaTests: XCTestCase {
 
     func testStoreDisplayColor() {
         let store = Store(context: context)
-        XCTAssertEqual(store.displayColor, "#757575")
+        XCTAssertEqual(store.displayColor, "#7A7368")
         store.color = "#FF5722"
         XCTAssertEqual(store.displayColor, "#FF5722")
     }

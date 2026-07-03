@@ -798,7 +798,7 @@ struct AddIngredientsToListView: View {
                         if !scaled.isEmpty {
                             Text(scaled)
                                 .font(.caption)
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(ForagerTheme.statusInfoFG)
 
                             if let originalId = ingredient.id,
                                let original = originalDisplayTexts[originalId],

@@ -319,7 +319,7 @@ struct SettingsView: View {
                                 apiKeyInput = ""
                             }
                             .buttonStyle(.borderless)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(ForagerTheme.statusDangerFG)
                             .font(.caption)
                         }
                     } else {
@@ -439,11 +439,11 @@ struct SettingsView: View {
                 switch result {
                 case .success:
                     Label("Connected", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(ForagerTheme.statusSuccessFG)
                         .font(.caption)
                 case .failure(let message):
                     Label(message, systemImage: "xmark.circle.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(ForagerTheme.statusDangerFG)
                         .font(.caption)
                 }
             }
