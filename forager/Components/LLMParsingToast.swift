@@ -22,7 +22,7 @@ struct LLMParsingToastModifier: ViewModifier {
                     .padding(.horizontal, ForagerTheme.Spacing.lg)
                     .padding(.vertical, ForagerTheme.Spacing.sm)
                     .background(ForagerTheme.accentPrimary.opacity(0.9))
-                    .clipShape(Capsule())
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
                     .padding(.bottom, ForagerTheme.Spacing.xl)
                     .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .onAppear {

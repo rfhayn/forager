@@ -797,9 +797,22 @@ struct IngredientRowView: View {
                 .frame(width: 4)
 
             if isEditMode {
+                // reskin-provisions-press: square print check (see GroceryListItemRow)
                 Button(action: { onSelectionChanged(!isSelected) }) {
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                            .strokeBorder(isSelected ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                    .fill(isSelected ? ForagerTheme.accentPrimary : Color.clear)
+                            )
+                        if isSelected {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -1222,7 +1235,7 @@ struct IngredientReviewSheet: View {
         .padding(.horizontal, ForagerTheme.Spacing.sm)
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .background(ForagerTheme.surfaceWarning)
-        .clipShape(Capsule())
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
     }
 
     private func reviewReason(for template: IngredientTemplate) -> String {
@@ -1374,7 +1387,7 @@ struct DuplicateReviewSheet: View {
             .padding(.horizontal, ForagerTheme.Spacing.sm)
             .padding(.vertical, ForagerTheme.Spacing.xs)
             .background(ForagerTheme.surfaceWarning)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
 
             // Canonical name
             Text("\"\(group.name)\"")
@@ -1426,7 +1439,7 @@ struct DuplicateReviewSheet: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(ForagerTheme.statusSuccessFG.opacity(0.15))
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                     }
                 }
 

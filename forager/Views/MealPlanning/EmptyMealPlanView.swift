@@ -72,7 +72,7 @@ struct EmptyMealPlanView: View {
                 }
             }
             .padding(16)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(ForagerTheme.surfacePrimary)
             .cornerRadius(ForagerTheme.Radius.md)
             .padding(.horizontal, 32)
             
@@ -80,7 +80,7 @@ struct EmptyMealPlanView: View {
             Button(action: onCreatePlan) {
                 Label("Create Meal Plan", systemImage: "plus.circle.fill")
                     .font(.headline)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(ForagerTheme.buttonPrimaryText)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ForagerTheme.accentPrimary)

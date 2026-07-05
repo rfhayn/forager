@@ -54,8 +54,8 @@ struct PreHouseholdDataMigrationSheet: View {
 
                     // Title
                     Text("Move Existing Data to Household?")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                        .font(ForagerTheme.cardTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
                         .multilineTextAlignment(.center)
 
                     // Data summary
@@ -135,9 +135,8 @@ struct PreHouseholdDataMigrationSheet: View {
                     }) {
                         Text("Move to Household")
                             .frame(maxWidth: .infinity)
-                            .font(.headline)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(ForagerPrimaryButtonStyle())
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 12)

@@ -38,6 +38,42 @@ final class ReskinScreenshotTests: XCTestCase {
         app.buttons["Meals"].firstMatch.tap()
         sleep(2)
         saveShot(app, name: "04-meals")
+
+        // Settings (gear from Home) + scrolled sections
+        app.buttons["Home"].firstMatch.tap()
+        sleep(1)
+        let gear = app.buttons["Settings"].firstMatch.exists
+            ? app.buttons["Settings"].firstMatch
+            : app.buttons["gearshape"].firstMatch
+        if gear.waitForExistence(timeout: 3) {
+            gear.tap()
+            sleep(2)
+            saveShot(app, name: "05-settings-top")
+            app.swipeUp()
+            sleep(1)
+            saveShot(app, name: "06-settings-mid")
+            app.swipeUp()
+            sleep(1)
+            saveShot(app, name: "07-settings-bottom")
+        }
+
+        // A modal: add-item sheet from list detail (fresh launch to reset nav)
+        app.terminate()
+        app.launch()
+        sleep(3)
+        app.buttons["Lists"].firstMatch.tap()
+        sleep(1)
+        let cell = app.cells.firstMatch
+        if cell.waitForExistence(timeout: 3) {
+            cell.tap()
+            sleep(2)
+            let plus = app.buttons["plus.square"].firstMatch
+            if plus.waitForExistence(timeout: 3) {
+                plus.tap()
+                sleep(2)
+                saveShot(app, name: "08-add-item-modal")
+            }
+        }
     }
 
     private func saveShot(_ app: XCUIApplication, name: String) {

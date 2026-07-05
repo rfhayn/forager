@@ -93,7 +93,7 @@ struct HouseholdMembersView: View {
                                                 let remaining = max(0, 86400 - Date().timeIntervalSince(invited))
                                                 let hours = Int(remaining / 3600)
                                                 Text("Expires in \(hours)h")
-                                                    .font(.caption)
+                                                    .font(ForagerTheme.quantityFont)
                                                     .foregroundStyle(ForagerTheme.textTertiary)
                                             }
                                         }
@@ -107,7 +107,13 @@ struct HouseholdMembersView: View {
                                         .foregroundStyle(ForagerTheme.statusWarningFG)
                                     }
                                     .padding(.vertical, 4)
-                                    .foragerGlassCard()
+                                    .padding(ForagerTheme.Spacing.lg)
+                                    .background(ForagerTheme.surfacePrimary)
+                                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                            .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+                                    )
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -278,14 +284,15 @@ struct ShareParticipantRow: View {
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
 
-                    // Role badge
-                    Text(participant.isOwner ? "Owner" : "Member")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(participant.isOwner ? ForagerTheme.accentSecondary.opacity(0.2) : ForagerTheme.textTertiary.opacity(0.2))
-                        .foregroundStyle(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
-                        .cornerRadius(ForagerTheme.Radius.xs)
+                    // Role badge — printed tag (reskin-provisions-press)
+                    Text((participant.isOwner ? "Owner" : "Member").uppercased())
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
 
                 // Email (if available and not a CloudKit ID)
@@ -314,7 +321,13 @@ struct ShareParticipantRow: View {
             }
         }
         .padding(.vertical, 4)
-        .foragerGlassCard()
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
     }
 
     /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)

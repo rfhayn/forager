@@ -32,8 +32,8 @@ struct AcceptInvitationSheet: View {
                 // Title
                 VStack(spacing: 8) {
                     Text("Join Household?")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
                     
                     // Display household invitation
                     Text("Household Invitation")
@@ -72,11 +72,8 @@ struct AcceptInvitationSheet: View {
                             Text("Join Household")
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ForagerTheme.accentPrimary)
-                        .foregroundStyle(.white)
-                        .cornerRadius(ForagerTheme.Radius.md)
                     }
+                    .buttonStyle(ForagerPrimaryButtonStyle())
                     .disabled(isAccepting)
                     
                     Button {

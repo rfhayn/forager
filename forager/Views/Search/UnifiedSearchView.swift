@@ -297,7 +297,7 @@ struct UnifiedSearchView: View {
                                                 Text("• \(Int(recipe.totalTime)) min")
                                             }
                                         }
-                                        .font(.caption)
+                                        .font(ForagerTheme.quantityFont)
                                         .foregroundStyle(ForagerTheme.textSecondary)
                                     }
 
@@ -376,7 +376,11 @@ struct UnifiedSearchView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 6)
                                 .background(ForagerTheme.surfaceSecondary)
-                                .clipShape(Capsule())
+                                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                                        .stroke(ForagerTheme.borderStrong, lineWidth: 1)
+                                )
                         }
                     }
                 }
@@ -415,11 +419,14 @@ struct UnifiedSearchView: View {
                 Image(systemName: icon)
                     .foregroundStyle(color)
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 15, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(ForagerTheme.textPrimary)
                 Spacer()
                 Text("\(count)")
-                    .font(.subheadline)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .font(ForagerTheme.quantityFont)
+                    .foregroundStyle(ForagerTheme.accentSecondary)
             }
 
             VStack(spacing: 0) {

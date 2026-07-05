@@ -214,7 +214,8 @@ struct MealPlanDetailView: View {
                         .foregroundStyle(isToday(date) ? ForagerTheme.buttonPrimaryText : ForagerTheme.textPrimary)
                         .frame(width: 36, height: 36)
                         .background(
-                            Circle()
+                            // reskin-provisions-press: square day indicator (matches MealPlanListView)
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                 .fill(isToday(date) ? ForagerTheme.accentPrimary : .clear)
                         )
                 }
@@ -239,7 +240,8 @@ struct MealPlanDetailView: View {
                 unplannedDayContent(for: date)
             }
         }
-        .foragerGlassCard()
+        // reskin-provisions-press: content cards are matte, not glass
+        .foragerCard()
     }
 
     // MARK: - Day Header
@@ -252,13 +254,15 @@ struct MealPlanDetailView: View {
                     .font(ForagerTheme.bodyFont.bold())
                     .foregroundStyle(ForagerTheme.textPrimary)
                 if isToday(date) {
+                    // reskin-provisions-press: printed tomato tag (matches ACTIVE tag)
                     Text("TODAY")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .padding(.horizontal, ForagerTheme.Spacing.sm)
-                        .padding(.vertical, 2)
-                        .background(ForagerTheme.accentTint)
-                        .clipShape(Capsule())
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.accentPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
             }
             Spacer()
@@ -315,7 +319,8 @@ struct MealPlanDetailView: View {
                 toggleCompletion(for: meal)
             } label: {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
-                    Image(systemName: meal.isCompleted ? "checkmark" : "circle")
+                    // reskin-provisions-press: square print-check vocabulary
+                    Image(systemName: meal.isCompleted ? "checkmark.square.fill" : "square")
                     Text("Done")
                 }
                 .font(ForagerTheme.captionFont)
@@ -531,9 +536,13 @@ struct MealPlanDetailView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
             .padding(30)
+            // reskin-provisions-press: matte panel, no glass on content HUD
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 

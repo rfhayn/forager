@@ -148,9 +148,21 @@ struct MealPlanIngredientSelectionView: View {
             toggleIngredient(ingredient)
         } label: {
             HStack {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
-                    .font(.title3)
+                // reskin-provisions-press: square print checkbox (matches GroceryListItemRow)
+                ZStack {
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(isSelected ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .fill(isSelected ? ForagerTheme.accentPrimary : Color.clear)
+                        )
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                    }
+                }
+                .frame(width: 20, height: 20)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(ingredient.name ?? "Unknown")

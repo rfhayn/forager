@@ -145,9 +145,12 @@ struct AddListItemView: View {
                                     }
                                 }
                             }
-                            .background(Color(.systemBackground))
+                            .background(ForagerTheme.surfacePrimary)
                             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-                            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                    .strokeBorder(ForagerTheme.borderSubtle, lineWidth: 1)
+                            )
                             .padding(.top, 4)
                         }
                     }

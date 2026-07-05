@@ -31,8 +31,8 @@ struct InviteMemberSheet: View {
                 // Title
                 VStack(spacing: 8) {
                     Text("Invite Member")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
 
                     Text("Add people to your household")
                         .font(.title3)
@@ -70,11 +70,8 @@ struct InviteMemberSheet: View {
                             Text("Invite People")
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ForagerTheme.accentPrimary)
-                        .foregroundStyle(.white)
-                        .cornerRadius(ForagerTheme.Radius.md)
                     }
+                    .buttonStyle(ForagerPrimaryButtonStyle())
                     .disabled(isLoading)
 
                     Button {

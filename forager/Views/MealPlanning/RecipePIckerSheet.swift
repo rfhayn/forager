@@ -95,6 +95,7 @@ struct RecipePickerSheet: View {
                     recipeList
                 }
             }
+            .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add Recipe")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -152,7 +153,7 @@ struct RecipePickerSheet: View {
             }
         }
         .padding(12)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(ForagerTheme.surfacePrimary)
         .cornerRadius(ForagerTheme.Radius.md)
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -175,6 +176,7 @@ struct RecipePickerSheet: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     // M4.2.1-3: Empty state when no recipes or search returns nothing
@@ -320,7 +322,7 @@ struct RecipeRowView: View {
                 Text("Add to Plan")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(ForagerTheme.buttonPrimaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
                     .background(ForagerTheme.accentPrimary)

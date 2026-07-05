@@ -263,6 +263,7 @@ struct CreateRecipeView: View {
                     Spacer()
                     Stepper(value: $formData.servings, in: 1...99) {
                         Text("\(formData.servings)")
+                            .font(ForagerTheme.quantityFont)
                             .frame(minWidth: 30)
                     }
                 }
@@ -304,6 +305,7 @@ struct CreateRecipeView: View {
                             .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.prepTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -324,6 +326,7 @@ struct CreateRecipeView: View {
                             .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.cookTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -341,8 +344,8 @@ struct CreateRecipeView: View {
                         Text("Total Time")
                         Spacer()
                         Text(formatTime(formData.totalTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
-                            .fontWeight(.medium)
                     }
                     .padding(.vertical, 8)
                 }
@@ -472,7 +475,10 @@ struct CreateRecipeView: View {
                         }
                         .background(ForagerTheme.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+                        )
                         .padding(.top, 4)
                     }
                 }

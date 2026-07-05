@@ -214,6 +214,9 @@ struct foragerApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // reskin-provisions-press: global tomato tint — SwiftUI Toggles
+            // (and other controls) don't follow the AccentColor asset on
+            // their own; root-level .tint makes switches/controls tomato.
             Group {
                 if isReady {
                     // M15.1: Liquid Glass TabView replaces CustomBottomNavigationView
@@ -334,6 +337,7 @@ struct foragerApp: App {
                         }
                 }
             }
+            .tint(ForagerTheme.accentPrimary)
             .onReceive(persistenceController.$isReady) { ready in
                 if ready {
                     withAnimation(.easeIn(duration: 0.3)) {

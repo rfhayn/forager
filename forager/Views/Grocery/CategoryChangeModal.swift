@@ -108,8 +108,7 @@ struct CategoryChangeModal: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Assign Categories")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        .font(ForagerTheme.detailTitle)
                     Text("\(ingredientTemplates.count) ingredients need categories")
                         .font(.subheadline)
                         .foregroundStyle(ForagerTheme.textSecondary)

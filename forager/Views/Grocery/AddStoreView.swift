@@ -115,9 +115,9 @@ struct AddStoreView: View {
                                     ? ForagerTheme.accentPrimary
                                     : ForagerTheme.textPrimary
                             )
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                             .overlay(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                     .stroke(
                                         name == storeName
                                             ? ForagerTheme.accentPrimary

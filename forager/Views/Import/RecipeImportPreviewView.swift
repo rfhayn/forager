@@ -323,7 +323,7 @@ struct RecipeImportPreviewView: View {
     // MARK: - Partial Meta Field Cards (wireframe screen 3)
 
     /// Side-by-side cards for prep/cook/servings when extraction is partial.
-    /// Empty fields get dashed borders and placeholder text.
+    /// Empty fields get a warning-tinted solid border and placeholder text.
     private var partialMetaFieldCards: some View {
         VStack(spacing: ForagerTheme.Spacing.sm) {
             HStack(spacing: ForagerTheme.Spacing.sm) {
@@ -383,7 +383,7 @@ struct RecipeImportPreviewView: View {
             RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
                 .stroke(
                     value == nil ? ForagerTheme.statusWarningFG : ForagerTheme.borderSubtle,
-                    style: value == nil ? StrokeStyle(lineWidth: 1, dash: [5, 3]) : StrokeStyle(lineWidth: 1)
+                    lineWidth: 1
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm))
@@ -731,7 +731,7 @@ struct RecipeImportPreviewView: View {
                             Spacer()
                             if template.usageCount > 0 {
                                 Text("\(template.usageCount)")
-                                    .font(.caption2)
+                                    .font(ForagerTheme.quantityFont)
                                     .foregroundStyle(ForagerTheme.textSecondary)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -752,7 +752,10 @@ struct RecipeImportPreviewView: View {
             }
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 
@@ -798,8 +801,10 @@ struct RecipeImportPreviewView: View {
             // M10.6.6: Section header with batch LLM parse sparkle button
             HStack {
                 Text("Ingredients")
-                    .font(ForagerTheme.bodyFont.weight(.bold))
-                    .foregroundStyle(ForagerTheme.textPrimary)
+                    .font(.system(size: 13, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(ForagerTheme.textSecondary)
                 Spacer()
                 if parsingService.isLLMAvailable {
                     if isLLMBatchParsing {
@@ -1061,11 +1066,11 @@ struct RecipeImportPreviewView: View {
 
         return HStack(alignment: .top, spacing: ForagerTheme.Spacing.md) {
             Text("\(index + 1)")
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.quantityFont)
                 .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(width: 24, height: 24)
                 .background(ForagerTheme.accentTint)
-                .clipShape(Circle())
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
 
             if isEditing {
                 TextField("Step \(index + 1)", text: importStepTextBinding(index: index, original: step), axis: .vertical)
@@ -1242,8 +1247,10 @@ struct RecipeImportPreviewView: View {
     private func sectionHeader(label: String, showEditIcon: Bool = false) -> some View {
         HStack {
             Text(label)
-                .font(ForagerTheme.bodyFont.weight(.bold))
-                .foregroundStyle(ForagerTheme.textPrimary)
+                .font(.system(size: 13, weight: .bold).width(.condensed))
+                .tracking(0.5)
+                .textCase(.uppercase)
+                .foregroundStyle(ForagerTheme.textSecondary)
             Spacer()
             if showEditIcon {
                 Image(systemName: "pencil")
@@ -1256,9 +1263,10 @@ struct RecipeImportPreviewView: View {
 
     // MARK: - Confidence Indicators
 
-    /// Confidence indicator dot: green (high), amber (medium), red (low), gray (missing)
+    /// Confidence indicator: printed square in success/warning/danger ink
+    /// (high/medium/low), neutral border for missing.
     private func confidenceDot(_ confidence: ImportConfidence) -> some View {
-        Circle()
+        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
             .fill(confidenceColor(confidence))
             .frame(width: 8, height: 8)
     }

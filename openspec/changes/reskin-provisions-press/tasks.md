@@ -23,8 +23,8 @@
 
 - [x] 4.1 Build and walk all screens (4 tabs + Settings + Import + Household flows); fix per-view styling residue — no functional edits
 - [x] 4.2 Apply the mono quantity role at quantity/count render sites (grocery rows, recipe ingredients, store headers, badges)
-- [ ] 4.3 Verify Liquid Glass chrome picks up the new tint correctly (tab bar, nav bars, sheets, CTAs); no glass-on-glass, no flattened chrome
-- [ ] 4.4 Restyle empty states (`ContentUnavailableView`) and onboarding/walkthrough views; regenerate any baked-in UI assets (M9.34 guide check from design.md open question)
+- [x] 4.3 Verify Liquid Glass chrome picks up the new tint correctly (tab bar, nav bars, sheets, CTAs); no glass-on-glass, no flattened chrome
+- [x] 4.4 Restyle empty states (`ContentUnavailableView`) and onboarding/walkthrough views; regenerate any baked-in UI assets (M9.34 guide check from design.md open question)
 
 ## 5. Accessibility & QA
 

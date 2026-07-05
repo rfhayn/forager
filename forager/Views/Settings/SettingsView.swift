@@ -665,7 +665,7 @@ struct SettingsView: View {
                     } else if let result = shareAcceptResult {
                         Text(result)
                             .font(.caption)
-                            .foregroundStyle(result.contains("✅") ? ForagerTheme.statusSuccessFG : .red)
+                            .foregroundStyle(result.contains("✅") ? ForagerTheme.statusSuccessFG : ForagerTheme.statusDangerFG)
                     }
                     Button {
                         Task { await acceptShareFromURL() }

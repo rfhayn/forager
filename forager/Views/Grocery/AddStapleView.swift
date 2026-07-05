@@ -53,7 +53,7 @@ struct AddStapleView: View {
                             ForEach(categories, id: \.self) { category in
                                 HStack {
                                     Circle()
-                                        .fill(Color(hex: category.displayColor))
+                                        .fill(ForagerTheme.categoryColor(for: category))
                                         .frame(width: 16, height: 16)
                                     Text(category.displayName)
                                 }

@@ -90,7 +90,7 @@ struct IngredientMatchRow: View {
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
                     .background(ForagerTheme.backgroundTertiary)
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
             }
         }
     }

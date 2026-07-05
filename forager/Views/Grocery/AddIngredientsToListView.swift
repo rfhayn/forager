@@ -730,7 +730,7 @@ struct AddIngredientsToListView: View {
                         Text("\(selectedServings) servings")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(selectedServings != recipe.servings ? .blue : .primary)
+                            .foregroundStyle(selectedServings != recipe.servings ? ForagerTheme.accentPrimary : .primary)
                     }
                 }
                 
@@ -781,9 +781,22 @@ struct AddIngredientsToListView: View {
             Button(action: {
                 toggleIngredientSelection(ingredient)
             }) {
-                Image(systemName: isSelected(ingredient) ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected(ingredient) ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
-                    .font(.title3)
+                // Square print check (reskin-provisions-press): ink-outlined box,
+                // tomato fill when selected — matches GroceryListItemRow checkbox
+                ZStack {
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(isSelected(ingredient) ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .fill(isSelected(ingredient) ? ForagerTheme.accentPrimary : Color.clear)
+                        )
+                    if isSelected(ingredient) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                    }
+                }
+                .frame(width: 22, height: 22)
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -926,15 +939,15 @@ struct AddIngredientsToListView: View {
     private func categoryHeaderSimple(categoryName: String, count: Int) -> some View {
         HStack {
             Text(categoryName.uppercased())
-                .font(.caption)
-                .fontWeight(.semibold)
+                .font(.system(size: 12, weight: .bold).width(.condensed))
+                .tracking(0.5)
                 .foregroundStyle(ForagerTheme.textSecondary)
-            
+
             Spacer()
-            
+
             Text("\(count)")
-                .font(.caption2)
-                .foregroundStyle(ForagerTheme.textSecondary)
+                .font(ForagerTheme.quantityFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
     

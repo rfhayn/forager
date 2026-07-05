@@ -993,7 +993,14 @@ struct RecipeCardView: View {
                 }
             }
         }
-        .foragerGlassCard()
+        // reskin-provisions-press: matte bordered card (content layer, not glass)
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
         .accessibilityHint("Double tap to view recipe")
@@ -1004,13 +1011,13 @@ struct RecipeCardView: View {
             Image(systemName: icon)
                 .font(ForagerTheme.captionFont)
             Text(text)
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.quantityFont)
         }
         .foregroundStyle(ForagerTheme.accentSecondary)
         .padding(.horizontal, ForagerTheme.Spacing.sm)
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .background(ForagerTheme.accentTint)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
     }
 }
 
@@ -1808,7 +1815,7 @@ struct RecipeDetailView: View {
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
                                 .background(ForagerTheme.backgroundTertiary)
-                                .clipShape(RoundedRectangle(cornerRadius: 3))
+                                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
                         }
                     }
                 } else {
@@ -2071,7 +2078,10 @@ struct RecipeDetailView: View {
             }
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 

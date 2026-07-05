@@ -162,7 +162,13 @@ struct HouseholdView: View {
                 // M9.15.3: Live sync status from CloudKitSyncMonitor
                 syncStatusRow
             }
-            .foragerGlassCard()
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 
@@ -201,12 +207,18 @@ struct HouseholdView: View {
                             .foregroundStyle(ForagerTheme.accentPrimary)
                         Spacer()
                         Text("\(participants.count)")
-                            .font(ForagerTheme.captionFont)
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                     }
                 }
             }
-            .foragerGlassCard()
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         } header: {
             Text("Members")
         }
@@ -238,14 +250,15 @@ struct HouseholdView: View {
                     }
                 }
 
-                // Role badge
-                Text(participant.isOwner ? "Owner" : "Member")
-                    .font(ForagerTheme.captionFont)
-                    .padding(.horizontal, ForagerTheme.Spacing.sm)
-                    .padding(.vertical, 2)
-                    .background(participant.isOwner ? ForagerTheme.accentTint : ForagerTheme.backgroundSecondary)
-                    .foregroundStyle(participant.isOwner ? ForagerTheme.accentPrimary : ForagerTheme.textSecondary)
-                    .clipShape(Capsule())
+                // Role badge — printed tag (reskin-provisions-press)
+                Text((participant.isOwner ? "Owner" : "Member").uppercased())
+                    .font(.system(size: 10, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
             }
 
             Spacer()
@@ -302,7 +315,13 @@ struct HouseholdView: View {
                     Color.clear.frame(maxWidth: .infinity)
                 }
             }
-            .foragerGlassCard()
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         } header: {
             Text("Shared Data")
         }
@@ -314,7 +333,7 @@ struct HouseholdView: View {
                 .font(.title3)
                 .foregroundStyle(ForagerTheme.accentSecondary)
             Text("\(count)")
-                .font(ForagerTheme.cardTitle)
+                .font(.system(size: 22, weight: .semibold, design: .monospaced))
                 .foregroundStyle(ForagerTheme.textPrimary)
             Text(label)
                 .font(ForagerTheme.captionFont)
@@ -350,7 +369,13 @@ struct HouseholdView: View {
                     .buttonStyle(.borderless)
                 }
             }
-            .foragerGlassCard()
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         } header: {
             Text("Danger Zone")
         } footer: {
@@ -385,7 +410,13 @@ struct HouseholdView: View {
                 .buttonStyle(ForagerPrimaryButtonStyle())
             }
             .frame(maxWidth: .infinity)
-            .foragerGlassCard()
+            .padding(ForagerTheme.Spacing.lg)
+            .background(ForagerTheme.surfacePrimary)
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         } footer: {
             if householdService.discoveryState == .checking {
                 Text("If you were previously in a household, your data is syncing from iCloud. You can create a new household at any time.")
