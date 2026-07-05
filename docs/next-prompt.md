@@ -11,7 +11,11 @@
 
 ## Recommended Next (in priority order)
 
-1. **Resume `reposition-app-store-listing` Session 2** (Shipping) — screenshots + video against build 141. This is the actual unblock for the 4.3(a) rejection; the new binary (141, with the #150 CloudKit fix) is already on TestFlight. Update the 4.3(a) response doc with the build swap (134 → 141).
+0. **Finish `reskin-provisions-press`** (ACTIVE) — icon/a11y/TestFlight done; remaining: user smoke test (5.2), docs sync (6.1–6.2), landing-page final, App Store screenshots (6.4), PR + withdraw-and-refile (6.5).
+0a. **Then (user-committed 2026-07-05): `establish-test-planning-workflow`** — plan drafted, run `/opsx:propose`; resolve the 5 decisions in PRD §7. Pairs with fixing the pre-existing CategoryDeduplicator/StoreSchema test-isolation failures.
+0b. **Then: `decide-view-layer-scope-architecture`** — evaluate `@ScopedFetchRequest` wrapper vs formalize in-memory filter vs ratify status quo; pilot one view; ADR 016.
+
+1. **(superseded by reskin-provisions-press) ~~Resume `reposition-app-store-listing` Session 2~~** (Shipping) — screenshots + video against build 141. This is the actual unblock for the 4.3(a) rejection; the new binary (141, with the #150 CloudKit fix) is already on TestFlight. Update the 4.3(a) response doc with the build swap (134 → 141).
 2. **Smoke-test build 141 on TestFlight** — cold-launch Dashboard: confirm all three meal-plan cards populate immediately (the #152 fix) and the grocery card still renders; verify no CloudKit zone-conflict (134040) on launch (the #150 fix).
 3. **Kick off `establish-test-planning-workflow`** (Operating Model stream) — plan drafted at [`docs/prds/active/establish-test-planning-workflow.md`](prds/active/establish-test-planning-workflow.md); run `/opsx:propose establish-test-planning-workflow` when ready. §7 of the PRD has 5 decisions to resolve during proposal.
 4. **Consider `decide-view-layer-scope-architecture`** (App Health stream) — deferred from architecture-compliance-sweep. Evaluate custom property wrapper vs. formalize in-memory filter vs. accept status quo. Write ADR 016 after the decision.
