@@ -287,13 +287,15 @@ enum ForagerTheme {
     }
 
     /// 28pt Heavy Condensed — Recipe detail hero, detail headers
+    /// (relative to .title so Dynamic Type scales it)
     static var detailTitle: Font {
-        .system(size: 28, weight: .heavy, design: .default).width(.condensed)
+        .system(.title, design: .default).weight(.heavy).width(.condensed)
     }
 
     /// 20pt Bold Condensed — Card titles, section headers
+    /// (relative to .title3 so Dynamic Type scales it)
     static var cardTitle: Font {
-        .system(size: 20, weight: .bold, design: .default).width(.condensed)
+        .system(.title3, design: .default).weight(.bold).width(.condensed)
     }
 
     /// 17pt Regular System — Content text, list items, instructions
@@ -328,8 +330,9 @@ enum ForagerTheme {
     }
 
     /// 15pt Semibold Mono — Larger quantity contexts (recipe ingredient lists)
+    /// (relative to .subheadline so Dynamic Type scales it with the item text)
     static var quantityFontLarge: Font {
-        .system(size: 15, weight: .semibold, design: .monospaced)
+        .system(.subheadline, design: .monospaced).weight(.semibold)
     }
 
     // MARK: - Spacing (4-point grid)

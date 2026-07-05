@@ -28,7 +28,7 @@
 
 ## 5. Accessibility & QA
 
-- [ ] 5.1 Accessibility pass: Reduce Transparency, Increase Contrast, Dynamic Type (incl. accessibility sizes), light/dark
+- [x] 5.1 Accessibility pass: Reduce Transparency, Increase Contrast, Dynamic Type (incl. accessibility sizes), light/dark
 - [ ] 5.2 Full manual smoke test of all flows to confirm zero behavior change; run test suite
 - [ ] 5.3 TestFlight build to beta group for identity feedback
 
