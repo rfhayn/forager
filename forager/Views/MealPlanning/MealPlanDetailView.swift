@@ -240,8 +240,13 @@ struct MealPlanDetailView: View {
                 unplannedDayContent(for: date)
             }
         }
-        // reskin-provisions-press: content cards are matte, not glass
-        .foragerCard()
+        // reskin-provisions-press: broadsheet day block — hairline rule, no box
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
     }
 
     // MARK: - Day Header

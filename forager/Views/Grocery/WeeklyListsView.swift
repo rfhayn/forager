@@ -364,7 +364,7 @@ struct WeeklyListRowView: View {
 
                     if let date = weeklyList.dateCreated {
                         Text(date, style: .date)
-                            .font(ForagerTheme.captionFont)
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                     }
 
@@ -388,7 +388,13 @@ struct WeeklyListRowView: View {
                 CategoryChipPills(categories: categoryComposition)
             }
         }
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet row — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(weeklyList.name ?? "Unnamed List"), \(completedItemsCount) of \(totalItemsCount) items checked")
         .onAppear {

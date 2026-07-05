@@ -387,7 +387,13 @@ struct MealPlanSummaryCard: View {
                 .buttonStyle(.borderless)
             }
         }
-        .foragerCard()
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet block — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
         .accessibilityElement(children: .combine)

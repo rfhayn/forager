@@ -93,7 +93,9 @@ struct MealPlanIngredientSelectionView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(ForagerTheme.backgroundCanvas)
 
             // Bottom actions
             bottomActions

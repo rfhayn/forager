@@ -498,7 +498,13 @@ struct StoreRowView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet row — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
         .sheet(isPresented: $showingColorPicker) {
             StoreColorPickerSheet(store: store, storeService: storeService)
         }

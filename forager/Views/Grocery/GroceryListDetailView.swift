@@ -376,9 +376,9 @@ struct GroceryListDetailView: View {
             isExpanded: isExpanded,
             colorDotHex: colorDotHex
         )
-        .listRowBackground(ForagerTheme.surfacePrimary)
+        .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 6, leading: ForagerTheme.Spacing.sm, bottom: 2, trailing: ForagerTheme.Spacing.sm))
+        .listRowInsets(EdgeInsets(top: 10, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
     }
 
     private var shoppingListView: some View {
@@ -444,8 +444,7 @@ struct GroceryListDetailView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
-        .listSectionSpacing(.compact)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
     }
@@ -460,10 +459,10 @@ struct GroceryListDetailView: View {
             storeColorHex: hasStores ? item.store?.color : nil,
             categoryTagName: categoryTag
         )
-        .listRowBackground(ForagerTheme.surfacePrimary)
+        .listRowBackground(Color.clear)
         .listRowSeparator(.visible)
         .listRowSeparatorTint(ForagerTheme.borderSubtle)
-        .listRowInsets(EdgeInsets(top: 2, leading: ForagerTheme.Spacing.md, bottom: 2, trailing: ForagerTheme.Spacing.md))
+        .listRowInsets(EdgeInsets(top: 2, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
         .swipeActions(edge: .leading) {
             Button {
                 toggleItemCompletion(item)

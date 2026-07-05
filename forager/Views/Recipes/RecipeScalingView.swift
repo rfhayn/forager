@@ -187,7 +187,9 @@ struct RecipeScalingView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas)
     }
     
     private func ingredientRow(_ ingredient: ScaledIngredient) -> some View {
