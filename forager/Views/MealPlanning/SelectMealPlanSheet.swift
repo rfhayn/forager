@@ -64,6 +64,8 @@ struct SelectMealPlanSheet: View {
                     }
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Meal Plan")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

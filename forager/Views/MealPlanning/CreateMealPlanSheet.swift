@@ -91,6 +91,8 @@ struct CreateMealPlanSheet: View {
                 actionButtonsSection
             }
         }
+            .scrollContentBackground(.hidden)
+            .background(ForagerTheme.backgroundCanvas)
     }
     
     // M4.2.4: Optional name field with auto-generation hint
@@ -321,6 +323,8 @@ struct CreateMealPlanSheet: View {
                 }
             )
         }
+            .scrollContentBackground(.hidden)
+            .background(ForagerTheme.backgroundCanvas)
         .navigationTitle("Test Container")
     }
     .environment(\.managedObjectContext, context)

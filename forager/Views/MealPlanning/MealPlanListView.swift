@@ -221,14 +221,17 @@ struct MealPlansListView: View {
                                 }
                             }
                         } header: {
-                            // reskin-provisions-press: ink band with collapse chevron
+                            // reskin-provisions-press: ink band with collapse chevron —
+                            // inset to match the grocery list-detail band (not full-bleed)
                             ForagerSectionHeader(
                                 title: "Completed",
                                 count: completedPlans.count,
                                 isExpanded: $showCompleted
                             )
                             .textCase(nil)
-                            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 2, trailing: 0))
+                            .padding(.horizontal, ForagerTheme.Spacing.lg)
+                            .padding(.top, 8)
+                            .listRowInsets(EdgeInsets())
                         }
                     }
                 }

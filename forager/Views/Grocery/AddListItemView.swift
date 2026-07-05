@@ -240,6 +240,8 @@ struct AddListItemView: View {
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -310,6 +312,8 @@ struct AddListItemView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Ingredients?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

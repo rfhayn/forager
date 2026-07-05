@@ -833,6 +833,8 @@ struct GroceryListDetailView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Ingredients?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

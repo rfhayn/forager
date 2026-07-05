@@ -66,6 +66,8 @@ struct AddCategoryView: View {
                     .disabled(!isFormValid)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("New Category")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

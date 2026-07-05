@@ -75,6 +75,8 @@ struct AddStoreView: View {
                     .disabled(!isFormValid)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("New Store")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

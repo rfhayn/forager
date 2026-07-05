@@ -141,9 +141,10 @@ struct SettingsView: View {
                     }
                 }
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
         } header: {
-            Text("Household")
+            ForagerBand("Household")
+                .textCase(nil)
         }
     }
     
@@ -197,7 +198,7 @@ struct SettingsView: View {
                 .buttonStyle(.plain)
 
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .navigationDestination(isPresented: $showingIngredients) {
@@ -210,7 +211,8 @@ struct SettingsView: View {
                 ManageStoresView(popToRoot: .constant(false), storeService: storeService)
             }
         } header: {
-            Text("Data")
+            ForagerBand("Data")
+                .textCase(nil)
         }
     }
 
@@ -260,9 +262,10 @@ struct SettingsView: View {
                     Text("Automatically names new meal plans based on their start date — for example, \"Week of Mar 3\" for a 7-day plan. When off, you'll name each plan yourself.")
                 }
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
         } header: {
-            Text("Meal Planning")
+            ForagerBand("Meal Planning")
+                .textCase(nil)
         } footer: {
             Text("Configure how meal plans are created and displayed. Meal plans will default to \(preferencesService.mealPlanDuration) days starting on \(preferencesService.startDayName).")
                 .font(.caption)
@@ -370,9 +373,10 @@ struct SettingsView: View {
                     connectionStatusRow
                 }
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
         } header: {
-            Text("AI Integration")
+            ForagerBand("AI Integration")
+                .textCase(nil)
         } footer: {
             if llmSettings.isEnabled {
                 Text("Only ingredient text is sent to the API. Estimated cost: ~$0.0005/recipe. Your key is stored securely in iOS Keychain on this device.")
@@ -492,14 +496,15 @@ struct SettingsView: View {
                 Toggle("Logging Enabled", isOn: $diagnosticLogger.isEnabled)
                     .font(ForagerTheme.bodyFont)
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .navigationDestination(isPresented: $showingDiagnosticLog) {
                 DiagnosticLogView()
             }
         } header: {
-            Text("Diagnostics")
+            ForagerBand("Diagnostics")
+                .textCase(nil)
         } footer: {
             Text("Persistent log of CloudKit and household operations. Export from the log viewer to share with support.")
                 .font(.caption)
@@ -679,9 +684,10 @@ struct SettingsView: View {
                 }
                 #endif
             }
-            .foragerGlassCard()
+            .padding(.vertical, ForagerTheme.Spacing.xs)
         } header: {
-            Text("Developer Tools")
+            ForagerBand("Developer Tools")
+                .textCase(nil)
         } footer: {
             Text("Tools for testing and debugging CloudKit synchronization.")
                 .font(.caption)
@@ -744,7 +750,8 @@ struct SettingsView: View {
             }
             .listRowBackground(ForagerTheme.surfacePrimary)
         } header: {
-            Text("About")
+            ForagerBand("About")
+                .textCase(nil)
         } footer: {
             VStack(spacing: ForagerTheme.Spacing.sm) {
                 Text("Your data is stored on your device and synced privately through your iCloud account. Household data is shared only with household members. We never collect or share your information with third parties.")
@@ -778,7 +785,8 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Data Management")
+            ForagerBand("Data Management")
+                .textCase(nil)
         }
     }
     */
@@ -835,6 +843,8 @@ struct CreateHouseholdSheet: View {
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .task {
                 // M7.6.8: Auto-populate name from iCloud if available
                 do {

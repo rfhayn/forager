@@ -87,6 +87,8 @@ struct AddStapleView: View {
                     .disabled(!isFormValid)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add Staple")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

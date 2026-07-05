@@ -110,6 +110,8 @@ struct EditStapleView: View {
                     }
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Edit Staple")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

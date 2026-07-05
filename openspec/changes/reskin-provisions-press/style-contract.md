@@ -57,8 +57,10 @@ ONLY — never change behavior, services, fetches, or navigation.
 
 ## Leave alone
 
-- System `Form`/grouped `List` chrome in Settings-type sheets (system material
-  is chrome) — but everything *inside* rows follows the rules above.
+- System `Form` row/control chrome in sheets — but (updated 2026-07-05, user
+  decision) every `Form`/`List` MUST sit on the paper canvas:
+  `.scrollContentBackground(.hidden)` + `.background(ForagerTheme.backgroundCanvas)`.
+  No cool system-grouped grey anywhere.
 - `ContentUnavailableView` structure (keep; just ensure token colors if styled).
 - `.sheet` presentation itself, detents, alerts' system styling (alerts are
   system chrome; their text/buttons can't be styled anyway).

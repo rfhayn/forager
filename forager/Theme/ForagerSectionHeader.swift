@@ -6,6 +6,29 @@
 
 import SwiftUI
 
+/// Title-only ink band — the print grammar's section divider for screens
+/// that don't need a count (Settings, Dashboard). Same band colors as
+/// ForagerSectionHeader.
+struct ForagerBand: View {
+    let title: String
+
+    init(_ title: String) { self.title = title }
+
+    var body: some View {
+        HStack {
+            Text(title.uppercased())
+                .font(ForagerTheme.footnoteFont)
+                .tracking(0.8)
+                .foregroundStyle(ForagerTheme.adaptiveColor(lightHex: "#E8E6DF", darkHex: "#191714"))
+            Spacer()
+        }
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .padding(.vertical, 6)
+        .background(ForagerTheme.adaptiveColor(lightHex: "#201D1A", darkHex: "#E4E1D8"))
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
+    }
+}
+
 struct ForagerSectionHeader: View {
     let title: String
     let count: Int
