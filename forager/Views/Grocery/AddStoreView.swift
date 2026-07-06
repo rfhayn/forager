@@ -51,11 +51,11 @@ struct AddStoreView: View {
 
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 48))], spacing: 12) {
                             ForEach(ForagerTheme.storeColorPalette, id: \.self) { color in
-                                Circle()
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                                     .fill(Color(hex: color))
                                     .frame(width: 40, height: 40)
                                     .overlay(
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                                             .stroke(selectedColor == color ? ForagerTheme.textPrimary : Color.clear, lineWidth: 3)
                                     )
                                     .onTapGesture {

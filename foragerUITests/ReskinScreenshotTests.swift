@@ -55,6 +55,21 @@ final class ReskinScreenshotTests: XCTestCase {
             app.swipeUp()
             sleep(1)
             saveShot(app, name: "07-settings-bottom")
+            // Manage screens (Settings > Data)
+            app.swipeDown(); app.swipeDown()
+            sleep(1)
+            let stores = app.staticTexts["Stores"].firstMatch
+            if stores.waitForExistence(timeout: 3) {
+                stores.tap(); sleep(2)
+                saveShot(app, name: "09-manage-stores")
+                app.navigationBars.buttons.firstMatch.tap(); sleep(1)
+            }
+            let cats = app.staticTexts["Categories"].firstMatch
+            if cats.waitForExistence(timeout: 3) {
+                cats.tap(); sleep(2)
+                saveShot(app, name: "10-manage-categories")
+                app.navigationBars.buttons.firstMatch.tap(); sleep(1)
+            }
         }
 
         // A modal: add-item sheet from list detail (fresh launch to reset nav)

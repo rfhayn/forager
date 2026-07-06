@@ -145,28 +145,29 @@ struct ManageCategoriesView: View {
     }
     
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            Text("Drag to Reorder Categories")
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
+        // reskin-provisions-press: ink band header + caption (uniform grammar)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            ForagerSectionHeader(title: "Store Layout", count: categories.count)
             HStack {
-                Text("Arrange categories to match your store layout")
+                Text("Arrange categories to match your store layout.")
                     .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+                    .foregroundStyle(ForagerTheme.textTertiary)
 
                 Spacer()
 
-                Button("Reset to Default") {
+                Button {
                     resetToDefaultOrder()
+                } label: {
+                    Text("RESET")
+                        .font(.system(size: 12, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
-                .font(ForagerTheme.captionFont)
-                .foregroundStyle(ForagerTheme.accentPrimary)
+                .buttonStyle(.borderless)
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
         .background(ForagerTheme.backgroundCanvas)
     }
     
@@ -192,6 +193,7 @@ struct ManageCategoriesView: View {
                 Text("Drag categories to reorder. Swipe left to delete — its ingredients will be reassigned.")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)
@@ -733,18 +735,21 @@ struct CategoryRowView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Position indicator
+            // Position indicator — mono price-tag numeral
             Text("\(position)")
-                .font(ForagerTheme.secondaryFont)
-                .fontWeight(.semibold)
+                .font(ForagerTheme.quantityFontLarge)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
-            // Category color indicator — prefers stored hex (user-chosen) over
-            // name-based theme color (architecture-compliance-sweep fix)
-            Circle()
+            // Category color swatch — printed square; prefers stored hex
+            // (user-chosen) over name-based theme color
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                 .fill(ForagerTheme.categoryColor(for: category))
                 .frame(width: 32, height: 32)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(ForagerTheme.borderDefault, lineWidth: 1)
+                )
 
             // Category info
             VStack(alignment: .leading, spacing: 4) {
