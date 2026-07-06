@@ -73,7 +73,7 @@ struct MealPlanRowView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Text(dateRangeText)
-                    .font(ForagerTheme.quantityFont)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
             
@@ -99,7 +99,7 @@ struct MealPlanRowView: View {
                 
                 // Progress text
                 Text(progressText)
-                    .font(ForagerTheme.quantityFont)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .frame(width: 70, alignment: .trailing)
             }

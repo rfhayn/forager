@@ -1027,7 +1027,7 @@ struct RecipeCardView: View {
             Image(systemName: icon)
                 .font(ForagerTheme.captionFont)
             Text(text)
-                .font(ForagerTheme.quantityFont)
+                .font(ForagerTheme.footnoteFont)
         }
         .foregroundStyle(ForagerTheme.accentSecondary)
         .padding(.horizontal, ForagerTheme.Spacing.sm)

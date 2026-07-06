@@ -174,7 +174,7 @@ struct SelectListSheet: View {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.caption2)
                     Text(String(format: "%.1fx scale", scaleFactor))
-                        .font(ForagerTheme.quantityFont)
+                        .font(ForagerTheme.footnoteFont)
                 }
                 .foregroundStyle(ForagerTheme.statusWarningFG)
             }

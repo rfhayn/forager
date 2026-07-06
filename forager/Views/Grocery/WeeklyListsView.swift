@@ -369,12 +369,12 @@ struct WeeklyListRowView: View {
 
                     if let date = weeklyList.dateCreated {
                         Text(date, style: .date)
-                            .font(ForagerTheme.quantityFont)
+                            .font(ForagerTheme.footnoteFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                     }
 
                     Text("\(completedItemsCount) of \(totalItemsCount) items")
-                        .font(ForagerTheme.quantityFont)
+                        .font(ForagerTheme.footnoteFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 

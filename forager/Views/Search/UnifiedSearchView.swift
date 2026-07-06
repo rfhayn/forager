@@ -288,7 +288,7 @@ struct UnifiedSearchView: View {
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         highlightedText(recipe.title ?? "Untitled Recipe", highlight: searchText)
-                                            .font(.body)
+                                            .font(ForagerTheme.bodyCondensed.weight(.medium))
 
                                         HStack(spacing: 8) {
                                             Text("\(Int(recipe.servings)) servings")
@@ -297,7 +297,7 @@ struct UnifiedSearchView: View {
                                                 Text("• \(Int(recipe.totalTime)) min")
                                             }
                                         }
-                                        .font(ForagerTheme.quantityFont)
+                                        .font(ForagerTheme.footnoteFont)
                                         .foregroundStyle(ForagerTheme.textSecondary)
                                     }
 

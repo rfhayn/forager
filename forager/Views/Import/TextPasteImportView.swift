@@ -59,7 +59,7 @@ struct TextPasteImportView: View {
                 Spacer()
                 if !recipeText.isEmpty {
                     Text("\(recipeText.components(separatedBy: .newlines).count) lines")
-                        .font(ForagerTheme.quantityFont)
+                        .font(ForagerTheme.footnoteFont)
                         .foregroundStyle(ForagerTheme.textTertiary)
                 }
             }

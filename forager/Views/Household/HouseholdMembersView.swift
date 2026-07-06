@@ -93,7 +93,7 @@ struct HouseholdMembersView: View {
                                                 let remaining = max(0, 86400 - Date().timeIntervalSince(invited))
                                                 let hours = Int(remaining / 3600)
                                                 Text("Expires in \(hours)h")
-                                                    .font(ForagerTheme.quantityFont)
+                                                    .font(ForagerTheme.footnoteFont)
                                                     .foregroundStyle(ForagerTheme.textTertiary)
                                             }
                                         }

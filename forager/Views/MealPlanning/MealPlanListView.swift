@@ -358,9 +358,9 @@ struct MealPlanSummaryCard: View {
                 }
             }
 
-            // Date range — mono price-tag numerals (reskin-provisions-press)
+            // Date range — condensed meta (crate-label voice)
             Text(dateRangeText)
-                .font(ForagerTheme.quantityFont)
+                .font(ForagerTheme.footnoteFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
             // Day dots — left-aligned to match Lists/Recipes card style
@@ -464,11 +464,11 @@ struct MealPlanSummaryCard: View {
                         Image(systemName: option.icon)
                         Text(option.rawValue)
                     }
-                    .font(ForagerTheme.secondaryFont.bold())
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .foregroundStyle(ForagerTheme.textPrimary)
                 } else if let recipe = meal.recipe {
                     Text("\(recipe.recipeDisplayTitle) · \(recipe.recipeServingsDescription)")
-                        .font(ForagerTheme.secondaryFont.bold())
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         .foregroundStyle(ForagerTheme.textPrimary)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)

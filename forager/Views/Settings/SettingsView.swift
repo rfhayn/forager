@@ -521,7 +521,7 @@ struct SettingsView: View {
                             Text("Diagnostic Log")
                                 .font(ForagerTheme.bodyFont)
                             Text("\(diagnosticLogger.lineCount) lines • \(diagnosticLogger.formattedFileSize)")
-                                .font(ForagerTheme.quantityFont)
+                                .font(ForagerTheme.footnoteFont)
                                 .foregroundStyle(ForagerTheme.textSecondary)
                         }
                         Spacer()
@@ -576,7 +576,7 @@ struct SettingsView: View {
                                 Text("Debug Log")
                                     .font(ForagerTheme.bodyFont)
                                 Text("\(DebugLogService.shared.entries.count) entries")
-                                    .font(ForagerTheme.quantityFont)
+                                    .font(ForagerTheme.footnoteFont)
                                     .foregroundStyle(ForagerTheme.textSecondary)
                             }
                             Spacer()
@@ -681,7 +681,7 @@ struct SettingsView: View {
                         Text(correctionCount >= retrainingThreshold
                             ? "Ready for retraining (\(correctionCount) corrections)"
                             : "Need \(retrainingThreshold - correctionCount) more corrections (\(correctionCount)/\(retrainingThreshold))")
-                            .font(ForagerTheme.quantityFont)
+                            .font(ForagerTheme.footnoteFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
                     Spacer()

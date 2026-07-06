@@ -144,11 +144,11 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
-                // Date eyebrow — mono price-tag line (reskin-provisions-press)
+                // Date eyebrow — condensed dateline (crate-label voice)
                 Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()).uppercased())
-                    .font(ForagerTheme.quantityFont)
+                    .font(ForagerTheme.footnoteFont)
+                    .tracking(0.8)
                     .foregroundStyle(ForagerTheme.textTertiary)
-                    .tracking(0.5)
                     .padding(.top, ForagerTheme.Spacing.xs)
 
                 // reskin-provisions-press: broadsheet sections — ink band +
@@ -336,8 +336,8 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
             if let recipe = meal.recipe {
                 Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont)
-                    .fontWeight(.medium)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.semibold)
                     .foregroundStyle(ForagerTheme.textPrimary)
                     .lineLimit(2)
 
@@ -355,7 +355,8 @@ struct DashboardView: View {
                 }
             } else if let quickOption = meal.quickOption {
                 Text(quickOption)
-                    .font(ForagerTheme.secondaryFont)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.medium)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
@@ -378,8 +379,8 @@ struct DashboardView: View {
             // Recipe or quick option
             if let recipe = meal.recipe {
                 Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont)
-                    .fontWeight(.medium)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.semibold)
                     .foregroundStyle(ForagerTheme.textPrimary)
                     .lineLimit(2)
 
@@ -397,7 +398,8 @@ struct DashboardView: View {
                 }
             } else if let quickOption = meal.quickOption {
                 Text(quickOption)
-                    .font(ForagerTheme.secondaryFont)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.medium)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
@@ -418,7 +420,7 @@ struct DashboardView: View {
             // Fill status (plan name moved to title; no need to repeat here)
             if let dayData = planDaysFilled {
                 Text("\(dayData.filled) of \(dayData.total) days planned")
-                    .font(ForagerTheme.quantityFont)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
 
