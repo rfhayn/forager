@@ -370,7 +370,9 @@ struct GroceryListDetailView: View {
 
     // MARK: - Shopping List with Collapsible Sections
 
-    // Header row styled to match item rows inside the card
+    // Section header band — lives in the Section's header slot so it PINS
+    // to the top while its rows scroll (plain list style pins headers);
+    // opaque canvas backing so rows don't show through around the band
     private func sectionHeaderRow(title: String, completedCount: Int, totalCount: Int, isExpanded: Binding<Bool>, colorDotHex: String? = nil) -> some View {
         ForagerSectionHeader(
             title: title,
@@ -379,9 +381,11 @@ struct GroceryListDetailView: View {
             isExpanded: isExpanded,
             colorDotHex: colorDotHex
         )
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 10, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.top, 10)
+        .padding(.bottom, 2)
+        .background(ForagerTheme.backgroundCanvas)
+        .listRowInsets(EdgeInsets())
     }
 
     private var shoppingListView: some View {
@@ -398,19 +402,11 @@ struct GroceryListDetailView: View {
                     let storeCompleted = allItems.filter { $0.isCompleted }.count
 
                     Section {
-                        // Store header as first row inside card
-                        sectionHeaderRow(
-                            title: storeName,
-                            completedCount: storeCompleted,
-                            totalCount: allItems.count,
-                            isExpanded: storeExpanded,
-                            colorDotHex: storeColor
-                        )
-
                         // reskin-provisions-press: flat mockup grammar — store
                         // band, then rows carrying printed category tags (no
                         // nested category bands; category order is preserved
-                        // by the grouped source).
+                        // by the grouped source). No per-row store dot here:
+                        // the pinned band already carries the store color.
                         if !collapsedSections.contains(storeName) {
                             ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
                                 ForEach(items, id: \.self) { item in
@@ -418,6 +414,14 @@ struct GroceryListDetailView: View {
                                 }
                             }
                         }
+                    } header: {
+                        sectionHeaderRow(
+                            title: storeName,
+                            completedCount: storeCompleted,
+                            totalCount: allItems.count,
+                            isExpanded: storeExpanded,
+                            colorDotHex: storeColor
+                        )
                     }
                 }
             } else {
@@ -430,19 +434,18 @@ struct GroceryListDetailView: View {
                     let completedCount = items.filter { $0.isCompleted }.count
 
                     Section {
-                        // Category header as first row inside card
+                        if !collapsedCategories.contains(categoryName) {
+                            ForEach(items, id: \.self) { item in
+                                itemRow(item)
+                            }
+                        }
+                    } header: {
                         sectionHeaderRow(
                             title: categoryName,
                             completedCount: completedCount,
                             totalCount: items.count,
                             isExpanded: isExpanded
                         )
-
-                        if !collapsedCategories.contains(categoryName) {
-                            ForEach(items, id: \.self) { item in
-                                itemRow(item)
-                            }
-                        }
                     }
                 }
             }
@@ -459,7 +462,9 @@ struct GroceryListDetailView: View {
             item: item,
             onToggle: { toggleItemCompletion(item) },
             showRecipeSources: preferencesService.showRecipeSources,
-            storeColorHex: hasStores ? item.store?.color : nil,
+            // Store dot only when grouping is OFF — in store grouping the
+            // pinned band already carries the store color
+            storeColorHex: (hasStores && !showStoreGrouping) ? item.store?.color : nil,
             categoryTagName: categoryTag
         )
         .listRowBackground(Color.clear)
@@ -900,7 +905,10 @@ struct GroceryListItemRow: View {
                         .strokeBorder(item.isCompleted ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
                         .background(
                             RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
-                                .fill(item.isCompleted ? ForagerTheme.accentPrimary : Color.clear)
+                                // Washed check — completion dimming lives here and
+                                // in the disabled text, NOT on the whole row, so
+                                // the category tag keeps its true color
+                                .fill(item.isCompleted ? ForagerTheme.accentPrimary.opacity(0.55) : Color.clear)
                         )
                     if item.isCompleted {
                         Image(systemName: "checkmark")
@@ -954,16 +962,15 @@ struct GroceryListItemRow: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .background(item.isCompleted
-                        ? ForagerTheme.textDisabled
-                        : ForagerTheme.categoryColor(for: tag))
+                    // Tag keeps its category color on completed rows — the
+                    // strikethrough + row dim already signal completion
+                    .background(ForagerTheme.categoryColor(for: tag))
                     .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
             }
         }
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .frame(minHeight: 44)
         .contentShape(Rectangle())
-        .opacity(item.isCompleted ? 0.6 : 1.0)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.name ?? "Unknown Item")
