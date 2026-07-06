@@ -96,6 +96,25 @@ final class ReskinScreenshotTests: XCTestCase {
         }
     }
 
+    // Coach mark card verification (shared CoachMarkCard via Replay Onboarding)
+    func testCaptureCoachMarks() throws {
+        let app = XCUIApplication()
+        app.launch()
+        sleep(3)
+
+        // Fresh install shows the welcome carousel first — skip it
+        let skip = app.staticTexts["Skip"].firstMatch
+        if skip.waitForExistence(timeout: 3) {
+            skip.tap()
+            sleep(2)
+        }
+        // TEMP-flag build renders CoachMarkOverlay on launch
+        saveShot(app, name: "11-coachmark-step1")
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15)).tap()
+        sleep(2)
+        saveShot(app, name: "12-coachmark-step2-spotlight")
+    }
+
     private func saveShot(_ app: XCUIApplication, name: String) {
         let shot = app.screenshot()
         let dir = URL(fileURLWithPath: "/tmp/reskin-shots", isDirectory: true)
