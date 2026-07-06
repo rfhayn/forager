@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>forager — icon round 5: print-shop craft, no plants</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@700&family=Archivo:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 24px 80px; background: #26231F; color: #E8E6DF; font-family: 'Archivo', sans-serif; }
+  h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 26px; text-transform: uppercase; margin: 0 auto 6px; max-width: 1100px; }
+  .lede { max-width: 1100px; margin: 0 auto 36px; color: #B5B1A8; font-size: 14.5px; line-height: 1.55; }
+  .grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 40px; }
+  .concept h2 { font-family: 'Space Mono', monospace; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #D89A2B; margin: 0 0 4px; }
+  .concept p { font-size: 13px; color: #B5B1A8; line-height: 1.5; margin: 0 0 14px; max-width: 440px; }
+  .sizes { display: flex; align-items: flex-end; gap: 22px; }
+  .icon { border-radius: 22.37%; overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.45); flex: none; background: #C8402E; }
+  .s180 { width: 180px; height: 180px; }
+  .s90  { width: 90px;  height: 90px; }
+  .s60  { width: 60px;  height: 60px; }
+  .sizelabel { font-family: 'Space Mono', monospace; font-size: 10px; color: #8C8879; text-align: center; margin-top: 8px; }
+  .lig { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-family: 'Space Mono', monospace; font-weight: 700; color: #F2F0EA; letter-spacing: -0.06em; line-height: 1; white-space: nowrap; }
+  .note { max-width: 1100px; margin: 44px auto 0; font-size: 13px; color: #B5B1A8; line-height: 1.6; border-top: 1px solid #4A453E; padding-top: 16px; }
+  .note b { color: #E8E6DF; }
+
+  /* D1 crop marks */
+  .crop { position: absolute; width: 14%; height: 14%; }
+  .crop::before, .crop::after { content: ""; position: absolute; background: #F2F0EA; opacity: 0.9; }
+  .crop::before { width: 100%; height: 12%; }
+  .crop::after { width: 12%; height: 100%; }
+  .crop.tl { top: 10%; left: 10%; } .crop.tl::before { top: 0; left: 0; } .crop.tl::after { top: 0; left: 0; }
+  .crop.tr { top: 10%; right: 10%; } .crop.tr::before { top: 0; right: 0; } .crop.tr::after { top: 0; right: 0; }
+  .crop.bl { bottom: 10%; left: 10%; } .crop.bl::before { bottom: 0; left: 0; } .crop.bl::after { bottom: 0; left: 0; }
+  .crop.br { bottom: 10%; right: 10%; } .crop.br::before { bottom: 0; right: 0; } .crop.br::after { bottom: 0; right: 0; }
+
+  /* D2 keyline */
+  .keyline { position: absolute; inset: 9%; border: 2.5px solid rgba(242,240,234,0.85); border-radius: 10%; }
+  .s90 .keyline { border-width: 1.8px; }
+  .s60 .keyline { border-width: 1.4px; }
+</style>
+</head>
+<body>
+  <h1>Icon Round 5 — Print-Shop Craft (No Plants)</h1>
+  <p class="lede">Same fgr, same tomato. The craft element now comes from the print shop — the same world as the app's ink bands and mono price tags. Judge at 60px.</p>
+
+  <div class="grid">
+
+    <div class="concept">
+      <h2>D5 · The Basket-g (user's idea — now recommended)</h2>
+      <p>The g's bowl becomes a woven basket: red weave lines cross the bowl, the descender hook stays so it still reads as a g. The craft is IN the letterform — a true custom ligature, unmistakably designed, unmistakably foraging.</p>
+      <div class="sizes">
+        <div><div class="icon s180">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <!-- basket-g: bowl -->
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <!-- weave -->
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="3"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="3"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="3"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="3"/>
+            <!-- g stem + descender hook -->
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="3.5"/>
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="4.5"/>
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D5b · Basket-g with Handle</h2>
+      <p>Same basket bowl, plus a small arc handle rising above the x-height — more literally a basket, slightly busier next to the f's ascender.</p>
+      <div class="sizes">
+        <div><div class="icon s180">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <path d="M78 76 Q90 62 102 76" stroke="#D89A2B" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="3"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="3"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="3"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="3"/>
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <path d="M78 76 Q90 62 102 76" stroke="#D89A2B" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="3.5"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="3.5"/>
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60">
+          <svg viewBox="0 0 180 180" style="position:absolute;inset:0;width:100%;height:100%">
+            <text x="38" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">f</text>
+            <text x="112" y="112" font-family="Space Mono" font-weight="700" font-size="58" fill="#F2F0EA" letter-spacing="-3">r</text>
+            <path d="M78 76 Q90 62 102 76" stroke="#D89A2B" stroke-width="6" fill="none" stroke-linecap="round"/>
+            <circle cx="90" cy="94" r="19" fill="#F2F0EA"/>
+            <line x1="72" y1="88" x2="108" y2="88" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="72" y1="99" x2="108" y2="99" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="83" y1="76" x2="83" y2="112" stroke="#C8402E" stroke-width="4.5"/>
+            <line x1="96" y1="76" x2="96" y2="112" stroke="#C8402E" stroke-width="4.5"/>
+            <path d="M109 80 L109 122 Q109 134 92 134" stroke="#F2F0EA" stroke-width="9" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D1 · Registration Crop Marks</h2>
+      <p>Four corner crop marks, like a label proof fresh off the press. Reads instantly as "printed thing," frames the wordmark, and echoes the app's whole print identity. Nobody's icon has crop marks.</p>
+      <div class="sizes">
+        <div><div class="icon s180"><span class="lig" style="font-size:58px">fgr</span><span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90"><span class="lig" style="font-size:29px">fgr</span><span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60"><span class="lig" style="font-size:20px">fgr</span><span class="crop tl"></span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D2 · Label Keyline</h2>
+      <p>A thin cream keyline frame inset from the edge — the icon becomes a printed label, not a color swatch. Calmer than crop marks; the frame does the craft work.</p>
+      <div class="sizes">
+        <div><div class="icon s180"><span class="keyline"></span><span class="lig" style="font-size:56px">fgr</span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90"><span class="keyline"></span><span class="lig" style="font-size:28px">fgr</span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60"><span class="keyline"></span><span class="lig" style="font-size:19px">fgr</span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D3 · Footnote Asterisk</h2>
+      <p>fgr* — Space Mono's own asterisk in mustard, raised like a footnote mark. Pure typography (no drawing at all), a wink at ingredient footnotes, and the mustard accent lands the two-color brand.</p>
+      <div class="sizes">
+        <div><div class="icon s180"><span class="lig" style="font-size:58px">fgr<span style="color:#D89A2B;font-size:70%;vertical-align:38%">*</span></span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90"><span class="lig" style="font-size:29px">fgr<span style="color:#D89A2B;font-size:70%;vertical-align:38%">*</span></span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60"><span class="lig" style="font-size:20px">fgr<span style="color:#D89A2B;font-size:70%;vertical-align:38%">*</span></span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D4 · Keyline + Mustard Corner Tab</h2>
+      <p>D2's label frame plus one mustard corner tab breaking the keyline — like a price sticker overlapping the label edge. Two-color, still quiet, clearly "assembled" not "typed."</p>
+      <div class="sizes">
+        <div><div class="icon s180"><span class="keyline"></span><span style="position:absolute;top:0;right:14%;width:13%;height:16%;background:#D89A2B"></span><span class="lig" style="font-size:56px">fgr</span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90"><span class="keyline"></span><span style="position:absolute;top:0;right:14%;width:13%;height:16%;background:#D89A2B"></span><span class="lig" style="font-size:28px">fgr</span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60"><span class="keyline"></span><span style="position:absolute;top:0;right:14%;width:13%;height:16%;background:#D89A2B"></span><span class="lig" style="font-size:19px">fgr</span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note"><b>Why these fit better than the sprig:</b> the app's identity is butcher paper, ink bands, and mono price tags — a <i>print shop</i>, not a meadow. Crop marks, keylines, and footnote asterisks are that same voice at icon scale, and each one converts "font sample" into "designed label" — the exact fix the collision research called for. All generate from the PIL script (rects + font glyphs only).</p>
+</body>
+</html>
