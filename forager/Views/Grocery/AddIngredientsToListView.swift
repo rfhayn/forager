@@ -800,17 +800,19 @@ struct AddIngredientsToListView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(ingredient.name ?? "Unknown ingredient")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                
+                // Shared ingredient render: mono quantity + body name
+                IngredientText(
+                    text: ingredient.name ?? "Unknown ingredient",
+                    parsedName: IngredientParsingService.extractCleanIngredientName(from: ingredient.name ?? "")
+                )
+
                 HStack(spacing: 4) {
                     // Only show scaled quantity caption when servings are adjusted
                     if scaleFactor != 1.0 {
                         let scaled = scaledDisplayText(for: ingredient)
                         if !scaled.isEmpty {
                             Text(scaled)
-                                .font(.caption)
+                                .font(ForagerTheme.quantityFont)
                                 .foregroundStyle(ForagerTheme.statusInfoFG)
 
                             if let originalId = ingredient.id,

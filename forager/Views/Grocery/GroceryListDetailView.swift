@@ -923,7 +923,7 @@ struct GroceryListItemRow: View {
             if item.isCompleted {
                 IngredientText(
                     text: cleanQuantityDisplay(item.name ?? "Unknown Item"),
-                    parsedName: nil,
+                    parsedName: parsedIngredientName,
                     isCompleted: true
                 )
             } else {
@@ -933,10 +933,11 @@ struct GroceryListItemRow: View {
                         parsedName: parsedIngredientName
                     )
 
-                    // Recipe sources inline
+                    // Recipe sources inline — metaFont (body family), not the
+                    // condensed label face: keeps rows to two type voices
                     if showRecipeSources && !item.sourceRecipeNames.isEmpty {
                         Text(item.sourceRecipeNames.joined(separator: ", "))
-                            .font(ForagerTheme.captionFont)
+                            .font(ForagerTheme.metaFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                             .lineLimit(1)
                     }

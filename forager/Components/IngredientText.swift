@@ -29,30 +29,33 @@ struct IngredientText: View {
     private var styledText: Text {
         let display = text.lowercased()
 
-        if isCompleted {
-            return Text(display)
-                .font(ForagerTheme.bodyFont)
-                .strikethrough()
-                .foregroundStyle(ForagerTheme.textDisabled)
-        }
+        // Completed rows keep the same mono/body composition — only the
+        // color and strikethrough change, so checked and unchecked items
+        // read as the same row in different states
+        let mainColor = isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary
+        let qualifierColor = isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textSecondary
 
         guard let name = parsedName?.lowercased(), !name.isEmpty,
               let range = display.range(of: name) else {
             return Text(display)
                 .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
+                .strikethrough(isCompleted)
+                .foregroundStyle(mainColor)
         }
 
         let prefix = Text(String(display[display.startIndex..<range.lowerBound]))
             .font(ForagerTheme.quantityFontLarge)
-            .foregroundStyle(ForagerTheme.textPrimary)
+            .strikethrough(isCompleted)
+            .foregroundStyle(mainColor)
         let matched = Text(String(display[range]))
             .font(ForagerTheme.bodyFont)
             .fontWeight(.medium)
-            .foregroundStyle(ForagerTheme.textPrimary)
+            .strikethrough(isCompleted)
+            .foregroundStyle(mainColor)
         let suffix = Text(String(display[range.upperBound...]))
             .font(ForagerTheme.bodyFont)
-            .foregroundStyle(ForagerTheme.textSecondary)
+            .strikethrough(isCompleted)
+            .foregroundStyle(qualifierColor)
 
         return Text("\(prefix)\(matched)\(suffix)")
     }

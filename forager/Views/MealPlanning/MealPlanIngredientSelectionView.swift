@@ -167,15 +167,17 @@ struct MealPlanIngredientSelectionView: View {
                 .frame(width: 20, height: 20)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(ingredient.name ?? "Unknown")
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
+                    // Shared ingredient render: mono quantity + body name
+                    IngredientText(
+                        text: ingredient.name ?? "Unknown",
+                        parsedName: IngredientParsingService.extractCleanIngredientName(from: ingredient.name ?? "")
+                    )
 
                     if let template = ingredient.ingredientTemplate,
                        let catName = template.categoryEntity?.name,
                        catName.lowercased() != "uncategorized" {
                         Text(catName)
-                            .font(ForagerTheme.captionFont)
+                            .font(ForagerTheme.metaFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }
