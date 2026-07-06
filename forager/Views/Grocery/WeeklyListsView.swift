@@ -359,13 +359,12 @@ struct WeeklyListRowView: View {
                             .submitLabel(.done)
                             .onSubmit { saveName() }
                     } else {
+                        // Rename moved to the row context menu — a gesture on
+                        // the name Text swallows taps meant for the enclosing
+                        // NavigationLink (left half of the row went dead)
                         Text(weeklyList.name ?? "Unnamed List")
                             .font(ForagerTheme.cardTitle)
                             .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
-                            .onLongPressGesture {
-                                editedName = weeklyList.name ?? ""
-                                isEditingName = true
-                            }
                     }
 
                     if let date = weeklyList.dateCreated {
@@ -400,6 +399,14 @@ struct WeeklyListRowView: View {
             Rectangle()
                 .fill(ForagerTheme.borderSubtle)
                 .frame(height: 1.5)
+        }
+        .contextMenu {
+            Button {
+                editedName = weeklyList.name ?? ""
+                isEditingName = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(weeklyList.name ?? "Unnamed List"), \(completedItemsCount) of \(totalItemsCount) items checked")

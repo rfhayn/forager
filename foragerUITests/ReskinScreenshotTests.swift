@@ -22,9 +22,11 @@ final class ReskinScreenshotTests: XCTestCase {
         sleep(2)
         saveShot(app, name: "01-lists")
 
-        // Broadsheet rows aren't XCUI cells; the name text carries a
-        // long-press rename gesture — tap the items-count line instead
-        let listRow = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'items'")).firstMatch
+        // Broadsheet rows aren't XCUI cells. Tap the list NAME deliberately:
+        // it used to carry a long-press rename gesture that swallowed taps
+        // (rename now lives in the row context menu) — this tap doubles as
+        // the regression check for that fix.
+        let listRow = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Shopping List'")).firstMatch
         if listRow.waitForExistence(timeout: 5) {
             listRow.tap()
             sleep(2)

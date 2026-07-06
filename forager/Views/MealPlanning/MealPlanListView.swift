@@ -337,13 +337,12 @@ struct MealPlanSummaryCard: View {
                         .submitLabel(.done)
                         .onSubmit { saveName() }
                 } else {
+                    // Rename moved to the card context menu — a gesture on
+                    // the name Text swallows taps meant for the row's hidden
+                    // NavigationLink
                     Text(mealPlan.name ?? "Unnamed Plan")
                         .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textPrimary)
-                        .onLongPressGesture {
-                            editedName = mealPlan.name ?? ""
-                            isEditingName = true
-                        }
                 }
                 Spacer()
                 if status == .active {
@@ -399,6 +398,14 @@ struct MealPlanSummaryCard: View {
         }
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .contextMenu {
+            Button {
+                editedName = mealPlan.name ?? ""
+                isEditingName = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(mealPlan.name ?? "Unnamed Plan"), \(dateRangeText), \(plannedMeals.count) of \(Int(mealPlan.duration)) days planned")
         .accessibilityHint("Double tap to open meal plan")
