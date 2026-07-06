@@ -92,6 +92,26 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 5. `docs/insights-log.md` — Technical insights (log IMMEDIATELY, don't defer)
 6. `docs/development-journal.md` — Session narrative (MANDATORY before commits)
 
+## Knowledge Boundary — Auto-Memory vs Committed Docs
+
+Two homes for what the project knows. Keep them distinct — never let the same fact live authoritatively in both.
+
+- **Auto-memory** (`~/.claude/projects/-Users-rich-Development-forager/memory/`) holds *behavioral preferences, user identity, and volatile personal/session state* — things that shape **how** the assistant works. Auto-recalled at session start; not versioned, not team-shareable. Examples: "never delete untracked files", copy-style rules, "use the iPhone 17 Pro simulator", active-branch focus.
+- **Committed docs** (ADRs in `docs/architecture/`, `docs/insights-log.md`, OpenSpec specs) hold *durable engineering truth* — **what** the system does and why. Versioned, reviewed, team-shareable. Examples: scope-aware fetch rule (ADR 013), the multi-zone `context.assign` fix (ADR 014), parser confidence routing (ADR 010).
+
+**Promotion pipeline** — engineering truth flows one way, toward the committed side:
+
+```
+discovery → docs/insights-log.md            (log immediately, don't defer)
+          → docs/architecture/NNN-*.md      (ADR, once it's a durable decision)
+          → openspec/specs/<capability>/    (spec REQ, once it's a standing requirement)
+```
+
+Rules of thumb:
+- A memory entry that states an engineering decision, a code seam, or "how the system works" belongs on the committed side — **promote it, then retire the memory** so there's one source of truth.
+- A committed doc that drifts into personal preference or volatile state — that half belongs in memory instead.
+- Memory may *point at* a committed doc (e.g. "authoritative doc: `docs/openspec-workflow-reference.md`"); it must not duplicate its content.
+
 ## Pre-Development Checks
 
 - `/core-data-audit` — Before schema changes
