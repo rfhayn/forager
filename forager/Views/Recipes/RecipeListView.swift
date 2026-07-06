@@ -281,6 +281,15 @@ struct RecipeListView: View {
     private var recipeListContent: some View {
         VStack(spacing: 0) {
             List {
+                // reskin-provisions-press: ink band — uniform with other screens
+                ForagerSectionHeader(
+                    title: activeFilter == .all ? "All Recipes" : activeFilter.rawValue,
+                    count: filteredRecipes.count
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 4, trailing: ForagerTheme.Spacing.lg))
+
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
                     Group {
                         if let onSelect {
@@ -331,6 +340,13 @@ struct RecipeListView: View {
     private var recipeGridContent: some View {
         VStack(spacing: 0) {
             ScrollView {
+                // reskin-provisions-press: ink band — uniform with other screens
+                ForagerSectionHeader(
+                    title: activeFilter == .all ? "All Recipes" : activeFilter.rawValue,
+                    count: filteredRecipes.count
+                )
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.bottom, ForagerTheme.Spacing.md)
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible(), spacing: ForagerTheme.Spacing.md),

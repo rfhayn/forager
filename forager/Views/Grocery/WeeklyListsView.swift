@@ -109,6 +109,12 @@ struct WeeklyListsView: View {
 
     private var listsView: some View {
         List {
+            // reskin-provisions-press: ink band — uniform with other screens
+            ForagerSectionHeader(title: "All Lists", count: weeklyLists.count)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 4, trailing: ForagerTheme.Spacing.lg))
+
             ForEach(weeklyLists, id: \.self) { list in
                 ZStack {
                     NavigationLink(destination: GroceryListDetailView(weeklyList: list)) { EmptyView() }
