@@ -114,6 +114,7 @@ struct SettingsView: View {
         Rectangle()
             .fill(ForagerTheme.borderSubtle)
             .frame(height: 1.5)
+            .padding(.vertical, ForagerTheme.Spacing.sm)
     }
 
     /// Right-aligned mono value — the price-tag position.
@@ -202,7 +203,6 @@ struct SettingsView: View {
                         Spacer()
                         rowChevron
                     }
-                    .padding(.vertical, ForagerTheme.Spacing.xs)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -217,7 +217,6 @@ struct SettingsView: View {
                         Spacer()
                         rowChevron
                     }
-                    .padding(.vertical, ForagerTheme.Spacing.xs)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -232,7 +231,6 @@ struct SettingsView: View {
                         Spacer()
                         rowChevron
                     }
-                    .padding(.vertical, ForagerTheme.Spacing.xs)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -262,7 +260,7 @@ struct SettingsView: View {
     // Controls meal plan duration, start day, and display options
     private var mealPlanningSection: some View {
         Section {
-            VStack(spacing: ForagerTheme.Spacing.sm) {
+            VStack(spacing: 0) {
                 // Duration stepper (3-14 days)
                 // Controls how many days appear in meal plan calendar
                 Stepper(value: $preferencesService.mealPlanDuration, in: 3...14) {
@@ -322,7 +320,7 @@ struct SettingsView: View {
 
     private var aiImportSection: some View {
         Section {
-            VStack(spacing: ForagerTheme.Spacing.sm) {
+            VStack(spacing: 0) {
                 HStack {
                     Toggle("Enable AI for Ingredients", isOn: $llmSettings.isEnabled)
                     Button {
@@ -529,7 +527,6 @@ struct SettingsView: View {
                         Spacer()
                         rowChevron
                     }
-                    .padding(.vertical, ForagerTheme.Spacing.xs)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -561,7 +558,7 @@ struct SettingsView: View {
     // Provides access to sync status monitoring and validation
     private var developerToolsSection: some View {
         Section {
-            VStack(spacing: ForagerTheme.Spacing.sm) {
+            VStack(spacing: 0) {
                 // M10.6.5: Debug log toggle + viewer
                 // M10.6.13: Ungated for Release builds
                 Toggle("Debug Mode", isOn: Binding(
