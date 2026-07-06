@@ -933,11 +933,10 @@ struct GroceryListItemRow: View {
                         parsedName: parsedIngredientName
                     )
 
-                    // Recipe sources inline — metaFont (body family), not the
-                    // condensed label face: keeps rows to two type voices
+                    // Recipe sources inline
                     if showRecipeSources && !item.sourceRecipeNames.isEmpty {
                         Text(item.sourceRecipeNames.joined(separator: ", "))
-                            .font(ForagerTheme.metaFont)
+                            .font(ForagerTheme.captionFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                             .lineLimit(1)
                     }

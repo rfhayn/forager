@@ -27,33 +27,36 @@ struct IngredientText: View {
     }
 
     private var styledText: Text {
-        let display = text.lowercased()
+        // Display transforms only: lowercase + decimal→kitchen-fraction
+        let display = text.lowercased().displayingKitchenFractions
 
-        // Completed rows keep the same mono/body composition — only the
-        // color and strikethrough change, so checked and unchecked items
-        // read as the same row in different states
+        // Completed rows keep the same composition — only the color and
+        // strikethrough change, so checked and unchecked items read as
+        // the same row in different states
         let mainColor = isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary
         let qualifierColor = isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textSecondary
 
         guard let name = parsedName?.lowercased(), !name.isEmpty,
               let range = display.range(of: name) else {
             return Text(display)
-                .font(ForagerTheme.bodyFont)
+                .font(ForagerTheme.bodyCondensed)
+                .fontWeight(.medium)
                 .strikethrough(isCompleted)
                 .foregroundStyle(mainColor)
         }
 
         let prefix = Text(String(display[display.startIndex..<range.lowerBound]))
-            .font(ForagerTheme.quantityFontLarge)
+            .font(ForagerTheme.bodyCondensed)
+            .fontWeight(.semibold)
             .strikethrough(isCompleted)
             .foregroundStyle(mainColor)
         let matched = Text(String(display[range]))
-            .font(ForagerTheme.bodyFont)
-            .fontWeight(.medium)
+            .font(ForagerTheme.bodyCondensed)
+            .fontWeight(.semibold)
             .strikethrough(isCompleted)
             .foregroundStyle(mainColor)
         let suffix = Text(String(display[range.upperBound...]))
-            .font(ForagerTheme.bodyFont)
+            .font(ForagerTheme.bodyCondensed)
             .strikethrough(isCompleted)
             .foregroundStyle(qualifierColor)
 

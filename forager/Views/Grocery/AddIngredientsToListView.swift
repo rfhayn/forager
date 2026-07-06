@@ -811,7 +811,7 @@ struct AddIngredientsToListView: View {
                     if scaleFactor != 1.0 {
                         let scaled = scaledDisplayText(for: ingredient)
                         if !scaled.isEmpty {
-                            Text(scaled)
+                            Text(scaled.displayingKitchenFractions)
                                 .font(ForagerTheme.quantityFont)
                                 .foregroundStyle(ForagerTheme.statusInfoFG)
 

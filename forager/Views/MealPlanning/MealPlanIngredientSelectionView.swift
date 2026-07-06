@@ -177,7 +177,7 @@ struct MealPlanIngredientSelectionView: View {
                        let catName = template.categoryEntity?.name,
                        catName.lowercased() != "uncategorized" {
                         Text(catName)
-                            .font(ForagerTheme.metaFont)
+                            .font(ForagerTheme.captionFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
                 }

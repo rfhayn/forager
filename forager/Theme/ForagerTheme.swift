@@ -318,12 +318,11 @@ enum ForagerTheme {
         .system(.caption).weight(.semibold).width(.condensed)
     }
 
-    /// 13pt Regular System — metadata sub-lines under content rows (recipe
-    /// sources, category notes). Body family, NOT condensed: condensed is
-    /// reserved for printed labels/tags, mono for amounts — running metadata
-    /// stays in the body voice so rows read as two type voices, not three.
-    static var metaFont: Font {
-        .system(.footnote)
+    /// 17pt Condensed — the crate-label voice at body size: ingredient
+    /// names and qualifiers in list rows (semibold for names via
+    /// fontWeight). Pairs with mono amounts; sub-lines use captionFont.
+    static var bodyCondensed: Font {
+        .system(.body).width(.condensed)
     }
 
     /// 10pt Semibold Condensed — Tab bar labels only

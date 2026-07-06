@@ -110,7 +110,7 @@ struct ConsolidationPreviewView: View {
             // Content
             VStack(alignment: .leading, spacing: 6) {
                 // Display text — quantities render in the mono price-tag role
-                Text(item.displayText)
+                Text(item.displayText.displayingKitchenFractions)
                     .font(ForagerTheme.quantityFontLarge)
                     .fontWeight(item.isMerged ? .semibold : .regular)
                 

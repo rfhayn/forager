@@ -173,7 +173,7 @@ struct IngredientMatchRow: View {
     private func rawTextLine(result: IngredientMatchResult) -> some View {
         HStack(spacing: ForagerTheme.Spacing.xs) {
             Text(result.rawText)
-                .font(ForagerTheme.metaFont)
+                .font(ForagerTheme.captionFont)
                 .foregroundStyle(ForagerTheme.textTertiary)
                 .lineLimit(1)
 
