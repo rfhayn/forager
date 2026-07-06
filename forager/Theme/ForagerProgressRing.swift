@@ -1,41 +1,40 @@
 // ForagerProgressRing.swift
 // M15.3: Circular progress indicator with color shift
-//
-// PRD §5.6: 56pt ring, accentPrimary → accentSecondary → statusSuccessFG.
+// reskin-provisions-press: restyled from a ring to the print grammar —
+// mono percentage over a flat linear bar (same language as the list
+// detail's bottom progress bar). Name kept so call sites don't churn.
 
 import SwiftUI
 
 struct ForagerProgressRing: View {
     let progress: Double // 0.0–1.0
-    @ScaledMetric(relativeTo: .body) private var ringSize: CGFloat = 56
+    @ScaledMetric(relativeTo: .subheadline) private var barWidth: CGFloat = 56
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            // Background track
-            Circle()
-                .stroke(ForagerTheme.backgroundTertiary, lineWidth: 4)
-
-            // Progress arc
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(progressColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
-
-            // Percentage text — mono numerals (reskin-provisions-press)
+        VStack(alignment: .trailing, spacing: 4) {
+            // Percentage — mono price-tag numeral
             Text("\(Int(progress * 100))%")
-                .font(ForagerTheme.quantityFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
+                .font(ForagerTheme.quantityFontLarge)
+                .foregroundStyle(progress >= 1.0 ? ForagerTheme.statusSuccessFG : ForagerTheme.textPrimary)
+
+            // Flat progress bar — tomato fill on print track
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                    .fill(ForagerTheme.borderDefault)
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                    .fill(progressColor)
+                    .frame(width: max(4, barWidth * progress))
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
+            }
+            .frame(width: barWidth, height: 4)
         }
-        .frame(width: ringSize, height: ringSize)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("List progress")
         .accessibilityValue("\(Int(progress * 100)) percent complete")
     }
 
     private var progressColor: Color {
-        if progress >= 1.0 { return ForagerTheme.statusSuccessFG }
-        if progress >= 0.5 { return ForagerTheme.accentSecondary }
-        return ForagerTheme.accentPrimary
+        progress >= 1.0 ? ForagerTheme.statusSuccessFG : ForagerTheme.accentPrimary
     }
 }
