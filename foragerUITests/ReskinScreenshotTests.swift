@@ -22,11 +22,16 @@ final class ReskinScreenshotTests: XCTestCase {
         sleep(2)
         saveShot(app, name: "01-lists")
 
-        let firstCell = app.cells.firstMatch
-        if firstCell.waitForExistence(timeout: 5) {
-            firstCell.tap()
+        // Broadsheet rows aren't XCUI cells; the name text carries a
+        // long-press rename gesture — tap the items-count line instead
+        let listRow = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'items'")).firstMatch
+        if listRow.waitForExistence(timeout: 5) {
+            listRow.tap()
             sleep(2)
             saveShot(app, name: "02-list-detail")
+            app.swipeUp()
+            sleep(1)
+            saveShot(app, name: "02b-list-detail-scrolled")
         }
 
         // Recipes tab

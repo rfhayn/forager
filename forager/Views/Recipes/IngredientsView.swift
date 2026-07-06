@@ -830,9 +830,14 @@ struct IngredientRowView: View {
                     }
             } else {
                 VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                    Text(ingredient.name ?? "Unknown ingredient")
+                    // Matches IngredientText's name treatment: lowercase
+                    // display, medium ink, one line
+                    Text((ingredient.name ?? "Unknown ingredient").lowercased())
                         .font(ForagerTheme.bodyFont)
+                        .fontWeight(.medium)
                         .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
                     if ingredient.isStaple {
                         Text("Staple")

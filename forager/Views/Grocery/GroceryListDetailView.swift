@@ -921,13 +921,17 @@ struct GroceryListItemRow: View {
 
             // Item text
             if item.isCompleted {
-                Text(cleanQuantityDisplay(item.name ?? "Unknown Item"))
-                    .font(ForagerTheme.bodyFont)
-                    .strikethrough()
-                    .foregroundStyle(ForagerTheme.textDisabled)
+                IngredientText(
+                    text: cleanQuantityDisplay(item.name ?? "Unknown Item"),
+                    parsedName: nil,
+                    isCompleted: true
+                )
             } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    formattedItemText
+                    IngredientText(
+                        text: cleanQuantityDisplay(item.name ?? "Unknown Item"),
+                        parsedName: parsedIngredientName
+                    )
 
                     // Recipe sources inline
                     if showRecipeSources && !item.sourceRecipeNames.isEmpty {
@@ -970,35 +974,6 @@ struct GroceryListItemRow: View {
     /// Clean trailing .0 from quantities: "2.0 tsp" → "2 tsp", "0.25 cup" unchanged
     private func cleanQuantityDisplay(_ text: String) -> String {
         text.replacingOccurrences(of: #"(\d+)\.0(\s|$)"#, with: "$1$2", options: .regularExpression)
-    }
-
-    /// Formatted text matching recipe detail (reskin-provisions-press):
-    /// quantity in mono ink (price-tag numerals), name in medium ink
-    @ViewBuilder
-    private var formattedItemText: some View {
-        let fullText = cleanQuantityDisplay(item.name ?? "Unknown Item")
-        if let ingredientName = parsedIngredientName,
-           let range = fullText.range(of: ingredientName, options: .caseInsensitive) {
-            let prefix = String(fullText[fullText.startIndex..<range.lowerBound])
-            let name = String(fullText[range])
-            let suffix = String(fullText[range.upperBound...])
-            HStack(spacing: 0) {
-                Text(prefix)
-                    .font(ForagerTheme.quantityFontLarge)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Text(name)
-                    .font(ForagerTheme.bodyFont)
-                    .fontWeight(.medium)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Text(suffix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-            }
-        } else {
-            Text(fullText)
-                .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
-        }
     }
 
     private func sourceDisplayText(_ source: String) -> String {

@@ -6,6 +6,18 @@
 
 ---
 
+## Session 132 — July 6, 2026 — reskin-provisions-press: ingredient text consistency
+
+**Change**: `reskin-provisions-press` (continuing) — user design-review pass against TestFlight build 145 surfaced three "didn't come through" reports and one real inconsistency; the session resolved all four.
+
+**What happened**: Rich reviewed build 145 on device and flagged: (1) the progress circle on the shared list-row component still looked like the old ring, (2) the new tab-bar symbols (Lists checklist, Meals fork.knife) were missing, and (3) ingredient names read inconsistently across the Ingredients tab, grocery list detail, and recipe detail — different casing per screen, and long names wrapping into awkward two-line blobs beside the mono quantity. Items (1) and (2) turned out to be build-timing, not bugs: the ring restyle (`4ea2cf3`), tab symbols (`baab387`), and quick-add matte dropdown all landed *after* the build-145 version bump, so 145 predates them — they ship automatically in the next build. Item (3) was real and had two distinct root causes: naive `.capitalized` in `extractCleanIngredientName` persisting Title Case into grocery item names at creation (hence "2 Of Garlic") while other screens display stored lowercase; and both grocery and recipe rows building their text as an `HStack` of three separate `Text`s, so long names wrapped within their own column and the stack center-aligned (the floating-quantity artifact).
+
+**Key decisions** (user chose via option previews): **lowercase everywhere** as the display casing — matches the print/crate-label vernacular, never miscapitalizes, applied as a render-layer transform with stored data untouched; and **one-line + tail ellipsis everywhere** — the "…" naturally eats the grey parenthetical qualifier first, keeping quantity and name intact. Implemented as a single shared `Components/IngredientText.swift` (concatenated styled-Text interpolation: mono quantity → medium-ink name → secondary qualifier) replacing the two near-duplicate builders in `GroceryListItemRow` and `RecipeDetailView`, with the Ingredients-tab row brought into line. The parser artifacts themselves ("2 of garlic" losing its unit, "avocado s") stay deferred — parsing fixes are behavior changes and the reskin is functionality-frozen.
+
+**Learning**: `Text + Text` is deprecated in iOS 26 in favor of styled-Text interpolation — same attributed-run semantics, one `lineLimit` governing the whole line. And a process lesson now logged as an insight: TestFlight builds are cut at the bump commit; check commit order against the bump before treating a "missing" change as a regression.
+
+**AI tooling observations**: The verification loop stayed headless end-to-end — build, then the ReskinScreenshotTests harness for before/after screenshots. The harness needed two fixes to reach the list detail (broadsheet rows aren't XCUI cells; the list-name text's long-press rename gesture silently swallowed the tap), both now insights. The AskUserQuestion option previews (ASCII mockups of the three casing conventions) made the design decision concrete the same way the HTML mockups did for the identity choice — Rich picked from renderings, not adjectives.
+
 ## Session 131 — July 2–3, 2026 — Meet with Apple outcome → reskin-provisions-press
 **Change**: `reskin-provisions-press` (new) — the Meet with Apple appointment happened, it finally named the real axis of the 4.3(a) rejection, and the response is a full visual-identity overhaul. Milestone set up, OpenSpec change proposed (4/4 artifacts), direction chosen and mocked up.
 

@@ -1864,13 +1864,12 @@ struct RecipeDetailView: View {
                         }
                 } else if scaleFactor != 1.0 {
                     // Scaled display mode: show scaled quantities, no editing
-                    Text(displayName)
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
+                    IngredientText(text: displayName, parsedName: matchInfo?.parsedName)
                         .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
                 } else {
-                    // Display mode: formatted text with parsed name highlighted
-                    formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                    // Display mode: shared IngredientText — mono quantity,
+                    // medium name, one-line ellipsis (reskin-provisions-press)
+                    IngredientText(text: currentText, parsedName: matchInfo?.parsedName)
                         .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -2171,37 +2170,6 @@ struct RecipeDetailView: View {
         isAddingIngredient = false
         showingIngredientAutocomplete = false
         autocompleteService.clearSuggestions()
-    }
-
-    // MARK: - M10.8: Formatted Ingredient Text
-
-    /// Format ingredient text (reskin-provisions-press): quantity prefix in
-    /// mono ink (price-tag numerals), parsed name in medium ink. Uses shared
-    /// IngredientMatchResult.
-    @ViewBuilder
-    private func formattedIngredientText(text: String, matchInfo: IngredientMatchResult?) -> some View {
-        if let info = matchInfo,
-           let range = text.range(of: info.parsedName, options: .caseInsensitive) {
-            let prefix = String(text[text.startIndex..<range.lowerBound])
-            let name = String(text[range])
-            let suffix = String(text[range.upperBound...])
-            HStack(spacing: 0) {
-                Text(prefix)
-                    .font(ForagerTheme.quantityFontLarge)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Text(name)
-                    .font(ForagerTheme.bodyFont)
-                    .fontWeight(.medium)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Text(suffix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-            }
-        } else {
-            Text(text)
-                .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
-        }
     }
 
     // MARK: - M10.6.8: Ingredient Match Summary (shared component)
