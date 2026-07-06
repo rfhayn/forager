@@ -361,7 +361,10 @@ struct GroceryListDetailView: View {
         }
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
         .padding(.horizontal, ForagerTheme.Spacing.lg)
     }
 
