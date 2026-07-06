@@ -27,9 +27,9 @@ enum NavigationTab: String, CaseIterable {
     var icon: String {
         switch self {
         case .home: return "house"
-        case .lists: return "list.bullet"
+        case .lists: return "checklist"
         case .recipes: return "book"
-        case .mealPlans: return "calendar"
+        case .mealPlans: return "fork.knife"
         }
     }
 }
@@ -228,13 +228,13 @@ struct foragerApp: App {
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
-                            Tab("Lists", systemImage: "list.bullet", value: .lists) {
+                            Tab("Lists", systemImage: "checklist", value: .lists) {
                                 NavigationStack {
                                     WeeklyListsView(popToRoot: $listsPopToRoot)
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
-                            Tab("Meals", systemImage: "calendar", value: .mealPlans) {
+                            Tab("Meals", systemImage: "fork.knife", value: .mealPlans) {
                                 NavigationStack {
                                     MealPlansListView(popToRoot: $mealPlansPopToRoot)
                                         .searchButton(showSearch: $showSearch)
