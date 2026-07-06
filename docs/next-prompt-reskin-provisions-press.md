@@ -1,66 +1,54 @@
 # reskin-provisions-press — ACTIVE: UI/UX Overhaul (Provisions Press Identity)
 
-**PRD**: OpenSpec change `openspec/changes/reskin-provisions-press/` (proposal via `/opsx:propose`)
-**Branch**: `feature/reskin-provisions-press`
-**Problem**: Meet with Apple (2026-07-02) established that the 4.3(a) rejection is driven by the **design surface** — UI, color scheme, and overall look reading as over-saturated / already-used — not by code or functionality duplication. The current warm-cream + forest-green + SF Rounded system is the category's default visual space (and the most common AI-generated design cluster). Functionality is not in question and must not change.
+**OpenSpec**: `openspec/changes/reskin-provisions-press/` (proposal/design/specs/tasks + style-contract.md + token-map.md)
+**Branch**: `feature/reskin-provisions-press` (34+ commits, all pushed; `/review` verdict: READY FOR PR)
+**Why**: Meet with Apple (2026-07-02) — 4.3(a) is a design-surface objection (UI/color scheme over-saturated/already-used), NOT functionality. Full visual overhaul; functionality frozen.
 
 ---
 
-## The Direction: Provisions Press
+## ⏸️ RESUME POINT (session ended 2026-07-06)
 
-Bold editorial print grounded in **grocery-world vernacular** — crate labels, butcher paper, printed category tags, market signage. Explicitly NOT generic neo-brutalism (no acid yellow/pink/lime, no thick black borders + hard shadows); the grocer's palette and print metaphor keep it subject-specific and defensible as original work.
+**THE PENDING DECISION — release-prep held at the merge gate.**
+`/release-prep` was requested and is ready to fire (review passed clean), but it squash-merges to
+main. Held for Rich's call: **proceed** (merge now, behavior-test against main) or **hold**
+(behavior test on build 145 first, then merge). Ask this FIRST on resume.
 
-### Palette (light mode)
-| Token role | Hex | Name |
-|---|---|---|
-| Canvas | `#E8E6DF` | butcher-paper grey |
-| Ink / text | `#201D1A` | ink |
-| Primary accent / CTA | `#C8402E` | tomato |
-| Secondary accent | `#D89A2B` | mustard |
-| Tertiary / category | `#1F6E6A` | teal |
+**PENDING USER ACTIONS (Rich, tracked as session task #7):**
+1. **Behavior/functionality smoke test (task 5.2)** — NOT yet done. Build 145 on TestFlight is the vehicle.
+   Checklist: import (URL/text/photo), grocery loop (generate-from-plan, quick-add, check-off,
+   celebration, swipe actions, STORE GROUPING toggle — restructured, test carefully), meal planning,
+   household sync, recipe scaling, cold-launch Home population.
+2. **Reduce Transparency check** (Settings → Accessibility) — the one a11y item simctl can't script.
 
-Dark mode: to be derived (ink-paper inversion, keep accents saturated).
+## State
 
-### Typography
-- Display / titles: SF Compact heavy or condensed (crate-label voice; web stand-ins: Anton / Archivo Narrow)
-- Body: SF Pro Text (Archivo/Work Sans stand-in)
-- Quantities & counts: SF Mono (functional signature — the app is full of amounts)
-- **Replaces** SF Pro Rounded chrome typography (CLAUDE.md + design-system docs must be updated)
+- **TestFlight**: build **145** live (Public Beta Testers). 142→145 all this branch. Icon `fgr` since 143.
+- **Icon FINAL**: clean `fgr` (Space Mono Bold on tomato). Collision research: LOW risk (no brand
+  confusion; Flipboard/FGR/category all cleared). Basket-g concept approved but deferred —
+  full design spec at `docs/mockups/icon-basket-g/DESIGN-SPEC.md` (icon swaps don't need App Review).
+- **All screens in print grammar**: bands everywhere, broadsheet de-boxing, Settings row grammar,
+  paper-skinned Form sheets, square swatches, mono numerals, flat progress bars, checklist/fork.knife tabs.
+- **5.1 accessibility DONE** (dark/Dynamic Type/Increase Contrast; 3 type roles made DT-relative).
+- **Style contract clean** app-wide (last content-glass fixed in `/review`, e9558ee).
 
-### Layer split (KEY DECISION — preserves Liquid Glass)
-| Layer | Treatment |
-|---|---|
-| Chrome: tab bar, nav bars, toolbars, sheets, primary CTAs | **Liquid Glass retained**, re-tinted by new palette |
-| Content: list rows, category tags, store headers, quantities, empty states | Provisions Press flat print / matte |
+## Remaining tasks (openspec tasks.md — 18/23 done)
 
-Matte print content under glossy glass chrome is itself the signature pairing. Do not stack glass on glass; do not flatten the chrome.
+- [ ] 5.2 user behavior smoke test (above)
+- [ ] 5.3 — done for now (145); more builds as fixes land
+- [ ] 6.1 docs sync: CLAUDE.md UI Patterns (typography/palette rules), design-system doc successor, memory design-system note
+- [ ] 6.2 log Meet-with-Apple outcome in `docs/app-store-rejection-43a-response.md` §7/§11.8
+- [ ] 6.3b landing page final pass (icon.png done; screenshots inherit from 6.4)
+- [ ] 6.4 App Store screenshot set (use ReskinScreenshotTests harness + seeded data; include icon-uniqueness
+      note in review notes: "original typographic mark, no Food & Drink competitor uses letterform icon")
+- [ ] 6.5 PR → squash merge → withdraw-and-refile fresh submission (`/release-prep` covers merge+TestFlight)
 
----
+## Queued next changes (user-committed)
+1. `establish-test-planning-workflow` (PRD drafted; also fix pre-existing CategoryDeduplicator/StoreSchema test-isolation failures)
+2. `decide-view-layer-scope-architecture` (ADR 016)
 
-## What's Done
-- 3-direction comparison mockup: `docs/mockups/ui-overhaul-directions.html` (Field Guide / Larder / Provisions Press)
-- Direction chosen: Provisions Press (user preference + research validation)
-- Research: category is uniformly warm/green/minimal — bold editorial print is an outlier within grocery/recipe apps; guardrail identified (avoid generic neo-brutalist clichés)
-- Liquid Glass compatibility confirmed (chrome vs. content layer split)
-
-## What's Left
-- [ ] Revised mockup: Provisions Press content + Liquid Glass chrome, 2+ screens (grocery list, recipe detail), incl. reduced-transparency fallback
-- [ ] `/opsx:propose reskin-provisions-press` — full proposal, design, tasks, delta specs
-- [ ] Full token map: every existing `ForagerTheme` token → new value (incl. dark mode, category colors, status colors — keep AA/AAA contrast discipline)
-- [ ] Typography scale replacement (Rounded → Compact/Mono system)
-- [ ] View sweep: verify no hardcoded colors leak (all views use semantic tokens per M15.1)
-- [ ] Update design-system docs: `docs/mockups/forager-design-system.html`, CLAUDE.md UI Patterns section
-- [ ] New App Store screenshots + withdraw-and-refile fresh submission
-
-## Key Design Decisions
-1. **Content-layer identity, chrome-layer glass** — Liquid Glass artifacts are all retained and re-tinted; Provisions Press applies to content only.
-2. **Grocery vernacular over trend** — every element must trace to the grocery world (crate label, butcher paper, price tag), not to neo-brutalism.
-3. **Functionality frozen** — zero behavior/service/model changes in this change; visual layer only.
-4. **Monospace quantities** — carried over from Field Guide exploration; functional, not decorative.
-
-## Key Files
-- `forager/Theme/ForagerTheme.swift` — token system (colors, type, spacing, radius)
-- `forager/Theme/ForagerTheme+StoreColors.swift`, `ForagerButtonStyles.swift`, `ForagerCard.swift`, `ForagerSectionHeader.swift`, `ForagerProgressRing.swift`, `Color+Extensions.swift`
-- `docs/mockups/ui-overhaul-directions.html` — direction comparison
-- `docs/prds/complete/m15-ux-design-system.md` — outgoing design system (reference for token coverage)
-- `docs/app-store-rejection-43a-response.md` — §7 history; log Meet with Apple outcome
+## Key artifacts
+- Style contract: `openspec/changes/reskin-provisions-press/style-contract.md`
+- Token map (69 verified contrast pairs): `openspec/changes/reskin-provisions-press/token-map.md`
+- Screenshot harness: `foragerUITests/ReskinScreenshotTests.swift` (10 screens; boot sim → set `simctl ui` state → run for a11y matrices)
+- Mockups: `docs/mockups/provisions-press-liquid-glass.html` + icon rounds a–a5 + `icon-basket-g/`
+- Stray branch note: `docs/memory-committed-boundary` exists (one docs commit, other session) — untouched.
