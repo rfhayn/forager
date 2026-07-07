@@ -105,7 +105,7 @@ class ClaudeIngredientParser: LLMIngredientParser {
 
         return [
             "model": model,
-            "max_tokens": 1024,
+            "max_tokens": Self.maxTokens(for: lines.count),
             "system": prompt,
             "tools": [toolDefinitionWithCategory],
             "tool_choice": ["type": "tool", "name": "parse_ingredients"],
@@ -113,6 +113,18 @@ class ClaudeIngredientParser: LLMIngredientParser {
                 ["role": "user", "content": userMessage]
             ]
         ]
+    }
+
+    /// Output budget scales with batch size. Each result emits
+    /// name/quantity/unit/notes/category as tool_use JSON — long names plus
+    /// notes can run ~80-120 output tokens per ingredient, so a fixed 1024
+    /// cap truncated large recipes mid-input (the "Missing tool_use" failure
+    /// on a 14-ingredient import). Padded per-item budget, capped to keep
+    /// non-streamed responses inside the request timeout.
+    private static func maxTokens(for count: Int) -> Int {
+        let perIngredient = 160
+        let overhead = 400
+        return min(8192, overhead + perIngredient * count)
     }
 
     private func buildURLRequest(body: [String: Any]) throws -> URLRequest {
@@ -184,11 +196,23 @@ class ClaudeIngredientParser: LLMIngredientParser {
             throw LLMParserError.malformedResponse("Missing content array")
         }
 
-        // Find the tool_use block
-        guard let toolUse = content.first(where: { ($0["type"] as? String) == "tool_use" }),
-              let input = toolUse["input"] as? [String: Any],
-              let ingredients = input["ingredients"] as? [[String: Any]] else {
-            throw LLMParserError.malformedResponse("Missing tool_use with parse_ingredients")
+        // Truncation: when generation hits the max_tokens ceiling mid
+        // tool_use input, the partial JSON can't yield a complete
+        // ingredients array — surface that as its own error, not a
+        // generic malformed-response
+        if (json["stop_reason"] as? String) == "max_tokens" {
+            throw LLMParserError.responseTruncated
+        }
+
+        // Split guards so failures name the actual missing piece
+        guard let toolUse = content.first(where: { ($0["type"] as? String) == "tool_use" }) else {
+            throw LLMParserError.malformedResponse("Response contained no tool_use block")
+        }
+        guard let input = toolUse["input"] as? [String: Any] else {
+            throw LLMParserError.malformedResponse("tool_use block had no input object")
+        }
+        guard let ingredients = input["ingredients"] as? [[String: Any]] else {
+            throw LLMParserError.malformedResponse("tool_use input missing 'ingredients' array")
         }
 
         var droppedCount = 0
