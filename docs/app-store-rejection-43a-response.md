@@ -276,6 +276,8 @@ Drop the optional second-device acceptance beat. Otherwise same shooting + expor
 | 2026-06-06 | Strategy reset → escalate to App Review Board | Metadata-only repositioning is disproven: fully executed on 2026-04-23, it drew identical boilerplate on two re-reviews. Decision: stop editing metadata and file a formal App Review Board appeal. See § 11. Tracked by OpenSpec change `escalate-43a-to-app-review-board`. |
 | 2026-06-06 | **App Review Board appeal SUBMITTED** | Filed via the App Review appeal form (`developer.apple.com/contact/app-store/?topic=appeal`), not the Resolution Center. Submission ID `e5e960e5…`, v2.0 build 140. Sent the 1,945-char trimmed letter (§ 11.3) verbatim — fit under the form's 2,000-char cap. Now awaiting the Board's response (typical window: a few business days to ~2 weeks). Outcome plan in § 11.5. |
 | 2026-06-23 | **App Review Board UPHELD the rejection** | Appeal Ticket **APL466617** (reviewer "Leo"). The Board determined the original 4.3(a) rejection feedback was valid: "this app duplicates the content and functionality of other apps … considered a form of spam." Still **no specific duplicated app named** — the determination did not engage our point-by-point refutation of the four spam factors, confirming the operative driver is unstated category-saturation perception, not the written criteria. Matches the **"Upheld with the same boilerplate"** branch of § 11.5 → next move is the "Meet with Apple" appointment. Full Board message recorded in § 11.7. |
+| 2026-07-02 | **Meet with Apple appointment HELD** | The live conversation finally named the axis three written rounds never did: the 4.3(a) driver is the **design surface** — the reviewer-side perception that forager's UI, color scheme, and overall look are over-saturated / already-used in the category. It is largely NOT about code duplication or functionality similarity; the four-factor engineering defense was never the battleground. No specific duplicated app was named (consistent with all prior rounds), but the actionable feedback made naming one unnecessary. Outcome recorded in § 11.8; response strategy in § 12. |
+| 2026-07-03 → 07-06 | **`reskin-provisions-press` executed** | Full visual-identity overhaul (Provisions Press: butcher-paper/ink/tomato print identity, SF Compact condensed + mono numerals, original `fgr` typographic icon, broadsheet masthead system; Liquid Glass chrome retained and re-tinted). Functionality frozen. TestFlight builds 142–153 iterated with live design review; new 5-screenshot set composited from build 153. Fresh-submission package in § 12. |
 
 Add new rows as the round progresses:
 - When Apple responds (overturn, uphold, or follow-up question)
@@ -472,3 +474,63 @@ Apple offered "Request an App Review Appointment at Meet with Apple … Tuesdays
 **Two outcomes:**
 - They name a comparable app → triage it; differentiate concretely; refile.
 - They cannot / will not → the case for *repositioning the first-impression surface* + withdraw-and-refile-fresh (build 141, new submission ID, per § 11.6) becomes the path.
+
+**✅ OUTCOME (held 2026-07-02):** A third branch, better than either anticipated one. The rep did not name a comparable app — but did name the **axis**: the objection is the *UI, color scheme, and overall design* reading as over-saturated and already-used in the grocery/recipe category. Functionality and code similarity were explicitly not the driver. Diagnosis: the pre-reskin identity (warm cream canvas, earthy green accents, SF Pro Rounded, soft cards) sat dead-center in the category's default visual space *and* in the most common AI-generated design cluster — a triage reviewer couldn't tell forager's screenshots from a dozen competitors', and per this document's record, didn't.
+
+This converted a three-round immovable wall into scoped, actionable work: **`reskin-provisions-press`** — replace the visual identity (Provisions Press: bold editorial print grounded in grocery-world vernacular), keep functionality frozen, produce new screenshots, and withdraw-and-refile fresh. Executed 2026-07-03 → 07-06. The fresh-submission package is § 12.
+
+---
+
+## 12. Fresh Submission Package (post-reskin, withdraw-and-refile)
+
+The written-appeal path is exhausted (§ 11) and the design-surface diagnosis is addressed (§ 11.8 outcome). This section is the complete package for the fresh submission: strategy, the App Review notes text, and the submission mechanics.
+
+### 12.1 Strategy
+
+- **Withdraw** the stuck submission (`e5e960e5…`, three 4.3(a) determinations + upheld appeal) and **file fresh** — new submission ID, near-certain new reviewer, no inherited thread history.
+- **Binary**: the final reskin build (154+; must include the diagnostics re-gate — Settings > Diagnostics hidden in Release). Do NOT submit builds 134–141 (pre-reskin identity) or 142–153 (beta diagnostics UI visible).
+- **First impression is the battleground**: the reviewer's first 30 seconds are the icon, the screenshots, and the opening screens. All three now carry the Provisions Press identity.
+- **Tone of all text**: neutral and forward-looking. A new reviewer sees this cold — nothing should read as a continuation of a dispute. The consultation is referenced as collaboration, not grievance.
+
+### 12.2 What changed since the last review (internal checklist)
+
+| Surface | Before (rejected rounds) | Now |
+|---|---|---|
+| Color system | Warm cream + earthy green (category default) | Butcher-paper grey `#E8E6DF` / ink `#201D1A` / tomato `#C8402E` / mustard / teal |
+| Typography | SF Pro Rounded throughout | SF Compact condensed display + SF Pro body + mono numerals (price-tag signature) |
+| App icon | Leaf glyph (category cliché) | Original `fgr` typographic mark (Space Mono Bold on tomato) — no Food & Drink competitor uses a letterform icon |
+| Screen structure | Soft cards, floating boxes | Broadsheet print grammar: ink bands, hairline rules, masthead titles, printed category tags |
+| Screenshots | White-band captions, SF Rounded | Butcher-paper band, Condensed Black ink titles, mounted-print framing (build 153 captures) |
+| Functionality | — | **Unchanged** (frozen by policy for the entire reskin) |
+
+### 12.3 App Review Notes (draft — paste into the fresh submission's Review Notes field)
+
+> Following our App Review consultation on July 2, 2026 (appointment referencing ticket APL466617), we understood the 4.3(a) concern to be about the app's visual design reading as similar to other apps in the category, rather than its functionality. We took that feedback seriously and completely redesigned the app's visual identity before this submission.
+>
+> What changed: a new color system (butcher-paper neutral with tomato/mustard/teal accents, replacing the category-typical cream-and-green), new typography (condensed editorial display type with monospaced numerals, replacing rounded type), a new original app icon (a typographic "fgr" mark — to our knowledge no app in the category uses a letterform icon), and a rebuilt screen grammar (print-inspired ink bands and mastheads). App functionality is unchanged from the previously reviewed build.
+>
+> Three features distinguish forager functionally, each verifiable in under a minute:
+> 1. Household sharing with no accounts: Settings > Household > Invite Member generates a share link — the recipient joins via iCloud with no signup, email, or password. (Most competitors require creating an account.)
+> 2. Multi-store shopping: assign grocery items to specific stores and toggle "group by store" on any list — the list reorganizes into per-store sections for multi-stop trips.
+> 3. On-device ingredient parsing: recipe imports are parsed into structured ingredients locally. Enable Airplane Mode and import a recipe via paste to verify no network dependency. (An optional AI assist exists but is off by default and requires the user's own API key.)
+>
+> No demo account is needed; all functionality is available on first launch. Thank you for taking a fresh look.
+
+*(~1,950 characters — comfortably under the field limit; trim the parenthetical competitor asides first if a shorter version is ever needed.)*
+
+### 12.4 Submission mechanics (in order)
+
+1. **Final build**: cut the submission build (diagnostics re-gate + any final fixes), distribute to TestFlight, quick smoke.
+2. **Withdraw**: App Store Connect → the pending/rejected submission → Cancel Submission (this releases the thread; per the resubmit-workflow memory, binary rejections require a fresh submit anyway).
+3. **New version setup**: confirm version string, select the new build.
+4. **Screenshots**: upload the five build-153 composites to the 6.9" iPhone slot (repo: `docs/beta/screenshots/01–05`). **Open question: iPad slot** — the 2026-05-13 review used an iPad Air M3; if the listing carries iPad screenshots they MUST be regenerated in the new identity before submitting (an old-identity iPad set undermines the whole story).
+5. **Metadata**: name/subtitle/keywords/description carry over from the 2026-04-23 repositioning (still accurate post-reskin); update What's New for the redesign.
+6. **Review Notes**: paste § 12.3.
+7. **Submit** and log the new submission ID in § 7.
+
+### 12.5 Open items before submitting
+
+- [ ] Final submission build cut + smoke-tested (diagnostics hidden in Release)
+- [ ] iPad screenshot question answered (and set regenerated if needed)
+- [ ] Landing page (`docs/index.html`) final pass with the new screenshots (task 6.3b)
+- [ ] `reskin-provisions-press` merged to main (task 6.5) — submission build should be cut from main
