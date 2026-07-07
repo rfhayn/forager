@@ -47,7 +47,7 @@ struct MealPlanRowView: View {
                     .frame(width: 8, height: 8)
                 
                 Text(displayName)
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .lineLimit(1)
                 
                 Spacer()

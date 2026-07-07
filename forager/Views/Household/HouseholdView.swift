@@ -220,7 +220,7 @@ struct HouseholdView: View {
                     .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
             )
         } header: {
-            Text("Members")
+            ForagerBand("Members")
         }
     }
 
@@ -323,7 +323,7 @@ struct HouseholdView: View {
                     .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
             )
         } header: {
-            Text("Shared Data")
+            ForagerBand("Shared Data")
         }
     }
 

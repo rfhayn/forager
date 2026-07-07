@@ -35,7 +35,7 @@ struct HouseholdMembersView: View {
                         .font(.largeTitle)
                         .foregroundStyle(ForagerTheme.statusWarningFG)
                     Text("Could not load members")
-                        .font(.headline)
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -88,7 +88,7 @@ struct HouseholdMembersView: View {
                                         }
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Pending Invitation")
-                                                .font(.headline)
+                                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                                             if let invited = member.invitedDate {
                                                 let remaining = max(0, 86400 - Date().timeIntervalSince(invited))
                                                 let hours = Int(remaining / 3600)
@@ -276,7 +276,7 @@ struct ShareParticipantRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(participant.displayName)
-                        .font(.headline)
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
 
                     if participant.isCurrentUser {
                         Text("(You)")

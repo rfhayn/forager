@@ -31,7 +31,7 @@ struct ConsolidationPreviewView: View {
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(analysis.summary)
-                                    .font(.headline)
+                                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                                 
                                 Text("Review changes below before applying")
                                     .font(.caption)

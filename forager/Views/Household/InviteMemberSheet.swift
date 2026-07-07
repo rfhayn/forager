@@ -35,7 +35,7 @@ struct InviteMemberSheet: View {
                         .foregroundStyle(ForagerTheme.textPrimary)
 
                     Text("Add people to your household")
-                        .font(.title3)
+                        .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 

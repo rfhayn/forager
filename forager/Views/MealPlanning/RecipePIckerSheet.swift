@@ -123,7 +123,7 @@ struct RecipePickerSheet: View {
                 .foregroundStyle(ForagerTheme.accentPrimary)
             
             Text("Adding to \(formattedShortDate)")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             Spacer()
         }
@@ -187,7 +187,7 @@ struct RecipePickerSheet: View {
                 .foregroundStyle(ForagerTheme.textTertiary)
             
             Text(searchText.isEmpty ? "No Recipes Yet" : "No Matching Recipes")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             Text(searchText.isEmpty ?
                  "Create some recipes to add them to your meal plan" :

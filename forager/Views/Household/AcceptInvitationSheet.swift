@@ -37,7 +37,7 @@ struct AcceptInvitationSheet: View {
                     
                     // Display household invitation
                     Text("Household Invitation")
-                        .font(.title2)
+                        .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
@@ -99,7 +99,7 @@ struct AcceptInvitationSheet: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                             Text(isRetrying ? "Checking for household..." : "Joining household...")
-                                .font(.headline)
+                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         }
                         .padding(40)
                         .background(.regularMaterial)

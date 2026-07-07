@@ -106,15 +106,16 @@ struct MealPlanDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
+                // Matches the global inline nav-title voice (condensed heavy 17)
                 if isEditingTitle {
                     TextField("Plan name", text: $editedTitle)
-                        .font(.headline)
+                        .font(.system(size: 17, weight: .heavy).width(.condensed))
                         .multilineTextAlignment(.center)
                         .submitLabel(.done)
                         .onSubmit { savePlanTitle() }
                 } else {
                     Text(mealPlan.name ?? "Meal Plan")
-                        .font(.headline)
+                        .font(.system(size: 17, weight: .heavy).width(.condensed))
                         .onLongPressGesture {
                             editedTitle = mealPlan.name ?? ""
                             isEditingTitle = true

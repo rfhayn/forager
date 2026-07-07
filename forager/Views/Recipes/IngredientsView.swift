@@ -1396,7 +1396,7 @@ struct DuplicateReviewSheet: View {
 
             // Canonical name
             Text("\"\(group.name)\"")
-                .font(.title3)
+                .font(ForagerTheme.cardTitle)
                 .fontWeight(.semibold)
                 .foregroundStyle(ForagerTheme.textPrimary)
 

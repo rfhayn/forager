@@ -85,7 +85,7 @@ struct SelectListSheet: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Recipes to Add")
-                            .font(.headline)
+                            .font(ForagerTheme.bodyCondensed.weight(.semibold))
                             .foregroundStyle(.primary)
                         
                         Text("\(recipes.count) recipes")

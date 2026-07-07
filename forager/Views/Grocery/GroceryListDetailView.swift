@@ -540,15 +540,16 @@ struct GroceryListDetailView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .principal) {
+            // Matches the global inline nav-title voice (condensed heavy 17)
             if isEditingTitle {
                 TextField("List name", text: $editedTitle)
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .heavy).width(.condensed))
                     .multilineTextAlignment(.center)
                     .submitLabel(.done)
                     .onSubmit { saveTitle() }
             } else {
                 Text(weeklyList.name ?? "Grocery List")
-                    .font(.headline)
+                    .font(.system(size: 17, weight: .heavy).width(.condensed))
                     .onLongPressGesture {
                         editedTitle = weeklyList.name ?? ""
                         isEditingTitle = true

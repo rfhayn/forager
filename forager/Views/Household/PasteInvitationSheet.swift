@@ -34,7 +34,7 @@ struct PasteInvitationSheet: View {
                         .foregroundStyle(ForagerTheme.textPrimary)
 
                     Text("Paste your invitation link")
-                        .font(.title3)
+                        .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
@@ -98,7 +98,7 @@ struct PasteInvitationSheet: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                             Text("Joining household...")
-                                .font(.headline)
+                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         }
                         .padding(40)
                         .background(.regularMaterial)

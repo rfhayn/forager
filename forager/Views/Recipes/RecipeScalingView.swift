@@ -69,7 +69,7 @@ struct RecipeScalingView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             Text("Scale Recipe")
-                .font(.title2)
+                .font(ForagerTheme.cardTitle)
                 .fontWeight(.semibold)
             
             HStack(spacing: 16) {
@@ -108,7 +108,7 @@ struct RecipeScalingView: View {
     private var scaleControlsSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Scale Factor: \(formatScaleFactor(scaleFactor))x")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 8) {
                 // Slider

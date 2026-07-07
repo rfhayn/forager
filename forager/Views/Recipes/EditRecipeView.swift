@@ -273,7 +273,7 @@ struct EditRecipeView: View {
     private var basicInfoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Basic Information")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 12) {
                 TextField("Recipe Name", text: $formData.name)
@@ -315,7 +315,7 @@ struct EditRecipeView: View {
     private var timingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Timing")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 12) {
                 Button(action: { activeSheet = .prepTimePicker }) {
@@ -404,7 +404,7 @@ struct EditRecipeView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Ingredients")
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                 Spacer()
                 // M10.6.6: Batch LLM parse sparkle button
                 if parsingService.isLLMAvailable {
@@ -741,7 +741,7 @@ struct EditRecipeView: View {
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Instructions")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             TextEditor(text: $formData.instructions)
                 .frame(minHeight: 150)
@@ -761,7 +761,7 @@ struct EditRecipeView: View {
     private var tagsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Tags")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             TextField("Enter tags separated by commas", text: $formData.tags)
                 .textFieldStyle(RoundedBorderTextFieldStyle())

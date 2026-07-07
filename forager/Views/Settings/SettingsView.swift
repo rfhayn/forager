@@ -639,7 +639,7 @@ struct SettingsView: View {
                             .foregroundStyle(ForagerTheme.statusWarningFG)
                         VStack(alignment: .leading) {
                             Text("Household Debug")
-                                .font(.headline)
+                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                             Text("View all households in database")
                                 .font(.caption)
                                 .foregroundStyle(ForagerTheme.textSecondary)
@@ -819,7 +819,7 @@ struct SettingsView: View {
                         .foregroundStyle(ForagerTheme.accentSecondary)
                     VStack(alignment: .leading) {
                         Text("Quantity Migration")
-                            .font(.headline)
+                            .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         Text("Convert ingredients to structured format")
                             .font(.caption)
                             .foregroundStyle(ForagerTheme.textSecondary)

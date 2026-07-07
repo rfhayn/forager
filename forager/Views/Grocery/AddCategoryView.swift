@@ -38,7 +38,7 @@ struct AddCategoryView: View {
                     
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Color")
-                            .font(.headline)
+                            .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 48))], spacing: 12) {
                             ForEach(availableColors, id: \.self) { color in

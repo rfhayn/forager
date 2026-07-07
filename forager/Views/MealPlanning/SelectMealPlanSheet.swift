@@ -101,7 +101,7 @@ struct SelectMealPlanSheet: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(recipe.title ?? "Unnamed Recipe")
-                        .font(.headline)
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     
                     if recipe.servings > 0 {
                         Text("\(recipe.servings) servings")
@@ -126,7 +126,7 @@ struct SelectMealPlanSheet: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Text("No Meal Plans Available")
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                 
                 Text("Create your first meal plan to start organizing your recipes")
                     .font(.subheadline)
@@ -138,7 +138,7 @@ struct SelectMealPlanSheet: View {
                         Image(systemName: "plus.circle.fill")
                         Text("Create Meal Plan")
                     }
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .foregroundStyle(ForagerTheme.buttonPrimaryText)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)

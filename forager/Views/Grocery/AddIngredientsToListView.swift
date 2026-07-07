@@ -759,7 +759,7 @@ struct AddIngredientsToListView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Recipe: \(recipe.title ?? "Unknown Recipe")")
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .fontWeight(.semibold)
                 Spacer()
             }

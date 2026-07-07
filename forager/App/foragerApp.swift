@@ -115,6 +115,18 @@ struct foragerApp: App {
         let navBar = UINavigationBar.appearance()
         navBar.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
         navBar.titleTextAttributes = [.font: condensedHeavy(size: 17)]
+
+        // iOS 26 glass bars ignore the legacy proxy for INLINE titles (large
+        // titles still honor it) — route the same fonts through
+        // UINavigationBarAppearance. configureWithTransparentBackground()
+        // sets no background of its own, so the Liquid Glass material stays.
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.titleTextAttributes = [.font: condensedHeavy(size: 17)]
+        appearance.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
+        navBar.standardAppearance = appearance
+        navBar.scrollEdgeAppearance = appearance
+        navBar.compactAppearance = appearance
     }
 
     init() {
