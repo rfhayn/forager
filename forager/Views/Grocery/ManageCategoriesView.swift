@@ -58,11 +58,14 @@ struct ManageCategoriesView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // Broadsheet masthead — screen name as content, bar stays capsules-only
+            BroadsheetMasthead(title: "Categories")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
             headerSection
             categoriesListSection
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Manage Categories")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent

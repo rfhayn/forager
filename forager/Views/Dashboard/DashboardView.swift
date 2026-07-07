@@ -144,6 +144,8 @@ struct DashboardView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+                BroadsheetMasthead(title: greeting)
+
                 // Date eyebrow — condensed dateline (crate-label voice)
                 Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()).uppercased())
                     .font(ForagerTheme.footnoteFont)
@@ -224,7 +226,7 @@ struct DashboardView: View {
             Button("From Meal Plan") { selectedTab = .lists }
             Button("Empty List") { selectedTab = .lists }
         }
-        .navigationTitle(greeting)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {

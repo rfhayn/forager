@@ -155,8 +155,13 @@ struct HouseholdMembersView: View {
             }
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Household Members")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            BroadsheetMasthead(title: "Members")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .background(ForagerTheme.backgroundCanvas)
+        }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {

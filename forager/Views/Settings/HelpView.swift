@@ -214,8 +214,13 @@ struct HelpView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(ForagerTheme.backgroundCanvas)
-            .navigationTitle("Help & Guide")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                BroadsheetMasthead(title: "Help")
+                    .padding(.horizontal, ForagerTheme.Spacing.lg)
+                    .background(ForagerTheme.backgroundCanvas)
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {

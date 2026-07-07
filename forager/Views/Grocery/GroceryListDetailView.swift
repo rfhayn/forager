@@ -121,10 +121,35 @@ struct GroceryListDetailView: View {
         ZStack {
             ForagerTheme.backgroundCanvas.ignoresSafeArea()
 
-            if listItems.isEmpty {
-                emptyStateView
-            } else {
-                shoppingListView
+            VStack(spacing: 0) {
+                // Editable broadsheet masthead — long-press to rename
+                HStack {
+                    if isEditingTitle {
+                        TextField("List name", text: $editedTitle)
+                            .font(ForagerTheme.detailTitle)
+                            .submitLabel(.done)
+                            .onSubmit { saveTitle() }
+                    } else {
+                        Text(weeklyList.name ?? "Grocery List")
+                            .font(ForagerTheme.detailTitle)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .onLongPressGesture {
+                                editedTitle = weeklyList.name ?? ""
+                                isEditingTitle = true
+                            }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.top, ForagerTheme.Spacing.xs)
+                .padding(.bottom, ForagerTheme.Spacing.sm)
+
+                if listItems.isEmpty {
+                    emptyStateView
+                } else {
+                    shoppingListView
+                }
             }
 
             // M15.3: Celebration banner
@@ -539,23 +564,6 @@ struct GroceryListDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            // Matches the global inline nav-title voice (condensed heavy 17)
-            if isEditingTitle {
-                TextField("List name", text: $editedTitle)
-                    .font(.system(size: 17, weight: .heavy).width(.condensed))
-                    .multilineTextAlignment(.center)
-                    .submitLabel(.done)
-                    .onSubmit { saveTitle() }
-            } else {
-                Text(weeklyList.name ?? "Grocery List")
-                    .font(.system(size: 17, weight: .heavy).width(.condensed))
-                    .onLongPressGesture {
-                        editedTitle = weeklyList.name ?? ""
-                        isEditingTitle = true
-                    }
-            }
-        }
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: ForagerTheme.Spacing.sm) {
                 // M18.1.5: Store grouping toggle (category always present)

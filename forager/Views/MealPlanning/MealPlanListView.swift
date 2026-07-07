@@ -48,7 +48,7 @@ struct MealPlansListView: View {
 
     var body: some View {
         contentView
-            .navigationTitle("Meal Plans")
+            .navigationTitle("")
             .toolbar {
                 if ProcessInfo.processInfo.isiOSAppOnMac {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -125,6 +125,11 @@ struct MealPlansListView: View {
                 }
             } else {
                 List {
+                    BroadsheetMasthead(title: "Meal Plans")
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
                     // reskin-provisions-press: ink band section headers
                     if !activePlans.isEmpty {
                         ForagerSectionHeader(title: "Active", count: activePlans.count)

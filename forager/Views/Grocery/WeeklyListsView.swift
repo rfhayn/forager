@@ -42,7 +42,7 @@ struct WeeklyListsView: View {
 
     var body: some View {
         contentView
-            .navigationTitle("Grocery Lists")
+            .navigationTitle("")
             .toolbar {
                 toolbarContent
             }
@@ -109,6 +109,11 @@ struct WeeklyListsView: View {
 
     private var listsView: some View {
         List {
+            BroadsheetMasthead(title: "Grocery Lists")
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
             // reskin-provisions-press: ink band — uniform with other screens
             ForagerSectionHeader(title: "All Lists", count: weeklyLists.count)
                 .listRowBackground(Color.clear)

@@ -59,6 +59,8 @@ struct ManageStoresView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            BroadsheetMasthead(title: "Stores")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
             if stores.isEmpty {
                 emptyStateView
             } else {
@@ -67,7 +69,7 @@ struct ManageStoresView: View {
             }
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Manage Stores")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent

@@ -118,6 +118,9 @@ struct IngredientsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            BroadsheetMasthead(title: "Ingredients")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+
             // M7.4: Removed search bar, now using .searchable() for Apple Music pattern
             // Filter Section
             filterSection
@@ -149,8 +152,8 @@ struct IngredientsView: View {
                 ingredientsListView
             }
         }
-        .navigationTitle("Ingredients")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 if isEditMode && !selectedIngredients.isEmpty {

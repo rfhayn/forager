@@ -122,7 +122,9 @@ struct foragerApp: App {
         // sets no background of its own, so the Liquid Glass material stays.
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
-        appearance.titleTextAttributes = [.font: condensedHeavy(size: 17)]
+        // 20pt: inline titles read as a proper crate-label stamp next to
+        // the back capsule (17 felt undersized once pushed screens went inline)
+        appearance.titleTextAttributes = [.font: condensedHeavy(size: 20)]
         appearance.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
         navBar.standardAppearance = appearance
         navBar.scrollEdgeAppearance = appearance

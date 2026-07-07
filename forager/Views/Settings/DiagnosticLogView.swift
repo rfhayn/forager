@@ -41,8 +41,13 @@ struct DiagnosticLogView: View {
                 }
             }
         }
-        .navigationTitle("Diagnostic Log")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            BroadsheetMasthead(title: "Diagnostic Log")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .background(ForagerTheme.backgroundCanvas)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {

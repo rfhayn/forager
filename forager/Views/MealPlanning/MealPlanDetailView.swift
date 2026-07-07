@@ -73,6 +73,29 @@ struct MealPlanDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Editable broadsheet masthead — long-press to rename
+            HStack {
+                if isEditingTitle {
+                    TextField("Plan name", text: $editedTitle)
+                        .font(ForagerTheme.detailTitle)
+                        .submitLabel(.done)
+                        .onSubmit { savePlanTitle() }
+                } else {
+                    Text(mealPlan.name ?? "Meal Plan")
+                        .font(ForagerTheme.detailTitle)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .onLongPressGesture {
+                            editedTitle = mealPlan.name ?? ""
+                            isEditingTitle = true
+                        }
+                }
+                Spacer()
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.top, ForagerTheme.Spacing.xs)
+            .padding(.bottom, ForagerTheme.Spacing.sm)
+
             // Fixed day strip
             dayStripView
 
@@ -104,25 +127,6 @@ struct MealPlanDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                // Matches the global inline nav-title voice (condensed heavy 17)
-                if isEditingTitle {
-                    TextField("Plan name", text: $editedTitle)
-                        .font(.system(size: 17, weight: .heavy).width(.condensed))
-                        .multilineTextAlignment(.center)
-                        .submitLabel(.done)
-                        .onSubmit { savePlanTitle() }
-                } else {
-                    Text(mealPlan.name ?? "Meal Plan")
-                        .font(.system(size: 17, weight: .heavy).width(.condensed))
-                        .onLongPressGesture {
-                            editedTitle = mealPlan.name ?? ""
-                            isEditingTitle = true
-                        }
-                }
-            }
-        }
         .overlay {
             if isBulkAdding { bulkAddOverlay }
         }

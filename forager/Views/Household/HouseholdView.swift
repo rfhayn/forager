@@ -43,6 +43,11 @@ struct HouseholdView: View {
 
     var body: some View {
         List {
+            BroadsheetMasthead(title: "Household")
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
             if let household = householdService.currentHousehold {
                 householdHeader(household)
                     .listRowBackground(Color.clear)
@@ -68,8 +73,8 @@ struct HouseholdView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Household")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         // M10.6.16: Re-run when currentHousehold changes (e.g., after accepting invitation)
         .task(id: householdService.currentHousehold?.id) {
             isLoadingParticipants = true

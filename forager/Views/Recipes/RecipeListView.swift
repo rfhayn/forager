@@ -133,6 +133,9 @@ struct RecipeListView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                BroadsheetMasthead(title: "Recipes")
+                    .padding(.horizontal, ForagerTheme.Spacing.lg)
+
                 // M9.26: Filter pills always visible (even when empty)
                 filterPillRow
 
@@ -145,7 +148,7 @@ struct RecipeListView: View {
                 }
             }
         }
-        .navigationTitle("Recipes")
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 HStack(spacing: ForagerTheme.Spacing.sm) {

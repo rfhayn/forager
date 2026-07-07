@@ -53,6 +53,12 @@ struct SettingsView: View {
     var body: some View {
         // M15.1: NavigationView removed — SettingsView is inside NavigationStack from TabView
         List {
+            // Broadsheet masthead — screen name as content, bar stays capsules-only
+            BroadsheetMasthead(title: "Settings")
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
             // M7.2.1: Household Management
             householdSection
                 .listRowBackground(Color.clear)
@@ -98,7 +104,8 @@ struct SettingsView: View {
                 .listRowSeparator(.hidden)
         }
         .listStyle(.plain)
-        .navigationTitle("Settings")
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
         .sheet(isPresented: $showingPrivacyPolicy) {
