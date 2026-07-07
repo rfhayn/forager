@@ -32,12 +32,12 @@ struct AcceptInvitationSheet: View {
                 // Title
                 VStack(spacing: 8) {
                     Text("Join Household?")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
                     
                     // Display household invitation
                     Text("Household Invitation")
-                        .font(.title2)
+                        .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 
@@ -72,11 +72,8 @@ struct AcceptInvitationSheet: View {
                             Text("Join Household")
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ForagerTheme.accentPrimary)
-                        .foregroundStyle(.white)
-                        .cornerRadius(ForagerTheme.Radius.md)
                     }
+                    .buttonStyle(ForagerPrimaryButtonStyle())
                     .disabled(isAccepting)
                     
                     Button {
@@ -102,7 +99,7 @@ struct AcceptInvitationSheet: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                             Text(isRetrying ? "Checking for household..." : "Joining household...")
-                                .font(.headline)
+                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         }
                         .padding(40)
                         .background(.regularMaterial)

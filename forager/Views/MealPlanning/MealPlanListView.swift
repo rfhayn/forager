@@ -48,7 +48,7 @@ struct MealPlansListView: View {
 
     var body: some View {
         contentView
-            .navigationTitle("Meal Plans")
+            .navigationTitle("")
             .toolbar {
                 if ProcessInfo.processInfo.isiOSAppOnMac {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -125,6 +125,18 @@ struct MealPlansListView: View {
                 }
             } else {
                 List {
+                    BroadsheetMasthead(title: "Meal Plans")
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
+                    // reskin-provisions-press: ink band section headers
+                    if !activePlans.isEmpty {
+                        ForagerSectionHeader(title: "Active", count: activePlans.count)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
+                    }
                     // Active plans
                     ForEach(activePlans, id: \.objectID) { plan in
                         ZStack {
@@ -156,6 +168,12 @@ struct MealPlansListView: View {
                         }
                     }
 
+                    if !upcomingPlans.isEmpty {
+                        ForagerSectionHeader(title: "Upcoming", count: upcomingPlans.count)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 8, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
+                    }
                     // Upcoming plans
                     ForEach(upcomingPlans, id: \.objectID) { plan in
                         ZStack {
@@ -208,21 +226,17 @@ struct MealPlansListView: View {
                                 }
                             }
                         } header: {
-                            Button {
-                                withAnimation { showCompleted.toggle() }
-                            } label: {
-                                HStack(spacing: ForagerTheme.Spacing.sm) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(ForagerTheme.textTertiary)
-                                    Text("Completed (\(completedPlans.count))")
-                                        .font(ForagerTheme.secondaryFont)
-                                        .foregroundStyle(ForagerTheme.textSecondary)
-                                    Spacer()
-                                    Image(systemName: showCompleted ? "chevron.up" : "chevron.down")
-                                        .font(.caption)
-                                        .foregroundStyle(ForagerTheme.textTertiary)
-                                }
-                            }
+                            // reskin-provisions-press: ink band with collapse chevron —
+                            // inset to match the grocery list-detail band (not full-bleed)
+                            ForagerSectionHeader(
+                                title: "Completed",
+                                count: completedPlans.count,
+                                isExpanded: $showCompleted
+                            )
+                            .textCase(nil)
+                            .padding(.horizontal, ForagerTheme.Spacing.lg)
+                            .padding(.top, 8)
+                            .listRowInsets(EdgeInsets())
                         }
                     }
                 }
@@ -328,29 +342,30 @@ struct MealPlanSummaryCard: View {
                         .submitLabel(.done)
                         .onSubmit { saveName() }
                 } else {
+                    // Rename moved to the card context menu — a gesture on
+                    // the name Text swallows taps meant for the row's hidden
+                    // NavigationLink
                     Text(mealPlan.name ?? "Unnamed Plan")
                         .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textPrimary)
-                        .onLongPressGesture {
-                            editedName = mealPlan.name ?? ""
-                            isEditingName = true
-                        }
                 }
                 Spacer()
                 if status == .active {
-                    Text("Active")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .padding(.horizontal, ForagerTheme.Spacing.sm)
-                        .padding(.vertical, 2)
-                        .background(ForagerTheme.accentTint)
-                        .clipShape(Capsule())
+                    // reskin-provisions-press: printed tomato tag
+                    Text("ACTIVE")
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.accentPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
             }
 
-            // Date range
+            // Date range — condensed meta (crate-label voice)
             Text(dateRangeText)
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.footnoteFont)
                 .foregroundStyle(ForagerTheme.textSecondary)
 
             // Day dots — left-aligned to match Lists/Recipes card style
@@ -379,9 +394,23 @@ struct MealPlanSummaryCard: View {
                 .buttonStyle(.borderless)
             }
         }
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet block — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
         .opacity(status == .completed ? 0.6 : 1.0)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .contextMenu {
+            Button {
+                editedName = mealPlan.name ?? ""
+                isEditingName = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(mealPlan.name ?? "Unnamed Plan"), \(dateRangeText), \(plannedMeals.count) of \(Int(mealPlan.duration)) days planned")
         .accessibilityHint("Double tap to open meal plan")
@@ -408,12 +437,12 @@ struct MealPlanSummaryCard: View {
                     .foregroundStyle(isPlanned ? ForagerTheme.buttonPrimaryText : ForagerTheme.textTertiary)
                     .frame(width: dayCircleSize, height: dayCircleSize)
                     .background(
-                        Circle()
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                             .fill(isPlanned ? ForagerTheme.accentPrimary : .clear)
                     )
                     .overlay(
-                        Circle()
-                            .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                            .strokeBorder(isPlanned ? .clear : ForagerTheme.borderDefault, lineWidth: 1.5)
                     )
 
                 if index < daysInPlan.count - 1 {
@@ -431,7 +460,7 @@ struct MealPlanSummaryCard: View {
         HStack {
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
                 Text("TONIGHT")
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.system(size: 11, weight: .semibold).width(.condensed))
                     .tracking(0.5)
                     .foregroundStyle(ForagerTheme.textTertiary)
 
@@ -440,11 +469,11 @@ struct MealPlanSummaryCard: View {
                         Image(systemName: option.icon)
                         Text(option.rawValue)
                     }
-                    .font(ForagerTheme.secondaryFont.bold())
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .foregroundStyle(ForagerTheme.textPrimary)
                 } else if let recipe = meal.recipe {
                     Text("\(recipe.recipeDisplayTitle) · \(recipe.recipeServingsDescription)")
-                        .font(ForagerTheme.secondaryFont.bold())
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         .foregroundStyle(ForagerTheme.textPrimary)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)

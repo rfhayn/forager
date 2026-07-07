@@ -26,7 +26,7 @@ struct ImportGuideOverlay: View {
         (
             target: "ingredientRow",
             title: "Ingredient Status",
-            description: "forager builds a personal ingredient library that learns where you buy things and how to categorize them. The more recipes you import, the smarter it gets.\n\n✅ Matched: already in your library\n🟡 Needs category: recognized, but needs a store aisle\n➕ New: first time seeing this ingredient"
+            description: "forager builds a personal ingredient library that learns where you buy things and how to categorize them. The more recipes you import, the smarter it gets.\n\nMatched ingredients show no marker — they're already in your library. A dashed circle means an ingredient needs a category. NEW marks one forager hasn't seen before."
         ),
         (
             target: "smartIndicator",
@@ -136,68 +136,31 @@ struct ImportGuideOverlay: View {
     }
 
     private var cardContent: some View {
-        VStack(spacing: 16) {
-            // Step counter + skip
-            HStack {
-                if currentStep > 0 {
-                    Button { goBack() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                }
-                Spacer()
-                Text("\(currentStep + 1) of \(steps.count)")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-                Spacer()
-                Button { complete() } label: {
-                    Text("Skip")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-            }
-
-            Text(step.title)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-
-            Text(step.description)
-                .font(.body)
-                .foregroundStyle(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-
+        // reskin-provisions-press: shared print card (matte paper + ink band)
+        CoachMarkCard(
+            stepIndex: currentStep,
+            stepCount: steps.count,
+            title: step.title,
+            description: step.description,
+            onBack: currentStep > 0 ? { goBack() } : nil,
+            onSkip: currentStep < steps.count - 1 ? { complete() } : nil
+        ) {
             if currentStep == steps.count - 1 {
                 Button { complete() } label: {
                     Text("Got It")
-                        .font(.headline)
+                        .font(ForagerTheme.bodyFont.bold())
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(ForagerTheme.accentPrimary)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(ForagerTheme.buttonPrimaryText)
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
                 }
-                .padding(.top, 8)
             } else {
                 Text("Tap anywhere to continue")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.top, 4)
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
             }
         }
-        .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .environment(\.colorScheme, .dark)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-        )
         .onTapGesture {
             if currentStep < steps.count - 1 {
                 advanceStep()

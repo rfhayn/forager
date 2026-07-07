@@ -11,10 +11,10 @@
 //     builds so testers can enable logging and share log entries with the
 //     developer. Default is now OFF in Release (users opt in via Settings);
 //     DEBUG builds keep default ON.
-//   - **TODO before the next App Store submission**: either (a) re-gate behind
-//     a BETA compilation flag that only TestFlight builds set, or (b) keep the
-//     code compiled but verify App Store Review is OK with a user-optional
-//     diagnostic logger that writes to Documents/forager-diagnostics.log.
+//   - reskin-provisions-press (2026-07-06): TODO resolved — the Settings >
+//     Diagnostics section is re-gated behind `#if DEBUG` for the submission
+//     build. The logger stays compiled (defaults OFF in Release; only devices
+//     that opted in while the beta UI existed still write logs).
 //
 
 import Foundation

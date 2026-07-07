@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>forager — Provisions Press × Liquid Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 24px 80px;
+    background: #26231F; color: #E8E6DF;
+    font-family: 'Archivo', system-ui, sans-serif;
+  }
+  .head { max-width: 1240px; margin: 0 auto 8px; }
+  .head h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 30px; letter-spacing: 0.01em; text-transform: uppercase; margin: 0 0 6px; }
+  .head p { margin: 0 0 4px; color: #B5B1A8; font-size: 14.5px; line-height: 1.55; max-width: 860px; }
+  .head .key { color: #D89A2B; }
+  .section-label { max-width: 1240px; margin: 40px auto 14px; font-family: 'Archivo Narrow', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 13px; color: #D89A2B; border-bottom: 1px solid #4A453E; padding-bottom: 6px; }
+
+  .row { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 360px)); gap: 28px; justify-content: start; }
+  .cell .cap { font-size: 12.5px; color: #B5B1A8; margin: 10px 2px 0; line-height: 1.5; }
+  .cell .cap b { color: #E8E6DF; }
+
+  .phone { border-radius: 34px; padding: 12px; background: #000; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .screen { border-radius: 24px; overflow: hidden; height: 660px; position: relative; display: flex; flex-direction: column; }
+  .content { flex: 1; overflow: hidden; padding: 52px 16px 90px; }
+  .sb { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 12px 20px 0; font-size: 12px; font-weight: 600; z-index: 30; }
+
+  /* ---------- LIGHT TOKENS ---------- */
+  .light { background: #E8E6DF; color: #201D1A; }
+  .light .muted { color: #6C665E; }
+
+  /* ---------- glass chrome (simulated Liquid Glass) ---------- */
+  .glassbar {
+    position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 20;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 6px 12px; border-radius: 26px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.42), rgba(255,255,255,0.18));
+    backdrop-filter: blur(18px) saturate(1.6);
+    -webkit-backdrop-filter: blur(18px) saturate(1.6);
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: 0 8px 28px rgba(32,29,26,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #6C665E; }
+  .tab .ic { width: 24px; height: 24px; border-radius: 7px; background: #6C665E33; }
+  .tab.on { color: #C8402E; }
+  .tab.on .ic { background: #C8402E; box-shadow: 0 2px 8px rgba(200,64,46,0.35); }
+
+  .glassnav {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+    padding: 34px 16px 10px;
+    background: linear-gradient(180deg, rgba(232,230,223,0.85), rgba(232,230,223,0.55));
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid rgba(32,29,26,0.08);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .glassnav .nt { font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .glassnav .pill {
+    font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+    color: #fff; padding: 6px 12px; border-radius: 999px;
+    background: linear-gradient(135deg, rgba(200,64,46,0.92), rgba(200,64,46,0.78));
+    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 3px 10px rgba(200,64,46,0.3);
+  }
+
+  /* ---------- print content ---------- */
+  .h-title { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 32px; text-transform: uppercase; line-height: 1.02; margin: 14px 2px 2px; letter-spacing: 0.005em; }
+  .h-sub { font-family: 'Space Mono', monospace; font-size: 10.5px; letter-spacing: 0.03em; margin: 6px 2px 12px; }
+  .h-sub .accent { color: #C8402E; font-weight: 700; }
+
+  .store { background: #201D1A; color: #E8E6DF; margin: 14px 0 2px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 3px; }
+  .store .nm { font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .store .co { font-family: 'Space Mono', monospace; font-size: 10px; color: #D89A2B; }
+
+  .lrow { display: flex; align-items: center; gap: 11px; padding: 11px 4px; border-bottom: 1.5px solid rgba(32,29,26,0.09); }
+  .chk { width: 20px; height: 20px; border: 2px solid #201D1A; border-radius: 4px; flex: none; }
+  .chk.done { background: #C8402E; border-color: #C8402E; position: relative; }
+  .chk.done::after { content: "✓"; color: #fff; font-size: 13px; position: absolute; top: -1px; left: 3px; }
+  .qty { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 12.5px; min-width: 48px; flex: none; }
+  .inm { flex: 1; font-size: 15px; font-weight: 500; }
+  .inm.done { text-decoration: line-through; color: #9A948C; }
+  .ctag { flex: none; font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; color: #fff; padding: 3px 7px; border-radius: 2px; }
+
+  /* re-derived category palette (hue-family continuity, print gamut) */
+  .c-produce { background: #2E7A52; }        /* green family kept, deepened to print green */
+  .c-dairy { background: #34689A; }          /* blue kept */
+  .c-meat { background: #C8402E; }           /* red kept = tomato */
+  .c-bread { background: #B0762A; color:#fff; } /* golden brown kept */
+  .c-pantry { background: #77563A; }         /* brown kept */
+  .c-frozen { background: #3C7D96; }         /* ice blue kept */
+  .c-bev { background: #6A4E92; }            /* purple kept */
+  .c-snacks { background: #C2662C; }         /* orange kept */
+  .c-seafood { background: #1F6E6A; }        /* teal anchor */
+  .c-house { background: #5E6E60; }          /* grey-green kept */
+  .c-unc { background: #7A7368; }            /* neutral kept */
+
+  /* ---------- recipe detail ---------- */
+  .hero { margin: 10px -16px 0; height: 150px; background: linear-gradient(160deg, #C2662C, #C8402E 60%, #8F2E22); position: relative; }
+  .hero .band { position: absolute; left: 0; right: 0; bottom: 0; background: #201D1A; color: #E8E6DF; padding: 8px 16px; display: flex; justify-content: space-between; align-items: baseline; }
+  .hero .band .src { font-family: 'Space Mono', monospace; font-size: 9.5px; color: #D89A2B; }
+  .hero .band .tm { font-family: 'Space Mono', monospace; font-size: 10px; }
+  .r-title { font-family: 'Anton', sans-serif; font-size: 27px; text-transform: uppercase; line-height: 1.04; margin: 12px 2px 4px; }
+  .r-meta { display: flex; gap: 8px; margin: 8px 0 4px; }
+  .r-chip { font-family: 'Space Mono', monospace; font-size: 10px; padding: 4px 8px; border: 1.5px solid #201D1A; border-radius: 3px; }
+  .r-chip b { color: #C8402E; }
+  .ing-head { font-family: 'Archivo Narrow', sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; margin: 16px 2px 4px; display: flex; align-items: center; gap: 8px; }
+  .ing-head::after { content: ""; flex: 1; height: 2px; background: #201D1A; }
+
+  /* ---------- DARK TOKENS ---------- */
+  .dark { background: #191714; color: #E4E1D8; }
+  .dark .lrow { border-bottom-color: rgba(228,225,216,0.1); }
+  .dark .chk { border-color: #E4E1D8; }
+  .dark .chk.done { background: #E05A44; border-color: #E05A44; }
+  .dark .inm.done { color: #6E6A62; }
+  .dark .store { background: #E4E1D8; color: #191714; }
+  .dark .store .co { color: #9A6E1B; }
+  .dark .h-sub .accent { color: #E05A44; }
+  .dark .glassnav {
+    background: linear-gradient(180deg, rgba(25,23,20,0.85), rgba(25,23,20,0.55));
+    border-bottom-color: rgba(228,225,216,0.08);
+  }
+  .dark .glassbar {
+    background: linear-gradient(135deg, rgba(50,46,40,0.55), rgba(50,46,40,0.3));
+    border-color: rgba(228,225,216,0.16);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(228,225,216,0.12);
+  }
+  .dark .tab { color: #8F8A80; }
+  .dark .tab .ic { background: #8F8A8033; }
+  .dark .tab.on { color: #E05A44; }
+  .dark .tab.on .ic { background: #E05A44; box-shadow: 0 2px 8px rgba(224,90,68,0.35); }
+  .dark .glassnav .pill { background: linear-gradient(135deg, rgba(224,90,68,0.92), rgba(224,90,68,0.78)); }
+
+  /* ---------- REDUCE TRANSPARENCY ---------- */
+  .rt .glassbar {
+    background: #DEDCD3; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 1px solid rgba(32,29,26,0.14); box-shadow: 0 4px 16px rgba(32,29,26,0.14);
+  }
+  .rt .glassnav { background: #E4E2DA; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .rt .glassnav .pill { background: #C8402E; backdrop-filter: none; border-color: transparent; }
+
+  /* ---------- category strip ---------- */
+  .catstrip { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .catstrip .ctag { font-size: 11px; padding: 6px 12px; border-radius: 2px; }
+  .note { max-width: 1240px; margin: 10px auto 0; font-size: 12.5px; color: #B5B1A8; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Provisions Press × Liquid Glass</h1>
+  <p><span class="key">The pairing:</span> matte editorial-print <b>content</b> (butcher paper, ink, crate-label type, printed tags, mono quantities) under glossy translucent <b>chrome</b> (Liquid Glass tab bar, nav, CTAs — retained and re-tinted by the palette). Glass floats above print; print never imitates glass.</p>
+  <p>Web stand-ins: Anton → SF Compact heavy · Archivo → SF Pro Text · Archivo Narrow → SF Compact condensed · Space Mono → SF Mono.</p>
+</div>
+
+<div class="section-label">Light mode — grocery list · recipe detail</div>
+<div class="row">
+
+  <div class="cell">
+    <div class="phone"><div class="screen light">
+      <div class="sb"><span>9:41</span><span>▮▮▮ ▮</span></div>
+      <div class="glassnav"><span class="nt">Lists</span><span class="pill">+ Add</span></div>
+      <div class="content">
+        <div class="h-title">This Week</div>
+        <div class="h-sub"><span class="accent">18 items</span> · 2 stores · <span class="accent">5 done</span></div>
+        <div class="store"><span class="nm">Whole Foods</span><span class="co">08 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">2 lb</span><span class="inm">carrots</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk done"></span><span class="qty">1 gal</span><span class="inm done">whole milk</span><span class="ctag c-dairy">dairy</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">6 oz</span><span class="inm">baby spinach</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">12 oz</span><span class="inm">sourdough loaf</span><span class="ctag c-bread">bread</span></div>
+        <div class="store"><span class="nm">Trader Joe's</span><span class="co">10 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">1 lb</span><span class="inm">ground beef</span><span class="ctag c-meat">meat</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">3</span><span class="inm">lemons</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">1 jar</span><span class="inm">tomato passata</span><span class="ctag c-pantry">pantry</span></div>
+      </div>
+      <div class="glassbar">
+        <div class="tab on"><span class="ic"></span>Lists</div>
+        <div class="tab"><span class="ic"></span>Recipes</div>
+        <div class="tab"><span class="ic"></span>Plan</div>
+        <div class="tab"><span class="ic"></span>House</div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Grocery list.</b> Print content: ink store bands, flat printed category tags, SF Mono quantities. Glass chrome: nav bar, tomato CTA pill, floating tab bar picking up paper tint.</div>
+  </div>
+
+  <div class="cell">
+    <div class="phone"><div class="screen light">
+      <div class="sb"><span>9:41</span><span>▮▮▮ ▮</span></div>
+      <div class="glassnav"><span class="nt">Recipes</span><span class="pill">Add to list</span></div>
+      <div class="content">
+        <div class="hero">
+          <div class="band"><span class="src">seriouseats.com</span><span class="tm">45 MIN · SERVES 4</span></div>
+        </div>
+        <div class="r-title">Weeknight Bolognese</div>
+        <div class="r-meta">
+          <span class="r-chip"><b>9</b> ingredients</span>
+          <span class="r-chip"><b>6</b> steps</span>
+          <span class="r-chip">last made <b>05/12</b></span>
+        </div>
+        <div class="ing-head">Ingredients</div>
+        <div class="lrow"><span class="qty">1 lb</span><span class="inm">ground beef</span><span class="ctag c-meat">meat</span></div>
+        <div class="lrow"><span class="qty">1 jar</span><span class="inm">tomato passata</span><span class="ctag c-pantry">pantry</span></div>
+        <div class="lrow"><span class="qty">2</span><span class="inm">carrots, diced</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="qty">1/2 c</span><span class="inm">whole milk</span><span class="ctag c-dairy">dairy</span></div>
+      </div>
+      <div class="glassbar">
+        <div class="tab"><span class="ic"></span>Lists</div>
+        <div class="tab on"><span class="ic"></span>Recipes</div>
+        <div class="tab"><span class="ic"></span>Plan</div>
+        <div class="tab"><span class="ic"></span>House</div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Recipe detail.</b> Hero image with ink attribution band (source in mono mustard — the price-tag move). Crate-label title, bordered mono stat chips, same row grammar as lists.</div>
+  </div>
+
+</div>
+
+<div class="section-label">Dark mode (ink-paper inversion) · Reduce Transparency fallback</div>
+<div class="row">
+
+  <div class="cell">
+    <div class="phone"><div class="screen dark">
+      <div class="sb"><span>9:41</span><span>▮▮▮ ▮</span></div>
+      <div class="glassnav"><span class="nt">Lists</span><span class="pill">+ Add</span></div>
+      <div class="content">
+        <div class="h-title">This Week</div>
+        <div class="h-sub"><span class="accent">18 items</span> · 2 stores · <span class="accent">5 done</span></div>
+        <div class="store"><span class="nm">Whole Foods</span><span class="co">08 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">2 lb</span><span class="inm">carrots</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk done"></span><span class="qty">1 gal</span><span class="inm done">whole milk</span><span class="ctag c-dairy">dairy</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">6 oz</span><span class="inm">baby spinach</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">12 oz</span><span class="inm">sourdough loaf</span><span class="ctag c-bread">bread</span></div>
+        <div class="store"><span class="nm">Trader Joe's</span><span class="co">10 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">1 lb</span><span class="inm">ground beef</span><span class="ctag c-meat">meat</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">3</span><span class="inm">lemons</span><span class="ctag c-produce">produce</span></div>
+      </div>
+      <div class="glassbar">
+        <div class="tab on"><span class="ic"></span>Lists</div>
+        <div class="tab"><span class="ic"></span>Recipes</div>
+        <div class="tab"><span class="ic"></span>Plan</div>
+        <div class="tab"><span class="ic"></span>House</div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Dark = ink paper, not grey.</b> Warm near-black `#191714` canvas, paper-cream text, store bands invert to paper-on-ink. Tomato lifts to `#E05A44`; category tags keep saturation.</div>
+  </div>
+
+  <div class="cell">
+    <div class="phone"><div class="screen light rt">
+      <div class="sb"><span>9:41</span><span>▮▮▮ ▮</span></div>
+      <div class="glassnav"><span class="nt">Lists</span><span class="pill">+ Add</span></div>
+      <div class="content">
+        <div class="h-title">This Week</div>
+        <div class="h-sub"><span class="accent">18 items</span> · 2 stores · <span class="accent">5 done</span></div>
+        <div class="store"><span class="nm">Whole Foods</span><span class="co">08 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">2 lb</span><span class="inm">carrots</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk done"></span><span class="qty">1 gal</span><span class="inm done">whole milk</span><span class="ctag c-dairy">dairy</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">6 oz</span><span class="inm">baby spinach</span><span class="ctag c-produce">produce</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">12 oz</span><span class="inm">sourdough loaf</span><span class="ctag c-bread">bread</span></div>
+        <div class="store"><span class="nm">Trader Joe's</span><span class="co">10 items</span></div>
+        <div class="lrow"><span class="chk"></span><span class="qty">1 lb</span><span class="inm">ground beef</span><span class="ctag c-meat">meat</span></div>
+      </div>
+      <div class="glassbar">
+        <div class="tab on"><span class="ic"></span>Lists</div>
+        <div class="tab"><span class="ic"></span>Recipes</div>
+        <div class="tab"><span class="ic"></span>Plan</div>
+        <div class="tab"><span class="ic"></span>House</div>
+      </div>
+    </div></div>
+    <div class="cap"><b>Reduce Transparency.</b> Glass falls back to tinted opaque paper surfaces; identity fully survives because it lives in the print layer, not the glass.</div>
+  </div>
+
+</div>
+
+<div class="section-label">Re-derived category palette — hue-family continuity, print gamut</div>
+<div class="catstrip">
+  <span class="ctag c-produce">produce</span>
+  <span class="ctag c-dairy">dairy &amp; fridge</span>
+  <span class="ctag c-meat">deli &amp; meat</span>
+  <span class="ctag c-bread">bread &amp; bakery</span>
+  <span class="ctag c-pantry">pantry &amp; canned</span>
+  <span class="ctag c-frozen">frozen</span>
+  <span class="ctag c-bev">beverages</span>
+  <span class="ctag c-snacks">snacks &amp; other</span>
+  <span class="ctag c-seafood">seafood</span>
+  <span class="ctag c-house">household</span>
+  <span class="ctag c-unc">uncategorized</span>
+</div>
+<p class="note">Each category keeps its learned hue family (produce green, dairy blue, meat red…) but re-tuned into the print gamut — deeper, inkier, flat. Meat aligns with the tomato primary; seafood claims the teal anchor. All ≥ 3:1 on butcher paper. In dark mode tags keep these fills (verified against `#191714`).</p>
+
+</body>
+</html>

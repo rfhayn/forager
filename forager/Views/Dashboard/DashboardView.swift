@@ -143,64 +143,66 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.lg) {
-                // Date subtitle
-                Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()))
-                    .font(ForagerTheme.secondaryFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.md) {
+                BroadsheetMasthead(title: greeting)
+
+                // Date eyebrow — condensed dateline (crate-label voice)
+                Text(Date().formatted(.dateTime.weekday(.wide).month(.wide).day()).uppercased())
+                    .font(ForagerTheme.footnoteFont)
+                    .tracking(0.8)
+                    .foregroundStyle(ForagerTheme.textTertiary)
                     .padding(.top, ForagerTheme.Spacing.xs)
 
-                // 1. Tonight's Meal (always visible)
+                // reskin-provisions-press: broadsheet sections — ink band +
+                // flat content, no floating boxes.
+
+                // 1. Tonight
+                sectionBand("Tonight")
                 if let meal = nextMeal {
                     Button { selectedTab = .mealPlans } label: {
                         nextMealCard(meal: meal)
                     }
                     .buttonStyle(.plain)
                 } else {
-                    ghostCard(
-                        icon: "fork.knife",
-                        title: "Tonight's Meal",
-                        message: "No recipe for today.",
-                        action: "Tap to pick one."
-                    ) { showingRecipePicker = true }
+                    emptySectionRow(message: "No recipe for today.", action: "Pick one") {
+                        showingRecipePicker = true
+                    }
                 }
 
-                // 2. Shopping List (always visible)
+                // 2. Shopping List
+                sectionBand("Shopping List")
                 if let list = activeGroceryList {
                     NavigationLink(destination: GroceryListDetailView(weeklyList: list)) {
                         WeeklyListRowView(weeklyList: list)
                     }
                     .buttonStyle(.plain)
                 } else {
-                    ghostCard(
-                        icon: "cart",
-                        title: "Shopping List",
-                        message: "No shopping list.",
-                        action: "Tap to create one."
-                    ) { showingCreateListOptions = true }
+                    emptySectionRow(message: "No shopping list.", action: "Create one") {
+                        showingCreateListOptions = true
+                    }
                 }
 
-                // 3. Meal Plan Overview (always visible)
+                // 3. Meal Plan
+                sectionBand("Meal Plan")
                 if let plan = mealPlanService.activeMealPlan {
                     Button { selectedTab = .mealPlans } label: {
                         mealPlanOverviewCard(plan: plan)
                     }
                     .buttonStyle(.plain)
                 } else {
-                    ghostCard(
-                        icon: "calendar",
-                        title: "Meal Plan",
-                        message: "No meal plan this week.",
-                        action: "Tap to create one."
-                    ) { showingCreateMealPlan = true }
+                    emptySectionRow(message: "No meal plan this week.", action: "Create one") {
+                        showingCreateMealPlan = true
+                    }
                 }
 
-                // 4. Tomorrow's Meal (only if data exists)
+                // 4. Tomorrow (only if data exists)
                 if let meal = tomorrowMeal {
+                    sectionBand("Tomorrow")
                     tomorrowMealCard(meal: meal)
                 }
 
                 quickActionsBar
+                    .padding(.top, ForagerTheme.Spacing.sm)
             }
             .padding(.horizontal, ForagerTheme.Spacing.md)
             .padding(.bottom, ForagerTheme.Spacing.xl)
@@ -224,7 +226,7 @@ struct DashboardView: View {
             Button("From Meal Plan") { selectedTab = .lists }
             Button("Empty List") { selectedTab = .lists }
         }
-        .navigationTitle(greeting)
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink {
@@ -288,35 +290,44 @@ struct DashboardView: View {
         return nil
     }
 
-    // MARK: - Ghost Card (empty state with dashed border)
+    // MARK: - Broadsheet Section Elements (reskin-provisions-press)
 
-    private func ghostCard(icon: String, title: String, message: String, action: String, onTap: @escaping () -> Void) -> some View {
+    /// Ink band section header — the print grammar's section divider.
+    private func sectionBand(_ title: String) -> some View {
+        HStack {
+            Text(title.uppercased())
+                .font(ForagerTheme.footnoteFont)
+                .tracking(0.8)
+                .foregroundStyle(ForagerTheme.adaptiveColor(lightHex: "#E8E6DF", darkHex: "#191714"))
+            Spacer()
+        }
+        .padding(.horizontal, ForagerTheme.Spacing.md)
+        .padding(.vertical, 6)
+        .background(ForagerTheme.adaptiveColor(lightHex: "#201D1A", darkHex: "#E4E1D8"))
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
+    }
+
+    /// Flat empty state under a band: message + tomato action, hairline rule.
+    private func emptySectionRow(message: String, action: String, onTap: @escaping () -> Void) -> some View {
         Button(action: onTap) {
-            VStack(spacing: ForagerTheme.Spacing.sm) {
-                HStack {
-                    Image(systemName: icon)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                    Text(title)
-                        .font(ForagerTheme.cardTitle)
-                        .foregroundStyle(ForagerTheme.textTertiary)
-                    Spacer()
-                }
-
+            HStack {
                 Text(message)
                     .font(ForagerTheme.secondaryFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
-
-                Text(action)
-                    .font(ForagerTheme.captionFont)
+                Spacer()
+                Text(action.uppercased())
+                    .font(.system(size: 12, weight: .bold).width(.condensed))
+                    .tracking(0.5)
                     .foregroundStyle(ForagerTheme.accentPrimary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(ForagerTheme.Spacing.md)
-            .overlay(
-                RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg)
-                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [8, 4]))
-                    .foregroundStyle(ForagerTheme.borderSubtle)
-            )
+            .padding(.horizontal, ForagerTheme.Spacing.xs)
+            .padding(.vertical, ForagerTheme.Spacing.sm)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(ForagerTheme.borderSubtle)
+                    .frame(height: 1.5)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -324,20 +335,11 @@ struct DashboardView: View {
     // MARK: - Tomorrow's Meal Card
 
     private func tomorrowMealCard(meal: PlannedMeal) -> some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            HStack {
-                Image(systemName: "fork.knife")
-                    .foregroundStyle(ForagerTheme.accentTertiary)
-                Text("Tomorrow")
-                    .font(ForagerTheme.cardTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Spacer()
-            }
-
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
             if let recipe = meal.recipe {
                 Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont)
-                    .fontWeight(.medium)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.semibold)
                     .foregroundStyle(ForagerTheme.textPrimary)
                     .lineLimit(2)
 
@@ -355,26 +357,20 @@ struct DashboardView: View {
                 }
             } else if let quickOption = meal.quickOption {
                 Text(quickOption)
-                    .font(ForagerTheme.secondaryFont)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.medium)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
-        .foragerGlassCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, ForagerTheme.Spacing.xs)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
     }
 
     // MARK: - Next Meal Card
 
     private func nextMealCard(meal: PlannedMeal) -> some View {
-        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            HStack {
-                Image(systemName: "fork.knife")
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-                Text("Next Up")
-                    .font(ForagerTheme.cardTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Spacer()
-            }
-
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
             // Meal type + timing
             let mealType = meal.mealType?.capitalized ?? "Meal"
             let timing = nextMealTimeLabel
@@ -385,8 +381,8 @@ struct DashboardView: View {
             // Recipe or quick option
             if let recipe = meal.recipe {
                 Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont)
-                    .fontWeight(.medium)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.semibold)
                     .foregroundStyle(ForagerTheme.textPrimary)
                     .lineLimit(2)
 
@@ -404,32 +400,29 @@ struct DashboardView: View {
                 }
             } else if let quickOption = meal.quickOption {
                 Text(quickOption)
-                    .font(ForagerTheme.secondaryFont)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(.medium)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
         }
-        .foragerGlassCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, ForagerTheme.Spacing.xs)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
     }
 
     // MARK: - Meal Plan Overview Card
 
     private func mealPlanOverviewCard(plan: MealPlan) -> some View {
         VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
-            // Title row: plan name (mirrors grocery list card pattern — the
-            // list/plan NAME leads, not a generic domain label)
-            HStack {
-                Image(systemName: "calendar")
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-                Text(plan.name ?? "Current Plan")
-                    .font(ForagerTheme.cardTitle)
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                Spacer()
-            }
+            // Plan name — condensed, flat under the ink band
+            Text(plan.name ?? "Current Plan")
+                .font(.system(size: 17, weight: .bold).width(.condensed))
+                .foregroundStyle(ForagerTheme.textPrimary)
 
             // Fill status (plan name moved to title; no need to repeat here)
             if let dayData = planDaysFilled {
                 Text("\(dayData.filled) of \(dayData.total) days planned")
-                    .font(ForagerTheme.captionFont)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
 
@@ -443,12 +436,12 @@ struct DashboardView: View {
                                 .foregroundStyle(indicator.hasMeal ? ForagerTheme.buttonPrimaryText : ForagerTheme.textTertiary)
                                 .frame(width: 28, height: 28)
                                 .background(
-                                    Circle()
+                                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                         .fill(indicator.hasMeal ? ForagerTheme.accentPrimary : .clear)
                                 )
                                 .overlay(
-                                    Circle()
-                                        .strokeBorder(indicator.hasMeal ? .clear : ForagerTheme.borderDefault, lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                                        .strokeBorder(indicator.hasMeal ? .clear : ForagerTheme.borderDefault, lineWidth: 1.5)
                                 )
                         }
                         if indicator.dayLetter != indicators.last?.dayLetter {
@@ -458,7 +451,9 @@ struct DashboardView: View {
                 }
             }
         }
-        .foragerGlassCard()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, ForagerTheme.Spacing.xs)
+        .padding(.vertical, ForagerTheme.Spacing.xs)
     }
 
     // MARK: - Quick Actions Bar
@@ -485,8 +480,11 @@ struct DashboardView: View {
             .foregroundStyle(ForagerTheme.accentPrimary)
             .padding(.horizontal, ForagerTheme.Spacing.md)
             .padding(.vertical, ForagerTheme.Spacing.sm)
-            .background(ForagerTheme.accentPrimary.opacity(0.12))
-            .clipShape(Capsule())
+            .frame(maxWidth: .infinity)
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                    .stroke(ForagerTheme.accentPrimary, lineWidth: 1.5)
+            )
         }
     }
 }

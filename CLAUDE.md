@@ -55,12 +55,14 @@ Status: `COMPLETE` | `ACTIVE` | `READY` | `PLANNED`
 - Schema v11 (current). Read `docs/architecture/007-core-data-change-process.md` before changes
 - CloudKit Production schema is append-only — no destructive changes
 
-### UI Patterns
+### UI Patterns (Provisions Press — since reskin-provisions-press, 2026-07)
 - SwiftUI + `@FetchRequest`, `NavigationStack`, 4-tab Liquid Glass TabView
-- **ForagerTheme** semantic color tokens — never hardcode colors
-- Typography: SF Pro Rounded for chrome, system default for body. No serif.
+- **ForagerTheme** semantic color tokens — never hardcode colors. Palette: butcher paper `#E8E6DF` / ink `#201D1A` / tomato `#C8402E` / mustard / teal.
+- **Typography — NO `design: .rounded`, no serif.** Display/titles: system heavy/bold `.width(.condensed)` (crate-label voice). Content rows (ingredient lines, names, dates, counts-with-words): `bodyCondensed`. Plain body font for long-form only. Mono (`quantityFont*`) for PURE numerals only (band counts, %, steppers). No raw `.headline`/`.title*` on `Text` outside `Theme/`.
+- **Chrome/content split**: Liquid Glass is chrome-only (tab bar, nav capsules, sheets, floating CTAs). Content layer is matte print — no `glassEffect` on cards/rows.
+- **Broadsheet masthead**: the nav bar carries no titles; every full-screen page opens with `BroadsheetMasthead`. Modal sheets keep inline bar titles.
 - Empty states: `ContentUnavailableView`
-- Design system: `docs/prds/complete/m15-ux-design-system.md` + `docs/mockups/forager-design-system.html`
+- Design system (authoritative): `docs/design-system/style-contract.md` + `docs/design-system/token-map.md` + mockup `docs/mockups/provisions-press-liquid-glass.html` (M15 docs are historical)
 
 ### Ingredient Parsing (M8.4 + M10.6)
 - 3-tier local: RegexParser (≥0.9) → MLParser (≥0.8) → NLPParser (fallback, capped 0.75)

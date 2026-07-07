@@ -27,9 +27,9 @@ enum NavigationTab: String, CaseIterable {
     var icon: String {
         switch self {
         case .home: return "house"
-        case .lists: return "list.bullet"
+        case .lists: return "checklist"
         case .recipes: return "book"
-        case .mealPlans: return "calendar"
+        case .mealPlans: return "fork.knife"
         }
     }
 }
@@ -97,7 +97,46 @@ struct foragerApp: App {
     @State private var recipesPopToRoot = false
     @State private var mealPlansPopToRoot = false
 
+    /// reskin-provisions-press: apply the Provisions Press display voice to
+    /// UIKit-managed navigation titles (SwiftUI's .navigationTitle renders
+    /// through UINavigationBar, which ForagerTheme fonts can't reach).
+    /// Only typography is set — backgrounds/tints stay untouched so the
+    /// Liquid Glass chrome keeps its adaptive material.
+    private static func configureNavigationBarTypography() {
+        func condensedHeavy(size: CGFloat) -> UIFont {
+            let base = UIFont.systemFont(ofSize: size, weight: .heavy)
+            let descriptor = base.fontDescriptor.withDesign(.default)?
+                .addingAttributes([.traits: [
+                    UIFontDescriptor.TraitKey.width: NSNumber(value: 0.2)
+                ]]) ?? base.fontDescriptor
+            return UIFont(descriptor: descriptor.withSymbolicTraits(.traitCondensed) ?? descriptor, size: size)
+        }
+
+        let navBar = UINavigationBar.appearance()
+        navBar.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
+        navBar.titleTextAttributes = [.font: condensedHeavy(size: 17)]
+
+        // iOS 26 glass bars ignore the legacy proxy for INLINE titles (large
+        // titles still honor it) — route the same fonts through
+        // UINavigationBarAppearance. configureWithTransparentBackground()
+        // sets no background of its own, so the Liquid Glass material stays.
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        // 20pt: inline titles read as a proper crate-label stamp next to
+        // the back capsule (17 felt undersized once pushed screens went inline)
+        appearance.titleTextAttributes = [.font: condensedHeavy(size: 20)]
+        appearance.largeTitleTextAttributes = [.font: condensedHeavy(size: 34)]
+        navBar.standardAppearance = appearance
+        navBar.scrollEdgeAppearance = appearance
+        navBar.compactAppearance = appearance
+    }
+
     init() {
+        // reskin-provisions-press: crate-label navigation titles — heavy
+        // condensed system font for large titles and inline bar titles.
+        // Colors stay dynamic (nav bars remain Liquid Glass; only type changes).
+        Self.configureNavigationBarTypography()
+
         let context = PersistenceController.shared.container.viewContext
 
         let household = HouseholdService(context: context)
@@ -189,6 +228,9 @@ struct foragerApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // reskin-provisions-press: global tomato tint — SwiftUI Toggles
+            // (and other controls) don't follow the AccentColor asset on
+            // their own; root-level .tint makes switches/controls tomato.
             Group {
                 if isReady {
                     // M15.1: Liquid Glass TabView replaces CustomBottomNavigationView
@@ -200,13 +242,13 @@ struct foragerApp: App {
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
-                            Tab("Lists", systemImage: "list.bullet", value: .lists) {
+                            Tab("Lists", systemImage: "checklist", value: .lists) {
                                 NavigationStack {
                                     WeeklyListsView(popToRoot: $listsPopToRoot)
                                         .searchButton(showSearch: $showSearch)
                                 }
                             }
-                            Tab("Meals", systemImage: "calendar", value: .mealPlans) {
+                            Tab("Meals", systemImage: "fork.knife", value: .mealPlans) {
                                 NavigationStack {
                                     MealPlansListView(popToRoot: $mealPlansPopToRoot)
                                         .searchButton(showSearch: $showSearch)
@@ -309,6 +351,7 @@ struct foragerApp: App {
                         }
                 }
             }
+            .tint(ForagerTheme.accentPrimary)
             .onReceive(persistenceController.$isReady) { ready in
                 if ready {
                     withAnimation(.easeIn(duration: 0.3)) {

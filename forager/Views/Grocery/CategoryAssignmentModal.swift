@@ -128,7 +128,7 @@ struct CategoryAssignmentModal: View {
             .padding(.horizontal, ForagerTheme.Spacing.sm)
             .padding(.vertical, ForagerTheme.Spacing.xs)
             .background(ForagerTheme.surfaceAccent)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
 
             // Editable name
             VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {

@@ -121,10 +121,35 @@ struct GroceryListDetailView: View {
         ZStack {
             ForagerTheme.backgroundCanvas.ignoresSafeArea()
 
-            if listItems.isEmpty {
-                emptyStateView
-            } else {
-                shoppingListView
+            VStack(spacing: 0) {
+                // Editable broadsheet masthead — long-press to rename
+                HStack {
+                    if isEditingTitle {
+                        TextField("List name", text: $editedTitle)
+                            .font(ForagerTheme.detailTitle)
+                            .submitLabel(.done)
+                            .onSubmit { saveTitle() }
+                    } else {
+                        Text(weeklyList.name ?? "Grocery List")
+                            .font(ForagerTheme.detailTitle)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .onLongPressGesture {
+                                editedTitle = weeklyList.name ?? ""
+                                isEditingTitle = true
+                            }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.top, ForagerTheme.Spacing.xs)
+                .padding(.bottom, ForagerTheme.Spacing.sm)
+
+                if listItems.isEmpty {
+                    emptyStateView
+                } else {
+                    shoppingListView
+                }
             }
 
             // M15.3: Celebration banner
@@ -361,13 +386,18 @@ struct GroceryListDetailView: View {
         }
         .background(ForagerTheme.surfacePrimary)
         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
         .padding(.horizontal, ForagerTheme.Spacing.lg)
     }
 
     // MARK: - Shopping List with Collapsible Sections
 
-    // Header row styled to match item rows inside the card
+    // Section header band — lives in the Section's header slot so it PINS
+    // to the top while its rows scroll (plain list style pins headers);
+    // opaque canvas backing so rows don't show through around the band
     private func sectionHeaderRow(title: String, completedCount: Int, totalCount: Int, isExpanded: Binding<Bool>, colorDotHex: String? = nil) -> some View {
         ForagerSectionHeader(
             title: title,
@@ -376,8 +406,11 @@ struct GroceryListDetailView: View {
             isExpanded: isExpanded,
             colorDotHex: colorDotHex
         )
-        .listRowBackground(ForagerTheme.surfacePrimary)
-        .listRowSeparator(.hidden)
+        .padding(.horizontal, ForagerTheme.Spacing.lg)
+        .padding(.top, 10)
+        .padding(.bottom, 2)
+        .background(ForagerTheme.backgroundCanvas)
+        .listRowInsets(EdgeInsets())
     }
 
     private var shoppingListView: some View {
@@ -394,7 +427,19 @@ struct GroceryListDetailView: View {
                     let storeCompleted = allItems.filter { $0.isCompleted }.count
 
                     Section {
-                        // Store header as first row inside card
+                        // reskin-provisions-press: flat mockup grammar — store
+                        // band, then rows carrying printed category tags (no
+                        // nested category bands; category order is preserved
+                        // by the grouped source). No per-row store dot here:
+                        // the pinned band already carries the store color.
+                        if !collapsedSections.contains(storeName) {
+                            ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
+                                ForEach(items, id: \.self) { item in
+                                    itemRow(item, categoryTag: categoryName)
+                                }
+                            }
+                        }
+                    } header: {
                         sectionHeaderRow(
                             title: storeName,
                             completedCount: storeCompleted,
@@ -402,32 +447,6 @@ struct GroceryListDetailView: View {
                             isExpanded: storeExpanded,
                             colorDotHex: storeColor
                         )
-
-                        if !collapsedSections.contains(storeName) {
-                            ForEach(categoryGroups, id: \.categoryName) { categoryName, items in
-                                let catKey = "\(storeName)/\(categoryName)"
-                                let catExpanded = Binding(
-                                    get: { !collapsedCategories.contains(catKey) },
-                                    set: { if !$0 { collapsedCategories.insert(catKey) } else { collapsedCategories.remove(catKey) } }
-                                )
-
-                                let catCompleted = items.filter { $0.isCompleted }.count
-
-                                // Category header as row inside card
-                                sectionHeaderRow(
-                                    title: categoryName,
-                                    completedCount: catCompleted,
-                                    totalCount: items.count,
-                                    isExpanded: catExpanded
-                                )
-
-                                if !collapsedCategories.contains(catKey) {
-                                    ForEach(items, id: \.self) { item in
-                                        itemRow(item)
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
             } else {
@@ -440,38 +459,43 @@ struct GroceryListDetailView: View {
                     let completedCount = items.filter { $0.isCompleted }.count
 
                     Section {
-                        // Category header as first row inside card
+                        if !collapsedCategories.contains(categoryName) {
+                            ForEach(items, id: \.self) { item in
+                                itemRow(item)
+                            }
+                        }
+                    } header: {
                         sectionHeaderRow(
                             title: categoryName,
                             completedCount: completedCount,
                             totalCount: items.count,
                             isExpanded: isExpanded
                         )
-
-                        if !collapsedCategories.contains(categoryName) {
-                            ForEach(items, id: \.self) { item in
-                                itemRow(item)
-                            }
-                        }
                     }
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .background(ForagerTheme.backgroundCanvas)
     }
 
     // M18.1.4: Extracted item row with swipe actions and context menu
-    private func itemRow(_ item: GroceryListItem) -> some View {
+    // reskin-provisions-press: hairline separators + tight print insets
+    private func itemRow(_ item: GroceryListItem, categoryTag: String? = nil) -> some View {
         GroceryListItemRow(
             item: item,
             onToggle: { toggleItemCompletion(item) },
             showRecipeSources: preferencesService.showRecipeSources,
-            storeColorHex: hasStores ? item.store?.color : nil
+            // Store dot only when grouping is OFF — in store grouping the
+            // pinned band already carries the store color
+            storeColorHex: (hasStores && !showStoreGrouping) ? item.store?.color : nil,
+            categoryTagName: categoryTag
         )
-        .listRowBackground(ForagerTheme.surfacePrimary)
-        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.visible)
+        .listRowSeparatorTint(ForagerTheme.borderSubtle)
+        .listRowInsets(EdgeInsets(top: 2, leading: ForagerTheme.Spacing.lg, bottom: 2, trailing: ForagerTheme.Spacing.lg))
         .swipeActions(edge: .leading) {
             Button {
                 toggleItemCompletion(item)
@@ -479,7 +503,7 @@ struct GroceryListDetailView: View {
                 Label(item.isCompleted ? "Undo" : "Complete",
                       systemImage: item.isCompleted ? "arrow.uturn.left" : "checkmark")
             }
-            .tint(item.isCompleted ? .orange : .green)
+            .tint(item.isCompleted ? ForagerTheme.accentSecondary : ForagerTheme.statusSuccessFG)
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
@@ -540,22 +564,6 @@ struct GroceryListDetailView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .principal) {
-            if isEditingTitle {
-                TextField("List name", text: $editedTitle)
-                    .font(.headline)
-                    .multilineTextAlignment(.center)
-                    .submitLabel(.done)
-                    .onSubmit { saveTitle() }
-            } else {
-                Text(weeklyList.name ?? "Grocery List")
-                    .font(.headline)
-                    .onLongPressGesture {
-                        editedTitle = weeklyList.name ?? ""
-                        isEditingTitle = true
-                    }
-            }
-        }
         ToolbarItem(placement: .navigationBarTrailing) {
             HStack(spacing: ForagerTheme.Spacing.sm) {
                 // M18.1.5: Store grouping toggle (category always present)
@@ -842,6 +850,8 @@ struct GroceryListDetailView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Ingredients?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -882,6 +892,10 @@ struct GroceryListItemRow: View {
     let onToggle: () -> Void
     var showRecipeSources: Bool = false
     var storeColorHex: String? = nil
+    /// reskin-provisions-press: when set, renders the printed category tag
+    /// (mockup .ctag) at the row's trailing edge — used in store grouping
+    /// where rows mix categories.
+    var categoryTagName: String? = nil
 
     /// Parsed ingredient name for bold highlighting (matches recipe detail pattern)
     private var parsedIngredientName: String? {
@@ -892,13 +906,28 @@ struct GroceryListItemRow: View {
 
     var body: some View {
         HStack(spacing: ForagerTheme.Spacing.sm) {
-            // Checkbox
+            // Checkbox — square print check (reskin-provisions-press):
+            // ink-outlined box, tomato fill when checked
             Button(action: onToggle) {
-                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(item.isCompleted ? ForagerTheme.statusSuccessFG : ForagerTheme.textDisabled)
-                    .font(.system(size: 18))
-                    .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
-                    .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
+                ZStack {
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(item.isCompleted ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                // Washed check — completion dimming lives here and
+                                // in the disabled text, NOT on the whole row, so
+                                // the category tag keeps its true color
+                                .fill(item.isCompleted ? ForagerTheme.accentPrimary.opacity(0.55) : Color.clear)
+                        )
+                    if item.isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                    }
+                }
+                .frame(width: 20, height: 20)
+                .scaleEffect(reduceMotion ? 1.0 : (item.isCompleted ? 1.1 : 1.0))
+                .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: item.isCompleted)
             }
             .buttonStyle(.borderless)
 
@@ -909,13 +938,17 @@ struct GroceryListItemRow: View {
 
             // Item text
             if item.isCompleted {
-                Text(cleanQuantityDisplay(item.name ?? "Unknown Item"))
-                    .font(ForagerTheme.bodyFont)
-                    .strikethrough()
-                    .foregroundStyle(ForagerTheme.textDisabled)
+                IngredientText(
+                    text: cleanQuantityDisplay(item.name ?? "Unknown Item"),
+                    parsedName: parsedIngredientName,
+                    isCompleted: true
+                )
             } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    formattedItemText
+                    IngredientText(
+                        text: cleanQuantityDisplay(item.name ?? "Unknown Item"),
+                        parsedName: parsedIngredientName
+                    )
 
                     // Recipe sources inline
                     if showRecipeSources && !item.sourceRecipeNames.isEmpty {
@@ -928,11 +961,25 @@ struct GroceryListItemRow: View {
             }
 
             Spacer(minLength: 0)
+
+            // Printed category tag (reskin-provisions-press mockup .ctag)
+            if let tag = categoryTagName {
+                Text(tag.uppercased())
+                    .font(.system(size: 10, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .lineLimit(1)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    // Tag keeps its category color on completed rows — the
+                    // strikethrough + row dim already signal completion
+                    .background(ForagerTheme.categoryColor(for: tag))
+                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
+            }
         }
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .frame(minHeight: 44)
         .contentShape(Rectangle())
-        .opacity(item.isCompleted ? 0.6 : 1.0)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: item.isCompleted)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(item.name ?? "Unknown Item")
@@ -943,34 +990,6 @@ struct GroceryListItemRow: View {
     /// Clean trailing .0 from quantities: "2.0 tsp" → "2 tsp", "0.25 cup" unchanged
     private func cleanQuantityDisplay(_ text: String) -> String {
         text.replacingOccurrences(of: #"(\d+)\.0(\s|$)"#, with: "$1$2", options: .regularExpression)
-    }
-
-    /// Formatted text matching recipe detail: quantity in secondary, name in bold green
-    @ViewBuilder
-    private var formattedItemText: some View {
-        let fullText = cleanQuantityDisplay(item.name ?? "Unknown Item")
-        if let ingredientName = parsedIngredientName,
-           let range = fullText.range(of: ingredientName, options: .caseInsensitive) {
-            let prefix = String(fullText[fullText.startIndex..<range.lowerBound])
-            let name = String(fullText[range])
-            let suffix = String(fullText[range.upperBound...])
-            HStack(spacing: 0) {
-                Text(prefix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                Text(name)
-                    .font(ForagerTheme.bodyFont)
-                    .bold()
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-                Text(suffix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-            }
-        } else {
-            Text(fullText)
-                .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
-        }
     }
 
     private func sourceDisplayText(_ source: String) -> String {

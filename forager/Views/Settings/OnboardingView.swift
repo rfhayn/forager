@@ -218,65 +218,27 @@ struct CoachMarkOverlay: View {
     // MARK: - Card Content
 
     private var cardContent: some View {
-        VStack(spacing: 16) {
-            // Arrow pointing toward target (for spotlight steps)
-            if let targetName = step.targetAnchor, let frame = anchors[targetName] {
-                if frame.midY > screenHeight / 2 {
-                    // Arrow points down toward target
-                    EmptyView() // arrow at bottom
+        // reskin-provisions-press: shared print card (matte paper + ink band)
+        VStack(spacing: ForagerTheme.Spacing.sm) {
+            CoachMarkCard(
+                stepIndex: currentStep,
+                stepCount: steps.count,
+                title: step.title,
+                description: step.description,
+                onBack: (currentStep > 0 && !step.isFinalStep) ? { goBack() } : nil
+            ) {
+                if step.isFinalStep {
+                    finalButtons
+                } else if currentStep == 0 {
+                    // Tap hint for welcome screen
+                    Text("Tap anywhere to continue")
+                        .font(ForagerTheme.captionFont)
+                        .foregroundStyle(ForagerTheme.textTertiary)
                 }
             }
 
-            // Step counter with back button
-            HStack {
-                if currentStep > 0 && !step.isFinalStep {
-                    Button {
-                        goBack()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-                }
-
-                Spacer()
-
-                Text("\(currentStep + 1) of \(steps.count)")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.6))
-
-                Spacer()
-
-                // Balance the back button width
-                if currentStep > 0 && !step.isFinalStep {
-                    Color.clear
-                        .frame(width: 12, height: 12)
-                }
-            }
-
-            Text(step.title)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-
-            Text(step.description)
-                .font(.body)
-                .foregroundStyle(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
-
-            if step.isFinalStep {
-                finalButtons
-            } else if currentStep == 0 {
-                // Tap hint for welcome screen
-                Text("Tap anywhere to continue")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.top, 4)
-            }
-
-            // Arrow pointing to target below the card
+            // Arrow pointing to target below the card (sits on the scrim,
+            // so it stays light in both modes)
             if let targetName = step.targetAnchor, let frame = anchors[targetName],
                frame.midY > screenHeight / 2 {
                 Image(systemName: "arrowtriangle.down.fill")
@@ -284,16 +246,6 @@ struct CoachMarkOverlay: View {
                     .foregroundStyle(.white.opacity(0.8))
             }
         }
-        .padding(24)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .environment(\.colorScheme, .dark)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-        )
         // Card tap advances on non-final steps (Button takes priority for back)
         .onTapGesture {
             if !step.isFinalStep {
@@ -305,20 +257,17 @@ struct CoachMarkOverlay: View {
     // MARK: - Final Step Buttons
 
     private var finalButtons: some View {
-        VStack(spacing: 12) {
-            Button {
-                completeOnboarding()
-            } label: {
-                Text("Got It")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(ForagerTheme.accentPrimary)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-            }
+        Button {
+            completeOnboarding()
+        } label: {
+            Text("Got It")
+                .font(ForagerTheme.bodyFont.bold())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(ForagerTheme.accentPrimary)
+                .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
         }
-        .padding(.top, 8)
     }
 
     // MARK: - Actions

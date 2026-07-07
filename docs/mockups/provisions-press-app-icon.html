@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>forager — app icon concepts (Provisions Press)</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Narrow:wght@700&family=Space+Mono:wght@700&family=Archivo:wght@500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 24px 80px; background: #26231F; color: #E8E6DF; font-family: 'Archivo', sans-serif; }
+  h1 { font-family: 'Anton', sans-serif; font-weight: 400; font-size: 28px; text-transform: uppercase; margin: 0 auto 6px; max-width: 1100px; }
+  .lede { max-width: 1100px; margin: 0 auto 36px; color: #B5B1A8; font-size: 14.5px; line-height: 1.55; }
+  .grid { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 40px; }
+  .concept h2 { font-family: 'Archivo Narrow', sans-serif; font-size: 17px; text-transform: uppercase; letter-spacing: 0.08em; color: #D89A2B; margin: 0 0 4px; }
+  .concept p { font-size: 13px; color: #B5B1A8; line-height: 1.5; margin: 0 0 14px; max-width: 440px; }
+  .sizes { display: flex; align-items: flex-end; gap: 22px; }
+  .icon { border-radius: 22.37%; overflow: hidden; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.45); flex: none; }
+  .s180 { width: 180px; height: 180px; }
+  .s90  { width: 90px;  height: 90px; }
+  .s60  { width: 60px;  height: 60px; }
+  .sizelabel { font-family: 'Space Mono', monospace; font-size: 10px; color: #8C8879; text-align: center; margin-top: 8px; }
+
+  /* ---------- A: Crate Stencil ---------- */
+  .icoA { background: #C8402E; display: flex; align-items: center; justify-content: center; }
+  .icoA .f { font-family: 'Anton', sans-serif; color: #F2F0EA; line-height: 0.9; transform: translateY(-2%); }
+  .s180 .f { font-size: 148px; }
+  .s90 .f  { font-size: 74px; }
+  .s60 .f  { font-size: 49px; }
+  .icoA .baseline { position: absolute; left: 12%; right: 12%; bottom: 13%; height: 2.5%; background: #F2F0EA; opacity: 0.9; }
+
+  /* ---------- B: Butcher Paper + Sticker ---------- */
+  .icoB { background: #E8E6DF; display: flex; align-items: center; justify-content: center; }
+  .icoB .f { font-family: 'Anton', sans-serif; color: #201D1A; line-height: 0.9; transform: translate(-6%, -2%); }
+  .icoB .dot { position: absolute; right: 12%; bottom: 12%; width: 26%; height: 26%; border-radius: 50%; background: #C8402E; box-shadow: 0 1px 4px rgba(32,29,26,0.3); }
+
+  /* ---------- C: PLU Produce Sticker ---------- */
+  .icoC { background: #E8E6DF; display: flex; align-items: center; justify-content: center; }
+  .icoC .sticker { width: 78%; height: 62%; background: #C8402E; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(32,29,26,0.28); border: 1.5px dashed rgba(242,240,234,0.55); }
+  .icoC .f { font-family: 'Anton', sans-serif; color: #F2F0EA; line-height: 0.85; }
+  .s180 .icoC-f { font-size: 72px; }
+  .icoC .plu { font-family: 'Space Mono', monospace; font-weight: 700; color: #F2F0EA; letter-spacing: 0.08em; margin-top: 2%; }
+  .s180 .icoC-plu { font-size: 15px; }
+
+  /* ---------- D: Ink Field / Paper f ---------- */
+  .icoD { background: #201D1A; display: flex; align-items: center; justify-content: center; }
+  .icoD .f { font-family: 'Anton', sans-serif; color: #E8E6DF; line-height: 0.9; transform: translateY(-2%); }
+  .icoD .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 14%; background: #C8402E; }
+
+  .note { max-width: 1100px; margin: 44px auto 0; font-size: 13px; color: #B5B1A8; line-height: 1.6; border-top: 1px solid #4A453E; padding-top: 16px; }
+  .note b { color: #E8E6DF; }
+</style>
+</head>
+<body>
+  <h1>App Icon — Four Concepts</h1>
+  <p class="lede">The leaf is gone. Each concept is built from the Provisions Press vocabulary — crate stencils, butcher paper, produce stickers, ink + tomato. Judge at the 60px size first: that's the home-screen reality. All shown on the iOS squircle.</p>
+
+  <div class="grid">
+
+    <div class="concept">
+      <h2>A · Crate Stencil (recommended)</h2>
+      <p>Full tomato field, stenciled heavy-condensed lowercase “f” with a baseline rule — like a shipping-crate stamp. Boldest at small sizes; unmistakable in an App Store grid full of white and green food icons.</p>
+      <div class="sizes">
+        <div><div class="icon s180 icoA"><span class="f">f</span><span class="baseline"></span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90 icoA"><span class="f">f</span><span class="baseline"></span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60 icoA"><span class="f">f</span><span class="baseline"></span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>B · Ink on Paper + Sticker</h2>
+      <p>Butcher-paper field, ink “f”, one tomato sticker dot — the quietest option; the paper texture story carries it. Risk: light-field icons can wash out on light home screens.</p>
+      <div class="sizes">
+        <div><div class="icon s180 icoB"><span class="f" style="font-size:148px">f</span><span class="dot"></span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90 icoB"><span class="f" style="font-size:74px">f</span><span class="dot"></span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60 icoB"><span class="f" style="font-size:49px">f</span><span class="dot"></span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>C · PLU Produce Sticker</h2>
+      <p>The grocery in-joke: a tomato-red PLU sticker (dashed die-cut edge, mono number band) on butcher paper. Most vernacular storytelling; the detail compresses at 60px, where it reads as a red oval badge.</p>
+      <div class="sizes">
+        <div><div class="icon s180 icoC"><div class="sticker"><span class="f icoC-f">f</span><span class="plu icoC-plu">4129</span></div></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90 icoC"><div class="sticker"><span class="f" style="font-size:36px">f</span><span class="plu" style="font-size:8px">4129</span></div></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60 icoC"><div class="sticker"><span class="f" style="font-size:24px">f</span><span class="plu" style="font-size:5px">4129</span></div></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+    <div class="concept">
+      <h2>D · Ink Field, Tomato Base</h2>
+      <p>Dark ink field, paper “f”, tomato base bar — the store-band grammar from the list screen as an icon. Strong dark-mode affinity; slightly more “label” than “stamp”.</p>
+      <div class="sizes">
+        <div><div class="icon s180 icoD"><span class="f" style="font-size:148px">f</span><span class="bar"></span></div><div class="sizelabel">180</div></div>
+        <div><div class="icon s90 icoD"><span class="f" style="font-size:74px">f</span><span class="bar"></span></div><div class="sizelabel">90</div></div>
+        <div><div class="icon s60 icoD"><span class="f" style="font-size:49px">f</span><span class="bar"></span></div><div class="sizelabel">60</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="note"><b>Production notes:</b> final assets render the “f” in SF Compact Heavy (Anton is the web stand-in). iOS 26 needs light, dark, and tinted appearance variants — A and D invert naturally (A dark = ink field, tomato f; D dark is already dark). Lowercase “f” is mandatory (copy rule: “forager” is always lowercase). PLU 4129 is a real code (large Fuji apple) — swappable. Concept A + D can share one drawing with swapped fills, giving the light/dark pair for free.</p>
+</body>
+</html>

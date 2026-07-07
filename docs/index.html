@@ -4,76 +4,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>forager - Shared Shopping</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=Archivo+Narrow:wght@700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Provisions Press — butcher paper, ink, tomato, mustard, teal */
+        :root {
+            --paper: #E8E6DF;
+            --paper-raised: #F2F0EA;
+            --ink: #201D1A;
+            --ink-soft: #55504A;
+            --ink-faint: #6C665E;
+            --tomato: #C8402E;
+            --tomato-press: #A5301F;
+            --mustard: #D89A2B;
+            --teal: #1F6E6A;
+            --rule: rgba(32, 29, 26, 0.12);
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
             line-height: 1.6;
             max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            color: #333;
+            margin: 0 auto;
+            padding: 48px 20px 0;
+            color: var(--ink);
+            background: var(--paper);
         }
         .hero {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 48px;
         }
         .hero img {
             width: 128px;
             height: 128px;
             border-radius: 28px;
+            box-shadow: 0 8px 24px rgba(32, 29, 26, 0.18);
         }
         h1 {
-            color: #2c3e50;
-            margin-bottom: 0;
-            font-size: 2em;
+            font-family: 'Anton', sans-serif;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.01em;
+            color: var(--ink);
+            margin: 20px 0 0;
+            font-size: 3em;
+            line-height: 1;
         }
         .subtitle {
-            color: #7f8c8d;
-            font-size: 1.2em;
-            margin-top: 4px;
+            font-family: 'Space Mono', monospace;
+            color: var(--tomato);
+            font-size: 0.95em;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 10px;
         }
+        .lede {
+            font-size: 1.15em;
+            color: var(--ink-soft);
+            text-align: center;
+            max-width: 560px;
+            margin: 0 auto 8px;
+        }
+        /* Section headers as ink store-bands */
         h2 {
-            color: #27ae60;
-            margin-top: 30px;
+            font-family: 'Archivo Narrow', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 1.05em;
+            background: var(--ink);
+            color: var(--paper);
+            padding: 7px 14px;
+            border-radius: 3px;
+            margin-top: 44px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
         }
-        ul {
-            padding-left: 20px;
+        h2 .co {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 0.72em;
+            color: var(--mustard);
+            letter-spacing: 0.06em;
         }
+        ul { padding-left: 0; list-style: none; }
         li {
-            margin-bottom: 8px;
+            margin: 0;
+            padding: 12px 4px;
+            border-bottom: 1.5px solid var(--rule);
+        }
+        li::before {
+            content: "▪";
+            color: var(--tomato);
+            margin-right: 10px;
         }
         .cta {
             text-align: center;
-            margin: 40px 0;
+            margin: 48px 0;
         }
         .cta a {
             display: inline-block;
-            background-color: #27ae60;
-            color: white;
-            padding: 14px 32px;
-            border-radius: 10px;
+            font-family: 'Archivo Narrow', sans-serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background-color: var(--tomato);
+            color: #fff;
+            padding: 15px 36px;
+            border-radius: 3px;
             text-decoration: none;
-            font-size: 1.1em;
-            font-weight: 600;
+            font-size: 1.15em;
+            box-shadow: 0 4px 14px rgba(200, 64, 46, 0.3);
         }
         .cta a:hover {
-            background-color: #219a52;
+            background-color: var(--tomato-press);
         }
-        .links {
-            margin-top: 30px;
-        }
+        .links li::before { content: none; }
         .links a {
-            color: #27ae60;
+            color: var(--teal);
+            font-weight: 600;
             text-decoration: none;
         }
-        .links a:hover {
-            text-decoration: underline;
-        }
+        .links a:hover { text-decoration: underline; }
         .screenshots {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
-            margin: 20px 0 40px;
+            margin: 24px 0 40px;
         }
         .screenshots figure {
             margin: 0;
@@ -82,21 +141,40 @@
         .screenshots img {
             width: 100%;
             height: auto;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(32, 29, 26, 0.14);
         }
         .screenshots figcaption {
-            margin-top: 8px;
-            font-size: 0.9em;
-            color: #7f8c8d;
+            font-family: 'Space Mono', monospace;
+            margin-top: 10px;
+            font-size: 0.78em;
+            letter-spacing: 0.03em;
+            color: var(--ink-faint);
         }
         footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #ecf0f1;
-            color: #7f8c8d;
+            margin-top: 56px;
+            padding: 20px 0 32px;
+            border-top: 2px solid var(--ink);
+            color: var(--ink-faint);
             text-align: center;
-            font-size: 0.9em;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8em;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --paper: #191714;
+                --paper-raised: #262220;
+                --ink: #E4E1D8;
+                --ink-soft: #B8B3A8;
+                --ink-faint: #9A948A;
+                --tomato: #E05A44;
+                --tomato-press: #C8402E;
+                --teal: #6FB3AE;
+                --rule: rgba(228, 225, 216, 0.12);
+            }
+            body { background: var(--paper); }
+            h2 { background: var(--ink); color: var(--paper); }
+            .cta a { color: #191714; }
         }
     </style>
 </head>
@@ -107,9 +185,9 @@
         <p class="subtitle">Shared Shopping</p>
     </div>
 
-    <p>Shared grocery lists for households. No account. No server. Just iCloud.</p>
+    <p class="lede">Shared grocery lists for households. No account. No server. Just iCloud.</p>
 
-    <h2>Features</h2>
+    <h2>Features <span class="co">06 items</span></h2>
     <ul>
         <li>Invite your household with a shareable link. No signup, no email, no proprietary account.</li>
         <li>"Group by Store" shopping when your week spans Trader Joe's, Costco, or anywhere else.</li>
@@ -119,7 +197,7 @@
         <li>No ads, no tracking, no third-party code.</li>
     </ul>
 
-    <h2>Screenshots</h2>
+    <h2>Screenshots <span class="co">05 items</span></h2>
     <div class="screenshots">
         <figure>
             <img src="beta/screenshots/01-household-invite.png" alt="Household invite screen showing shareable link">
@@ -132,6 +210,14 @@
         <figure>
             <img src="beta/screenshots/03-recipe-import.png" alt="Recipe import showing on-device ingredient parsing">
             <figcaption>AI parsing on your iPhone.</figcaption>
+        </figure>
+        <figure>
+            <img src="beta/screenshots/04-dashboard.png" alt="Home dashboard showing tonight's meal, shopping list, and meal plan">
+            <figcaption>Your week, at a glance.</figcaption>
+        </figure>
+        <figure>
+            <img src="beta/screenshots/05-recipe-scaling.png" alt="Recipe detail scaled to one and a half times with kitchen fractions">
+            <figcaption>Scale any recipe. Fractions made friendly.</figcaption>
         </figure>
     </div>
 

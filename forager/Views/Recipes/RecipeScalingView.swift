@@ -35,7 +35,7 @@ struct RecipeScalingView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerSection
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
             
             scaleControlsSection
                 .padding()
@@ -69,7 +69,7 @@ struct RecipeScalingView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             Text("Scale Recipe")
-                .font(.title2)
+                .font(ForagerTheme.cardTitle)
                 .fontWeight(.semibold)
             
             HStack(spacing: 16) {
@@ -78,8 +78,7 @@ struct RecipeScalingView: View {
                         .font(.caption)
                         .foregroundStyle(ForagerTheme.textSecondary)
                     Text("\(recipe.servings)")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(.system(.title, design: .monospaced).weight(.bold))
                     Text("servings")
                         .font(.caption)
                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -93,8 +92,7 @@ struct RecipeScalingView: View {
                         .font(.caption)
                         .foregroundStyle(ForagerTheme.textSecondary)
                     Text("\(scaledServings)")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(.system(.title, design: .monospaced).weight(.bold))
                         .foregroundStyle(ForagerTheme.accentPrimary)
                     Text("servings")
                         .font(.caption)
@@ -110,7 +108,7 @@ struct RecipeScalingView: View {
     private var scaleControlsSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Scale Factor: \(formatScaleFactor(scaleFactor))x")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 8) {
                 // Slider
@@ -160,8 +158,7 @@ struct RecipeScalingView: View {
                             let position = CGFloat((factor - minValue) / range) * width
                             
                             Text(formatScaleFactor(factor) + "x")
-                                .font(.caption)
-                                .fontWeight(.medium)
+                                .font(ForagerTheme.quantityFont)
                                 .foregroundStyle(ForagerTheme.textSecondary)
                                 .position(x: position, y: 28)
                         }
@@ -190,7 +187,9 @@ struct RecipeScalingView: View {
                 }
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(ForagerTheme.backgroundCanvas)
     }
     
     private func ingredientRow(_ ingredient: ScaledIngredient) -> some View {

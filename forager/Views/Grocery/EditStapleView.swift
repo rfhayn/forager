@@ -73,7 +73,7 @@ struct EditStapleView: View {
                         ForEach(categories, id: \.self) { category in
                             HStack {
                                 Circle()
-                                    .fill(Color(hex: category.displayColor))
+                                    .fill(ForagerTheme.categoryColor(for: category))
                                     .frame(width: 12, height: 12)
                                 Text(category.displayName)
                             }.tag(category.displayName)
@@ -110,6 +110,8 @@ struct EditStapleView: View {
                     }
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Edit Staple")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -77,7 +77,7 @@ struct SectionHighlightView: View {
 
     private func legendDot(_ type: LineType) -> some View {
         HStack(spacing: 4) {
-            Circle()
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
                 .fill(colorForType(type))
                 .frame(width: 8, height: 8)
             Text(labelForType(type))
@@ -111,15 +111,16 @@ struct SectionHighlightView: View {
 
                 Spacer(minLength: 0)
 
-                // Type badge
+                // Type badge — printed tag: solid ink fill, white condensed label
                 Text(shortLabelForType(line.wrappedValue.type))
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(colorForType(line.wrappedValue.type))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .font(.system(size: 10, weight: .bold).width(.condensed))
+                    .tracking(0.5)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
                     .background(
-                        Capsule()
-                            .fill(colorForType(line.wrappedValue.type).opacity(0.15))
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
+                            .fill(colorForType(line.wrappedValue.type))
                     )
             }
             .padding(.vertical, 4)

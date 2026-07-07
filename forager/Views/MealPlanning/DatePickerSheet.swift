@@ -56,6 +56,7 @@ struct DatePickerSheet: View {
                 }
                 .padding()
             }
+            .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Meal Plan")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -74,10 +75,12 @@ struct DatePickerSheet: View {
     @ViewBuilder
     private var recipeInfoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Recipe")
-                .font(.headline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-            
+            // reskin-provisions-press: condensed uppercase eyebrow
+            Text("RECIPE")
+                .font(.system(size: 12, weight: .bold).width(.condensed))
+                .tracking(0.5)
+                .foregroundStyle(ForagerTheme.textTertiary)
+
             HStack(spacing: 12) {
                 Image(systemName: "fork.knife.circle.fill")
                     .font(.title2)
@@ -97,21 +100,23 @@ struct DatePickerSheet: View {
                 }
             }
             .padding(12)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(ForagerTheme.surfacePrimary)
             .cornerRadius(ForagerTheme.Radius.sm)
         }
     }
-    
+
     // MARK: - Servings Section
     
     // M4.2: Allows user to adjust servings for this meal
     @ViewBuilder
     private var servingsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Servings")
-                .font(.headline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-            
+            // reskin-provisions-press: condensed uppercase eyebrow
+            Text("SERVINGS")
+                .font(.system(size: 12, weight: .bold).width(.condensed))
+                .tracking(0.5)
+                .foregroundStyle(ForagerTheme.textTertiary)
+
             HStack {
                 Text("\(servings) servings")
                     .font(.body)
@@ -122,7 +127,7 @@ struct DatePickerSheet: View {
                     .labelsHidden()
             }
             .padding(12)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(ForagerTheme.surfacePrimary)
             .cornerRadius(ForagerTheme.Radius.sm)
             
             if servings != Int(recipe.servings) {
@@ -140,10 +145,12 @@ struct DatePickerSheet: View {
     @ViewBuilder
     private var dateSelectionSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Select Date")
-                .font(.headline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-            
+            // reskin-provisions-press: condensed uppercase eyebrow
+            Text("SELECT DATE")
+                .font(.system(size: 12, weight: .bold).width(.condensed))
+                .tracking(0.5)
+                .foregroundStyle(ForagerTheme.textTertiary)
+
             if mealPlanService.activeMealPlan != nil {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 12) {
                     ForEach(mealPlanService.getDatesInMealPlan(), id: \.self) { date in
@@ -173,12 +180,12 @@ struct DatePickerSheet: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(ForagerTheme.surfacePrimary)
                 .cornerRadius(ForagerTheme.Radius.sm)
             }
         }
     }
-    
+
     // MARK: - Actions
     
     // M4.2.4: Handles date selection
@@ -242,15 +249,15 @@ struct DateButton: View {
     var body: some View {
         Button(action: onSelect) {
             VStack(spacing: 4) {
-                Text(dayFormatter.string(from: date))
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                
+                // reskin-provisions-press: condensed day label, mono date
+                Text(dayFormatter.string(from: date).uppercased())
+                    .font(ForagerTheme.captionFont)
+
                 Text(dateFormatter.string(from: date))
-                    .font(.subheadline)
-                
+                    .font(ForagerTheme.quantityFont)
+
                 if isOccupied {
-                    Image(systemName: "checkmark.circle.fill")
+                    Image(systemName: "checkmark.square.fill")
                         .font(.caption2)
                         .foregroundStyle(ForagerTheme.statusSuccessFG)
                 }

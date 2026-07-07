@@ -59,7 +59,7 @@ struct TextPasteImportView: View {
                 Spacer()
                 if !recipeText.isEmpty {
                     Text("\(recipeText.components(separatedBy: .newlines).count) lines")
-                        .font(ForagerTheme.captionFont)
+                        .font(ForagerTheme.footnoteFont)
                         .foregroundStyle(ForagerTheme.textTertiary)
                 }
             }
@@ -74,7 +74,7 @@ struct TextPasteImportView: View {
                 .scrollContentBackground(.hidden)
                 .padding(ForagerTheme.Spacing.sm)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg)
                         .fill(ForagerTheme.surfaceSecondary)
                 )
                 .overlay(

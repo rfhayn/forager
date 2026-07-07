@@ -38,7 +38,7 @@ struct EmptyMealPlanView: View {
             // Title and description
             VStack(spacing: 8) {
                 Text("No Active Meal Plan")
-                    .font(.title2)
+                    .font(ForagerTheme.cardTitle)
                     .fontWeight(.bold)
                 
                 Text("Create your first meal plan to start organizing your weekly meals")
@@ -72,15 +72,15 @@ struct EmptyMealPlanView: View {
                 }
             }
             .padding(16)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(ForagerTheme.surfacePrimary)
             .cornerRadius(ForagerTheme.Radius.md)
             .padding(.horizontal, 32)
             
             // Create button
             Button(action: onCreatePlan) {
                 Label("Create Meal Plan", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .foregroundStyle(.white)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
+                    .foregroundStyle(ForagerTheme.buttonPrimaryText)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ForagerTheme.accentPrimary)

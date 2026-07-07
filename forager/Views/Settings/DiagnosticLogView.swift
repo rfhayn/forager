@@ -41,8 +41,13 @@ struct DiagnosticLogView: View {
                 }
             }
         }
-        .navigationTitle("Diagnostic Log")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            BroadsheetMasthead(title: "Diagnostic Log")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .background(ForagerTheme.backgroundCanvas)
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button {
@@ -135,10 +140,16 @@ struct DiagnosticLogView: View {
         .font(.caption2.bold())
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(isSelected ? ForagerTheme.accentPrimary.opacity(0.2) : Color.clear)
-        .foregroundStyle(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textSecondary)
-        .clipShape(Capsule())
-        .overlay(Capsule().stroke(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary, lineWidth: 1))
+        .foregroundStyle(isSelected ? .white : ForagerTheme.textSecondary)
+        // reskin-provisions-press: printed tag corners — sharp, not capsule
+        .background(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                .fill(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.backgroundSecondary)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                .stroke(isSelected ? Color.clear : ForagerTheme.borderStrong, lineWidth: 1)
+        )
     }
 
     // MARK: - Data

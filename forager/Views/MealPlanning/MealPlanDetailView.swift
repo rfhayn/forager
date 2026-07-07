@@ -73,6 +73,29 @@ struct MealPlanDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Editable broadsheet masthead — long-press to rename
+            HStack {
+                if isEditingTitle {
+                    TextField("Plan name", text: $editedTitle)
+                        .font(ForagerTheme.detailTitle)
+                        .submitLabel(.done)
+                        .onSubmit { savePlanTitle() }
+                } else {
+                    Text(mealPlan.name ?? "Meal Plan")
+                        .font(ForagerTheme.detailTitle)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .onLongPressGesture {
+                            editedTitle = mealPlan.name ?? ""
+                            isEditingTitle = true
+                        }
+                }
+                Spacer()
+            }
+            .padding(.horizontal, ForagerTheme.Spacing.lg)
+            .padding(.top, ForagerTheme.Spacing.xs)
+            .padding(.bottom, ForagerTheme.Spacing.sm)
+
             // Fixed day strip
             dayStripView
 
@@ -104,24 +127,6 @@ struct MealPlanDetailView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                if isEditingTitle {
-                    TextField("Plan name", text: $editedTitle)
-                        .font(.headline)
-                        .multilineTextAlignment(.center)
-                        .submitLabel(.done)
-                        .onSubmit { savePlanTitle() }
-                } else {
-                    Text(mealPlan.name ?? "Meal Plan")
-                        .font(.headline)
-                        .onLongPressGesture {
-                            editedTitle = mealPlan.name ?? ""
-                            isEditingTitle = true
-                        }
-                }
-            }
-        }
         .overlay {
             if isBulkAdding { bulkAddOverlay }
         }
@@ -214,7 +219,8 @@ struct MealPlanDetailView: View {
                         .foregroundStyle(isToday(date) ? ForagerTheme.buttonPrimaryText : ForagerTheme.textPrimary)
                         .frame(width: 36, height: 36)
                         .background(
-                            Circle()
+                            // reskin-provisions-press: square day indicator (matches MealPlanListView)
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                 .fill(isToday(date) ? ForagerTheme.accentPrimary : .clear)
                         )
                 }
@@ -239,7 +245,13 @@ struct MealPlanDetailView: View {
                 unplannedDayContent(for: date)
             }
         }
-        .foragerGlassCard()
+        // reskin-provisions-press: broadsheet day block — hairline rule, no box
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
     }
 
     // MARK: - Day Header
@@ -252,13 +264,15 @@ struct MealPlanDetailView: View {
                     .font(ForagerTheme.bodyFont.bold())
                     .foregroundStyle(ForagerTheme.textPrimary)
                 if isToday(date) {
+                    // reskin-provisions-press: printed tomato tag (matches ACTIVE tag)
                     Text("TODAY")
-                        .font(ForagerTheme.captionFont)
-                        .foregroundStyle(ForagerTheme.accentPrimary)
-                        .padding(.horizontal, ForagerTheme.Spacing.sm)
-                        .padding(.vertical, 2)
-                        .background(ForagerTheme.accentTint)
-                        .clipShape(Capsule())
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.accentPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
             }
             Spacer()
@@ -276,7 +290,8 @@ struct MealPlanDetailView: View {
                         .font(.title3)
                         .foregroundStyle(meal.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textSecondary)
                     Text(option.rawValue)
-                        .font(ForagerTheme.bodyFont)
+                        .font(ForagerTheme.bodyCondensed)
+                        .fontWeight(.medium)
                         .foregroundStyle(meal.isCompleted ? ForagerTheme.textDisabled : ForagerTheme.textPrimary)
                         .strikethrough(meal.isCompleted)
                     Spacer()
@@ -289,7 +304,8 @@ struct MealPlanDetailView: View {
                         .foregroundStyle(ForagerTheme.accentPrimary)
                     VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
                         Text(recipe.recipeDisplayTitle)
-                            .font(ForagerTheme.bodyFont)
+                            .font(ForagerTheme.bodyCondensed)
+                            .fontWeight(.medium)
                             .foregroundStyle(ForagerTheme.textPrimary)
                             .strikethrough(meal.isCompleted)
                         Text(recipe.recipeServingsDescription)
@@ -315,7 +331,8 @@ struct MealPlanDetailView: View {
                 toggleCompletion(for: meal)
             } label: {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
-                    Image(systemName: meal.isCompleted ? "checkmark" : "circle")
+                    // reskin-provisions-press: square print-check vocabulary
+                    Image(systemName: meal.isCompleted ? "checkmark.square.fill" : "square")
                     Text("Done")
                 }
                 .font(ForagerTheme.captionFont)
@@ -531,9 +548,13 @@ struct MealPlanDetailView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
             .padding(30)
+            // reskin-provisions-press: matte panel, no glass on content HUD
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 

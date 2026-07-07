@@ -85,7 +85,7 @@ struct SelectListSheet: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Recipes to Add")
-                            .font(.headline)
+                            .font(ForagerTheme.bodyCondensed.weight(.semibold))
                             .foregroundStyle(.primary)
                         
                         Text("\(recipes.count) recipes")
@@ -152,8 +152,7 @@ struct SelectListSheet: View {
                 
                 // Current servings
                 Text("\(currentServings(for: recipe))")
-                    .font(.title3)
-                    .fontWeight(.semibold)
+                    .font(ForagerTheme.quantityFontLarge)
                     .frame(minWidth: 40)
                 
                 // Plus button
@@ -175,7 +174,7 @@ struct SelectListSheet: View {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.caption2)
                     Text(String(format: "%.1fx scale", scaleFactor))
-                        .font(.caption)
+                        .font(ForagerTheme.footnoteFont)
                 }
                 .foregroundStyle(ForagerTheme.statusWarningFG)
             }
@@ -184,7 +183,7 @@ struct SelectListSheet: View {
         .background(ForagerTheme.surfacePrimary)
         .cornerRadius(ForagerTheme.Radius.sm)
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm)
                 .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
         )
     }

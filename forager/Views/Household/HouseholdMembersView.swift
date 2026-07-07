@@ -35,7 +35,7 @@ struct HouseholdMembersView: View {
                         .font(.largeTitle)
                         .foregroundStyle(ForagerTheme.statusWarningFG)
                     Text("Could not load members")
-                        .font(.headline)
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     Text(error)
                         .font(.caption)
                         .foregroundStyle(ForagerTheme.textSecondary)
@@ -88,12 +88,12 @@ struct HouseholdMembersView: View {
                                         }
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Pending Invitation")
-                                                .font(.headline)
+                                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                                             if let invited = member.invitedDate {
                                                 let remaining = max(0, 86400 - Date().timeIntervalSince(invited))
                                                 let hours = Int(remaining / 3600)
                                                 Text("Expires in \(hours)h")
-                                                    .font(.caption)
+                                                    .font(ForagerTheme.footnoteFont)
                                                     .foregroundStyle(ForagerTheme.textTertiary)
                                             }
                                         }
@@ -107,7 +107,13 @@ struct HouseholdMembersView: View {
                                         .foregroundStyle(ForagerTheme.statusWarningFG)
                                     }
                                     .padding(.vertical, 4)
-                                    .foragerGlassCard()
+                                    .padding(ForagerTheme.Spacing.lg)
+                                    .background(ForagerTheme.surfacePrimary)
+                                    .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                            .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+                                    )
                                     .listRowBackground(Color.clear)
                                     .listRowSeparator(.hidden)
                                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -128,7 +134,7 @@ struct HouseholdMembersView: View {
                                         Text("Revoke All Invitations")
                                     }
                                     .font(ForagerTheme.captionFont)
-                                    .foregroundStyle(.red)
+                                    .foregroundStyle(ForagerTheme.statusDangerFG)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, ForagerTheme.Spacing.sm)
                                 }
@@ -149,8 +155,13 @@ struct HouseholdMembersView: View {
             }
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Household Members")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            BroadsheetMasthead(title: "Members")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .background(ForagerTheme.backgroundCanvas)
+        }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") {
@@ -270,7 +281,7 @@ struct ShareParticipantRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(participant.displayName)
-                        .font(.headline)
+                        .font(ForagerTheme.bodyCondensed.weight(.semibold))
 
                     if participant.isCurrentUser {
                         Text("(You)")
@@ -278,14 +289,15 @@ struct ShareParticipantRow: View {
                             .foregroundStyle(ForagerTheme.textSecondary)
                     }
 
-                    // Role badge
-                    Text(participant.isOwner ? "Owner" : "Member")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(participant.isOwner ? ForagerTheme.accentSecondary.opacity(0.2) : ForagerTheme.textTertiary.opacity(0.2))
-                        .foregroundStyle(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
-                        .cornerRadius(ForagerTheme.Radius.xs)
+                    // Role badge — printed tag (reskin-provisions-press)
+                    Text((participant.isOwner ? "Owner" : "Member").uppercased())
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(participant.isOwner ? ForagerTheme.accentSecondary : ForagerTheme.textTertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
 
                 // Email (if available and not a CloudKit ID)
@@ -314,7 +326,13 @@ struct ShareParticipantRow: View {
             }
         }
         .padding(.vertical, 4)
-        .foragerGlassCard()
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
     }
 
     /// Checks if a string is a CloudKit user record ID (starts with "_" and contains hex chars)

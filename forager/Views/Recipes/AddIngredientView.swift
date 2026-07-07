@@ -71,6 +71,8 @@ struct AddIngredientView: View {
                     Toggle("Is Staple", isOn: $isStaple)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add Ingredient")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

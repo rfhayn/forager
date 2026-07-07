@@ -31,7 +31,7 @@ struct ConsolidationPreviewView: View {
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(analysis.summary)
-                                    .font(.headline)
+                                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                                 
                                 Text("Review changes below before applying")
                                     .font(.caption)
@@ -109,10 +109,10 @@ struct ConsolidationPreviewView: View {
             
             // Content
             VStack(alignment: .leading, spacing: 6) {
-                // Display text
-                Text(item.displayText)
-                    .font(.body)
-                    .fontWeight(item.isMerged ? .medium : .regular)
+                // Display text — quantities render in the mono price-tag role
+                Text(item.displayText.displayingKitchenFractions)
+                    .font(ForagerTheme.bodyCondensed)
+                    .fontWeight(item.isMerged ? .semibold : .medium)
                 
                 // Merge info
                 if item.isMerged && item.sourceCount > 1 {

@@ -68,6 +68,7 @@ enum LLMParserError: Error, LocalizedError {
     case timeout
     case malformedResponse(String)
     case validationFailed(String)
+    case responseTruncated
 
     var errorDescription: String? {
         switch self {
@@ -87,6 +88,8 @@ enum LLMParserError: Error, LocalizedError {
             return "Malformed response: \(detail)"
         case .validationFailed(let detail):
             return "Validation failed: \(detail)"
+        case .responseTruncated:
+            return "Recipe too large to parse in one pass. Try parsing fewer ingredients at a time."
         }
     }
 

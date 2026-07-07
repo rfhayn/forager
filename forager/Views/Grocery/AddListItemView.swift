@@ -145,9 +145,12 @@ struct AddListItemView: View {
                                     }
                                 }
                             }
-                            .background(Color(.systemBackground))
+                            .background(ForagerTheme.surfacePrimary)
                             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-                            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                    .strokeBorder(ForagerTheme.borderSubtle, lineWidth: 1)
+                            )
                             .padding(.top, 4)
                         }
                     }
@@ -237,6 +240,8 @@ struct AddListItemView: View {
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add Item")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -307,6 +312,8 @@ struct AddListItemView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("Add to Ingredients?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -266,7 +266,7 @@ struct PhotoImportView: View {
             Label("\(ocrTimeMs)ms", systemImage: "clock")
             Spacer()
         }
-        .font(ForagerTheme.captionFont)
+        .font(ForagerTheme.quantityFont)
         .foregroundStyle(ForagerTheme.textTertiary)
         .padding(.horizontal, ForagerTheme.Spacing.lg)
         .padding(.vertical, ForagerTheme.Spacing.xs)

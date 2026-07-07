@@ -51,11 +51,11 @@ struct AddStoreView: View {
 
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 48))], spacing: 12) {
                             ForEach(ForagerTheme.storeColorPalette, id: \.self) { color in
-                                Circle()
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                                     .fill(Color(hex: color))
                                     .frame(width: 40, height: 40)
                                     .overlay(
-                                        Circle()
+                                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                                             .stroke(selectedColor == color ? ForagerTheme.textPrimary : Color.clear, lineWidth: 3)
                                     )
                                     .onTapGesture {
@@ -75,6 +75,8 @@ struct AddStoreView: View {
                     .disabled(!isFormValid)
                 }
             }
+                .scrollContentBackground(.hidden)
+                .background(ForagerTheme.backgroundCanvas)
             .navigationTitle("New Store")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -115,9 +117,9 @@ struct AddStoreView: View {
                                     ? ForagerTheme.accentPrimary
                                     : ForagerTheme.textPrimary
                             )
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                             .overlay(
-                                Capsule()
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                     .stroke(
                                         name == storeName
                                             ? ForagerTheme.accentPrimary

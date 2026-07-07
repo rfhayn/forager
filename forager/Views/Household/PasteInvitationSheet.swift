@@ -30,11 +30,11 @@ struct PasteInvitationSheet: View {
                 // Title
                 VStack(spacing: 8) {
                     Text("Join with Link")
-                        .font(.title)
-                        .fontWeight(.bold)
+                        .font(ForagerTheme.detailTitle)
+                        .foregroundStyle(ForagerTheme.textPrimary)
 
                     Text("Paste your invitation link")
-                        .font(.title3)
+                        .font(ForagerTheme.cardTitle)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
@@ -71,11 +71,8 @@ struct PasteInvitationSheet: View {
                             Text("Join Household")
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(invitationURL.isEmpty ? ForagerTheme.textTertiary : ForagerTheme.accentPrimary)
-                        .foregroundStyle(.white)
-                        .cornerRadius(ForagerTheme.Radius.md)
                     }
+                    .buttonStyle(ForagerPrimaryButtonStyle())
                     .disabled(invitationURL.isEmpty || isAccepting)
 
                     Button {
@@ -101,7 +98,7 @@ struct PasteInvitationSheet: View {
                             ProgressView()
                                 .scaleEffect(1.5)
                             Text("Joining household...")
-                                .font(.headline)
+                                .font(ForagerTheme.bodyCondensed.weight(.semibold))
                         }
                         .padding(40)
                         .background(.regularMaterial)

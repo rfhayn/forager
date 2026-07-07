@@ -118,6 +118,9 @@ struct IngredientsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            BroadsheetMasthead(title: "Ingredients")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+
             // M7.4: Removed search bar, now using .searchable() for Apple Music pattern
             // Filter Section
             filterSection
@@ -149,8 +152,8 @@ struct IngredientsView: View {
                 ingredientsListView
             }
         }
-        .navigationTitle("Ingredients")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 if isEditMode && !selectedIngredients.isEmpty {
@@ -797,9 +800,22 @@ struct IngredientRowView: View {
                 .frame(width: 4)
 
             if isEditMode {
+                // reskin-provisions-press: square print check (see GroceryListItemRow)
                 Button(action: { onSelectionChanged(!isSelected) }) {
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(isSelected ? ForagerTheme.accentPrimary : ForagerTheme.textTertiary)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                            .strokeBorder(isSelected ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                    .fill(isSelected ? ForagerTheme.accentPrimary : Color.clear)
+                            )
+                        if isSelected {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                        }
+                    }
+                    .frame(width: 20, height: 20)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -817,9 +833,14 @@ struct IngredientRowView: View {
                     }
             } else {
                 VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                    Text(ingredient.name ?? "Unknown ingredient")
+                    // Matches IngredientText's name treatment: lowercase
+                    // display, medium ink, one line
+                    Text((ingredient.name ?? "Unknown ingredient").lowercased())
                         .font(ForagerTheme.bodyFont)
+                        .fontWeight(.medium)
                         .foregroundStyle(ForagerTheme.textPrimary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
                     if ingredient.isStaple {
                         Text("Staple")
@@ -855,7 +876,7 @@ struct IngredientRowView: View {
                         saveNameEdit()
                     }
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(ForagerTheme.accentPrimary)
                     .buttonStyle(.borderless)
                     .disabled(editedName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
@@ -1222,7 +1243,7 @@ struct IngredientReviewSheet: View {
         .padding(.horizontal, ForagerTheme.Spacing.sm)
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .background(ForagerTheme.surfaceWarning)
-        .clipShape(Capsule())
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
     }
 
     private func reviewReason(for template: IngredientTemplate) -> String {
@@ -1374,11 +1395,11 @@ struct DuplicateReviewSheet: View {
             .padding(.horizontal, ForagerTheme.Spacing.sm)
             .padding(.vertical, ForagerTheme.Spacing.xs)
             .background(ForagerTheme.surfaceWarning)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
 
             // Canonical name
             Text("\"\(group.name)\"")
-                .font(.title3)
+                .font(ForagerTheme.cardTitle)
                 .fontWeight(.semibold)
                 .foregroundStyle(ForagerTheme.textPrimary)
 
@@ -1426,7 +1447,7 @@ struct DuplicateReviewSheet: View {
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(ForagerTheme.statusSuccessFG.opacity(0.15))
-                            .clipShape(Capsule())
+                            .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                     }
                 }
 

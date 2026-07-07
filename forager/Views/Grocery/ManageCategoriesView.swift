@@ -58,11 +58,14 @@ struct ManageCategoriesView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // Broadsheet masthead — screen name as content, bar stays capsules-only
+            BroadsheetMasthead(title: "Categories")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
             headerSection
             categoriesListSection
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Manage Categories")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent
@@ -145,28 +148,29 @@ struct ManageCategoriesView: View {
     }
     
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            Text("Drag to Reorder Categories")
-                .font(.subheadline)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
+        // reskin-provisions-press: ink band header + caption (uniform grammar)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            ForagerSectionHeader(title: "Store Layout", count: categories.count)
             HStack {
-                Text("Arrange categories to match your store layout")
-                    .font(.caption)
-                    .foregroundStyle(ForagerTheme.textSecondary)
+                Text("Arrange categories to match your store layout.")
+                    .font(ForagerTheme.captionFont)
+                    .foregroundStyle(ForagerTheme.textTertiary)
 
                 Spacer()
 
-                Button("Reset to Default") {
+                Button {
                     resetToDefaultOrder()
+                } label: {
+                    Text("RESET")
+                        .font(.system(size: 12, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(ForagerTheme.accentPrimary)
                 }
-                .font(.caption)
-                .foregroundStyle(ForagerTheme.accentPrimary)
+                .buttonStyle(.borderless)
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
         .background(ForagerTheme.backgroundCanvas)
     }
     
@@ -192,6 +196,7 @@ struct ManageCategoriesView: View {
                 Text("Drag categories to reorder. Swipe left to delete — its ingredients will be reassigned.")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
+                    .listRowBackground(Color.clear)
             }
         }
         .listStyle(.plain)
@@ -308,19 +313,18 @@ struct ManageCategoriesView: View {
             // Header with better spacing
             VStack(spacing: 12) {
                 Text("Category Has Assigned Ingredients")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                    .font(ForagerTheme.detailTitle)
                     .multilineTextAlignment(.center)
-                
+
                 if let category = categoryToDelete {
                     VStack(spacing: 8) {
                         Text("\(assignedIngredientCount) ingredient\(assignedIngredientCount == 1 ? "" : "s") \(assignedIngredientCount == 1 ? "is" : "are") assigned to '\(category.displayName)'.")
-                            .font(.body)
+                            .font(ForagerTheme.bodyFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
-                        
+
                         Text("Choose how to handle these assignments:")
-                            .font(.body)
+                            .font(ForagerTheme.bodyFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                             .multilineTextAlignment(.center)
                     }
@@ -336,7 +340,7 @@ struct ManageCategoriesView: View {
                             Image(systemName: "arrow.triangle.2.circlepath")
                                 .foregroundStyle(ForagerTheme.accentPrimary)
                             Text("Reassign to Different Category")
-                                .font(.headline)
+                                .font(ForagerTheme.secondaryFont)
                                 .fontWeight(.medium)
                         }
                         
@@ -368,25 +372,25 @@ struct ManageCategoriesView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                     .padding(16)
-                    .background(Color(.systemGray6))
+                    .background(ForagerTheme.backgroundSecondary)
                     .cornerRadius(ForagerTheme.Radius.md)
                 }
-                
+
                 // Option 2: Move to Uncategorized
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "folder")
                             .foregroundStyle(ForagerTheme.textTertiary)
                         Text("Move to \"Uncategorized\" Category")
-                            .font(.headline)
+                            .font(ForagerTheme.secondaryFont)
                             .fontWeight(.medium)
                     }
                     Text("Ingredients will be moved to the Uncategorized category")
-                        .font(.subheadline)
+                        .font(ForagerTheme.captionFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
                 .padding(16)
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
                 .cornerRadius(ForagerTheme.Radius.md)
             }
             
@@ -399,37 +403,37 @@ struct ManageCategoriesView: View {
                             reassignIngredientTemplates(from: category, to: newCategory)
                         }
                     }
-                    .font(.headline)
-                    .foregroundStyle(selectedReassignmentCategory == nil ? ForagerTheme.textSecondary : Color.white)
+                    .font(ForagerTheme.secondaryFont)
+                    .foregroundStyle(selectedReassignmentCategory == nil ? ForagerTheme.buttonPrimaryDisabledText : ForagerTheme.buttonPrimaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(selectedReassignmentCategory == nil ? Color(.systemGray4) : ForagerTheme.accentPrimary)
+                    .background(selectedReassignmentCategory == nil ? ForagerTheme.buttonPrimaryDisabled : ForagerTheme.buttonPrimaryDefault)
                     .cornerRadius(ForagerTheme.Radius.md)
                     .disabled(selectedReassignmentCategory == nil)
                 }
-                
+
                 Button("Move to Uncategorized") {
                     if let category = categoryToDelete {
                         moveIngredientTemplatesToUncategorized(from: category)
                     }
                 }
-                .font(.headline)
-                .foregroundStyle(.white)
+                .font(ForagerTheme.secondaryFont)
+                .foregroundStyle(ForagerTheme.buttonPrimaryText)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(ForagerTheme.textTertiary)
                 .cornerRadius(ForagerTheme.Radius.md)
-                
+
                 Button("Cancel") {
                     showingReassignmentDialog = false
                     categoryToDelete = nil
                     selectedReassignmentCategory = nil
                 }
-                .font(.body)
+                .font(ForagerTheme.bodyFont)
                 .foregroundStyle(ForagerTheme.accentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color(.systemGray6))
+                .background(ForagerTheme.backgroundSecondary)
                 .cornerRadius(ForagerTheme.Radius.md)
             }
         }
@@ -530,7 +534,7 @@ struct ManageCategoriesView: View {
                     let repo = HouseholdCategoryRepository(context: context, factory: factory, householdKey: currentHouseholdKey)
                     uncategorizedCategory = try repo.findOrCreate(
                         name: "Uncategorized",
-                        color: "#9E9E9E",
+                        color: "#7A7368",
                         sortOrder: Int16.max,
                         isDefault: false
                     )
@@ -734,24 +738,27 @@ struct CategoryRowView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Position indicator
+            // Position indicator — mono price-tag numeral
             Text("\(position)")
-                .font(.headline)
-                .fontWeight(.semibold)
+                .font(ForagerTheme.quantityFontLarge)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
             
-            // Category color indicator — prefers stored hex (user-chosen) over
-            // name-based theme color (architecture-compliance-sweep fix)
-            Circle()
+            // Category color swatch — printed square; prefers stored hex
+            // (user-chosen) over name-based theme color
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                 .fill(ForagerTheme.categoryColor(for: category))
                 .frame(width: 32, height: 32)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(ForagerTheme.borderDefault, lineWidth: 1)
+                )
 
             // Category info
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
                     Text(category.displayName)
-                        .font(.headline)
+                        .font(ForagerTheme.secondaryFont)
                         .fontWeight(.medium)
 
                     if category.isDefault {
@@ -784,7 +791,13 @@ struct CategoryRowView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet row — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
     }
 
 }
@@ -842,11 +855,11 @@ struct CategorySelectionRow: View {
 
                 // Category name
                 Text(category.displayName)
-                    .font(.body)
+                    .font(ForagerTheme.bodyFont)
                     .foregroundStyle(.primary)
-                
+
                 Spacer()
-                
+
                 // Selection indicator
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")

@@ -133,6 +133,9 @@ struct RecipeListView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                BroadsheetMasthead(title: "Recipes")
+                    .padding(.horizontal, ForagerTheme.Spacing.lg)
+
                 // M9.26: Filter pills always visible (even when empty)
                 filterPillRow
 
@@ -145,7 +148,7 @@ struct RecipeListView: View {
                 }
             }
         }
-        .navigationTitle("Recipes")
+        .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 HStack(spacing: ForagerTheme.Spacing.sm) {
@@ -281,6 +284,15 @@ struct RecipeListView: View {
     private var recipeListContent: some View {
         VStack(spacing: 0) {
             List {
+                // reskin-provisions-press: ink band — uniform with other screens
+                ForagerSectionHeader(
+                    title: activeFilter == .all ? "All Recipes" : activeFilter.rawValue,
+                    count: filteredRecipes.count
+                )
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 4, trailing: ForagerTheme.Spacing.lg))
+
                 ForEach(filteredRecipes, id: \.objectID) { recipe in
                     Group {
                         if let onSelect {
@@ -331,6 +343,13 @@ struct RecipeListView: View {
     private var recipeGridContent: some View {
         VStack(spacing: 0) {
             ScrollView {
+                // reskin-provisions-press: ink band — uniform with other screens
+                ForagerSectionHeader(
+                    title: activeFilter == .all ? "All Recipes" : activeFilter.rawValue,
+                    count: filteredRecipes.count
+                )
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
+                .padding(.bottom, ForagerTheme.Spacing.md)
                 LazyVGrid(
                     columns: [
                         GridItem(.flexible(), spacing: ForagerTheme.Spacing.md),
@@ -876,42 +895,47 @@ struct RecipeGridCard: View {
             }
             .frame(height: 120)
             .clipped()
-
-            // Title + metadata — fixed height so grid rows align
-            VStack(alignment: .leading, spacing: ForagerTheme.Spacing.xs) {
-                Text(recipe.recipeDisplayTitle)
-                    .font(ForagerTheme.secondaryFont.weight(.semibold))
-                    .foregroundStyle(ForagerTheme.textPrimary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
+            // reskin-provisions-press: ink attribution band across the hero
+            // (mockup .hero .band) — source in mustard mono, time in paper mono
+            .overlay(alignment: .bottom) {
                 HStack(spacing: ForagerTheme.Spacing.xs) {
+                    Text(recipe.sourceURLDomain ?? recipe.displayAuthor ?? "recipe")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(ForagerTheme.adaptiveColor(lightHex: "#D89A2B", darkHex: "#D89A2B"))
+                        .lineLimit(1)
+                    Spacer(minLength: ForagerTheme.Spacing.xs)
                     if recipe.hasRecipeTiming {
-                        Image(systemName: "clock")
-                            .font(ForagerTheme.captionFont)
-                        Text(recipe.recipeFormattedTotalTime)
-                            .font(ForagerTheme.captionFont)
-                    } else {
-                        Text(" ")
-                            .font(ForagerTheme.captionFont)
+                        Text(recipe.recipeFormattedTotalTime.uppercased())
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            .foregroundStyle(ForagerTheme.adaptiveColor(lightHex: "#E8E6DF", darkHex: "#E8E6DF"))
+                            .lineLimit(1)
                     }
-
-                    Spacer()
-
                     if recipe.isFavorite {
                         Image(systemName: "heart.fill")
-                            .font(ForagerTheme.captionFont)
-                            .foregroundStyle(ForagerTheme.statusDangerFG)
+                            .font(.system(size: 9))
+                            .foregroundStyle(ForagerTheme.adaptiveColor(lightHex: "#E05A44", darkHex: "#E05A44"))
                     }
                 }
-                .foregroundStyle(ForagerTheme.textTertiary)
+                .padding(.horizontal, ForagerTheme.Spacing.sm)
+                .padding(.vertical, 5)
+                .background(ForagerTheme.adaptiveColor(lightHex: "#201D1A", darkHex: "#100E0C"))
             }
-            .padding(ForagerTheme.Spacing.sm)
+
+            // Title — condensed crate voice, fixed height so grid rows align
+            Text(recipe.recipeDisplayTitle)
+                .font(.system(size: 15, weight: .bold).width(.condensed))
+                .foregroundStyle(ForagerTheme.textPrimary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, minHeight: 40, alignment: .topLeading)
+                .padding(ForagerTheme.Spacing.sm)
         }
         .background(ForagerTheme.surfacePrimary)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
         .accessibilityHint("Double tap to view recipe")
@@ -988,7 +1012,14 @@ struct RecipeCardView: View {
                 }
             }
         }
-        .foragerGlassCard()
+        // reskin-provisions-press: matte bordered card (content layer, not glass)
+        .padding(ForagerTheme.Spacing.lg)
+        .background(ForagerTheme.surfacePrimary)
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(recipe.recipeDisplayTitle)\(recipe.isFavorite ? ", favorite" : "")")
         .accessibilityHint("Double tap to view recipe")
@@ -999,13 +1030,13 @@ struct RecipeCardView: View {
             Image(systemName: icon)
                 .font(ForagerTheme.captionFont)
             Text(text)
-                .font(ForagerTheme.captionFont)
+                .font(ForagerTheme.footnoteFont)
         }
         .foregroundStyle(ForagerTheme.accentSecondary)
         .padding(.horizontal, ForagerTheme.Spacing.sm)
         .padding(.vertical, ForagerTheme.Spacing.xs)
         .background(ForagerTheme.accentTint)
-        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
     }
 }
 
@@ -1803,7 +1834,7 @@ struct RecipeDetailView: View {
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
                                 .background(ForagerTheme.backgroundTertiary)
-                                .clipShape(RoundedRectangle(cornerRadius: 3))
+                                .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs))
                         }
                     }
                 } else {
@@ -1836,13 +1867,12 @@ struct RecipeDetailView: View {
                         }
                 } else if scaleFactor != 1.0 {
                     // Scaled display mode: show scaled quantities, no editing
-                    Text(displayName)
-                        .font(ForagerTheme.bodyFont)
-                        .foregroundStyle(ForagerTheme.textPrimary)
+                    IngredientText(text: displayName, parsedName: matchInfo?.parsedName)
                         .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
                 } else {
-                    // Display mode: formatted text with parsed name highlighted
-                    formattedIngredientText(text: currentText, matchInfo: matchInfo)
+                    // Display mode: shared IngredientText — mono quantity,
+                    // medium name, one-line ellipsis (reskin-provisions-press)
+                    IngredientText(text: currentText, parsedName: matchInfo?.parsedName)
                         .frame(maxWidth: .infinity, minHeight: 24, alignment: .leading)
                         .contentShape(Rectangle())
                         .onTapGesture {
@@ -2066,7 +2096,10 @@ struct RecipeDetailView: View {
             }
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+            )
         }
     }
 
@@ -2140,35 +2173,6 @@ struct RecipeDetailView: View {
         isAddingIngredient = false
         showingIngredientAutocomplete = false
         autocompleteService.clearSuggestions()
-    }
-
-    // MARK: - M10.8: Formatted Ingredient Text
-
-    /// Format ingredient text with parsed name in bold accent. Uses shared IngredientMatchResult.
-    @ViewBuilder
-    private func formattedIngredientText(text: String, matchInfo: IngredientMatchResult?) -> some View {
-        if let info = matchInfo,
-           let range = text.range(of: info.parsedName, options: .caseInsensitive) {
-            let prefix = String(text[text.startIndex..<range.lowerBound])
-            let name = String(text[range])
-            let suffix = String(text[range.upperBound...])
-            HStack(spacing: 0) {
-                Text(prefix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-                Text(name)
-                    .font(ForagerTheme.bodyFont)
-                    .bold()
-                    .foregroundStyle(ForagerTheme.accentPrimary)
-                Text(suffix)
-                    .font(ForagerTheme.bodyFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-            }
-        } else {
-            Text(text)
-                .font(ForagerTheme.bodyFont)
-                .foregroundStyle(ForagerTheme.textPrimary)
-        }
     }
 
     // MARK: - M10.6.8: Ingredient Match Summary (shared component)

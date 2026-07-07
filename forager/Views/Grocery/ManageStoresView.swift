@@ -59,6 +59,8 @@ struct ManageStoresView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            BroadsheetMasthead(title: "Stores")
+                .padding(.horizontal, ForagerTheme.Spacing.lg)
             if stores.isEmpty {
                 emptyStateView
             } else {
@@ -67,7 +69,7 @@ struct ManageStoresView: View {
             }
         }
         .background(ForagerTheme.backgroundCanvas.ignoresSafeArea())
-        .navigationTitle("Manage Stores")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             toolbarContent
@@ -139,22 +141,15 @@ struct ManageStoresView: View {
     // MARK: - Header
 
     private var headerSection: some View {
-        VStack(spacing: 12) {
-            Text("Drag to Reorder Stores")
-                .font(ForagerTheme.secondaryFont)
-                .foregroundStyle(ForagerTheme.textSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack {
-                Text("Arrange stores in your preferred shopping order")
-                    .font(ForagerTheme.captionFont)
-                    .foregroundStyle(ForagerTheme.textSecondary)
-
-                Spacer()
-            }
+        // reskin-provisions-press: ink band header + caption (uniform grammar)
+        VStack(alignment: .leading, spacing: ForagerTheme.Spacing.sm) {
+            ForagerSectionHeader(title: "Shopping Order", count: stores.count)
+            Text("Arrange stores in your preferred shopping order. Drag to reorder.")
+                .font(ForagerTheme.captionFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, ForagerTheme.Spacing.sm)
         .background(ForagerTheme.backgroundCanvas)
     }
 
@@ -182,7 +177,9 @@ struct ManageStoresView: View {
                 Text("Drag stores to reorder. Swipe left to delete — its ingredient preferences will be reassigned or cleared.")
                     .font(ForagerTheme.captionFont)
                     .foregroundStyle(ForagerTheme.textTertiary)
+                    .listRowBackground(Color.clear)
             }
+            .listRowBackground(Color.clear)
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
@@ -284,7 +281,7 @@ struct ManageStoresView: View {
                         )) {
                             HStack {
                                 if let selected = selectedReassignmentStore {
-                                    Circle()
+                                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                                         .fill(ForagerTheme.storeColor(hex: selected.color))
                                         .frame(width: 16, height: 16)
                                     Text(selected.displayName)
@@ -413,22 +410,21 @@ struct StoreRowView: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Position indicator
+            // Position indicator — mono price-tag numeral
             Text("\(position)")
-                .font(ForagerTheme.secondaryFont)
-                .fontWeight(.semibold)
+                .font(ForagerTheme.quantityFontLarge)
                 .foregroundStyle(ForagerTheme.textSecondary)
                 .frame(width: 30)
 
-            // Store color dot — tap to change color
+            // Store color swatch — printed square, tap to change color
             Button {
                 showingColorPicker = true
             } label: {
-                Circle()
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                     .fill(ForagerTheme.storeColor(hex: store.color))
                     .frame(width: 32, height: 32)
                     .overlay(
-                        Circle()
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                             .strokeBorder(ForagerTheme.borderDefault, lineWidth: 1)
                     )
             }
@@ -498,7 +494,13 @@ struct StoreRowView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.sm)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet row — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
         .sheet(isPresented: $showingColorPicker) {
             StoreColorPickerSheet(store: store, storeService: storeService)
         }
@@ -529,8 +531,8 @@ struct StoreColorPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: ForagerTheme.Spacing.lg) {
-                // Current color preview
-                Circle()
+                // Current color preview — printed square
+                RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
                     .fill(ForagerTheme.storeColor(hex: store.color))
                     .frame(width: 64, height: 64)
                     .padding(.top, ForagerTheme.Spacing.lg)
@@ -547,12 +549,12 @@ struct StoreColorPickerSheet: View {
                             storeService.saveContext()
                             dismiss()
                         } label: {
-                            Circle()
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                                 .fill(ForagerTheme.storeColor(hex: hex))
                                 .frame(width: 44, height: 44)
                                 .overlay(
-                                    Circle()
-                                        .strokeBorder(store.color == hex ? ForagerTheme.accentPrimary : Color.clear, lineWidth: 3)
+                                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                        .strokeBorder(store.color == hex ? ForagerTheme.textPrimary : Color.clear, lineWidth: 3)
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -589,7 +591,7 @@ struct StoreSelectionView: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 16) {
-                        Circle()
+                        RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
                             .fill(ForagerTheme.storeColor(hex: store.color))
                             .frame(width: 32, height: 32)
 

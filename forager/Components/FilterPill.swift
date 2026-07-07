@@ -60,13 +60,14 @@ struct FilterPill: View {
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
         .foregroundStyle(isSelected ? .white : ForagerTheme.textSecondary)
+        // reskin-provisions-press: printed tag corners — sharp, not capsule
         .background(
-            Capsule()
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
                 .fill(isSelected ? (color ?? ForagerTheme.accentPrimary) : ForagerTheme.backgroundSecondary)
         )
         .overlay(
-            Capsule()
-                .stroke(ForagerTheme.borderSubtle, lineWidth: isSelected ? 0 : 0.5)
+            RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous)
+                .stroke(isSelected ? Color.clear : ForagerTheme.borderStrong, lineWidth: 1)
         )
     }
 }

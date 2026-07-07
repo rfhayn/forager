@@ -273,7 +273,7 @@ struct EditRecipeView: View {
     private var basicInfoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Basic Information")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 12) {
                 TextField("Recipe Name", text: $formData.name)
@@ -288,6 +288,7 @@ struct EditRecipeView: View {
                     Spacer()
                     Stepper(value: $formData.servings, in: 1...99) {
                         Text("\(formData.servings)")
+                            .font(ForagerTheme.quantityFont)
                             .frame(minWidth: 30)
                     }
                 }
@@ -314,7 +315,7 @@ struct EditRecipeView: View {
     private var timingSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Timing")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             VStack(spacing: 12) {
                 Button(action: { activeSheet = .prepTimePicker }) {
@@ -326,6 +327,7 @@ struct EditRecipeView: View {
                             .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.prepTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -345,6 +347,7 @@ struct EditRecipeView: View {
                             .foregroundStyle(ForagerTheme.textPrimary)
                         Spacer()
                         Text(formatTime(formData.cookTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
                         Image(systemName: "chevron.right")
                             .foregroundStyle(ForagerTheme.textSecondary)
@@ -362,8 +365,8 @@ struct EditRecipeView: View {
                         Text("Total Time")
                         Spacer()
                         Text(formatTime(formData.totalTime))
+                            .font(ForagerTheme.quantityFont)
                             .foregroundStyle(ForagerTheme.textSecondary)
-                            .fontWeight(.medium)
                     }
                     .padding(.vertical, 8)
                 }
@@ -401,7 +404,7 @@ struct EditRecipeView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Ingredients")
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                 Spacer()
                 // M10.6.6: Batch LLM parse sparkle button
                 if parsingService.isLLMAvailable {
@@ -490,7 +493,10 @@ struct EditRecipeView: View {
                         }
                         .background(ForagerTheme.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
+                        )
                         .padding(.top, 4)
                     }
                 }
@@ -735,7 +741,7 @@ struct EditRecipeView: View {
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Instructions")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             TextEditor(text: $formData.instructions)
                 .frame(minHeight: 150)
@@ -755,7 +761,7 @@ struct EditRecipeView: View {
     private var tagsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Tags")
-                .font(.headline)
+                .font(ForagerTheme.bodyCondensed.weight(.semibold))
             
             TextField("Enter tags separated by commas", text: $formData.tags)
                 .textFieldStyle(RoundedBorderTextFieldStyle())

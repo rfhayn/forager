@@ -1,9 +1,18 @@
 // ForagerTheme.swift
 // M15.1: Centralized design token system for the forager app
+// reskin-provisions-press: Provisions Press visual identity — bold editorial
+// print grounded in grocery vernacular (butcher paper, ink, tomato, mustard,
+// teal; crate-label display type, SF Mono quantities). Content layer only —
+// Liquid Glass chrome is retained and picks up tint from these tokens.
 //
 // All semantic colors, typography helpers, spacing, and corner radii
 // are defined here. Views reference ForagerTheme tokens instead of
 // hardcoded values. Light/dark mode handled via UIColor dynamic provider.
+// Dark mode is a deliberate ink-paper inversion (warm near-black, not grey).
+//
+// Contrast: every text-on-background and accent-on-surface pair verified
+// against WCAG (AAA primary text, AA other text, 3:1 UI). Full map with
+// computed ratios: openspec/changes/reskin-provisions-press/token-map.md
 
 import SwiftUI
 import UIKit
@@ -25,201 +34,202 @@ enum ForagerTheme {
         adaptiveColor(light: UIColor(hex: lightHex), dark: UIColor(hex: darkHex))
     }
 
-    // MARK: - Background Colors (§4.1.2)
+    // MARK: - Background Colors
 
-    /// Full-screen base background
+    /// Full-screen base background — butcher paper / warm ink
     static var backgroundCanvas: Color {
-        adaptiveColor(lightHex: "#EDE8DF", darkHex: "#141210")
+        adaptiveColor(lightHex: "#E8E6DF", darkHex: "#191714")
     }
 
     /// Card/section backgrounds
     static var backgroundPrimary: Color {
-        adaptiveColor(lightHex: "#E3DDD2", darkHex: "#1C1915")
+        adaptiveColor(lightHex: "#E0DDD4", darkHex: "#201D19")
     }
 
     /// Grouped content
     static var backgroundSecondary: Color {
-        adaptiveColor(lightHex: "#D9D1C4", darkHex: "#24201A")
+        adaptiveColor(lightHex: "#D8D4C9", darkHex: "#282420")
     }
 
     /// Nested groups
     static var backgroundTertiary: Color {
-        adaptiveColor(lightHex: "#CFC6B8", darkHex: "#2C2720")
+        adaptiveColor(lightHex: "#CFCBBE", darkHex: "#302B26")
     }
 
-    // MARK: - Surface Colors (§4.1.3)
+    // MARK: - Surface Colors
 
-    /// Cards, list rows, inputs
+    /// Cards, list rows, inputs — raised paper
     static var surfacePrimary: Color {
-        adaptiveColor(lightHex: "#FAFBFC", darkHex: "#282828")
+        adaptiveColor(lightHex: "#F2F0EA", darkHex: "#262220")
     }
 
     /// Sheets, popovers
     static var surfaceSecondary: Color {
-        adaptiveColor(lightHex: "#F5F6F8", darkHex: "#323232")
+        adaptiveColor(lightHex: "#F7F5F0", darkHex: "#2E2A26")
     }
 
-    /// Selected state highlight
+    /// Selected state highlight — tomato tint
     static var surfaceAccent: Color {
-        adaptiveColor(lightHex: "#E8F0E0", darkHex: "#2A3520")
+        adaptiveColor(lightHex: "#F2DCD7", darkHex: "#3A2A26")
     }
 
-    /// Warning banners
+    /// Warning banners — mustard tint
     static var surfaceWarning: Color {
-        adaptiveColor(lightHex: "#FFF8E6", darkHex: "#332B18")
+        adaptiveColor(lightHex: "#F4E7CC", darkHex: "#362D1A")
     }
 
-    /// Error banners
+    /// Error banners — tomato tint
     static var surfaceDanger: Color {
-        adaptiveColor(lightHex: "#FFF0EE", darkHex: "#331E1A")
+        adaptiveColor(lightHex: "#F4DAD4", darkHex: "#3A241F")
     }
 
-    /// Success banners
+    /// Success banners — print-green tint
     static var surfaceSuccess: Color {
-        adaptiveColor(lightHex: "#EEF6EE", darkHex: "#1E3020")
+        adaptiveColor(lightHex: "#DCE9DD", darkHex: "#22302A")
     }
 
-    // MARK: - Text Colors (§4.1.4)
+    // MARK: - Text Colors
 
-    /// Primary text (14.80:1 light, 14.66:1 dark — AAA)
+    /// Primary text — ink on paper (13.43:1 light, 13.68:1 dark — AAA)
     static var textPrimary: Color {
-        adaptiveColor(lightHex: "#2C2418", darkHex: "#F0EBE3")
+        adaptiveColor(lightHex: "#201D1A", darkHex: "#E4E1D8")
     }
 
-    /// Secondary text (7.35:1 light, 9.33:1 dark — AAA)
+    /// Secondary text (6.39:1 light, 8.56:1 dark — AA+)
     static var textSecondary: Color {
-        adaptiveColor(lightHex: "#5A5347", darkHex: "#C4BDB2")
+        adaptiveColor(lightHex: "#55504A", darkHex: "#B8B3A8")
     }
 
-    /// Tertiary text, metadata (5.8:1 light, 5.5:1 dark — AA)
+    /// Tertiary text, metadata (4.54:1 light, 5.94:1 dark — AA)
     static var textTertiary: Color {
-        adaptiveColor(lightHex: "#6A6057", darkHex: "#A09A90")
+        adaptiveColor(lightHex: "#6C665E", darkHex: "#9A948A")
     }
 
     /// Disabled text
     static var textDisabled: Color {
-        adaptiveColor(lightHex: "#B0A89E", darkHex: "#5A5650")
+        adaptiveColor(lightHex: "#A39D92", darkHex: "#5E594F")
     }
 
-    /// Link text
+    /// Link text — teal (5.94:1 light, 7.44:1 dark)
     static var textLink: Color {
-        adaptiveColor(lightHex: "#2D6A3F", darkHex: "#7BC08A")
+        adaptiveColor(lightHex: "#1A5F5B", darkHex: "#6FB3AE")
     }
 
-    // MARK: - Accent Colors (§4.1.5)
+    // MARK: - Accent Colors
 
-    /// Primary CTAs — Forest Green
+    /// Primary CTAs — Tomato
     static var accentPrimary: Color {
-        adaptiveColor(lightHex: "#2D5016", darkHex: "#7BC08A")
+        adaptiveColor(lightHex: "#C8402E", darkHex: "#E05A44")
     }
 
-    /// Secondary buttons — Leaf Green
+    /// Secondary accents — Mustard (ink-weight in light mode for contrast)
     static var accentSecondary: Color {
-        adaptiveColor(lightHex: "#4A7C2E", darkHex: "#5AAD5A")
+        adaptiveColor(lightHex: "#A9761F", darkHex: "#D89A2B")
     }
 
-    /// Icons, decorative — Spring Green
+    /// Icons, decorative — Teal
     static var accentTertiary: Color {
-        adaptiveColor(lightHex: "#6B9B37", darkHex: "#3D8B37")
+        adaptiveColor(lightHex: "#1F6E6A", darkHex: "#4E9B95")
     }
 
-    /// Tinted backgrounds
+    /// Tinted backgrounds — tomato tint
     static var accentTint: Color {
-        adaptiveColor(lightHex: "#E8F0E0", darkHex: "#2A3520")
+        adaptiveColor(lightHex: "#F2DCD7", darkHex: "#3A2A26")
     }
 
-    // MARK: - Status Colors (§4.1.6)
+    // MARK: - Status Colors
 
-    /// Success foreground
+    /// Success foreground (5.12:1 on BG light, 5.35:1 dark)
     static var statusSuccessFG: Color {
-        adaptiveColor(lightHex: "#2D7A2D", darkHex: "#5AAD5A")
+        adaptiveColor(lightHex: "#266B45", darkHex: "#6FAF87")
     }
 
     /// Success background
     static var statusSuccessBG: Color {
-        adaptiveColor(lightHex: "#EEF6EE", darkHex: "#1E3020")
+        adaptiveColor(lightHex: "#DCE9DD", darkHex: "#22302A")
     }
 
-    /// Warning foreground (validated: 5.25:1 AA pass)
+    /// Warning foreground (5.36:1 on BG light, 6.12:1 dark)
     static var statusWarningFG: Color {
-        adaptiveColor(lightHex: "#8B6607", darkHex: "#D4A62B")
+        adaptiveColor(lightHex: "#7A5710", darkHex: "#D8A64A")
     }
 
     /// Warning background
     static var statusWarningBG: Color {
-        adaptiveColor(lightHex: "#FFF8E6", darkHex: "#332B18")
+        adaptiveColor(lightHex: "#F4E7CC", darkHex: "#362D1A")
     }
 
-    /// Danger foreground
+    /// Danger foreground (4.55:1 on BG light, 4.87:1 dark)
     static var statusDangerFG: Color {
-        adaptiveColor(lightHex: "#C4402F", darkHex: "#E06050")
+        adaptiveColor(lightHex: "#B03A28", darkHex: "#E67560")
     }
 
     /// Danger background
     static var statusDangerBG: Color {
-        adaptiveColor(lightHex: "#FFF0EE", darkHex: "#331E1A")
+        adaptiveColor(lightHex: "#F4DAD4", darkHex: "#3A241F")
     }
 
-    /// Info foreground
+    /// Info foreground (4.64:1 on BG light, 5.12:1 dark)
     static var statusInfoFG: Color {
-        adaptiveColor(lightHex: "#3D7A9C", darkHex: "#5A9BBD")
+        adaptiveColor(lightHex: "#34689A", darkHex: "#6E9EC8")
     }
 
     /// Info background
     static var statusInfoBG: Color {
-        adaptiveColor(lightHex: "#EEF6FA", darkHex: "#1A2830")
+        adaptiveColor(lightHex: "#DEE6EE", darkHex: "#202A34")
     }
 
-    // MARK: - Border Colors (§4.1.7)
+    // MARK: - Border Colors
 
     /// Default border
     static var borderDefault: Color {
-        adaptiveColor(lightHex: "#CCC9C2", darkHex: "#444444")
+        adaptiveColor(lightHex: "#C6C2B6", darkHex: "#44403A")
     }
 
     /// Subtle border
     static var borderSubtle: Color {
-        adaptiveColor(lightHex: "#D8D6D0", darkHex: "#3A3A3A")
+        adaptiveColor(lightHex: "#D6D2C7", darkHex: "#38342E")
     }
 
     /// Strong border
     static var borderStrong: Color {
-        adaptiveColor(lightHex: "#C0BCAE", darkHex: "#505050")
+        adaptiveColor(lightHex: "#A9A497", darkHex: "#56524A")
     }
 
     /// Accent border
     static var borderAccent: Color {
-        adaptiveColor(lightHex: "#4A7C2E", darkHex: "#5AAD5A")
+        adaptiveColor(lightHex: "#C8402E", darkHex: "#E05A44")
     }
 
-    // MARK: - Button States (§4.1.9)
+    // MARK: - Button States
 
-    /// Primary button default background
+    /// Primary button default background — tomato
     static var buttonPrimaryDefault: Color {
-        adaptiveColor(lightHex: "#2D5016", darkHex: "#7BC08A")
+        adaptiveColor(lightHex: "#C8402E", darkHex: "#E05A44")
     }
 
-    /// Primary button pressed background
+    /// Primary button pressed background — darker in light, LIGHTER in dark
+    /// (glass brightens under touch; keeps ink text at 6.38:1)
     static var buttonPrimaryPressed: Color {
-        adaptiveColor(lightHex: "#1F3A0F", darkHex: "#5AAD5A")
+        adaptiveColor(lightHex: "#A5301F", darkHex: "#EA7A64")
     }
 
     /// Primary button disabled background
     static var buttonPrimaryDisabled: Color {
-        adaptiveColor(lightHex: "#D4CBC0", darkHex: "#3A3630")
+        adaptiveColor(lightHex: "#D2CEC3", darkHex: "#38342E")
     }
 
-    /// Primary button default text
+    /// Primary button default text (4.97:1 light, 4.88:1 dark)
     static var buttonPrimaryText: Color {
-        adaptiveColor(lightHex: "#FFFFFF", darkHex: "#1C1A14")
+        adaptiveColor(lightHex: "#FFFFFF", darkHex: "#1B1613")
     }
 
     /// Primary button disabled text
     static var buttonPrimaryDisabledText: Color {
-        adaptiveColor(lightHex: "#FFFFFF", darkHex: "#5A5650")
+        adaptiveColor(lightHex: "#8F897D", darkHex: "#5E594F")
     }
 
-    // MARK: - Category Colors (§4.1.8)
+    // MARK: - Category Colors
 
     /// Returns the themed color for a Category, preferring the stored `color`
     /// hex (set by AddCategoryView / CategoryService when a user creates a
@@ -235,51 +245,57 @@ enum ForagerTheme {
     }
 
     /// Returns the themed color for a grocery category name.
-    /// All colors verified ≥ 3:1 on their respective backgrounds.
+    /// Re-derived for Provisions Press with hue-family continuity (produce
+    /// stays green, dairy blue, meat red…) so learned associations survive.
+    /// All fills verified ≥ 3:1 on canvas; white labels ≥ 3:1 on light fills.
     static func categoryColor(for name: String) -> Color {
         switch name.lowercased() {
         case "produce":
-            return adaptiveColor(lightHex: "#357A30", darkHex: "#5AAD54")
+            return adaptiveColor(lightHex: "#2E7A52", darkHex: "#5FA97E")
         case "dairy & fridge", "dairy":
-            return adaptiveColor(lightHex: "#3A7CA5", darkHex: "#5AADCF")
+            return adaptiveColor(lightHex: "#34689A", darkHex: "#6E9EC8")
         case "deli & meat", "meat", "deli":
-            return adaptiveColor(lightHex: "#A8382E", darkHex: "#D4605A")
+            return adaptiveColor(lightHex: "#C8402E", darkHex: "#E06A55")
         case "bread & frozen", "bread & bakery", "bakery", "bread":
-            return adaptiveColor(lightHex: "#B07828", darkHex: "#D4A04A")
+            return adaptiveColor(lightHex: "#B0762A", darkHex: "#C9924A")
         case "boxed & canned", "pantry & canned", "pantry", "canned":
-            return adaptiveColor(lightHex: "#7A5D3F", darkHex: "#B09070")
+            return adaptiveColor(lightHex: "#77563A", darkHex: "#A5825F")
         case "frozen":
-            return adaptiveColor(lightHex: "#4A7D95", darkHex: "#6AADC0")
+            return adaptiveColor(lightHex: "#3C7D96", darkHex: "#6BA7BE")
         case "beverages":
-            return adaptiveColor(lightHex: "#6D5098", darkHex: "#9A7DC8")
+            return adaptiveColor(lightHex: "#6A4E92", darkHex: "#9C82C4")
         case "snacks, drinks, & other", "snacks & other", "snacks":
-            return adaptiveColor(lightHex: "#C06A2F", darkHex: "#E08A50")
+            return adaptiveColor(lightHex: "#C2662C", darkHex: "#D98A52")
         case "seafood":
-            return adaptiveColor(lightHex: "#267080", darkHex: "#45A0B0")
+            return adaptiveColor(lightHex: "#1F6E6A", darkHex: "#4E9B95")
         case "household":
             return adaptiveColor(lightHex: "#5E6E60", darkHex: "#8DA890")
         case "uncategorized":
-            return adaptiveColor(lightHex: "#7A7067", darkHex: "#938D83")
+            return adaptiveColor(lightHex: "#7A7368", darkHex: "#948D82")
         default:
-            return adaptiveColor(lightHex: "#7A7067", darkHex: "#938D83")
+            return adaptiveColor(lightHex: "#7A7368", darkHex: "#948D82")
         }
     }
 
-    // MARK: - Typography (§4.2.2)
+    // MARK: - Typography
+    // Crate-label voice: condensed heavy display for titles, SF Pro Text for
+    // body, SF Mono for quantities. SF Pro Rounded is retired app-wide.
 
-    /// 34pt Bold Rounded — Top-level screen headers
+    /// 34pt Heavy Condensed — Top-level screen headers (crate-label display)
     static var screenTitle: Font {
-        .system(.largeTitle, design: .rounded).bold()
+        .system(.largeTitle, design: .default).weight(.heavy).width(.condensed)
     }
 
-    /// 28pt Bold Rounded — Recipe detail hero, detail headers
+    /// 28pt Heavy Condensed — Recipe detail hero, detail headers
+    /// (relative to .title so Dynamic Type scales it)
     static var detailTitle: Font {
-        .system(size: 28, weight: .bold, design: .rounded)
+        .system(.title, design: .default).weight(.heavy).width(.condensed)
     }
 
-    /// 20pt Semibold Rounded — Card titles, section headers
+    /// 20pt Bold Condensed — Card titles, section headers
+    /// (relative to .title3 so Dynamic Type scales it)
     static var cardTitle: Font {
-        .system(size: 20, weight: .semibold, design: .rounded)
+        .system(.title3, design: .default).weight(.bold).width(.condensed)
     }
 
     /// 17pt Regular System — Content text, list items, instructions
@@ -292,19 +308,38 @@ enum ForagerTheme {
         .system(.subheadline)
     }
 
-    /// 13pt Semibold Rounded — Filter pills, action buttons, small interactive
+    /// 13pt Semibold Condensed — Filter pills, action buttons, small interactive
     static var footnoteFont: Font {
-        .system(.footnote, design: .rounded).weight(.semibold)
+        .system(.footnote).weight(.semibold).width(.condensed)
     }
 
-    /// 12pt Semibold Rounded — Badges, category labels, counts
+    /// 12pt Semibold Condensed — Badges, category labels, counts
     static var captionFont: Font {
-        .system(.caption, design: .rounded).weight(.semibold)
+        .system(.caption).weight(.semibold).width(.condensed)
     }
 
-    /// 10pt Medium Rounded — Tab bar labels only
+    /// 17pt Condensed — the crate-label voice at body size: ingredient
+    /// names and qualifiers in list rows (semibold for names via
+    /// fontWeight). Pairs with mono amounts; sub-lines use captionFont.
+    static var bodyCondensed: Font {
+        .system(.body).width(.condensed)
+    }
+
+    /// 10pt Semibold Condensed — Tab bar labels only
     static var tabLabel: Font {
-        .system(size: 10, weight: .medium, design: .rounded)
+        .system(size: 10, weight: .semibold).width(.condensed)
+    }
+
+    /// 13pt Semibold Mono — Quantities, amounts, counts (the price-tag
+    /// signature: tabular, scannable numerals wherever amounts render)
+    static var quantityFont: Font {
+        .system(.footnote, design: .monospaced).weight(.semibold)
+    }
+
+    /// 15pt Semibold Mono — Larger quantity contexts (recipe ingredient lists)
+    /// (relative to .subheadline so Dynamic Type scales it with the item text)
+    static var quantityFontLarge: Font {
+        .system(.subheadline, design: .monospaced).weight(.semibold)
     }
 
     // MARK: - Spacing (4-point grid)
@@ -319,12 +354,13 @@ enum ForagerTheme {
     }
 
     // MARK: - Corner Radius
+    // Print vocabulary: tags and blocks sit sharper than the old soft system.
 
     enum Radius {
-        static let xs: CGFloat = 4
-        static let sm: CGFloat = 8
-        static let md: CGFloat = 12
-        static let lg: CGFloat = 16
+        static let xs: CGFloat = 2
+        static let sm: CGFloat = 4
+        static let md: CGFloat = 8
+        static let lg: CGFloat = 12
         static let full: CGFloat = 999
     }
 }

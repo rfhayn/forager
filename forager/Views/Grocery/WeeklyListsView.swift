@@ -42,7 +42,7 @@ struct WeeklyListsView: View {
 
     var body: some View {
         contentView
-            .navigationTitle("Grocery Lists")
+            .navigationTitle("")
             .toolbar {
                 toolbarContent
             }
@@ -109,6 +109,17 @@ struct WeeklyListsView: View {
 
     private var listsView: some View {
         List {
+            BroadsheetMasthead(title: "Grocery Lists")
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: ForagerTheme.Spacing.lg, bottom: 0, trailing: ForagerTheme.Spacing.lg))
+
+            // reskin-provisions-press: ink band — uniform with other screens
+            ForagerSectionHeader(title: "All Lists", count: weeklyLists.count)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 4, leading: ForagerTheme.Spacing.lg, bottom: 4, trailing: ForagerTheme.Spacing.lg))
+
             ForEach(weeklyLists, id: \.self) { list in
                 ZStack {
                     NavigationLink(destination: GroceryListDetailView(weeklyList: list)) { EmptyView() }
@@ -353,23 +364,22 @@ struct WeeklyListRowView: View {
                             .submitLabel(.done)
                             .onSubmit { saveName() }
                     } else {
+                        // Rename moved to the row context menu — a gesture on
+                        // the name Text swallows taps meant for the enclosing
+                        // NavigationLink (left half of the row went dead)
                         Text(weeklyList.name ?? "Unnamed List")
                             .font(ForagerTheme.cardTitle)
                             .foregroundStyle(isListCompleted ? ForagerTheme.textTertiary : ForagerTheme.textPrimary)
-                            .onLongPressGesture {
-                                editedName = weeklyList.name ?? ""
-                                isEditingName = true
-                            }
                     }
 
                     if let date = weeklyList.dateCreated {
                         Text(date, style: .date)
-                            .font(ForagerTheme.captionFont)
+                            .font(ForagerTheme.footnoteFont)
                             .foregroundStyle(ForagerTheme.textTertiary)
                     }
 
                     Text("\(completedItemsCount) of \(totalItemsCount) items")
-                        .font(ForagerTheme.secondaryFont)
+                        .font(ForagerTheme.footnoteFont)
                         .foregroundStyle(ForagerTheme.textSecondary)
                 }
 
@@ -388,7 +398,21 @@ struct WeeklyListRowView: View {
                 CategoryChipPills(categories: categoryComposition)
             }
         }
-        .foragerGlassCard()
+        .padding(.vertical, ForagerTheme.Spacing.md)
+        .overlay(alignment: .bottom) {
+            // reskin-provisions-press: broadsheet row — hairline rule, no box
+            Rectangle()
+                .fill(ForagerTheme.borderSubtle)
+                .frame(height: 1.5)
+        }
+        .contextMenu {
+            Button {
+                editedName = weeklyList.name ?? ""
+                isEditingName = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(weeklyList.name ?? "Unnamed List"), \(completedItemsCount) of \(totalItemsCount) items checked")
         .onAppear {

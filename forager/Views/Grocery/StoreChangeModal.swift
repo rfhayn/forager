@@ -95,8 +95,7 @@ struct StoreChangeModal: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Assign Stores")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                        .font(ForagerTheme.detailTitle)
                     Text("\(ingredientTemplates.count) ingredient\(ingredientTemplates.count == 1 ? "" : "s")")
                         .font(.subheadline)
                         .foregroundStyle(ForagerTheme.textSecondary)

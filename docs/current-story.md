@@ -1,10 +1,10 @@
 # Current Development Story
 
-**Last Updated**: June 23, 2026
-**Status**: **fix-meal-plan-household-observer COMPLETE** (#152, squash `70e2814`, 2026-04-30) | **fix-groceryitem-multi-zone-assignment COMPLETE + ARCHIVED** (#150, squash `25f0314`, 2026-04-22 — delta specs promoted into `architecture` + `grocery-lists` living specs on 2026-05-26) | **Build 141 on TestFlight** | **architecture-compliance-sweep COMPLETE** (#146) | **fix-test-harness-and-stale-assertions COMPLETE** (#147) | **fix-dashboard-meal-plan-cold-start COMPLETE** (#148) | **investigate-import-and-store-test-failures COMPLETE** (#149) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M9.28 / M19 / M18 / FUI-1 (8/8) COMPLETE**
+**Last Updated**: July 7, 2026
+**Status**: **reskin-provisions-press READY TO MERGE** (22/23 tasks; builds 142–154 shipped + verified; design converged, screenshots composited, docs synced, diagnostics re-gated; remaining: PR → squash merge → submission build 155 from main → RESUBMIT-IN-PLACE on existing submission per revised §12 strategy — see next-prompt-reskin-provisions-press.md) | **fix-meal-plan-household-observer COMPLETE** (#152, squash `70e2814`, 2026-04-30) | **fix-groceryitem-multi-zone-assignment COMPLETE + ARCHIVED** (#150, squash `25f0314`, 2026-04-22 — delta specs promoted into `architecture` + `grocery-lists` living specs on 2026-05-26) | **Build 141 on TestFlight** | **architecture-compliance-sweep COMPLETE** (#146) | **fix-test-harness-and-stale-assertions COMPLETE** (#147) | **fix-dashboard-meal-plan-cold-start COMPLETE** (#148) | **investigate-import-and-store-test-failures COMPLETE** (#149) | **sync-status-line-with-focus COMPLETE** (#145) | **seed-operating-model-foundations COMPLETE** (#141) | **expand-claude-context-infrastructure COMPLETE** (#143) | **harden-pr-skill-doc-freshness COMPLETE** (#144) | **M9.28 / M19 / M18 / FUI-1 (8/8) COMPLETE**
 **Total Progress**: ~363h shipped (all post-launch correctness changes merged + build 141 distributed)
-**Current Branch**: `feature/escalate-43a-to-app-review-board` (logging the Board outcome; PR #154 appeal already merged).
-**Launch Path**: M7.7 — STILL BLOCKED. The **App Review Board UPHELD the 4.3(a) rejection on 2026-06-23** (Appeal Ticket APL466617) — no app named, four-factor refutation not engaged → unstated category-saturation. The written-appeal path is now exhausted. Next move: **Meet with Apple** (live appointment) to force engagement + demand the specific comparable app; fallback is product first-impression repositioning + withdraw-and-refile-fresh build 141. Plan in the 4.3(a) response doc § 11.7–11.8.
+**Current Branch**: `feature/reskin-provisions-press` (UI/UX overhaul — Provisions Press identity).
+**Launch Path**: M7.7 — BLOCKED, but now with a **concrete, actionable cause**. **Meet with Apple held 2026-07-02** (Appointment from ticket APL466617): the rep's feedback was that 4.3(a) is driven by the **UI, color scheme, and overall design reading as over-saturated / already-used** — NOT code duplication or functionality similarity. The four-factor engineering defense effectively landed; the design surface did not. Next move: `reskin-provisions-press` — overhaul the visual identity (bold editorial-print content layer + retained Liquid Glass chrome, complete color-scheme replacement), keep functionality unchanged, then withdraw-and-refile fresh with new screenshots. History in the 4.3(a) response doc § 7 + § 11.
 **Planning**: Three-stream roadmap — [operating-model](roadmaps/operating-model-roadmap.md) / [app-health](roadmaps/app-health-roadmap.md) / [shipping](roadmaps/shipping-roadmap.md). OpenSpec specs in `openspec/specs/` (11 capabilities incl. new `architecture` + `developer-tooling`); archived changes in `openspec/changes/archive/`.
 **Naming**: Forward-only — new work uses OpenSpec change-id kebab-case (see [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md)); historical M#.#.# preserved.
 
@@ -39,6 +39,19 @@
 | `architecture-compliance-sweep` | Narrowed sweep: 3 view-save fixes + audit tightening + ADR 011 SUPERSEDED + ADR 015 + ADR 013 scope clarification + spec drift fix + beta diagnostic logging + CategoryService | 5-6h | ACTIVE (PR #146, build 136 on TestFlight, 2026-04-19) |
 | `fix-test-harness-and-stale-assertions` | Eliminate 51 test setUp crash-loops; fix 2 stale parser/normalizer assertions. 6 newly-exposed failures → `investigate-import-and-store-test-failures` | ~1h | ACTIVE (PR #147, awaiting review, 2026-04-19) |
 | `fix-dashboard-meal-plan-cold-start` | One-line fix: reload `MealPlanService.shared.activeMealPlan` after `householdKeyProvider` is wired. Dashboard Meal Plan card now populates on cold start instead of showing ghost state until user visits Meals tab | ~0.5h | ACTIVE (new branch, awaiting PR, 2026-04-19) |
+
+---
+
+## ACTIVE: reskin-provisions-press — UI/UX Overhaul (July 3, 2026)
+
+**Why**: Meet with Apple (2026-07-02) reframed the 4.3(a) blocker — the reviewer objection is the *design surface* (UI, color scheme, over-saturated/already-used look), not code or functionality duplication. The current warm-cream + forest-green + rounded system sits squarely in the category's default visual space.
+
+**What**: Replace the visual identity with **Provisions Press** — bold editorial print grounded in grocery-world vernacular (crate labels, butcher paper, printed category tags). Butcher-paper grey `#E8E6DF` / ink `#201D1A` / tomato `#C8402E` / mustard `#D89A2B` / teal `#1F6E6A`. Content layer gets the print identity; **Liquid Glass chrome (tab bar, nav, sheets, CTAs) is retained** and re-tinted by the new palette. Functionality unchanged.
+
+**Branch**: `feature/reskin-provisions-press`
+**Mockups**: `docs/mockups/ui-overhaul-directions.html` (3-direction comparison; Provisions Press chosen) → revised Liquid Glass-aware mockup in progress
+**OpenSpec**: proposal via `/opsx:propose` (in progress)
+**Exit criteria**: new ForagerTheme tokens + typography, all views re-skinned, new App Store screenshots, withdraw-and-refile fresh submission.
 
 ---
 

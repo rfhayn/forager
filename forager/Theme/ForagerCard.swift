@@ -34,38 +34,36 @@ struct ForagerCardModifier: ViewModifier {
 }
 
 // MARK: - Regular Glass Card (M15.6)
+// reskin-provisions-press: glass belongs to CHROME only (tab bar, nav, CTAs).
+// These modifiers are used exclusively on CONTENT cards, so they now render
+// the matte print card (surface + hairline border). API names retained so
+// call sites don't churn; the "glass" in the name is historical.
 
 struct ForagerGlassCardModifier: ViewModifier {
-    @Environment(\.colorScheme) private var colorScheme
-
     func body(content: Content) -> some View {
         content
             .padding(ForagerTheme.Spacing.lg)
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: ForagerTheme.Radius.md, style: .continuous)
-                    .stroke(Color.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
+                    .stroke(ForagerTheme.borderSubtle, lineWidth: 1)
             )
     }
 }
 
 // MARK: - Prominent Glass Card (M15.6)
-// Uses larger radius for visual emphasis; no .prominent Glass variant exists
+// Larger radius + stronger border for hero/active emphasis (matte print).
 
 struct ForagerProminentGlassCardModifier: ViewModifier {
-    @Environment(\.colorScheme) private var colorScheme
-
     func body(content: Content) -> some View {
         content
             .padding(ForagerTheme.Spacing.lg)
             .background(ForagerTheme.surfacePrimary)
             .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: ForagerTheme.Radius.lg, style: .continuous)
-                    .stroke(Color.white.opacity(colorScheme == .dark ? 0.06 : 0), lineWidth: 1)
+                    .stroke(ForagerTheme.borderStrong, lineWidth: 1)
             )
     }
 }

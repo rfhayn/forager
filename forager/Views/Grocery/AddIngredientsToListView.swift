@@ -730,7 +730,7 @@ struct AddIngredientsToListView: View {
                         Text("\(selectedServings) servings")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(selectedServings != recipe.servings ? .blue : .primary)
+                            .foregroundStyle(selectedServings != recipe.servings ? ForagerTheme.accentPrimary : .primary)
                     }
                 }
                 
@@ -759,7 +759,7 @@ struct AddIngredientsToListView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Recipe: \(recipe.title ?? "Unknown Recipe")")
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .fontWeight(.semibold)
                 Spacer()
             }
@@ -781,24 +781,39 @@ struct AddIngredientsToListView: View {
             Button(action: {
                 toggleIngredientSelection(ingredient)
             }) {
-                Image(systemName: isSelected(ingredient) ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected(ingredient) ? ForagerTheme.statusSuccessFG : ForagerTheme.textTertiary)
-                    .font(.title3)
+                // Square print check (reskin-provisions-press): ink-outlined box,
+                // tomato fill when selected — matches GroceryListItemRow checkbox
+                ZStack {
+                    RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                        .strokeBorder(isSelected(ingredient) ? Color.clear : ForagerTheme.textPrimary, lineWidth: 2)
+                        .background(
+                            RoundedRectangle(cornerRadius: ForagerTheme.Radius.sm, style: .continuous)
+                                .fill(isSelected(ingredient) ? ForagerTheme.accentPrimary : Color.clear)
+                        )
+                    if isSelected(ingredient) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(ForagerTheme.buttonPrimaryText)
+                    }
+                }
+                .frame(width: 22, height: 22)
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(ingredient.name ?? "Unknown ingredient")
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                
+                // Shared ingredient render: mono quantity + body name
+                IngredientText(
+                    text: ingredient.name ?? "Unknown ingredient",
+                    parsedName: IngredientParsingService.extractCleanIngredientName(from: ingredient.name ?? "")
+                )
+
                 HStack(spacing: 4) {
                     // Only show scaled quantity caption when servings are adjusted
                     if scaleFactor != 1.0 {
                         let scaled = scaledDisplayText(for: ingredient)
                         if !scaled.isEmpty {
-                            Text(scaled)
-                                .font(.caption)
-                                .foregroundStyle(.blue)
+                            Text(scaled.displayingKitchenFractions)
+                                .font(ForagerTheme.footnoteFont)
+                                .foregroundStyle(ForagerTheme.statusInfoFG)
 
                             if let originalId = ingredient.id,
                                let original = originalDisplayTexts[originalId],
@@ -926,15 +941,15 @@ struct AddIngredientsToListView: View {
     private func categoryHeaderSimple(categoryName: String, count: Int) -> some View {
         HStack {
             Text(categoryName.uppercased())
-                .font(.caption)
-                .fontWeight(.semibold)
+                .font(.system(size: 12, weight: .bold).width(.condensed))
+                .tracking(0.5)
                 .foregroundStyle(ForagerTheme.textSecondary)
-            
+
             Spacer()
-            
+
             Text("\(count)")
-                .font(.caption2)
-                .foregroundStyle(ForagerTheme.textSecondary)
+                .font(ForagerTheme.quantityFont)
+                .foregroundStyle(ForagerTheme.textTertiary)
         }
     }
     

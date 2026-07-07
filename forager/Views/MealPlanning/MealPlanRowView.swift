@@ -47,21 +47,22 @@ struct MealPlanRowView: View {
                     .frame(width: 8, height: 8)
                 
                 Text(displayName)
-                    .font(.headline)
+                    .font(ForagerTheme.bodyCondensed.weight(.semibold))
                     .lineLimit(1)
                 
                 Spacer()
                 
                 // M4.2.4: Active badge for current plan
+                // reskin-provisions-press: printed tomato tag (matches ACTIVE tag)
                 if status == .active {
-                    Text("Active")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(ForagerTheme.statusSuccessFG.opacity(0.2))
-                        .foregroundStyle(ForagerTheme.statusSuccessFG)
-                        .cornerRadius(ForagerTheme.Radius.sm)
+                    Text("ACTIVE")
+                        .font(.system(size: 10, weight: .bold).width(.condensed))
+                        .tracking(0.5)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(ForagerTheme.accentPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs, style: .continuous))
                 }
             }
             
@@ -72,7 +73,7 @@ struct MealPlanRowView: View {
                     .foregroundStyle(ForagerTheme.textSecondary)
                 
                 Text(dateRangeText)
-                    .font(.subheadline)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
             }
             
@@ -84,7 +85,7 @@ struct MealPlanRowView: View {
                     ZStack(alignment: .leading) {
                         // Background
                         RoundedRectangle(cornerRadius: ForagerTheme.Radius.xs)
-                            .fill(Color(.systemGray5))
+                            .fill(ForagerTheme.borderDefault)
                             .frame(height: 8)
                         
                         // Progress fill
@@ -98,7 +99,7 @@ struct MealPlanRowView: View {
                 
                 // Progress text
                 Text(progressText)
-                    .font(.caption)
+                    .font(ForagerTheme.footnoteFont)
                     .foregroundStyle(ForagerTheme.textSecondary)
                     .frame(width: 70, alignment: .trailing)
             }
