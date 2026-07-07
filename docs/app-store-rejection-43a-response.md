@@ -487,7 +487,16 @@ The written-appeal path is exhausted (§ 11) and the design-surface diagnosis is
 
 ### 12.1 Strategy
 
-- **Withdraw** the stuck submission (`e5e960e5…`, three 4.3(a) determinations + upheld appeal) and **file fresh** — new submission ID, near-certain new reviewer, no inherited thread history.
+> **REVISED 2026-07-07 (developer decision):** No withdraw-and-refile. At the
+> Meet with Apple appointment the rep indicated the existing submission is
+> **solvable in place** — so we RESUBMIT on the current submission
+> (`e5e960e5…`) with the redesigned build, new screenshots, and the § 12.3
+> notes. This also keeps the consultation context attached to the thread,
+> which now works *for* us: the reviewer can see we did exactly what the
+> consultation asked. Per the resubmit-workflow record, binary/guideline
+> rejections use the Resubmit path with a new build selected.
+
+- ~~**Withdraw** the stuck submission (`e5e960e5…`, three 4.3(a) determinations + upheld appeal) and **file fresh** — new submission ID, near-certain new reviewer, no inherited thread history.~~ *(superseded by the revision above)*
 - **Binary**: the final reskin build (154+; must include the diagnostics re-gate — Settings > Diagnostics hidden in Release). Do NOT submit builds 134–141 (pre-reskin identity) or 142–153 (beta diagnostics UI visible).
 - **First impression is the battleground**: the reviewer's first 30 seconds are the icon, the screenshots, and the opening screens. All three now carry the Provisions Press identity.
 - **Tone of all text**: neutral and forward-looking. A new reviewer sees this cold — nothing should read as a continuation of a dispute. The consultation is referenced as collaboration, not grievance.
@@ -518,15 +527,14 @@ The written-appeal path is exhausted (§ 11) and the design-surface diagnosis is
 
 *(~1,950 characters — comfortably under the field limit; trim the parenthetical competitor asides first if a shorter version is ever needed.)*
 
-### 12.4 Submission mechanics (in order)
+### 12.4 Submission mechanics (in order — REVISED for resubmit-in-place)
 
-1. **Final build**: cut the submission build (diagnostics re-gate + any final fixes), distribute to TestFlight, quick smoke.
-2. **Withdraw**: App Store Connect → the pending/rejected submission → Cancel Submission (this releases the thread; per the resubmit-workflow memory, binary rejections require a fresh submit anyway).
-3. **New version setup**: confirm version string, select the new build.
-4. **Screenshots**: upload the five build-153 composites to the 6.9" iPhone slot (repo: `docs/beta/screenshots/01–05`). **Open question: iPad slot** — the 2026-05-13 review used an iPad Air M3; if the listing carries iPad screenshots they MUST be regenerated in the new identity before submitting (an old-identity iPad set undermines the whole story).
-5. **Metadata**: name/subtitle/keywords/description carry over from the 2026-04-23 repositioning (still accurate post-reskin); update What's New for the redesign.
-6. **Review Notes**: paste § 12.3.
-7. **Submit** and log the new submission ID in § 7.
+1. **Final build**: merge `reskin-provisions-press` to main, cut the submission build FROM MAIN (155+, includes diagnostics re-gate + AI-parse fix), distribute to TestFlight, quick smoke. *(154 verified 2026-07-07: chili parse ✅, diagnostics hidden ✅.)*
+2. **Build selector**: on the existing submission, swap the selected build to the new one.
+3. **Screenshots**: replace the 6.9" iPhone slot with the five build-153 composites (repo: `docs/beta/screenshots/01–05`). iPad slot: N/A — confirmed no separate iPad set (2026-07-07).
+4. **Metadata**: name/subtitle/keywords/description carry over from the 2026-04-23 repositioning (still accurate post-reskin); update What's New for the redesign.
+5. **Review Notes / Resolution Center**: paste § 12.3 (works verbatim as either the review-notes field or a Resolution Center reply, whichever the resubmit flow surfaces).
+6. **Resubmit** on the existing submission and log the date in § 7.
 
 ### 12.5 Open items before submitting
 

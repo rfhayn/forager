@@ -88,3 +88,6 @@ Tools/ml-training/data/harness_all.jsonl
 Tools/ml-training/data/conversion_stats.json
 Tools/ml-training/models/
 Tools/ml-training/venv/
+
+# Raw screenshot captures (contain unredacted personal data) — never commit
+docs/beta/screenshots/drafts/

@@ -29,14 +29,14 @@
 ## 5. Accessibility & QA
 
 - [x] 5.1 Accessibility pass: Reduce Transparency, Increase Contrast, Dynamic Type (incl. accessibility sizes), light/dark
-- [ ] 5.2 Full manual smoke test of all flows to confirm zero behavior change; run test suite
-- [ ] 5.3 TestFlight build to beta group for identity feedback
+- [x] 5.2 Full manual smoke test of all flows to confirm zero behavior change; run test suite
+- [x] 5.3 TestFlight build to beta group for identity feedback (builds 142-154)
 
 ## 6. Docs & Refile
 
-- [ ] 6.1 Update CLAUDE.md UI Patterns (typography rule, palette summary) + create successor design-system mockup doc; update memory design-system notes
-- [ ] 6.2 Log Meet with Apple outcome in `docs/app-store-rejection-43a-response.md` §7/§11.8; update insights log + dev journal
+- [x] 6.1 Update CLAUDE.md UI Patterns (typography rule, palette summary) + create successor design-system mockup doc; update memory design-system notes
+- [x] 6.2 Log Meet with Apple outcome in `docs/app-store-rejection-43a-response.md` §7/§11.8; update insights log + dev journal
 - [x] 6.3 App icon redesign (leaf abandoned): concept mockup → user pick → generate AppIcon + LaunchIcon assets in the print vocabulary
-- [ ] 6.3b Landing page (`docs/index.html`) restyle — first pass done; REVISIT after final icon + any palette refinement land
-- [ ] 6.4 New App Store screenshot set against the re-skinned build
-- [ ] 6.5 PR + squash merge; then withdraw-and-refile fresh submission via `/release-prep`
+- [x] 6.3b Landing page (`docs/index.html`) restyle — final pass 2026-07-07 (5 new screenshots, user-approved)
+- [x] 6.4 New App Store screenshot set against the re-skinned build (build 153 captures, Provisions Press composites)
+- [ ] 6.5 PR + squash merge; then RESUBMIT-IN-PLACE on the existing submission (strategy revised 2026-07-07 per Meet with Apple guidance; see response doc §12)
