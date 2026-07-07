@@ -19,7 +19,7 @@ Dependencies:
     Pillow (pip3 install --user Pillow)
 """
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 # ---------------- Config ----------------
 
@@ -35,13 +35,22 @@ MAX_TEXT_WIDTH = 1200  # 60px margin each side
 TITLE_Y = 150
 TITLE_SUB_GAP = 36
 
-# Colors
-TITLE_COLOR = (20, 20, 20)     # near-black
-SUB_COLOR = (95, 95, 95)       # dark gray
-FRAME_BG = (255, 255, 255)     # white
+# Colors — Provisions Press band (reskin-provisions-press): butcher-paper
+# frame blends with the app canvas so the composite reads as one sheet;
+# ink title, tomato subtitle
+TITLE_COLOR = (32, 29, 26)     # ink #201D1A
+SUB_COLOR = (200, 64, 46)      # tomato #C8402E
+FRAME_BG = (232, 230, 223)     # butcher paper #E8E6DF
+REDACT_FILL = (242, 240, 235)  # card surface (sampled) — invisible patch
 
-# System font (SF Rounded; Pillow picks the regular weight)
-FONT_PATH = "/System/Library/Fonts/SFNSRounded.ttf"
+# Crate-label faces from the Helvetica Neue collection
+TITLE_FONT = ("/System/Library/Fonts/HelveticaNeue.ttc", 9)  # Condensed Black
+SUB_FONT = ("/System/Library/Fonts/HelveticaNeue.ttc", 4)    # Condensed Bold
+
+# Mounted-print treatment
+MOUNT_MARGIN = 56      # paper margin around the app screen
+MOUNT_RADIUS = 64
+MOUNT_KEYLINE = 8      # bold ink border
 
 # IO paths (relative to repo root)
 DRAFT_DIR = "docs/beta/screenshots/drafts"
@@ -56,8 +65,8 @@ SHOTS = [
         "title": "Invite your household with a link.",
         "subtitle": "No account. No signup. No email.",
         # Rectangle over "Hayn" in the "Mary Hayn" row. Coords are in the
-        # 1320x2868 source space. Slight overshoot on all sides for safety.
-        "redact": [(380, 1310, 700, 1430)],
+        # 1320x2868 source space (build 153 masthead layout, IMG_1958 set).
+        "redact": [(394, 1385, 545, 1472)],
     },
     {
         "filename": "02-group-by-store.png",
@@ -88,25 +97,30 @@ SHOTS = [
 # ---------------- Implementation ----------------
 
 
-def fit_font(text, max_width, start_pt):
+def load_font(fontspec, pt):
+    path, index = fontspec
+    return ImageFont.truetype(path, pt, index=index)
+
+
+def fit_font(text, max_width, start_pt, fontspec):
     """Return (font, pt) that fits text within max_width; shrinks in 4pt steps."""
     pt = start_pt
     probe_img = Image.new("RGB", (1, 1))
     probe_draw = ImageDraw.Draw(probe_img)
     while pt >= MIN_PT:
-        font = ImageFont.truetype(FONT_PATH, pt)
+        font = load_font(fontspec, pt)
         bbox = probe_draw.textbbox((0, 0), text, font=font)
         if bbox[2] - bbox[0] <= max_width:
             return font, pt
         pt -= 4
-    return ImageFont.truetype(FONT_PATH, MIN_PT), MIN_PT
+    return load_font(fontspec, MIN_PT), MIN_PT
 
 
 def composite(shot):
     input_path = os.path.join(DRAFT_DIR, shot["filename"])
     output_path = os.path.join(OUT_DIR, shot["filename"])
 
-    # Frame with white background
+    # Butcher-paper frame
     frame = Image.new("RGB", (FRAME_W, FRAME_H), FRAME_BG)
 
     # Load source
@@ -116,28 +130,46 @@ def composite(shot):
     if shot.get("redact"):
         rdraw = ImageDraw.Draw(src)
         for box in shot["redact"]:
-            rdraw.rectangle(box, fill=FRAME_BG)
+            rdraw.rectangle(box, fill=REDACT_FILL)
 
-    # Scale source to fit the screenshot area while preserving aspect
+    # Mounted-print treatment: inset with margins, rounded corners, bold
+    # ink keyline, soft shadow — the app screen reads as a clearly bounded
+    # object on the paper instead of blending into the frame
+    avail_w = FRAME_W - 2 * MOUNT_MARGIN
+    avail_h = SCREENSHOT_H - MOUNT_MARGIN
     src_ratio = src.width / src.height
-    target_ratio = FRAME_W / SCREENSHOT_H
-    if src_ratio > target_ratio:
-        new_w = FRAME_W
-        new_h = int(FRAME_W / src_ratio)
-    else:
-        new_h = SCREENSHOT_H
-        new_w = int(SCREENSHOT_H * src_ratio)
+    new_h = avail_h
+    new_w = int(new_h * src_ratio)
+    if new_w > avail_w:
+        new_w = avail_w
+        new_h = int(new_w / src_ratio)
     scaled = src.resize((new_w, new_h), Image.LANCZOS)
 
-    # Paste centered in screenshot area (below caption band)
     paste_x = (FRAME_W - new_w) // 2
-    paste_y = CAPTION_H + (SCREENSHOT_H - new_h) // 2
-    frame.paste(scaled, (paste_x, paste_y))
+    paste_y = CAPTION_H
+
+    # Shadow
+    shadow = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [paste_x + 8, paste_y + 14, paste_x + new_w + 8, paste_y + new_h + 14],
+        MOUNT_RADIUS, fill=TITLE_COLOR + (90,))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(22))
+    frame = Image.alpha_composite(frame.convert("RGBA"), shadow).convert("RGB")
+
+    # Rounded screenshot
+    mask = Image.new("L", (new_w, new_h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, new_w - 1, new_h - 1], MOUNT_RADIUS, fill=255)
+    frame.paste(scaled, (paste_x, paste_y), mask)
+
+    # Bold ink keyline
+    ImageDraw.Draw(frame).rounded_rectangle(
+        [paste_x, paste_y, paste_x + new_w - 1, paste_y + new_h - 1],
+        MOUNT_RADIUS, outline=TITLE_COLOR, width=MOUNT_KEYLINE)
 
     # Caption text
     draw = ImageDraw.Draw(frame)
-    title_font, title_pt = fit_font(shot["title"], MAX_TEXT_WIDTH, TITLE_PT_START)
-    sub_font, _ = fit_font(shot["subtitle"], MAX_TEXT_WIDTH, SUB_PT_START)
+    title_font, title_pt = fit_font(shot["title"], MAX_TEXT_WIDTH, TITLE_PT_START, TITLE_FONT)
+    sub_font, _ = fit_font(shot["subtitle"], MAX_TEXT_WIDTH, SUB_PT_START, SUB_FONT)
 
     t_bbox = draw.textbbox((0, 0), shot["title"], font=title_font)
     t_w = t_bbox[2] - t_bbox[0]
