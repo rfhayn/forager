@@ -1,4 +1,4 @@
-# reskin-provisions-press — READY TO MERGE (2026-07-07)
+# reskin-provisions-press — COMPLETE: RESUBMITTED 2026-07-07 (awaiting review)
 
 **OpenSpec**: `openspec/changes/reskin-provisions-press/` (22/23 tasks — only 6.5 merge+resubmit open)
 **Branch**: `feature/reskin-provisions-press` (60+ commits, all pushed)
@@ -13,12 +13,12 @@
 - **Submission strategy REVISED**: resubmit-in-place on existing submission `e5e960e5…` (NO withdraw-and-refile) — per Meet with Apple, it's solvable on the thread. Package in response doc §12 (review-notes text at §12.3, mechanics at §12.4).
 - Diagnostics re-gated behind `#if DEBUG` (submission TODO resolved); ReskinScreenshotTests harness deleted pre-PR per its own checklist.
 
-## Remaining (6.5)
+## DONE — all 23 tasks (2026-07-07)
 
-1. PR → squash merge to main
-2. Cut submission build (155) FROM MAIN → TestFlight
-3. ASC: swap build on existing submission, replace 6.9" screenshots with 01–05, update What's New, paste §12.3 review notes, **Resubmit**
-4. `/opsx:archive reskin-provisions-press` after merge (also archive stale `escalate-43a-to-app-review-board`)
+1. ✅ PR #157 squash-merged to main
+2. ✅ Build 2.0 (155) from main → TestFlight (verified)
+3. ✅ ASC staged via API (build swap, 10 screenshots incl. NEW iPad set — the listing DID carry an old-design iPad set — review notes); user resubmitted via site with point-by-point Resolution Center reply
+4. ⏳ Next session: `/opsx:archive reskin-provisions-press` (+ archive stale `escalate-43a-to-app-review-board`)
 
 ## Queued next changes (user-committed)
 1. `establish-test-planning-workflow` (PRD drafted)

@@ -277,6 +277,7 @@ Drop the optional second-device acceptance beat. Otherwise same shooting + expor
 | 2026-06-06 | **App Review Board appeal SUBMITTED** | Filed via the App Review appeal form (`developer.apple.com/contact/app-store/?topic=appeal`), not the Resolution Center. Submission ID `e5e960e5…`, v2.0 build 140. Sent the 1,945-char trimmed letter (§ 11.3) verbatim — fit under the form's 2,000-char cap. Now awaiting the Board's response (typical window: a few business days to ~2 weeks). Outcome plan in § 11.5. |
 | 2026-06-23 | **App Review Board UPHELD the rejection** | Appeal Ticket **APL466617** (reviewer "Leo"). The Board determined the original 4.3(a) rejection feedback was valid: "this app duplicates the content and functionality of other apps … considered a form of spam." Still **no specific duplicated app named** — the determination did not engage our point-by-point refutation of the four spam factors, confirming the operative driver is unstated category-saturation perception, not the written criteria. Matches the **"Upheld with the same boilerplate"** branch of § 11.5 → next move is the "Meet with Apple" appointment. Full Board message recorded in § 11.7. |
 | 2026-07-02 | **Meet with Apple appointment HELD** | The live conversation finally named the axis three written rounds never did: the 4.3(a) driver is the **design surface** — the reviewer-side perception that forager's UI, color scheme, and overall look are over-saturated / already-used in the category. It is largely NOT about code duplication or functionality similarity; the four-factor engineering defense was never the battleground. No specific duplicated app was named (consistent with all prior rounds), but the actionable feedback made naming one unnecessary. Outcome recorded in § 11.8; response strategy in § 12. |
+| 2026-07-07 | **RESUBMITTED** | Resubmitted on the existing submission (`e5e960e5…`) via App Store Connect after the reskin: build **2.0 (155)** (cut from main post-merge; diagnostics hidden; AI-parse fix), all 10 screenshots replaced (iPhone 6.9" + iPad 12.9", Provisions Press composites), review notes set (§ 12.3), Resolution Center reply enumerating the four design resolutions point-by-point against the July 2 consultation feedback. Staged via ASC API (build swap, screenshots, notes); final submit + reply via the ASC site. Now awaiting review. |
 | 2026-07-03 → 07-06 | **`reskin-provisions-press` executed** | Full visual-identity overhaul (Provisions Press: butcher-paper/ink/tomato print identity, SF Compact condensed + mono numerals, original `fgr` typographic icon, broadsheet masthead system; Liquid Glass chrome retained and re-tinted). Functionality frozen. TestFlight builds 142–153 iterated with live design review; new 5-screenshot set composited from build 153. Fresh-submission package in § 12. |
 
 Add new rows as the round progresses:
@@ -536,9 +537,10 @@ The written-appeal path is exhausted (§ 11) and the design-surface diagnosis is
 5. **Review Notes / Resolution Center**: paste § 12.3 (works verbatim as either the review-notes field or a Resolution Center reply, whichever the resubmit flow surfaces).
 6. **Resubmit** on the existing submission and log the date in § 7.
 
-### 12.5 Open items before submitting
+### 12.5 Open items before submitting — ALL CLOSED (2026-07-07)
 
-- [ ] Final submission build cut + smoke-tested (diagnostics hidden in Release)
-- [ ] iPad screenshot question answered (and set regenerated if needed)
-- [ ] Landing page (`docs/index.html`) final pass with the new screenshots (task 6.3b)
-- [ ] `reskin-provisions-press` merged to main (task 6.5) — submission build should be cut from main
+- [x] Final submission build cut + smoke-tested (155 from main; diagnostics hidden in Release)
+- [x] iPad screenshot question answered: set EXISTED with pre-reposition captures — replaced with 5 iPad-size Provisions Press composites
+- [x] Landing page (`docs/index.html`) final pass with the new screenshots (task 6.3b)
+- [x] `reskin-provisions-press` merged to main (PR #157, squash) — submission build cut from main
+- [x] **RESUBMITTED 2026-07-07** — see § 7

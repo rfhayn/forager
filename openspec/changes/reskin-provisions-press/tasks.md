@@ -39,4 +39,4 @@
 - [x] 6.3 App icon redesign (leaf abandoned): concept mockup → user pick → generate AppIcon + LaunchIcon assets in the print vocabulary
 - [x] 6.3b Landing page (`docs/index.html`) restyle — final pass 2026-07-07 (5 new screenshots, user-approved)
 - [x] 6.4 New App Store screenshot set against the re-skinned build (build 153 captures, Provisions Press composites)
-- [ ] 6.5 PR + squash merge; then RESUBMIT-IN-PLACE on the existing submission (strategy revised 2026-07-07 per Meet with Apple guidance; see response doc §12)
+- [x] 6.5 PR #157 squash-merged; build 155 from main; RESUBMITTED in place 2026-07-07 (response doc §7/§12)
