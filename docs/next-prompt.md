@@ -1,7 +1,7 @@
 # Next Implementation Prompt
 
-**Last Updated**: May 26, 2026
-**Launch Path**: M7.7 — v1.0 build 134 rejected on guideline 4.3(a) (spam/repositioning); resolution is the paused `reposition-app-store-listing` change (metadata + screenshots) shipped against a fresh binary. **Build 141 on TestFlight** (cumulative: #150 CloudKit zone-conflict fix + #152 Dashboard meal-plan cold-start fix on top of build 137)
+**Last Updated**: July 7, 2026
+**Launch Path**: **RESUBMITTED — awaiting App Review.** After three 4.3(a) rejections and an upheld Board appeal, Meet with Apple (2026-07-02) identified the design surface as the objection; `reskin-provisions-press` (Provisions Press identity, functionality frozen) merged as PR #157 and **v2.0 build 155 was resubmitted 2026-07-07** on the existing submission with all-new iPhone + iPad screenshots and a point-by-point Resolution Center reply. Record: `docs/app-store-rejection-43a-response.md` §7/§12.
 **Canonical planning reference**: [`docs/project-roadmap.md`](project-roadmap.md) — parent doc with three stream detail docs
 **Naming convention**: forward-only. New work uses OpenSpec change-id kebab-case; legacy M#.#.# preserved for historical artifacts. See [`docs/openspec-workflow-reference.md`](openspec-workflow-reference.md).
 
@@ -11,9 +11,12 @@
 
 ## Recommended Next (in priority order)
 
-0. **Finish `reskin-provisions-press`** (ACTIVE) — icon/a11y/TestFlight done; remaining: user smoke test (5.2), docs sync (6.1–6.2), landing-page final, App Store screenshots (6.4), PR + withdraw-and-refile (6.5).
-0a. **Then (user-committed 2026-07-05): `establish-test-planning-workflow`** — plan drafted, run `/opsx:propose`; resolve the 5 decisions in PRD §7. Pairs with fixing the pre-existing CategoryDeduplicator/StoreSchema test-isolation failures.
-0b. **Then: `decide-view-layer-scope-architecture`** — evaluate `@ScopedFetchRequest` wrapper vs formalize in-memory filter vs ratify status quo; pilot one view; ADR 016.
+*(No active OpenSpec changes — `reskin-provisions-press` and `escalate-43a-to-app-review-board` archived 2026-07-07. Repo is idle-clean while awaiting App Review.)*
+
+0. **Watch the review** — on verdict, add a §7 row to the 43a response doc. If approved: release flow + re-enable the beta diagnostics UI if desired. If rejected: the §10 escalation path and consultation record are the starting point.
+1. **`establish-test-planning-workflow`** (user-committed 2026-07-05) — plan drafted, run `/opsx:propose`; resolve the 5 decisions in PRD §7. Pairs with fixing the pre-existing CategoryDeduplicator/StoreSchema test-isolation failures.
+2. **`decide-view-layer-scope-architecture`** — evaluate `@ScopedFetchRequest` wrapper vs formalize in-memory filter vs ratify status quo; pilot one view; ADR 016.
+3. **Post-reskin cleanup candidates** — dead `CoachMarkOverlay` deletion, LLM 4xx error-body surfacing + batch chunking (agent report 2026-07-07), re-enable beta diagnostics UI post-approval.
 
 1. **(superseded by reskin-provisions-press) ~~Resume `reposition-app-store-listing` Session 2~~** (Shipping) — screenshots + video against build 141. This is the actual unblock for the 4.3(a) rejection; the new binary (141, with the #150 CloudKit fix) is already on TestFlight. Update the 4.3(a) response doc with the build swap (134 → 141).
 2. **Smoke-test build 141 on TestFlight** — cold-launch Dashboard: confirm all three meal-plan cards populate immediately (the #152 fix) and the grocery card still renders; verify no CloudKit zone-conflict (134040) on launch (the #150 fix).

@@ -1,5 +1,14 @@
 # Tasks — escalate-43a-to-app-review-board
 
+> **ARCHIVED AS SUPERSEDED (2026-07-07).** The appeal this change tracked was
+> filed 2026-06-06 and UPHELD 2026-06-23 (ticket APL466617). The 15 unchecked
+> tasks below are contingency branches (overturn handling, re-appeal drafts)
+> that events resolved via a different path: Meet with Apple (2026-07-02)
+> named the design surface as the 4.3(a) axis → `reskin-provisions-press`
+> executed the response → resubmitted 2026-07-07. Full record:
+> `docs/app-store-rejection-43a-response.md` §11–§12.
+
+
 ## 1. Record + draft (Claude executes) — DONE in the scaffolding session
 
 - [x] 1.1 Backfill `docs/app-store-rejection-43a-response.md` § 7 with the late-April second rejection, the 2026-05-05 resubmission, the 2026-05-13 third rejection, and the 2026-06-06 escalation decision
