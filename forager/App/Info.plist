@@ -14,7 +14,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.richhayn.forager</string>
+			<string>com.richhayn.foragerapp</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>forager</string>
@@ -22,7 +22,7 @@
 		</dict>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>Forager uses the camera to scan recipe pages for import</string>
+	<string>forager uses the camera to scan recipe pages for import</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>

@@ -11,9 +11,10 @@
 #   - API key .p8 file at ~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8
 #   - Tools/appstore-connect/generate-jwt.swift available
 #
-# Configuration (hardcoded for forager):
-#   - App ID: 6756034827
-#   - Beta Group: Public Beta Testers (46d19222-23de-4578-954a-ed0457239949)
+# Configuration (hardcoded for forager — fresh app record 2026-07-24, "forager - Groceries, managed."):
+#   - App ID: 6794530669
+#   - Beta Group: Public Beta Testers (408cdc6a-79a4-48b3-af67-b59ffef4e75c)
+#   - Internal group (auto-access, no beta review): e6810cf5-faa4-4faf-9278-06a905913177
 
 set -euo pipefail
 
@@ -35,8 +36,8 @@ if [ -z "$MARKETING_VERSION" ]; then
 fi
 
 # --- Constants ---
-APP_ID="6756034827"
-BETA_GROUP_ID="46d19222-23de-4578-954a-ed0457239949"
+APP_ID="6794530669"
+BETA_GROUP_ID="408cdc6a-79a4-48b3-af67-b59ffef4e75c"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MAX_POLL_ATTEMPTS=20
 POLL_INTERVAL=60
