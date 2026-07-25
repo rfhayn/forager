@@ -1,6 +1,6 @@
 # forager - App Store Listing
 
-**Last Updated**: April 12, 2026
+**Last Updated**: July 24, 2026 (fresh app record — "forager - Groceries, managed.", App ID 6794530669, bundle `com.richhayn.foragerapp`; description/keywords carried from the 2026-04-23 repositioning, recovered from commit `7276217`)
 
 ---
 
@@ -10,8 +10,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Name** | forager - Smart Meal Planner |
-| **Subtitle** | Grocery Lists & Meal Planning |
+| **Name** | forager - Groceries, managed. |
+| **Subtitle** | Household Sync, Multi-Store |
 | **Primary Category** | Food & Drink |
 | **Secondary Category** | Productivity |
 | **Copyright** | 2026 Rich Hayn |
